@@ -28,7 +28,6 @@ import com.orientechnologies.common.serialization.types.ODecimalSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.serialization.types.OUUIDSerializer;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
@@ -154,7 +153,8 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
     ORecordInternal.clearSource(document);
   }
 
-  public void serialize(final ODocument document, final BytesContainer bytes) {
+  public void serialize(
+      final ODocument document, final BytesContainer bytes, OSerializationContext ctx) {
     serializeClass(document, bytes);
     final Collection<Entry<String, ODocumentEntry>> fields = fetchEntries(document);
     OVarIntSerializer.write(bytes, fields.size());
@@ -171,7 +171,7 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
                   + " with the Result binary serializer");
         }
         writeOType(bytes, bytes.alloc(1), type);
-        serializeValue(bytes, value, type, getLinkedType(document, type, entry.getKey()));
+        serializeValue(bytes, value, type, getLinkedType(document, type, entry.getKey()), ctx);
       } else {
         writeOType(bytes, bytes.alloc(1), null);
       }
@@ -227,9 +227,9 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
     }
   }
 
-  public byte[] serializeValue(Object value, OType type) {
+  public byte[] serializeValue(Object value, OType type, OSerializationContext ctx) {
     BytesContainer bytes = new BytesContainer();
-    serializeValue(bytes, value, type, null);
+    serializeValue(bytes, value, type, null, ctx);
     return bytes.fitBytes();
   }
 
@@ -345,9 +345,8 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
     return value;
   }
 
-  private void writeRidBag(BytesContainer bytes, ORidBag bag) {
-    final OSBTreeCollectionManager sbTreeCollectionManager =
-        ODatabaseRecordThreadLocal.instance().get().getSbTreeCollectionManager();
+  private void writeRidBag(BytesContainer bytes, ORidBag bag, OSerializationContext ctx) {
+    final OSBTreeCollectionManager sbTreeCollectionManager = ctx.getCollectionManager();
     UUID uuid = null;
     if (sbTreeCollectionManager != null) uuid = sbTreeCollectionManager.listenForChanges(bag);
     if (uuid == null) uuid = new UUID(-1, -1);
@@ -536,7 +535,11 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
 
   @SuppressWarnings("unchecked")
   public void serializeValue(
-      final BytesContainer bytes, Object value, final OType type, final OType linkedType) {
+      final BytesContainer bytes,
+      Object value,
+      final OType type,
+      final OType linkedType,
+      OSerializationContext ctx) {
     int pointer = 0;
     switch (type) {
       case INTEGER:
@@ -584,16 +587,16 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
         if (value instanceof ODocumentSerializable) {
           ODocument cur = ((ODocumentSerializable) value).toDocument();
           cur.field(ODocumentSerializable.CLASS_NAME, value.getClass().getName());
-          serialize(cur, bytes);
+          serialize(cur, bytes, ctx);
         } else {
-          serialize((ODocument) value, bytes);
+          serialize((ODocument) value, bytes, ctx);
         }
         break;
       case EMBEDDEDSET:
       case EMBEDDEDLIST:
         if (value.getClass().isArray())
-          writeEmbeddedCollection(bytes, Arrays.asList(OMultiValue.array(value)), linkedType);
-        else writeEmbeddedCollection(bytes, (Collection<?>) value, linkedType);
+          writeEmbeddedCollection(bytes, Arrays.asList(OMultiValue.array(value)), linkedType, ctx);
+        else writeEmbeddedCollection(bytes, (Collection<?>) value, linkedType, ctx);
         break;
       case DECIMAL:
         BigDecimal decimalValue = (BigDecimal) value;
@@ -618,10 +621,10 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
         writeLinkMap(bytes, (Map<Object, OIdentifiable>) value);
         break;
       case EMBEDDEDMAP:
-        writeEmbeddedMap(bytes, (Map<Object, Object>) value);
+        writeEmbeddedMap(bytes, (Map<Object, Object>) value, ctx);
         break;
       case LINKBAG:
-        writeRidBag(bytes, (ORidBag) value);
+        writeRidBag(bytes, (ORidBag) value, ctx);
         break;
       case CUSTOM:
         if (!(value instanceof OSerializableStream))
@@ -670,7 +673,8 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
     }
   }
 
-  private int writeEmbeddedMap(BytesContainer bytes, Map<Object, Object> map) {
+  private int writeEmbeddedMap(
+      BytesContainer bytes, Map<Object, Object> map, OSerializationContext ctx) {
     final int fullPos = OVarIntSerializer.write(bytes, map.size());
     for (Entry<Object, Object> entry : map.entrySet()) {
       writeString(bytes, entry.getKey().toString());
@@ -684,7 +688,7 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
                   + " with the Result binary serializer");
         }
         writeOType(bytes, bytes.alloc(1), type);
-        serializeValue(bytes, value, type, null);
+        serializeValue(bytes, value, type, null, ctx);
       } else {
         writeOType(bytes, bytes.alloc(1), null);
       }
@@ -735,7 +739,10 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
   }
 
   private int writeEmbeddedCollection(
-      final BytesContainer bytes, final Collection<?> value, final OType linkedType) {
+      final BytesContainer bytes,
+      final Collection<?> value,
+      final OType linkedType,
+      OSerializationContext ctx) {
     final int pos = OVarIntSerializer.write(bytes, value.size());
     // TODO manage embedded type from schema and auto-determined.
     for (Object itemValue : value) {
@@ -749,7 +756,7 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
       else type = linkedType;
       if (type != null) {
         writeOType(bytes, bytes.alloc(1), type);
-        serializeValue(bytes, itemValue, type, null);
+        serializeValue(bytes, itemValue, type, null, ctx);
       } else {
         throw new OSerializationException(
             "Impossible serialize value of type "
@@ -892,7 +899,7 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
 
       ODocument doc = (ODocument) iSource;
       // SERIALIZE RECORD
-      serialize(doc, container);
+      serialize(doc, container, ctx);
       return container.fitBytes();
     }
   }

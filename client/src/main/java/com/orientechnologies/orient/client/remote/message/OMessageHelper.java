@@ -19,6 +19,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
+import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationContext;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37Client;
 import com.orientechnologies.orient.core.serialization.serializer.result.binary.OResultSerializerNetwork;
@@ -299,7 +300,10 @@ public class OMessageHelper {
   }
 
   static void writeTransactionIndexChanges(
-      OChannelDataOutput network, ORecordSerializerNetworkV37 serializer, List<IndexChange> changes)
+      OChannelDataOutput network,
+      ORecordSerializerNetworkV37 serializer,
+      List<IndexChange> changes,
+      OSerializationContext ctx)
       throws IOException {
     network.writeInt(changes.size());
     for (IndexChange indexChange : changes) {
@@ -323,7 +327,7 @@ public class OMessageHelper {
       for (OTransactionIndexChangesPerKey change :
           indexChange.getKeyChanges().changesPerKey.values()) {
         OType type = OType.getTypeByValue(change.key);
-        byte[] value = serializer.serializeValue(change.key, type);
+        byte[] value = serializer.serializeValue(change.key, type, ctx);
         network.writeByte((byte) type.getId());
         network.writeBytes(value);
         network.writeInt(change.size());

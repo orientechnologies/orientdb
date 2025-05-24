@@ -9,6 +9,7 @@ import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationReq
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
+import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationContextImpl;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37Client;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
@@ -85,7 +86,8 @@ public class OCommit37Request implements OBinaryRequest<OCommit37Response> {
       network.writeByte((byte) 0);
 
       // SEND MANUAL INDEX CHANGES
-      OMessageHelper.writeTransactionIndexChanges(network, serializer, indexChanges);
+      OMessageHelper.writeTransactionIndexChanges(
+          network, serializer, indexChanges, new OSerializationContextImpl());
     }
   }
 

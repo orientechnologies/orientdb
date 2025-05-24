@@ -3,6 +3,7 @@ package com.orientechnologies.orient.server.distributed.impl;
 import static org.junit.Assert.assertEquals;
 
 import com.orientechnologies.orient.core.index.OCompositeKey;
+import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationContextImpl;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkDistributed;
 import com.orientechnologies.orient.core.tx.OTransactionId;
 import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPhase1Task;
@@ -43,7 +44,10 @@ public class OTransactionPhase1TaskSerializationTest {
           }
         };
     OTransactionPhase1Task.writeTxUniqueIndexKeys(
-        actualUniqueKeys, ORecordSerializerNetworkDistributed.INSTANCE, out);
+        actualUniqueKeys,
+        ORecordSerializerNetworkDistributed.INSTANCE,
+        out,
+        new OSerializationContextImpl());
 
     OTransactionPhase1Task task = new OTransactionPhase1Task();
     task.fromStream(new DataInputStream(new ByteArrayInputStream(outStream.toByteArray())), null);

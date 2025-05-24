@@ -291,7 +291,7 @@ public class ORidBag
       offset += OUUIDSerializer.UUID_SIZE;
     }
 
-    delegate.serialize(stream, offset, oldUuid);
+    delegate.serialize(stream, offset, oldUuid, ctx);
     return pointer;
   }
 

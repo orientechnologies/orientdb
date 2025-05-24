@@ -8,6 +8,7 @@ import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
+import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationContextImpl;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37Client;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
@@ -75,7 +76,10 @@ public class OFetchTransactionResponse implements OBinaryResponse {
 
     // SEND MANUAL INDEX CHANGES
     OMessageHelper.writeTransactionIndexChanges(
-        channel, (ORecordSerializerNetworkV37) serializer, indexChanges);
+        channel,
+        (ORecordSerializerNetworkV37) serializer,
+        indexChanges,
+        new OSerializationContextImpl());
   }
 
   static void writeTransactionEntry(

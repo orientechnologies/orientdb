@@ -2,6 +2,7 @@ package com.orientechnologies.orient.server.distributed.impl.task.transaction;
 
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationContext;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -33,17 +34,19 @@ public class OTransactionUniqueKey implements Comparable<OTransactionUniqueKey> 
     return version;
   }
 
-  public void write(ORecordSerializerNetworkV37 serializer, DataOutput out) throws IOException {
+  public void write(
+      ORecordSerializerNetworkV37 serializer, DataOutput out, OSerializationContext ctx)
+      throws IOException {
     out.writeUTF(getIndex());
     if (getKey() == null) {
       out.writeByte((byte) -1);
     } else if (getKey() instanceof OCompositeKey) {
       // Avoid the default serializer of OCompositeKey which converts the key to a document.
       out.writeByte((byte) -2);
-      ((OCompositeKey) getKey()).toStream(serializer, out);
+      ((OCompositeKey) getKey()).toStream(serializer, out, ctx);
     } else {
       OType type = OType.getTypeByValue(getKey());
-      byte[] bytes = serializer.serializeValue(getKey(), type);
+      byte[] bytes = serializer.serializeValue(getKey(), type, ctx);
       out.writeByte((byte) type.getId());
       out.writeInt(bytes.length);
       out.write(bytes);

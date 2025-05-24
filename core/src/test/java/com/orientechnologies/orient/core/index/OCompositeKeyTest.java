@@ -7,6 +7,7 @@ import static org.junit.Assert.assertTrue;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OCompositeKeySerializer;
+import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationContextImpl;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALPageChangesPortion;
@@ -346,7 +347,7 @@ public class OCompositeKeyTest {
     ORecordSerializerNetworkV37 serializer = ORecordSerializerNetworkV37.INSTANCE;
     ByteArrayOutputStream outStream = new ByteArrayOutputStream();
     DataOutputStream out = new DataOutputStream(outStream);
-    compositeKey.toStream(serializer, out);
+    compositeKey.toStream(serializer, out, new OSerializationContextImpl());
     ByteArrayInputStream inStream = new ByteArrayInputStream(outStream.toByteArray());
     DataInputStream in = new DataInputStream(inStream);
     OCompositeKey deserializedCompositeKey = new OCompositeKey();

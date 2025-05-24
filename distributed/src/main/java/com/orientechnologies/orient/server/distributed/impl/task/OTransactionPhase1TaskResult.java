@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.OStreamable;
 import com.orientechnologies.orient.core.serialization.OStreamableHelper;
+import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationContextImpl;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkDistributed;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTransactionResultPayload;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxConcurrentCreation;
@@ -100,7 +101,8 @@ public class OTransactionPhase1TaskResult implements OStreamable {
           OType type = OType.getTypeByValue(pl3.getKey());
           out.writeInt(type.getId());
           byte[] keyBytes =
-              ORecordSerializerNetworkDistributed.INSTANCE.serializeValue(pl3.getKey(), type);
+              ORecordSerializerNetworkDistributed.INSTANCE.serializeValue(
+                  pl3.getKey(), type, new OSerializationContextImpl());
           out.writeInt(keyBytes.length);
           out.write(keyBytes);
         }

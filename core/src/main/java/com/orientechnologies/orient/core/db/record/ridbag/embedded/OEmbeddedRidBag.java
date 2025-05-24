@@ -39,6 +39,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.OSimpleMultiValueTracker;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
+import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationContext;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.Change;
 import java.util.Collection;
 import java.util.Iterator;
@@ -438,7 +439,7 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
   }
 
   @Override
-  public int serialize(byte[] stream, int offset, UUID ownerUuid) {
+  public int serialize(byte[] stream, int offset, UUID ownerUuid, OSerializationContext ctx) {
     OIntegerSerializer.INSTANCE.serializeLiteral(size, stream, offset);
     offset += OIntegerSerializer.INT_SIZE;
     ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();

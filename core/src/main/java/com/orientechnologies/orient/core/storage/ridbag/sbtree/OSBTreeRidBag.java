@@ -39,6 +39,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.OSimpleMultiValueTracker;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.OLinkSerializer;
+import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationContext;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORidBagDeleteSerializationOperation;
@@ -749,7 +750,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
   }
 
   @Override
-  public int serialize(byte[] stream, int offset, UUID ownerUuid) {
+  public int serialize(byte[] stream, int offset, UUID ownerUuid, OSerializationContext ctx) {
     applyNewEntries();
 
     final ORecordSerializationContext context;
@@ -776,9 +777,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
           final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
           assert atomicOperation != null;
           collectionPointer =
-              databaseDocumentInternal
-                  .getSbTreeCollectionManager()
-                  .createSBTree(clusterId, atomicOperation, ownerUuid);
+              ctx.getCollectionManager().createSBTree(clusterId, atomicOperation, ownerUuid);
         } catch (IOException e) {
           throw OException.wrapException(new ODatabaseException("Error during ridbag creation"), e);
         }

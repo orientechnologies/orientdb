@@ -10,6 +10,7 @@ import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
+import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationContextImpl;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ODocumentSerializerDelta;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37Client;
@@ -96,7 +97,8 @@ public class OBeginTransaction38Request implements OBinaryRequest<OBeginTransact
       network.writeByte((byte) 0);
 
       // SEND MANUAL INDEX CHANGES
-      OMessageHelper.writeTransactionIndexChanges(network, serializer, indexChanges);
+      OMessageHelper.writeTransactionIndexChanges(
+          network, serializer, indexChanges, new OSerializationContextImpl());
     }
   }
 

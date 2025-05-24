@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.db.record.OTrackedMultiValue;
 import com.orientechnologies.orient.core.record.impl.OSimpleMultiValueTracker;
+import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationContext;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.Change;
 import java.util.Collection;
 import java.util.NavigableMap;
@@ -56,9 +57,10 @@ public interface ORidBagDelegate
    * @param stream to write content
    * @param offset in stream where start to write content
    * @param ownerUuid id of delegate owner
+   * @param ctx
    * @return offset where content of stream is ended
    */
-  int serialize(byte[] stream, int offset, UUID ownerUuid);
+  int serialize(byte[] stream, int offset, UUID ownerUuid, OSerializationContext ctx);
 
   int deserialize(byte[] stream, int offset);
 

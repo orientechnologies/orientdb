@@ -20,6 +20,8 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
+import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationContext;
+import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationContextImpl;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ODocumentSerializerDeltaDistributed;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkDistributed;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
@@ -353,17 +355,18 @@ public class OTransactionPhase1Task extends OAbstractRemoteTask implements OLock
     }
 
     ORecordSerializerNetworkDistributed serializer = ORecordSerializerNetworkDistributed.INSTANCE;
-    writeTxUniqueIndexKeys(uniqueIndexKeys, serializer, out);
+    writeTxUniqueIndexKeys(uniqueIndexKeys, serializer, out, new OSerializationContextImpl());
   }
 
   public static void writeTxUniqueIndexKeys(
       SortedSet<OTransactionUniqueKey> uniqueIndexKeys,
       ORecordSerializerNetworkV37 serializer,
-      DataOutput out)
+      DataOutput out,
+      OSerializationContext ctx)
       throws IOException {
     out.writeInt(uniqueIndexKeys.size());
     for (OTransactionUniqueKey pair : uniqueIndexKeys) {
-      pair.write(serializer, out);
+      pair.write(serializer, out, ctx);
     }
   }
 

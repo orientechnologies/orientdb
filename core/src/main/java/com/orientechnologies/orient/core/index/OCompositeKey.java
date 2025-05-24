@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.index.comparator.OAlwaysLessKey;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.ODocumentSerializable;
+import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationContext;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -202,7 +203,9 @@ public class OCompositeKey
   }
 
   // Alternative (de)serialization methods that avoid converting the OCompositeKey to a document.
-  public void toStream(ORecordSerializerNetworkV37 serializer, DataOutput out) throws IOException {
+  public void toStream(
+      ORecordSerializerNetworkV37 serializer, DataOutput out, OSerializationContext ctx)
+      throws IOException {
     int l = keys.size();
     out.writeInt(l);
     for (Object key : keys) {
@@ -213,7 +216,7 @@ public class OCompositeKey
         out.writeByte((byte) -1);
       } else {
         OType type = OType.getTypeByValue(key);
-        byte[] bytes = serializer.serializeValue(key, type);
+        byte[] bytes = serializer.serializeValue(key, type, ctx);
         out.writeByte((byte) type.getId());
         out.writeInt(bytes.length);
         out.write(bytes);

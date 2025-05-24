@@ -10,6 +10,7 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
+import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationContextImpl;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -30,7 +31,7 @@ public class ORidBagBasicTest extends BaseMemoryDatabase {
     bag.convertRecords2Links();
     byte[] bytes = new byte[1024];
     UUID id = UUID.randomUUID();
-    bag.serialize(bytes, 0, id);
+    bag.serialize(bytes, 0, id, new OSerializationContextImpl());
 
     OEmbeddedRidBag bag1 = new OEmbeddedRidBag();
     bag1.deserialize(bytes, 0);
