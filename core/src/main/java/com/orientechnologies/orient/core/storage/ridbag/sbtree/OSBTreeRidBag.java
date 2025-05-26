@@ -21,6 +21,7 @@
 package com.orientechnologies.orient.core.storage.ridbag.sbtree;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.types.OModifiableInteger;
@@ -77,6 +78,7 @@ public class OSBTreeRidBag implements ORidBagDelegate {
   private final OSBTreeCollectionManager collectionManager =
       ODatabaseRecordThreadLocal.instance().get().getSbTreeCollectionManager();
   private final NavigableMap<OIdentifiable, Change> changes = new ConcurrentSkipListMap<>();
+
   /** Entries with not valid id. */
   private final IdentityHashMap<OIdentifiable, OModifiableInteger> newEntries =
       new IdentityHashMap<>();
@@ -433,7 +435,8 @@ public class OSBTreeRidBag implements ORidBagDelegate {
       throw new IllegalStateException(
           "This data structure is owned by document "
               + owner
-              + " if you want to use it in other document create new rid bag instance and copy content of current one.");
+              + " if you want to use it in other document create new rid bag instance and copy"
+              + " content of current one.");
     }
     if (this.owner != null) {
       for (OIdentifiable entry : newEntries.keySet()) {
@@ -839,9 +842,19 @@ public class OSBTreeRidBag implements ORidBagDelegate {
 
   @Override
   public void requestDelete() {
-    final ORecordSerializationContext context = ORecordSerializationContext.getContext();
-    if (context != null && collectionPointer != null) {
-      context.push(new ORidBagDeleteSerializationOperation(this));
+    if (ODatabaseRecordThreadLocal.instance().isDefined()
+        && !ODatabaseRecordThreadLocal.instance().get().isRemote()) {
+      final ORecordSerializationContext context = ORecordSerializationContext.getContext();
+
+      if (context != null && collectionPointer != null) {
+        context.push(new ORidBagDeleteSerializationOperation(this));
+      } else {
+        OLogManager.instance()
+            .error(
+                this,
+                "Cannot delete the ridbag in current context may leak disk data",
+                new ODatabaseException(""));
+      }
     }
   }
 

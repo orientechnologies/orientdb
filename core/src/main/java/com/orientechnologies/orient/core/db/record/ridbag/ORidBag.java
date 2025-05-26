@@ -41,6 +41,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.BytesContainer;
 import com.orientechnologies.orient.core.serialization.serializer.string.OStringBuilderSerializable;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsai;
 import com.orientechnologies.orient.core.storage.ridbag.ORemoteTreeRidBag;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.Change;
@@ -295,7 +296,9 @@ public class ORidBag
 
   public void checkAndConvert() {
     ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.instance().getIfDefined();
-    if (database != null && !database.isRemote()) {
+    if (database != null
+        && !database.isRemote()
+        && ORecordSerializationContext.getContext() != null) {
       if (isEmbedded()
           && ODatabaseRecordThreadLocal.instance().get().getSbTreeCollectionManager() != null
           && delegate.size() >= topThreshold) {
