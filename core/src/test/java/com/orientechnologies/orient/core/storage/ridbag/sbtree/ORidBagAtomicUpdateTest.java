@@ -2,11 +2,13 @@ package com.orientechnologies.orient.core.storage.ridbag.sbtree;
 
 import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OConcurrentModificationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsai;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -1136,6 +1138,62 @@ public class ORidBagAtomicUpdateTest extends BaseMemoryDatabase {
     for (OIdentifiable identifiable : ridBag) Assert.assertTrue(docsToAdd.remove(identifiable));
 
     Assert.assertTrue(docsToAdd.isEmpty());
+  }
+
+  @Test
+  public void testFromSBTreeToEmbedded() {
+    OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(5);
+    OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.setValue(7);
+
+    List<OIdentifiable> docsToAdd = new ArrayList<OIdentifiable>();
+
+    ODocument document = new ODocument();
+
+    ORidBag ridBag = new ORidBag();
+    document.field("ridBag", ridBag);
+    document.save(db.getClusterNameById(db.getDefaultClusterId()));
+
+    db.begin();
+
+    for (int i = 0; i < 10; i++) {
+      ODocument docToAdd = new ODocument();
+      docToAdd.save(db.getClusterNameById(db.getDefaultClusterId()));
+      ridBag.add(docToAdd);
+      docsToAdd.add(docToAdd);
+    }
+
+    document.save(db.getClusterNameById(db.getDefaultClusterId()));
+
+    db.commit();
+
+    Assert.assertEquals(docsToAdd.size(), 10);
+    Assert.assertTrue(!ridBag.isEmbedded());
+
+    document = db.load(document.getIdentity());
+    ridBag = document.field("ridBag");
+
+    db.begin();
+    OBonsaiCollectionPointer pointer =
+        ((OSBTreeRidBag) ridBag.getDelegate()).getCollectionPointer();
+    for (int i = 0; i < 4; i++) {
+      OIdentifiable docToRemove = docsToAdd.get(i);
+      ridBag.remove(docToRemove);
+    }
+
+    Assert.assertTrue(document.isDirty());
+
+    document.save(db.getClusterNameById(db.getDefaultClusterId()));
+    db.commit();
+
+    OSBTreeBonsai<OIdentifiable, Integer> btree =
+        ((ODatabaseDocumentEmbedded) db).getSbTreeCollectionManager().loadSBTree(pointer);
+
+    Assert.assertTrue(btree.isEmpty());
+
+    document = db.load(document.getIdentity());
+    ridBag = document.field("ridBag");
+
+    Assert.assertTrue(ridBag.isEmbedded());
   }
 
   @Test

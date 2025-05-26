@@ -840,9 +840,15 @@ public class OSBTreeRidBag implements ORidBagDelegate {
 
   @Override
   public void requestDelete() {
-    final ORecordSerializationContext context = ORecordSerializationContext.getContext();
-    if (context != null && collectionPointer != null) {
-      context.push(new ORidBagDeleteSerializationOperation(this));
+    if (ODatabaseRecordThreadLocal.instance().isDefined()
+        && !ODatabaseRecordThreadLocal.instance().get().isRemote()) {
+      final ORecordSerializationContext context = ORecordSerializationContext.getContext();
+
+      if (context != null && collectionPointer != null) {
+        context.push(new ORidBagDeleteSerializationOperation(this));
+      } else {
+        throw new ODatabaseException("Cannot delete the ridbag in current context");
+      }
     }
   }
 
