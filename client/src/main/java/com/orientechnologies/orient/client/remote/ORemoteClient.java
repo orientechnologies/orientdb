@@ -165,6 +165,7 @@ import com.orientechnologies.orient.enterprise.channel.binary.ODistributedRedire
 import com.orientechnologies.orient.enterprise.channel.binary.OTokenSecurityException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.SocketException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -2028,6 +2029,11 @@ public class ORemoteClient implements OStorageInfo {
           liveListener.onError(
               OException.wrapException(new ODatabaseException("Live query disconnection "), e));
         }
+      }
+      if (e instanceof SocketException) {
+        logger.debug("Socket exception on push request", e);
+      } else {
+        logger.warn("Error on push request", e);
       }
     }
   }

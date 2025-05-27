@@ -109,6 +109,9 @@ public class ORemoteClientPushThread extends Thread {
       } catch (InterruptedException e) {
         pushHandler.onPushDisconnect(this.network, e);
         currentThread().interrupt();
+      } catch (Throwable e) {
+        logger.warn("Push thread error ", e);
+        throw e;
       }
     }
   }
