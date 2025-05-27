@@ -1634,7 +1634,8 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
   public OBinaryResponse executeSubscribeDistributedConfiguration(
       OSubscribeDistributedConfigurationRequest request) {
     OPushManager manager = server.getPushManager();
-    manager.subscribeDistributeConfig((ONetworkProtocolBinary) connection.getProtocol());
+    manager.subscribeDistributeConfig(
+        (ONetworkProtocolBinary) connection.getProtocol(), connection);
 
     OrientDBInternal databases = server.getDatabases();
     Set<String> dbs = databases.listLodadedDatabases();
@@ -1655,7 +1656,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
       OSubscribeStorageConfigurationRequest request) {
     OPushManager manager = server.getPushManager();
     manager.subscribeStorageConfiguration(
-        connection.getDatabase(), (ONetworkProtocolBinary) connection.getProtocol());
+        connection.getDatabase(), (ONetworkProtocolBinary) connection.getProtocol(), connection);
     return new OSubscribeStorageConfigurationResponse();
   }
 
@@ -1663,7 +1664,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
   public OBinaryResponse executeSubscribeSchema(OSubscribeSchemaRequest request) {
     OPushManager manager = server.getPushManager();
     manager.subscribeSchema(
-        connection.getDatabase(), (ONetworkProtocolBinary) connection.getProtocol());
+        connection.getDatabase(), (ONetworkProtocolBinary) connection.getProtocol(), connection);
     return new OSubscribeSchemaResponse();
   }
 
@@ -1671,7 +1672,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
   public OBinaryResponse executeSubscribeIndexManager(OSubscribeIndexManagerRequest request) {
     OPushManager manager = server.getPushManager();
     manager.subscribeIndexManager(
-        connection.getDatabase(), (ONetworkProtocolBinary) connection.getProtocol());
+        connection.getDatabase(), (ONetworkProtocolBinary) connection.getProtocol(), connection);
     return new OSubscribeIndexManagerResponse();
   }
 
@@ -1679,7 +1680,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
   public OBinaryResponse executeSubscribeFunctions(OSubscribeFunctionsRequest request) {
     OPushManager manager = server.getPushManager();
     manager.subscribeFunctions(
-        connection.getDatabase(), (ONetworkProtocolBinary) connection.getProtocol());
+        connection.getDatabase(), (ONetworkProtocolBinary) connection.getProtocol(), connection);
     return new OSubscribeFunctionsResponse();
   }
 
@@ -1687,7 +1688,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
   public OBinaryResponse executeSubscribeSequences(OSubscribeSequencesRequest request) {
     OPushManager manager = server.getPushManager();
     manager.subscribeSequences(
-        connection.getDatabase(), (ONetworkProtocolBinary) connection.getProtocol());
+        connection.getDatabase(), (ONetworkProtocolBinary) connection.getProtocol(), connection);
     return new OSubscribeSequencesResponse();
   }
 
