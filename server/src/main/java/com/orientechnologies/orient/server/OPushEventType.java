@@ -1,8 +1,6 @@
 package com.orientechnologies.orient.server;
 
 import com.orientechnologies.orient.client.remote.message.OBinaryPushRequest;
-import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
-import java.lang.ref.WeakReference;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.Set;
@@ -11,8 +9,7 @@ import java.util.concurrent.ConcurrentMap;
 
 public class OPushEventType {
   private final ConcurrentMap<String, OBinaryPushRequest<?>> databases = new ConcurrentHashMap<>();
-  protected final ConcurrentMap<String, Set<WeakReference<ONetworkProtocolBinary>>> listeners =
-      new ConcurrentHashMap<>();
+  protected final ConcurrentMap<String, Set<OPushInfo>> listeners = new ConcurrentHashMap<>();
 
   public synchronized void send(
       String database, OBinaryPushRequest<?> request, OPushManager pushManager) {
@@ -26,20 +23,22 @@ public class OPushEventType {
     return databases.remove(database);
   }
 
-  public synchronized void subscribe(String database, ONetworkProtocolBinary protocol) {
-    Set<WeakReference<ONetworkProtocolBinary>> pushSockets = listeners.get(database);
+  public synchronized void subscribe(String database, OPushInfo protocol) {
+    Set<OPushInfo> pushSockets = listeners.get(database);
     if (pushSockets == null) {
       pushSockets = new HashSet<>();
       listeners.put(database, pushSockets);
     }
-    pushSockets.add(new WeakReference<>(protocol));
+    pushSockets.add(protocol);
   }
 
-  public synchronized void cleanListeners() {
-    for (Set<WeakReference<ONetworkProtocolBinary>> value : listeners.values()) {
-      Iterator<WeakReference<ONetworkProtocolBinary>> iter = value.iterator();
+  public synchronized void cleanListeners(OPushManager manager) {
+    for (Set<OPushInfo> value : listeners.values()) {
+      Iterator<OPushInfo> iter = value.iterator();
       while (iter.hasNext()) {
-        if (iter.next().get() == null) {
+        OPushInfo ref = iter.next();
+        if (ref.protocol().get() == null) {
+          manager.close(ref);
           iter.remove();
         }
       }

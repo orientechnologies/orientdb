@@ -356,7 +356,7 @@ public class OServer {
 
     clientConnectionManager = new OClientConnectionManager(this);
     httpSessionManager = new OHttpSessionManager(this);
-    pushManager = new OPushManager();
+    pushManager = new OPushManager(this.getContextConfiguration(), getClientConnectionManager());
     rejectRequests = false;
 
     if (contextConfiguration.getValueAsBoolean(
