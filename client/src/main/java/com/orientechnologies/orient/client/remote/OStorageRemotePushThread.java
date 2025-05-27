@@ -106,6 +106,9 @@ public class OStorageRemotePushThread extends Thread {
       } catch (InterruptedException e) {
         pushHandler.onPushDisconnect(this.network, e);
         currentThread().interrupt();
+      } catch (Throwable e) {
+        OLogManager.instance().warn(this, "Push thread error ", e);
+        throw e;
       }
     }
   }

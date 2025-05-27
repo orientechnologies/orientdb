@@ -176,6 +176,7 @@ import com.orientechnologies.orient.enterprise.channel.binary.OTokenSecurityExce
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.SocketException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
@@ -2364,6 +2365,11 @@ public class OStorageRemote implements OStorageProxy, ORemotePushHandler, OStora
           liveListener.onError(
               OException.wrapException(new ODatabaseException("Live query disconnection "), e));
         }
+      }
+      if (e instanceof SocketException) {
+        OLogManager.instance().debug(this, "Socket exception on push request", e);
+      } else {
+        OLogManager.instance().warn(this, "Error on push request", e);
       }
     }
   }
