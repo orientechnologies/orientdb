@@ -1616,6 +1616,30 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
   }
 
   @Test
+  public void testFetchFromCompsiteIndex() {
+    String className = "testFetchFromClassCompositeIndex";
+    OClass clazz = db.getMetadata().getSchema().createClass(className);
+    clazz.createProperty("first", OType.LONG);
+    clazz.createProperty("second", OType.LONG);
+    clazz.createIndex(className + ".first_second", OClass.INDEX_TYPE.NOTUNIQUE, "second", "first");
+
+    for (int i = 0; i < 10; i++) {
+      ODocument doc = db.newInstance(className);
+      doc.setProperty("first", 99);
+      doc.setProperty("second", 5 + i);
+      db.save(doc);
+    }
+
+    OResultSet result =
+        db.query("select from " + className + " where second <= 10 and first = 99 ");
+    printExecutionPlan(result);
+    Assert.assertEquals(result.stream().count(), 6);
+    OExecutionPlan plan = result.getExecutionPlan().get();
+    Assert.assertEquals(1, plan.getIndexes().size());
+    result.close();
+  }
+
+  @Test
   public void testFetchFromClassWithHashIndexes1() {
     String className = "testFetchFromClassWithHashIndexes1";
     OClass clazz = db.getMetadata().getSchema().createClass(className);
