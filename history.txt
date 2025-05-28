@@ -27,6 +27,29 @@
 This document contains the last changes of OrientDB Community Edition.
 
 
+
+-----------------------------------------------------------------------------------------------------------------------------------
+VERSION 3.2.40 - (May, 30  2025)
+- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3240---30-May-2025
+
+# Core
+- Fix remove of linked class in schema
+- Fix views to indexed fields in original ordering, to guarantee index uses in views queries
+- Avoid concurrent access to schema on database load
+- Avoid double to float casting when loose precision, issue #10391
+- Make sure to delete tree RidBag data when converting them to embedded
+- Fix use of composite index fields in case of range operations, issue #10456
+
+# Server
+- Fixed disconnect push session in case of push error, issue #10453
+
+# Client
+- Increased logging in client in case of push execution failure
+
+# Distributed
+- Log cluster names in debug only
+- Make sure to rollback distributed promise in case of DDL failure
+
 -----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.39 - (April, 15  2025)
 - Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3239---15-April-2025
