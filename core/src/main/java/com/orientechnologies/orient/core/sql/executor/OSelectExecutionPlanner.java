@@ -2916,23 +2916,25 @@ public class OSelectExecutionPlanner {
               ctx);
       blockIterator = blockCopy.getSubBlocks().iterator();
       boolean indexFieldFound = false;
+      boolean foundItWithRangeOps = false;
       while (blockIterator.hasNext()) {
         OBooleanExpression singleExp = blockIterator.next();
         if (singleExp.isIndexAware(info, ctx)) {
           indexFieldFound = true;
           indexKeyValue.getSubBlocks().add(singleExp.copy());
           blockIterator.remove();
-          if (singleExp instanceof OBinaryCondition
-              && info.allowsRange()
-              && ((OBinaryCondition) singleExp).getOperator().isRangeOperator()) {
-            // look for the opposite condition, on the same field, for range queries (the other
-            // side of the range)
-            while (blockIterator.hasNext()) {
-              OBooleanExpression next = blockIterator.next();
-              if (next.createRangeWith(singleExp)) {
-                additionalRangeCondition = (OBinaryCondition) next;
-                blockIterator.remove();
-                break;
+          if (singleExp instanceof OBinaryCondition) {
+            foundItWithRangeOps = ((OBinaryCondition) singleExp).getOperator().isRangeOperator();
+            if (info.allowsRange() && foundItWithRangeOps) {
+              // look for the opposite condition, on the same field, for range queries (the other
+              // side of the range)
+              while (blockIterator.hasNext()) {
+                OBooleanExpression next = blockIterator.next();
+                if (next.createRangeWith(singleExp)) {
+                  additionalRangeCondition = (OBinaryCondition) next;
+                  blockIterator.remove();
+                  break;
+                }
               }
             }
           }
@@ -2943,7 +2945,7 @@ public class OSelectExecutionPlanner {
       if (indexFieldFound) {
         found = true;
       }
-      if (!indexFieldFound) {
+      if (!indexFieldFound || foundItWithRangeOps) {
         break;
       }
     }
