@@ -891,10 +891,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   public Set<String> getAvailableNodesButLocal(ODatabaseSession database) {
-    final Set<String> nodes = context.getDistributedConfiguration(database).getServers(null);
-
-    // REMOVE CURRENT NODE BECAUSE IT HAS BEEN ALREADY EXECUTED LOCALLY
-    nodes.remove(localNodeName);
-    return nodes;
+    return context.getDistributedManager().getAvailableNodeNotLocalNames(databaseName);
   }
 }

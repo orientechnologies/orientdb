@@ -316,6 +316,10 @@ public class ODistributedConfiguration {
     return partitions;
   }
 
+  public Set<String> getServers() {
+    return getAllConfiguredServers();
+  }
+
   /**
    * Returns true if the local server has all the requested clusters.
    *

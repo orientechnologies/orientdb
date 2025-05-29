@@ -104,7 +104,7 @@ public class OClusterHealthChecker implements Runnable {
       if (cfg == null) {
         continue;
       }
-      final Set<String> confServers = cfg.getServers(null);
+      final Set<String> confServers = manager.getAvailableNodeNames(databaseName);
       for (String s : manager.getActiveServers()) {
         if (manager.isNodeAvailable(s, databaseName) && !confServers.contains(s)) {
           final Set<String> nodes = manager.getAvailableNodeNames(databaseName);
