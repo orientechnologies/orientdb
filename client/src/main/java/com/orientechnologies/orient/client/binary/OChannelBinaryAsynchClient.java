@@ -55,10 +55,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
       OLogManager.instance().logger(OChannelBinaryAsynchClient.class);
   private int socketTimeout; // IN MS
   protected final short srvProtocolVersion;
-  private String serverURL;
-  private byte currentStatus;
-  private int currentSessionId;
-  private byte currentMessage;
+  private final String serverURL;
   private volatile long lastUse;
   private volatile boolean inUse;
 
@@ -177,7 +174,8 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
         releaseReadLock();
         throw new IOException("Channel is closed");
       }
-
+      byte currentStatus;
+      int currentSessionId;
       try {
         setWaitResponseTimeout();
         currentStatus = readByte();
@@ -200,7 +198,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
       if (token) tokenBytes = this.readBytes();
       else tokenBytes = null;
 
-      currentMessage = readByte();
+      byte currentMessage = readByte();
       handleStatus(currentStatus, currentSessionId);
       return tokenBytes;
     } catch (OLockException e) {

@@ -41,8 +41,6 @@ import com.orientechnologies.orient.client.remote.message.OBeginTransactionRespo
 import com.orientechnologies.orient.client.remote.message.OBinaryPushRequest;
 import com.orientechnologies.orient.client.remote.message.OCeilingPhysicalPositionsRequest;
 import com.orientechnologies.orient.client.remote.message.OCeilingPhysicalPositionsResponse;
-import com.orientechnologies.orient.client.remote.message.OCleanOutRecordRequest;
-import com.orientechnologies.orient.client.remote.message.OCleanOutRecordResponse;
 import com.orientechnologies.orient.client.remote.message.OCloseQueryRequest;
 import com.orientechnologies.orient.client.remote.message.OCommit37Response;
 import com.orientechnologies.orient.client.remote.message.OCommit38Request;
@@ -50,10 +48,6 @@ import com.orientechnologies.orient.client.remote.message.OCountRecordsRequest;
 import com.orientechnologies.orient.client.remote.message.OCountRecordsResponse;
 import com.orientechnologies.orient.client.remote.message.OCountRequest;
 import com.orientechnologies.orient.client.remote.message.OCountResponse;
-import com.orientechnologies.orient.client.remote.message.OCreateRecordRequest;
-import com.orientechnologies.orient.client.remote.message.OCreateRecordResponse;
-import com.orientechnologies.orient.client.remote.message.ODeleteRecordRequest;
-import com.orientechnologies.orient.client.remote.message.ODeleteRecordResponse;
 import com.orientechnologies.orient.client.remote.message.ODropClusterRequest;
 import com.orientechnologies.orient.client.remote.message.ODropClusterResponse;
 import com.orientechnologies.orient.client.remote.message.OExperimentalRequest;
@@ -114,8 +108,6 @@ import com.orientechnologies.orient.client.remote.message.OUnlockRecordRequest;
 import com.orientechnologies.orient.client.remote.message.OUnlockRecordResponse;
 import com.orientechnologies.orient.client.remote.message.OUnsubscribeLiveQueryRequest;
 import com.orientechnologies.orient.client.remote.message.OUnsubscribeRequest;
-import com.orientechnologies.orient.client.remote.message.OUpdateRecordRequest;
-import com.orientechnologies.orient.client.remote.message.OUpdateRecordResponse;
 import com.orientechnologies.orient.client.remote.message.push.OStorageConfigurationPayload;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
@@ -152,7 +144,6 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorage.LOCKING_STRATEGY;
 import com.orientechnologies.orient.core.storage.OStorage.STATUS;
 import com.orientechnologies.orient.core.storage.OStorageInfo;
-import com.orientechnologies.orient.core.storage.OStorageOperationResult;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
@@ -184,7 +175,6 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 /** This object is bound to each remote ODatabase instances. */
 public class ORemoteClient implements OStorageInfo {
   private static final OLogger logger = OLogManager.instance().logger(ORemoteClient.class);
-  @Deprecated public static final String PARAM_CONNECTION_STRATEGY = "connectionStrategy";
 
   public static final String DRIVER_NAME = "OrientDB Java";
 
@@ -209,7 +199,7 @@ public class ORemoteClient implements OStorageInfo {
   private final int connectionRetryDelay;
   private OCluster[] clusters = OCommonConst.EMPTY_CLUSTER_ARRAY;
   private int defaultClusterId;
-  public ORemoteConnectionManager connectionManager;
+  public final ORemoteConnectionManager connectionManager;
   private final Set<ORemoteClientSession> sessions =
       Collections.newSetFromMap(new ConcurrentHashMap<ORemoteClientSession, Boolean>());
 
@@ -222,7 +212,7 @@ public class ORemoteClient implements OStorageInfo {
 
   protected volatile OStorageConfiguration configuration;
   protected volatile OCurrentStorageComponentsFactory componentsFactory;
-  protected String name;
+  protected final String name;
 
   protected volatile STATUS status = STATUS.CLOSED;
   public static final String TYPE = "remote";
@@ -310,55 +300,6 @@ public class ORemoteClient implements OStorageInfo {
 
   public String getName() {
     return name;
-  }
-
-  @Deprecated
-  public <T extends OBinaryResponse> T networkOperationNoRetry(
-      ORemoteClientSession session,
-      final OBinaryAsyncRequest<T> request,
-      final ORecordId recordId,
-      final String errorMessage) {
-    return networkOperationRetry(session, request, recordId, errorMessage, 0);
-  }
-
-  @Deprecated
-  public <T extends OBinaryResponse> T networkOperationRetry(
-      ORemoteClientSession baseSession,
-      final OBinaryAsyncRequest<T> request,
-      final ORecordId recordId,
-      final String errorMessage,
-      int retry) {
-    request.setMode((byte) 0);
-    return baseNetworkOperation(
-        baseSession,
-        (network, session) -> {
-          // Send The request
-          try {
-            try {
-              network.beginRequest(request.getCommand(), session);
-              request.write(network, session);
-            } finally {
-              network.endRequest();
-            }
-          } catch (IOException e) {
-            throw new ONotSendRequestException("Cannot send request on this channel");
-          }
-          final T response = request.createResponse();
-          T ret = null;
-          // SYNC
-          try {
-            beginResponse(network, session);
-            response.read(network, session);
-          } finally {
-            endResponse(network);
-          }
-          ret = response;
-          connectionManager.release(network);
-
-          return ret;
-        },
-        errorMessage,
-        retry);
   }
 
   public <T extends OBinaryResponse> T networkOperationRetryTimeout(
@@ -650,7 +591,6 @@ public class ORemoteClient implements OStorageInfo {
 
     } finally {
       stateLock.writeLock().unlock();
-      ;
     }
   }
 
@@ -692,34 +632,6 @@ public class ORemoteClient implements OStorageInfo {
       stateLock.readLock().unlock();
       ;
     }
-  }
-
-  public OStorageOperationResult<OPhysicalPosition> createRecord(
-      ORemoteClientSession session,
-      final ORecordId iRid,
-      final byte[] iContent,
-      final int iRecordVersion,
-      final byte iRecordType) {
-
-    final OSBTreeCollectionManager collectionManager =
-        ODatabaseRecordThreadLocal.instance().get().getSbTreeCollectionManager();
-
-    // The Upper layer require to return this also if it not really received response from the
-    // network
-    final OPhysicalPosition ppos = new OPhysicalPosition(iRecordType);
-    final OCreateRecordRequest request = new OCreateRecordRequest(iContent, iRid, iRecordType);
-    final OCreateRecordResponse response =
-        networkOperationNoRetry(
-            session, request, iRid, "Error on create record in cluster " + iRid.getClusterId());
-    if (response != null) {
-      ppos.clusterPosition = response.getIdentity().getClusterPosition();
-      ppos.recordVersion = response.getVersion();
-      iRid.setClusterId(response.getIdentity().getClusterId());
-      iRid.setClusterPosition(response.getIdentity().getClusterPosition());
-      updateCollectionsFromChanges(collectionManager, response.getChangedIds());
-    }
-
-    return new OStorageOperationResult<OPhysicalPosition>(ppos);
   }
 
   private void updateCollectionsFromChanges(
@@ -785,52 +697,6 @@ public class ORemoteClient implements OStorageInfo {
     OIncrementalBackupResponse response =
         networkOperationNoRetry(session, request, "Error on incremental backup");
     return response.getFileName();
-  }
-
-  public OStorageOperationResult<Integer> updateRecord(
-      ORemoteClientSession session,
-      final ORecordId iRid,
-      final boolean updateContent,
-      final byte[] iContent,
-      final int iVersion,
-      final byte iRecordType) {
-
-    final OSBTreeCollectionManager collectionManager =
-        ODatabaseRecordThreadLocal.instance().get().getSbTreeCollectionManager();
-
-    OUpdateRecordRequest request =
-        new OUpdateRecordRequest(iRid, iContent, iVersion, updateContent, iRecordType);
-    OUpdateRecordResponse response =
-        networkOperationNoRetry(session, request, iRid, "Error on update record " + iRid);
-
-    Integer resVersion = null;
-    if (response != null) {
-      // Returning given version in case of no answer from server
-      resVersion = response.getVersion();
-      updateCollectionsFromChanges(collectionManager, response.getChanges());
-    }
-    return new OStorageOperationResult<Integer>(resVersion);
-  }
-
-  public OStorageOperationResult<Boolean> deleteRecord(
-      ORemoteClientSession session, final ORecordId iRid, final int iVersion) {
-    final ODeleteRecordRequest request = new ODeleteRecordRequest(iRid, iVersion);
-    final ODeleteRecordResponse response =
-        networkOperationNoRetry(session, request, iRid, "Error on delete record " + iRid);
-    Boolean resDelete = null;
-    if (response != null) resDelete = response.getResult();
-    return new OStorageOperationResult<Boolean>(resDelete);
-  }
-
-  public boolean cleanOutRecord(
-      ORemoteClientSession session, final ORecordId recordId, final int recordVersion) {
-
-    final OCleanOutRecordRequest request = new OCleanOutRecordRequest(recordVersion, recordId);
-    final OCleanOutRecordResponse response =
-        networkOperationNoRetry(session, request, recordId, "Error on delete record " + recordId);
-    Boolean result = null;
-    if (response != null) result = response.getResult();
-    return result != null ? result : false;
   }
 
   public OContextConfiguration getClientConfiguration() {
@@ -1651,11 +1517,6 @@ public class ORemoteClient implements OStorageInfo {
       session.serverURLIndex = 0;
     }
     return newUrl;
-  }
-
-  /** Parse the URLs. Multiple URLs must be separated by semicolon (;) */
-  protected void parseServerURLs() {
-    this.name = serverURLs.parseServerUrls(this.url, getClientConfiguration());
   }
 
   /**

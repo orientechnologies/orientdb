@@ -119,7 +119,6 @@ public class ORemoteClientPushThread extends Thread {
   public <T extends OBinaryResponse> T subscribe(
       OBinaryRequest<T> request, ORemoteClientSession session) {
     try {
-      long timeout;
       synchronized (this) {
         this.currentRequest = new OSubscribeRequest(request);
         ((OChannelBinaryAsynchClient) network)
