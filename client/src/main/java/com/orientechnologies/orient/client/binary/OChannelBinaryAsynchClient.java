@@ -196,8 +196,6 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
         setReadResponseTimeout();
       }
 
-      assert (currentSessionId == iRequesterId);
-
       if (debug)
         OLogManager.instance()
             .debug(this, "%s - Session %d handle response", socket.getLocalAddress(), iRequesterId);
@@ -206,6 +204,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
       else tokenBytes = null;
 
       currentMessage = readByte();
+      assert (currentSessionId == iRequesterId);
       handleStatus(currentStatus, currentSessionId);
       return tokenBytes;
     } catch (OLockException e) {
