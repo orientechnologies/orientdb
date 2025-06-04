@@ -1,7 +1,7 @@
 package com.orientechnologies.orient.server;
 
 import com.orientechnologies.orient.client.remote.message.OBinaryPushRequest;
-import java.util.HashSet;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -26,7 +26,7 @@ public class OPushEventType {
   public synchronized void subscribe(String database, OPushInfo protocol) {
     Set<OPushInfo> pushSockets = listeners.get(database);
     if (pushSockets == null) {
-      pushSockets = new HashSet<>();
+      pushSockets = Collections.newSetFromMap(new ConcurrentHashMap<>());
       listeners.put(database, pushSockets);
     }
     pushSockets.add(protocol);
