@@ -20,7 +20,6 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -972,7 +971,7 @@ public class OClassEmbedded extends OClassImpl {
       for (String node : toRemoveNodes) {
         List<String> assigned = getAllocation().getAllocationClusters(node);
         List<String> toMove = assigned.subList(size, assigned.size());
-        getAllocation().removeNodeClusters(node, toMove);
+        removeAllocations(db, node, toMove);
         toReassing.addAll(toMove);
       }
 
@@ -982,7 +981,7 @@ public class OClassEmbedded extends OClassImpl {
         if (assigned.size() > size) {
           List<String> toMove = assigned.subList(size, assigned.size());
           toReassing.addAll(toMove);
-          getAllocation().removeNodeClusters(node, toMove);
+          removeAllocations(db, node, toMove);
         } else if (assigned.size() < size) {
           toReceive.add(node);
         }
@@ -1004,11 +1003,5 @@ public class OClassEmbedded extends OClassImpl {
         }
       }
     }
-  }
-
-  private void assignClusterOwnership(
-      final ODatabaseDocumentInternal iDatabase, final String cluster, final String node) {
-    removeAllocations(iDatabase, Collections.singletonList(cluster));
-    addAllocations(iDatabase, node, Collections.singletonList(cluster));
   }
 }

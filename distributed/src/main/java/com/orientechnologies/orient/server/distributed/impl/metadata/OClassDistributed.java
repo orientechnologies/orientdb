@@ -548,7 +548,7 @@ public class OClassDistributed extends OClassEmbedded {
       ODatabaseDocumentDistributed db, ODistributedServerManager manager) {
     String nodeName = manager.getLocalNodeName();
     List<String> cls;
-    if (getAllocation() != null) {
+    if (getAllocation() != null && getAllocation().getAllocationClusters(nodeName) != null) {
       cls = new ArrayList<>(getAllocation().getAllocationClusters(nodeName));
     } else {
       cls = Collections.emptyList();
