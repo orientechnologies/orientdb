@@ -552,11 +552,11 @@ public class Orient extends OListenerManger<OOrientListener> {
     return shutdownHook != null;
   }
 
-  public Iterator<ODatabaseLifecycleListener> getDbLifecycleListeners() {
+  public synchronized Iterator<ODatabaseLifecycleListener> getDbLifecycleListeners() {
     return new LinkedHashSet<>(dbLifecycleListeners.keySet()).iterator();
   }
 
-  public void addDbLifecycleListener(final ODatabaseLifecycleListener iListener) {
+  public synchronized void addDbLifecycleListener(final ODatabaseLifecycleListener iListener) {
     final Map<ODatabaseLifecycleListener, ODatabaseLifecycleListener.PRIORITY> tmp =
         new LinkedHashMap<ODatabaseLifecycleListener, ODatabaseLifecycleListener.PRIORITY>(
             dbLifecycleListeners);
@@ -574,7 +574,7 @@ public class Orient extends OListenerManger<OOrientListener> {
     }
   }
 
-  public void removeDbLifecycleListener(final ODatabaseLifecycleListener iListener) {
+  public synchronized void removeDbLifecycleListener(final ODatabaseLifecycleListener iListener) {
     dbLifecycleListeners.remove(iListener);
   }
 
