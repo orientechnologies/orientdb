@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.client.remote.db.document;
 
+import com.orientechnologies.orient.client.remote.ORemoteClient;
 import com.orientechnologies.orient.client.remote.OrientDBRemote;
 import com.orientechnologies.orient.client.remote.metadata.schema.OSchemaRemote;
 import com.orientechnologies.orient.client.remote.metadata.security.OSecurityRemote;
@@ -70,6 +71,7 @@ public class OSharedContextRemote extends OSharedContext {
     indexManager.close();
     sequenceLibrary.close();
     loaded = false;
+    getClient().shutdown();
   }
 
   public synchronized void reload(ODatabaseDocumentInternal database) {
@@ -82,5 +84,9 @@ public class OSharedContextRemote extends OSharedContext {
     scheduler.load(database);
     sequenceLibrary.load(database);
     functionLibrary.load(database);
+  }
+
+  public ORemoteClient getClient() {
+    return (ORemoteClient) storage;
   }
 }

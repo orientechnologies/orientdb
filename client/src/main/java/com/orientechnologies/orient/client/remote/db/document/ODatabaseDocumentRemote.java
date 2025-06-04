@@ -44,7 +44,6 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OHookReplacedRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OLiveQueryMonitor;
 import com.orientechnologies.orient.core.db.OLiveQueryResultListener;
-import com.orientechnologies.orient.core.db.OSharedContext;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentAbstract;
@@ -115,17 +114,16 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
   private OrientDBConfig config;
   private ORemoteClient client;
 
-  public ODatabaseDocumentRemote(final ORemoteClient remoteClient, OSharedContext sharedContext) {
+  public ODatabaseDocumentRemote(OSharedContextRemote sharedContext) {
     activateOnCurrentThread();
 
     try {
       status = STATUS.CLOSED;
-
+      this.client = sharedContext.getClient();
       // OVERWRITE THE URL
-      url = remoteClient.getURL();
-      this.client = remoteClient;
+      url = this.client.getURL();
       this.sharedContext = sharedContext;
-      this.componentsFactory = remoteClient.getComponentsFactory();
+      this.componentsFactory = this.client.getComponentsFactory();
 
       unmodifiableHooks = Collections.unmodifiableMap(hooks);
 
@@ -191,7 +189,8 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
   }
 
   public ODatabaseDocumentInternal copy() {
-    ODatabaseDocumentRemote database = new ODatabaseDocumentRemote(client, this.sharedContext);
+    ODatabaseDocumentRemote database =
+        new ODatabaseDocumentRemote((OSharedContextRemote) this.sharedContext);
     database.client = client.copy(this, database);
     database.client.addUser();
     database.status = STATUS.OPEN;

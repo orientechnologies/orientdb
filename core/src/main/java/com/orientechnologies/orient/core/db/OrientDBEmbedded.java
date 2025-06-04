@@ -1083,8 +1083,8 @@ public class OrientDBEmbedded implements OrientDBInternal {
     if (storage != null) {
       OSharedContext ctx = sharedContexts.remove(iDatabaseName);
       dbCount.decrementAndGet();
-      ctx.getViewManager().close();
       if (ctx != null) {
+        ctx.getViewManager().close();
         ctx.close();
       }
       storage.shutdown();

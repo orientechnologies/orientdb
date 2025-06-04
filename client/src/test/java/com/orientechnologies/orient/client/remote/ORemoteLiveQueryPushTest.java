@@ -67,9 +67,8 @@ public class ORemoteLiveQueryPushTest {
             new ORemoteURLs(new String[] {}, new OContextConfiguration()),
             "none",
             null,
-            "",
             connectionManager,
-            null);
+            new OContextConfiguration());
   }
 
   @Test

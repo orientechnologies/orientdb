@@ -118,7 +118,6 @@ import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OLiveQueryMonitor;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -227,22 +226,18 @@ public class ORemoteClient implements OStorageInfo {
       final ORemoteURLs hosts,
       String name,
       OrientDBRemote context,
-      final String iMode,
       ORemoteConnectionManager connectionManager,
-      OrientDBConfig config)
-      throws IOException {
-    this(hosts, name, context, iMode, connectionManager, null, config);
+      OContextConfiguration config) {
+    this(hosts, name, context, connectionManager, null, config);
   }
 
   public ORemoteClient(
       final ORemoteURLs hosts,
       String name,
       OrientDBRemote context,
-      final String iMode,
       ORemoteConnectionManager connectionManager,
       final STATUS status,
-      OrientDBConfig config)
-      throws IOException {
+      OContextConfiguration config) {
 
     this.name = normalizeName(name);
 
@@ -256,11 +251,7 @@ public class ORemoteClient implements OStorageInfo {
 
     configuration = null;
 
-    if (config != null) {
-      clientConfiguration = config.getConfigurations();
-    } else {
-      clientConfiguration = new OContextConfiguration();
-    }
+    clientConfiguration = config;
     connectionRetry =
         clientConfiguration.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_RETRY);
     connectionRetryDelay =
@@ -556,7 +547,7 @@ public class ORemoteClient implements OStorageInfo {
     }
   }
 
-  public void shutdown(final ORemoteClientSession session) {
+  public void shutdown() {
     if (status == STATUS.CLOSED || status == STATUS.CLOSING) return;
 
     // FROM HERE FORWARD COMPLETELY CLOSE THE STORAGE
@@ -570,7 +561,9 @@ public class ORemoteClient implements OStorageInfo {
       if (status == STATUS.CLOSED) return;
 
       status = STATUS.CLOSING;
-      close(session, true);
+      for (ORemoteClientSession session : sessions) {
+        close(session, true);
+      }
     } finally {
       stateLock.writeLock().unlock();
     }
