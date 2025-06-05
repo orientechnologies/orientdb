@@ -1401,9 +1401,11 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
     final HashSet<ORID> recordsBeforeImport = new HashSet<>();
 
     for (final String clusterName : database.getClusterNames()) {
-      final Iterator<ORecord> recordIterator = database.browseCluster(clusterName);
-      while (recordIterator.hasNext()) {
-        recordsBeforeImport.add(recordIterator.next().getIdentity());
+      if (!OSessionMetadata.CLUSTER_INTERNAL_NAME.equals(clusterName)) {
+        final Iterator<ORecord> recordIterator = database.browseCluster(clusterName);
+        while (recordIterator.hasNext()) {
+          recordsBeforeImport.add(recordIterator.next().getIdentity());
+        }
       }
     }
 
