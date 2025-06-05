@@ -5,6 +5,7 @@ import com.orientechnologies.orient.core.db.record.OMultiValueChangeEvent;
 import com.orientechnologies.orient.core.db.record.OMultiValueChangeTimeLine;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationContext;
 
 public class ODocumentSerializerDeltaDistributed extends ODocumentSerializerDelta {
   private static ODocumentSerializerDeltaDistributed INSTANCE =
@@ -14,6 +15,7 @@ public class ODocumentSerializerDeltaDistributed extends ODocumentSerializerDelt
     return INSTANCE;
   }
 
+  @Override
   protected void deserializeDeltaLinkBag(BytesContainer bytes, ORidBag toUpdate) {
     boolean isTree = deserializeByte(bytes) == 1;
     long rootChanges = OVarIntSerializer.readAsLong(bytes);
@@ -51,11 +53,13 @@ public class ODocumentSerializerDeltaDistributed extends ODocumentSerializerDelt
     }
   }
 
-  protected void serializeDeltaLinkBag(BytesContainer bytes, ORidBag value) {
+  @Override
+  protected void serializeDeltaLinkBag(
+      BytesContainer bytes, ORidBag value, OSerializationContext ctx) {
     serializeByte(bytes, value.isEmbedded() ? (byte) 0 : 1);
     OMultiValueChangeTimeLine<OIdentifiable, OIdentifiable> timeline =
         value.getTransactionTimeLine();
-    assert timeline != null : "Cx ollection timeline required for link types serialization";
+    assert timeline != null : "Collection timeline required for link types serialization";
     OVarIntSerializer.write(bytes, timeline.getMultiValueChangeEvents().size());
     for (OMultiValueChangeEvent<OIdentifiable, OIdentifiable> event :
         timeline.getMultiValueChangeEvents()) {
