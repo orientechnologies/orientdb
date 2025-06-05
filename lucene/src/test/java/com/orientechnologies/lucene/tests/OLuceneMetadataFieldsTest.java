@@ -44,7 +44,7 @@ public class OLuceneMetadataFieldsTest extends OLuceneBaseTest {
   @Test
   public void shouldFetchByRid() throws Exception {
 
-    String ridQuery = doubleEscape("#26:4 #26:5");
+    String ridQuery = doubleEscape("#40:4 #40:5");
     OResultSet results =
         db.query("SELECT FROM Song WHERE search_class('RID:(" + ridQuery + ") ')=true ");
 

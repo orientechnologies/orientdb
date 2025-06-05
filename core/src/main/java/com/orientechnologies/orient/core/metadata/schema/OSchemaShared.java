@@ -87,20 +87,6 @@ public abstract class OSchemaShared implements OCloseable {
   private volatile ORID identity;
   protected volatile OImmutableSchema snapshot;
 
-  protected static Set<String> internalClasses = new HashSet<String>();
-
-  static {
-    internalClasses.add("ouser");
-    internalClasses.add("orole");
-    internalClasses.add("osecuritypolicy");
-    internalClasses.add("oidentity");
-    internalClasses.add("ofunction");
-    internalClasses.add("osequence");
-    internalClasses.add("otrigger");
-    internalClasses.add("oschedule");
-    internalClasses.add("orids");
-  }
-
   protected static final class ClusterIdsAreEmptyException extends Exception {}
 
   public OSchemaShared() {}

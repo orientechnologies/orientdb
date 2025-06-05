@@ -17,6 +17,7 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import com.orientechnologies.orient.core.index.OPropertyMapIndexDefinition.INDEX_BY;
 import com.orientechnologies.orient.core.iterator.ORecordIteratorCluster;
+import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -565,7 +566,7 @@ public class OSchemaEmbedded extends OSchemaShared {
 
     int[] clusterIds;
 
-    if (internalClasses.contains(className.toLowerCase(Locale.ENGLISH))) {
+    if (OMetadataInternal.SYSTEM_CLASSES.contains(className.toLowerCase(Locale.ENGLISH))) {
       // INTERNAL CLASS, SET TO 1
       minimumClusters = 1;
     }
