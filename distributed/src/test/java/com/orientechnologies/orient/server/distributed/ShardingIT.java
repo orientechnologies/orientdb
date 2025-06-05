@@ -84,7 +84,7 @@ public class ShardingIT extends AbstractServerClusterTest {
           serverInstance
               .get(0)
               .getServerInstance()
-              .openDatabase(getDatabaseName(), "admin", "admin");
+              .openDatabase(getDatabaseName(), "admin", "adminpwd");
       graph.begin();
 
       try {
@@ -112,7 +112,7 @@ public class ShardingIT extends AbstractServerClusterTest {
             serverInstance
                 .get(i)
                 .getServerInstance()
-                .openDatabase(getDatabaseName(), "admin", "admin");
+                .openDatabase(getDatabaseName(), "admin", "adminpwd");
         try {
 
           vertices[i] = graph.newVertex("Client-Type");
@@ -167,7 +167,7 @@ public class ShardingIT extends AbstractServerClusterTest {
           serverInstance
               .get(0)
               .getServerInstance()
-              .openDatabase(getDatabaseName(), "admin", "admin");
+              .openDatabase(getDatabaseName(), "admin", "adminpwd");
       try {
         for (int i = 0; i < vertices.length; ++i)
           System.out.println("Created vertex " + i + ": " + vertices[i].getRecord());
@@ -181,7 +181,7 @@ public class ShardingIT extends AbstractServerClusterTest {
             serverInstance
                 .get(i)
                 .getServerInstance()
-                .openDatabase(getDatabaseName(), "admin", "admin");
+                .openDatabase(getDatabaseName(), "admin", "adminpwd");
         try {
 
           // CREATE A REGULAR EDGE
@@ -222,7 +222,7 @@ public class ShardingIT extends AbstractServerClusterTest {
             serverInstance
                 .get(server)
                 .getServerInstance()
-                .openDatabase(getDatabaseName(), "admin", "admin");
+                .openDatabase(getDatabaseName(), "admin", "adminpwd");
 
         System.out.println("Query from server " + server + "...");
 
@@ -275,7 +275,7 @@ public class ShardingIT extends AbstractServerClusterTest {
             serverInstance
                 .get(0)
                 .getServerInstance()
-                .openDatabase(getDatabaseName(), "admin", "admin");
+                .openDatabase(getDatabaseName(), "admin", "adminpwd");
         try {
           // MISC QUERIES
           OResultSet result =
@@ -312,7 +312,7 @@ public class ShardingIT extends AbstractServerClusterTest {
             serverInstance
                 .get(server)
                 .getServerInstance()
-                .openDatabase(getDatabaseName(), "admin", "admin");
+                .openDatabase(getDatabaseName(), "admin", "adminpwd");
         try {
 
           OResultSet result = g.command("select from `Client-Type`");
@@ -345,7 +345,7 @@ public class ShardingIT extends AbstractServerClusterTest {
             serverInstance
                 .get(server)
                 .getServerInstance()
-                .openDatabase(getDatabaseName(), "admin", "admin");
+                .openDatabase(getDatabaseName(), "admin", "adminpwd");
         try {
 
           OResultSet result =
@@ -373,7 +373,7 @@ public class ShardingIT extends AbstractServerClusterTest {
             serverInstance
                 .get(server)
                 .getServerInstance()
-                .openDatabase(getDatabaseName(), "admin", "admin");
+                .openDatabase(getDatabaseName(), "admin", "adminpwd");
         try {
 
           OResultSet result =
@@ -406,7 +406,7 @@ public class ShardingIT extends AbstractServerClusterTest {
             serverInstance
                 .get(server)
                 .getServerInstance()
-                .openDatabase(getDatabaseName(), "admin", "admin");
+                .openDatabase(getDatabaseName(), "admin", "adminpwd");
         try {
 
           OResultSet result = g.command("select `name-property`, count(*) from `Client-Type`");
@@ -435,7 +435,7 @@ public class ShardingIT extends AbstractServerClusterTest {
           serverInstance
               .get(0)
               .getServerInstance()
-              .openDatabase(getDatabaseName(), "admin", "admin");
+              .openDatabase(getDatabaseName(), "admin", "adminpwd");
       try {
         OResultSet countResultBeforeDelete = g.command("select from `Client-Type`");
         long totalBeforeDelete = countResultBeforeDelete.stream().count();
@@ -477,7 +477,7 @@ public class ShardingIT extends AbstractServerClusterTest {
           serverInstance
               .get(0)
               .getServerInstance()
-              .openDatabase(getDatabaseName(), "admin", "admin");
+              .openDatabase(getDatabaseName(), "admin", "adminpwd");
       gTx.begin();
       try {
         v1 = gTx.newVertex("Client-Type");
@@ -496,7 +496,7 @@ public class ShardingIT extends AbstractServerClusterTest {
           serverInstance
               .get(0)
               .getServerInstance()
-              .openDatabase(getDatabaseName(), "admin", "admin");
+              .openDatabase(getDatabaseName(), "admin", "adminpwd");
       gTx.begin();
       try {
         // DELETE IN TX
@@ -511,7 +511,7 @@ public class ShardingIT extends AbstractServerClusterTest {
           serverInstance
               .get(0)
               .getServerInstance()
-              .openDatabase(getDatabaseName(), "admin", "admin");
+              .openDatabase(getDatabaseName(), "admin", "adminpwd");
       gTx.begin();
       try {
         OResultSet countResultAfterFullDelete = gTx.command("select from `Client-Type`");
@@ -539,7 +539,7 @@ public class ShardingIT extends AbstractServerClusterTest {
           serverInstance
               .get(server)
               .getServerInstance()
-              .openDatabase(getDatabaseName(), "admin", "admin");
+              .openDatabase(getDatabaseName(), "admin", "adminpwd");
       try {
 
         OResultSet result =

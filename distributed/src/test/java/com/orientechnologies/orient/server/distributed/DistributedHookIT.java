@@ -128,10 +128,10 @@ public class DistributedHookIT extends AbstractServerClusterTest {
       OrientDB orientDB = serverInstance.get(s - 1).getServerInstance().getContext();
       if (!orientDB.exists(getDatabaseName())) {
         orientDB.execute(
-            "create database ? plocal users(admin identified by 'admin' role admin)",
+            "create database ? plocal users(admin identified by 'adminpwd' role admin)",
             getDatabaseName());
       }
-      ODatabaseDocument g = orientDB.open(getDatabaseName(), "admin", "admin");
+      ODatabaseDocument g = orientDB.open(getDatabaseName(), "admin", "adminpwd");
       g.registerHook(new TestHookSourceNode(), ORecordHook.HOOK_POSITION.REGULAR);
 
       try {

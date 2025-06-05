@@ -18,7 +18,7 @@ public class BareBonesServer {
       server
           .getContext()
           .execute(
-              "create database ? plocal users(admin identified by 'admin' role admin)",
+              "create database ? plocal users(admin identified by 'adminpwd' role admin)",
               databaseName);
     }
     try {
@@ -27,7 +27,7 @@ public class BareBonesServer {
       // TODO Auto-generated catch block
       e.printStackTrace();
     }
-    ODatabaseSession graph = server.getContext().open(databaseName, "admin", "admin");
+    ODatabaseSession graph = server.getContext().open(databaseName, "admin", "adminpwd");
 
     OSchema schema = graph.getMetadata().getSchema();
     if (!schema.existsClass("edgetype")) {

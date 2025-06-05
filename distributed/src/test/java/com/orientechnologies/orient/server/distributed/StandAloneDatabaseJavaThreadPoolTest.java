@@ -43,9 +43,9 @@ public final class StandAloneDatabaseJavaThreadPoolTest {
     OrientDB orientDB = getOrientDB();
     if (!orientDB.exists(dbName)) {
       orientDB.execute(
-          "create database ? plocal users(admin identified by 'admin' role admin)", dbName);
+          "create database ? plocal users(admin identified by 'adminpwd' role admin)", dbName);
     }
-    ODatabaseDocument orientGraph = orientDB.open(dbName, "admin", "admin");
+    ODatabaseDocument orientGraph = orientDB.open(dbName, "admin", "adminpwd");
     createVertexType(orientGraph, "Test");
     createVertexType(orientGraph, "Test1");
     orientGraph.close();
@@ -350,7 +350,7 @@ public final class StandAloneDatabaseJavaThreadPoolTest {
       log("Datastore pool created with size : 10, db location: " + getDBURL());
       graphReadFactory =
           new ODatabasePool(
-              getOrientDB(), dbName, "admin", "admin", OrientDBConfig.defaultConfig());
+              getOrientDB(), dbName, "admin", "adminpwd", OrientDBConfig.defaultConfig());
     }
     return graphReadFactory;
   }
@@ -369,7 +369,7 @@ public final class StandAloneDatabaseJavaThreadPoolTest {
         orientDB.execute(
             "create database "
                 + dbName
-                + " plocal users(admin identified by 'admin' role admin,reader identified by"
+                + " plocal users(admin identified by 'adminpwd' role admin,reader identified by"
                 + " 'reader' role reader,writer identified by 'writer' role writer )");
       } else {
         log(dbName + " database already exists");

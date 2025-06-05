@@ -50,7 +50,7 @@ public class DistributedIndexesIT extends AbstractServerClusterTest {
             .get(1)
             .getServerInstance()
             .getContext()
-            .open(getDatabaseName(), "admin", "admin");
+            .open(getDatabaseName(), "admin", "adminpwd");
     try {
       testIndexUsage(db);
       testIndexAcceptsNulls(db);

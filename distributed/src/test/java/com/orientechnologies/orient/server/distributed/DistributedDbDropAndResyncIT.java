@@ -39,7 +39,7 @@ public class DistributedDbDropAndResyncIT extends AbstractServerClusterTxTest {
     for (ServerRun s : serverInstance) {
 
       final ODatabaseDocument db =
-          s.getServerInstance().getContext().open(getDatabaseName(), "admin", "admin");
+          s.getServerInstance().getContext().open(getDatabaseName(), "admin", "adminpwd");
 
       banner("RE-SYNC DATABASE ON SERVER " + s.getServerId());
       db.command("ha sync database").close();

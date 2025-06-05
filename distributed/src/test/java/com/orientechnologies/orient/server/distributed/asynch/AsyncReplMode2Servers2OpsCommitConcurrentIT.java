@@ -28,7 +28,7 @@ public class AsyncReplMode2Servers2OpsCommitConcurrentIT extends BareBoneBase2Se
     // OGlobalConfiguration.LOG_CONSOLE_LEVEL.setValue("FINEST");
     OrientDB orientdb = servers[0].getServer().getContext();
     orientdb.createIfNotExists(getDatabaseName(), ODatabaseType.PLOCAL);
-    ODatabaseDocument graph = orientdb.open(getDatabaseName(), "admin", "admin");
+    ODatabaseDocument graph = orientdb.open(getDatabaseName(), "admin", "adminpwd");
     OVertex vertex1 = graph.newVertex("vertextype");
     vertex1.save();
     graph.commit();
@@ -53,7 +53,7 @@ public class AsyncReplMode2Servers2OpsCommitConcurrentIT extends BareBoneBase2Se
     }
 
     ODatabaseSession graph =
-        servers[0].getServer().getContext().open(getDatabaseName(), "admin", "admin");
+        servers[0].getServer().getContext().open(getDatabaseName(), "admin", "adminpwd");
 
     OVertex vertex1 = ((OElement) graph.getRecord(vertex1Id)).asVertex().get();
 

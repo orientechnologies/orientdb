@@ -33,8 +33,8 @@ public class SimpleViewDistributedIT {
 
     OrientDB remote = setup.createRemote(server0, "root", "test", OrientDBConfig.defaultConfig());
     remote.execute(
-        "create database ? plocal users(admin identified by 'admin' role admin)", databaseName);
-    ODatabaseSession session = remote.open(databaseName, "admin", "admin");
+        "create database ? plocal users(admin identified by 'adminpwd' role admin)", databaseName);
+    ODatabaseSession session = remote.open(databaseName, "admin", "adminpwd");
     session.createClass("test");
     session
         .command(
@@ -47,7 +47,7 @@ public class SimpleViewDistributedIT {
   @Test
   public void testLiveQueryDifferentNode() throws InterruptedException {
     OrientDB remote1 = setup.createRemote(server0, "root", "test", OrientDBConfig.defaultConfig());
-    ODatabaseSession session = remote1.open(databaseName, "admin", "admin");
+    ODatabaseSession session = remote1.open(databaseName, "admin", "adminpwd");
     for (int i = 0; i < 10000; i++) {
       OElement el = session.save(session.newElement("test"));
       el.setProperty("name", "name");

@@ -48,7 +48,7 @@ public class ServerClusterRemoteInsertBalancedIT extends AbstractServerClusterTe
         new ODatabasePool(
             "remote:localhost/" + getDatabaseName(),
             "admin",
-            "admin",
+            "adminpwd",
             OrientDBConfig.builder()
                 .addConfig(OGlobalConfiguration.CLIENT_CONNECTION_STRATEGY, "ROUND_ROBIN_CONNECT")
                 .build());
@@ -84,7 +84,7 @@ public class ServerClusterRemoteInsertBalancedIT extends AbstractServerClusterTe
         new ODatabasePool(
             "remote:localhost/" + getDatabaseName(),
             "admin",
-            "admin",
+            "adminpwd",
             OrientDBConfig.builder()
                 .addConfig(OGlobalConfiguration.CLIENT_CONNECTION_STRATEGY, "ROUND_ROBIN_CONNECT")
                 .build());

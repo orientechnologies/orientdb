@@ -122,7 +122,7 @@ public class HaRemoveServerIT extends AbstractServerClusterTest {
                     server
                         .getServerInstance()
                         .getContext()
-                        .open(getDatabaseName(), "admin", "admin")) {
+                        .open(getDatabaseName(), "admin", "adminpwd")) {
                   db.command(String.format("HA remove server `%s`", offlineNodeName)).close();
                 } catch (Exception e) {
                   e.printStackTrace();

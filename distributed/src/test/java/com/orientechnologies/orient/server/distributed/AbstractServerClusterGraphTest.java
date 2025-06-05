@@ -165,7 +165,7 @@ public abstract class AbstractServerClusterGraphTest extends AbstractServerClust
             serverInstance.get(0).getServerInstance().getContext(),
             getDatabaseName(),
             "admin",
-            "admin",
+            "adminpwd",
             OrientDBConfig.defaultConfig());
     setFactorySettings(dbPool);
     super.executeTest();

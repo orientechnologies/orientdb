@@ -61,7 +61,10 @@ public class ServerClusterQueryIT extends AbstractServerClusterTest {
 
   private void createDatabase() {
     ODatabaseDocument g =
-        serverInstance.get(0).getServerInstance().openDatabase(getDatabaseName(), "admin", "admin");
+        serverInstance
+            .get(0)
+            .getServerInstance()
+            .openDatabase(getDatabaseName(), "admin", "adminpwd");
 
     try {
       g.createVertexClass("V1");
@@ -93,7 +96,7 @@ public class ServerClusterQueryIT extends AbstractServerClusterTest {
           serverInstance
               .get(s)
               .getServerInstance()
-              .openDatabase(getDatabaseName(), "admin", "admin");
+              .openDatabase(getDatabaseName(), "admin", "adminpwd");
 
       try {
         OResultSet it =
@@ -122,7 +125,7 @@ public class ServerClusterQueryIT extends AbstractServerClusterTest {
           serverInstance
               .get(s)
               .getServerInstance()
-              .openDatabase(getDatabaseName(), "admin", "admin");
+              .openDatabase(getDatabaseName(), "admin", "adminpwd");
 
       try {
         OResultSet it = g.command("select sum(amount) as total from v", v2.getIdentity());
@@ -144,7 +147,7 @@ public class ServerClusterQueryIT extends AbstractServerClusterTest {
           serverInstance
               .get(s)
               .getServerInstance()
-              .openDatabase(getDatabaseName(), "admin", "admin");
+              .openDatabase(getDatabaseName(), "admin", "adminpwd");
 
       try {
         OResultSet it = g.command("select amount from v order by amount asc");
@@ -189,7 +192,7 @@ public class ServerClusterQueryIT extends AbstractServerClusterTest {
           serverInstance
               .get(s)
               .getServerInstance()
-              .openDatabase(getDatabaseName(), "admin", "admin");
+              .openDatabase(getDatabaseName(), "admin", "adminpwd");
 
       try {
         OResultSet it =

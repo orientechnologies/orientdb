@@ -21,10 +21,10 @@ public class AsyncIndexIT extends BareBoneBase2ServerTest {
     OrientDB orientDB = servers[0].getServer().getContext();
     if (!orientDB.exists(getDatabaseName())) {
       orientDB.execute(
-          "create database ? plocal users(admin identified by 'admin' role admin)",
+          "create database ? plocal users(admin identified by 'adminpwd' role admin)",
           getDatabaseName());
     }
-    ODatabaseDocument graph = orientDB.open(getDatabaseName(), "admin", "admin");
+    ODatabaseDocument graph = orientDB.open(getDatabaseName(), "admin", "adminpwd");
     try {
       graph.command("create class SMS").close();
       graph.command("create property SMS.type string").close();
@@ -66,7 +66,7 @@ public class AsyncIndexIT extends BareBoneBase2ServerTest {
     // CHECK ON THE OTHER NODE
     OrientDB orientDB2 = servers[1].getServer().getContext();
     orientDB2.createIfNotExists(getDatabaseName(), ODatabaseType.PLOCAL);
-    ODatabaseDocument graph2 = orientDB.open(getDatabaseName(), "admin", "admin");
+    ODatabaseDocument graph2 = orientDB.open(getDatabaseName(), "admin", "adminpwd");
     try {
       try {
         graph2

@@ -58,7 +58,7 @@ public abstract class AbstractServerClusterSequenceTest extends AbstractServerCl
               .get(i)
               .getServerInstance()
               .getContext()
-              .open(getDatabaseName(), "admin", "admin");
+              .open(getDatabaseName(), "admin", "adminpwd");
     }
 
     executeOrderedSequenceTest(dbs, "seq0");

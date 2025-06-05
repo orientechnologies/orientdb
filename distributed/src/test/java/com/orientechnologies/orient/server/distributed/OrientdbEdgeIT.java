@@ -81,7 +81,7 @@ public class OrientdbEdgeIT {
         new OrientDB("remote:localhost", "root", "root", OrientDBConfig.defaultConfig());
     if (!orientDB.exists("test")) {
       orientDB.execute(
-          "create database ? plocal users(admin identified by 'admin' role admin)", "test");
+          "create database ? plocal users(admin identified by 'adminpwd' role admin)", "test");
     }
 
     ODatabaseDocument t = orientDB.open("test", "root", "root");

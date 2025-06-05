@@ -50,7 +50,7 @@ public class DistributedSecurityIT extends AbstractServerClusterTest {
               .get(s)
               .getServerInstance()
               .getContext()
-              .open(getDatabaseName(), "admin", "admin");
+              .open(getDatabaseName(), "admin", "adminpwd");
 
       try {
 

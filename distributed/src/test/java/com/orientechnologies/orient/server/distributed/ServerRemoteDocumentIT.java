@@ -53,7 +53,7 @@ public class ServerRemoteDocumentIT extends AbstractServerClusterTest {
   protected void executeTest() throws Exception {
     String id = String.valueOf(Math.random());
     try (OrientDB orientDB = new OrientDB("remote:localhost", OrientDBConfig.defaultConfig())) {
-      ODatabaseDocument db = orientDB.open(getDatabaseName(), "admin", "admin");
+      ODatabaseDocument db = orientDB.open(getDatabaseName(), "admin", "adminpwd");
 
       db.getMetadata().getSchema().createClass("Client");
       db.getMetadata().getSchema().createClass("Matter");
@@ -74,7 +74,7 @@ public class ServerRemoteDocumentIT extends AbstractServerClusterTest {
         db.close();
       }
 
-      ODatabaseDocument db2 = orientDB.open(getDatabaseName(), "admin", "admin");
+      ODatabaseDocument db2 = orientDB.open(getDatabaseName(), "admin", "adminpwd");
       db2.begin();
       try {
         ODocument matter = null;

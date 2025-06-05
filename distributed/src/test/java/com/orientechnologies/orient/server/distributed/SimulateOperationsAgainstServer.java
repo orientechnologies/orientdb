@@ -42,7 +42,7 @@ public class SimulateOperationsAgainstServer {
       new String[] {"remote:localhost:2424/test", "remote:localhost:2425/test"};
   protected String className = "Customer";
   protected String userName = "admin";
-  protected String userPassword = "admin";
+  protected String userPassword = "adminpwd";
 
   private OrientDB ctx;
 

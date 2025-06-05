@@ -33,8 +33,8 @@ public class SimpleMultiNodeConnectIT {
 
     OrientDB remote = setup.createRemote(server0, "root", "test", OrientDBConfig.defaultConfig());
     remote.execute(
-        "create database ? plocal users(admin identified by 'admin' role admin)", "test");
-    ODatabaseSession session = remote.open("test", "admin", "admin");
+        "create database ? plocal users(admin identified by 'adminpwd' role admin)", "test");
+    ODatabaseSession session = remote.open("test", "admin", "adminpwd");
     session.createClass("test");
     OElement doc = session.newElement("test");
     doc.setProperty("name", "value");
@@ -48,7 +48,7 @@ public class SimpleMultiNodeConnectIT {
     OrientDB remote1 =
         setup.createRemote(
             Arrays.asList(server0, server1), "root", "test", OrientDBConfig.defaultConfig());
-    ODatabaseSession session = remote1.open("test", "admin", "admin");
+    ODatabaseSession session = remote1.open("test", "admin", "adminpwd");
     try (OResultSet result = session.query("select from test")) {
       assertEquals(1, result.stream().count());
     }

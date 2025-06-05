@@ -76,7 +76,7 @@ public class DistributedSchedulerIT extends AbstractServerClusterTest {
             .get(0)
             .getServerInstance()
             .getContext()
-            .open(getDatabaseName(), "admin", "admin");
+            .open(getDatabaseName(), "admin", "adminpwd");
     OFunction func = createFunction(db);
 
     db.getMetadata()
@@ -101,7 +101,7 @@ public class DistributedSchedulerIT extends AbstractServerClusterTest {
 
   public void eventBySQL() throws Exception {
     OrientDB context = serverInstance.get(0).getServerInstance().getContext();
-    final ODatabaseDocument db = context.open(getDatabaseName(), "admin", "admin");
+    final ODatabaseDocument db = context.open(getDatabaseName(), "admin", "adminpwd");
     try {
       OFunction func = createFunction(db);
 

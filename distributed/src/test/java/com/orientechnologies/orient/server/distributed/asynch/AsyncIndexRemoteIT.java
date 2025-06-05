@@ -19,7 +19,7 @@ public class AsyncIndexRemoteIT extends BareBoneBase3ServerTest {
 
   protected void dbClient1(BareBonesServer[] servers) {
     OrientDB orientDB = new OrientDB("remote:localhost:2424", OrientDBConfig.defaultConfig());
-    ODatabaseDocument graph = orientDB.open(getDatabaseName(), "admin", "admin");
+    ODatabaseDocument graph = orientDB.open(getDatabaseName(), "admin", "adminpwd");
     try {
       graph.command("create class SMS").close();
       graph.command("create property SMS.type string").close();
@@ -61,7 +61,7 @@ public class AsyncIndexRemoteIT extends BareBoneBase3ServerTest {
 
     // CHECK ON THE 2ND NODE
     OrientDB orientDB2 = new OrientDB("remote:localhost:2425", OrientDBConfig.defaultConfig());
-    ODatabaseDocument graph2 = orientDB2.open(getDatabaseName(), "admin", "admin");
+    ODatabaseDocument graph2 = orientDB2.open(getDatabaseName(), "admin", "adminpwd");
 
     try {
       try {
@@ -90,7 +90,7 @@ public class AsyncIndexRemoteIT extends BareBoneBase3ServerTest {
 
     // CHECK ON THE 2ND NODE
     OrientDB orientDB3 = new OrientDB("remote:localhost:2425", OrientDBConfig.defaultConfig());
-    ODatabaseDocument graph3 = orientDB3.open(getDatabaseName(), "admin", "admin");
+    ODatabaseDocument graph3 = orientDB3.open(getDatabaseName(), "admin", "adminpwd");
     try {
       try {
         graph3

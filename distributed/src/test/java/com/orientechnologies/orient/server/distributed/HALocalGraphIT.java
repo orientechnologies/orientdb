@@ -460,7 +460,7 @@ public class HALocalGraphIT extends AbstractServerClusterTxTest {
     // ODatabaseDocumentTx(getDatabaseURL(serverInstance.get(0)));
 
     final ODatabaseDocument orientGraph =
-        server.getServerInstance().openDatabase(getDatabaseName(), "admin", "admin");
+        server.getServerInstance().openDatabase(getDatabaseName(), "admin", "adminpwd");
 
     /*
     if (orientGraph.exists()) {

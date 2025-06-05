@@ -53,9 +53,9 @@ public final class DistributedDatabaseCRUDIT {
     OrientDB orientDb = getOrientDB();
     if (!orientDB.exists(dbName)) {
       orientDb.execute(
-          "create database ? plocal users(admin identified by 'admin' role admin)", dbName);
+          "create database ? plocal users(admin identified by 'adminpwd' role admin)", dbName);
     }
-    ODatabaseSession orientGraph = orientDb.open(dbName, "admin", "admin");
+    ODatabaseSession orientGraph = orientDb.open(dbName, "admin", "adminpwd");
     createVertexTypeWithUniqueIndex(orientGraph, "Test", "property1", "property2");
     for (int i = 1; i <= totalClassCount; i++) {
       createVertexType(orientGraph, "Test" + i, "property1", "property2");
@@ -545,7 +545,7 @@ public final class DistributedDatabaseCRUDIT {
         orientDB.execute(
             "create database "
                 + dbName
-                + " plocal users(admin identified by 'admin' role admin,reader identified by"
+                + " plocal users(admin identified by 'adminpwd' role admin,reader identified by"
                 + " 'reader' role reader,writer identified by 'writer' role writer )");
       } else {
         log(dbName + " database already exists");

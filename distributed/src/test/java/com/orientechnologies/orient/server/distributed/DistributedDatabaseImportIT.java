@@ -39,8 +39,9 @@ public class DistributedDatabaseImportIT {
   public void test() throws IOException {
     final OrientDB ctx1 = setup.getServer(server0).getServerInstance().getContext();
     ctx1.execute(
-        "create database ? plocal users(admin identified by 'admin' role admin)", "db-to-export");
-    final ODatabaseSession session = ctx1.open("db-to-export", "admin", "admin");
+        "create database ? plocal users(admin identified by 'adminpwd' role admin)",
+        "db-to-export");
+    final ODatabaseSession session = ctx1.open("db-to-export", "admin", "adminpwd");
     session.createClass("testa");
     final ODatabaseExport export =
         new ODatabaseExport((ODatabaseDocumentInternal) session, exportFileName, iText -> {});
@@ -49,8 +50,8 @@ public class DistributedDatabaseImportIT {
     session.close();
 
     ctx1.execute(
-        "create database ? plocal users(admin identified by 'admin' role admin)", "imported-db");
-    final ODatabaseSession session1 = ctx1.open("imported-db", "admin", "admin");
+        "create database ? plocal users(admin identified by 'adminpwd' role admin)", "imported-db");
+    final ODatabaseSession session1 = ctx1.open("imported-db", "admin", "adminpwd");
     final ODatabaseImport imp =
         new ODatabaseImport((ODatabaseDocumentInternal) session1, exportFileName, iText -> {});
     imp.importDatabase();
@@ -58,7 +59,7 @@ public class DistributedDatabaseImportIT {
     session1.close();
 
     final OrientDB ctx2 = setup.getServer(server1).getServerInstance().getContext();
-    final ODatabaseSession session2 = ctx2.open("imported-db", "admin", "admin");
+    final ODatabaseSession session2 = ctx2.open("imported-db", "admin", "adminpwd");
     assertTrue(session2.getMetadata().getSchema().existsClass("testa"));
     session2.close();
   }

@@ -392,9 +392,9 @@ public final class DistributedConfigReloadIT {
       if (!orientDB.exists(dbName)) {
         log("Database does not exists. New database is created");
         orientDB.execute(
-            "create database ? plocal users(admin identified by 'admin' role admin)", dbName);
+            "create database ? plocal users(admin identified by 'adminpwd' role admin)", dbName);
 
-        ODatabaseDocument orientGraph = orientDB.open(dbName, "admin", "admin");
+        ODatabaseDocument orientGraph = orientDB.open(dbName, "admin", "adminpwd");
         orientGraph.command("ALTER DATABASE custom strictSQL=false").close();
         orientGraph.close();
         isNewDB = true;

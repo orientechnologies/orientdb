@@ -31,7 +31,7 @@ public class HARemoteGraphIT extends HALocalGraphIT {
               "remote:localhost:2424;localhost:2425;localhost:2426/",
               getDatabaseName(),
               "admin",
-              "admin",
+              "adminpwd",
               OrientDBConfig.defaultConfig());
     }
     return graphReadFactory;

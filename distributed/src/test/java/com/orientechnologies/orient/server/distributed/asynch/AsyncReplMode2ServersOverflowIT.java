@@ -37,7 +37,7 @@ public class AsyncReplMode2ServersOverflowIT extends BareBoneBase2ServerTest {
 
     OrientDB orientdb = servers[0].getServer().getContext();
     orientdb.createIfNotExists(getDatabaseName(), ODatabaseType.PLOCAL);
-    ODatabaseDocument graph = orientdb.open(getDatabaseName(), "admin", "admin");
+    ODatabaseDocument graph = orientdb.open(getDatabaseName(), "admin", "adminpwd");
 
     try {
       int i = 0;

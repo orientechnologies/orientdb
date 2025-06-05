@@ -69,7 +69,7 @@ public class DistributedDbDropAndReCreateIT extends AbstractServerClusterTxTest 
       for (int retry = 0; retry < 10; retry++) {
         try {
           orientDB.execute(
-              "create database ? plocal users(admin identified by 'admin' role admin)",
+              "create database ? plocal users(admin identified by 'adminpwd' role admin)",
               getDatabaseName());
           break;
         } catch (ODatabaseException e) {

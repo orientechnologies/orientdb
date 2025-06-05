@@ -49,7 +49,7 @@ public class DistributedSuperNodeIT extends AbstractServerClusterGraphTest {
   @Override
   protected void onAfterExecution() {
     OServer server = serverInstance.get(0).getServerInstance();
-    try (ODatabaseDocument graph = server.openDatabase(getDatabaseName(), "admin", "admin")) {
+    try (ODatabaseDocument graph = server.openDatabase(getDatabaseName(), "admin", "adminpwd")) {
 
       ODocument rootDoc = graph.load(rootVertexId);
       final OVertex root = rootDoc.asVertex().get();

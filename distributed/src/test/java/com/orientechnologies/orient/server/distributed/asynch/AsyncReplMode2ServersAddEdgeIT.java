@@ -29,7 +29,7 @@ public class AsyncReplMode2ServersAddEdgeIT extends BareBoneBase2ServerTest {
     synchronized (LOCK) {
       OrientDB orientdb = servers[0].getServer().getContext();
       orientdb.createIfNotExists(getDatabaseName(), ODatabaseType.PLOCAL);
-      ODatabaseDocument graph = orientdb.open(getDatabaseName(), "admin", "admin");
+      ODatabaseDocument graph = orientdb.open(getDatabaseName(), "admin", "adminpwd");
       if (!graph.getMetadata().getSchema().existsClass("vertextype"))
         graph.createClass("vertextype", "V");
       if (!graph.getMetadata().getSchema().existsClass("edgetype"))
@@ -84,7 +84,7 @@ public class AsyncReplMode2ServersAddEdgeIT extends BareBoneBase2ServerTest {
     synchronized (LOCK) {
       OrientDB orientdb = servers[2].getServer().getContext();
       orientdb.createIfNotExists(getDatabaseName(), ODatabaseType.PLOCAL);
-      ODatabaseDocument graph = orientdb.open(getDatabaseName(), "admin", "admin");
+      ODatabaseDocument graph = orientdb.open(getDatabaseName(), "admin", "adminpwd");
 
       try {
         sleep(500);

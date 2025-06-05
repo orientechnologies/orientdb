@@ -60,7 +60,7 @@ public class DistributedDbDropAndReCreateAnotherIT extends AbstractServerCluster
           .getServerInstance()
           .getContext()
           .execute(
-              "create database ? plocal users(admin identified by 'admin' role admin)",
+              "create database ? plocal users(admin identified by 'adminpwd' role admin)",
               getDatabaseName());
 
       waitForDatabaseIsOnline(0, "europe-0", getDatabaseName(), 15000);
@@ -70,7 +70,7 @@ public class DistributedDbDropAndReCreateAnotherIT extends AbstractServerCluster
       checkSameClusters();
 
       try (ODatabaseDocument graph =
-          server.getServerInstance().openDatabase(getDatabaseName(), "admin", "admin")) {
+          server.getServerInstance().openDatabase(getDatabaseName(), "admin", "adminpwd")) {
         onAfterDatabaseCreation(graph);
       }
 

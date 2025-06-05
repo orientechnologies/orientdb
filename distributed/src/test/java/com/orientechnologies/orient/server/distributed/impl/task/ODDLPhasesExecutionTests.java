@@ -26,7 +26,7 @@ public class ODDLPhasesExecutionTests {
     server.activate();
     OrientDB orientDB = server.getContext();
     orientDB.execute(
-        "create database ? plocal users(admin identified by 'admin' role admin)",
+        "create database ? plocal users(admin identified by 'adminpwd' role admin)",
         ODDLPhasesExecutionTests.class.getSimpleName());
   }
 
@@ -35,7 +35,7 @@ public class ODDLPhasesExecutionTests {
     OrientDB orientDB = server.getContext();
     ODatabaseDocumentDistributed session =
         (ODatabaseDocumentDistributed)
-            orientDB.open(ODDLPhasesExecutionTests.class.getSimpleName(), "admin", "admin");
+            orientDB.open(ODDLPhasesExecutionTests.class.getSimpleName(), "admin", "adminpwd");
     String command = "create cluster bla";
     OTransactionId first = new OTransactionId(Optional.of("node"), 10, 1);
     OTransactionId second = new OTransactionId(Optional.of("node"), 30, 1);

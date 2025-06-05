@@ -37,8 +37,8 @@ public class UniqueCompositeIndexDistributedIT {
     setup.setup();
 
     remote = setup.createRemote(server0, "root", "test", OrientDBConfig.defaultConfig());
-    remote.execute("create database test plocal users(admin identified by 'admin' role admin)");
-    session = remote.open("test", "admin", "admin");
+    remote.execute("create database test plocal users(admin identified by 'adminpwd' role admin)");
+    session = remote.open("test", "admin", "adminpwd");
     OClass clazz = session.createClass("Test");
     clazz.createProperty("test", OType.STRING);
     clazz.createProperty("testa", OType.STRING);

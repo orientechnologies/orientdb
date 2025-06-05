@@ -36,8 +36,8 @@ public class SimpleIndexDistributedIT {
 
     remote = setup.createRemote(server0, "root", "test", OrientDBConfig.defaultConfig());
     remote.execute(
-        "create database ? plocal users(admin identified by 'admin' role admin)", "test");
-    session = remote.open("test", "admin", "admin");
+        "create database ? plocal users(admin identified by 'adminpwd' role admin)", "test");
+    session = remote.open("test", "admin", "adminpwd");
     OClass clazz = session.createClass("Test");
     clazz.createProperty("test", OType.STRING).createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
   }
@@ -54,7 +54,7 @@ public class SimpleIndexDistributedIT {
     }
 
     OrientDB remote1 = setup.createRemote(server1, OrientDBConfig.defaultConfig());
-    ODatabaseSession session1 = remote1.open("test", "admin", "admin");
+    ODatabaseSession session1 = remote1.open("test", "admin", "adminpwd");
     try (OResultSet res1 = session1.query("select from test where test =\"some\"")) {
       assertTrue(res1.hasNext());
     }

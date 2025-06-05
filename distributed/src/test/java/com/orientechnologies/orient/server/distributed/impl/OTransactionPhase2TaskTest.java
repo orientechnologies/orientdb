@@ -40,9 +40,9 @@ public class OTransactionPhase2TaskTest {
     server.activate();
     OrientDB orientDB = server.getContext();
     orientDB.execute(
-        "create database ? plocal users(admin identified by 'admin' role admin)",
+        "create database ? plocal users(admin identified by 'adminpwd' role admin)",
         OTransactionPhase2TaskTest.class.getSimpleName());
-    session = orientDB.open(OTransactionPhase2TaskTest.class.getSimpleName(), "admin", "admin");
+    session = orientDB.open(OTransactionPhase2TaskTest.class.getSimpleName(), "admin", "adminpwd");
     session.createClass("TestClass");
   }
 

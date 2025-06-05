@@ -27,8 +27,8 @@ public class SimpleDDLRestartDistributedIT {
         setup.createRemote(
             SimpleDServerConfig.SERVER0, "root", "test", OrientDBConfig.defaultConfig());
     remote.execute(
-        "create database ? plocal users(admin identified by 'admin' role admin)", "test");
-    session = remote.open("test", "admin", "admin");
+        "create database ? plocal users(admin identified by 'adminpwd' role admin)", "test");
+    session = remote.open("test", "admin", "adminpwd");
   }
 
   @Test
@@ -40,7 +40,7 @@ public class SimpleDDLRestartDistributedIT {
     setup.startServer(SimpleDServerConfig.SERVER2);
     try (OrientDB remoteServer2 =
         setup.createRemote(SimpleDServerConfig.SERVER2, OrientDBConfig.defaultConfig())) {
-      try (ODatabaseSession server2Session = remoteServer2.open("test", "admin", "admin")) {
+      try (ODatabaseSession server2Session = remoteServer2.open("test", "admin", "adminpwd")) {
         try (OResultSet result = server2Session.query("select from one")) {}
         try (OResultSet result = server2Session.query("select from testClass")) {}
       }

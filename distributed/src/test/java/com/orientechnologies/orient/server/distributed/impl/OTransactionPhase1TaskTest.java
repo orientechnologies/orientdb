@@ -39,9 +39,9 @@ public class OTransactionPhase1TaskTest {
     server.activate();
     OrientDB orientDB = server.getContext();
     orientDB.execute(
-        "create database ? plocal users(admin identified by 'admin' role admin)",
+        "create database ? plocal users(admin identified by 'adminpwd' role admin)",
         OTransactionPhase1TaskTest.class.getSimpleName());
-    session = orientDB.open(OTransactionPhase1TaskTest.class.getSimpleName(), "admin", "admin");
+    session = orientDB.open(OTransactionPhase1TaskTest.class.getSimpleName(), "admin", "adminpwd");
     session.createClass("TestClass");
     OClass clazz = session.createClass("TestClassInd");
     clazz.createProperty("one", OType.STRING).createIndex(OClass.INDEX_TYPE.UNIQUE);

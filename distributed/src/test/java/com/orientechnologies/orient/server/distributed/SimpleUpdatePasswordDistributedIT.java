@@ -30,16 +30,16 @@ public class SimpleUpdatePasswordDistributedIT {
         setup.createRemote(
             SimpleDServerConfig.SERVER0, "root", "test", OrientDBConfig.defaultConfig());
     remote.execute(
-        "create database ? plocal users(admin identified by 'admin' role admin)", "test");
-    session = remote.open("test", "admin", "admin");
+        "create database ? plocal users(admin identified by 'adminpwd' role admin)", "test");
+    session = remote.open("test", "admin", "adminpwd");
   }
 
   @Test
   public void test() {
-    session.command("update OUser set password='other' where name='admin'").close();
+    session.command("update OUser set password='other' where name='adminpwd'").close();
     session.close();
     session = remote.open("test", "admin", "other");
-    try (OResultSet result = session.command("select  from OUser  where name='admin'")) {
+    try (OResultSet result = session.command("select  from OUser  where name='adminpwd'")) {
       assertEquals(result.next().getProperty("name"), "admin");
     }
     session.close();

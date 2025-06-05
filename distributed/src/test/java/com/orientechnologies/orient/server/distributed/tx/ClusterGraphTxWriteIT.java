@@ -79,7 +79,7 @@ public class ClusterGraphTxWriteIT {
         setup.createRemote(server0, "root", "test", OrientDBConfig.defaultConfig())) {
       System.out.println("Creating database and schema...");
       remote.execute(
-          "create database ? plocal users(admin identified by 'admin' role admin)", "test");
+          "create database ? plocal users(admin identified by 'adminpwd' role admin)", "test");
       try (ODatabaseSession session = remote.open("test", "root", "test")) {
         /* Create schema */
         OClass personClass = session.createVertexClass("Person");

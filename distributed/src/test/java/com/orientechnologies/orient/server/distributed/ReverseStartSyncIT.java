@@ -30,20 +30,20 @@ public class ReverseStartSyncIT {
 
     OrientDB remote = setup.createRemote(server0, "root", "test", OrientDBConfig.defaultConfig());
     remote.execute(
-        "create database ? plocal users(admin identified by 'admin' role admin)", "test");
+        "create database ? plocal users(admin identified by 'adminpwd' role admin)", "test");
     remote.close();
   }
 
   @Test
   public void reverseStartSync() throws InterruptedException {
     try (OrientDB remote = setup.createRemote(server0, OrientDBConfig.defaultConfig())) {
-      try (ODatabaseSession session = remote.open("test", "admin", "admin")) {
+      try (ODatabaseSession session = remote.open("test", "admin", "adminpwd")) {
         session.createClass("One");
         session.save(session.newElement("One"));
         session.save(session.newElement("One"));
       }
       setup.shutdownServer(server2);
-      try (ODatabaseSession session = remote.open("test", "admin", "admin")) {
+      try (ODatabaseSession session = remote.open("test", "admin", "adminpwd")) {
         session.save(session.newElement("One"));
       }
     }
@@ -57,19 +57,19 @@ public class ReverseStartSyncIT {
     TestSetup.waitForDbOnlineStatus(setup, "test");
     // Test server 0
     try (OrientDB remote = setup.createRemote(server0, OrientDBConfig.defaultConfig())) {
-      try (ODatabaseSession session = remote.open("test", "admin", "admin")) {
+      try (ODatabaseSession session = remote.open("test", "admin", "adminpwd")) {
         assertEquals(session.countClass("One"), 3);
       }
     }
     // Test server 1
     try (OrientDB remote = setup.createRemote(server1, OrientDBConfig.defaultConfig())) {
-      try (ODatabaseSession session = remote.open("test", "admin", "admin")) {
+      try (ODatabaseSession session = remote.open("test", "admin", "adminpwd")) {
         assertEquals(session.countClass("One"), 3);
       }
     }
     // Test server 2
     try (OrientDB remote = setup.createRemote(server2, OrientDBConfig.defaultConfig())) {
-      try (ODatabaseSession session = remote.open("test", "admin", "admin")) {
+      try (ODatabaseSession session = remote.open("test", "admin", "adminpwd")) {
         assertEquals(session.countClass("One"), 3);
       }
     }

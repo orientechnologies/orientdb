@@ -53,13 +53,13 @@ public class ShardingDocsAndEdgesIT extends AbstractServerClusterTest {
             .get(0)
             .getServerInstance()
             .getContext()
-            .open(getDatabaseName(), "admin", "admin");
+            .open(getDatabaseName(), "admin", "adminpwd");
     USA =
         serverInstance
             .get(1)
             .getServerInstance()
             .getContext()
-            .open(getDatabaseName(), "admin", "admin");
+            .open(getDatabaseName(), "admin", "adminpwd");
 
     Set<String> queryResult;
 

@@ -39,8 +39,8 @@ public class RidBagConversionIT {
     OrientDB orientDB =
         new OrientDB("embedded:" + server0Path + "/databases/", OrientDBConfig.defaultConfig());
     orientDB.execute(
-        "create database ? plocal users(admin identified by 'admin' role admin)", "test");
-    ODatabaseSession database = orientDB.open("test", "admin", "admin");
+        "create database ? plocal users(admin identified by 'adminpwd' role admin)", "test");
+    ODatabaseSession database = orientDB.open("test", "admin", "adminpwd");
     database.begin();
     OVertex ver = database.newVertex("V");
     OVertex ver1 = database.newVertex("V");
@@ -65,7 +65,7 @@ public class RidBagConversionIT {
         .waitUntilNodeOnline(server1Instance.getDistributedManager().getLocalNodeName(), "test");
 
     OrientDB embOri = server0Instance.getContext();
-    ODatabaseSession data = embOri.open("test", "admin", "admin");
+    ODatabaseSession data = embOri.open("test", "admin", "adminpwd");
     try (OResultSet query = data.query("select from V")) {
       for (OResult res : query.stream().collect(Collectors.toList())) {
         OElement ele = res.getElement().get();

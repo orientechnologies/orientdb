@@ -145,8 +145,9 @@ public class ServerRun {
   public ODatabaseDocument createDatabase(final String iName) {
     server
         .getContext()
-        .execute("create database ? plocal users(admin identified by 'admin' role admin)", iName);
-    return server.openDatabase(iName, "admin", "admin");
+        .execute(
+            "create database ? plocal users(admin identified by 'adminpwd' role admin)", iName);
+    return server.openDatabase(iName, "admin", "adminpwd");
   }
 
   public void copyDatabase(final String iDatabaseName, final String iDestinationDirectory)

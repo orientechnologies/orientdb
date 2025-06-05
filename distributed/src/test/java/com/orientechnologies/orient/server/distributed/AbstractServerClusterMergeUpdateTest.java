@@ -34,14 +34,14 @@ public abstract class AbstractServerClusterMergeUpdateTest extends AbstractServe
             .get(0)
             .getServerInstance()
             .getContext()
-            .open(getDatabaseName(), "admin", "admin");
+            .open(getDatabaseName(), "admin", "adminpwd");
     try {
       ODatabaseDocument db1 =
           serverInstance
               .get(1)
               .getServerInstance()
               .getContext()
-              .open(getDatabaseName(), "admin", "admin");
+              .open(getDatabaseName(), "admin", "adminpwd");
       try {
         executeTest(db0, db1);
       } finally {

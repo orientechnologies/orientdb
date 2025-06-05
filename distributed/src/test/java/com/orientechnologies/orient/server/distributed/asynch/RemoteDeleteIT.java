@@ -16,7 +16,7 @@ public class RemoteDeleteIT extends BareBoneBase1ClientTest {
   protected void dbClient1(BareBonesServer[] servers) {
     OrientDB orientdb = servers[0].getServer().getContext();
     orientdb.createIfNotExists(getDatabaseName(), ODatabaseType.PLOCAL);
-    ODatabaseDocument graph = orientdb.open(getDatabaseName(), "admin", "admin");
+    ODatabaseDocument graph = orientdb.open(getDatabaseName(), "admin", "adminpwd");
     if (!graph.getMetadata().getSchema().existsClass("vertextype"))
       graph.createClass("vertextype", "V");
     if (!graph.getMetadata().getSchema().existsClass("edgetype"))

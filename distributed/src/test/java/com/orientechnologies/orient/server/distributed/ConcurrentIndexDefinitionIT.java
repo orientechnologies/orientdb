@@ -36,7 +36,7 @@ public class ConcurrentIndexDefinitionIT {
     setup = TestSetupUtil.create(config);
     setup.setup();
     remote = setup.createRemote(server0, "root", "test", OrientDBConfig.defaultConfig());
-    remote.execute("create database test plocal users(admin identified by 'admin' role admin)");
+    remote.execute("create database test plocal users(admin identified by 'adminpwd' role admin)");
   }
 
   @Test
@@ -46,21 +46,21 @@ public class ConcurrentIndexDefinitionIT {
     Future<?> future =
         executor.submit(
             () -> {
-              ODatabaseSession session = remote.open("test", "admin", "admin");
+              ODatabaseSession session = remote.open("test", "admin", "adminpwd");
               OClass clazz = session.createClass("Test");
               clazz.createProperty("test", OType.STRING).createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
             });
     Future<?> future1 =
         executor.submit(
             () -> {
-              ODatabaseSession session = remote.open("test", "admin", "admin");
+              ODatabaseSession session = remote.open("test", "admin", "adminpwd");
               OClass clazz = session.createClass("Test1");
               clazz.createProperty("test1", OType.STRING).createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
             });
     future.get();
     future1.get();
     executor.shutdown();
-    ODatabaseSession session = remote.open("test", "admin", "admin");
+    ODatabaseSession session = remote.open("test", "admin", "adminpwd");
     assertTrue(session.getMetadata().getSchema().existsClass("Test"));
     assertFalse(session.getMetadata().getSchema().getClass("Test").getIndexes().isEmpty());
 
@@ -68,7 +68,7 @@ public class ConcurrentIndexDefinitionIT {
     assertFalse(session.getMetadata().getSchema().getClass("Test1").getIndexes().isEmpty());
 
     OrientDB remote1 = setup.createRemote(server1, "root", "test", OrientDBConfig.defaultConfig());
-    ODatabaseSession session1 = remote1.open("test", "admin", "admin");
+    ODatabaseSession session1 = remote1.open("test", "admin", "adminpwd");
     assertTrue(session1.getMetadata().getSchema().existsClass("Test"));
     assertFalse(session1.getMetadata().getSchema().getClass("Test").getIndexes().isEmpty());
 
@@ -79,7 +79,7 @@ public class ConcurrentIndexDefinitionIT {
 
     OrientDB remote2 = setup.createRemote(server2, "root", "test", OrientDBConfig.defaultConfig());
     // Make sure the created database is propagated
-    ODatabaseSession session2 = remote2.open("test", "admin", "admin");
+    ODatabaseSession session2 = remote2.open("test", "admin", "adminpwd");
     assertTrue(session2.getMetadata().getSchema().existsClass("Test"));
     assertFalse(session2.getMetadata().getSchema().getClass("Test").getIndexes().isEmpty());
 

@@ -32,7 +32,7 @@ public class AsyncReplModeIT extends BareBoneBase2ClientTest {
     synchronized (LOCK) {
       OrientDB context = servers[0].getServer().getContext();
       context.createIfNotExists(getDatabaseName(), ODatabaseType.PLOCAL);
-      ODatabaseDocument graph = context.open(getDatabaseName(), "admin", "admin");
+      ODatabaseDocument graph = context.open(getDatabaseName(), "admin", "adminpwd");
       graph.createVertexClass("vertextype1");
       graph.createVertexClass("vertextype2");
       graph.createVertexClass("vertextype3");
@@ -157,7 +157,7 @@ public class AsyncReplModeIT extends BareBoneBase2ClientTest {
   protected void dbClient2(BareBonesServer[] servers) {
     synchronized (LOCK) {
       OrientDB orientDB = new OrientDB("remote:localhost:2424", OrientDBConfig.defaultConfig());
-      ODatabaseDocument graph = orientDB.open(getDatabaseName(), "admin", "admin");
+      ODatabaseDocument graph = orientDB.open(getDatabaseName(), "admin", "adminpwd");
       graph.begin();
       OElement parentV1 = null;
       OElement parentV2 = null;

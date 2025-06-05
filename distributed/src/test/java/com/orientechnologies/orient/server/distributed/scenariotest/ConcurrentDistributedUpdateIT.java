@@ -41,10 +41,10 @@ public class ConcurrentDistributedUpdateIT extends AbstractScenarioTest {
 
     if (!orientDB.exists(getDatabaseName())) {
       orientDB.execute(
-          "create database ? plocal users(admin identified by 'admin' role admin)",
+          "create database ? plocal users(admin identified by 'adminpwd' role admin)",
           getDatabaseName());
     }
-    ODatabaseDocument orientGraph = orientDB.open(getDatabaseName(), "admin", "admin");
+    ODatabaseDocument orientGraph = orientDB.open(getDatabaseName(), "admin", "adminpwd");
     OClass clazz = orientGraph.getClass("Test");
     if (clazz == null) {
       log("Creating vertex type - " + "Test");
@@ -55,10 +55,10 @@ public class ConcurrentDistributedUpdateIT extends AbstractScenarioTest {
 
     if (!orientDB.exists(getDatabaseName())) {
       orientDB.execute(
-          "create database ? plocal users(admin identified by 'admin' role admin)",
+          "create database ? plocal users(admin identified by 'adminpwd' role admin)",
           getDatabaseName());
     }
-    ODatabaseDocument graph = orientDB.open(getDatabaseName(), "admin", "admin");
+    ODatabaseDocument graph = orientDB.open(getDatabaseName(), "admin", "adminpwd");
     for (int i = 0; i < 2; i++) {
       OVertex vertex = graph.newVertex("Test");
       vertex.setProperty("prop1", "v1-" + i);
@@ -90,12 +90,12 @@ public class ConcurrentDistributedUpdateIT extends AbstractScenarioTest {
                   .getServerInstance()
                   .getContext()
                   .execute(
-                      "create database ? plocal users(admin identified by 'admin' role admin)",
+                      "create database ? plocal users(admin identified by 'adminpwd' role admin)",
                       getDatabaseName());
             }
 
             ODatabaseDocument graph =
-                server.getServerInstance().openDatabase(getDatabaseName(), "admin", "admin");
+                server.getServerInstance().openDatabase(getDatabaseName(), "admin", "adminpwd");
             graph.begin();
 
             String query = "select from Test where prop2='v2-1'";
@@ -133,9 +133,9 @@ public class ConcurrentDistributedUpdateIT extends AbstractScenarioTest {
                               + " for vertex "
                               + vtx1
                               + " \n");
-                      //                    ex.printStackTrace();
+                      // ex.printStackTrace();
                       update = false;
-                      //                    isRunning = false;
+                      // isRunning = false;
                       break;
                     } catch (Exception ex) {
                       log(

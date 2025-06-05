@@ -70,7 +70,7 @@ public class HaSyncClusterIT extends AbstractServerClusterTest {
     String localNodeName =
         firstServer.getServerInstance().getDistributedManager().getLocalNodeName();
     ODatabaseDocument db =
-        firstServer.getServerInstance().getContext().open(getDatabaseName(), "admin", "admin");
+        firstServer.getServerInstance().getContext().open(getDatabaseName(), "admin", "adminpwd");
 
     final OClass person = db.getMetadata().getSchema().getClass("Person");
     person.createProperty("other", OType.INTEGER).createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
@@ -114,7 +114,7 @@ public class HaSyncClusterIT extends AbstractServerClusterTest {
                     server
                         .getServerInstance()
                         .getContext()
-                        .open(getDatabaseName(), "admin", "admin");
+                        .open(getDatabaseName(), "admin", "adminpwd");
                 try {
 
                   ODistributedServerManager manager =

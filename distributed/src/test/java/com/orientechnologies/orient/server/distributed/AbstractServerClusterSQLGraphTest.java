@@ -56,7 +56,7 @@ public abstract class AbstractServerClusterSQLGraphTest extends AbstractServerCl
               serverInstance.get(serverId).getServerInstance().getContext(),
               getDatabaseName(),
               "admin",
-              "admin",
+              "adminpwd",
               OrientDBConfig.defaultConfig());
       String name = Integer.toString(serverId);
 

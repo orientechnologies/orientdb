@@ -121,7 +121,7 @@ public class IncrementalRestartScenarioIT extends AbstractScenarioTest {
 
       List<OResult> result = null;
       OrientDB orientDb = serverInstance.get(0).getServerInstance().getContext();
-      final ODatabaseDocument dbServer1 = orientDb.open(getDatabaseName(), "admin", "admin");
+      final ODatabaseDocument dbServer1 = orientDb.open(getDatabaseName(), "admin", "adminpwd");
 
       try {
 
@@ -248,7 +248,7 @@ public class IncrementalRestartScenarioIT extends AbstractScenarioTest {
 
       List<OResult> result = null;
       OrientDB orientDB = serverInstances.get(0).getServerInstance().getContext();
-      final ODatabaseDocument dbServer1 = orientDB.open(getDatabaseName(), "admin", "admin");
+      final ODatabaseDocument dbServer1 = orientDB.open(getDatabaseName(), "admin", "adminpwd");
 
       try {
 

@@ -40,7 +40,7 @@ public class SimpleConnectionStrategiesIT {
     setup.setup();
     OrientDB remote = setup.createRemote(server0, "root", "test", OrientDBConfig.defaultConfig());
     remote.execute(
-        "create database ? plocal users(admin identified by 'admin' role admin)", databaseName);
+        "create database ? plocal users(admin identified by 'adminpwd' role admin)", databaseName);
     remote.close();
   }
 
@@ -65,12 +65,12 @@ public class SimpleConnectionStrategiesIT {
                 .build());
     Set<String> urls = new HashSet<>();
     ODatabaseSession session =
-        remote1.open(SimpleConnectionStrategiesIT.class.getSimpleName(), "admin", "admin");
+        remote1.open(SimpleConnectionStrategiesIT.class.getSimpleName(), "admin", "adminpwd");
     urls.add(((ODatabaseDocumentRemote) session).getSession().getDebugLastHost());
     session.close();
 
     ODatabaseSession session1 =
-        remote1.open(SimpleConnectionStrategiesIT.class.getSimpleName(), "admin", "admin");
+        remote1.open(SimpleConnectionStrategiesIT.class.getSimpleName(), "admin", "adminpwd");
     urls.add(((ODatabaseDocumentRemote) session1).getSession().getDebugLastHost());
     session1.close();
 
@@ -91,10 +91,10 @@ public class SimpleConnectionStrategiesIT {
                 .addConfig(CLIENT_CONNECTION_STRATEGY, "ROUND_ROBIN_CONNECT")
                 .build());
     Set<String> urls = new HashSet<>();
-    ODatabaseSession session = remote1.open(databaseName, "admin", "admin");
+    ODatabaseSession session = remote1.open(databaseName, "admin", "adminpwd");
     urls.add(((ODatabaseDocumentRemote) session).getSession().getDebugLastHost());
 
-    ODatabaseSession session1 = remote1.open(databaseName, "admin", "admin");
+    ODatabaseSession session1 = remote1.open(databaseName, "admin", "adminpwd");
     urls.add(((ODatabaseDocumentRemote) session1).getSession().getDebugLastHost());
     session1.close();
 
@@ -104,7 +104,7 @@ public class SimpleConnectionStrategiesIT {
 
     Set<String> poolUrls = new HashSet<>();
 
-    try (ODatabasePool pool = new ODatabasePool(remote1, databaseName, "admin", "admin")) {
+    try (ODatabasePool pool = new ODatabasePool(remote1, databaseName, "admin", "adminpwd")) {
 
       ODatabaseSession sessionP = pool.acquire();
       poolUrls.add(((ODatabaseDocumentRemote) sessionP).getSession().getDebugLastHost());
@@ -130,7 +130,7 @@ public class SimpleConnectionStrategiesIT {
                 .addConfig(CLIENT_CONNECTION_STRATEGY, "ROUND_ROBIN_REQUEST")
                 .build());
     Set<String> urls = new HashSet<>();
-    ODatabaseSession session = remote1.open(databaseName, "admin", "admin");
+    ODatabaseSession session = remote1.open(databaseName, "admin", "adminpwd");
     session.query("select count(*) from ORole").close();
     urls.add(((ODatabaseDocumentRemote) session).getSession().getDebugLastHost());
 
@@ -148,7 +148,7 @@ public class SimpleConnectionStrategiesIT {
         setup.createRemote(
             server0,
             OrientDBConfig.builder().addConfig(CLIENT_CONNECTION_FETCH_HOST_LIST, false).build());
-    ODatabaseSession session = remote.open(databaseName, "admin", "admin");
+    ODatabaseSession session = remote.open(databaseName, "admin", "adminpwd");
     assertEquals(
         ((ORemoteClient) ((ODatabaseDocumentRemote) session).getRemoteClient())
             .getServerURLs()
@@ -161,7 +161,7 @@ public class SimpleConnectionStrategiesIT {
         setup.createRemote(
             server0,
             OrientDBConfig.builder().addConfig(CLIENT_CONNECTION_FETCH_HOST_LIST, true).build());
-    ODatabaseSession session1 = remote1.open(databaseName, "admin", "admin");
+    ODatabaseSession session1 = remote1.open(databaseName, "admin", "adminpwd");
     assertTrue(
         ((ORemoteClient) ((ODatabaseDocumentRemote) session1).getRemoteClient())
                 .getServerURLs()
@@ -178,7 +178,7 @@ public class SimpleConnectionStrategiesIT {
             server0,
             OrientDBConfig.builder().addConfig(CLIENT_CONNECTION_FETCH_HOST_LIST, false).build());
 
-    ODatabasePool pool = new ODatabasePool(remote, databaseName, "admin", "admin");
+    ODatabasePool pool = new ODatabasePool(remote, databaseName, "admin", "adminpwd");
     ODatabaseSession session = pool.acquire();
     assertEquals(
         ((ORemoteClient) ((ODatabaseDocumentRemote) session).getRemoteClient())
@@ -193,7 +193,7 @@ public class SimpleConnectionStrategiesIT {
         setup.createRemote(
             server0,
             OrientDBConfig.builder().addConfig(CLIENT_CONNECTION_FETCH_HOST_LIST, true).build());
-    ODatabasePool pool1 = new ODatabasePool(remote1, databaseName, "admin", "admin");
+    ODatabasePool pool1 = new ODatabasePool(remote1, databaseName, "admin", "adminpwd");
     ODatabaseSession session1 = pool1.acquire();
     assertTrue(
         ((ORemoteClient) ((ODatabaseDocumentRemote) session1).getRemoteClient())
@@ -218,7 +218,7 @@ public class SimpleConnectionStrategiesIT {
     Set<String> urls = new HashSet<>();
     for (int i = 0; i < 10; i++) {
       ODatabaseSession session =
-          remote1.open(SimpleConnectionStrategiesIT.class.getSimpleName(), "admin", "admin");
+          remote1.open(SimpleConnectionStrategiesIT.class.getSimpleName(), "admin", "adminpwd");
       urls.add(((ODatabaseDocumentRemote) session).getSession().getDebugLastHost());
       session.close();
     }
@@ -232,7 +232,7 @@ public class SimpleConnectionStrategiesIT {
 
     for (int i = 0; i < 10; i++) {
       ODatabaseSession session2 =
-          remote1.open(SimpleConnectionStrategiesIT.class.getSimpleName(), "admin", "admin");
+          remote1.open(SimpleConnectionStrategiesIT.class.getSimpleName(), "admin", "adminpwd");
       session2.query("select from OUSer").close();
       urls.add(((ODatabaseDocumentRemote) session2).getSession().getDebugLastHost());
       session2.close();

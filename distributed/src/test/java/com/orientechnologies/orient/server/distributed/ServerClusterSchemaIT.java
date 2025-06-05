@@ -51,7 +51,7 @@ public class ServerClusterSchemaIT extends AbstractServerClusterTest {
           serverInstance
               .get(s)
               .getServerInstance()
-              .openDatabase(getDatabaseName(), "admin", "admin");
+              .openDatabase(getDatabaseName(), "admin", "adminpwd");
 
       try {
         System.out.println("Creating vertex class Client" + s + " against server " + g + "...");
@@ -71,7 +71,7 @@ public class ServerClusterSchemaIT extends AbstractServerClusterTest {
           serverInstance
               .get(s)
               .getServerInstance()
-              .openDatabase(getDatabaseName(), "admin", "admin");
+              .openDatabase(getDatabaseName(), "admin", "adminpwd");
 
       try {
         for (int i = 0; i < SERVERS; ++i) {
@@ -90,7 +90,7 @@ public class ServerClusterSchemaIT extends AbstractServerClusterTest {
           serverInstance
               .get(s)
               .getServerInstance()
-              .openDatabase(getDatabaseName(), "admin", "admin");
+              .openDatabase(getDatabaseName(), "admin", "adminpwd");
 
       try {
         for (int i = 0; i < SERVERS; ++i) {
@@ -113,7 +113,7 @@ public class ServerClusterSchemaIT extends AbstractServerClusterTest {
           serverInstance
               .get(s)
               .getServerInstance()
-              .openDatabase(getDatabaseName(), "admin", "admin");
+              .openDatabase(getDatabaseName(), "admin", "adminpwd");
       g.begin();
 
       try {

@@ -121,7 +121,7 @@ public class ShutdownAndRestartNodeScenarioIT extends AbstractScenarioTest {
           new OrientDB(
               "remote:" + serverInstances.get(2).getBinaryProtocolAddress() + "/",
               OrientDBConfig.defaultConfig());
-      final ODatabaseDocument dbServer3 = orientDB.open(getDatabaseName(), "admin", "admin");
+      final ODatabaseDocument dbServer3 = orientDB.open(getDatabaseName(), "admin", "adminpwd");
 
       try {
 
@@ -206,7 +206,7 @@ public class ShutdownAndRestartNodeScenarioIT extends AbstractScenarioTest {
     public Void call() throws Exception {
 
       OrientDB orientDB = serverInstances.get(0).getServerInstance().getContext();
-      final ODatabaseDocument dbServer1 = orientDB.open(getDatabaseName(), "admin", "admin");
+      final ODatabaseDocument dbServer1 = orientDB.open(getDatabaseName(), "admin", "adminpwd");
 
       try {
 
@@ -264,7 +264,7 @@ public class ShutdownAndRestartNodeScenarioIT extends AbstractScenarioTest {
           assertEquals(0, result.stream().count());
         }
         OrientDB orientDB1 = serverInstances.get(1).getServerInstance().getContext();
-        final ODatabaseDocument dbServer2 = orientDB1.open(getDatabaseName(), "admin", "admin");
+        final ODatabaseDocument dbServer2 = orientDB1.open(getDatabaseName(), "admin", "adminpwd");
         dbServer2.activateOnCurrentThread();
         try (OResultSet result = dbServer2.query("select from Person where id='L-001'")) {
           assertEquals(0, result.stream().count());

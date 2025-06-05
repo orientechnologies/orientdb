@@ -203,7 +203,7 @@ public abstract class AbstractServerClusterTest {
           .getServerInstance()
           .getContext()
           .execute(
-              "create database ? plocal users(admin identified by 'admin' role admin)",
+              "create database ? plocal users(admin identified by 'adminpwd' role admin)",
               getDatabaseName());
   }
 
@@ -226,7 +226,7 @@ public abstract class AbstractServerClusterTest {
 
   protected ODatabaseDocumentInternal getDatabase(final ServerRun serverRun) {
     if (serverRun != null) {
-      return serverRun.getServerInstance().openDatabase(getDatabaseName(), "admin", "admin");
+      return serverRun.getServerInstance().openDatabase(getDatabaseName(), "admin", "adminpwd");
     }
 
     return null;
@@ -273,10 +273,10 @@ public abstract class AbstractServerClusterTest {
       if (orientDB.exists(getDatabaseName())) orientDB.drop(getDatabaseName());
 
       orientDB.execute(
-          "create database ? plocal users(admin identified by 'admin' role admin)",
+          "create database ? plocal users(admin identified by 'adminpwd' role admin)",
           getDatabaseName());
 
-      final ODatabaseDocument graph = orientDB.open(getDatabaseName(), "admin", "admin");
+      final ODatabaseDocument graph = orientDB.open(getDatabaseName(), "admin", "adminpwd");
       try {
         onAfterDatabaseCreation(graph);
       } finally {

@@ -37,8 +37,8 @@ public class SimpleIndexFailDistributedIT {
 
     remote = setup.createRemote(server0, "root", "test", OrientDBConfig.defaultConfig());
     remote.execute(
-        "create database ? plocal users(admin identified by 'admin' role admin)", "test");
-    session = remote.open("test", "admin", "admin");
+        "create database ? plocal users(admin identified by 'adminpwd' role admin)", "test");
+    session = remote.open("test", "admin", "adminpwd");
     OClass clazz = session.createClass("Test");
     prop = clazz.createProperty("test", OType.STRING);
   }

@@ -113,11 +113,11 @@ public class MultipleDBAlignmentOnNodesJoiningIT extends AbstractScenarioTest {
 
     if (iCreateDatabase) {
       orientDB.execute(
-          "create database ? plocal users(admin identified by 'admin' role admin)", dbA);
+          "create database ? plocal users(admin identified by 'adminpwd' role admin)", dbA);
       orientDB.execute(
-          "create database ? plocal users(admin identified by 'admin' role admin)", dbB);
-      final ODatabaseDocument graph1 = orientDB.open(dbA, "admin", "admin");
-      final ODatabaseDocument graph2 = orientDB.open(dbB, "admin", "admin");
+          "create database ? plocal users(admin identified by 'adminpwd' role admin)", dbB);
+      final ODatabaseDocument graph1 = orientDB.open(dbA, "admin", "adminpwd");
+      final ODatabaseDocument graph2 = orientDB.open(dbB, "admin", "adminpwd");
       try {
         onAfterDatabaseCreation(graph1);
         onAfterDatabaseCreation(graph2);
@@ -144,8 +144,8 @@ public class MultipleDBAlignmentOnNodesJoiningIT extends AbstractScenarioTest {
             "embedded:" + master.getServerHome() + "/databases/", OrientDBConfig.defaultConfig());
     if (iCreateDatabase) {
       orientDB1.execute(
-          "create database ? plocal users(admin identified by 'admin' role admin)", dbC);
-      final ODatabaseDocument graph1 = orientDB1.open(dbC, "admin", "admin");
+          "create database ? plocal users(admin identified by 'adminpwd' role admin)", dbC);
+      final ODatabaseDocument graph1 = orientDB1.open(dbC, "admin", "adminpwd");
       try {
         onAfterDatabaseCreation(graph1);
       } finally {
@@ -208,7 +208,7 @@ public class MultipleDBAlignmentOnNodesJoiningIT extends AbstractScenarioTest {
     List<ODatabaseDocument> dbs = new LinkedList<ODatabaseDocument>();
     for (ServerRun server : checkConsistencyOnServers) {
       try {
-        dbs.add(server.getServerInstance().openDatabase(databaseName, "admin", "admin"));
+        dbs.add(server.getServerInstance().openDatabase(databaseName, "admin", "adminpwd"));
         checkOnServer +=
             server.getServerInstance().getDistributedManager().getLocalNodeName() + ",";
       } catch (Exception e) {

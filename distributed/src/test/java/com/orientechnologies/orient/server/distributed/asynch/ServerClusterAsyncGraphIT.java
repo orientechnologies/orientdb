@@ -63,7 +63,7 @@ public class ServerClusterAsyncGraphIT extends AbstractServerClusterTest {
     {
       OrientDB orientdb = serverInstance.get(0).getServerInstance().getContext();
       orientdb.createIfNotExists(getDatabaseName(), ODatabaseType.PLOCAL);
-      ODatabaseDocument g = orientdb.open(getDatabaseName(), "admin", "admin");
+      ODatabaseDocument g = orientdb.open(getDatabaseName(), "admin", "adminpwd");
 
       try {
         g.createClass("Post", "V");
@@ -82,7 +82,7 @@ public class ServerClusterAsyncGraphIT extends AbstractServerClusterTest {
     for (int s = 0; s < SERVERS; ++s) {
       OrientDB orientdb = serverInstance.get(s).getServerInstance().getContext();
       orientdb.createIfNotExists(getDatabaseName(), ODatabaseType.PLOCAL);
-      ODatabaseDocument g2 = orientdb.open(getDatabaseName(), "admin", "admin");
+      ODatabaseDocument g2 = orientdb.open(getDatabaseName(), "admin", "adminpwd");
 
       try {
 
@@ -99,7 +99,7 @@ public class ServerClusterAsyncGraphIT extends AbstractServerClusterTest {
     {
       OrientDB orientdb = serverInstance.get(0).getServerInstance().getContext();
       orientdb.createIfNotExists(getDatabaseName(), ODatabaseType.PLOCAL);
-      ODatabaseDocument g = orientdb.open(getDatabaseName(), "admin", "admin");
+      ODatabaseDocument g = orientdb.open(getDatabaseName(), "admin", "adminpwd");
       try {
         g.command("create edge Own from (select from User) to (select from Post)").close();
 
@@ -114,7 +114,7 @@ public class ServerClusterAsyncGraphIT extends AbstractServerClusterTest {
     for (int s = 0; s < SERVERS; ++s) {
       OrientDB orientdb = serverInstance.get(s).getServerInstance().getContext();
       orientdb.createIfNotExists(getDatabaseName(), ODatabaseType.PLOCAL);
-      ODatabaseDocument g2 = orientdb.open(getDatabaseName(), "admin", "admin");
+      ODatabaseDocument g2 = orientdb.open(getDatabaseName(), "admin", "adminpwd");
 
       try {
 

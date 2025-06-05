@@ -75,10 +75,10 @@ public class BasicShardingNoReplicaScenarioIT extends AbstractShardingScenarioTe
       OrientDB orientDB = serverInstance.get(0).getServerInstance().getContext();
       if (!orientDB.exists(getDatabaseName())) {
         orientDB.execute(
-            "create database ? plocal users(admin identified by 'admin' role admin)",
+            "create database ? plocal users(admin identified by 'adminpwd' role admin)",
             getDatabaseName());
       }
-      graphNoTx = (ODatabaseDocumentInternal) orientDB.open(getDatabaseName(), "admin", "admin");
+      graphNoTx = (ODatabaseDocumentInternal) orientDB.open(getDatabaseName(), "admin", "adminpwd");
 
       graphNoTx.command(" create class Client extends V clusters 1");
       OSchema schema = graphNoTx.getMetadata().getSchema();
@@ -133,7 +133,8 @@ public class BasicShardingNoReplicaScenarioIT extends AbstractShardingScenarioTe
       try {
         System.out.print("Checking that records on server3 are not available in the cluster...");
         System.out.print("Checking that records on server3 are not available in the cluster...");
-        graphNoTx = (ODatabaseDocumentInternal) orientDB.open(getDatabaseName(), "admin", "admin");
+        graphNoTx =
+            (ODatabaseDocumentInternal) orientDB.open(getDatabaseName(), "admin", "adminpwd");
 
         graphNoTx.activateOnCurrentThread();
         final String uniqueId = "client_asia-s2-t10-v0";
@@ -175,10 +176,11 @@ public class BasicShardingNoReplicaScenarioIT extends AbstractShardingScenarioTe
         OrientDB orientDB1 = serverInstance.get(2).getServerInstance().getContext();
         if (!orientDB1.exists(getDatabaseName())) {
           orientDB1.execute(
-              "create database ? plocal users(admin identified by 'admin' role admin)",
+              "create database ? plocal users(admin identified by 'adminpwd' role admin)",
               getDatabaseName());
         }
-        graphNoTx = (ODatabaseDocumentInternal) orientDB1.open(getDatabaseName(), "admin", "admin");
+        graphNoTx =
+            (ODatabaseDocumentInternal) orientDB1.open(getDatabaseName(), "admin", "adminpwd");
         graphNoTx.activateOnCurrentThread();
         final String uniqueId = "client_asia-s2-t10-v0";
         OResultSet it = graphNoTx.query("select from Client where name = '" + uniqueId + "'");
