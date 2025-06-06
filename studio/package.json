@@ -101,7 +101,7 @@
     "typescript": "^2.9.2",
     "url-loader": "^0.5.7",
     "webpack": "2.7.0",
-    "webpack-dev-server": "2.11.5"
+    "webpack-dev-server": "5.2.1"
   },
   "engines": {
     "node": ">=0.8.0"
