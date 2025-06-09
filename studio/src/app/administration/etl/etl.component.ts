@@ -1708,7 +1708,7 @@ class EtlComponent implements OnDestroy {
         let reader = new FileReader();
 
         reader.onload = function() {
-          fileDisplayArea.innerText = reader.result;
+          fileDisplayArea.innerText = reader.result.toString();
           context.importReady = true;
           context.oldConfig = reader.result;
         };

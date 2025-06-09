@@ -19,10 +19,10 @@ declare var angular:any
 
 class GraphModelPanelComponent implements OnInit, OnChanges {
 
-  @Input() modellingConfig = this.modellingConfig !== 'undefined' ? this.modellingConfig : 'no config from parent.';
+  @Input() modellingConfig;
   @Output() modellingConfigChange = new EventEmitter();
 
-  @Input() selectedElement = this.selectedElement !== 'undefined' ? this.selectedElement : 'undefined';
+  @Input() selectedElement;
   @Output() onSelectedElement = new EventEmitter();
 
   @Output() onSaveConfigRequest = new EventEmitter();

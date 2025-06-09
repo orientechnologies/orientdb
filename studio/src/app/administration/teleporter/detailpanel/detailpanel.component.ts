@@ -37,9 +37,9 @@ import edge = require("selenium-webdriver/edge");
 
 class DetailPanelComponent implements OnChanges, AfterViewChecked {
 
-  @Input() modellingConfig = this.modellingConfig !== 'undefined' ? this.modellingConfig : 'no config from parent.';
+  @Input() modellingConfig;
   @Output() onElementRenamed = new EventEmitter();
-  @Input() selectedElement = this.selectedElement !== 'undefined' ? this.selectedElement : {name: undefined, properties: undefined};     // needed the second initialization because of renameModal
+  @Input() selectedElement;
   @Output() onSelectedElementRemoved = new EventEmitter();
 
   private propertiesName;
@@ -83,6 +83,7 @@ class DetailPanelComponent implements OnChanges, AfterViewChecked {
 
   constructor() {
     this.edgeName = undefined;
+    this.modellingConfig = undefined;
     this.propertiesName = [];
     this.excludedPropertiesName = [];
     this.selectedPropertiesToInclude = [];
@@ -109,6 +110,10 @@ class DetailPanelComponent implements OnChanges, AfterViewChecked {
     (<any>$('[data-toggle="popover"]')).popover();
   }
 
+  ngOnInit() {
+    this.modellingConfig = this.modellingConfig !== undefined ? this.modellingConfig: {edges: undefined};
+    this.selectedElement = this.selectedElement !== undefined ? this.selectedElement:  {name: undefined, properties: undefined, externalKey: undefined, source: undefined, target: undefined};
+  }
   ngOnChanges(changes) {
 
     if(changes.selectedElement && this.selectedElement) {

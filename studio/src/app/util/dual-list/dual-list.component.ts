@@ -37,17 +37,17 @@ export class DualListComponent implements DoCheck, OnChanges {
   static AVAILABLE_LIST_NAME = 'available';
   static CONFIRMED_LIST_NAME = 'confirmed';
 
-  @Input() key:string = typeof this.key !== 'undefined' ? this.key : '_id';
-  @Input() display:string = typeof this.display !== 'undefined' ? this.display : '_name';
-  @Input() height:string = typeof this.height !== 'undefined' ? this.height : '100px';
-  @Input() sort:boolean = typeof this.sort !== 'undefined' ? this.sort : false;
-  @Input() compare:compareFunction = typeof this.compare !== 'undefined' ? this.compare : undefined;
+  @Input() key:string;
+  @Input() display:string;
+  @Input() height:string;
+  @Input() sort:boolean;
+  @Input() compare:compareFunction;
   @Input() source:Array<any>; // = typeof this.source !== 'undefined' ? this.source : [];
   @Input() destination:Array<any>;
-  @Input() headerLeft:string = typeof this.headerLeft !== 'undefined' ? this.headerLeft : 'Source';
-  @Input() headerRight:string = typeof this.headerRight !== 'undefined' ? this.headerRight : 'Target';
-  @Input() addBtn:string = typeof this.addBtn !== 'undefined' ? this.addBtn : 'Add';
-  @Input() removeBtn:string = typeof this.removeBtn !== 'undefined' ? this.removeBtn : 'Remove';
+  @Input() headerLeft:string;
+  @Input() headerRight:string;
+  @Input() addBtn:string;
+  @Input() removeBtn:string;
   @Output() destinationChange = new EventEmitter();
 
   private available:BasicList;
@@ -60,6 +60,18 @@ export class DualListComponent implements DoCheck, OnChanges {
 
 
   constructor(private differs:IterableDiffers, private cdr:ChangeDetectorRef) {
+  }
+
+  ngOnInit() {
+      this.key = typeof this.key !== 'undefined' ? this.key : '_id';
+      this.display = typeof this.display !== 'undefined' ? this.display : '_name';
+      this.height = typeof this.height !== 'undefined' ? this.height : '100px';
+      this.sort = typeof this.sort !== 'undefined' ? this.sort : false;
+      this.compare = typeof this.compare !== 'undefined' ? this.compare : undefined;
+      this.headerLeft = typeof this.headerLeft !== 'undefined' ? this.headerLeft : 'Source';
+      this.headerRight = typeof this.headerRight !== 'undefined' ? this.headerRight : 'Target';
+      this.addBtn = typeof this.addBtn !== 'undefined' ? this.addBtn : 'Add';
+      this.removeBtn  = typeof this.removeBtn !== 'undefined' ? this.removeBtn : 'Remove';
   }
 
   ngOnChanges(changeRecord: {[key:string]:SimpleChange}) {

@@ -18,7 +18,7 @@ class GraphComponent implements AfterViewInit {
   private orientGraph:OGraph;
   private self = this;
 
-  @Input() modellingConfig = this.modellingConfig !== 'undefined' ? this.modellingConfig : 'no config from parent.';
+  @Input() modellingConfig = 'no config from parent.';
   @Output() modellingConfigChange = new EventEmitter();
 
   @Input() selectedElement;

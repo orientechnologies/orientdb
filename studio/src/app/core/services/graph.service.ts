@@ -8,9 +8,9 @@ import {downgradeInjectable} from '@angular/upgrade/static';
  */
 declare var angular: any;
 let GraphService = Class({
-  constructor: [function () {
+  constructor: function () {
     this.databases = {}
-  }],
+  },
 
   init(db, user){
     if (!this.databases[db]) this.databases[db] = {}
