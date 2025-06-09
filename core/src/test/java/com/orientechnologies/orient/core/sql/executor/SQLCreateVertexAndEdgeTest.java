@@ -111,27 +111,22 @@ public class SQLCreateVertexAndEdgeTest extends BaseMemoryDatabase {
   public void testSqlScriptThatCreatesEdge() {
     long start = System.currentTimeMillis();
 
-    try {
-      String cmd = "begin\n";
-      cmd += "let a = create vertex set script = true\n";
-      cmd += "let b = select from v limit 1\n";
-      cmd += "let e = create edge from $a to $b\n";
-      cmd += "commit retry 100\n";
-      cmd += "return $e";
+    String cmd = "begin;";
+    cmd += "let a = create vertex set script = true;";
+    cmd += "let b = select from v limit 1;";
+    cmd += "let e = create edge from $a to $b;";
+    cmd += "commit retry 100;";
+    cmd += "return $e;";
 
-      OResultSet result = db.query("select from V");
+    OResultSet result = db.query("select from V");
 
-      long before = result.stream().count();
+    long before = result.stream().count();
 
-      db.execute("sql", cmd).close();
+    db.execute("sql", cmd).close();
 
-      result = db.query("select from V");
+    result = db.query("select from V");
 
-      Assert.assertEquals(result.stream().count(), before + 1);
-    } catch (Exception ex) {
-      System.err.println("commit exception! " + ex);
-      ex.printStackTrace(System.err);
-    }
+    Assert.assertEquals(result.stream().count(), before + 1);
 
     System.out.println("done in " + (System.currentTimeMillis() - start) + "ms");
   }
