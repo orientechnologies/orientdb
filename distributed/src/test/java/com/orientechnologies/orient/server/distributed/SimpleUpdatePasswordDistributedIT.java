@@ -36,10 +36,10 @@ public class SimpleUpdatePasswordDistributedIT {
 
   @Test
   public void test() {
-    session.command("update OUser set password='other' where name='adminpwd'").close();
+    session.command("update OUser set password='other' where name='admin'").close();
     session.close();
     session = remote.open("test", "admin", "other");
-    try (OResultSet result = session.command("select  from OUser  where name='adminpwd'")) {
+    try (OResultSet result = session.command("select  from OUser  where name='admin'")) {
       assertEquals(result.next().getProperty("name"), "admin");
     }
     session.close();

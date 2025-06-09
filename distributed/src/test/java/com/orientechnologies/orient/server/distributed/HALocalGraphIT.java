@@ -434,7 +434,7 @@ public class HALocalGraphIT extends AbstractServerClusterTxTest {
               server.getServerInstance().getContext(),
               getDatabaseName(),
               "admin",
-              "admin",
+              "adminpwd",
               OrientDBConfig.defaultConfig());
     }
     return graphReadFactory;
