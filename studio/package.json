@@ -77,7 +77,7 @@
     "@types/hammerjs": "^2.0.45",
     "@types/jasmine": "^2.6.3",
     "@types/jquery": "^3.3.6",
-    "@types/node": "^7.0.46",
+    "@types/node": "^7.10.14",
     "@types/selenium-webdriver": "^2.53.53",
     "@types/source-map": "^0.5.2",
     "@types/uglify-js": "^2.6.29",
