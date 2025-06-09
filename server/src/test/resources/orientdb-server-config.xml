@@ -65,8 +65,6 @@
         <user resources="connect,server.listDatabases" password="guest" name="guest"/>
     </users>
     <properties>
-        <entry name="log.console.level" value="info"/>
-        <entry name="log.file.level" value="fine"/>
         <entry name="server.database.path" value="./target/server_test_database"/>
 
     </properties>

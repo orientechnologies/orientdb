@@ -169,8 +169,6 @@ public class OrientdbEdgeIT {
             + "\n"
             + "        <!-- LOG: enable/Disable logging. Levels are: finer, fine, finest, info,"
             + " warning -->\n"
-            + "        <entry name=\"log.console.level\" value=\"info\"/>\n"
-            + "        <entry name=\"log.file.level\" value=\"info\"/>\n"
             + "    </properties>\n"
             + " <isAfterFirstTime>true</isAfterFirstTime></orient-server>");
 

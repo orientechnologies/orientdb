@@ -65,8 +65,6 @@
         <user resources="connect,server.listDatabases,server.dblist" password="guest" name="guest"/>
     </users>
     <properties>
-        <entry value="info" name="log.console.level"/>
-        <entry value="fine" name="log.file.level"/>
         <entry name="server.database.path" value="target/databases" />
     </properties>
     <isAfterFirstTime>true</isAfterFirstTime>
