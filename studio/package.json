@@ -80,7 +80,7 @@
     "@types/node": "^7.0.46",
     "@types/selenium-webdriver": "^2.53.53",
     "@types/source-map": "^0.5.2",
-    "@types/uglify-js": "^2.6.29",
+    "@types/uglify-js": "^2.6.37",
     "@types/webpack": "^2.2.16",
     "angular2-router-loader": "^0.3.5",
     "angular2-template-loader": "^0.6.2",

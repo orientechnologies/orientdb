@@ -281,7 +281,7 @@
   dependencies:
     "@types/node" "*"
 
-"@types/source-map@*", "@types/source-map@^0.5.2":
+"@types/source-map@^0.5.2":
   version "0.5.2"
   resolved "https://registry.yarnpkg.com/@types/source-map/-/source-map-0.5.2.tgz#973459e744cc7445c85b97f770275b479b138e08"
 
@@ -289,11 +289,12 @@
   version "0.2.3"
   resolved "https://registry.yarnpkg.com/@types/tapable/-/tapable-0.2.3.tgz#0888b0f20cc7e58e1c22a1888b4e963eefaa810a"
 
-"@types/uglify-js@*", "@types/uglify-js@^2.6.29":
-  version "2.6.29"
-  resolved "https://registry.yarnpkg.com/@types/uglify-js/-/uglify-js-2.6.29.tgz#521347f69e20201d218f5991ae66e10878afcf1a"
+"@types/uglify-js@*", "@types/uglify-js@^2.6.37":
+  version "2.6.37"
+  resolved "https://registry.yarnpkg.com/@types/uglify-js/-/uglify-js-2.6.37.tgz#2468eaeb74cb5379a64331be51fc68c411417ed0"
+  integrity sha512-QzzzQSy++oq3szGN4b67A/RlXriQ6Bk3obIgBnwIaPkaHjkWAmazgY72hhaFINor2aZcLYdGGThXPhDhcatJ8g==
   dependencies:
-    "@types/source-map" "*"
+    source-map "^0.6.1"
 
 "@types/webpack@^2.2.16":
   version "2.2.16"
@@ -5052,16 +5053,16 @@ source-map@0.5.6, source-map@0.5.x, source-map@^0.5.0, source-map@^0.5.3, source
   version "0.5.6"
   resolved "https://registry.yarnpkg.com/source-map/-/source-map-0.5.6.tgz#75ce38f52bf0733c5a7f0c118d81334a2bb5f412"
 
+source-map@^0.6.1, source-map@~0.6.1:
+  version "0.6.1"
+  resolved "https://registry.yarnpkg.com/source-map/-/source-map-0.6.1.tgz#74722af32e9614e9c287a8d0bbde48b5e2f1a263"
+  integrity sha512-UjgapumWlbMhkBgzT7Ykc5YXUT46F0iKu8SGXq0bcwP5dz/h0Plj6enJqjz1Zbq2l5WaqYnrVbwWOWMyF3F47g==
+
 source-map@~0.4.1:
   version "0.4.2"
   resolved "https://registry.yarnpkg.com/source-map/-/source-map-0.4.2.tgz#dc9f3114394ab7c1f9782972f3d11820fff06f1f"
   dependencies:
     amdefine ">=0.0.4"
-
-source-map@~0.6.1:
-  version "0.6.1"
-  resolved "https://registry.yarnpkg.com/source-map/-/source-map-0.6.1.tgz#74722af32e9614e9c287a8d0bbde48b5e2f1a263"
-  integrity sha512-UjgapumWlbMhkBgzT7Ykc5YXUT46F0iKu8SGXq0bcwP5dz/h0Plj6enJqjz1Zbq2l5WaqYnrVbwWOWMyF3F47g==
 
 spdx-correct@~1.0.0:
   version "1.0.2"
