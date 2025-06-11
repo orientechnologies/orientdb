@@ -13,7 +13,7 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProt
 public class ORemoteConnectionPool
     implements OResourcePoolListener<String, OChannelBinaryAsynchClient> {
 
-  private OResourcePool<String, OChannelBinaryAsynchClient> pool;
+  private final OResourcePool<String, OChannelBinaryAsynchClient> pool;
 
   public ORemoteConnectionPool(int iMaxResources) {
     pool = new OResourcePool<>(iMaxResources, this);

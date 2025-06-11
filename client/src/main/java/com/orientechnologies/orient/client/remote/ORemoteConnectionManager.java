@@ -156,15 +156,34 @@ public class ORemoteConnectionManager {
     pool.getPool().remove(conn);
 
     try {
+      conn.close();
+    } catch (Exception e) {
+      OLogManager.instance().debug(this, "Cannot close connection", e);
+    }
+
+    try {
       conn.unlock();
     } catch (Exception e) {
       OLogManager.instance().debug(this, "Cannot unlock connection lock", e);
     }
+  }
+
+  public void removeIfPresent(final OChannelBinaryAsynchClient conn) {
+    if (conn == null) return;
+
+    final ORemoteConnectionPool pool = connections.get(conn.getServerURL());
+    if (pool == null) return;
+    pool.getPool().remove(conn);
 
     try {
       conn.close();
     } catch (Exception e) {
       OLogManager.instance().debug(this, "Cannot close connection", e);
+    }
+    try {
+      conn.unlock();
+    } catch (Exception e) {
+      OLogManager.instance().debug(this, "Cannot unlock connection lock", e);
     }
   }
 
