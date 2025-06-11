@@ -52,17 +52,17 @@ public abstract class OChannelBinary extends OChannel
   private int responseTimeout;
   private int networkTimeout;
 
-  public OChannelBinary(final Socket iSocket, final OContextConfiguration iConfig)
+  public OChannelBinary(final Socket socket, final OContextConfiguration config)
       throws IOException {
-    super(iSocket, iConfig);
-    socket.setKeepAlive(true);
+    super(socket, config);
+    this.socket.setKeepAlive(true);
     maxChunkSize =
-        iConfig.getValueAsInteger(OGlobalConfiguration.NETWORK_BINARY_MAX_CONTENT_LENGTH) * 1024;
-    debug = iConfig.getValueAsBoolean(OGlobalConfiguration.NETWORK_BINARY_DEBUG);
-    responseTimeout = iConfig.getValueAsInteger(OGlobalConfiguration.NETWORK_REQUEST_TIMEOUT);
-    networkTimeout = iConfig.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_TIMEOUT);
+        config.getValueAsInteger(OGlobalConfiguration.NETWORK_BINARY_MAX_CONTENT_LENGTH) * 1024;
+    debug = config.getValueAsBoolean(OGlobalConfiguration.NETWORK_BINARY_DEBUG);
+    responseTimeout = config.getValueAsInteger(OGlobalConfiguration.NETWORK_REQUEST_TIMEOUT);
+    networkTimeout = config.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_TIMEOUT);
 
-    if (debug) logger.info("%s - Connected", socket.getRemoteSocketAddress());
+    if (debug) logger.info("%s - Connected", this.socket.getRemoteSocketAddress());
   }
 
   public byte readByte() throws IOException {

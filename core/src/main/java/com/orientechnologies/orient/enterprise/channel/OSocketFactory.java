@@ -48,7 +48,7 @@ public class OSocketFactory {
   private String trustStorePassword = null;
   private String trustStoreType = KeyStore.getDefaultType();
 
-  private OSocketFactory(final OContextConfiguration iConfig) {
+  public OSocketFactory(final OContextConfiguration iConfig) {
     config = iConfig;
 
     useSSL = iConfig.getValueAsBoolean(OGlobalConfiguration.CLIENT_USE_SSL);
@@ -57,10 +57,6 @@ public class OSocketFactory {
     trustStorePath = (String) iConfig.getValue(OGlobalConfiguration.CLIENT_SSL_TRUSTSTORE);
     trustStorePassword =
         (String) iConfig.getValue(OGlobalConfiguration.CLIENT_SSL_TRUSTSTORE_PASSWORD);
-  }
-
-  public static OSocketFactory instance(final OContextConfiguration iConfig) {
-    return new OSocketFactory(iConfig);
   }
 
   private SocketFactory getBackingFactory() {

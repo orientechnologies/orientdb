@@ -24,6 +24,7 @@ import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.message.OShutdownRequest;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
+import com.orientechnologies.orient.enterprise.channel.OSocketFactory;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolException;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
@@ -45,6 +46,7 @@ public class OServerShutdownMain {
   private OContextConfiguration contextConfig;
   private String rootUser;
   private String rootPassword;
+  private OSocketFactory socketFactory;
 
   public OServerShutdownMain(
       final String iServerAddress,
@@ -58,6 +60,7 @@ public class OServerShutdownMain {
 
     networkAddress = iServerAddress;
     networkPort = OServerNetworkListener.getPorts(iServerPorts);
+    socketFactory = new OSocketFactory(contextConfig);
   }
 
   public void connect(final int iTimeout) throws IOException {
@@ -69,6 +72,7 @@ public class OServerShutdownMain {
                 networkAddress,
                 port,
                 contextConfig,
+                socketFactory,
                 OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION);
         break;
       } catch (Exception e) {

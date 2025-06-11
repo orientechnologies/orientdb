@@ -54,13 +54,14 @@ public class ORemoteConnectionManager {
   protected final long timeout;
   protected final long idleTimeout;
   private final TimerTask idleTask;
+  private final OContextConfiguration conf;
 
-  public ORemoteConnectionManager(final OContextConfiguration clientConfiguration, Timer timer) {
+  public ORemoteConnectionManager(final OContextConfiguration conf, Timer timer) {
     connections = new ConcurrentHashMap<String, ORemoteConnectionPool>();
-    timeout = clientConfiguration.getValueAsLong(NETWORK_LOCK_TIMEOUT);
-    int idleSecs = clientConfiguration.getValueAsInteger(CLIENT_CHANNEL_IDLE_TIMEOUT);
+    timeout = conf.getValueAsLong(NETWORK_LOCK_TIMEOUT);
+    int idleSecs = conf.getValueAsInteger(CLIENT_CHANNEL_IDLE_TIMEOUT);
     this.idleTimeout = TimeUnit.MILLISECONDS.convert(idleSecs, TimeUnit.SECONDS);
-    if (clientConfiguration.getValueAsBoolean(CLIENT_CHANNEL_IDLE_CLOSE)) {
+    if (conf.getValueAsBoolean(CLIENT_CHANNEL_IDLE_CLOSE)) {
       idleTask =
           new TimerTask() {
             @Override
@@ -73,6 +74,7 @@ public class ORemoteConnectionManager {
     } else {
       idleTask = null;
     }
+    this.conf = conf;
   }
 
   public void close() {
@@ -87,11 +89,11 @@ public class ORemoteConnectionManager {
   }
 
   public OChannelBinaryAsynchClient acquire(
-      String iServerURL, final OContextConfiguration clientConfiguration) {
+      String url, final OContextConfiguration clientConfiguration) {
 
     long localTimeout = timeout;
 
-    ORemoteConnectionPool pool = connections.get(iServerURL);
+    ORemoteConnectionPool pool = connections.get(url);
     if (pool == null) {
       int maxPool = 8;
 
@@ -103,9 +105,11 @@ public class ORemoteConnectionManager {
         final Object netLockTimeout = clientConfiguration.getValue(NETWORK_LOCK_TIMEOUT);
         if (netLockTimeout != null) localTimeout = Integer.parseInt(netLockTimeout.toString());
       }
-
-      pool = new ORemoteConnectionPool(maxPool);
-      final ORemoteConnectionPool prev = connections.putIfAbsent(iServerURL, pool);
+      int sepPos = url.indexOf(":");
+      String host = url.substring(0, sepPos);
+      int port = Integer.parseInt(url.substring(sepPos + 1));
+      pool = new ORemoteConnectionPool(maxPool, host, port, this.conf);
+      final ORemoteConnectionPool prev = connections.putIfAbsent(url, pool);
       if (prev != null) {
         // ALREADY PRESENT, DESTROY IT AND GET THE ALREADY EXISTENT OBJ
         pool.getPool().close();
@@ -115,7 +119,7 @@ public class ORemoteConnectionManager {
 
     try {
       // RETURN THE RESOURCE
-      OChannelBinaryAsynchClient ret = pool.acquire(iServerURL, localTimeout, clientConfiguration);
+      OChannelBinaryAsynchClient ret = pool.acquire(url, localTimeout, clientConfiguration);
       ret.markInUse();
       return ret;
 
@@ -124,7 +128,7 @@ public class ORemoteConnectionManager {
       throw e;
     } catch (Exception e) {
       // ERROR ON RETRIEVING THE INSTANCE FROM THE POOL
-      logger.debug("Error on retrieving the connection from pool: %s", e, iServerURL);
+      logger.debug("Error on retrieving the connection from pool: %s", e, url);
     }
     return null;
   }

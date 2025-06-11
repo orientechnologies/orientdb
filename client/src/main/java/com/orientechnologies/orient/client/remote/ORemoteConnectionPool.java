@@ -8,6 +8,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
+import com.orientechnologies.orient.enterprise.channel.OSocketFactory;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 
 /** Created by tglman on 01/10/15. */
@@ -16,28 +17,34 @@ public class ORemoteConnectionPool
   private static final OLogger logger = OLogManager.instance().logger(ORemoteConnectionPool.class);
 
   private final OResourcePool<String, OChannelBinaryAsynchClient> pool;
+  private final String host;
+  private final int port;
+  private final OSocketFactory socketFactory;
+  private final OContextConfiguration conf;
 
-  public ORemoteConnectionPool(int iMaxResources) {
-    pool = new OResourcePool<>(iMaxResources, this);
+  public ORemoteConnectionPool(
+      int iMaxResources, String host, int port, OContextConfiguration conf) {
+    this.pool = new OResourcePool<>(iMaxResources, this);
+    this.host = host;
+    this.port = port;
+    this.conf = conf;
+    this.socketFactory = new OSocketFactory(conf);
   }
 
   protected OChannelBinaryAsynchClient createNetworkConnection(
-      String serverURL, final OContextConfiguration clientConfiguration) throws OIOException {
+      String serverURL, final OContextConfiguration conf) throws OIOException {
     if (serverURL == null) throw new IllegalArgumentException("server url is null");
 
     // TRY WITH CURRENT URL IF ANY
     try {
       logger.debug("Trying to connect to the remote host %s...", serverURL);
 
-      int sepPos = serverURL.indexOf(":");
-      final String remoteHost = serverURL.substring(0, sepPos);
-      final int remotePort = Integer.parseInt(serverURL.substring(sepPos + 1));
-
       final OChannelBinaryAsynchClient ch =
           new OChannelBinaryAsynchClient(
-              remoteHost,
-              remotePort,
-              clientConfiguration,
+              host,
+              port,
+              this.conf,
+              socketFactory,
               OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION);
 
       return ch;

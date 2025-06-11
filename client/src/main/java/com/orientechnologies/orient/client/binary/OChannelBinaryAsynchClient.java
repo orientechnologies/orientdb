@@ -60,16 +60,17 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
   private volatile boolean inUse;
 
   public OChannelBinaryAsynchClient(
-      final String remoteHost,
-      final int remotePort,
-      final OContextConfiguration iConfig,
-      final int iProtocolVersion)
+      String remoteHost,
+      int remotePort,
+      OContextConfiguration config,
+      OSocketFactory factory,
+      int iProtocolVersion)
       throws IOException {
-    super(OSocketFactory.instance(iConfig).createSocket(), iConfig);
+    super(factory.createSocket(), config);
     try {
 
       serverURL = remoteHost + ":" + remotePort;
-      socketTimeout = iConfig.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_TIMEOUT);
+      socketTimeout = config.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_TIMEOUT);
 
       try {
         socket.connect(new InetSocketAddress(remoteHost, remotePort), getSocketTimeout());

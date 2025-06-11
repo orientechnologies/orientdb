@@ -20,18 +20,20 @@
 package com.orientechnologies.orient.client.binary;
 
 import com.orientechnologies.orient.core.config.OContextConfiguration;
+import com.orientechnologies.orient.enterprise.channel.OSocketFactory;
 import java.io.IOException;
 
 /** Synchronous implementation of binary channel. */
 public class OChannelBinarySynchClient extends OChannelBinaryClientAbstract {
   public OChannelBinarySynchClient(
+      final OSocketFactory factory,
       final String remoteHost,
       final int remotePort,
       final String iDatabaseName,
       final OContextConfiguration iConfig,
       final int protocolVersion)
       throws IOException {
-    super(remoteHost, remotePort, iDatabaseName, iConfig, protocolVersion);
+    super(factory, remoteHost, remotePort, iDatabaseName, iConfig, protocolVersion);
   }
 
   public void beginRequest(final byte iCommand, final int sessionId, final byte[] token)

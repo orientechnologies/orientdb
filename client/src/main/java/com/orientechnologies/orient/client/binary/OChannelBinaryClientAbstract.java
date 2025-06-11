@@ -59,13 +59,14 @@ public abstract class OChannelBinaryClientAbstract extends OChannelBinary {
   protected int currentSessionId;
 
   public OChannelBinaryClientAbstract(
+      OSocketFactory factory,
       final String remoteHost,
       final int remotePort,
       final String iDatabaseName,
       final OContextConfiguration iConfig,
       final int protocolVersion)
       throws IOException {
-    super(OSocketFactory.instance(iConfig).createSocket(), iConfig);
+    super(factory.createSocket(), iConfig);
     try {
 
       serverURL = remoteHost + ":" + remotePort;

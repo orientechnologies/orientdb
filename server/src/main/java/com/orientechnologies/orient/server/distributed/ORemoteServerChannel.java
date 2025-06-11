@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.metadata.security.binary.OBinaryTokenSerializer;
+import com.orientechnologies.orient.enterprise.channel.OSocketFactory;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -72,6 +73,7 @@ public class ORemoteServerChannel {
   private volatile int totalConsecutiveErrors = 0;
   private static final int MAX_CONSECUTIVE_ERRORS = 10;
   private final ExecutorService executor;
+  private final OSocketFactory factory;
 
   public ORemoteServerChannel(
       final ORemoteServerAvailabilityCheck check,
@@ -109,7 +111,7 @@ public class ORemoteServerChannel {
         };
 
     executor = OThreadPoolExecutors.newSingleThreadPool("ORemoteServerChannel", 10, reject);
-
+    factory = new OSocketFactory(contextConfig);
     connect();
   }
 
@@ -212,6 +214,7 @@ public class ORemoteServerChannel {
     networkClose();
     channel =
         new OChannelBinarySynchClient(
+            factory,
             remoteHost,
             remotePort,
             null,
