@@ -1867,10 +1867,7 @@ public class ORemoteClient implements OStorageInfo {
   }
 
   public void onPushDisconnect(OChannelBinary network, Exception e) {
-    if (this.connectionManager.getPool(((OChannelBinaryAsynchClient) network).getServerURL())
-        != null) {
-      this.connectionManager.remove((OChannelBinaryAsynchClient) network);
-    }
+    this.connectionManager.removeIfPresent((OChannelBinaryAsynchClient) network);
     if (e instanceof InterruptedException) {
       for (OLiveQueryClientListener liveListener : liveQueryListener.values()) {
         liveListener.onEnd();
