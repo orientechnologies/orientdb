@@ -25,7 +25,7 @@ public class ORemoteClientPushThread extends Thread {
   private final String host;
   private final int retryDelay;
   private final long requestTimeout;
-  private OChannelBinary network;
+  private volatile OChannelBinary network;
   private final BlockingQueue<Object> blockingQueue = new SynchronousQueue<>();
   private volatile OBinaryRequest currentRequest;
   private volatile boolean shutDown;
@@ -88,27 +88,31 @@ public class ORemoteClientPushThread extends Thread {
         }
       } catch (IOException | OException e) {
         pushHandler.onPushDisconnect(this.network, e);
-        while (!currentThread().isInterrupted()) {
+        while (!isInterrupted()) {
           try {
             Thread.sleep(retryDelay);
           } catch (InterruptedException x) {
-            currentThread().interrupt();
+            interrupt();
           }
-          if (!currentThread().isInterrupted()) {
+          if (!isInterrupted()) {
             try {
               synchronized (this) {
-                network = pushHandler.getNetwork(this.host);
+                this.network = null;
+                this.network = pushHandler.getNetwork(this.host);
               }
               pushHandler.onPushReconnect(this.host);
               break;
             } catch (OIOException ex) {
+              if (this.network != null) {
+                pushHandler.onPushDisconnect(this.network, ex);
+              }
               // Noting it just retry
             }
           }
         }
       } catch (InterruptedException e) {
         pushHandler.onPushDisconnect(this.network, e);
-        currentThread().interrupt();
+        interrupt();
       } catch (Throwable e) {
         logger.warn("Push thread error ", e);
         throw e;
