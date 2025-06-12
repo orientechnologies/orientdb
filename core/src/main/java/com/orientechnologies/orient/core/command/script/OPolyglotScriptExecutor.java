@@ -8,6 +8,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.script.transformer.OScriptTransformer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.OrientDBEmbedded;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.metadata.security.ORole;
@@ -34,10 +35,13 @@ public class OPolyglotScriptExecutor extends OAbstractScriptExecutor
   protected ConcurrentHashMap<String, OResourcePool<ODatabaseDocumentInternal, Context>>
       contextPools =
           new ConcurrentHashMap<String, OResourcePool<ODatabaseDocumentInternal, Context>>();
+  private final OrientDBEmbedded context;
 
-  public OPolyglotScriptExecutor(final String language, OScriptTransformer scriptTransformer) {
+  public OPolyglotScriptExecutor(
+      OrientDBEmbedded context, final String language, OScriptTransformer scriptTransformer) {
     super("javascript".equalsIgnoreCase(language) ? "js" : language);
     this.transformer = scriptTransformer;
+    this.context = context;
   }
 
   private Context resolveContext(ODatabaseDocumentInternal database) {
@@ -60,9 +64,8 @@ public class OPolyglotScriptExecutor extends OAbstractScriptExecutor
   }
 
   @Override
-  public Context createNewResource(ODatabaseDocumentInternal database, Object... iAdditionalArgs) {
-    final OScriptManager scriptManager =
-        database.getSharedContext().getOrientDB().getScriptManager();
+  public Context createNewResource(ODatabaseDocumentInternal database) {
+    final OScriptManager scriptManager = context.getScriptManager();
 
     final Set<String> allowedPackaged = scriptManager.getAllowedPackages();
 
@@ -99,8 +102,7 @@ public class OPolyglotScriptExecutor extends OAbstractScriptExecutor
   }
 
   @Override
-  public boolean reuseResource(
-      ODatabaseDocumentInternal iKey, Object[] iAdditionalArgs, Context iValue) {
+  public boolean reuseResource(ODatabaseDocumentInternal iKey, Context iValue) {
     return true;
   }
 

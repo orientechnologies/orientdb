@@ -51,14 +51,12 @@ public class ODatabasePoolImpl implements ODatabasePoolInternal {
             max,
             new OResourcePoolListener<Void, ODatabaseDocumentInternal>() {
               @Override
-              public ODatabaseDocumentInternal createNewResource(
-                  Void iKey, Object... iAdditionalArgs) {
+              public ODatabaseDocumentInternal createNewResource(Void iKey) {
                 return factory.poolOpen(database, user, password, ODatabasePoolImpl.this);
               }
 
               @Override
-              public boolean reuseResource(
-                  Void iKey, Object[] iAdditionalArgs, ODatabaseDocumentInternal iValue) {
+              public boolean reuseResource(Void iKey, ODatabaseDocumentInternal iValue) {
                 if (iValue.isReusable()) {
                   return false;
                 }

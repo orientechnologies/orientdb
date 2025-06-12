@@ -38,6 +38,7 @@ import com.orientechnologies.orient.core.command.script.transformer.OScriptTrans
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.OrientDBEmbedded;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
@@ -81,7 +82,7 @@ public class OScriptManager {
       new HashMap<String, OScriptResultHandler>();
   protected OCommandManager commandManager = new OCommandManager();
 
-  public OScriptManager() {
+  public OScriptManager(OrientDBEmbedded context) {
     scriptEngineManager = new ScriptEngineManager();
     final boolean useGraal = OGlobalConfiguration.SCRIPT_POLYGLOT_USE_GRAAL.getValueAsBoolean();
 
@@ -119,13 +120,13 @@ public class OScriptManager {
         "javascript",
         (lang) ->
             useGraal
-                ? new OPolyglotScriptExecutor(lang, new OScriptTransformerImpl())
+                ? new OPolyglotScriptExecutor(context, lang, new OScriptTransformerImpl())
                 : new OJsr223ScriptExecutor(lang, new OScriptTransformerImpl()));
     executorsFactories.put(
         "ecmascript",
         (lang) ->
             useGraal
-                ? new OPolyglotScriptExecutor(lang, new OScriptTransformerImpl())
+                ? new OPolyglotScriptExecutor(context, lang, new OScriptTransformerImpl())
                 : new OJsr223ScriptExecutor(lang, new OScriptTransformerImpl()));
     for (String lang : engines.keySet()) {
       Function<String, OScriptExecutor> factory = executorsFactories.get(lang);

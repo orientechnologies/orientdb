@@ -108,7 +108,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
   private final ExecutorService ioExecutor;
   private final Timer timer;
   private TimerTask autoCloseTimer = null;
-  private final OScriptManager scriptManager = new OScriptManager();
+  private final OScriptManager scriptManager;
   private final OSystemDatabase systemDatabase;
   private final ODefaultSecuritySystem securitySystem;
   private final OCommandTimeoutChecker timeoutChecker;
@@ -183,6 +183,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
     systemDatabase = new OSystemDatabase(this);
     securitySystem = new ODefaultSecuritySystem();
     securitySystem.activate(this, this.configurations.getSecurityConfig());
+    this.scriptManager = new OScriptManager(this);
   }
 
   private void initAutoClose() {

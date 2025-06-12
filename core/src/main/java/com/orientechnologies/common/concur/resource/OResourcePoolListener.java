@@ -31,7 +31,7 @@ public interface OResourcePoolListener<K, V> {
    *
    * @return The new resource
    */
-  V createNewResource(K iKey, Object... iAdditionalArgs);
+  V createNewResource(K iKey);
 
   /**
    * Reuses the pooled resource.
@@ -39,5 +39,5 @@ public interface OResourcePoolListener<K, V> {
    * @return true if can be reused, otherwise false. In this case the resource will be removed from
    *     the pool
    */
-  boolean reuseResource(K iKey, Object[] iAdditionalArgs, V iValue);
+  boolean reuseResource(K iKey, V iValue);
 }

@@ -65,7 +65,7 @@ public class OResourcePool<K, V> {
     sem = new Semaphore(maxResources, true);
     unmodifiableresources = Collections.unmodifiableCollection(resources);
     for (int i = 0; i < min; i++) {
-      V res = listener.createNewResource(null, null);
+      V res = listener.createNewResource(null);
       created.incrementAndGet();
       resources.add(res);
     }
@@ -94,7 +94,7 @@ public class OResourcePool<K, V> {
       res = resources.poll();
       if (res != null) {
         // TRY TO REUSE IT
-        if (listener.reuseResource(key, additionalArgs, res)) {
+        if (listener.reuseResource(key, res)) {
           // OK: REUSE IT
           break;
         } else res = null;
@@ -106,7 +106,7 @@ public class OResourcePool<K, V> {
     // NO AVAILABLE RESOURCES: CREATE A NEW ONE
     try {
       if (res == null) {
-        res = listener.createNewResource(key, additionalArgs);
+        res = listener.createNewResource(key);
         created.incrementAndGet();
         if (logger.isDebugEnabled())
           logger.debug(

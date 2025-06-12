@@ -31,13 +31,10 @@ public class ORemoteConnectionPool
     this.socketFactory = new OSocketFactory(conf);
   }
 
-  protected OChannelBinaryAsynchClient createNetworkConnection(
-      String serverURL, final OContextConfiguration conf) throws OIOException {
-    if (serverURL == null) throw new IllegalArgumentException("server url is null");
-
+  protected OChannelBinaryAsynchClient createNetworkConnection() throws OIOException {
     // TRY WITH CURRENT URL IF ANY
     try {
-      logger.debug("Trying to connect to the remote host %s...", serverURL);
+      logger.debug("Trying to connect to the remote host %s:%d...", this.host, this.port);
 
       final OChannelBinaryAsynchClient ch =
           new OChannelBinaryAsynchClient(
@@ -53,20 +50,19 @@ public class ORemoteConnectionPool
       // RE-THROW IT
       throw e;
     } catch (Exception e) {
-      logger.debug("Error on connecting to %s", e, serverURL);
-      throw OException.wrapException(new OIOException("Error on connecting to " + serverURL), e);
+      logger.debug("Error on connecting to  %s:%d", e, this.host, this.port);
+      throw OException.wrapException(
+          new OIOException("Error on connecting to " + this.host + ":" + this.port), e);
     }
   }
 
   @Override
-  public OChannelBinaryAsynchClient createNewResource(
-      final String iKey, final Object... iAdditionalArgs) {
-    return createNetworkConnection(iKey, (OContextConfiguration) iAdditionalArgs[0]);
+  public OChannelBinaryAsynchClient createNewResource(final String iKey) {
+    return createNetworkConnection();
   }
 
   @Override
-  public boolean reuseResource(
-      final String iKey, final Object[] iAdditionalArgs, final OChannelBinaryAsynchClient iValue) {
+  public boolean reuseResource(final String iKey, final OChannelBinaryAsynchClient iValue) {
     final boolean canReuse = iValue.isConnected();
     if (!canReuse)
       // CANNOT REUSE: CLOSE IT PROPERLY

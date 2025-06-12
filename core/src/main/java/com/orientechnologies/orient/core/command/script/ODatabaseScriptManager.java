@@ -41,12 +41,10 @@ public class ODatabaseScriptManager {
 
     pooledEngines =
         new OResourcePoolFactory<String, ScriptEngine>(
-            new OResourcePoolFactory.ObjectFactoryFactory<String, ScriptEngine>() {
-              @Override
-              public OResourcePoolListener<String, ScriptEngine> create(final String language) {
-                return new OResourcePoolListener<String, ScriptEngine>() {
+            language ->
+                new OResourcePoolListener<String, ScriptEngine>() {
                   @Override
-                  public ScriptEngine createNewResource(String key, Object... args) {
+                  public ScriptEngine createNewResource(String key) {
                     final ScriptEngine scriptEngine = scriptManager.getEngine(language);
                     final String library =
                         scriptManager.getLibrary(
@@ -63,8 +61,7 @@ public class ODatabaseScriptManager {
                   }
 
                   @Override
-                  public boolean reuseResource(
-                      String iKey, Object[] iAdditionalArgs, ScriptEngine iValue) {
+                  public boolean reuseResource(String iKey, ScriptEngine iValue) {
                     if (language.equals("sql")) {
                       if (!language.equals(iValue.getFactory().getLanguageName())) return false;
                     } else {
@@ -72,9 +69,7 @@ public class ODatabaseScriptManager {
                     }
                     return true;
                   }
-                };
-              }
-            });
+                });
     pooledEngines.setMaxPoolSize(OGlobalConfiguration.SCRIPT_POOL.getValueAsInteger());
     pooledEngines.setMaxPartitions(1);
   }

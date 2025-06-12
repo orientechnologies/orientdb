@@ -20,12 +20,7 @@ public class OResourcePoolFactory<K, T> extends OOrientListenerAbstract {
   private final ObjectFactoryFactory<K, T> objectFactoryFactory;
 
   private final EvictionListener<K, OResourcePool<K, T>> evictionListener =
-      new EvictionListener<K, OResourcePool<K, T>>() {
-        @Override
-        public void onEviction(K key, OResourcePool<K, T> partitionedObjectPool) {
-          partitionedObjectPool.close();
-        }
-      };
+      (key, partitionedObjectPool) -> partitionedObjectPool.close();
 
   public OResourcePoolFactory(final ObjectFactoryFactory<K, T> objectFactoryFactory) {
     this(objectFactoryFactory, 100);
