@@ -35,7 +35,6 @@ import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
  */
 public class OStopServerTask extends OAbstractRemoteTask {
   private static final OLoggerDistributed logger = OLoggerDistributed.logger(OStopServerTask.class);
-  private static final long serialVersionUID = 1L;
   public static final int FACTORYID = 9;
 
   public OStopServerTask() {}

@@ -35,7 +35,6 @@ import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 public class ODropDatabaseTask extends OAbstractRemoteTask {
   private static final OLoggerDistributed logger =
       OLoggerDistributed.logger(ODropDatabaseTask.class);
-  private static final long serialVersionUID = 1L;
   public static final int FACTORYID = 23;
 
   public ODropDatabaseTask() {}

@@ -45,7 +45,6 @@ import java.io.IOException;
 public class OCopyDatabaseChunkTask extends OAbstractRemoteTask {
   private static final OLoggerDistributed logger =
       OLoggerDistributed.logger(OCopyDatabaseChunkTask.class);
-  private static final long serialVersionUID = 1L;
   public static final int FACTORYID = 15;
 
   private String fileName;
@@ -92,11 +91,6 @@ public class OCopyDatabaseChunkTask extends OAbstractRemoteTask {
         OFileUtils.getSizeAsNumber(result.buffer.length));
 
     return result;
-  }
-
-  @Override
-  public RESULT_STRATEGY getResultStrategy() {
-    return RESULT_STRATEGY.ANY;
   }
 
   @Override

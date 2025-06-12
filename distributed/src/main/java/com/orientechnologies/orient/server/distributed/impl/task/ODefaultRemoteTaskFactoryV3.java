@@ -92,9 +92,6 @@ public class ODefaultRemoteTaskFactoryV3 implements ORemoteTaskFactory {
       case NodeOperationTask.FACTORYID: // 55
         return new NodeOperationTask();
 
-      case ONewSQLCommandTask.FACTORYID: // 56
-        return new ONewSQLCommandTask();
-
       case OSyncDatabaseNewDeltaTask.FACTORYID: // 57
         return new OSyncDatabaseNewDeltaTask();
 

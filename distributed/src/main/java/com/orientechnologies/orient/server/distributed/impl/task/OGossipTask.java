@@ -21,7 +21,6 @@ package com.orientechnologies.orient.server.distributed.impl.task;
 
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
@@ -31,7 +30,6 @@ import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
 
 /**
  * Task to manage the end of distributed transaction when no fix is needed (OFixTxTask) and all the
@@ -47,9 +45,6 @@ public class OGossipTask extends OAbstractRemoteTask {
 
   private long timestamp = System.currentTimeMillis();
   private String lockManagerServer;
-
-  private static final SimpleDateFormat dateFormat =
-      new SimpleDateFormat(OStorageConfiguration.DEFAULT_DATETIME_FORMAT);
 
   public OGossipTask() {
     this.lockManagerServer = "";

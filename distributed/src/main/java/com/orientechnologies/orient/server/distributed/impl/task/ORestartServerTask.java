@@ -40,7 +40,6 @@ import java.io.IOException;
 public class ORestartServerTask extends OAbstractRemoteTask {
   private static final OLoggerDistributed logger =
       OLoggerDistributed.logger(ORestartServerTask.class);
-  private static final long serialVersionUID = 1L;
   public static final int FACTORYID = 10;
 
   public ORestartServerTask() {}
