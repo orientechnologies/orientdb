@@ -191,11 +191,6 @@ public class OSyncDatabaseTask extends OAbstractRemoteTask {
   }
 
   @Override
-  public RESULT_STRATEGY getResultStrategy() {
-    return RESULT_STRATEGY.UNION;
-  }
-
-  @Override
   public OCommandDistributedReplicateRequest.QUORUM_TYPE getQuorumType() {
     return OCommandDistributedReplicateRequest.QUORUM_TYPE.ALL;
   }

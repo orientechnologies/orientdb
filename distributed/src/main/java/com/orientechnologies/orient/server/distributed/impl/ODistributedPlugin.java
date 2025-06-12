@@ -1493,9 +1493,9 @@ public class ODistributedPlugin extends OServerPluginAbstract
         nodes.toString(),
         "Requesting deploy of database '%s' on local server...",
         databaseName);
-    for (String noteToSend : nodes) {
+    for (String nodetoSend : nodes) {
       OSyncDatabaseTask deployTask = new OSyncDatabaseTask();
-      ODistributedResponse response = sendSingleRequest(databaseName, noteToSend, deployTask);
+      ODistributedResponse response = sendSingleRequest(databaseName, nodetoSend, deployTask);
 
       if (response == null || response.getPayload() == null) {
         logger.errorIn(
@@ -1507,52 +1507,43 @@ public class ODistributedPlugin extends OServerPluginAbstract
         return false;
       }
 
-      final Map<String, Object> results = (Map<String, Object>) response.getPayload();
+      final Object value = response.getPayload();
       final String dbPath = serverInstance.getDatabaseDirectory() + databaseName;
 
-      for (Map.Entry<String, Object> r : results.entrySet()) {
-        final Object value = r.getValue();
-        if (value instanceof ODistributedDatabaseChunk) {
-          if (backupDatabase) backupCurrentDatabase(databaseName);
+      if (value instanceof ODistributedDatabaseChunk) {
+        if (backupDatabase) backupCurrentDatabase(databaseName);
 
-          try {
-            installDatabaseFromNetwork(
-                dbPath, databaseName, r.getKey(), (ODistributedDatabaseChunk) value);
-          } catch (OException e) {
-            logger.error("Error installing database from network", e);
-            continue;
-          }
-
-          return true;
-        }
-      }
-
-      for (Map.Entry<String, Object> r : results.entrySet()) {
-        final Object value = r.getValue();
-
-        if (value instanceof Boolean) {
-          serverInstance.getDatabases().distributedSetOnline(databaseName);
+        try {
+          installDatabaseFromNetwork(
+              dbPath, databaseName, nodetoSend, (ODistributedDatabaseChunk) value);
+        } catch (OException e) {
+          logger.error("Error installing database from network", e);
           continue;
-        } else if (value instanceof ODatabaseIsOldException) {
+        }
 
-          // MANAGE THIS EXCEPTION AT UPPER LEVEL
-          throw (ODatabaseIsOldException) value;
+        return true;
+      } else if (value instanceof Boolean) {
+        serverInstance.getDatabases().distributedSetOnline(databaseName);
+        continue;
+      } else if (value instanceof ODatabaseIsOldException) {
 
-        } else if (value instanceof Throwable) {
-          logger.errorIn(
-              nodeName,
-              r.getKey(),
-              "Error on installing database '%s' in %s",
-              (Throwable) value,
-              databaseName,
-              dbPath);
+        // MANAGE THIS EXCEPTION AT UPPER LEVEL
+        throw (ODatabaseIsOldException) value;
 
-          setDatabaseStatus(nodeName, databaseName, DB_STATUS.NOT_AVAILABLE);
+      } else if (value instanceof Throwable) {
+        logger.errorIn(
+            nodeName,
+            nodetoSend,
+            "Error on installing database '%s' in %s",
+            (Throwable) value,
+            databaseName,
+            dbPath);
 
-          if (value instanceof ODistributedException) throw (ODistributedException) value;
+        setDatabaseStatus(nodeName, databaseName, DB_STATUS.NOT_AVAILABLE);
 
-        } else throw new IllegalArgumentException("Type " + value + " not supported");
-      }
+        if (value instanceof ODistributedException) throw (ODistributedException) value;
+
+      } else throw new IllegalArgumentException("Type " + value + " not supported");
     }
 
     throw new ODistributedException(
