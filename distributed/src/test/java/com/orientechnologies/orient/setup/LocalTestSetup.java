@@ -100,8 +100,9 @@ public class LocalTestSetup implements TestSetup {
       OrientDBConfig config) {
     Optional<String> url =
         serverIds.stream()
-            .map(id -> "remote:" + getAddress(id, PortType.BINARY))
-            .reduce((s1, s2) -> s1 + ";" + s2);
+            .map(id -> getAddress(id, PortType.BINARY))
+            .reduce((s1, s2) -> s1 + ";" + s2)
+            .map((h) -> "remote:" + h);
     return new OrientDB(url.orElse(""), serverUser, serverPassword, config);
   }
 
