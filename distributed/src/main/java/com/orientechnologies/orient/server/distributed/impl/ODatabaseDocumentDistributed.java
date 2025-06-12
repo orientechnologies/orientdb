@@ -1002,14 +1002,17 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       do {
         ids = local.nextDDLId();
         if (ids.isEmpty()) {
+          i++;
           try {
             Thread.sleep(new Random().nextInt(retryDelay));
           } catch (InterruptedException e) {
             OException.wrapException(new OInterruptedException(e.getMessage()), e);
           }
         }
-      } while (ids.isEmpty());
-
+      } while (ids.isEmpty() && i < nretry);
+      if (i >= nretry) {
+        break;
+      }
       OSQLCommandTaskFirstPhase task =
           new OSQLCommandTaskFirstPhase(command, ids.get().getFirst(), ids.get().getSecond());
       ODistributedServerManager dManager = getDistributedManager();
@@ -1291,7 +1294,9 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       OTransactionId afterChangeId,
       ODistributedRequestId requestId) {
     ODistributedDatabase localDistributedDatabase = getDistributedShared();
-    ODDLContextImpl ddlContext = new ODDLContextImpl(query, preChangeId, afterChangeId, requestId);
+    ODDLContextImpl ddlContext =
+        new ODDLContextImpl(localDistributedDatabase, query, preChangeId, afterChangeId, requestId);
+    register(requestId, localDistributedDatabase, ddlContext);
     ValidationResult first = localDistributedDatabase.validate(preChangeId);
     ValidationResult second = localDistributedDatabase.validate(afterChangeId);
     if (first == ValidationResult.ALREADY_PROMISED || second == ValidationResult.ALREADY_PROMISED) {
@@ -1315,7 +1320,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       return new OTxInvalidSequential();
     }
     ddlContext.setStatus(SUCCESS);
-    register(requestId, localDistributedDatabase, ddlContext);
     return new OTxSuccess();
   }
 
