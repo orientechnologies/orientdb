@@ -141,7 +141,4 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
       logger.warn("Error on dropping Lucene indexes", e);
     }
   }
-
-  @Override
-  public void onLocalNodeConfigurationRequest(ODocument iConfiguration) {}
 }

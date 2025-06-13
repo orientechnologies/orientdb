@@ -35,7 +35,6 @@ import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import com.orientechnologies.orient.core.index.OIndexMetadata;
 import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import java.util.Collections;
@@ -124,21 +123,6 @@ public class OLuceneCrossClassIndexFactory implements OIndexFactory, ODatabaseLi
   }
 
   @Override
-  public void onCreate(ODatabaseInternal db) {
-    // createCrossClassSearchIndex(db);
-  }
-
-  @Override
-  public void onOpen(ODatabaseInternal db) {
-    // createCrossClassSearchIndex(db);
-  }
-
-  @Override
-  public void onClose(ODatabaseInternal db) {
-    logger.debug("onClose");
-  }
-
-  @Override
   public void onDrop(final ODatabaseInternal db) {
     try {
       if (db.isClosed()) return;
@@ -156,15 +140,6 @@ public class OLuceneCrossClassIndexFactory implements OIndexFactory, ODatabaseLi
       logger.warn("Error on dropping Lucene indexes", e);
     }
   }
-
-  @Override
-  public void onCreateClass(ODatabaseInternal db, OClass oClass) {}
-
-  @Override
-  public void onDropClass(ODatabaseInternal db, OClass oClass) {}
-
-  @Override
-  public void onLocalNodeConfigurationRequest(ODocument iConfiguration) {}
 
   private void createCrossClassSearchIndex(ODatabaseInternal db) {
 

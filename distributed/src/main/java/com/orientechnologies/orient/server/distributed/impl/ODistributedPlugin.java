@@ -138,7 +138,7 @@ import sun.misc.Signal;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
 public class ODistributedPlugin extends OServerPluginAbstract
-    implements ODistributedServerManager, ODatabaseLifecycleListener, OCommandOutputListener {
+    implements ODistributedServerManager, OCommandOutputListener {
   private static final OLoggerDistributed logger =
       OLoggerDistributed.logger(ODistributedPlugin.class);
   public static final String REPLICATOR_USER = "_CrossServerTempUser";
@@ -184,11 +184,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
       throws InterruptedException {
     while (getDatabase(databaseName) == null || !isNodeOnline(nodeName, databaseName))
       Thread.sleep(100);
-  }
-
-  @Override
-  public PRIORITY getPriority() {
-    return PRIORITY.LAST;
   }
 
   @Override
@@ -287,8 +282,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
     // REGISTER TEMPORARY USER FOR REPLICATION PURPOSE
     serverInstance.addTemporaryUser(REPLICATOR_USER, "" + new SecureRandom().nextLong(), "*");
 
-    Orient.instance().addDbLifecycleListener(this);
-
     // CLOSE ALL CONNECTIONS TO THE SERVERS
     remoteServerManager.closeAll();
 
@@ -379,23 +372,11 @@ public class ODistributedPlugin extends OServerPluginAbstract
 
       setNodeStatus(NODE_STATUS.OFFLINE);
 
-      Orient.instance().removeDbLifecycleListener(this);
     } catch (HazelcastInstanceNotActiveException e) {
       // HZ IS ALREADY DOWN, IGNORE IT
     }
     clusterManager.hazelcastPluginShutdown();
   }
-
-  /** Auto register myself as hook. */
-  @Override
-  public void onOpen(final ODatabaseInternal iDatabase) {}
-
-  /** Remove myself as hook. */
-  @Override
-  public void onClose(final ODatabaseInternal iDatabase) {}
-
-  @Override
-  public void onDrop(final ODatabaseInternal iDatabase) {}
 
   public void removeDbFromClusterMetadata(String name) {
     clusterManager.removeDbFromClusterMetadata(name);
@@ -411,9 +392,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
   public void dropConfig(String dbName) {
     clusterManager.dropDatabaseConfiguration(dbName);
   }
-
-  @Override
-  public void onDropClass(ODatabaseInternal iDatabase, OClass iClass) {}
 
   @Override
   public String getName() {
@@ -966,9 +944,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
   public String getLocalNodeName() {
     return nodeName;
   }
-
-  @Override
-  public void onLocalNodeConfigurationRequest(final ODocument iConfiguration) {}
 
   @SuppressWarnings("unchecked")
   public ODocument getStats() {
@@ -2313,21 +2288,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
   @Override
   public void setDatabaseStatus(String iNode, String iDatabaseName, DB_STATUS iStatus) {
     clusterManager.setDatabaseStatus(iNode, iDatabaseName, iStatus);
-  }
-
-  @Override
-  public void onCreate(final ODatabaseInternal iDatabase) {
-    if (!isRelatedToLocalServer(iDatabase)) return;
-
-    if (getNodeStatus() != NODE_STATUS.ONLINE) return;
-
-    final ODatabaseDocumentInternal currDb = ODatabaseRecordThreadLocal.instance().getIfDefined();
-    try {
-      onOpen(iDatabase);
-    } finally {
-      // RESTORE ORIGINAL DATABASE INSTANCE IN TL
-      ODatabaseRecordThreadLocal.instance().set(currDb);
-    }
   }
 
   // Called to notify this server, that a node has been removed from the cluster

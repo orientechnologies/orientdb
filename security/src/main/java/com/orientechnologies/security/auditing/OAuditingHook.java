@@ -33,7 +33,13 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.security.OAuditingOperation;
 import com.orientechnologies.orient.core.security.OSecuritySystem;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -215,30 +221,11 @@ public class OAuditingHook extends ORecordHookAbstract implements ODatabaseListe
   }
 
   @Override
-  public void onCreate(ODatabase iDatabase) {}
-
-  @Override
-  public void onDelete(ODatabase iDatabase) {}
-
-  @Override
-  public void onOpen(ODatabase iDatabase) {}
-
-  @Override
-  public void onBeforeTxBegin(ODatabase iDatabase) {}
-
-  @Override
-  public void onBeforeTxRollback(ODatabase iDatabase) {}
-
-  @Override
   public void onAfterTxRollback(ODatabase iDatabase) {
-
     synchronized (operations) {
       operations.remove(iDatabase);
     }
   }
-
-  @Override
-  public void onBeforeTxCommit(ODatabase iDatabase) {}
 
   @Override
   public void onAfterTxCommit(ODatabase iDatabase) {
@@ -253,15 +240,6 @@ public class OAuditingHook extends ORecordHookAbstract implements ODatabaseListe
         auditingQueue.offer(oDocument);
       }
     }
-  }
-
-  @Override
-  public void onClose(ODatabase iDatabase) {}
-
-  @Override
-  public boolean onCorruptionRepairDatabase(
-      ODatabase iDatabase, String iReason, String iWhatWillbeFixed) {
-    return false;
   }
 
   public ODocument getConfiguration() {

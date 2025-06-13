@@ -31,25 +31,33 @@ import com.orientechnologies.orient.core.sql.executor.OResultSet;
 public interface ODatabaseListener {
 
   @Deprecated
-  void onCreate(final ODatabase iDatabase);
+  default void onCreate(final ODatabase iDatabase) {}
 
   @Deprecated
-  void onDelete(final ODatabase iDatabase);
+  default void onDelete(final ODatabase iDatabase) {}
+  ;
 
   @Deprecated
-  void onOpen(final ODatabase iDatabase);
+  default void onOpen(final ODatabase iDatabase) {}
+  ;
 
-  void onBeforeTxBegin(final ODatabase iDatabase);
+  default void onBeforeTxBegin(final ODatabase iDatabase) {}
+  ;
 
-  void onBeforeTxRollback(final ODatabase iDatabase);
+  default void onBeforeTxRollback(final ODatabase iDatabase) {}
+  ;
 
-  void onAfterTxRollback(final ODatabase iDatabase);
+  default void onAfterTxRollback(final ODatabase iDatabase) {}
+  ;
 
-  void onBeforeTxCommit(final ODatabase iDatabase);
+  default void onBeforeTxCommit(final ODatabase iDatabase) {}
+  ;
 
-  void onAfterTxCommit(final ODatabase iDatabase);
+  default void onAfterTxCommit(final ODatabase iDatabase) {}
+  ;
 
-  void onClose(final ODatabase iDatabase);
+  default void onClose(final ODatabase iDatabase) {}
+  ;
 
   default void onCreateClass(ODatabase iDatabase, OClass iClass) {}
 

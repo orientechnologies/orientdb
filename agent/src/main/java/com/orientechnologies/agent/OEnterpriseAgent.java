@@ -35,14 +35,12 @@ import com.orientechnologies.enterprise.server.OEnterpriseServer;
 import com.orientechnologies.enterprise.server.OEnterpriseServerImpl;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.engine.OEngine;
 import com.orientechnologies.orient.core.enterprise.OEnterpriseEndpoint;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -139,33 +137,6 @@ public class OEnterpriseAgent extends OServerPluginAbstract
       Orient.instance().removeDbLifecycleListener(this);
     }
   }
-
-  @Override
-  public PRIORITY getPriority() {
-    return PRIORITY.LAST;
-  }
-
-  /** Auto register myself as hook. */
-  @Override
-  public void onOpen(final ODatabaseInternal iDatabase) {}
-
-  @Override
-  public void onCreate(ODatabaseInternal iDatabase) {
-    onOpen(iDatabase);
-  }
-
-  /** Remove myself as hook. */
-  @Override
-  public void onClose(final ODatabaseInternal iDatabase) {}
-
-  @Override
-  public void onDrop(final ODatabaseInternal iDatabase) {}
-
-  @Override
-  public void onCreateClass(final ODatabaseInternal iDatabase, final OClass iClass) {}
-
-  @Override
-  public void onDropClass(final ODatabaseInternal iDatabase, final OClass iClass) {}
 
   // TODO SEND CPU METRICS ON configuration request;
   @Override

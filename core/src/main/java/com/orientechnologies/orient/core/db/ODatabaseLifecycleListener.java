@@ -42,13 +42,17 @@ public interface ODatabaseLifecycleListener {
     return PRIORITY.LAST;
   }
 
-  void onCreate(ODatabaseInternal iDatabase);
+  default void onCreate(ODatabaseInternal iDatabase) {}
+  ;
 
-  void onOpen(ODatabaseInternal iDatabase);
+  default void onOpen(ODatabaseInternal iDatabase) {}
+  ;
 
-  void onClose(ODatabaseInternal iDatabase);
+  default void onClose(ODatabaseInternal iDatabase) {}
+  ;
 
-  void onDrop(ODatabaseInternal iDatabase);
+  default void onDrop(ODatabaseInternal iDatabase) {}
+  ;
 
   @Deprecated
   default void onCreateClass(ODatabaseInternal iDatabase, OClass iClass) {}
@@ -67,5 +71,5 @@ public interface ODatabaseLifecycleListener {
    *
    * @param iConfiguration
    */
-  void onLocalNodeConfigurationRequest(ODocument iConfiguration);
+  default void onLocalNodeConfigurationRequest(ODocument iConfiguration) {}
 }

@@ -19,7 +19,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.ODatabaseLifecycleListenerAbstract;
+import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.impl.proxy.OProxyServer;
 import com.orientechnologies.orient.setup.ServerRun;
@@ -211,7 +211,7 @@ public class SplitBraiNetworkTestTempIT extends AbstractHARemoveNode {
     // REWRITE THE ORIENTDB PORTS TO USE THE PROXIES
     Orient.instance()
         .addDbLifecycleListener(
-            new ODatabaseLifecycleListenerAbstract() {
+            new ODatabaseLifecycleListener() {
               @Override
               public void onLocalNodeConfigurationRequest(ODocument iConfiguration) {
                 List<Map<String, Object>> listeners = iConfiguration.field("listeners");

@@ -19,10 +19,6 @@
  */
 package com.orientechnologies.orient.server.plugin.livequery;
 
-import com.orientechnologies.orient.core.db.ODatabaseInternal;
-import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
-import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener.PRIORITY;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
@@ -33,7 +29,7 @@ import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
  * <p>Not needed anymore, keeping the class for backward compatibilty
  */
 @Deprecated
-public class OLiveQueryPlugin extends OServerPluginAbstract implements ODatabaseLifecycleListener {
+public class OLiveQueryPlugin extends OServerPluginAbstract {
 
   private boolean enabled = false;
 
@@ -61,27 +57,7 @@ public class OLiveQueryPlugin extends OServerPluginAbstract implements ODatabase
   }
 
   @Override
-  public PRIORITY getPriority() {
-    return PRIORITY.LATE;
-  }
-
-  @Override
   public void startup() {
     super.startup();
   }
-
-  @Override
-  public void onCreate(ODatabaseInternal iDatabase) {}
-
-  @Override
-  public void onOpen(ODatabaseInternal iDatabase) {}
-
-  @Override
-  public void onClose(ODatabaseInternal iDatabase) {}
-
-  @Override
-  public void onDrop(ODatabaseInternal iDatabase) {}
-
-  @Override
-  public void onLocalNodeConfigurationRequest(ODocument iConfiguration) {}
 }

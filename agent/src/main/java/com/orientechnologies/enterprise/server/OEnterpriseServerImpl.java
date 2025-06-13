@@ -18,7 +18,6 @@ import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.OSystemDatabase;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.db.document.OQueryDatabaseState;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OSecuritySystem;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.executor.OQueryMetrics;
@@ -245,9 +244,6 @@ public class OEnterpriseServerImpl
   }
 
   @Override
-  public void onClose(ODatabaseInternal iDatabase) {}
-
-  @Override
   public void onDrop(final ODatabaseInternal iDatabase) {
     if (!((ODatabaseDocumentInternal) iDatabase).isRemote()) {
       final OStorage storage = iDatabase.getStorage();
@@ -259,9 +255,6 @@ public class OEnterpriseServerImpl
       }
     }
   }
-
-  @Override
-  public void onLocalNodeConfigurationRequest(ODocument iConfiguration) {}
 
   @Override
   public void registerFunction(OSQLFunction function) {
@@ -395,33 +388,6 @@ public class OEnterpriseServerImpl
             })
         .orElse(new ArrayList());
   }
-
-  @Override
-  public void onCreate(ODatabase iDatabase) {}
-
-  @Override
-  public void onDelete(ODatabase iDatabase) {}
-
-  @Override
-  public void onOpen(ODatabase iDatabase) {}
-
-  @Override
-  public void onBeforeTxBegin(ODatabase iDatabase) {}
-
-  @Override
-  public void onBeforeTxRollback(ODatabase iDatabase) {}
-
-  @Override
-  public void onAfterTxRollback(ODatabase iDatabase) {}
-
-  @Override
-  public void onBeforeTxCommit(ODatabase iDatabase) {}
-
-  @Override
-  public void onAfterTxCommit(ODatabase iDatabase) {}
-
-  @Override
-  public void onClose(ODatabase iDatabase) {}
 
   @Override
   public void onCommandStart(ODatabase database, OResultSet result) {

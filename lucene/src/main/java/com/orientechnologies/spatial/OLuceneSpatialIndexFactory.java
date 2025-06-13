@@ -136,12 +136,6 @@ public class OLuceneSpatialIndexFactory implements OIndexFactory, ODatabaseLifec
   }
 
   @Override
-  public void onOpen(ODatabaseInternal iDatabase) {}
-
-  @Override
-  public void onClose(ODatabaseInternal iDatabase) {}
-
-  @Override
   public void onDrop(final ODatabaseInternal db) {
     try {
       if (db.isClosed()) return;
@@ -159,13 +153,4 @@ public class OLuceneSpatialIndexFactory implements OIndexFactory, ODatabaseLifec
       logger.warn("Error on dropping spatial indexes", e);
     }
   }
-
-  @Override
-  public void onCreateClass(ODatabaseInternal iDatabase, OClass iClass) {}
-
-  @Override
-  public void onDropClass(ODatabaseInternal iDatabase, OClass iClass) {}
-
-  @Override
-  public void onLocalNodeConfigurationRequest(ODocument iConfiguration) {}
 }
