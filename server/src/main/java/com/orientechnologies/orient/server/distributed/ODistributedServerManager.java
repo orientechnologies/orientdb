@@ -22,6 +22,7 @@ package com.orientechnologies.orient.server.distributed;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.distributed.ONodeConfig;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import java.io.File;
@@ -37,24 +38,6 @@ import java.util.Set;
  */
 public interface ODistributedServerManager {
   String FILE_DISTRIBUTED_DB_CONFIG = "distributed-config.json";
-
-  /** Server status. */
-  enum NODE_STATUS {
-    /** The server was never started or the shutdown is complete. */
-    OFFLINE,
-
-    /** The server is STARTING. */
-    STARTING,
-
-    /** The server is ONLINE. */
-    ONLINE,
-
-    /** The server starts to merge to another cluster. */
-    MERGING,
-
-    /** The server is shutting down. */
-    SHUTTINGDOWN
-  };
 
   /** Database status. */
   enum DB_STATUS {
@@ -185,9 +168,9 @@ public interface ODistributedServerManager {
 
   int getNodeIdByName(String node);
 
-  ODocument getNodeConfigurationByUuid(String iNode, boolean useCache);
+  ONodeConfig getNodeConfigurationByUuid(String iNode, boolean useCache);
 
-  ODocument getLocalNodeConfiguration();
+  ONodeConfig getLocalNodeConfiguration();
 
   ODistributedConfiguration getDatabaseConfiguration(String iDatabaseName);
 

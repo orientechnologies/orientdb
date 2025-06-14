@@ -57,16 +57,18 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
-import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTxMetadataHolder;
 import com.orientechnologies.orient.core.tx.OTxMetadataHolderImpl;
+import com.orientechnologies.orient.distributed.ONodeConfig;
+import com.orientechnologies.orient.distributed.ONodeListenerConfig;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
 import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
+import com.orientechnologies.orient.server.distributed.NODE_STATUS;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedLifecycleListener;
@@ -408,49 +410,44 @@ public class ODistributedPlugin extends OServerPluginAbstract
   }
 
   @Override
-  public ODocument getLocalNodeConfiguration() {
-    final ODocument nodeCfg = new ODocument();
-    nodeCfg.setTrackingChanges(false);
+  public ONodeConfig getLocalNodeConfiguration() {
+    ONodeConfig nodeCfg = new ONodeConfig();
 
-    nodeCfg.field("id", getLocalNodeId());
-    nodeCfg.field("uuid", clusterManager.getLocalNodeUuid());
-    nodeCfg.field("name", nodeName);
-    nodeCfg.field("version", OConstants.getRawVersion());
-    nodeCfg.field("publicAddress", clusterManager.getPublicAddress());
-    nodeCfg.field("startedOn", startedOn);
-    nodeCfg.field("status", getNodeStatus());
-    nodeCfg.field("connections", serverInstance.getClientConnectionManager().getTotal());
+    nodeCfg.setId(getLocalNodeId());
+    nodeCfg.setUuid(clusterManager.getLocalNodeUuid());
+    nodeCfg.setName(nodeName);
+    nodeCfg.setVersion(OConstants.getRawVersion());
+    nodeCfg.setPublicAddress(clusterManager.getPublicAddress());
+    nodeCfg.setStartedOn(startedOn);
+    nodeCfg.setStatus(getNodeStatus().toString());
+    nodeCfg.setConnections(serverInstance.getClientConnectionManager().getTotal());
 
-    final List<Map<String, Object>> listeners = new ArrayList<Map<String, Object>>();
-    nodeCfg.field("listeners", listeners, OType.EMBEDDEDLIST);
-
+    List<ONodeListenerConfig> listeners = new ArrayList<>();
     for (OServerNetworkListener listener : serverInstance.getNetworkListeners()) {
-      final Map<String, Object> listenerCfg = new HashMap<String, Object>();
-      listeners.add(listenerCfg);
-
-      listenerCfg.put("protocol", listener.getProtocolType().getSimpleName());
-      listenerCfg.put("listen", listener.getListeningAddress(true));
+      listeners.add(
+          new ONodeListenerConfig(
+              listener.getProtocolType().getSimpleName(), listener.getListeningAddress(true)));
     }
+    nodeCfg.setListeners(listeners);
 
     // STORE THE TEMP USER/PASSWD USED FOR REPLICATION
     final OSecurityUser user = serverInstance.getSecurity().getUser(REPLICATOR_USER);
     if (user != null)
-      nodeCfg.field(
-          "user_replicator", serverInstance.getSecurity().getUser(REPLICATOR_USER).getPassword());
+      nodeCfg.setReplicator(serverInstance.getSecurity().getUser(REPLICATOR_USER).getPassword());
 
-    nodeCfg.field("databases", getManagedDatabases());
+    nodeCfg.setDatabases(getManagedDatabases());
 
     final long maxMem = Runtime.getRuntime().maxMemory();
     final long totMem = Runtime.getRuntime().totalMemory();
     final long freeMem = Runtime.getRuntime().freeMemory();
     final long usedMem = totMem - freeMem;
 
-    nodeCfg.field("usedMemory", usedMem);
-    nodeCfg.field("freeMemory", freeMem);
-    nodeCfg.field("maxMemory", maxMem);
+    nodeCfg.setUsedMemory(usedMem);
+    nodeCfg.setFreeMemory(freeMem);
+    nodeCfg.setMaxMemory(maxMem);
 
-    nodeCfg.field("latencies", getMessageService().getLatencies(), OType.EMBEDDED);
-    nodeCfg.field("messages", getMessageService().getMessageStats(), OType.EMBEDDED);
+    nodeCfg.setLatencies("latencies", getMessageService().getLatencies());
+    nodeCfg.setMessages("messages", getMessageService().getMessageStats());
 
     for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners();
         it.hasNext(); ) {
@@ -516,9 +513,8 @@ public class ODistributedPlugin extends OServerPluginAbstract
 
   protected void checkForServerOnline(final ODistributedRequest iRequest)
       throws ODistributedException {
-    final ODistributedServerManager.NODE_STATUS srvStatus = getNodeStatus();
-    if (srvStatus == ODistributedServerManager.NODE_STATUS.OFFLINE
-        || srvStatus == ODistributedServerManager.NODE_STATUS.SHUTTINGDOWN) {
+    final NODE_STATUS srvStatus = getNodeStatus();
+    if (srvStatus == NODE_STATUS.OFFLINE || srvStatus == NODE_STATUS.SHUTTINGDOWN) {
       logger.errorOut(
           this.nodeName,
           null,
@@ -1673,17 +1669,16 @@ public class ODistributedPlugin extends OServerPluginAbstract
   public void notifyClients(String databaseName) {
     List<String> hosts = new ArrayList<>();
     for (String name : getActiveServers()) {
-      ODocument memberConfig = clusterManager.getNodeConfigurationByName(name, true);
+      ONodeConfig memberConfig = clusterManager.getNodeConfigurationByName(name, true);
       if (memberConfig != null) {
-        final String nodeStatus = memberConfig.field("status");
+        final String nodeStatus = memberConfig.getStatus();
 
         if (!"OFFLINE".equals(nodeStatus)) {
-          final Collection<Map<String, Object>> listeners = memberConfig.field("listeners");
+          final Collection<ONodeListenerConfig> listeners = memberConfig.getListeners();
           if (listeners != null)
-            for (Map<String, Object> listener : listeners) {
-              if (listener.get("protocol").equals("ONetworkProtocolBinary")) {
-                String url = (String) listener.get("listen");
-                hosts.add(url);
+            for (ONodeListenerConfig listener : listeners) {
+              if (listener.getProtocol().equals("ONetworkProtocolBinary")) {
+                hosts.add(listener.getListen());
               }
             }
         }
@@ -1962,35 +1957,22 @@ public class ODistributedPlugin extends OServerPluginAbstract
     return clusterManager.getClusterTime();
   }
 
-  public static String getListeningBinaryAddress(final ODocument cfg) {
+  public static String getListeningBinaryAddress(final ONodeConfig cfg) {
     if (cfg == null) return null;
 
-    String url = cfg.field("publicAddress");
-
-    final Collection<Map<String, Object>> listeners = cfg.field("listeners");
+    final Collection<ONodeListenerConfig> listeners = cfg.getListeners();
     if (listeners == null)
       throw new ODatabaseException(
           "Cannot connect to a remote node because bad distributed configuration: missing"
               + " 'listeners' array field");
     String listenUrl = null;
-    for (Map<String, Object> listener : listeners) {
-      if ((listener.get("protocol")).equals("ONetworkProtocolBinary")) {
-        listenUrl = (String) listener.get("listen");
+    for (ONodeListenerConfig listener : listeners) {
+      if ((listener.getProtocol()).equals("ONetworkProtocolBinary")) {
+        listenUrl = (String) listener.getListen();
         break;
       }
     }
-    if (url == null) url = listenUrl;
-    else {
-      int pos;
-      String port;
-      if ((pos = listenUrl.lastIndexOf(":")) != -1) {
-        port = listenUrl.substring(pos + 1);
-      } else {
-        port = "2424";
-      }
-      url += ":" + port;
-    }
-    return url;
+    return listenUrl;
   }
 
   @Override
@@ -2124,8 +2106,8 @@ public class ODistributedPlugin extends OServerPluginAbstract
       Member member = clusterManager.getClusterMemberByName(rNodeName);
 
       for (int retry = 0; retry < 20; ++retry) {
-        ODocument cfg = getNodeConfigurationByUuid(member.getUuid(), false);
-        if (cfg == null || cfg.field("listeners") == null) {
+        ONodeConfig cfg = getNodeConfigurationByUuid(member.getUuid(), false);
+        if (cfg == null || cfg.getListeners() == null) {
           try {
             Thread.sleep(100);
             member = clusterManager.getClusterMemberByName(rNodeName);
@@ -2146,7 +2128,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
               "Cannot connect to a remote node because the url was not found");
         }
 
-        final String userPassword = cfg.field("user_replicator");
+        final String userPassword = cfg.getReplicator();
 
         if (userPassword != null) {
           remoteServer =
@@ -2352,7 +2334,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
   }
 
   @Override
-  public ODocument getNodeConfigurationByUuid(String iNode, boolean useCache) {
+  public ONodeConfig getNodeConfigurationByUuid(String iNode, boolean useCache) {
     return clusterManager.getNodeConfigurationByUuid(iNode, useCache);
   }
 

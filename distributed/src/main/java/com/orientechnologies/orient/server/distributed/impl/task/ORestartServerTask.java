@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.distributed.NODE_STATUS;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
@@ -54,7 +55,7 @@ public class ORestartServerTask extends OAbstractRemoteTask {
 
     logger.warnIn(iManager.getLocalNodeName(), getNodeSource(), "Restarting server...");
 
-    iManager.setNodeStatus(ODistributedServerManager.NODE_STATUS.OFFLINE);
+    iManager.setNodeStatus(NODE_STATUS.OFFLINE);
 
     Orient.instance()
         .scheduleTask(

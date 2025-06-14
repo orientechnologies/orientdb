@@ -20,11 +20,11 @@ import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
-import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.distributed.ONodeConfig;
+import com.orientechnologies.orient.distributed.ONodeListenerConfig;
 import com.orientechnologies.orient.server.distributed.impl.proxy.OProxyServer;
 import com.orientechnologies.orient.setup.ServerRun;
 import java.util.List;
-import java.util.Map;
 import org.junit.Assert;
 import org.junit.Ignore;
 import org.junit.Test;
@@ -213,16 +213,17 @@ public class SplitBraiNetworkTestTempIT extends AbstractHARemoveNode {
         .addDbLifecycleListener(
             new ODatabaseLifecycleListener() {
               @Override
-              public void onLocalNodeConfigurationRequest(ODocument iConfiguration) {
-                List<Map<String, Object>> listeners = iConfiguration.field("listeners");
-                for (Map<String, Object> map : listeners) {
-                  if (map.get("protocol").toString().equalsIgnoreCase("ONetworkProtocolBinary")) {
-                    final String listen = map.get("listen").toString();
+              public void onLocalNodeConfigurationRequest(ONodeConfig conf) {
+                List<ONodeListenerConfig> listeners = conf.getListeners();
+                for (ONodeListenerConfig map : listeners) {
+                  if (map.getProtocol().equalsIgnoreCase("ONetworkProtocolBinary")) {
+                    final String listen = map.getListen();
                     final String[] parts = listen.split(":");
                     final int port = Integer.parseInt(parts[1]);
                     if (port >= 2424 && port <= 2430)
                       // PATCH THE PORT
-                      map.put("listen", parts[0] + ":" + (port + 1000));
+                      map.setListen(parts[0] + ":" + (port + 1000));
+                    conf.setListeners(listeners);
                   }
                 }
               }

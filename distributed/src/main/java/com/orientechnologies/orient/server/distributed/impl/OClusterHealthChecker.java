@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.distributed.NODE_STATUS;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
@@ -196,7 +197,7 @@ public class OClusterHealthChecker implements Runnable {
   }
 
   private void checkServerStatus() {
-    if (manager.getNodeStatus() != ODistributedServerManager.NODE_STATUS.ONLINE)
+    if (manager.getNodeStatus() != NODE_STATUS.ONLINE)
       // ONLY ONLINE NODE CAN TRY TO RECOVER FOR SINGLE DB STATUS
       return;
 
@@ -232,7 +233,7 @@ public class OClusterHealthChecker implements Runnable {
             "Trying to recover current server for database '%s'...",
             dbName);
 
-        if (manager.getNodeStatus() != ODistributedServerManager.NODE_STATUS.ONLINE)
+        if (manager.getNodeStatus() != NODE_STATUS.ONLINE)
           // ONLY ONLINE NODE CAN TRY TO RECOVER FOR SINGLE DB STATUS
           return;
 
@@ -254,7 +255,7 @@ public class OClusterHealthChecker implements Runnable {
   }
 
   private void checkServerInStall() {
-    if (manager.getNodeStatus() != ODistributedServerManager.NODE_STATUS.ONLINE)
+    if (manager.getNodeStatus() != NODE_STATUS.ONLINE)
       // ONLY ONLINE NODE CAN CHECK FOR OTHERS
       return;
 
@@ -298,7 +299,7 @@ public class OClusterHealthChecker implements Runnable {
   }
 
   private void notifyDatabaseSequenceStatus() {
-    if (manager.getNodeStatus() != ODistributedServerManager.NODE_STATUS.ONLINE)
+    if (manager.getNodeStatus() != NODE_STATUS.ONLINE)
       // ONLY ONLINE NODE CAN TRY TO RECOVER FOR SINGLE DB STATUS
       return;
 

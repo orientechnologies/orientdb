@@ -29,6 +29,7 @@ import com.hazelcast.map.listener.EntryRemovedListener;
 import com.hazelcast.map.listener.EntryUpdatedListener;
 import com.hazelcast.map.listener.MapClearedListener;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.distributed.ONodeConfig;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -48,15 +49,12 @@ public class OHazelcastDistributedMap extends ConcurrentHashMap<String, Object>
         EntryRemovedListener<String, Object>,
         MapClearedListener,
         EntryUpdatedListener<String, Object> {
-  private final OHazelcastClusterMetadataManager dManager;
   private final IMap<String, Object> hzMap;
   private final String membershipListenerRegistration;
 
   public static final String ORIENTDB_MAP = "orientdb";
 
-  public OHazelcastDistributedMap(
-      final OHazelcastClusterMetadataManager manager, final HazelcastInstance hz) {
-    dManager = manager;
+  public OHazelcastDistributedMap(final HazelcastInstance hz) {
     hzMap = hz.getMap(ORIENTDB_MAP);
     membershipListenerRegistration = hzMap.addEntryListener(this, true);
 
@@ -175,17 +173,22 @@ public class OHazelcastDistributedMap extends ConcurrentHashMap<String, Object>
     return this.containsKey(OHazelcastClusterMetadataManager.CONFIG_NODE_PREFIX + nodeUuid);
   }
 
-  public ODocument getNodeConfig(String nodeUuid) {
-    return (ODocument) get(OHazelcastClusterMetadataManager.CONFIG_NODE_PREFIX + nodeUuid);
+  public ONodeConfig getNodeConfig(String nodeUuid) {
+    ODocument doc = (ODocument) get(OHazelcastClusterMetadataManager.CONFIG_NODE_PREFIX + nodeUuid);
+    if (doc == null) return null;
+    return new ONodeConfig(doc);
   }
 
   public void removeNode(String nodeUuid) {
     this.remove(OHazelcastClusterMetadataManager.CONFIG_NODE_PREFIX + nodeUuid);
   }
 
-  public ODocument getLocalCachedNodeConfig(String nodeUuid) {
-    return (ODocument)
-        getLocalCachedValue(OHazelcastClusterMetadataManager.CONFIG_NODE_PREFIX + nodeUuid);
+  public ONodeConfig getLocalCachedNodeConfig(String nodeUuid) {
+    ODocument doc =
+        (ODocument)
+            getLocalCachedValue(OHazelcastClusterMetadataManager.CONFIG_NODE_PREFIX + nodeUuid);
+    if (doc == null) return null;
+    return new ONodeConfig(doc);
   }
 
   public List<String> getNodes() {
@@ -202,8 +205,8 @@ public class OHazelcastDistributedMap extends ConcurrentHashMap<String, Object>
     return nodes;
   }
 
-  public void putNodeConfig(String nodeUuid, ODocument cfg) {
-    put(OHazelcastClusterMetadataManager.CONFIG_NODE_PREFIX + nodeUuid, cfg);
+  public void putNodeConfig(String nodeUuid, ONodeConfig cfg) {
+    put(OHazelcastClusterMetadataManager.CONFIG_NODE_PREFIX + nodeUuid, cfg.getConfig());
   }
 
   public Set<String> getNodeUuidByName(String name) {

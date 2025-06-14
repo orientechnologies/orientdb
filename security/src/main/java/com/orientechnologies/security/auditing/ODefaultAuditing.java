@@ -286,9 +286,6 @@ public class ODefaultAuditing
     }
   }
 
-  @Override
-  public void onLocalNodeConfigurationRequest(ODocument iConfiguration) {}
-
   protected void updateConfigOnDisk(final String iDatabaseName, final ODocument cfg)
       throws IOException {
     final File auditingFileConfig = getConfigFile(iDatabaseName);

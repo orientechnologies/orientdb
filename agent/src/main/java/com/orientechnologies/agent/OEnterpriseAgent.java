@@ -19,7 +19,7 @@ package com.orientechnologies.agent;
 
 import com.orientechnologies.agent.functions.OAgentProfilerService;
 import com.orientechnologies.agent.ha.OEnterpriseDistributedStrategy;
-import com.orientechnologies.agent.http.command.*;
+import com.orientechnologies.agent.http.command.OServerCommandDistributedManager;
 import com.orientechnologies.agent.profiler.OEnterpriseProfiler;
 import com.orientechnologies.agent.services.OEnterpriseService;
 import com.orientechnologies.agent.services.backup.OBackupService;
@@ -37,13 +37,12 @@ import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.engine.OEngine;
 import com.orientechnologies.orient.core.enterprise.OEnterpriseEndpoint;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
-import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.distributed.ONodeConfig;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerLifecycleListener;
@@ -60,7 +59,11 @@ import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Locale;
+import java.util.Optional;
+import java.util.Properties;
 
 public class OEnterpriseAgent extends OServerPluginAbstract
     implements ODatabaseLifecycleListener,
@@ -140,12 +143,10 @@ public class OEnterpriseAgent extends OServerPluginAbstract
 
   // TODO SEND CPU METRICS ON configuration request;
   @Override
-  public void onLocalNodeConfigurationRequest(ODocument iConfiguration) {
+  public void onLocalNodeConfigurationRequest(ONodeConfig iConfiguration) {
     final OProfiler profiler = Orient.instance().getProfiler();
-    final OEngine plocal = Orient.instance().getEngine("plocal");
-
     if (profiler instanceof OEnterpriseProfiler) {
-      iConfiguration.field("cpu", ((OEnterpriseProfiler) profiler).cpuUsage());
+      iConfiguration.setCpu(((OEnterpriseProfiler) profiler).cpuUsage());
     }
   }
 
