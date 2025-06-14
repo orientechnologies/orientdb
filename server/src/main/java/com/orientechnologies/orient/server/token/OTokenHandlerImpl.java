@@ -310,7 +310,6 @@ public class OTokenHandlerImpl implements OTokenHandler {
       data.serverUser = binary.isServerUser();
       data.serverUsername = binary.getUserName();
       data.serverUsername = binary.getUserName();
-      data.supportsLegacyPushMessages = connection.getData().supportsLegacyPushMessages;
       data.collectStats = connection.getData().collectStats;
       return data;
     }

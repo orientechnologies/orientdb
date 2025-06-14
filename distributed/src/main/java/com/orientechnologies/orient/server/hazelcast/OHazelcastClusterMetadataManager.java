@@ -591,7 +591,6 @@ public class OHazelcastClusterMetadataManager
     distributedPlugin.onDbConfigUpdated(databaseName, document);
 
     // SEND NEW CFG TO ALL THE CONNECTED CLIENTS
-    serverInstance.getClientConnectionManager().pushDistribCfg2Clients(getClusterConfiguration());
 
     distributedPlugin.dumpServersStatus();
   }
@@ -1301,7 +1300,6 @@ public class OHazelcastClusterMetadataManager
     if (updated) {
       // SEND NEW CFG TO ALL THE CONNECTED CLIENTS
       distributedPlugin.notifyClients(databaseName);
-      serverInstance.getClientConnectionManager().pushDistribCfg2Clients(getClusterConfiguration());
     }
     return result;
   }

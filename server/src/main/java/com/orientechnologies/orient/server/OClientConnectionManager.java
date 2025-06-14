@@ -26,11 +26,7 @@ import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValu
 import com.orientechnologies.common.profiler.OProfiler.METRIC_TYPE;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OParsedToken;
-import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
-import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OTokenSecurityException;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
@@ -40,12 +36,10 @@ import java.io.IOException;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -372,66 +366,6 @@ public class OClientConnectionManager {
 
   public int getTotal() {
     return connections.size();
-  }
-
-  /** Pushes the distributed configuration to all the connected clients. */
-  public void pushDistribCfg2Clients(final ODocument iConfig) {
-    if (iConfig == null) return;
-
-    final Set<String> pushed = new HashSet<String>();
-    for (OClientConnection c : connections.values()) {
-      if (!c.getData().supportsLegacyPushMessages) continue;
-
-      try {
-        final String remoteAddress = c.getRemoteAddress();
-        if (pushed.contains(remoteAddress))
-          // ALREADY SENT: JUMP IT
-          continue;
-
-      } catch (Exception e) {
-        // SOCKET EXCEPTION SKIP IT
-        continue;
-      }
-
-      if (!(c.getProtocol() instanceof ONetworkProtocolBinary)
-          || c.getData().getSerializationImpl() == null)
-        // INVOLVE ONLY BINARY PROTOCOLS
-        continue;
-
-      final ONetworkProtocolBinary p = (ONetworkProtocolBinary) c.getProtocol();
-      final OChannelBinary channel = p.getChannel();
-      final ORecordSerializer ser =
-          ORecordSerializerFactory.instance().getFormat(c.getData().getSerializationImpl());
-      if (ser == null) return;
-
-      final byte[] content = ser.toStream(iConfig);
-
-      try {
-        // TRY ACQUIRING THE LOCK FOR MAXIMUM 3 SECS TO AVOID TO FREEZE CURRENT THREAD
-        if (channel.tryAcquireWriteLock(TIMEOUT_PUSH)) {
-          try {
-            channel.writeByte(OChannelBinaryProtocol.PUSH_DATA);
-            channel.writeInt(Integer.MIN_VALUE);
-            channel.writeByte(OChannelBinaryProtocol.REQUEST_PUSH_DISTRIB_CONFIG);
-            channel.writeBytes(content);
-            channel.flush();
-
-            pushed.add(c.getRemoteAddress());
-            logger.debug(
-                "Sent updated cluster configuration to the remote client %s", c.getRemoteAddress());
-
-          } finally {
-            channel.releaseWriteLock();
-          }
-        } else {
-          logger.info(
-              "Timeout on sending updated cluster configuration to the remote client %s",
-              c.getRemoteAddress());
-        }
-      } catch (Exception e) {
-        logger.warn("Cannot push cluster configuration to the client %s", e, c.getRemoteAddress());
-      }
-    }
   }
 
   public void shutdown() {

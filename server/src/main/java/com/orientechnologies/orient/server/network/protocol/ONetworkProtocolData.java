@@ -46,7 +46,6 @@ public class ONetworkProtocolData {
   private String serializationImpl = null;
   public boolean serverUser = false;
   public String serverUsername = null;
-  public boolean supportsLegacyPushMessages = true;
   public boolean collectStats = true;
   private ORecordSerializer serializer;
 

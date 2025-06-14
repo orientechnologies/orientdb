@@ -56,13 +56,10 @@ public class ORemoteServerChannel {
   private final String server;
   private OChannelBinarySynchClient channel;
   private int protocolVersion;
-  private ODistributedRequest prevRequest;
-  private ODistributedResponse prevResponse;
   private final String localNodeName;
 
   private static final int MAX_RETRY = 3;
   private static final String CLIENT_TYPE = "OrientDB Server";
-  private static final boolean COLLECT_STATS = false;
   private int sessionId = -1;
   private byte[] sessionToken;
   private OToken tokenInstance = null;
@@ -188,7 +185,6 @@ public class ORemoteServerChannel {
         "Cannot send distributed request " + request.getClass(),
         MAX_RETRY,
         true);
-    this.prevRequest = request;
   }
 
   public void sendResponse(final ODistributedResponse response) {
@@ -207,7 +203,6 @@ public class ORemoteServerChannel {
             + response.getClass(),
         MAX_RETRY,
         true);
-    this.prevResponse = response;
   }
 
   public void connect() throws IOException {
