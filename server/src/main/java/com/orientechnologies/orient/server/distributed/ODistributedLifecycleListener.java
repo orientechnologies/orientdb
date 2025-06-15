@@ -19,8 +19,6 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import java.util.Set;
-
 /**
  * Distributed lifecycle interface to catch event from the distributed cluster.
  *
@@ -63,9 +61,6 @@ public interface ODistributedLifecycleListener {
       String iNode, String iDatabaseName, ODistributedServerManager.DB_STATUS iNewStatus);
 
   default void onMessageReceived(ODistributedRequest request) {}
-
-  default void onMessagePartitionCalculated(
-      ODistributedRequest request, Set<Integer> involvedWorkerQueues) {}
 
   default void onMessageBeforeOp(String op, ODistributedRequestId requestId) {}
 

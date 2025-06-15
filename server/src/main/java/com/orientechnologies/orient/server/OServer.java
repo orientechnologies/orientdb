@@ -83,7 +83,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -91,8 +90,6 @@ public class OServer {
   private static final OLogger logger = OLogManager.instance().logger(OServer.class);
   private static final String ROOT_PASSWORD_VAR = "ORIENTDB_ROOT_PASSWORD";
   private static ThreadGroup threadGroup;
-  private static final Map<String, OServer> distributedServers =
-      new ConcurrentHashMap<String, OServer>();
   private CountDownLatch startupLatch;
   private CountDownLatch shutdownLatch;
   private final boolean shutdownEngineOnExit;
@@ -183,25 +180,6 @@ public class OServer {
     server.startup(config);
     server.activate();
     return server;
-  }
-
-  public static OServer getInstance(final String iServerId) {
-    return distributedServers.get(iServerId);
-  }
-
-  public static OServer getInstanceByPath(final String iPath) {
-    for (Map.Entry<String, OServer> entry : distributedServers.entrySet()) {
-      if (iPath.startsWith(entry.getValue().getDatabaseDirectory())) return entry.getValue();
-    }
-    return null;
-  }
-
-  public static void registerServerInstance(final String iServerId, final OServer iServer) {
-    distributedServers.put(iServerId, iServer);
-  }
-
-  public static void unregisterServerInstance(final String iServerId) {
-    distributedServers.remove(iServerId);
   }
 
   /**

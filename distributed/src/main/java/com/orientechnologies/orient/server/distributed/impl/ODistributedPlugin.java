@@ -21,7 +21,6 @@ package com.orientechnologies.orient.server.distributed.impl;
 
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_MAX_STARTUP_DELAY;
 
-import com.hazelcast.core.HazelcastException;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.hazelcast.core.Member;
@@ -45,7 +44,6 @@ import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
@@ -72,7 +70,6 @@ import com.orientechnologies.orient.server.distributed.NODE_STATUS;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedLifecycleListener;
-import com.orientechnologies.orient.server.distributed.ODistributedLockManager;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
@@ -119,11 +116,9 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TimerTask;
@@ -228,24 +223,8 @@ public class ODistributedPlugin extends OServerPluginAbstract
     clusterManager.configHazelcastPlugin(oServer, iParams, nodeName);
   }
 
-  @Override
-  @Deprecated
-  public String getCoordinatorServer() {
-    return "";
-  }
-
   public File getDefaultDatabaseConfigFile() {
     return defaultDatabaseConfigFile;
-  }
-
-  @Override
-  public ODistributedLockManager getLockManagerRequester() {
-    return clusterManager.getLockManagerRequester();
-  }
-
-  @Override
-  public ODistributedLockManager getLockManagerExecutor() {
-    return clusterManager.getLockManagerExecutor();
   }
 
   @Override
@@ -941,48 +920,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
     return nodeName;
   }
 
-  @SuppressWarnings("unchecked")
-  public ODocument getStats() {
-    final ODocument doc = new ODocument();
-
-    final Map<String, HashMap<String, Object>> nodes =
-        new HashMap<String, HashMap<String, Object>>();
-    doc.field("nodes", nodes);
-
-    Map<String, Object> localNode = new HashMap<String, Object>();
-    doc.field("localNode", localNode);
-
-    localNode.put("name", nodeName);
-    localNode.put("averageResponseTime", getMessageService().getAverageResponseTime());
-
-    Map<String, Object> databases = new HashMap<String, Object>();
-    localNode.put("databases", databases);
-    for (String dbName : getDatabases()) {
-      Map<String, Object> db = new HashMap<String, Object>();
-      databases.put(dbName, db);
-    }
-
-    return doc;
-  }
-
-  @Override
-  public Throwable convertException(final Throwable original) {
-    if (!Orient.instance().isActive() || isOffline())
-      return new OOfflineNodeException("Server " + nodeName + " is offline");
-
-    if (original instanceof HazelcastException
-        || original instanceof HazelcastInstanceNotActiveException)
-      return new IOException(
-          "Hazelcast wrapped exception: " + original.getMessage(), original.getCause());
-
-    if (original instanceof IllegalMonitorStateException)
-      // THIS IS RAISED WHEN INTERNAL LOCKING IS BROKEN BECAUSE HARD SHUTDOWN
-      return new IOException(
-          "Illegal monitor state: " + original.getMessage(), original.getCause());
-
-    return original;
-  }
-
   @Override
   public List<String> getOnlineNodes(String iDatabaseName) {
     return clusterManager.getOnlineNodes(iDatabaseName);
@@ -1113,20 +1050,8 @@ public class ODistributedPlugin extends OServerPluginAbstract
   }
 
   @Override
-  public int getTotalNodes(final String iDatabaseName) {
-    final ODistributedConfiguration cfg = getDatabaseConfiguration(iDatabaseName);
-    if (cfg != null) return cfg.getAllConfiguredServers().size();
-    return 0;
-  }
-
-  @Override
   public int getAvailableNodes(String iDatabaseName) {
     return clusterManager.getAvailableNodes(iDatabaseName);
-  }
-
-  @Override
-  public int getAvailableNodes(Collection<String> iNodes, String databaseName) {
-    return clusterManager.getAvailableNodes(iNodes, databaseName);
   }
 
   @Override
@@ -1912,28 +1837,12 @@ public class ODistributedPlugin extends OServerPluginAbstract
   }
 
   @Override
-  public String getNodeUuidByName(String name) {
-    return clusterManager.getNodeUuidByName(name);
-  }
-
-  @Override
   public void updateLastClusterChange() {
     clusterManager.updateLastClusterChange();
   }
 
   public void closeRemoteServer(final String node) {
     remoteServerManager.closeRemoteServer(node);
-  }
-
-  protected boolean isRelatedToLocalServer(final ODatabaseInternal iDatabase) {
-    // Check for the system database.
-    if (iDatabase.getName().equalsIgnoreCase(OSystemDatabase.SYSTEM_DB_NAME)) return false;
-    if (iDatabase.getSharedContext().getOrientDB() == this.serverInstance.getDatabases()) {
-      // Same instance of OrientDB context means is related to this server
-      return true;
-    } else {
-      return false;
-    }
   }
 
   /** Avoids to dump the same configuration twice if it's unchanged since the last time. */
@@ -1950,11 +1859,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
           "Distributed servers status (*=current):\n%s",
           ODistributedOutput.formatServerStatus(this, cfg));
     }
-  }
-
-  @Override
-  public long getClusterTime() {
-    return clusterManager.getClusterTime();
   }
 
   public static String getListeningBinaryAddress(final ONodeConfig cfg) {
@@ -1980,15 +1884,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
 
     for (ODistributedLifecycleListener listener : listeners) {
       listener.onMessageReceived(request);
-    }
-  }
-
-  @Override
-  public void messagePartitionCalculate(
-      ODistributedRequest request, Set<Integer> involvedWorkerQueues) {
-
-    for (ODistributedLifecycleListener listener : listeners) {
-      listener.onMessagePartitionCalculated(request, involvedWorkerQueues);
     }
   }
 
@@ -2167,11 +2062,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
   @Override
   public void setNodeStatus(NODE_STATUS iStatus) {
     clusterManager.setNodeStatus(iStatus);
-  }
-
-  @Override
-  public boolean checkNodeStatus(NODE_STATUS status) {
-    return clusterManager.checkNodeStatus(status);
   }
 
   public void onNodeJoined(String joinedNodeName, Member member) {

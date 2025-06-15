@@ -40,15 +40,6 @@ public class SplitBrainNetwork3StaticServersIT extends AbstractHARemoveNode {
 
   @Override
   protected void onAfterExecution() throws Exception {
-    Assert.assertEquals(
-        "europe-0",
-        serverInstance.get(0).getServerInstance().getDistributedManager().getCoordinatorServer());
-    Assert.assertEquals(
-        "europe-0",
-        serverInstance.get(1).getServerInstance().getDistributedManager().getCoordinatorServer());
-    Assert.assertEquals(
-        "europe-0",
-        serverInstance.get(2).getServerInstance().getDistributedManager().getCoordinatorServer());
 
     banner("SIMULATE ISOLATION OF SERVER " + (SERVERS - 1) + "...");
 
@@ -61,16 +52,6 @@ public class SplitBrainNetwork3StaticServersIT extends AbstractHARemoveNode {
         "SERVER "
             + (SERVERS - 1)
             + " HAS BEEN ISOLATED, WAITING FOR THE DATABASE ON SERVER 2 TO BE OFFLINE...");
-
-    Assert.assertEquals(
-        "europe-0",
-        serverInstance.get(0).getServerInstance().getDistributedManager().getCoordinatorServer());
-    Assert.assertEquals(
-        "europe-0",
-        serverInstance.get(1).getServerInstance().getDistributedManager().getCoordinatorServer());
-    Assert.assertEquals(
-        "europe-2",
-        serverInstance.get(2).getServerInstance().getDistributedManager().getCoordinatorServer());
 
     // CHECK THE SPLIT
     waitForDatabaseStatus(
@@ -154,16 +135,6 @@ public class SplitBrainNetwork3StaticServersIT extends AbstractHARemoveNode {
         1, "europe-2", getDatabaseName(), ODistributedServerManager.DB_STATUS.ONLINE);
     assertDatabaseStatusEquals(
         2, "europe-2", getDatabaseName(), ODistributedServerManager.DB_STATUS.ONLINE);
-
-    Assert.assertEquals(
-        "europe-0",
-        serverInstance.get(0).getServerInstance().getDistributedManager().getCoordinatorServer());
-    Assert.assertEquals(
-        "europe-0",
-        serverInstance.get(1).getServerInstance().getDistributedManager().getCoordinatorServer());
-    Assert.assertEquals(
-        "europe-0",
-        serverInstance.get(2).getServerInstance().getDistributedManager().getCoordinatorServer());
 
     banner("NETWORK FOR THE ISOLATED NODE " + (SERVERS - 1) + " HAS BEEN RESTORED");
 

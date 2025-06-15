@@ -47,11 +47,8 @@ import com.orientechnologies.orient.server.distributed.impl.task.OSyncDatabaseTa
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -139,19 +136,11 @@ public class OHazelcastClusterMetadataManager
 
     logger.info("Starting distributed server '%s' (hzID=%s)...", localNodeName, nodeUuid);
 
-    final long clusterTime = getClusterTime();
-    final long deltaTime = System.currentTimeMillis() - clusterTime;
-    logger.info(
-        "Distributed cluster time=%s (delta from local node=%d)...",
-        new Date(clusterTime), deltaTime);
-
     activeNodes.put(localNodeName, hazelcastInstance.getCluster().getLocalMember());
     activeNodesNamesByUuid.put(nodeUuid, localNodeName);
     activeNodesUuidByName.put(localNodeName, nodeUuid);
 
     configurationMap = new OHazelcastDistributedMap(hazelcastInstance);
-
-    OServer.registerServerInstance(localNodeName, serverInstance);
 
     initRegisteredNodeIds();
 
@@ -399,21 +388,7 @@ public class OHazelcastClusterMetadataManager
     }
   }
 
-  public long getClusterTime() {
-    if (hazelcastInstance == null) throw new HazelcastInstanceNotActiveException();
-
-    try {
-      return hazelcastInstance.getCluster().getClusterTime();
-    } catch (HazelcastInstanceNotActiveException e) {
-      return -1;
-    }
-  }
-
   public ODistributedLockManager getLockManagerRequester() {
-    return distributedLockManager;
-  }
-
-  public ODistributedLockManager getLockManagerExecutor() {
     return distributedLockManager;
   }
 
@@ -493,7 +468,6 @@ public class OHazelcastClusterMetadataManager
         });
 
     setNodeStatus(NODE_STATUS.OFFLINE);
-    OServer.unregisterServerInstance(nodeName);
   }
 
   public Member getClusterMemberByName(final String rNodeName) {
@@ -1242,19 +1216,6 @@ public class OHazelcastClusterMetadataManager
   }
 
   /**
-   * Returns the available nodes (not offline) and clears the node list by removing the offline
-   * nodes.
-   */
-  public int getAvailableNodes(final Collection<String> iNodes, final String databaseName) {
-    for (Iterator<String> it = iNodes.iterator(); it.hasNext(); ) {
-      final String node = it.next();
-
-      if (!isNodeAvailable(node, databaseName)) it.remove();
-    }
-    return iNodes.size();
-  }
-
-  /**
    * Executes an operation protected by a distributed lock (one per database).
    *
    * @param <T> Return type
@@ -1269,7 +1230,7 @@ public class OHazelcastClusterMetadataManager
 
     boolean updated;
     T result;
-    getLockManagerExecutor().acquireExclusiveLock(databaseName, nodeName, timeoutLocking);
+    getLockManagerRequester().acquireExclusiveLock(databaseName, nodeName, timeoutLocking);
     try {
 
       if (lastCfg == null) {
@@ -1315,7 +1276,7 @@ public class OHazelcastClusterMetadataManager
       final String databaseName, final long timeoutLocking, final Callable<T> iCallback) {
 
     T result;
-    getLockManagerExecutor().acquireExclusiveLock(databaseName, nodeName, timeoutLocking);
+    getLockManagerRequester().acquireExclusiveLock(databaseName, nodeName, timeoutLocking);
     try {
 
       try {
@@ -1362,10 +1323,6 @@ public class OHazelcastClusterMetadataManager
 
   public NODE_STATUS getNodeStatus() {
     return status;
-  }
-
-  public boolean checkNodeStatus(final NODE_STATUS iStatus2Check) {
-    return status.equals(iStatus2Check);
   }
 
   public boolean isNodeOnline(final String iNodeName, final String iDatabaseName) {
