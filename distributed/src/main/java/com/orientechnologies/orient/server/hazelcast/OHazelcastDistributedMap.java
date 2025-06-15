@@ -232,16 +232,12 @@ public class OHazelcastDistributedMap extends ConcurrentHashMap<String, Object>
     return key.startsWith(OHazelcastClusterMetadataManager.CONFIG_NODE_PREFIX);
   }
 
-  public ODocument getRegisteredNodes() {
-    final ODocument registeredNodes = new ODocument();
+  public ORegisteredNodes getRegisteredNodes() {
     String jsonData = (String) this.get(OHazelcastClusterMetadataManager.CONFIG_REGISTEREDNODES);
-    if (jsonData != null) {
-      registeredNodes.fromJSON(jsonData);
-    }
-    return registeredNodes;
+    return new ORegisteredNodes(jsonData);
   }
 
-  public void putRegisteredNodes(ODocument registeredNodes) {
+  public void putRegisteredNodes(ORegisteredNodes registeredNodes) {
     this.put(OHazelcastClusterMetadataManager.CONFIG_REGISTEREDNODES, registeredNodes.toJSON());
   }
 

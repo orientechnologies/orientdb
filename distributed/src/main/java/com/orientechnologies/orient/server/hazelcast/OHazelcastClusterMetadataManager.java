@@ -66,7 +66,7 @@ public class OHazelcastClusterMetadataManager
   public static final String CONFIG_DATABASE_PREFIX = "database.";
   public static final String CONFIG_NODE_PREFIX = "node.";
   public static final String CONFIG_DBSTATUS_PREFIX = "dbstatus.";
-  public static final String CONFIG_REGISTEREDNODES = "registeredNodes";
+  public static final String CONFIG_REGISTEREDNODES = "doc";
 
   protected String hazelcastConfigFile = "hazelcast.xml";
   protected Config hazelcastConfig;
@@ -246,12 +246,13 @@ public class OHazelcastClusterMetadataManager
       registeredNodeById.clear();
       registeredNodeByName.clear();
 
-      final ODocument registeredNodesFromCluster = configurationMap.getRegisteredNodes();
+      final ORegisteredNodes registeredNodesFromCluster = configurationMap.getRegisteredNodes();
+      List<String> ids = registeredNodesFromCluster.getIds();
+      Map<String, Integer> names = registeredNodesFromCluster.getNames();
 
-      if (registeredNodesFromCluster.hasProperty("ids")
-          && registeredNodesFromCluster.hasProperty("names")) {
-        registeredNodeById.addAll(registeredNodesFromCluster.field("ids", OType.EMBEDDEDLIST));
-        registeredNodeByName.putAll(registeredNodesFromCluster.field("names", OType.EMBEDDEDMAP));
+      if (ids != null && names != null) {
+        registeredNodeById.addAll(ids);
+        registeredNodeByName.putAll(names);
 
         if (registeredNodeByName.containsKey(nodeName)) {
           nodeId = registeredNodeByName.get(nodeName);
@@ -275,8 +276,8 @@ public class OHazelcastClusterMetadataManager
 
       logger.infoNode(nodeName, "Registered local server with nodeId=%d", nodeId);
 
-      registeredNodesFromCluster.field("ids", registeredNodeById, OType.EMBEDDEDLIST);
-      registeredNodesFromCluster.field("names", registeredNodeByName, OType.EMBEDDEDMAP);
+      registeredNodesFromCluster.setIds(registeredNodeById);
+      registeredNodesFromCluster.setNames(registeredNodeByName);
 
       configurationMap.putRegisteredNodes(registeredNodesFromCluster);
 
@@ -926,16 +927,16 @@ public class OHazelcastClusterMetadataManager
   }
 
   public void reloadRegisteredNodes() {
-    final ODocument registeredNodesFromCluster = configurationMap.getRegisteredNodes();
+    ORegisteredNodes registeredNodesFromCluster = configurationMap.getRegisteredNodes();
+    List<String> ids = registeredNodesFromCluster.getIds();
+    Map<String, Integer> names = registeredNodesFromCluster.getNames();
 
-    if (registeredNodesFromCluster.hasProperty("ids")
-        && registeredNodesFromCluster.hasProperty("names")) {
+    if (ids != null && names != null) {
+      registeredNodeById.addAll(ids);
       registeredNodeById.clear();
-      registeredNodeById.addAll(registeredNodesFromCluster.field("ids", OType.EMBEDDEDLIST));
       registeredNodeByName.clear();
-      registeredNodeByName.putAll(registeredNodesFromCluster.field("names", OType.EMBEDDEDMAP));
-    } else
-      throw new ODistributedException("Cannot find distributed 'registeredNodes' configuration");
+      registeredNodeByName.putAll(names);
+    } else throw new ODistributedException("Cannot find distributed 'doc' configuration");
   }
 
   private List<String> getRegisteredNodes() {
@@ -1080,7 +1081,7 @@ public class OHazelcastClusterMetadataManager
       logger.errorNode(
           nodeName,
           "Removed node id=%s name=%s has not being recognized. Remove the node manually"
-              + " (registeredNodes=%s)",
+              + " (doc=%s)",
           member,
           nodeLeftName,
           registeredNodes);
