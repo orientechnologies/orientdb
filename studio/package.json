@@ -75,7 +75,7 @@
   "devDependencies": {
     "@types/angular": "^1.8.9",
     "@types/hammerjs": "^2.0.45",
-    "@types/jasmine": "^2.6.3",
+    "@types/jasmine": "^2.8.23",
     "@types/jquery": "^3.5.2",
     "@types/node": "^7.10.14",
     "@types/selenium-webdriver": "^2.53.53",
