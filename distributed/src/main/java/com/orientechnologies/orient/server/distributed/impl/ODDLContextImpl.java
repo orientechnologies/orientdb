@@ -5,6 +5,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.tx.OTransactionId;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
+import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ODistributedTxContext;
@@ -17,8 +18,11 @@ public class ODDLContextImpl implements ODistributedTxContext {
   private OTransactionId afterChangeId;
   private ODistributedRequestId requestId;
   private TxContextStatus status;
+  private ODistributedDatabase shared;
+  private long startedOn;
 
   public ODDLContextImpl(
+      ODistributedDatabase shared,
       String query,
       OTransactionId preChangeId,
       OTransactionId afterChangeId,
@@ -27,6 +31,8 @@ public class ODDLContextImpl implements ODistributedTxContext {
     this.preChangeId = preChangeId;
     this.afterChangeId = afterChangeId;
     this.requestId = requestId;
+    this.shared = shared;
+    this.startedOn = System.currentTimeMillis();
   }
 
   @Override
@@ -43,19 +49,23 @@ public class ODDLContextImpl implements ODistributedTxContext {
   }
 
   @Override
-  public void destroy() {}
+  public void destroy() {
+    shared.rollback(this.preChangeId);
+    shared.rollback(this.afterChangeId);
+  }
 
   @Override
   public void clearUndo() {}
 
   @Override
   public long getStartedOn() {
-    return 0;
+    return startedOn;
   }
 
   @Override
   public Set<ORecordId> cancel(
       ODistributedServerManager current, ODatabaseDocumentInternal database) {
+    destroy();
     return null;
   }
 
