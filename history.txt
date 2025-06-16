@@ -29,6 +29,26 @@ This document contains the last changes of OrientDB Community Edition.
 
 
 -----------------------------------------------------------------------------------------------------------------------------------
+VERSION 3.2.41 - (June, 18  2025)
+- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3241---18-June-2025
+
+
+# Core
+- Fix synchronization on register and unregister of legacy listener APIs
+
+# Server
+- Minor fix in push manager concurrent subscribes and unsubscribes
+
+# Client
+- Increase logging in response handling
+- Make sure to terminate the push subscribe connection if fails to connect
+- simplified the returning of connection from push client
+
+# Distributed
+- make sure to cancel promises of failed DDLs
+
+
+-----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.40 - (May, 30  2025)
 - Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3240---30-May-2025
 
