@@ -440,9 +440,10 @@ angular-bootstrap-switch@^0.5.2:
     bootstrap-switch "3.3.2"
     jquery ">=1.9.0"
 
-angular-local-storage@^0.2.7:
-  version "0.2.7"
-  resolved "https://registry.yarnpkg.com/angular-local-storage/-/angular-local-storage-0.2.7.tgz#62eedadb38bd718f877ec26e61648809495fbb12"
+angular-local-storage@^0.7.1:
+  version "0.7.1"
+  resolved "https://registry.yarnpkg.com/angular-local-storage/-/angular-local-storage-0.7.1.tgz#fbd2730763c29fa9af5725e0186c780621e8cdd2"
+  integrity sha512-AJgX9+f8eWpsnSuPrNZ/G3TdH/iBtlEdOUgLohbddTrwJ+E0+tfHtXKNgYpYh7iN6aM6subYmn0KfvZBBaLdfw==
 
 angular-motion@0.4.4:
   version "0.4.4"
