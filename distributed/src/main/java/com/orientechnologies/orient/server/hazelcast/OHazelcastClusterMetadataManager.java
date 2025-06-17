@@ -26,7 +26,6 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentAbstract;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.distributed.ONodeConfig;
@@ -42,6 +41,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
 import com.orientechnologies.orient.server.distributed.ODistributedStartupException;
 import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
 import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
+import com.orientechnologies.orient.server.distributed.config.OClusterConfiguration;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedPlugin;
 import com.orientechnologies.orient.server.distributed.impl.task.OSyncDatabaseTask;
 import java.io.FileNotFoundException;
@@ -1138,35 +1138,30 @@ public class OHazelcastClusterMetadataManager
     return "ext:" + iMember.getUuid();
   }
 
-  public ODocument getClusterConfiguration() {
+  public OClusterConfiguration getClusterConfiguration() {
 
-    final ODocument cluster = new ODocument();
+    OClusterConfiguration clusterConfig = new OClusterConfiguration();
 
-    cluster.field("localName", distributedPlugin.getName());
-    cluster.field("localId", nodeUuid);
+    clusterConfig.setLocalName(distributedPlugin.getName());
+    clusterConfig.setLocalId(nodeUuid);
 
     // INSERT MEMBERS
-    final List<ODocument> members = new ArrayList<ODocument>();
-    cluster.field("members", members, OType.EMBEDDEDLIST);
     for (Member member : activeNodes.values()) {
       ONodeConfig nodeConfig = getNodeConfigurationByUuid(member.getUuid(), true);
       if (nodeConfig == null) {
         continue;
       }
-      ODocument memberConfig = nodeConfig.getConfig().copy();
-      members.add(memberConfig);
-
       final String nodeName = getNodeName(member, true);
       final Map<String, String> dbStatus = new HashMap<>();
-      memberConfig.field("databasesStatus", dbStatus, OType.EMBEDDEDMAP);
-      // Member DB status
       for (String db : distributedPlugin.getManagedDatabases()) {
         final DB_STATUS nodeDbState = getDatabaseStatus(nodeName, db);
         dbStatus.put(db, nodeDbState.toString());
       }
+      nodeConfig.setDatabasesStatus(dbStatus);
+      clusterConfig.addMember(nodeConfig);
     }
 
-    return cluster;
+    return clusterConfig;
   }
 
   public String tryGetNodeNameById(final int id) {

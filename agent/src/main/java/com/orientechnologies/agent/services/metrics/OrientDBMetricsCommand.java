@@ -14,9 +14,11 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.enterprise.server.OEnterpriseServer;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.distributed.ONodeConfig;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.distributed.config.OClusterConfiguration;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
@@ -78,14 +80,14 @@ public class OrientDBMetricsCommand extends OServerCommandAuthenticatedServerAbs
   }
 
   private ODocument calculateDBStatus(
-      final ODistributedServerManager manager, final ODocument cfg) {
+      final ODistributedServerManager manager, final OClusterConfiguration cfg) {
 
     final ODocument doc = new ODocument();
-    final Collection<ODocument> members = cfg.field("members");
+    final Collection<ONodeConfig> members = cfg.getMembers();
 
     Set<String> databases = new HashSet<String>();
-    for (ODocument m : members) {
-      final Collection<String> dbs = m.field("databases");
+    for (ONodeConfig m : members) {
+      final Collection<String> dbs = m.getDatabases();
       for (String db : dbs) {
         databases.add(db);
       }
@@ -113,14 +115,14 @@ public class OrientDBMetricsCommand extends OServerCommandAuthenticatedServerAbs
   private void doGet(OHttpResponse iResponse, String[] parts) throws IOException {
     if (parts.length == 1) {
 
-      ODocument metrics = new ODocument();
+      OClusterConfiguration metrics;
       ODistributedServerManager manager = server.getDistributedManager();
 
       if (manager != null) {
         metrics = manager.getClusterConfiguration();
-        final Collection<ODocument> documents = metrics.field("members");
+        final Collection<ONodeConfig> documents = metrics.getMembers();
         List<String> servers = new ArrayList<String>(documents.size());
-        for (ODocument document : documents) servers.add(document.field("name"));
+        for (ONodeConfig document : documents) servers.add(document.getName());
 
         Set<String> databases = manager.getServerInstance().listDatabases();
         if (databases.isEmpty()) {
@@ -144,25 +146,26 @@ public class OrientDBMetricsCommand extends OServerCommandAuthenticatedServerAbs
                             return new ODocument();
                           }));
 
-          metrics.field("clusterStats", responses);
+          metrics.setClusterStats(responses);
 
-          metrics.field("databasesStatus", calculateDBStatus(manager, metrics));
+          metrics.setDatabaseStatus(calculateDBStatus(manager, metrics));
         }
 
       } else {
+        metrics = new OClusterConfiguration();
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
         Map<String, ODocument> singleNodeStats = new HashMap<>();
         registry.toJSON(buffer);
         singleNodeStats.put("orientdb", new ODocument().fromJSON(buffer.toString()));
-        metrics.field("clusterStats", singleNodeStats);
+        metrics.setClusterStats(singleNodeStats);
       }
-      metrics.setProperty("distributed", manager != null);
-      metrics.setProperty("nodeName", manager != null ? manager.getLocalNodeName() : "orientdb");
+      metrics.setDistributed(manager != null);
+      metrics.setLocalName(manager != null ? manager.getLocalNodeName() : "orientdb");
       iResponse.send(
           OHttpUtils.STATUS_OK_CODE,
           OHttpUtils.STATUS_OK_DESCRIPTION,
           OHttpUtils.CONTENT_JSON,
-          metrics.toJSON(""),
+          metrics.getDocument().toJSON(""),
           null);
     } else {
       String command = parts[1];

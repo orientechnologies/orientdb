@@ -23,7 +23,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.server.distributed.config.OClusterConfiguration;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -144,7 +144,7 @@ public abstract class AbstractServerClusterTest {
       for (ServerRun server : serverInstance) {
         final ODistributedServerManager mgr = server.getServerInstance().getDistributedManager();
         Assert.assertNotNull(mgr);
-        final ODocument cfg = mgr.getClusterConfiguration();
+        OClusterConfiguration cfg = mgr.getClusterConfiguration();
         Assert.assertNotNull(cfg);
       }
 

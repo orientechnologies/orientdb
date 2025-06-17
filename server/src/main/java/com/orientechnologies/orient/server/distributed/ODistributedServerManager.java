@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.distributed.ONodeConfig;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.distributed.config.OClusterConfiguration;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import java.io.File;
 import java.io.IOException;
@@ -151,7 +152,7 @@ public interface ODistributedServerManager {
 
   String getLocalNodeName();
 
-  ODocument getClusterConfiguration();
+  OClusterConfiguration getClusterConfiguration();
 
   String getNodeNameById(int id);
 

@@ -26,9 +26,10 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.distributed.ONodeConfig;
+import com.orientechnologies.orient.distributed.ONodeListenerConfig;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
@@ -36,6 +37,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
+import com.orientechnologies.orient.server.distributed.config.OClusterConfiguration;
 import com.orientechnologies.orient.server.distributed.impl.task.OEnterpriseStatsTask;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
@@ -45,7 +47,6 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -217,11 +218,20 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
     // NODE CONFIG
     if (command.equalsIgnoreCase("node")) {
 
-      doc = doGetNodeConfig(manager);
+      OClusterConfiguration info = doGetNodeConfig(manager);
+      if (info != null) {
+        doc = info.getDocument();
+      } else {
+        doc = null;
+      }
 
     } else if (command.equalsIgnoreCase("database")) {
-
-      doc = doGetDatabaseInfo(server, id);
+      ODistributedConfiguration info = doGetDatabaseInfo(server, id);
+      if (info != null) {
+        doc = info.getDocument();
+      } else {
+        doc = null;
+      }
 
     } else if (command.equalsIgnoreCase("stats")) {
 
@@ -231,7 +241,12 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
 
       } else {
         if (manager != null) {
-          doc = getClusterConfig(manager);
+          OClusterConfiguration info = getClusterConfig(manager);
+          if (info != null) {
+            doc = info.getDocument();
+          } else {
+            doc = null;
+          }
         } else {
           throw new OConfigurationException(
               "Seems that the server is not running in distributed mode");
@@ -275,12 +290,12 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
     return doc;
   }
 
-  public ODocument getClusterConfig(final ODistributedServerManager manager) {
-    final ODocument doc = manager.getClusterConfiguration();
+  public OClusterConfiguration getClusterConfig(final ODistributedServerManager manager) {
+    final OClusterConfiguration doc = manager.getClusterConfiguration();
 
-    final Collection<ODocument> documents = doc.field("members");
+    final Collection<ONodeConfig> documents = doc.getMembers();
     List<String> servers = new ArrayList<String>(documents.size());
-    for (ODocument document : documents) servers.add((String) document.field("name"));
+    for (ONodeConfig document : documents) servers.add((String) document.getName());
 
     Set<String> databases = manager.getServerInstance().listDatabases();
     if (databases.isEmpty()) {
@@ -299,28 +314,28 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
     final Object payload = dResponse.getPayload();
 
     if (payload != null && payload instanceof Map) {
-      doc.field("clusterStats", payload);
+      doc.setClusterStats((Map<String, ODocument>) payload);
     }
 
-    doc.field("databasesStatus", calculateDBStatus(manager, doc));
+    doc.setDatabaseStatus(calculateDBStatus(manager, doc));
     return doc;
   }
 
   private ODocument calculateDBStatus(
-      final ODistributedServerManager manager, final ODocument cfg) {
+      final ODistributedServerManager manager, final OClusterConfiguration cfg) {
 
     final ODocument doc = new ODocument();
-    final Collection<ODocument> members = cfg.field("members");
+    final Collection<ONodeConfig> members = cfg.getMembers();
 
     Set<String> databases = new HashSet<String>();
-    for (ODocument m : members) {
-      final Collection<String> dbs = m.field("databases");
+    for (ONodeConfig m : members) {
+      final Collection<String> dbs = m.getDatabases();
       for (String db : dbs) {
         databases.add(db);
       }
     }
     for (String database : databases) {
-      doc.field(database, singleDBStatus(manager, database));
+      doc.setProperty(database, singleDBStatus(manager, database));
     }
     return doc;
   }
@@ -334,29 +349,25 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
     for (String serverName : servers) {
       final ODistributedServerManager.DB_STATUS databaseStatus =
           manager.getDatabaseStatus(serverName, database);
-      entries.field(serverName, databaseStatus.toString());
+      entries.setProperty(serverName, databaseStatus.toString());
     }
     return entries;
   }
 
-  public ODocument doGetDatabaseInfo(final OServer server, final String id) {
+  public ODistributedConfiguration doGetDatabaseInfo(final OServer server, final String id) {
     final ODistributedConfiguration cfg =
         server.getDistributedManager().getDatabaseConfiguration(id);
-    if (cfg != null) {
-      return cfg.getDocument();
-    } else {
-      return null;
-    }
+    return cfg;
   }
 
-  public ODocument doGetNodeConfig(final ODistributedServerManager manager) {
-    ODocument doc;
+  public OClusterConfiguration doGetNodeConfig(final ODistributedServerManager manager) {
+    OClusterConfiguration doc;
     if (manager != null) {
       doc = manager.getClusterConfiguration();
 
-      final Collection<ODocument> documents = doc.field("members");
+      final Collection<ONodeConfig> documents = doc.getMembers();
       List<String> servers = new ArrayList<String>(documents.size());
-      for (ODocument document : documents) servers.add((String) document.field("name"));
+      for (ONodeConfig document : documents) servers.add((String) document.getName());
 
       final ODistributedResponse dResponse =
           manager.sendRequest(
@@ -369,8 +380,8 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
       final Object payload = dResponse.getPayload();
 
       if (payload != null && payload instanceof Map) {
-        for (ODocument document : documents) {
-          final String serverName = (String) document.field("name");
+        for (ONodeConfig document : documents) {
+          final String serverName = (String) document.getName();
           Object stats = ((Map<String, Object>) payload).get(serverName);
           if (stats instanceof ODocument) {
             final ODocument dStat = (ODocument) stats;
@@ -381,16 +392,12 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
       }
 
     } else {
-      doc = new ODocument();
+      doc = new OClusterConfiguration();
 
-      final ODocument member = new ODocument();
+      final ONodeConfig member = new ONodeConfig();
 
-      member.field("name", "orientdb");
-      member.field("status", "ONLINE");
-
-      final List<Map<String, Object>> listeners = new ArrayList<Map<String, Object>>();
-
-      member.field("listeners", listeners, OType.EMBEDDEDLIST);
+      member.setName("orientdb");
+      member.setStatus("ONLINE");
 
       final String realtime = Orient.instance().getProfiler().toJSON("realtime", "system.config.");
       ODocument cfg = new ODocument().fromJSON(realtime);
@@ -398,33 +405,26 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
       addConfiguration("realtime.sizes", member, cfg);
       addConfiguration("realtime.texts", member, cfg);
 
+      final List<ONodeListenerConfig> listeners = new ArrayList<>();
       for (OServerNetworkListener listener : server.getNetworkListeners()) {
-        final Map<String, Object> listenerCfg = new HashMap<String, Object>();
-        listeners.add(listenerCfg);
-
-        listenerCfg.put("protocol", listener.getProtocolType().getSimpleName());
-        listenerCfg.put("listen", listener.getListeningAddress(true));
+        listeners.add(
+            new ONodeListenerConfig(
+                listener.getProtocolType().getSimpleName(), listener.getListeningAddress(true)));
       }
-      member.field("databases", server.getAvailableStorageNames().keySet());
-      doc.field(
-          "members",
-          new ArrayList<ODocument>() {
-            {
-              add(member);
-            }
-          });
+      member.setListeners(listeners);
+      member.setDatabases(server.getAvailableStorageNames().keySet());
+      doc.addMember(member);
     }
     return doc;
   }
 
-  private void addConfiguration(final String path, final ODocument member, final ODocument cfg) {
+  private void addConfiguration(final String path, final ONodeConfig member, final ODocument cfg) {
 
     if (member != null) {
-      ODocument configuration = member.field("configuration");
+      ODocument configuration = member.getConfiguration();
 
       if (configuration == null) {
         configuration = new ODocument();
-        member.field("configuration", configuration);
       }
 
       if (cfg != null) {
@@ -438,16 +438,17 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
           }
         }
       }
+      member.setConfiguration(configuration);
     }
   }
 
-  private ODocument getMemberConfig(final ODocument doc, final String node) {
+  private ONodeConfig getMemberConfig(final OClusterConfiguration doc, final String node) {
 
-    final Collection<ODocument> documents = doc.field("members");
+    final Collection<ONodeConfig> documents = doc.getMembers();
 
-    ODocument member = null;
-    for (ODocument document : documents) {
-      final String name = document.field("name");
+    ONodeConfig member = null;
+    for (ONodeConfig document : documents) {
+      final String name = document.getName();
       if (name.equalsIgnoreCase(node)) {
         member = document;
         break;

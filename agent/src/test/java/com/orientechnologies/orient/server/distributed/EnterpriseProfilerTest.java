@@ -1,8 +1,8 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.agent.http.command.OServerCommandDistributedManager;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.distributed.config.OClusterConfiguration;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpAbstract;
 import java.util.Set;
@@ -74,20 +74,20 @@ public class EnterpriseProfilerTest extends AbstractServerClusterTest {
         (OServerCommandDistributedManager)
             listener.getCommand(OServerCommandDistributedManager.class);
 
-    ODocument clusterStats = command.getClusterConfig(dm);
+    OClusterConfiguration clusterStats = command.getClusterConfig(dm);
 
     Assert.assertNotNull(clusterStats);
 
     for (String nodeName : availableNodeNames) {
       Assert.assertNotNull(
           String.format("Stats for server [%s] should't miss", nodeName),
-          clusterStats.eval("clusterStats." + nodeName));
+          clusterStats.getDocument().eval("clusterStats." + nodeName));
     }
 
     for (String node : nodes) {
       Assert.assertNull(
           String.format("Stats for server [%s] should't be in stats", node),
-          clusterStats.eval("clusterStats." + node));
+          clusterStats.getDocument().eval("clusterStats." + node));
     }
   }
 

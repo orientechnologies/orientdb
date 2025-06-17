@@ -85,6 +85,7 @@ import com.orientechnologies.orient.server.distributed.OModifiableDistributedCon
 import com.orientechnologies.orient.server.distributed.ORemoteServerAvailabilityCheck;
 import com.orientechnologies.orient.server.distributed.ORemoteServerController;
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactoryManager;
+import com.orientechnologies.orient.server.distributed.config.OClusterConfiguration;
 import com.orientechnologies.orient.server.distributed.impl.metadata.OClassDistributed;
 import com.orientechnologies.orient.server.distributed.impl.task.ODropDatabaseTask;
 import com.orientechnologies.orient.server.distributed.impl.task.ONewDeltaTaskResponse;
@@ -1847,7 +1848,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
 
   /** Avoids to dump the same configuration twice if it's unchanged since the last time. */
   public void dumpServersStatus() {
-    final ODocument cfg = getClusterConfiguration();
+    final OClusterConfiguration cfg = getClusterConfiguration();
 
     final String compactStatus = ODistributedOutput.getCompactServerStatus(this, cfg);
 
@@ -1971,7 +1972,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
 
   protected void dumpStats() {
     try {
-      final ODocument clusterCfg = getClusterConfiguration();
+      final OClusterConfiguration clusterCfg = getClusterConfiguration();
 
       final Set<String> dbs = getManagedDatabases();
 
@@ -2207,7 +2208,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
   }
 
   @Override
-  public ODocument getClusterConfiguration() {
+  public OClusterConfiguration getClusterConfiguration() {
     if (!enabled) return null;
 
     return clusterManager.getClusterConfiguration();

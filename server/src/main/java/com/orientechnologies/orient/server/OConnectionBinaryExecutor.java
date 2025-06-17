@@ -38,7 +38,6 @@ import com.orientechnologies.orient.core.fetch.remote.ORemoteFetchContext;
 import com.orientechnologies.orient.core.fetch.remote.ORemoteFetchListener;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHookV2;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -68,6 +67,7 @@ import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProt
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ORemoteServerController;
+import com.orientechnologies.orient.server.distributed.config.OClusterConfiguration;
 import com.orientechnologies.orient.server.network.protocol.binary.HandshakeInfo;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
@@ -224,19 +224,21 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
   @Override
   public OBinaryResponse executeDistributedStatus(ODistributedStatusRequest request) {
     final ODocument req = request.getStatus();
-    ODocument clusterConfig = new ODocument();
+    OClusterConfiguration clusterConfig;
 
     final String operation = req.field("operation");
     if (operation == null) throw new IllegalArgumentException("Cluster operation is null");
 
     if (operation.equals("status")) {
       final OServerPlugin plugin = server.getPlugin("cluster");
-      if (plugin != null && plugin instanceof ODistributedServerManager)
+      if (plugin != null && plugin instanceof ODistributedServerManager) {
         clusterConfig = ((ODistributedServerManager) plugin).getClusterConfiguration();
+      } else {
+        clusterConfig = new OClusterConfiguration();
+      }
     } else
       throw new IllegalArgumentException("Cluster operation '" + operation + "' is not supported");
-
-    return new ODistributedStatusResponse(clusterConfig);
+    return new ODistributedStatusResponse(clusterConfig.getDocument());
   }
 
   @Override
@@ -1081,7 +1083,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
 
     final OServerPlugin plugin = server.getPlugin("cluster");
     byte[] distriConf = null;
-    ODocument distributedCfg;
+    OClusterConfiguration distributedCfg;
     if (plugin instanceof ODistributedServerManager) {
       distributedCfg = ((ODistributedServerManager) plugin).getClusterConfiguration();
 
@@ -1090,9 +1092,9 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
               .getDatabaseConfiguration(connection.getDatabase().getName());
       if (dbCfg != null) {
         // ENHANCE SERVER CFG WITH DATABASE CFG
-        distributedCfg.field("database", dbCfg.getDocument(), OType.EMBEDDED);
+        distributedCfg.setDatabaseConfiguration(dbCfg);
       }
-      distriConf = getRecordBytes(connection, distributedCfg);
+      distriConf = getRecordBytes(connection, distributedCfg.getDocument());
     }
 
     String[] clusterNames = new String[clusters.size()];

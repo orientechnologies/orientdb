@@ -27,11 +27,14 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.distributed.ONodeConfig;
+import com.orientechnologies.orient.distributed.ONodeListenerConfig;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ODistributedTxContext;
+import com.orientechnologies.orient.server.distributed.config.OClusterConfiguration;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -52,28 +55,28 @@ import java.util.stream.Collectors;
 public class ODistributedOutput {
 
   public static String formatServerStatus(
-      final ODistributedServerManager manager, final ODocument distribCfg) {
+      final ODistributedServerManager manager, final OClusterConfiguration distribCfg) {
     final List<OIdentifiable> rows = new ArrayList<OIdentifiable>();
 
-    final Collection<ODocument> members = distribCfg.field("members");
+    final Collection<ONodeConfig> members = distribCfg.getMembers();
 
     if (members != null)
-      for (ODocument m : members) {
+      for (ONodeConfig m : members) {
         if (m == null) continue;
 
         final ODocument serverRow = new ODocument();
 
-        final String serverName = m.field("name");
+        final String serverName = m.getName();
 
         String serverLabel = serverName;
         if (manager.getLocalNodeName().equals(serverName)) serverLabel += "(*)";
 
         serverRow.field("Name", serverLabel);
-        serverRow.field("Status", (Object) m.field("status"));
+        serverRow.field("Status", (Object) m.getStatus());
         serverRow.field("Databases", (String) null);
-        serverRow.field("Conns", (Object) m.field("connections"));
+        serverRow.field("Conns", (Object) m.getConnections());
 
-        final Date date = m.field("startedOn");
+        final Date date = m.getStartedOn();
 
         if (date != null) {
           final SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd");
@@ -85,21 +88,21 @@ public class ODistributedOutput {
             serverRow.field("StartedOn", date);
         }
 
-        final Collection<Map> listeners = m.field("listeners");
+        final List<ONodeListenerConfig> listeners = m.getListeners();
         if (listeners != null) {
-          for (Map l : listeners) {
-            final String protocol = (String) l.get("protocol");
+          for (ONodeListenerConfig l : listeners) {
+            final String protocol = (String) l.getProtocol();
             if (protocol.equals("ONetworkProtocolBinary")) {
-              serverRow.field("Binary", l.get("listen"));
+              serverRow.field("Binary", l.getListen());
             } else if (protocol.equals("ONetworkProtocolHttpDb")) {
-              serverRow.field("HTTP", l.get("listen"));
+              serverRow.field("HTTP", l.getListen());
             }
           }
         }
 
-        final Long usedMem = m.field("usedMemory");
+        final Long usedMem = m.getUsedMemory();
         if (usedMem != null) {
-          final long maxMem = m.field("maxMemory");
+          final long maxMem = m.getMaxMemory();
 
           serverRow.field(
               "UsedMemory",
@@ -111,7 +114,7 @@ public class ODistributedOutput {
         }
         rows.add(serverRow);
 
-        final Collection<String> databases = m.field("databases");
+        final Collection<String> databases = m.getDatabases();
         if (databases != null) {
           int serverNum = 0;
           for (String dbName : databases) {
@@ -153,10 +156,11 @@ public class ODistributedOutput {
     return buffer.toString();
   }
 
-  public static String formatLatency(final ODistributedPlugin manager, final ODocument distribCfg) {
+  public static String formatLatency(
+      final ODistributedPlugin manager, final OClusterConfiguration distribCfg) {
     final List<OIdentifiable> rows = new ArrayList<OIdentifiable>();
 
-    final List<ODocument> members = distribCfg.field("members");
+    final Collection<ONodeConfig> members = distribCfg.getMembers();
 
     final StringBuilder buffer = new StringBuilder();
     buffer.append("\nREPLICATION LATENCY AVERAGE (in milliseconds)");
@@ -173,9 +177,9 @@ public class ODistributedOutput {
     if (members != null) {
       // BUILD A SORTED SERVER LIST
       final List<String> orderedServers = new ArrayList<String>(members.size());
-      for (ODocument fromMember : members) {
+      for (ONodeConfig fromMember : members) {
         if (fromMember != null) {
-          String serverName = fromMember.field("name");
+          String serverName = fromMember.getName();
           orderedServers.add(serverName);
 
           table.setColumnAlignment(
@@ -186,9 +190,9 @@ public class ODistributedOutput {
 
       for (String fromServer : orderedServers) {
         // SEARCH FOR THE MEMBER
-        ODocument fromMember = null;
-        for (ODocument m : members) {
-          if (m != null && fromServer.equals(m.field("name"))) {
+        ONodeConfig fromMember = null;
+        for (ONodeConfig m : members) {
+          if (m != null && fromServer.equals(m.getName())) {
             fromMember = m;
             break;
           }
@@ -203,7 +207,7 @@ public class ODistributedOutput {
 
         row.field("Servers", formatServerName(manager, fromServer));
 
-        final ODocument latencies = fromMember.field("latencies");
+        final ODocument latencies = fromMember.getLatencies();
         if (latencies == null) continue;
 
         for (String toServer : orderedServers) {
@@ -225,16 +229,16 @@ public class ODistributedOutput {
   }
 
   public static String formatMessages(
-      final ODistributedPlugin manager, final ODocument distribCfg) {
+      final ODistributedPlugin manager, final OClusterConfiguration distribCfg) {
     return formatMessageBetweenServers(manager, distribCfg)
         + formatMessageStats(manager, distribCfg);
   }
 
   public static String formatMessageBetweenServers(
-      final ODistributedPlugin manager, final ODocument distribCfg) {
+      final ODistributedPlugin manager, final OClusterConfiguration distribCfg) {
     final List<OIdentifiable> rows = new ArrayList<OIdentifiable>();
 
-    final List<ODocument> members = distribCfg.field("members");
+    final Collection<ONodeConfig> members = distribCfg.getMembers();
 
     final StringBuilder buffer = new StringBuilder();
     buffer.append(
@@ -254,9 +258,9 @@ public class ODistributedOutput {
     if (members != null) {
       // BUILD A SORTED SERVER LIST
       final List<String> orderedServers = new ArrayList<String>(members.size());
-      for (ODocument fromMember : members) {
+      for (ONodeConfig fromMember : members) {
         if (fromMember != null) {
-          String serverName = fromMember.field("name");
+          String serverName = fromMember.getName();
           orderedServers.add(serverName);
 
           table.setColumnAlignment(
@@ -269,9 +273,9 @@ public class ODistributedOutput {
 
       for (String fromServer : orderedServers) {
         // SEARCH FOR THE MEMBER
-        ODocument fromMember = null;
-        for (ODocument m : members) {
-          if (fromServer.equals(m.field("name"))) {
+        ONodeConfig fromMember = null;
+        for (ONodeConfig m : members) {
+          if (fromServer.equals(m.getName())) {
             fromMember = m;
             break;
           }
@@ -286,7 +290,7 @@ public class ODistributedOutput {
 
         row.field("Servers", formatServerName(manager, fromServer));
 
-        final ODocument latencies = fromMember.field("latencies");
+        final ODocument latencies = fromMember.getLatencies();
         if (latencies == null) continue;
 
         long total = 0;
@@ -332,10 +336,10 @@ public class ODistributedOutput {
   }
 
   public static String formatMessageStats(
-      final ODistributedPlugin manager, final ODocument distribCfg) {
+      final ODistributedPlugin manager, final OClusterConfiguration distribCfg) {
     final List<OIdentifiable> rows = new ArrayList<OIdentifiable>();
 
-    final List<ODocument> members = distribCfg.field("members");
+    final Collection<ONodeConfig> members = distribCfg.getMembers();
 
     final StringBuilder buffer = new StringBuilder();
     buffer.append("\nREPLICATION MESSAGE CURRENT NODE STATS");
@@ -353,13 +357,13 @@ public class ODistributedOutput {
       // BUILD A SORTED SERVER LIST AND OPERATION NAMES
       final List<String> orderedServers = new ArrayList<String>(members.size());
       final Set<String> operations = new LinkedHashSet<String>();
-      for (ODocument fromMember : members) {
+      for (ONodeConfig fromMember : members) {
         if (fromMember != null) {
-          String serverName = fromMember.field("name");
+          String serverName = fromMember.getName();
           orderedServers.add(serverName);
 
           // INSERT ALL THE FOUND OPERATIONS
-          final ODocument messages = fromMember.field("messages");
+          final ODocument messages = fromMember.getMessages();
           if (messages != null) {
             for (String opName : messages.fieldNames()) {
               operations.add(opName);
@@ -374,9 +378,9 @@ public class ODistributedOutput {
 
       for (String server : orderedServers) {
         // SEARCH FOR THE MEMBER
-        ODocument member = null;
-        for (ODocument m : members) {
-          if (server.equals(m.field("name"))) {
+        ONodeConfig member = null;
+        for (ONodeConfig m : members) {
+          if (server.equals(m.getName())) {
             member = m;
             break;
           }
@@ -391,7 +395,7 @@ public class ODistributedOutput {
 
         row.field("Servers", formatServerName(manager, server));
 
-        final ODocument messages = member.field("messages");
+        final ODocument messages = member.getMessages();
         if (messages == null) continue;
 
         long total = 0;
@@ -447,26 +451,26 @@ public class ODistributedOutput {
    * @return
    */
   public static String getCompactServerStatus(
-      final ODistributedServerManager manager, final ODocument distribCfg) {
+      final ODistributedServerManager manager, final OClusterConfiguration distribCfg) {
     final StringBuilder buffer = new StringBuilder();
 
-    final Collection<ODocument> members = distribCfg.field("members");
+    final Collection<ONodeConfig> members = distribCfg.getMembers();
 
     if (members != null) {
       buffer.append(members.size());
       buffer.append(":[");
 
       int memberCount = 0;
-      for (ODocument m : members) {
+      for (ONodeConfig m : members) {
         if (m == null) continue;
 
         if (memberCount++ > 0) buffer.append(",");
 
-        final String serverName = m.field("name");
+        final String serverName = m.getName();
         buffer.append(serverName);
-        buffer.append((Object) m.field("status"));
+        buffer.append((Object) m.getStatus());
 
-        final Collection<String> databases = m.field("databases");
+        final Collection<String> databases = m.getDatabases();
         if (databases != null) {
           buffer.append("{");
           int dbCount = 0;

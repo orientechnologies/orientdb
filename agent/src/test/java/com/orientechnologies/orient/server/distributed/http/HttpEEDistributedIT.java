@@ -1,9 +1,10 @@
 package com.orientechnologies.orient.server.distributed.http;
 
 import com.orientechnologies.agent.http.command.OServerCommandDistributedManager;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.AbstractServerClusterTest;
+import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ServerRun;
+import com.orientechnologies.orient.server.distributed.config.OClusterConfiguration;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpAbstract;
 import org.junit.Assert;
@@ -38,12 +39,13 @@ public class HttpEEDistributedIT extends AbstractServerClusterTest {
 
     OServerCommandDistributedManager first = distributedManager;
 
-    ODocument document =
+    ODistributedConfiguration dbConfig =
         distributedManager.doGetDatabaseInfo(s.getServerInstance(), getDatabaseName());
 
-    document.field("writeQuorum", "all");
+    dbConfig.getDocument().field("writeQuorum", "all");
 
-    distributedManager.changeConfig(s.getServerInstance(), getDatabaseName(), document.toJSON());
+    distributedManager.changeConfig(
+        s.getServerInstance(), getDatabaseName(), dbConfig.getDocument().toJSON());
 
     for (ServerRun serverRun : serverInstance) {
 
@@ -54,13 +56,14 @@ public class HttpEEDistributedIT extends AbstractServerClusterTest {
           (OServerCommandDistributedManager)
               listener.getCommand(OServerCommandDistributedManager.class);
 
-      document = distributedManager.doGetDatabaseInfo(s.getServerInstance(), getDatabaseName());
-      Assert.assertEquals("all", document.field("writeQuorum"));
+      dbConfig = distributedManager.doGetDatabaseInfo(s.getServerInstance(), getDatabaseName());
+      Assert.assertEquals("all", dbConfig.getDocument().field("writeQuorum"));
     }
 
     first.configure(s.getServerInstance());
 
-    ODocument config = first.doGetNodeConfig(s.getServerInstance().getDistributedManager());
+    OClusterConfiguration config =
+        first.doGetNodeConfig(s.getServerInstance().getDistributedManager());
 
     Assert.assertNotNull(config);
 

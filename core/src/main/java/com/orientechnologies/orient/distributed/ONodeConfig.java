@@ -55,6 +55,10 @@ public class ONodeConfig {
     config.setProperty("startedOn", startedOn);
   }
 
+  public Date getStartedOn() {
+    return config.getProperty("startedOn");
+  }
+
   public void setStatus(String nodeStatus) {
     config.setProperty("status", nodeStatus);
   }
@@ -67,8 +71,16 @@ public class ONodeConfig {
     config.setProperty("connections", total);
   }
 
+  public int getConnections() {
+    return config.getProperty("connections");
+  }
+
   public void setDatabases(Set<String> databases) {
     config.setProperty("databases", databases);
+  }
+
+  public Set<String> getDatabases() {
+    return config.getProperty("databases");
   }
 
   public void setReplicator(String password) {
@@ -83,12 +95,20 @@ public class ONodeConfig {
     config.setProperty("usedMemory", usedMem);
   }
 
+  public long getUsedMemory() {
+    return config.getProperty("usedMemory");
+  }
+
   public void setFreeMemory(long freeMem) {
     config.setProperty("freeMemory", freeMem);
   }
 
   public void setMaxMemory(long maxMem) {
     config.setProperty("maxMemory", maxMem);
+  }
+
+  public long getMaxMemory() {
+    return config.getProperty("maxMemory");
   }
 
   public void setCpu(double cpuUsage) {
@@ -112,7 +132,27 @@ public class ONodeConfig {
     config.setProperty("latencies", latencies, OType.EMBEDDED);
   }
 
+  public ODocument getLatencies() {
+    return config.getProperty("latencies");
+  }
+
   public void setMessages(String string, ODocument messageStats) {
     config.setProperty("messages", messageStats, OType.EMBEDDED);
+  }
+
+  public ODocument getMessages() {
+    return config.getProperty("messages");
+  }
+
+  public void setDatabasesStatus(Map<String, String> dbStatus) {
+    config.setProperty("databasesStatus", dbStatus, OType.EMBEDDEDMAP);
+  }
+
+  public ODocument getConfiguration() {
+    return config.getProperty("configuration");
+  }
+
+  public void setConfiguration(ODocument configuration) {
+    config.setProperty("configuration", configuration, OType.EMBEDDED);
   }
 }
