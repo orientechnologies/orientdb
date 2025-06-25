@@ -45,12 +45,6 @@
             <url>http://www.opensource.org/licenses/Apache-2.0</url>
         </license>
     </licenses>
-    <scm>
-        <connection>scm:git:git@github.com:orientechnologies/orientdb-gremlin.git</connection>
-        <developerConnection>scm:git:git@github.com:orientechnologies/orientdb-gremlin.git</developerConnection>
-        <url>https://github.com/orientechnologies/orientdb-gremlin</url>
-      <tag>HEAD</tag>
-  </scm>
     <dependencies>
         <!-- orientdb -->
         <dependency>
