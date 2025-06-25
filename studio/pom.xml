@@ -3,86 +3,15 @@
 	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
 	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
-	<groupId>com.orientechnologies</groupId>
+    <parent>
+        <groupId>com.orientechnologies</groupId>
+        <artifactId>orientdb-parent</artifactId>
+        <version>4.0.0-SNAPSHOT</version>
+        <relativePath>../pom.xml</relativePath>
+    </parent>
 	<artifactId>orientdb-studio</artifactId>
-	<version>4.0.0-SNAPSHOT</version>
 	<name>OrientDB Studio</name>
 	<description>OrientDB Studio - web interface for OrientDB server</description>
-	<url>https://www.orientdb.com</url>
-	<organization>
-		<name>OrientDB</name>
-		<url>https://orientdb.com</url>
-	</organization>
-	<licenses>
-		<license>
-			<name>Apache 2</name>
-			<url>http://www.apache.org/licenses/LICENSE-2.0.txt</url>
-		</license>
-	</licenses>
-	<scm>
-		<connection>scm:git:git@github.com:orientechnologies/orientdb-studio.git</connection>
-		<developerConnection>
-			scm:git:git@github.com:orientechnologies/orientdb-studio.git</developerConnection>
-		<url>scm:git:git@github.com:orientechnologies/orientdb-studio.git</url>
-		<tag>HEAD</tag>
-	</scm>
-	<issueManagement>
-		<system>GitHub Issues</system>
-		<url>https://github.com/orientechnologies/orientdb-studio/issues</url>
-	</issueManagement>
-	<developers>
-		<developer>
-			<id>l.garulli</id>
-			<name>Luca Garulli</name>
-			<email>l.garulli@orientdb.com</email>
-			<organization>OrientDB</organization>
-			<organizationUrl>https://www.orientdb.com</organizationUrl>
-			<roles>
-				<role>architect</role>
-				<role>developer</role>
-				<role>founder</role>
-			</roles>
-			<timezone>+1</timezone>
-		</developer>
-		<developer>
-			<id>e.risa</id>
-			<name>Enrico Risa</name>
-			<email>e.risa@orientdb.com</email>
-			<organization>OrientDB</organization>
-			<organizationUrl>https://www.orientdb.com</organizationUrl>
-			<roles>
-				<role>architect</role>
-				<role>developer</role>
-			</roles>
-			<timezone>+1</timezone>
-		</developer>
-	</developers>
-	<distributionManagement>
-		<repository>
-			<id>sonatype-nexus-staging</id>
-			<name>OrientDB Maven2 Repository</name>
-			<url>https://oss.sonatype.org/service/local/staging/deploy/maven2</url>
-		</repository>
-		<snapshotRepository>
-			<id>sonatype-nexus-snapshots</id>
-			<name>OrientDB Maven2 Snapshot Repository</name>
-			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
-			<uniqueVersion>false</uniqueVersion>
-		</snapshotRepository>
-	</distributionManagement>
-	<repositories>
-		<repository>
-			<id>sonatype-nexus-snapshots</id>
-			<name>Sonatype Nexus Snapshots</name>
-			<url>https://oss.sonatype.org/content/repositories/snapshots</url>
-			<releases>
-				<enabled>false</enabled>
-			</releases>
-			<snapshots>
-				<enabled>true</enabled>
-			</snapshots>
-		</repository>
-	</repositories>
 	<build>
 		<plugins>
 			<plugin>
