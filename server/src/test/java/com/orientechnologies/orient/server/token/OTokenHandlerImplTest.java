@@ -174,7 +174,7 @@ public class OTokenHandlerImplTest extends BaseMemoryInternalDatabase {
     byte[] token = handler.getSignedBinaryToken((ODatabaseDocumentInternal) db, original, data);
 
     OToken tok = handler.parseBinaryToken(token);
-    tok.setExpiry(OToken.timeMillis() + (handler.getSessionInMills() / 2) - 1);
+    tok.setExpiry(System.currentTimeMillis() + (handler.getSessionInMills() / 2) - 1);
     token = handler.renewIfNeeded(tok);
 
     assertTrue(token.length != 0);

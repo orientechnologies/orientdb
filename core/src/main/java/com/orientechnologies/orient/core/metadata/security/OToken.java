@@ -38,8 +38,4 @@ public interface OToken {
   boolean isNowValid();
 
   boolean isCloseToExpire();
-
-  public static long timeMillis() {
-    return System.nanoTime() / 1000000;
-  }
 }

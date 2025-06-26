@@ -107,13 +107,13 @@ public class JsonWebToken implements OJsonWebToken, OToken {
 
   @Override
   public boolean isNowValid() {
-    long now = OToken.timeMillis();
+    long now = System.currentTimeMillis();
     return getExpiry() > now && payload.getNotBefore() < now;
   }
 
   @Override
   public boolean isCloseToExpire() {
-    long now = OToken.timeMillis();
+    long now = System.currentTimeMillis();
     return getExpiry() - 120000 <= now;
   }
 }

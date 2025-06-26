@@ -137,7 +137,7 @@ public class OTokenHandlerImpl implements OTokenHandler {
     if (!(token instanceof JsonWebToken)) {
       return false;
     }
-    final long curTime = OToken.timeMillis();
+    final long curTime = System.currentTimeMillis();
     if (token.getDatabase().equalsIgnoreCase(database)
         && token.getExpiry() > curTime
         && (token.getExpiry() - (sessionInMills + 1)) < curTime) {
@@ -164,7 +164,7 @@ public class OTokenHandlerImpl implements OTokenHandler {
     if ("node".equals(token.getHeader().getType())) {
       valid = true;
     } else {
-      final long curTime = OToken.timeMillis();
+      final long curTime = System.currentTimeMillis();
       if (token.getExpiry() > curTime && (token.getExpiry() - (sessionInMills + 1)) < curTime) {
         valid = true;
       }
@@ -238,6 +238,7 @@ public class OTokenHandlerImpl implements OTokenHandler {
     if (!(token instanceof JsonWebToken)) {
       return false;
     }
+    final OrientJwtPayload payload = (OrientJwtPayload) ((JsonWebToken) token).getPayload();
     if (token.isNowValid()) {
       valid = true;
     }
@@ -253,7 +254,7 @@ public class OTokenHandlerImpl implements OTokenHandler {
 
       final OBinaryToken token = new OBinaryToken();
 
-      long curTime = OToken.timeMillis();
+      long curTime = System.currentTimeMillis();
 
       final OrientJwtHeader header = new OrientJwtHeader();
       header.setAlgorithm(this.sign.getAlgorithm());
@@ -351,10 +352,10 @@ public class OTokenHandlerImpl implements OTokenHandler {
   public byte[] renewIfNeeded(final OToken token) {
     if (token == null) throw new IllegalArgumentException("Token is null");
 
-    final long curTime = OToken.timeMillis();
+    final long curTime = System.currentTimeMillis();
     if (token.getExpiry() - curTime < (sessionInMills / 2) && token.getExpiry() >= curTime) {
       final long expiryMinutes = sessionInMills;
-      final long currTime = OToken.timeMillis();
+      final long currTime = System.currentTimeMillis();
       token.setExpiry(currTime + expiryMinutes);
       try {
         if (token instanceof OBinaryToken) return serializeSignedToken((OBinaryToken) token);
@@ -453,7 +454,7 @@ public class OTokenHandlerImpl implements OTokenHandler {
     payload.setUserRid(ORecordId.EMPTY_RECORD_ID);
 
     final long expiryMinutes = sessionInMills;
-    final long currTime = OToken.timeMillis();
+    final long currTime = System.currentTimeMillis();
     payload.setIssuedAt(currTime);
     payload.setNotBefore(currTime);
     payload.setUserName(serverUser.getName());
@@ -471,7 +472,7 @@ public class OTokenHandlerImpl implements OTokenHandler {
     payload.setUserRid(user.getIdentity().getIdentity());
 
     final long expiryMinutes = sessionInMills;
-    final long currTime = OToken.timeMillis();
+    final long currTime = System.currentTimeMillis();
     payload.setIssuedAt(currTime);
     payload.setNotBefore(currTime);
     payload.setUserName(user.getName());
