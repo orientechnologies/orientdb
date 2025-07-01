@@ -26,6 +26,17 @@
 
 This document contains the last changes of OrientDB Community Edition.
 
+-----------------------------------------------------------------------------------------------------------------------------------
+VERSION 3.2.42 - (July, 4 2025)
+- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3242---4-July-2025
+
+
+# Remote
+
+- Fix is of session renew loop based on monotonic time 
+
+# Distributed
+- make sure to cancel promises of failed DDLs
 
 
 -----------------------------------------------------------------------------------------------------------------------------------
@@ -43,9 +54,6 @@ VERSION 3.2.41 - (June, 18  2025)
 - Increase logging in response handling
 - Make sure to terminate the push subscribe connection if fails to connect
 - simplified the returning of connection from push client
-
-# Distributed
-- make sure to cancel promises of failed DDLs
 
 
 -----------------------------------------------------------------------------------------------------------------------------------
