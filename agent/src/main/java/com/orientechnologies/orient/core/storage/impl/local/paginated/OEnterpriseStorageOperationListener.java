@@ -1,12 +1,12 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
-import com.orientechnologies.orient.core.db.record.ORecordOperation;
-import java.util.List;
+import com.orientechnologies.orient.core.storage.OStorageRecordOperation;
+import java.util.Collection;
 
 /** Created by Enrico Risa on 20/07/2018. */
 public interface OEnterpriseStorageOperationListener {
 
-  void onCommit(List<ORecordOperation> operations);
+  void onCommit(Collection<OStorageRecordOperation> operations);
 
   void onRollback();
 

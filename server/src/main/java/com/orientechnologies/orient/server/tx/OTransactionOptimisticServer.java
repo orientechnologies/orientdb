@@ -81,7 +81,7 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
                     .getRecordFactoryManager()
                     .newInstance(operation.getRecordType(), rid.getClusterId(), getDatabase());
             ORecordSerializerNetworkV37.INSTANCE.fromStream(operation.getRecord(), record);
-            entry = new ORecordOperation(record, ORecordOperation.CREATED);
+            entry = newOp(record, ORecordOperation.CREATED);
             ORecordInternal.setIdentity(record, rid);
             ORecordInternal.setVersion(record, 0);
             record.setDirty();
@@ -173,7 +173,7 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
       // FIRE THE TRIGGERS ONLY AFTER HAVING PARSED THE REQUEST
       for (Map.Entry<ORID, ORecordOperation> entry : tempEntries.entrySet()) {
         database.getLocalCache().updateRecord(entry.getValue().getRecord());
-        addRecord(entry.getValue().getRecord(), entry.getValue().type, null, oldTxEntries);
+        addRecord(entry.getValue().getRecord(), entry.getValue().getType(), null, oldTxEntries);
       }
       tempEntries.clear();
 
@@ -365,27 +365,27 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
           byte status = iStatus;
           if (status == ORecordOperation.UPDATED && iRecord.getIdentity().isTemporary())
             status = ORecordOperation.CREATED;
-          txEntry = new ORecordOperation(iRecord, status);
+          txEntry = newOp(iRecord, status);
           allEntries.put(rid.copy(), txEntry);
         } else {
           // UPDATE PREVIOUS STATUS
           txEntry.record = iRecord;
 
-          switch (txEntry.type) {
+          switch (txEntry.getType()) {
             case ORecordOperation.LOADED:
               switch (iStatus) {
                 case ORecordOperation.UPDATED:
-                  txEntry.type = ORecordOperation.UPDATED;
+                  txEntry.setType(ORecordOperation.UPDATED);
                   break;
                 case ORecordOperation.DELETED:
-                  txEntry.type = ORecordOperation.DELETED;
+                  txEntry.setType(ORecordOperation.DELETED);
                   break;
               }
               break;
             case ORecordOperation.UPDATED:
               switch (iStatus) {
                 case ORecordOperation.DELETED:
-                  txEntry.type = ORecordOperation.DELETED;
+                  txEntry.setType(ORecordOperation.DELETED);
                   break;
               }
               break;

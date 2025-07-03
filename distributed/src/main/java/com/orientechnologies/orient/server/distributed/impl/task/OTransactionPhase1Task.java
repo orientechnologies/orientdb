@@ -100,13 +100,13 @@ public class OTransactionPhase1Task extends OAbstractRemoteTask implements OLock
 
   public void genOps(List<ORecordOperation> ops) {
     for (ORecordOperation txEntry : ops) {
-      if (txEntry.type == ORecordOperation.LOADED) continue;
+      if (txEntry.getType() == ORecordOperation.LOADED) continue;
       ORecordOperationRequest request = new ORecordOperationRequest();
-      request.setType(txEntry.type);
+      request.setType(txEntry.getType());
       request.setVersion(txEntry.getRecord().getVersion());
       request.setId(txEntry.getRecord().getIdentity());
       request.setRecordType(ORecordInternal.getRecordType(txEntry.getRecord()));
-      switch (txEntry.type) {
+      switch (txEntry.getType()) {
         case ORecordOperation.CREATED:
           request.setRecord(
               ORecordSerializerNetworkDistributed.INSTANCE.toStream(txEntry.getRecord()));
@@ -386,9 +386,7 @@ public class OTransactionPhase1Task extends OAbstractRemoteTask implements OLock
     tx.getIndexOperations()
         .forEach(
             (index, changes) -> {
-              OIndexInternal resolvedIndex =
-                  changes.resolveAssociatedIndex(
-                      index, database.getMetadata().getIndexManagerInternal(), database);
+              OIndexInternal resolvedIndex = changes.resolveAssociatedIndex(index, database);
               if (resolvedIndex != null && resolvedIndex.isUnique()) {
                 for (final Object keyWithChange : changes.changesPerKey.keySet()) {
                   int version = storage.getVersionForKey(index, keyWithChange);

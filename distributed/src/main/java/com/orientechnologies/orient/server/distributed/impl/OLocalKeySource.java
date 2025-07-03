@@ -29,9 +29,7 @@ public final class OLocalKeySource implements OLockKeySource {
     iTx.getIndexOperations()
         .forEach(
             (index, changes) -> {
-              OIndexInternal resolvedIndex =
-                  changes.resolveAssociatedIndex(
-                      index, database.getMetadata().getIndexManagerInternal(), database);
+              OIndexInternal resolvedIndex = changes.resolveAssociatedIndex(index, database);
               if (resolvedIndex.isUnique()) {
                 for (Object keyWithChange : changes.changesPerKey.keySet()) {
                   Object keyChange = OTransactionPhase1Task.mapKey(keyWithChange);

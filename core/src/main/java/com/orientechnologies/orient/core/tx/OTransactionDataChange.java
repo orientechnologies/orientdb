@@ -22,13 +22,13 @@ public class OTransactionDataChange {
   private boolean contentChanged;
 
   public OTransactionDataChange(ORecordOperation operation) {
-    this.type = operation.type;
+    this.type = operation.getType();
     ORecord rec = operation.getRecord();
     this.recordType = ORecordInternal.getRecordType(rec);
     this.id = rec.getIdentity();
     assert this.id.isPersistent();
     this.version = rec.getVersion();
-    switch (operation.type) {
+    switch (operation.getType()) {
       case ORecordOperation.CREATED:
         this.record = Optional.of(ORecordSerializerNetworkDistributed.INSTANCE.toStream(rec));
         this.contentChanged = ORecordInternal.isContentChanged(rec);

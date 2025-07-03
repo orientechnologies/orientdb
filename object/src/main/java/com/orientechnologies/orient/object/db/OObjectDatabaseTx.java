@@ -638,7 +638,7 @@ public class OObjectDatabaseTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
       // UPDATE ID & VERSION FOR ALL THE RECORDS
       Object pojo = null;
       for (ORecordOperation entry : getTransaction().getRecordOperations()) {
-        switch (entry.type) {
+        switch (entry.getType()) {
           case ORecordOperation.CREATED:
           case ORecordOperation.UPDATED:
             break;
@@ -669,7 +669,7 @@ public class OObjectDatabaseTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
       if (getTransaction().getRecordOperations() != null) {
         final List<ORecordOperation> newEntries = new ArrayList<>();
         for (ORecordOperation entry : getTransaction().getRecordOperations())
-          if (entry.type == ORecordOperation.CREATED) newEntries.add(entry);
+          if (entry.getType() == ORecordOperation.CREATED) newEntries.add(entry);
       }
     }
     return this;

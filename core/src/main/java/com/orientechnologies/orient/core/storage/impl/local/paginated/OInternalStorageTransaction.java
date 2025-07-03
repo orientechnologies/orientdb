@@ -15,20 +15,20 @@
  */
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
-import com.orientechnologies.orient.core.tx.OTransactionInternal;
+import com.orientechnologies.orient.core.storage.OStorageTransaction;
 
 /**
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 12.06.13
  */
-public class OStorageTransaction {
-  private final OTransactionInternal clientTx;
+public class OInternalStorageTransaction {
+  private final OStorageTransaction clientTx;
 
-  public OStorageTransaction(OTransactionInternal clientTx) {
+  public OInternalStorageTransaction(OStorageTransaction clientTx) {
     this.clientTx = clientTx;
   }
 
-  public OTransactionInternal getClientTx() {
+  public OStorageTransaction getClientTx() {
     return clientTx;
   }
 }

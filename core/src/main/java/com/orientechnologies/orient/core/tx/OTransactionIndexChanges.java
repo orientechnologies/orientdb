@@ -23,7 +23,6 @@ import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexInternal;
-import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import java.util.NavigableMap;
 import java.util.TreeMap;
 
@@ -106,10 +105,9 @@ public class OTransactionIndexChanges {
     return changesPerKey.floorKey(key);
   }
 
-  public OIndexInternal resolveAssociatedIndex(
-      String indexName, OIndexManagerAbstract indexManager, ODatabaseDocumentInternal db) {
+  public OIndexInternal resolveAssociatedIndex(String indexName, ODatabaseDocumentInternal db) {
     if (resolvedIndex == null) {
-      final OIndex index = indexManager.getIndex(db, indexName);
+      final OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, indexName);
       if (index != null) resolvedIndex = index.getInternal();
     }
 

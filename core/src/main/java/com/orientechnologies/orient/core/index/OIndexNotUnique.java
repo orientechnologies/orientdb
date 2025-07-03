@@ -21,6 +21,7 @@ package com.orientechnologies.orient.core.index;
 
 import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorageTransactionIndexChange;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 
 /**
@@ -50,7 +51,7 @@ public class OIndexNotUnique extends OIndexMultiValues {
   }
 
   @Override
-  public Iterable<OTransactionIndexChangesPerKey.OTransactionIndexEntry> interpretTxKeyChanges(
+  public Iterable<OStorageTransactionIndexChange> interpretTxKeyChanges(
       OTransactionIndexChangesPerKey changes) {
     return changes.interpret(OTransactionIndexChangesPerKey.Interpretation.NonUnique);
   }

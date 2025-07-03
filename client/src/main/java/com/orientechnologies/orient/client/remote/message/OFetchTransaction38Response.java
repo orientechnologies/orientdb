@@ -49,15 +49,16 @@ public class OFetchTransaction38Response implements OBinaryResponse {
     this.indexChanges = new ArrayList<>();
     List<ORecordOperation38Response> netOperations = new ArrayList<>();
     for (ORecordOperation txEntry : operations) {
-      if (txEntry.type == ORecordOperation.LOADED) continue;
+      if (txEntry.getType() == ORecordOperation.LOADED) continue;
       ORecordOperation38Response request = new ORecordOperation38Response();
-      request.setType(txEntry.type);
+      request.setType(txEntry.getType());
       request.setVersion(txEntry.getRecord().getVersion());
       request.setId(txEntry.getRID());
       ORID oldID = reversed.get(txEntry.getRID());
       request.setOldId(oldID != null ? oldID : txEntry.getRID());
       request.setRecordType(ORecordInternal.getRecordType(txEntry.getRecord()));
-      if (txEntry.type == ORecordOperation.UPDATED && txEntry.getRecord() instanceof ODocument) {
+      if (txEntry.getType() == ORecordOperation.UPDATED
+          && txEntry.getRecord() instanceof ODocument) {
         ODocument doc = (ODocument) txEntry.getRecord();
         ORawBuffer result = database.getStorage().readRecord((ORecordId) doc.getIdentity());
         ODocument docFromPersistence = new ODocument(doc.getIdentity());

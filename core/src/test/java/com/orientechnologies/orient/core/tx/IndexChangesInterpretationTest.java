@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.tx;
 
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.storage.OStorageTransactionIndexChange;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.Interpretation;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTransactionIndexEntry;
@@ -134,24 +135,25 @@ public class IndexChangesInterpretationTest {
   private static final Pattern OUTPUT_ITEMS_GRAMMAR =
       Pattern.compile("\\s*([pr]\\d+|d|r)\\s*", Pattern.CASE_INSENSITIVE);
 
-  private static String entryToString(OTransactionIndexEntry entry) {
+  private static String entryToString(OStorageTransactionIndexChange entry) {
     if (entry == null) return "r";
 
-    return entry.getOperation() == OPERATION.PUT
+    return entry.isPut()
         ? "p" + entry.getValue().getIdentity().getClusterPosition()
         : entry.getValue() == null
             ? "d"
             : "r" + entry.getValue().getIdentity().getClusterPosition();
   }
 
-  private static boolean entryEquals(OTransactionIndexEntry a, OTransactionIndexEntry b) {
+  private static boolean entryEquals(
+      OStorageTransactionIndexChange a, OStorageTransactionIndexChange b) {
     if (a == b) return true;
 
-    if (a == null) return b.getOperation() == OPERATION.REMOVE;
+    if (a == null) return b.isRemove();
 
-    if (b == null) return a.getOperation() == OPERATION.REMOVE;
+    if (b == null) return a.isRemove();
 
-    return a.getOperation() == b.getOperation() && a.equals(b);
+    return a.equals(b);
   }
 
   @Test
@@ -172,17 +174,17 @@ public class IndexChangesInterpretationTest {
           expectedUnique,
           changes.interpret(Interpretation.Unique),
           "unique",
-          changes.getEntriesAsList());
+          changes.getEntriesForStorage());
       verify(
           expectedDictionary,
           changes.interpret(Interpretation.Dictionary),
           "dictionary",
-          changes.getEntriesAsList());
+          changes.getEntriesForStorage());
       verify(
           expectedNonUnique,
           changes.interpret(Interpretation.NonUnique),
           "non-unique",
-          changes.getEntriesAsList());
+          changes.getEntriesForStorage());
     }
   }
 
@@ -200,7 +202,7 @@ public class IndexChangesInterpretationTest {
     return result;
   }
 
-  private void parseOutputItems(String text, Collection<OTransactionIndexEntry> result) {
+  private void parseOutputItems(String text, Collection<OStorageTransactionIndexChange> result) {
     result.clear();
     final Matcher matcher = OUTPUT_ITEMS_GRAMMAR.matcher(text);
     while (matcher.find()) result.add(parseChange(matcher.group(1)));
@@ -263,10 +265,10 @@ public class IndexChangesInterpretationTest {
 
   private void verify(
       Iterable<OutputCollection> expected,
-      Iterable<OTransactionIndexEntry> actual,
+      Iterable<OStorageTransactionIndexChange> actual,
       String type,
-      Iterable<OTransactionIndexEntry> input) {
-    final Iterator<OTransactionIndexEntry> actualIterator = actual.iterator();
+      Iterable<OStorageTransactionIndexChange> input) {
+    final Iterator<OStorageTransactionIndexChange> actualIterator = actual.iterator();
 
     boolean match = true;
     for (OutputCollection collection : expected)
@@ -290,9 +292,10 @@ public class IndexChangesInterpretationTest {
               + "'.");
   }
 
-  private String sequenceToString(Iterable<OTransactionIndexEntry> sequence) {
+  private String sequenceToString(Iterable<OStorageTransactionIndexChange> sequence) {
     final StringBuilder builder = new StringBuilder();
-    for (OTransactionIndexEntry entry : sequence) builder.append(entryToString(entry)).append(' ');
+    for (OStorageTransactionIndexChange entry : sequence)
+      builder.append(entryToString(entry)).append(' ');
     if (builder.length() > 0) builder.setLength(builder.length() - 1);
     return builder.toString();
   }
@@ -304,17 +307,17 @@ public class IndexChangesInterpretationTest {
     return builder.toString();
   }
 
-  private interface OutputCollection extends Collection<OTransactionIndexEntry> {
-    boolean matches(Iterator<OTransactionIndexEntry> actualIterator);
+  private interface OutputCollection extends Collection<OStorageTransactionIndexChange> {
+    boolean matches(Iterator<OStorageTransactionIndexChange> actualIterator);
   }
 
-  private static class OutputList extends ArrayList<OTransactionIndexEntry>
+  private static class OutputList extends ArrayList<OStorageTransactionIndexChange>
       implements OutputCollection {
     @Override
-    public boolean matches(Iterator<OTransactionIndexEntry> actualIterator) {
-      for (OTransactionIndexEntry expected : this) {
+    public boolean matches(Iterator<OStorageTransactionIndexChange> actualIterator) {
+      for (OStorageTransactionIndexChange expected : this) {
         if (!actualIterator.hasNext()) return false;
-        final OTransactionIndexEntry actual = actualIterator.next();
+        final OStorageTransactionIndexChange actual = actualIterator.next();
         if (!entryEquals(expected, actual)) return false;
       }
 
@@ -324,13 +327,14 @@ public class IndexChangesInterpretationTest {
     @Override
     public String toString() {
       final StringBuilder builder = new StringBuilder();
-      for (OTransactionIndexEntry entry : this) builder.append(entryToString(entry)).append(' ');
+      for (OStorageTransactionIndexChange entry : this)
+        builder.append(entryToString(entry)).append(' ');
       if (builder.length() > 0) builder.setLength(builder.length() - 1);
       return builder.toString();
     }
   }
 
-  private static class OutputSet extends ArrayList<OTransactionIndexEntry>
+  private static class OutputSet extends ArrayList<OStorageTransactionIndexChange>
       implements OutputCollection {
     private final int requiredMatches;
 
@@ -343,16 +347,16 @@ public class IndexChangesInterpretationTest {
     }
 
     @Override
-    public boolean matches(Iterator<OTransactionIndexEntry> actualIterator) {
+    public boolean matches(Iterator<OStorageTransactionIndexChange> actualIterator) {
       final int requiredMatches = this.requiredMatches == -1 ? this.size() : this.requiredMatches;
-      final ArrayList<OTransactionIndexEntry> unmatched =
-          new ArrayList<OTransactionIndexEntry>(this);
+      final ArrayList<OStorageTransactionIndexChange> unmatched =
+          new ArrayList<OStorageTransactionIndexChange>(this);
       for (int i = 0; i < requiredMatches; ++i) {
         if (!actualIterator.hasNext()) return false;
-        final OTransactionIndexEntry actual = actualIterator.next();
+        final OStorageTransactionIndexChange actual = actualIterator.next();
         final int expectedIndex = unmatched.indexOf(actual);
         if (expectedIndex == -1) return false;
-        final OTransactionIndexEntry expected = unmatched.get(expectedIndex);
+        final OStorageTransactionIndexChange expected = unmatched.get(expectedIndex);
         if (!entryEquals(expected, actual)) return false;
         unmatched.remove(expectedIndex);
       }
@@ -365,7 +369,8 @@ public class IndexChangesInterpretationTest {
       final StringBuilder builder = new StringBuilder();
       builder.append('{');
       if (requiredMatches != -1) builder.append(requiredMatches).append(' ');
-      for (OTransactionIndexEntry entry : this) builder.append(entryToString(entry)).append(' ');
+      for (OStorageTransactionIndexChange entry : this)
+        builder.append(entryToString(entry)).append(' ');
       if (builder.length() > 1) builder.setLength(builder.length() - 1);
       builder.append('}');
       return builder.toString();

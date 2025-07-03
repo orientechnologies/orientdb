@@ -22,8 +22,16 @@ package com.orientechnologies.orient.core.tx;
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.storage.OStorageTransactionIndexChange;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
-import java.util.*;
+import java.util.ArrayDeque;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Deque;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
 /**
  * Collects the changes to an index for a certain key
@@ -39,7 +47,7 @@ public class OTransactionIndexChangesPerKey {
 
   public boolean clientTrackOnly;
 
-  public class OTransactionIndexEntry {
+  public class OTransactionIndexEntry implements OStorageTransactionIndexChange {
     private OPERATION operation;
     private OIdentifiable value;
 
@@ -76,6 +84,14 @@ public class OTransactionIndexChangesPerKey {
       return value;
     }
 
+    public boolean isRemove() {
+      return operation == OPERATION.REMOVE;
+    }
+
+    public boolean isPut() {
+      return operation == OPERATION.PUT;
+    }
+
     public void setValue(OIdentifiable newValue) {
       ORID oldValueId = value == null ? null : value.getIdentity();
       ORID newValueId = newValue == null ? null : newValue.getIdentity();
@@ -94,7 +110,6 @@ public class OTransactionIndexChangesPerKey {
   public void add(OIdentifiable iValue, final OPERATION iOperation) {
     synchronized (this) {
       ORID valueIdentity = iValue == null ? null : iValue.getIdentity();
-      Iterator<OTransactionIndexEntry> iter = entries.iterator();
 
       Optional<OTxIndexChangesList.Node> nodeToRemove =
           entries.getFirstNode(
@@ -116,7 +131,7 @@ public class OTransactionIndexChangesPerKey {
    * @param interpretation the interpretation to use.
    * @return the interpreted changes.
    */
-  public Iterable<OTransactionIndexEntry> interpret(Interpretation interpretation) {
+  public Iterable<OStorageTransactionIndexChange> interpret(Interpretation interpretation) {
     synchronized (this) {
       switch (interpretation) {
         case Unique:
@@ -152,17 +167,19 @@ public class OTransactionIndexChangesPerKey {
     return builder.toString();
   }
 
-  private Iterable<OTransactionIndexEntry> interpretAsUnique() {
+  private Iterable<OStorageTransactionIndexChange> interpretAsUnique() {
     // 1. Handle common fast paths.
 
-    if (entries.size() < 2) return new ArrayList<OTransactionIndexEntry>(entries);
+    if (entries.size() < 2)
+      return entries.stream().map((x) -> (OStorageTransactionIndexChange) x).toList();
 
     if (entries.size() == 2) {
       final OTransactionIndexEntry entryA = entries.get(0);
       final OTransactionIndexEntry entryB = entries.get(1);
 
       if (entryA.operation == OPERATION.REMOVE && entryB.operation == OPERATION.REMOVE)
-        return Collections.singletonList(entryA); // only one removal is observed anyway
+        return Collections.singletonList(
+            (OStorageTransactionIndexChange) entryA); // only one removal is observed anyway
 
       final ORID ridA = entryA.value == null ? null : entryA.value.getIdentity();
       final ORID ridB = entryB.value == null ? null : entryB.value.getIdentity();
@@ -171,7 +188,7 @@ public class OTransactionIndexChangesPerKey {
         if (entryA.operation == entryB.operation) // both operations do the same on the same RID
         return Collections.singletonList(entryA);
 
-        return new ArrayList<OTransactionIndexEntry>(
+        return new ArrayList<OStorageTransactionIndexChange>(
             entries); // don't optimize remove-put on the same RID for safety
       }
 
@@ -184,13 +201,14 @@ public class OTransactionIndexChangesPerKey {
           return swap(entries);
         }
 
-      return new ArrayList<OTransactionIndexEntry>(entries); // it's either remove-put or put-put
+      return new ArrayList<OStorageTransactionIndexChange>(
+          entries); // it's either remove-put or put-put
     }
 
     // 2. Calculate observable changes to index.
 
-    final Set<OTransactionIndexEntry> interpretation =
-        new HashSet<OTransactionIndexEntry>(entries.size());
+    final Set<OStorageTransactionIndexChange> interpretation =
+        new HashSet<OStorageTransactionIndexChange>(entries.size());
     OTransactionIndexEntry firstExternalRemove = null;
     for (OTransactionIndexEntry entry : entries) {
       final OIdentifiable value = entry.value;
@@ -224,12 +242,13 @@ public class OTransactionIndexChangesPerKey {
       return Collections.emptyList();
     }
 
-    final List<OTransactionIndexEntry> changes =
-        new ArrayList<OTransactionIndexEntry>(1 /* for removal, if any */ + 2 /* for puts */);
+    final List<OStorageTransactionIndexChange> changes =
+        new ArrayList<OStorageTransactionIndexChange>(
+            1 /* for removal, if any */ + 2 /* for puts */);
     if (firstExternalRemove != null) changes.add(firstExternalRemove);
 
     int counter = 0;
-    for (OTransactionIndexEntry entry : interpretation) {
+    for (OStorageTransactionIndexChange entry : interpretation) {
       changes.add(entry);
 
       if (++counter == 2) break; // unique constraint already violated, stop
@@ -238,10 +257,10 @@ public class OTransactionIndexChangesPerKey {
     return changes;
   }
 
-  private Iterable<OTransactionIndexEntry> interpretAsDictionary() {
+  private Iterable<OStorageTransactionIndexChange> interpretAsDictionary() {
     // 1. Handle common fast paths.
 
-    if (entries.size() < 2) return new ArrayList<OTransactionIndexEntry>(entries);
+    if (entries.size() < 2) return new ArrayList<OStorageTransactionIndexChange>(entries);
 
     if (entries.size() == 2) {
       final OTransactionIndexEntry entryA = entries.get(0);
@@ -257,7 +276,7 @@ public class OTransactionIndexChangesPerKey {
         if (entryA.operation == entryB.operation) // both operations do the same on the same RID
         return Collections.singletonList(entryA);
 
-        return new ArrayList<OTransactionIndexEntry>(entries);
+        return new ArrayList<OStorageTransactionIndexChange>(entries);
       }
 
       if (entryB.operation == OPERATION.REMOVE && entryB.value == null)
@@ -281,48 +300,39 @@ public class OTransactionIndexChangesPerKey {
     // LinkedHashMap's "doubly-linked list" interface to the public, but mentioning it in the clever
     // javadoc. So we have to
     // maintain our own queue.
-    final Deque<OTransactionIndexEntry> lastObservedPuts =
-        new ArrayDeque<OTransactionIndexEntry>(entries.size());
+    final Deque<OStorageTransactionIndexChange> lastObservedPuts =
+        new ArrayDeque<OStorageTransactionIndexChange>(entries.size());
 
-    final Set<OTransactionIndexEntry> interpretation =
-        new HashSet<OTransactionIndexEntry>(entries.size());
-    OTransactionIndexEntry firstExternalRemove = null;
-    for (OTransactionIndexEntry entry : entries) {
-      final OIdentifiable value = entry.value;
+    final Set<OStorageTransactionIndexChange> interpretation =
+        new HashSet<OStorageTransactionIndexChange>(entries.size());
+    OStorageTransactionIndexChange firstExternalRemove = null;
+    for (OStorageTransactionIndexChange entry : entries) {
 
-      switch (entry.operation) {
-        case PUT:
-          assert value != null;
+      if (entry.isPut()) {
+        assert entry.getValue() != null;
 
-          interpretation.add(entry);
-          lastObservedPuts.addLast(entry);
-          break;
-        case REMOVE:
-          if (interpretation.remove(entry)) { // the put of this RID is no longer observable
-            assert value != null;
+        interpretation.add(entry);
+        lastObservedPuts.addLast(entry);
+      } else if (entry.isRemove()) {
+        if (interpretation.remove(entry)) { // the put of this RID is no longer observable
+          assert entry.getValue() != null;
 
-            // Recalculate last visible put.
+          // Recalculate last visible put.
 
-            if (entry.equals(lastObservedPuts.peekLast())) lastObservedPuts.removeLast();
+          if (entry.equals(lastObservedPuts.peekLast())) lastObservedPuts.removeLast();
 
-            OTransactionIndexEntry last;
-            while ((last = lastObservedPuts.peekLast()) != null
-                && !interpretation.contains(last)) // prune all unobservable puts
-            lastObservedPuts.removeLast();
-          } else {
-            if (firstExternalRemove == null) // save only first external remove
-            firstExternalRemove = entry;
-            if (value == null) { // start from the scratch
-              interpretation.clear();
-              lastObservedPuts.clear();
-            }
+          OStorageTransactionIndexChange last;
+          while ((last = lastObservedPuts.peekLast()) != null
+              && !interpretation.contains(last)) // prune all unobservable puts
+          lastObservedPuts.removeLast();
+        } else {
+          if (firstExternalRemove == null) // save only first external remove
+          firstExternalRemove = entry;
+          if (entry.getValue() == null) { // start from the scratch
+            interpretation.clear();
+            lastObservedPuts.clear();
           }
-          break;
-
-        case CLEAR:
-        default:
-          assert false;
-          break;
+        }
       }
     }
 
@@ -337,10 +347,10 @@ public class OTransactionIndexChangesPerKey {
     return Collections.singletonList(lastObservedPuts.getLast()); // last visible put
   }
 
-  private Iterable<OTransactionIndexEntry> interpretAsNonUnique() {
+  private Iterable<OStorageTransactionIndexChange> interpretAsNonUnique() {
     // 1. Handle common fast paths.
 
-    if (entries.size() < 2) return new ArrayList<OTransactionIndexEntry>(entries);
+    if (entries.size() < 2) return new ArrayList<OStorageTransactionIndexChange>(entries);
 
     if (entries.size() == 2) {
       final OTransactionIndexEntry entryA = entries.get(0);
@@ -355,7 +365,7 @@ public class OTransactionIndexChangesPerKey {
         if (entryB.operation == OPERATION.REMOVE)
           return Collections.singletonList(entryA); // both are removals
 
-        return new ArrayList<OTransactionIndexEntry>(entries); // second operation is a put
+        return new ArrayList<OStorageTransactionIndexChange>(entries); // second operation is a put
       }
 
       if (ridB == null) {
@@ -368,18 +378,20 @@ public class OTransactionIndexChangesPerKey {
         if (entryA.operation == entryB.operation) // both operations do the same on the same RID
         return Collections.singletonList(entryA);
 
-        return new ArrayList<OTransactionIndexEntry>(entries);
+        return new ArrayList<OStorageTransactionIndexChange>(entries);
       }
 
-      return new ArrayList<OTransactionIndexEntry>(entries); // it's put-put on different RIDs
+      return new ArrayList<OStorageTransactionIndexChange>(
+          entries); // it's put-put on different RIDs
     }
 
     // 2. Calculate observable changes to index.
 
-    final Set<OTransactionIndexEntry> changes = new HashSet<OTransactionIndexEntry>(entries.size());
+    final Set<OStorageTransactionIndexChange> changes =
+        new HashSet<OStorageTransactionIndexChange>(entries.size());
 
-    final Set<OTransactionIndexEntry> interpretation =
-        new HashSet<OTransactionIndexEntry>(entries.size());
+    final Set<OStorageTransactionIndexChange> interpretation =
+        new HashSet<OStorageTransactionIndexChange>(entries.size());
     boolean seenKeyRemoval = false;
     for (OTransactionIndexEntry entry : entries) {
       final OIdentifiable value = entry.value;
@@ -427,8 +439,8 @@ public class OTransactionIndexChangesPerKey {
       changes.addAll(interpretation);
       return changes;
     } else {
-      final OMultiCollectionIterator<OTransactionIndexEntry> result =
-          new OMultiCollectionIterator<OTransactionIndexEntry>();
+      final OMultiCollectionIterator<OStorageTransactionIndexChange> result =
+          new OMultiCollectionIterator<OStorageTransactionIndexChange>();
       result.setAutoConvertToRecord(false);
       result.add(changes);
       result.add(interpretation);
@@ -436,9 +448,10 @@ public class OTransactionIndexChangesPerKey {
     }
   }
 
-  private static Iterable<OTransactionIndexEntry> swap(List<OTransactionIndexEntry> list) {
+  private static Iterable<OStorageTransactionIndexChange> swap(List<OTransactionIndexEntry> list) {
     assert list.size() == 2;
-    final List<OTransactionIndexEntry> result = new ArrayList<OTransactionIndexEntry>(2);
+    final List<OStorageTransactionIndexChange> result =
+        new ArrayList<OStorageTransactionIndexChange>(2);
     result.add(list.get(1));
     result.add(list.get(0));
     return result;
@@ -466,6 +479,11 @@ public class OTransactionIndexChangesPerKey {
 
   /** @return a copy of the entries of this object */
   public List<OTransactionIndexEntry> getEntriesAsList() {
+    return Collections.unmodifiableList(new ArrayList<>(this.entries));
+  }
+
+  /** @return a copy of the entries of this object */
+  public List<OStorageTransactionIndexChange> getEntriesForStorage() {
     return Collections.unmodifiableList(new ArrayList<>(this.entries));
   }
 

@@ -44,10 +44,10 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorageTransactionIndexChange;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
-import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTransactionIndexEntry;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.Collections;
@@ -749,9 +749,9 @@ public abstract class OIndexAbstract implements OIndexInternal {
    * @param changes the changes to interpret.
    * @return the interpreted index key changes.
    */
-  public Iterable<OTransactionIndexEntry> interpretTxKeyChanges(
+  public Iterable<OStorageTransactionIndexChange> interpretTxKeyChanges(
       OTransactionIndexChangesPerKey changes) {
-    return changes.getEntriesAsList();
+    return changes.getEntriesForStorage();
   }
 
   public ODocument getConfiguration() {
