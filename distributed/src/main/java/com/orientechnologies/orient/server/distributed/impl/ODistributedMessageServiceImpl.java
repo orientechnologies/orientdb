@@ -26,7 +26,6 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.distributed.ODistributedMessageService;
-import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedResponseManager;
 import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
@@ -36,13 +35,12 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.Set;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
- * Hazelcast implementation of distributed peer. There is one instance per database. Each node
+ * Message handler for matching distributed responses to requests of distributed peer. Each node
  * creates own instance to talk with each others.
  *
  * @author Luca Garulli (l.garulli--at--orientdb.com)
@@ -53,7 +51,6 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
   private final ODistributedPlugin manager;
   private final ConcurrentHashMap<Long, ODistributedResponseManager> responsesByRequestIds;
   private final TimerTask asynchMessageManager;
-  private Thread responseThread;
   private long[] responseTimeMetrics = new long[10];
   private final Map<String, OProfilerEntry> latencies = new HashMap<String, OProfilerEntry>();
   private final Map<String, AtomicLong> messagesStats = new HashMap<String, AtomicLong>();
@@ -75,17 +72,7 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
         };
   }
 
-  public ODistributedDatabaseImpl getDatabase(final String iDatabaseName) {
-    return ((OrientDBDistributed) manager.getServerInstance().getDatabases())
-        .getDatabase(iDatabaseName);
-  }
-
   public void shutdown() {
-    if (responseThread != null) {
-      responseThread.interrupt();
-      responseThread = null;
-    }
-
     asynchMessageManager.cancel();
 
     // CANCEL ALL THE PENDING REQUESTS
@@ -95,11 +82,6 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
 
     latencies.clear();
     messagesStats.clear();
-  }
-
-  @Override
-  public ODistributedResponseManager getResponseManager(final ODistributedRequestId reqId) {
-    return responsesByRequestIds.get(reqId.getMessageId());
   }
 
   public void registerRequest(final long id, final ODistributedResponseManager currentResponseMgr) {
@@ -122,11 +104,6 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
       }
     }
     return total > 0 ? total / involved : 0;
-  }
-
-  @Override
-  public Set<String> getDatabases() {
-    return ((OrientDBDistributed) manager.getServerInstance().getDatabases()).getActiveDatabases();
   }
 
   /** Not synchronized, it's called when a message arrives */

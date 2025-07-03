@@ -52,7 +52,6 @@ public class ODistributedTxCoordinatorTest {
     when(tx.getIndexOperations()).thenReturn(new HashMap<>());
     when(distributedDatabase.nextId()).thenReturn(seq.next());
     when(serverManager.getDatabaseConfiguration(any())).thenReturn(distributedConfig);
-    when(messageService.getDatabase(dbName)).thenReturn(distributedDatabase);
     when(serverManager.getNextMessageIdCounter()).thenReturn(0L);
     when(responseManager.isQuorumReached()).thenReturn(true);
     when(databaseDocument.beginDistributedTx(any(), any(), eq(tx), eq(true), anyInt()))

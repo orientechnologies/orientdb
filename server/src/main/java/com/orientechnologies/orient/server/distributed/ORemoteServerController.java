@@ -19,6 +19,8 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import java.io.IOException;
@@ -44,33 +46,40 @@ public class ORemoteServerController {
   public ORemoteServerController(
       final ORemoteServerAvailabilityCheck check,
       String localNodeName,
-      final String iServer,
-      final String iURL,
+      final String server,
+      final String url,
       final String user,
-      final String passwd)
-      throws IOException {
+      final String passwd) {
     if (user == null) throw new IllegalArgumentException("User is null");
     if (passwd == null) throw new IllegalArgumentException("Password is null");
 
-    logger.debugOut(localNodeName, iServer, "Creating remote channel(s) to distributed server...");
+    logger.debugOut(localNodeName, server, "Creating remote channel(s) to distributed server...");
 
-    requestChannels =
-        new ORemoteServerChannel
-            [OGlobalConfiguration.DISTRIBUTED_REQUEST_CHANNELS.getValueAsInteger()];
-    for (int i = 0; i < requestChannels.length; ++i)
-      requestChannels[i] =
-          new ORemoteServerChannel(
-              check, localNodeName, iServer, iURL, user, passwd, CURRENT_PROTOCOL_VERSION);
+    int requestCannelCount = OGlobalConfiguration.DISTRIBUTED_REQUEST_CHANNELS.getValueAsInteger();
+    int responseCannelCount =
+        OGlobalConfiguration.DISTRIBUTED_RESPONSE_CHANNELS.getValueAsInteger();
+    requestChannels = new ORemoteServerChannel[requestCannelCount];
+    try {
+      for (int i = 0; i < requestChannels.length; ++i) {
+        var channel =
+            new ORemoteServerChannel(
+                check, localNodeName, server, url, user, passwd, CURRENT_PROTOCOL_VERSION);
+        requestChannels[i] = channel;
+      }
 
-    protocolVersion = requestChannels[0].getDistributedProtocolVersion();
+      protocolVersion = requestChannels[0].getDistributedProtocolVersion();
 
-    responseChannels =
-        new ORemoteServerChannel
-            [OGlobalConfiguration.DISTRIBUTED_RESPONSE_CHANNELS.getValueAsInteger()];
-    for (int i = 0; i < responseChannels.length; ++i)
-      responseChannels[i] =
-          new ORemoteServerChannel(
-              check, localNodeName, iServer, iURL, user, passwd, CURRENT_PROTOCOL_VERSION);
+      responseChannels = new ORemoteServerChannel[responseCannelCount];
+      for (int i = 0; i < responseChannels.length; ++i) {
+        var channel =
+            new ORemoteServerChannel(
+                check, localNodeName, server, url, user, passwd, CURRENT_PROTOCOL_VERSION);
+        responseChannels[i] = channel;
+      }
+    } catch (IOException e) {
+      throw OException.wrapException(
+          new OIOException(String.format("fail to connect to remote host %s", url)), e);
+    }
   }
 
   public void sendRequest(final ODistributedRequest req) {

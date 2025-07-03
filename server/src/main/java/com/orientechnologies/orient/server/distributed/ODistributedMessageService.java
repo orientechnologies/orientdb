@@ -20,13 +20,9 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import java.util.Set;
 
 /** @author Luca Garulli (l.garulli--at--orientdb.com) */
 public interface ODistributedMessageService {
-  Set<String> getDatabases();
-
-  ODistributedDatabase getDatabase(String iDatabaseName);
 
   void dispatchResponseToThread(final ODistributedResponse response);
 
@@ -43,8 +39,6 @@ public interface ODistributedMessageService {
   long getProcessedRequests();
 
   long getCurrentLatency(String server);
-
-  ODistributedResponseManager getResponseManager(ODistributedRequestId reqId);
 
   void registerRequest(final long id, final ODistributedResponseManager currentResponseMgr);
 }

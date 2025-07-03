@@ -40,7 +40,6 @@ import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.OSignalHandler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
-import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -135,8 +134,7 @@ import sun.misc.Signal;
  *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
-public class ODistributedPlugin extends OServerPluginAbstract
-    implements ODistributedServerManager, OCommandOutputListener {
+public class ODistributedPlugin extends OServerPluginAbstract implements ODistributedServerManager {
   private static final OLoggerDistributed logger =
       OLoggerDistributed.logger(ODistributedPlugin.class);
   public static final String REPLICATOR_USER = "_CrossServerTempUser";
@@ -170,7 +168,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
 
   private final OHazelcastClusterMetadataManager clusterManager;
 
-  protected ODistributedPlugin() {
+  public ODistributedPlugin() {
     clusterManager = new OHazelcastClusterMetadataManager(this);
   }
 
@@ -1793,14 +1791,6 @@ public class ODistributedPlugin extends OServerPluginAbstract
     }
   }
 
-  @Override
-  public void onMessage(String iText) {
-    if (iText.startsWith("\r\n")) iText = iText.substring(2);
-    else if (iText.startsWith("\n")) iText = iText.substring(1);
-
-    logger.debug("%s", iText);
-  }
-
   public void stopNode(final String iNode) throws IOException {
     logger.warnNode(nodeName, "Sending request of stopping node '%s'...", iNode);
 
@@ -2253,7 +2243,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
 
   @Override
   public ODistributedDatabaseImpl getDatabase(String name) {
-    return getMessageService().getDatabase(name);
+    return ((OrientDBDistributed) getServerInstance().getDatabases()).getDatabase(name);
   }
 
   public Set<String> getDatabases() {
