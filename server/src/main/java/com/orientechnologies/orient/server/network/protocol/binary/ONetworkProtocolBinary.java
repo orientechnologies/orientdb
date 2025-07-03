@@ -910,16 +910,17 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
   public static byte[] getRecordBytes(OClientConnection connection, final ORecord iRecord) {
     final byte[] stream;
     String dbSerializerName = null;
-    if (ODatabaseRecordThreadLocal.instance().getIfDefined() != null)
-      dbSerializerName =
-          ((ODatabaseDocumentInternal) iRecord.getDatabase()).getSerializer().toString();
+    ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.instance().getIfDefined();
+    if (database != null) dbSerializerName = database.getSerializer().toString();
     String name = connection.getData().getSerializationImpl();
     if (ORecordInternal.getRecordType(iRecord) == ODocument.RECORD_TYPE
         && (dbSerializerName == null || !dbSerializerName.equals(name))) {
       ((ODocument) iRecord).deserializeFields();
       ORecordSerializer ser = ORecordSerializerFactory.instance().getFormat(name);
       stream = ser.toStream(iRecord);
-    } else stream = iRecord.toStream();
+    } else {
+      stream = iRecord.toStream();
+    }
 
     return stream;
   }
