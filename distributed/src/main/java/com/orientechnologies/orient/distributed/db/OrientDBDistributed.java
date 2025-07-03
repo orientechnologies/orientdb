@@ -31,6 +31,7 @@ import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerAware;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
+import com.orientechnologies.orient.server.distributed.ODistributedMessageService;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.DB_STATUS;
 import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
@@ -39,6 +40,7 @@ import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDis
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributedPooled;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedConfigurationManager;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseImpl;
+import com.orientechnologies.orient.server.distributed.impl.ODistributedMessageServiceImpl;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedPlugin;
 import com.orientechnologies.orient.server.distributed.impl.ONewDeltaSyncImporter;
 import com.orientechnologies.orient.server.distributed.impl.metadata.OSharedContextDistributed;
@@ -59,12 +61,14 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
       OLoggerDistributed.logger(OrientDBDistributed.class);
   private volatile OServer server;
   private volatile ODistributedPlugin plugin;
-  protected final ConcurrentHashMap<String, ODistributedConfigurationManager> configurations =
+  private final ConcurrentHashMap<String, ODistributedConfigurationManager> configurations =
       new ConcurrentHashMap<String, ODistributedConfigurationManager>();
+
+  private final ODistributedMessageServiceImpl messageService;
 
   public OrientDBDistributed(String directoryPath, OrientDBConfig config, Orient instance) {
     super(directoryPath, config, instance);
-    // This now is simple but should be replaced by a factory depending to the protocol version
+    messageService = new ODistributedMessageServiceImpl(this);
   }
 
   @Override
@@ -413,7 +417,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     }
   }
 
-  protected String getNodeName() {
+  public String getNodeName() {
     return plugin.getLocalNodeName();
   }
 
@@ -617,10 +621,15 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   public void close() {
     if (!isOpen()) return;
     offlineOnShutdown();
+    this.messageService.shutdown();
     super.close();
   }
 
   public int getActiveDatabaseCount() {
     return this.dbCount.get();
+  }
+
+  public ODistributedMessageService getMessageService() {
+    return messageService;
   }
 }

@@ -69,6 +69,7 @@ import com.orientechnologies.orient.server.distributed.NODE_STATUS;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedLifecycleListener;
+import com.orientechnologies.orient.server.distributed.ODistributedMessageService;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest.EXECUTION_MODE;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
@@ -265,8 +266,6 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
     // CLOSE ALL CONNECTIONS TO THE SERVERS
     remoteServerManager.closeAll();
 
-    messageService = new ODistributedMessageServiceImpl(this);
-
     try {
       clusterManager.startupHazelcastPlugin();
 
@@ -347,8 +346,6 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
 
       // CLOSE ALL CONNECTIONS TO THE SERVERS
       remoteServerManager.closeAll();
-
-      if (messageService != null) messageService.shutdown();
 
       setNodeStatus(NODE_STATUS.OFFLINE);
 
@@ -481,7 +478,7 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
           "No nodes configured '" + iDatabaseName + "' request: " + req);
     }
 
-    messageService.updateMessageStats(iTask.getName());
+    getMessageService().updateMessageStats(iTask.getName());
     if (responseManagerFactory != null) {
       return send2Nodes(req, iTargetNodes, iExecutionMode, localResult, responseManagerFactory);
     } else {
@@ -606,7 +603,7 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
       if (!(iNodes instanceof List)) iNodes = new ArrayList<String>(iNodes);
       if (iNodes.size() > 1) Collections.sort((List<String>) iNodes);
 
-      this.messageService.registerRequest(iRequest.getId().getMessageId(), currentResponseMgr);
+      getMessageService().registerRequest(iRequest.getId().getMessageId(), currentResponseMgr);
 
       for (String node : iNodes) {
         // CATCH ANY EXCEPTION LOG IT AND IGNORE TO CONTINUE SENDING REQUESTS TO OTHER NODES
@@ -1035,17 +1032,8 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
   }
 
   @Override
-  public ODistributedMessageServiceImpl getMessageService() {
-    while (messageService == null)
-      // THIS COULD HAPPEN ONLY AT STARTUP
-      try {
-        Thread.sleep(100);
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-        throw OException.wrapException(
-            new OOfflineNodeException("Message Service is not available"), e);
-      }
-    return messageService;
+  public ODistributedMessageService getMessageService() {
+    return ((OrientDBDistributed) serverInstance.getDatabases()).getMessageService();
   }
 
   @Override
@@ -2108,10 +2096,7 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
         }
 
       // UNLOCK ANY PENDING LOCKS
-      if (messageService != null) {
-        for (String dbName : getDatabases())
-          getDatabase(dbName).handleUnreachableNode(nodeLeftName);
-      }
+      for (String dbName : getDatabases()) getDatabase(dbName).handleUnreachableNode(nodeLeftName);
 
       clusterManager.removeServerFromCluster(member, nodeLeftName, removeOnlyDynamicServers);
 
@@ -2139,7 +2124,7 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
         System.exit(1);
     } finally {
       // REMOVE NODE IN DB CFG
-      if (messageService != null) messageService.handleUnreachableNode(nodeLeftName);
+      getMessageService().handleUnreachableNode(nodeLeftName);
     }
   }
 

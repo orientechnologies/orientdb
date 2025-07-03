@@ -41,4 +41,8 @@ public interface ODistributedMessageService {
   long getCurrentLatency(String server);
 
   void registerRequest(final long id, final ODistributedResponseManager currentResponseMgr);
+
+  void handleUnreachableNode(final String nodeName);
+
+  void timeoutRequest(final long msgId);
 }

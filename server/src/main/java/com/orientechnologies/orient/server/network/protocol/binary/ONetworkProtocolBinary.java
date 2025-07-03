@@ -591,13 +591,11 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       final ODistributedServerManager manager = server.getDistributedManager();
       if (manager != null && connection.hasDatabase())
         try {
-          if (manager.getMessageService() != null) {
-            String databaseName = connection.getDatabaseName();
-            final ODistributedDatabase dDatabase = manager.getDatabase(databaseName);
-            if (dDatabase != null) {
-              dDatabase.waitForOnline();
-            } else manager.waitUntilNodeOnline(manager.getLocalNodeName(), databaseName);
-          }
+          String databaseName = connection.getDatabaseName();
+          final ODistributedDatabase dDatabase = manager.getDatabase(databaseName);
+          if (dDatabase != null) {
+            dDatabase.waitForOnline();
+          } else manager.waitUntilNodeOnline(manager.getLocalNodeName(), databaseName);
         } catch (InterruptedException e) {
           Thread.currentThread().interrupt();
           throw OException.wrapException(new OInterruptedException("Request interrupted"), e);
@@ -685,14 +683,6 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     final ODistributedResponse response = new ODistributedResponse();
 
     response.fromStream(channel.getDataInput());
-
-    // WHILE MSG SERVICE IS UP & RUNNING
-    while (manager.getMessageService() == null)
-      try {
-        Thread.sleep(100);
-      } catch (InterruptedException e) {
-        return;
-      }
 
     manager.getMessageService().dispatchResponseToThread(response);
   }

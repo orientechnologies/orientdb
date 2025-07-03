@@ -48,15 +48,15 @@ import java.util.concurrent.atomic.AtomicLong;
 public class ODistributedMessageServiceImpl implements ODistributedMessageService {
   private static final OLoggerDistributed logger =
       OLoggerDistributed.logger(ODistributedMessageServiceImpl.class);
-  private final ODistributedPlugin manager;
+  private final OrientDBDistributed context;
   private final ConcurrentHashMap<Long, ODistributedResponseManager> responsesByRequestIds;
   private final TimerTask asynchMessageManager;
   private long[] responseTimeMetrics = new long[10];
   private final Map<String, OProfilerEntry> latencies = new HashMap<String, OProfilerEntry>();
   private final Map<String, AtomicLong> messagesStats = new HashMap<String, AtomicLong>();
 
-  public ODistributedMessageServiceImpl(final ODistributedPlugin manager) {
-    this.manager = manager;
+  public ODistributedMessageServiceImpl(final OrientDBDistributed context) {
+    this.context = context;
     this.responsesByRequestIds = new ConcurrentHashMap<Long, ODistributedResponseManager>();
 
     // RESET ALL THE METRICS
@@ -137,7 +137,7 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
     }
   }
 
-  /** Removes a response manager because in timeout. */
+  /** Removes a response context because in timeout. */
   public void timeoutRequest(final long msgId) {
     final ODistributedResponseManager asynchMgr = responsesByRequestIds.remove(msgId);
     if (asynchMgr != null) asynchMgr.timeout();
@@ -216,7 +216,7 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
         final List<String> missingNodes = resp.getMissingNodes();
 
         logger.warnIn(
-            manager.getLocalNodeName(),
+            context.getNodeName(),
             missingNodes.toString(),
             "%d missed response(s) for message %d by nodes %s after %dms when timeout is %dms",
             missingNodes.size(),
@@ -277,9 +277,7 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
   @Override
   public long getReceivedRequests() {
     long total = 0;
-    Collection<ODistributedDatabaseImpl> dbs =
-        ((OrientDBDistributed) manager.getServerInstance().getDatabases())
-            .getDistributedDatabases();
+    Collection<ODistributedDatabaseImpl> dbs = context.getDistributedDatabases();
     for (ODistributedDatabaseImpl db : dbs) {
       total += db.getReceivedRequests();
     }
@@ -290,9 +288,7 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
   @Override
   public long getProcessedRequests() {
     long total = 0;
-    Collection<ODistributedDatabaseImpl> dbs =
-        ((OrientDBDistributed) manager.getServerInstance().getDatabases())
-            .getDistributedDatabases();
+    Collection<ODistributedDatabaseImpl> dbs = context.getDistributedDatabases();
     for (ODistributedDatabaseImpl db : dbs) {
       total += db.getProcessedRequests();
     }
