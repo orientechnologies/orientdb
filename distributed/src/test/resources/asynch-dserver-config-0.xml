@@ -22,7 +22,7 @@
                 <parameter value="false" name="enabled"/>
             </parameters>
         </handler>
-        <handler class="com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin">
+        <handler class="com.orientechnologies.orient.server.distributed.impl.ODistributedPlugin">
             <parameters>
                 <parameter value="true" name="enabled"/>
                 <parameter value="src/test/resources/asynch-distributed-db-config.json" name="configuration.db.default"/>

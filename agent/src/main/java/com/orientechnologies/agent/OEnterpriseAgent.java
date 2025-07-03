@@ -51,7 +51,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedConfiguration
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
-import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
+import com.orientechnologies.orient.server.distributed.impl.ODistributedPlugin;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpAbstract;
 import com.orientechnologies.orient.server.plugin.OPluginLifecycleListener;
@@ -309,8 +309,8 @@ public class OEnterpriseAgent extends OServerPluginAbstract
     if (!(database instanceof ODatabaseDocumentDistributed)) {
       throw new OCommandExecutionException("OrientDB is not started in distributed mode");
     }
-    final OHazelcastPlugin dManager =
-        (OHazelcastPlugin) ((ODatabaseDocumentDistributed) database).getDistributedManager();
+    final ODistributedPlugin dManager =
+        (ODistributedPlugin) ((ODatabaseDocumentDistributed) database).getDistributedManager();
     if (dManager == null || !dManager.isEnabled()) {
       throw new OCommandExecutionException("OrientDB is not started in distributed mode");
     }
@@ -328,8 +328,8 @@ public class OEnterpriseAgent extends OServerPluginAbstract
       throw new OCommandExecutionException("OrientDB is not started in distributed mode");
     }
 
-    final OHazelcastPlugin dManager =
-        (OHazelcastPlugin) ((ODatabaseDocumentDistributed) database).getDistributedManager();
+    final ODistributedPlugin dManager =
+        (ODistributedPlugin) ((ODatabaseDocumentDistributed) database).getDistributedManager();
     if (dManager == null || !dManager.isEnabled()) {
       throw new OCommandExecutionException("OrientDB is not started in distributed mode");
     }
@@ -346,8 +346,8 @@ public class OEnterpriseAgent extends OServerPluginAbstract
     if (!(database instanceof ODatabaseDocumentDistributed)) {
       throw new OCommandExecutionException("OrientDB is not started in distributed mode");
     }
-    final OHazelcastPlugin dManager =
-        (OHazelcastPlugin) ((ODatabaseDocumentDistributed) database).getDistributedManager();
+    final ODistributedPlugin dManager =
+        (ODistributedPlugin) ((ODatabaseDocumentDistributed) database).getDistributedManager();
     if (dManager == null || !dManager.isEnabled()) {
       throw new OCommandExecutionException("OrientDB is not started in distributed mode");
     }

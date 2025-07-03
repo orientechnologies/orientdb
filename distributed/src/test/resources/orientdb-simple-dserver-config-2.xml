@@ -2,7 +2,7 @@
 <orient-server>
     <handlers>
         <handler
-                class="com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin">
+                class="com.orientechnologies.orient.server.distributed.impl.ODistributedPlugin">
             <parameters>
                 <parameter value="europe-2" name="nodeName"/>
                 <parameter value="true" name="enabled"/>

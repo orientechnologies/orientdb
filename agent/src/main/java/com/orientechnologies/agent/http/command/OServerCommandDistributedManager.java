@@ -38,8 +38,8 @@ import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.config.OClusterConfiguration;
+import com.orientechnologies.orient.server.distributed.impl.ODistributedPlugin;
 import com.orientechnologies.orient.server.distributed.impl.task.OEnterpriseStatsTask;
-import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
@@ -137,7 +137,7 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
         throw new OConfigurationException(
             "Cannot restart the server: local server is not distributed");
 
-      final OHazelcastPlugin dManager = ((OHazelcastPlugin) server.getDistributedManager());
+      final ODistributedPlugin dManager = ((ODistributedPlugin) server.getDistributedManager());
       dManager.restartNode(parts[2]);
 
       iResponse.send(OHttpUtils.STATUS_OK_CODE, null, null, OHttpUtils.STATUS_OK_DESCRIPTION, null);
@@ -182,7 +182,7 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
 
     final String database = parts[2];
 
-    final OHazelcastPlugin dManager = ((OHazelcastPlugin) server.getDistributedManager());
+    final ODistributedPlugin dManager = ((ODistributedPlugin) server.getDistributedManager());
     if (dManager == null || !dManager.isEnabled())
       throw new OCommandExecutionException("OrientDB is not started in distributed mode");
 
@@ -194,7 +194,7 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
   }
 
   public void changeConfig(final OServer server, final String database, final String jsonContent) {
-    final OHazelcastPlugin manager = (OHazelcastPlugin) server.getDistributedManager();
+    final ODistributedPlugin manager = (ODistributedPlugin) server.getDistributedManager();
 
     final OModifiableDistributedConfiguration databaseConfiguration =
         manager.getDatabaseConfiguration(database).modify();

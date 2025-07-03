@@ -20,7 +20,7 @@ import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
-import com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin;
+import com.orientechnologies.orient.server.distributed.impl.ODistributedPlugin;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 import java.io.File;
 import java.io.IOException;
@@ -74,7 +74,7 @@ public class ServerRun {
   public void crashServer() {
     if (server != null) {
       server.getClientConnectionManager().killAllChannels();
-      ((OHazelcastPlugin) server.getDistributedManager())
+      ((ODistributedPlugin) server.getDistributedManager())
           .getHazelcastInstance()
           .getLifecycleService()
           .terminate();
@@ -135,7 +135,7 @@ public class ServerRun {
   public void shutdownServer() {
     if (server != null) {
       try {
-        ((OHazelcastPlugin) server.getDistributedManager()).getHazelcastInstance().shutdown();
+        ((ODistributedPlugin) server.getDistributedManager()).getHazelcastInstance().shutdown();
       } catch (Exception e) {
       }
       server.shutdown();
@@ -150,11 +150,11 @@ public class ServerRun {
   public void terminateServer() {
     if (server != null) {
       try {
-        if (((OHazelcastPlugin) server.getDistributedManager())
+        if (((ODistributedPlugin) server.getDistributedManager())
             .getHazelcastInstance()
             .getLifecycleService()
             .isRunning())
-          ((OHazelcastPlugin) server.getDistributedManager())
+          ((ODistributedPlugin) server.getDistributedManager())
               .getHazelcastInstance()
               .getLifecycleService()
               .terminate();

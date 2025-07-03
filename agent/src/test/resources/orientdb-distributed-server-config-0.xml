@@ -28,7 +28,7 @@
             </parameters>
         </handler>
         <!-- CLUSTER PLUGIN, TO TURN ON SET THE 'ENABLED' PARAMETER TO 'true' -->
-        <handler class="com.orientechnologies.orient.server.hazelcast.OHazelcastPlugin">
+        <handler class="com.orientechnologies.orient.server.distributed.impl.ODistributedPlugin">
             <parameters>
                 <parameter name="nodeName" value="europe-0"/>
                 <parameter name="enabled" value="true"/>
