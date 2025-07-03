@@ -92,7 +92,6 @@ import com.orientechnologies.orient.core.index.ODefaultIndexFactory;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.OIndexInternal;
-import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import com.orientechnologies.orient.core.index.OIndexMetadata;
 import com.orientechnologies.orient.core.index.OIndexes;
 import com.orientechnologies.orient.core.index.ORuntimeKeyIndexDefinition;
@@ -113,8 +112,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.core.serialization.serializer.binary.impl.index.OCompositeKeySerializer;
-import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.sharding.auto.OAutoShardingIndexEngine;
+import com.orientechnologies.orient.core.storage.OAllocationTransaction;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OIdentifiableStorage;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
@@ -122,6 +121,9 @@ import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageOperationResult;
+import com.orientechnologies.orient.core.storage.OStorageRecordOperation;
+import com.orientechnologies.orient.core.storage.OStorageTransaction;
+import com.orientechnologies.orient.core.storage.OStorageTransactionIndexChanges;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.cache.OPageDataVerificationError;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
@@ -131,8 +133,8 @@ import com.orientechnologies.orient.core.storage.cache.local.OBackgroundExceptio
 import com.orientechnologies.orient.core.storage.cluster.OOfflineCluster;
 import com.orientechnologies.orient.core.storage.cluster.OPaginatedCluster;
 import com.orientechnologies.orient.core.storage.config.OClusterBasedStorageConfiguration;
+import com.orientechnologies.orient.core.storage.impl.local.paginated.OInternalStorageTransaction;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
-import com.orientechnologies.orient.core.storage.impl.local.paginated.OStorageTransaction;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.AtomicOperationsTable;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperationsManager;
@@ -168,8 +170,6 @@ import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeRidBag;
 import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTransactionData;
-import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
-import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.core.tx.OTxMetadataHolder;
 import com.orientechnologies.orient.core.tx.OTxMetadataHolderImpl;
 import java.io.BufferedInputStream;
@@ -260,8 +260,8 @@ public abstract class OAbstractPaginatedStorage
 
   private static final int WAL_RESTORE_REPORT_INTERVAL = 30 * 1000; // milliseconds
 
-  private static final Comparator<ORecordOperation> COMMIT_RECORD_OPERATION_COMPARATOR =
-      Comparator.comparing(o -> o.getRecord().getIdentity());
+  private static final Comparator<OStorageRecordOperation> COMMIT_RECORD_OPERATION_COMPARATOR =
+      Comparator.comparing(o -> o.getRecordIdentity());
   public static final ThreadGroup storageThreadGroup;
 
   protected static final ScheduledExecutorService fuzzyCheckpointExecutor;
@@ -305,7 +305,7 @@ public abstract class OAbstractPaginatedStorage
   private final Map<String, OCluster> clusterMap = new HashMap<>();
   private final List<OCluster> clusters = new CopyOnWriteArrayList<>();
 
-  private volatile ThreadLocal<OStorageTransaction> transaction;
+  private volatile ThreadLocal<OInternalStorageTransaction> transaction;
   private final AtomicBoolean walVacuumInProgress = new AtomicBoolean();
 
   protected volatile OWriteAheadLog writeAheadLog;
@@ -493,9 +493,9 @@ public abstract class OAbstractPaginatedStorage
     }
   }
 
-  private static TreeMap<String, OTransactionIndexChanges> getSortedIndexOperations(
-      final OTransactionInternal clientTx) {
-    return new TreeMap<>(clientTx.getIndexOperations());
+  private static TreeMap<String, OStorageTransactionIndexChanges> getSortedIndexOperations(
+      final OStorageTransaction clientTx) {
+    return new TreeMap<>(clientTx.getChangesForIndex());
   }
 
   public final void open(final OContextConfiguration contextConfiguration) {
@@ -1921,16 +1921,17 @@ public abstract class OAbstractPaginatedStorage
    *
    * @param clientTx the transaction of witch allocate rids
    */
-  public void preallocateRids(final OTransactionInternal clientTx) {
+  public void preallocateRids(final OAllocationTransaction clientTx) {
     try {
-      final Iterable<ORecordOperation> entries = clientTx.getRecordOperations();
+      final Iterable<OStorageRecordOperation> entries = clientTx.getRecordChanges();
       final TreeMap<Integer, OCluster> clustersToLock = new TreeMap<>();
 
-      final Set<ORecordOperation> newRecords = new TreeSet<>(COMMIT_RECORD_OPERATION_COMPARATOR);
+      final Set<OStorageRecordOperation> newRecords =
+          new TreeSet<>(COMMIT_RECORD_OPERATION_COMPARATOR);
 
-      for (final ORecordOperation txEntry : entries) {
+      for (final OStorageRecordOperation txEntry : entries) {
 
-        if (txEntry.type == ORecordOperation.CREATED) {
+        if (txEntry.getType() == ORecordOperation.CREATED) {
           newRecords.add(txEntry);
           final int clusterId = txEntry.getRID().getClusterId();
           clustersToLock.put(clusterId, doGetAndCheckCluster(clusterId));
@@ -1947,7 +1948,7 @@ public abstract class OAbstractPaginatedStorage
             atomicOperation -> {
               lockClusters(clustersToLock);
 
-              for (final ORecordOperation txEntry : newRecords) {
+              for (final OStorageRecordOperation txEntry : newRecords) {
                 final ORecord rec = txEntry.getRecord();
                 if (!rec.getIdentity().isPersistent()) {
                   if (rec.isDirty()) {
@@ -2015,8 +2016,8 @@ public abstract class OAbstractPaginatedStorage
    * @return The list of operations applied by the transaction
    */
   @Override
-  public List<ORecordOperation> commit(final OTransactionInternal clientTx) {
-    return commit(clientTx, false);
+  public void commit(final OStorageTransaction clientTx) {
+    commit(clientTx, false);
   }
 
   /**
@@ -2025,9 +2026,8 @@ public abstract class OAbstractPaginatedStorage
    * @param clientTx the pre-allocated transaction to commit
    * @return The list of operations applied by the transaction
    */
-  @SuppressWarnings("UnusedReturnValue")
-  public List<ORecordOperation> commitPreAllocated(final OTransactionInternal clientTx) {
-    return commit(clientTx, true);
+  public void commitPreAllocated(final OStorageTransaction clientTx) {
+    commit(clientTx, true);
   }
 
   /**
@@ -2043,38 +2043,34 @@ public abstract class OAbstractPaginatedStorage
    * @param allocated true if the operation is pre-allocated commit
    * @return The list of operations applied by the transaction
    */
-  protected List<ORecordOperation> commit(
-      final OTransactionInternal transaction, final boolean allocated) {
+  protected void commit(final OStorageTransaction transaction, final boolean allocated) {
     try {
       txBegun.increment();
 
-      final ODatabaseDocumentInternal database = transaction.getDatabase();
-      final OIndexManagerAbstract indexManager = database.getMetadata().getIndexManagerInternal();
-      final TreeMap<String, OTransactionIndexChanges> indexOperations =
+      final TreeMap<String, OStorageTransactionIndexChanges> indexOperations =
           getSortedIndexOperations(transaction);
 
-      database.getMetadata().makeThreadLocalSchemaSnapshot();
-
-      final Collection<ORecordOperation> recordOperations = transaction.getRecordOperations();
+      final Collection<OStorageRecordOperation> recordOperations = transaction.getRecordChanges();
       final TreeMap<Integer, OCluster> clustersToLock = new TreeMap<>();
-      final Map<ORecordOperation, Integer> clusterOverrides = new IdentityHashMap<>(8);
+      final Map<OStorageRecordOperation, Integer> clusterOverrides = new IdentityHashMap<>(8);
 
-      final Set<ORecordOperation> newRecords = new TreeSet<>(COMMIT_RECORD_OPERATION_COMPARATOR);
+      final Set<OStorageRecordOperation> newRecords =
+          new TreeSet<>(COMMIT_RECORD_OPERATION_COMPARATOR);
 
-      for (final ORecordOperation recordOperation : recordOperations) {
-        if (recordOperation.type == ORecordOperation.CREATED
-            || recordOperation.type == ORecordOperation.UPDATED) {
+      for (final OStorageRecordOperation recordOperation : recordOperations) {
+        if (recordOperation.getType() == ORecordOperation.CREATED
+            || recordOperation.getType() == ORecordOperation.UPDATED) {
           final ORecord record = recordOperation.getRecord();
           if (record instanceof ODocument) {
             ((ODocument) record).validate();
           }
         }
 
-        if (recordOperation.type == ORecordOperation.UPDATED
-            || recordOperation.type == ORecordOperation.DELETED) {
-          final int clusterId = recordOperation.getRecord().getIdentity().getClusterId();
+        if (recordOperation.getType() == ORecordOperation.UPDATED
+            || recordOperation.getType() == ORecordOperation.DELETED) {
+          final int clusterId = recordOperation.getRecordIdentity().getClusterId();
           clustersToLock.put(clusterId, doGetAndCheckCluster(clusterId));
-        } else if (recordOperation.type == ORecordOperation.CREATED) {
+        } else if (recordOperation.getType() == ORecordOperation.CREATED) {
           newRecords.add(recordOperation);
 
           final ORecord record = recordOperation.getRecord();
@@ -2098,15 +2094,15 @@ public abstract class OAbstractPaginatedStorage
         }
       }
 
-      final List<ORecordOperation> result = new ArrayList<>(8);
+      final List<OStorageRecordOperation> result = new ArrayList<>(8);
       stateLock.readLock().lock();
       try {
 
         if (modificationLock) {
           final List<ORID> recordLocks = new ArrayList<>();
-          for (final ORecordOperation recordOperation : recordOperations) {
-            if (recordOperation.type == ORecordOperation.UPDATED
-                || recordOperation.type == ORecordOperation.DELETED) {
+          for (final OStorageRecordOperation recordOperation : recordOperations) {
+            if (recordOperation.getType() == ORecordOperation.UPDATED
+                || recordOperation.getType() == ORecordOperation.DELETED) {
               recordLocks.add(recordOperation.getRID());
             }
           }
@@ -2130,8 +2126,9 @@ public abstract class OAbstractPaginatedStorage
             final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
             lockClusters(clustersToLock);
 
-            final Map<ORecordOperation, OPhysicalPosition> positions = new IdentityHashMap<>(8);
-            for (final ORecordOperation recordOperation : newRecords) {
+            final Map<OStorageRecordOperation, OPhysicalPosition> positions =
+                new IdentityHashMap<>(8);
+            for (final OStorageRecordOperation recordOperation : newRecords) {
               final ORecord rec = recordOperation.getRecord();
 
               if (allocated) {
@@ -2180,14 +2177,10 @@ public abstract class OAbstractPaginatedStorage
                 transaction.updateIdentityAfterCommit(oldRID, rid);
               }
             }
-            lockRidBags(clustersToLock, indexOperations, indexManager, database);
+            lockRidBags(clustersToLock, indexOperations);
 
-            for (final ORecordOperation recordOperation : recordOperations) {
-              commitEntry(
-                  atomicOperation,
-                  recordOperation,
-                  positions.get(recordOperation),
-                  database.getSerializer());
+            for (final OStorageRecordOperation recordOperation : recordOperations) {
+              commitEntry(atomicOperation, recordOperation, positions.get(recordOperation));
               result.add(recordOperation);
             }
             lockIndexes(indexOperations);
@@ -2211,15 +2204,14 @@ public abstract class OAbstractPaginatedStorage
           }
         } finally {
           atomicOperationsManager.ensureThatComponentsUnlocked();
-          database.getMetadata().clearThreadLocalSchemaSnapshot();
         }
       } finally {
         try {
           if (modificationLock) {
             final List<ORID> recordLocks = new ArrayList<>();
-            for (final ORecordOperation recordOperation : recordOperations) {
-              if (recordOperation.type == ORecordOperation.UPDATED
-                  || recordOperation.type == ORecordOperation.DELETED) {
+            for (final OStorageRecordOperation recordOperation : recordOperations) {
+              if (recordOperation.getType() == ORecordOperation.UPDATED
+                  || recordOperation.getType() == ORecordOperation.DELETED) {
                 recordLocks.add(recordOperation.getRID());
               }
             }
@@ -2240,9 +2232,9 @@ public abstract class OAbstractPaginatedStorage
       if (logger.isDebugEnabled()) {
         logger.debug(
             "%d Committed transaction %d on database '%s' (result=%s)",
-            Thread.currentThread().getId(), transaction.getId(), database.getName(), result);
+            Thread.currentThread().getId(), transaction.getId(), getName(), result);
       }
-      return result;
+      return;
     } catch (final RuntimeException ee) {
       throw logAndPrepareForRethrow(ee);
     } catch (final Error ee) {
@@ -2255,14 +2247,14 @@ public abstract class OAbstractPaginatedStorage
 
   private void commitIndexes(
       OAtomicOperation atomicOperation,
-      final Map<String, OTransactionIndexChanges> indexesToCommit) {
-    for (final OTransactionIndexChanges changes : indexesToCommit.values()) {
+      final Map<String, OStorageTransactionIndexChanges> indexesToCommit) {
+    for (final OStorageTransactionIndexChanges changes : indexesToCommit.values()) {
       final OIndexInternal index = changes.getAssociatedIndex();
 
       try {
         int indexId = index.getIndexId();
         indexId = extractInternalId(indexId);
-        if (changes.cleared) {
+        if (changes.isClearIndex()) {
           clearIndex(indexId);
         }
         checkIndexId(indexId);
@@ -3108,15 +3100,14 @@ public abstract class OAbstractPaginatedStorage
     return engine.hasRangeQuerySupport();
   }
 
-  private void rollback(final OTransactionInternal clientTx, final Throwable error)
+  private void rollback(final OStorageTransaction clientTx, final Throwable error)
       throws IOException {
     assert transaction.get() != null;
     atomicOperationsManager.endAtomicOperation(error);
 
     assert atomicOperationsManager.getCurrentOperation() == null;
 
-    OTransactionAbstract.updateCacheFromEntries(
-        clientTx.getDatabase(), clientTx.getRecordOperations(), false);
+    clientTx.updateCache(false);
 
     txRollback.increment();
   }
@@ -3971,27 +3962,27 @@ public abstract class OAbstractPaginatedStorage
   }
 
   private void endStorageTx(
-      final OTransactionInternal txi, final Collection<ORecordOperation> recordOperations)
+      final OStorageTransaction txi, final Collection<OStorageRecordOperation> recordOperations)
       throws IOException {
     atomicOperationsManager.endAtomicOperation(null);
     assert atomicOperationsManager.getCurrentOperation() == null;
 
-    OTransactionAbstract.updateCacheFromEntries(txi.getDatabase(), recordOperations, true);
+    txi.updateCache(true);
     txCommit.increment();
   }
 
-  private void startStorageTx(final OTransactionInternal clientTx) throws IOException {
-    final OStorageTransaction storageTx = transaction.get();
+  private void startStorageTx(final OStorageTransaction clientTx) throws IOException {
+    final OInternalStorageTransaction storageTx = transaction.get();
     assert storageTx == null || storageTx.getClientTx().getId() == clientTx.getId();
     assert atomicOperationsManager.getCurrentOperation() == null;
-    transaction.set(new OStorageTransaction(clientTx));
+    transaction.set(new OInternalStorageTransaction(clientTx));
     try {
       final OAtomicOperation atomicOperation =
           atomicOperationsManager.startAtomicOperation(clientTx.getMetadata().orElse(null));
       if (clientTx.getMetadata().isPresent()) {
         this.lastMetadata = clientTx.getMetadata().get();
       }
-      clientTx.storageBegun();
+      clientTx.storageTransaction();
       Iterator<byte[]> ops = clientTx.getSerializedOperations();
       while (ops.hasNext()) {
         byte[] next = ops.next();
@@ -4667,21 +4658,20 @@ public abstract class OAbstractPaginatedStorage
 
   private void commitEntry(
       final OAtomicOperation atomicOperation,
-      final ORecordOperation txEntry,
-      final OPhysicalPosition allocated,
-      final ORecordSerializer serializer) {
+      final OStorageRecordOperation txEntry,
+      final OPhysicalPosition allocated) {
     final ORecord rec = txEntry.getRecord();
-    if (txEntry.type != ORecordOperation.DELETED && !rec.isDirty())
+    if (txEntry.getType() != ORecordOperation.DELETED && !rec.isDirty())
     // NO OPERATION
     {
       return;
     }
     final ORecordId rid = (ORecordId) rec.getIdentity();
 
-    if (txEntry.type == ORecordOperation.UPDATED && rid.isNew())
+    if (txEntry.getType() == ORecordOperation.UPDATED && rid.isNew())
     // OVERWRITE OPERATION AS CREATE
     {
-      txEntry.type = ORecordOperation.CREATED;
+      txEntry.setType(ORecordOperation.CREATED);
     }
 
     ORecordSerializationContext.pushContext();
@@ -4695,14 +4685,14 @@ public abstract class OAbstractPaginatedStorage
         return;
       }
 
-      switch (txEntry.type) {
+      switch (txEntry.getType()) {
         case ORecordOperation.LOADED:
           break;
         case ORecordOperation.CREATED:
           {
             final byte[] stream;
             try {
-              stream = serializer.toStream(rec);
+              stream = txEntry.getRecordBytes();
             } catch (RuntimeException e) {
               throw OException.wrapException(
                   new OCommitSerializationException(
@@ -4747,7 +4737,7 @@ public abstract class OAbstractPaginatedStorage
           {
             final byte[] stream;
             try {
-              stream = serializer.toStream(rec);
+              stream = txEntry.getRecordBytes();
             } catch (RuntimeException e) {
               throw OException.wrapException(
                   new OCommitSerializationException(
@@ -4782,7 +4772,7 @@ public abstract class OAbstractPaginatedStorage
             break;
           }
         default:
-          throw new OStorageException("Unknown record operation " + txEntry.type);
+          throw new OStorageException("Unknown record operation " + txEntry.getType());
       }
     } finally {
       ORecordSerializationContext.pullContext();
@@ -5788,13 +5778,12 @@ public abstract class OAbstractPaginatedStorage
     return ridsPerCluster;
   }
 
-  private static void lockIndexes(final TreeMap<String, OTransactionIndexChanges> indexes) {
-    for (final OTransactionIndexChanges changes : indexes.values()) {
-      assert changes.changesPerKey instanceof TreeMap;
+  private static void lockIndexes(final TreeMap<String, OStorageTransactionIndexChanges> indexes) {
+    for (final OStorageTransactionIndexChanges changes : indexes.values()) {
 
       final OIndexInternal index = changes.getAssociatedIndex();
 
-      final List<Object> orderedIndexNames = new ArrayList<>(changes.changesPerKey.keySet());
+      final List<Object> orderedIndexNames = new ArrayList<>(changes.getChanges().keySet());
       if (orderedIndexNames.size() > 1) {
         orderedIndexNames.sort(
             (o1, o2) -> {
@@ -5811,7 +5800,7 @@ public abstract class OAbstractPaginatedStorage
           break;
         }
       }
-      if (!fullyLocked && !changes.nullKeyChanges.isEmpty()) {
+      if (!fullyLocked && !changes.getNullChanges().isEmpty()) {
         index.acquireAtomicExclusiveLock(null);
       }
     }
@@ -5825,9 +5814,7 @@ public abstract class OAbstractPaginatedStorage
 
   private void lockRidBags(
       final TreeMap<Integer, OCluster> clusters,
-      final TreeMap<String, OTransactionIndexChanges> indexes,
-      final OIndexManagerAbstract manager,
-      ODatabaseDocumentInternal db) {
+      final TreeMap<String, OStorageTransactionIndexChanges> indexes) {
     final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
 
     for (final Integer clusterId : clusters.keySet()) {
@@ -5835,9 +5822,9 @@ public abstract class OAbstractPaginatedStorage
           atomicOperation, OSBTreeCollectionManagerShared.generateLockName(clusterId));
     }
 
-    for (final Map.Entry<String, OTransactionIndexChanges> entry : indexes.entrySet()) {
+    for (final Map.Entry<String, OStorageTransactionIndexChanges> entry : indexes.entrySet()) {
       final String indexName = entry.getKey();
-      final OIndexInternal index = entry.getValue().resolveAssociatedIndex(indexName, manager, db);
+      final OIndexInternal index = entry.getValue().resolveAssociatedIndex();
       if (index != null) {
         try {
           OBaseIndexEngine engine = getIndexEngine(index.getIndexId());

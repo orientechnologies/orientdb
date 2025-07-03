@@ -66,18 +66,18 @@ public abstract class OTransactionAbstract implements OTransaction {
   public static void updateCacheFromEntries(
       final ODatabaseDocumentInternal database,
       final Iterable<? extends ORecordOperation> entries,
-      final boolean updateStrategy) {
+      final boolean keepInCache) {
     final OLocalRecordCache dbCache = database.getLocalCache();
 
     for (ORecordOperation txEntry : entries) {
-      if (!updateStrategy) {
+      if (!keepInCache) {
         // ALWAYS REMOVE THE RECORD FROM CACHE
         dbCache.deleteRecord(txEntry.getRecord().getIdentity());
-      } else if (txEntry.type == ORecordOperation.DELETED) {
+      } else if (txEntry.getType() == ORecordOperation.DELETED) {
         // DELETION
         dbCache.deleteRecord(txEntry.getRecord().getIdentity());
-      } else if (txEntry.type == ORecordOperation.UPDATED
-          || txEntry.type == ORecordOperation.CREATED) {
+      } else if (txEntry.getType() == ORecordOperation.UPDATED
+          || txEntry.getType() == ORecordOperation.CREATED) {
         // UPDATE OR CREATE
         dbCache.updateRecord(txEntry.getRecord());
       }
@@ -216,5 +216,9 @@ public abstract class OTransactionAbstract implements OTransaction {
 
   public void setDatabase(ODatabaseDocumentInternal database) {
     this.database = database;
+  }
+
+  public ORecordOperation newOp(final OIdentifiable iRecord, final byte iStatus) {
+    return new ORecordOperation(iRecord, iStatus);
   }
 }

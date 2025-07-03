@@ -83,7 +83,7 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
             serializer.fromStream(operation.getRecord(), record, null);
             ORecordInternal.setIdentity(record, rid);
             ORecordInternal.setVersion(record, 0);
-            entry = new ORecordOperation(record, ORecordOperation.CREATED);
+            entry = newOp(record, ORecordOperation.CREATED);
             record.setDirty();
 
             // SAVE THE RECORD TO RETRIEVE THEM FOR THE NEW RID TO SEND BACK TO THE REQUESTER
@@ -98,7 +98,7 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
                     .newInstance(operation.getRecordType(), rid.getClusterId(), getDatabase());
             ORecordInternal.setIdentity(updated, rid);
             ORecordInternal.setVersion(updated, version);
-            entry = new ORecordOperation(updated, ORecordOperation.UPDATED);
+            entry = newOp(updated, ORecordOperation.UPDATED);
             updated.setDirty();
             ORecordInternal.setContentChanged(entry.getRecord(), operation.isContentChanged());
             break;
@@ -106,7 +106,7 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
           case ORecordOperation.DELETED:
             // LOAD RECORD TO BE SURE IT HASN'T BEEN DELETED BEFORE + PROVIDE CONTENT FOR ANY HOOK
             final ORecord rec = rid.getRecord();
-            entry = new ORecordOperation(rec, ORecordOperation.DELETED);
+            entry = newOp(rec, ORecordOperation.DELETED);
             int deleteVersion = operation.getVersion();
             if (rec == null) throw new ORecordNotFoundException(rid.getIdentity());
             else {
@@ -130,7 +130,7 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
       // FIRE THE TRIGGERS ONLY AFTER HAVING PARSED THE REQUEST
       for (Entry<ORID, ORecordOperation> entry : tempEntries.entrySet()) {
 
-        if (entry.getValue().type == ORecordOperation.UPDATED) {
+        if (entry.getValue().getType() == ORecordOperation.UPDATED) {
           // SPECIAL CASE FOR UPDATE: WE NEED TO LOAD THE RECORD AND APPLY CHANGES TO GET WORKING
           // HOOKS (LIKE INDEXES)
           final ORecord record = entry.getValue().record.getRecord();
@@ -155,7 +155,7 @@ public class OTransactionOptimisticProxy extends OTransactionOptimistic {
           }
         }
 
-        addRecord(entry.getValue().getRecord(), entry.getValue().type, null);
+        addRecord(entry.getValue().getRecord(), entry.getValue().getType(), null);
       }
       tempEntries.clear();
 

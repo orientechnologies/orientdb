@@ -25,14 +25,21 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
+import com.orientechnologies.orient.core.storage.OAllocationTransaction;
+import com.orientechnologies.orient.core.storage.OStorageTransaction;
 import java.io.IOException;
-import java.util.*;
+import java.util.Collection;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
 
 /**
  * Expose the api for extract the internal details needed by the storage for perform the transaction
  * commit
  */
-public interface OTransactionInternal extends OTransaction {
+public interface OTransactionInternal
+    extends OStorageTransaction, OAllocationTransaction, OTransaction {
 
   /**
    * Extract all the record operations for the current transaction
@@ -103,7 +110,7 @@ public interface OTransactionInternal extends OTransaction {
 
   void setMetadataHolder(Optional<OTxMetadataHolder> metadata);
 
-  default void storageBegun() {}
+  default void storageTransaction() {}
 
   void prepareSerializedOperations() throws IOException;
 

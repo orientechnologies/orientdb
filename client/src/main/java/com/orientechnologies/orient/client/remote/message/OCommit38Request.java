@@ -47,12 +47,12 @@ public class OCommit38Request implements OBinaryRequest<OCommit37Response> {
       this.indexChanges = new ArrayList<>();
       List<ORecordOperationRequest> netOperations = new ArrayList<>();
       for (ORecordOperation txEntry : operations) {
-        if (txEntry.type == ORecordOperation.LOADED) continue;
+        if (txEntry.getType() == ORecordOperation.LOADED) continue;
         ORecordOperationRequest request = new ORecordOperationRequest();
-        request.setType(txEntry.type);
+        request.setType(txEntry.getType());
         request.setVersion(txEntry.getRecord().getVersion());
         request.setId(txEntry.getRecord().getIdentity());
-        switch (txEntry.type) {
+        switch (txEntry.getType()) {
           case ORecordOperation.CREATED:
             request.setRecordType(ORecordInternal.getRecordType(txEntry.getRecord()));
             request.setRecord(

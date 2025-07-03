@@ -28,7 +28,6 @@ import com.orientechnologies.orient.core.config.OStorageConfigurationUpdateListe
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
-import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -42,7 +41,6 @@ import com.orientechnologies.orient.core.storage.impl.local.OIndexEngineCallback
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.transaction.OTransactionId;
-import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.core.util.OBackupable;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -113,7 +111,7 @@ public interface OStorage extends OBackupable, OStorageInfo {
   boolean cleanOutRecord(ORecordId recordId, int recordVersion);
 
   // TX OPERATIONS
-  List<ORecordOperation> commit(OTransactionInternal iTx);
+  void commit(OStorageTransaction iTx);
 
   Set<String> getClusterNames();
 
@@ -297,9 +295,9 @@ public interface OStorage extends OBackupable, OStorageInfo {
 
   void pauseConfigurationUpdateNotifications();
 
-  void preallocateRids(final OTransactionInternal clientTx);
+  void preallocateRids(final OAllocationTransaction clientTx);
 
-  List<ORecordOperation> commitPreAllocated(final OTransactionInternal clientTx);
+  void commitPreAllocated(final OStorageTransaction clientTx);
 
   void acquireWriteLock(final ORID rid, long timeout);
 

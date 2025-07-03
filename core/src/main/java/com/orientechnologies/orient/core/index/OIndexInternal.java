@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.metadata.security.OSecurityResourceProp
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
+import com.orientechnologies.orient.core.storage.OStorageTransactionIndexChange;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import java.util.Collection;
 import java.util.HashSet;
@@ -320,7 +321,7 @@ public interface OIndexInternal extends OIndex {
 
   boolean isNativeTxSupported();
 
-  Iterable<OTransactionIndexChangesPerKey.OTransactionIndexEntry> interpretTxKeyChanges(
+  Iterable<OStorageTransactionIndexChange> interpretTxKeyChanges(
       OTransactionIndexChangesPerKey changes);
 
   Stream<ORID> getRidsIgnoreTx(Object key);

@@ -33,17 +33,16 @@ import com.orientechnologies.common.util.OQuarto;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
-import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OInvalidInstanceIdException;
 import com.orientechnologies.orient.core.exception.OInvalidStorageEncryptionKeyException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
+import com.orientechnologies.orient.core.storage.OStorageTransaction;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.fs.OFile;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
-import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import java.io.BufferedInputStream;
 import java.io.DataInputStream;
 import java.io.File;
@@ -546,9 +545,8 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
   }
 
   @Override
-  public List<ORecordOperation> commit(OTransactionInternal clientTx, boolean allocated) {
-    List<ORecordOperation> operations = super.commit(clientTx, allocated);
-    listeners.forEach((l) -> l.onCommit(operations));
-    return operations;
+  public void commit(OStorageTransaction clientTx, boolean allocated) {
+    super.commit(clientTx, allocated);
+    listeners.forEach((l) -> l.onCommit(clientTx.getRecordChanges()));
   }
 }

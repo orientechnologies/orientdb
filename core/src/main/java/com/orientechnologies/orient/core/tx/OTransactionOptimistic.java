@@ -20,6 +20,7 @@
 
 package com.orientechnologies.orient.core.tx;
 
+import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
@@ -38,6 +39,7 @@ import com.orientechnologies.orient.core.index.OClassIndexManager;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
@@ -51,6 +53,11 @@ import com.orientechnologies.orient.core.record.impl.ODirtyManager;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.schedule.OScheduledEvent;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
+import com.orientechnologies.orient.core.storage.OStorageRecordOperation;
+import com.orientechnologies.orient.core.storage.OStorageTransactionIndexChange;
+import com.orientechnologies.orient.core.storage.OStorageTransactionIndexChanges;
+import com.orientechnologies.orient.core.storage.OStorageTransactionIndexKeyChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTransactionIndexEntry;
 import java.io.ByteArrayOutputStream;
@@ -68,6 +75,8 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
+import java.util.SortedMap;
+import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class OTransactionOptimistic extends OTransactionAbstract implements OTransactionInternal {
@@ -538,21 +547,21 @@ public class OTransactionOptimistic extends OTransactionAbstract implements OTra
           // UPDATE PREVIOUS STATUS
           txEntry.record = iRecord;
 
-          switch (txEntry.type) {
+          switch (txEntry.getType()) {
             case ORecordOperation.LOADED:
               switch (iStatus) {
                 case ORecordOperation.UPDATED:
-                  txEntry.type = ORecordOperation.UPDATED;
+                  txEntry.setType(ORecordOperation.UPDATED);
                   break;
                 case ORecordOperation.DELETED:
-                  txEntry.type = ORecordOperation.DELETED;
+                  txEntry.setType(ORecordOperation.DELETED);
                   break;
               }
               break;
             case ORecordOperation.UPDATED:
               switch (iStatus) {
                 case ORecordOperation.DELETED:
-                  txEntry.type = ORecordOperation.DELETED;
+                  txEntry.setType(ORecordOperation.DELETED);
                   break;
               }
               break;
@@ -795,7 +804,7 @@ public class OTransactionOptimistic extends OTransactionAbstract implements OTra
   public ORecord getRecord(final ORID rid) {
     final ORecordOperation e = getRecordEntry(rid);
     if (e != null)
-      if (e.type == ORecordOperation.DELETED) return OTransactionAbstract.DELETED_RECORD;
+      if (e.getType() == ORecordOperation.DELETED) return OTransactionAbstract.DELETED_RECORD;
       else return e.getRecord();
     return null;
   }
@@ -808,12 +817,12 @@ public class OTransactionOptimistic extends OTransactionAbstract implements OTra
     if (iClass == null)
       // RETURN ALL THE RECORDS
       for (ORecordOperation entry : allEntries.values()) {
-        if (entry.type == ORecordOperation.CREATED) result.add(entry);
+        if (entry.getType() == ORecordOperation.CREATED) result.add(entry);
       }
     else {
       // FILTER RECORDS BY CLASSNAME
       for (ORecordOperation entry : allEntries.values()) {
-        if (entry.type == ORecordOperation.CREATED)
+        if (entry.getType() == ORecordOperation.CREATED)
           if (entry.getRecord() != null && entry.getRecord() instanceof ODocument) {
             if (iPolymorphic) {
               if (iClass.isSuperClassOf(
@@ -835,7 +844,7 @@ public class OTransactionOptimistic extends OTransactionAbstract implements OTra
     if (iIds == null)
       // RETURN ALL THE RECORDS
       for (ORecordOperation entry : allEntries.values()) {
-        if (entry.type == ORecordOperation.CREATED) result.add(entry);
+        if (entry.getType() == ORecordOperation.CREATED) result.add(entry);
       }
     else
       // FILTER RECORDS BY ID
@@ -843,7 +852,7 @@ public class OTransactionOptimistic extends OTransactionAbstract implements OTra
         for (int id : iIds) {
           if (entry.getRecord() != null
               && entry.getRecord().getIdentity().getClusterId() == id
-              && entry.type == ORecordOperation.CREATED) {
+              && entry.getType() == ORecordOperation.CREATED) {
             result.add(entry);
             break;
           }
@@ -1228,7 +1237,7 @@ public class OTransactionOptimistic extends OTransactionAbstract implements OTra
   }
 
   @Override
-  public void storageBegun() {
+  public void storageTransaction() {
     if (metadata.isPresent()) {
       metadata.get().notifyMetadataRead();
     }
@@ -1262,7 +1271,7 @@ public class OTransactionOptimistic extends OTransactionAbstract implements OTra
   @Override
   public void resetAllocatedIds() {
     for (Map.Entry<ORID, ORecordOperation> op : allEntries.entrySet()) {
-      if (op.getValue().type == ORecordOperation.CREATED) {
+      if (op.getValue().getType() == ORecordOperation.CREATED) {
         ORID lastCreateId = op.getValue().getRID().copy();
         ORecordId oldNew =
             new ORecordId(lastCreateId.getClusterId(), op.getKey().getClusterPosition());
@@ -1300,5 +1309,109 @@ public class OTransactionOptimistic extends OTransactionAbstract implements OTra
 
     database.setDefaultTransactionMode(getNoTxLocks());
     userData.clear();
+  }
+
+  @Override
+  public void updateCache(boolean keepInCache) {
+    OTransactionAbstract.updateCacheFromEntries(getDatabase(), getRecordOperations(), keepInCache);
+  }
+
+  @Override
+  public SortedMap<String, OStorageTransactionIndexChanges> getChangesForIndex() {
+    TreeMap<String, OStorageTransactionIndexChanges> map = new TreeMap<>();
+    for (Map.Entry<String, OTransactionIndexChanges> change : this.indexEntries.entrySet()) {
+      String index = change.getKey();
+      OTransactionIndexChanges ops = change.getValue();
+      map.put(
+          index,
+          new OStorageTransactionIndexChanges() {
+
+            @Override
+            public OIndexInternal resolveAssociatedIndex() {
+              return ops.resolveAssociatedIndex(index, database);
+            }
+
+            @Override
+            public boolean isClearIndex() {
+              return ops.cleared;
+            }
+
+            @Override
+            public OStorageTransactionIndexKeyChanges getNullChanges() {
+              return new OStorageTransactionIndexKeyChanges() {
+                @Override
+                public boolean isEmpty() {
+                  return ops.nullKeyChanges.isEmpty();
+                }
+
+                @Override
+                public Iterable<OStorageTransactionIndexChange> getOps() {
+                  OIndexInternal indexInstance =
+                      database
+                          .getMetadata()
+                          .getIndexManagerInternal()
+                          .getIndex(database, index)
+                          .getInternal();
+                  return indexInstance.interpretTxKeyChanges(ops.nullKeyChanges);
+                }
+
+                @Override
+                public Object getKey() {
+                  return null;
+                }
+              };
+            }
+
+            @Override
+            public SortedMap<Object, OStorageTransactionIndexKeyChanges> getChanges() {
+              TreeMap<Object, OStorageTransactionIndexKeyChanges> map =
+                  new TreeMap<>(ODefaultComparator.INSTANCE);
+              for (Map.Entry<Object, OTransactionIndexChangesPerKey> keyChanges :
+                  ops.changesPerKey.entrySet()) {
+                map.put(
+                    keyChanges.getKey(),
+                    new OStorageTransactionIndexKeyChanges() {
+                      @Override
+                      public boolean isEmpty() {
+                        return keyChanges.getValue().isEmpty();
+                      }
+
+                      @Override
+                      public Iterable<OStorageTransactionIndexChange> getOps() {
+                        OIndexInternal indexInstance =
+                            database
+                                .getMetadata()
+                                .getIndexManagerInternal()
+                                .getIndex(database, index)
+                                .getInternal();
+                        return indexInstance.interpretTxKeyChanges(keyChanges.getValue());
+                      }
+
+                      @Override
+                      public Object getKey() {
+                        return keyChanges.getKey();
+                      }
+                    });
+              }
+              return map;
+            }
+
+            @Override
+            public OIndexInternal getAssociatedIndex() {
+              return ops.getAssociatedIndex();
+            }
+          });
+    }
+    return map;
+  }
+
+  @Override
+  public Collection<OStorageRecordOperation> getRecordChanges() {
+    ORecordSerializer serializer = database.getSerializer();
+    for (ORecordOperation op : allEntries.values()) {
+      op.setSerializer(serializer);
+    }
+
+    return (Collection<OStorageRecordOperation>) (Collection) allEntries.values();
   }
 }

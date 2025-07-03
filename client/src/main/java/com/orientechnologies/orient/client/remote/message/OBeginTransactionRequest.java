@@ -44,13 +44,13 @@ public class OBeginTransactionRequest implements OBinaryRequest<OBeginTransactio
 
     if (hasContent) {
       for (ORecordOperation txEntry : operations) {
-        if (txEntry.type == ORecordOperation.LOADED) continue;
+        if (txEntry.getType() == ORecordOperation.LOADED) continue;
         ORecordOperationRequest request = new ORecordOperationRequest();
-        request.setType(txEntry.type);
+        request.setType(txEntry.getType());
         request.setVersion(txEntry.getRecord().getVersion());
         request.setId(txEntry.getRecord().getIdentity());
         request.setRecordType(ORecordInternal.getRecordType(txEntry.getRecord()));
-        switch (txEntry.type) {
+        switch (txEntry.getType()) {
           case ORecordOperation.CREATED:
           case ORecordOperation.UPDATED:
             request.setRecord(

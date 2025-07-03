@@ -152,28 +152,28 @@ public class OTransactionOptimisticClient extends OTransactionOptimistic {
         if (txEntry == null) {
           if (!(rid.isTemporary() && iStatus != ORecordOperation.CREATED)) {
             // NEW ENTRY: JUST REGISTER IT
-            txEntry = new ORecordOperation(iRecord, iStatus);
+            txEntry = newOp(iRecord, iStatus);
             allEntries.put(rid.copy(), txEntry);
           }
         } else {
           // UPDATE PREVIOUS STATUS
           txEntry.record = iRecord;
 
-          switch (txEntry.type) {
+          switch (txEntry.getType()) {
             case ORecordOperation.LOADED:
               switch (iStatus) {
                 case ORecordOperation.UPDATED:
-                  txEntry.type = ORecordOperation.UPDATED;
+                  txEntry.setType(ORecordOperation.UPDATED);
                   break;
                 case ORecordOperation.DELETED:
-                  txEntry.type = ORecordOperation.DELETED;
+                  txEntry.setType(ORecordOperation.DELETED);
                   break;
               }
               break;
             case ORecordOperation.UPDATED:
               switch (iStatus) {
                 case ORecordOperation.DELETED:
-                  txEntry.type = ORecordOperation.DELETED;
+                  txEntry.setType(ORecordOperation.DELETED);
                   break;
               }
               break;

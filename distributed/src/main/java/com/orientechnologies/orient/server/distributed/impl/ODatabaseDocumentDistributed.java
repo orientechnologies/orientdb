@@ -384,7 +384,8 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     // This is future may handle a retry
     try {
       for (ORecordOperation txEntry : iTx.getRecordOperations()) {
-        if (txEntry.type == ORecordOperation.CREATED || txEntry.type == ORecordOperation.UPDATED) {
+        if (txEntry.getType() == ORecordOperation.CREATED
+            || txEntry.getType() == ORecordOperation.UPDATED) {
           final ORecord record = txEntry.getRecord();
           if (record instanceof ODocument) ((ODocument) record).validate();
         }

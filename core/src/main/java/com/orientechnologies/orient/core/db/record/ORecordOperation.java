@@ -21,6 +21,8 @@ package com.orientechnologies.orient.core.db.record;
 
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
+import com.orientechnologies.orient.core.storage.OStorageRecordOperation;
 import java.util.Locale;
 
 /**
@@ -28,7 +30,7 @@ import java.util.Locale;
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-public class ORecordOperation implements Comparable {
+public class ORecordOperation implements Comparable, OStorageRecordOperation {
 
   public static final byte LOADED = 0;
   public static final byte UPDATED = 1;
@@ -39,6 +41,7 @@ public class ORecordOperation implements Comparable {
   public OIdentifiable record;
 
   private Object resultData;
+  private ORecordSerializer serializer;
 
   public ORecordOperation() {}
 
@@ -46,6 +49,10 @@ public class ORecordOperation implements Comparable {
     // CLONE RECORD AND CONTENT
     this.record = iRecord;
     this.type = iStatus;
+  }
+
+  public void setSerializer(ORecordSerializer serializer) {
+    this.serializer = serializer;
   }
 
   @Override
@@ -132,5 +139,20 @@ public class ORecordOperation implements Comparable {
 
   public void setResultData(Object resultData) {
     this.resultData = resultData;
+  }
+
+  @Override
+  public ORID getRecordIdentity() {
+    return getRecord().getIdentity();
+  }
+
+  @Override
+  public byte[] getRecordBytes() {
+    return serializer.toStream(getRecord());
+  }
+
+  @Override
+  public void setType(byte type) {
+    this.type = type;
   }
 }

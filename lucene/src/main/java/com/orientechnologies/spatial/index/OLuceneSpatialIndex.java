@@ -20,9 +20,9 @@ import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdExceptio
 import com.orientechnologies.orient.core.index.OIndexMetadata;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.OStorageTransactionIndexChange;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
-import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTransactionIndexEntry;
 import com.orientechnologies.spatial.engine.OLuceneSpatialIndexContainer;
 import com.orientechnologies.spatial.shape.OShapeFactory;
 import java.util.LinkedHashMap;
@@ -48,7 +48,7 @@ public class OLuceneSpatialIndex extends OLuceneIndexNotUnique {
   }
 
   @Override
-  public Iterable<OTransactionIndexEntry> interpretTxKeyChanges(
+  public Iterable<OStorageTransactionIndexChange> interpretTxKeyChanges(
       final OTransactionIndexChangesPerKey changes) {
 
     try {
@@ -89,7 +89,7 @@ public class OLuceneSpatialIndex extends OLuceneIndexNotUnique {
     return key;
   }
 
-  private static Iterable<OTransactionIndexEntry> interpretAsSpatial(
+  private static Iterable<OStorageTransactionIndexChange> interpretAsSpatial(
       OTransactionIndexChangesPerKey item) {
     // 1. Handle common fast paths.
 
@@ -128,6 +128,6 @@ public class OLuceneSpatialIndex extends OLuceneIndexNotUnique {
           break;
       }
     }
-    return changes.getEntriesAsList();
+    return changes.getEntriesForStorage();
   }
 }

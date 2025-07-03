@@ -6,9 +6,10 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.index.OIndexMetadata;
 import com.orientechnologies.orient.core.index.OIndexOneValue;
+import com.orientechnologies.orient.core.storage.OStorageTransactionIndexChange;
+import com.orientechnologies.orient.core.storage.OStorageTransactionIndexChanges;
+import com.orientechnologies.orient.core.storage.OStorageTransactionIndexKeyChanges;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
-import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
-import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import java.io.IOException;
 import java.util.stream.Stream;
 
@@ -100,16 +101,18 @@ public interface OBaseIndexEngine {
       ORID value,
       IndexEngineValidator<Object, ORID> validator);
 
-  default void applyTxChanges(OAtomicOperation atomicOperation, OTransactionIndexChanges changes) {
-    for (final OTransactionIndexChangesPerKey changesPerKey : changes.changesPerKey.values()) {
+  default void applyTxChanges(
+      OAtomicOperation atomicOperation, OStorageTransactionIndexChanges changes) {
+    for (final OStorageTransactionIndexKeyChanges changesPerKey : changes.getChanges().values()) {
       applyKeyTxChanges(atomicOperation, changesPerKey, this, changes.getAssociatedIndex());
     }
-    applyKeyTxChanges(atomicOperation, changes.nullKeyChanges, this, changes.getAssociatedIndex());
+    applyKeyTxChanges(
+        atomicOperation, changes.getNullChanges(), this, changes.getAssociatedIndex());
   }
 
   private static void applyKeyTxChanges(
       OAtomicOperation atomicOperation,
-      OTransactionIndexChangesPerKey changes,
+      OStorageTransactionIndexKeyChanges changes,
       OBaseIndexEngine engine,
       OIndexInternal index) {
 
@@ -117,29 +120,22 @@ public interface OBaseIndexEngine {
     if (index.isUnique()) {
       uniqueValidator = ((OIndexOneValue) index).getUniqueValidator();
     }
-    for (OTransactionIndexChangesPerKey.OTransactionIndexEntry op :
-        index.interpretTxKeyChanges(changes)) {
-      switch (op.getOperation()) {
-        case PUT:
-          if (uniqueValidator != null) {
-            engine.validatedPut(
-                atomicOperation, changes.key, op.getValue().getIdentity(), uniqueValidator);
-          } else {
-            engine.put(atomicOperation, changes.key, op.getValue().getIdentity());
-          }
-          break;
-        case REMOVE:
-          if (op.getValue() != null) {
-            engine.remove(atomicOperation, changes.key, op.getValue().getIdentity());
-          } else {
-            engine.remove(atomicOperation, changes.key);
-          }
-          break;
-        case CLEAR:
-          // SHOULD NEVER BE THE CASE HANDLE BY cleared FLAG
-          break;
+    for (OStorageTransactionIndexChange op : changes.getOps()) {
+      if (op.isPut()) {
+        if (uniqueValidator != null) {
+          engine.validatedPut(
+              atomicOperation, changes.getKey(), op.getValue().getIdentity(), uniqueValidator);
+        } else {
+          engine.put(atomicOperation, changes.getKey(), op.getValue().getIdentity());
+        }
+      } else if (op.isRemove()) {
+        if (op.getValue() != null) {
+          engine.remove(atomicOperation, changes.getKey(), op.getValue().getIdentity());
+        } else {
+          engine.remove(atomicOperation, changes.getKey());
+        }
       }
-      engine.updateUniqueIndexVersion(changes.key);
+      engine.updateUniqueIndexVersion(changes.getKey());
     }
   }
 }

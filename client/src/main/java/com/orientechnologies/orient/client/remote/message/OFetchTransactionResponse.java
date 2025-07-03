@@ -43,9 +43,9 @@ public class OFetchTransactionResponse implements OBinaryResponse {
     this.indexChanges = new ArrayList<>();
     List<ORecordOperationRequest> netOperations = new ArrayList<>();
     for (ORecordOperation txEntry : operations) {
-      if (txEntry.type == ORecordOperation.LOADED) continue;
+      if (txEntry.getType() == ORecordOperation.LOADED) continue;
       ORecordOperationRequest request = new ORecordOperationRequest();
-      request.setType(txEntry.type);
+      request.setType(txEntry.getType());
       request.setVersion(txEntry.getRecord().getVersion());
       request.setId(txEntry.getRID());
       ORID oldID = reversed.get(txEntry.getRID());

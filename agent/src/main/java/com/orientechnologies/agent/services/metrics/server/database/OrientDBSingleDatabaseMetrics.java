@@ -6,9 +6,10 @@ import com.orientechnologies.agent.services.metrics.OGlobalMetrics;
 import com.orientechnologies.agent.services.metrics.OrientDBMetric;
 import com.orientechnologies.enterprise.server.OEnterpriseServer;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
+import com.orientechnologies.orient.core.storage.OStorageRecordOperation;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OEnterpriseLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OEnterpriseStorageOperationListener;
-import java.util.List;
+import java.util.Collection;
 
 /** Created by Enrico Risa on 20/07/2018. */
 public class OrientDBSingleDatabaseMetrics
@@ -85,10 +86,10 @@ public class OrientDBSingleDatabaseMetrics
   }
 
   @Override
-  public void onCommit(List<ORecordOperation> operations) {
+  public void onCommit(Collection<OStorageRecordOperation> operations) {
 
-    for (ORecordOperation operation : operations) {
-      switch (operation.type) {
+    for (OStorageRecordOperation operation : operations) {
+      switch (operation.getType()) {
         case ORecordOperation.CREATED:
           createOperation.mark();
           break;
