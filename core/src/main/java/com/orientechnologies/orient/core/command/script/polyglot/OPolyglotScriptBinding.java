@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.core.command.script;
+package com.orientechnologies.orient.core.command.script.polyglot;
 
 import java.util.*;
 import javax.script.Bindings;

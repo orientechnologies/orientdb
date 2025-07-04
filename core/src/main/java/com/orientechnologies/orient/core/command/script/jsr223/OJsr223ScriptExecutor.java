@@ -1,10 +1,16 @@
-package com.orientechnologies.orient.core.command.script;
+package com.orientechnologies.orient.core.command.script.jsr223;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.command.script.OAbstractScriptExecutor;
+import com.orientechnologies.orient.core.command.script.OCommandExecutorUtility;
+import com.orientechnologies.orient.core.command.script.OCommandScriptException;
+import com.orientechnologies.orient.core.command.script.ODatabaseScriptPool;
+import com.orientechnologies.orient.core.command.script.OScriptManager;
 import com.orientechnologies.orient.core.command.script.transformer.OScriptTransformer;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.OrientDBEmbedded;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.metadata.security.ORole;
@@ -23,12 +29,20 @@ import javax.script.ScriptException;
 
 /** Created by tglman on 25/01/17. */
 public class OJsr223ScriptExecutor extends OAbstractScriptExecutor {
+  protected static final int LINES_AROUND_ERROR = 5;
   private final OScriptTransformer transformer;
+  private final ODatabaseScriptPool pool;
+  private OrientDBEmbedded context;
 
-  public OJsr223ScriptExecutor(String language, OScriptTransformer scriptTransformer) {
+  public OJsr223ScriptExecutor(
+      String language,
+      OrientDBEmbedded context,
+      OScriptTransformer scriptTransformer,
+      ODatabaseScriptPool pool) {
     super(language);
-    this.language = language;
     this.transformer = scriptTransformer;
+    this.pool = pool;
+    this.context = context;
   }
 
   @Override
@@ -47,14 +61,12 @@ public class OJsr223ScriptExecutor extends OAbstractScriptExecutor {
   @Override
   public OResultSet execute(ODatabaseDocumentInternal database, String script, Map params) {
 
+    OScriptManager scriptManager = context.getScriptManager();
     preExecute(database, script, params);
 
-    final OScriptManager scriptManager =
-        database.getSharedContext().getOrientDB().getScriptManager();
     CompiledScript compiledScript = null;
 
-    final ScriptEngine scriptEngine =
-        scriptManager.acquireDatabaseEngine(database.getName(), language);
+    final ScriptEngine scriptEngine = pool.acquireDatabaseEngine(database.getName(), language);
     try {
 
       if (!(scriptEngine instanceof Compilable))
@@ -65,16 +77,16 @@ public class OJsr223ScriptExecutor extends OAbstractScriptExecutor {
       try {
         compiledScript = c.compile(script);
       } catch (ScriptException e) {
-        scriptManager.throwErrorMessage(e, script);
+        throwErrorMessage(e, script);
       }
 
       final Bindings binding =
-          scriptManager.bindContextVariables(
-              compiledScript.getEngine(),
+          bindContextVariables(
               compiledScript.getEngine().getBindings(ScriptContext.ENGINE_SCOPE),
               database,
               null,
-              params);
+              params,
+              scriptManager);
 
       try {
         final Object ob = compiledScript.eval(binding);
@@ -86,10 +98,10 @@ public class OJsr223ScriptExecutor extends OAbstractScriptExecutor {
             e);
 
       } finally {
-        scriptManager.unbind(scriptEngine, binding, null, params);
+        unbind(binding, null, params, scriptManager);
       }
     } finally {
-      scriptManager.releaseDatabaseEngine(language, database.getName(), scriptEngine);
+      pool.releaseDatabaseEngine(language, database.getName(), scriptEngine);
     }
   }
 
@@ -104,16 +116,15 @@ public class OJsr223ScriptExecutor extends OAbstractScriptExecutor {
 
     final OScriptManager scriptManager = db.getSharedContext().getOrientDB().getScriptManager();
 
-    final ScriptEngine scriptEngine =
-        scriptManager.acquireDatabaseEngine(db.getName(), f.getLanguage());
+    final ScriptEngine scriptEngine = pool.acquireDatabaseEngine(db.getName(), f.getLanguage());
     try {
       final Bindings binding =
-          scriptManager.bind(
-              scriptEngine,
+          bind(
               scriptEngine.getBindings(ScriptContext.ENGINE_SCOPE),
               db,
               context,
-              iArgs);
+              iArgs,
+              scriptManager);
 
       try {
         final Object result;
@@ -152,10 +163,10 @@ public class OJsr223ScriptExecutor extends OAbstractScriptExecutor {
         throw e;
 
       } finally {
-        scriptManager.unbind(scriptEngine, binding, context, iArgs);
+        unbind(binding, context, iArgs, scriptManager);
       }
     } finally {
-      scriptManager.releaseDatabaseEngine(f.getLanguage(), db.getName(), scriptEngine);
+      pool.releaseDatabaseEngine(f.getLanguage(), db.getName(), scriptEngine);
     }
   }
 }

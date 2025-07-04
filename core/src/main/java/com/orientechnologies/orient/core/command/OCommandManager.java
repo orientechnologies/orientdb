@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.command;
 
+import com.orientechnologies.orient.core.command.script.OScriptManager;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -26,7 +27,7 @@ import java.util.Map;
 public class OCommandManager {
   private Map<String, OScriptExecutor> scriptExecutors = new HashMap<>();
 
-  public OCommandManager() {
+  public OCommandManager(OScriptManager scriptManager) {
     registerScriptExecutor("sql", new OSqlScriptExecutor());
     registerScriptExecutor("script", new OSqlScriptExecutor());
   }

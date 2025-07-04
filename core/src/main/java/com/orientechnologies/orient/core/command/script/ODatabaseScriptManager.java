@@ -54,7 +54,7 @@ public class ODatabaseScriptManager {
                       try {
                         scriptEngine.eval(library);
                       } catch (ScriptException e) {
-                        scriptManager.throwErrorMessage(e, library);
+                        OAbstractScriptExecutor.throwErrorMessage(e, library);
                       }
 
                     return scriptEngine;

@@ -19,11 +19,8 @@ package com.orientechnologies.orient.core.db.record;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
-import com.orientechnologies.common.util.OCommonConst;
-import com.orientechnologies.orient.core.command.script.OCommandScriptException;
-import com.orientechnologies.orient.core.command.script.OScriptManager;
+import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.id.ORID;
@@ -35,11 +32,8 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import java.lang.reflect.Method;
-import javax.script.Bindings;
-import javax.script.Invocable;
-import javax.script.ScriptContext;
-import javax.script.ScriptEngine;
-import javax.script.ScriptException;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  * Author : henryzhao81@gmail.com Feb 19, 2013
@@ -251,58 +245,12 @@ public class OClassTrigger {
   private static ORecordHook.RESULT executeFunction(
       final ODocument iDocument, final OFunction func, ODatabaseDocumentInternal database) {
     if (func == null) return ORecordHook.RESULT.RECORD_NOT_CHANGED;
-
-    final OScriptManager scriptManager =
-        database.getSharedContext().getOrientDB().getScriptManager();
-
-    final ScriptEngine scriptEngine =
-        scriptManager.acquireDatabaseEngine(database.getName(), func.getLanguage());
-    try {
-      final Bindings binding = scriptEngine.getBindings(ScriptContext.ENGINE_SCOPE);
-
-      scriptManager.bind(scriptEngine, binding, (ODatabaseDocumentInternal) database, null, null);
-      binding.put("doc", iDocument);
-
-      String result = null;
-      try {
-        if (func.getLanguage() == null)
-          throw new OConfigurationException(
-              "Database function '" + func.getName() + "' has no language");
-        final String funcStr = scriptManager.getFunctionDefinition(func);
-        if (funcStr != null) {
-          try {
-            scriptEngine.eval(funcStr);
-          } catch (ScriptException e) {
-            scriptManager.throwErrorMessage(e, funcStr);
-          }
-        }
-        if (scriptEngine instanceof Invocable) {
-          final Invocable invocableEngine = (Invocable) scriptEngine;
-          Object[] empty = OCommonConst.EMPTY_OBJECT_ARRAY;
-          result = (String) invocableEngine.invokeFunction(func.getName(), empty);
-        }
-      } catch (ScriptException e) {
-        throw OException.wrapException(
-            new OCommandScriptException(
-                "Error on execution of the script", func.getName(), e.getColumnNumber()),
-            e);
-      } catch (NoSuchMethodException e) {
-        throw OException.wrapException(
-            new OCommandScriptException("Error on execution of the script", func.getName(), 0), e);
-      } catch (OCommandScriptException e) {
-        // PASS THROUGH
-        throw e;
-
-      } finally {
-        scriptManager.unbind(scriptEngine, binding, null, null);
-      }
-      if (result == null) {
-        return ORecordHook.RESULT.RECORD_NOT_CHANGED;
-      }
-      return ORecordHook.RESULT.valueOf(result);
-
-    } finally {
-      scriptManager.releaseDatabaseEngine(func.getLanguage(), database.getName(), scriptEngine);
+    Map<String, Object> pars = new HashMap<>();
+    pars.put("doc", iDocument);
+    String result = (String) func.executeInContext(new OBasicCommandContext(database), pars);
+    if (result == null) {
+      return ORecordHook.RESULT.RECORD_NOT_CHANGED;
     }
+    return ORecordHook.RESULT.valueOf(result);
   }
 }

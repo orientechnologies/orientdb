@@ -676,17 +676,12 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
     getSharedContext().getOrientDB().startCommand(Optional.empty());
     try {
       preQueryStart();
-      OScriptExecutor executor =
-          sharedContext
-              .getOrientDB()
-              .getScriptManager()
-              .getCommandManager()
-              .getScriptExecutor(language);
+
       OResultSet original;
 
       this.storage.pauseConfigurationUpdateNotifications();
       try {
-        original = executor.execute(this, script, params);
+        original = this.execute(language, script, params);
       } finally {
         this.storage.fireConfigurationUpdateNotifications();
       }

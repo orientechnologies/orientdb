@@ -35,7 +35,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import javax.script.Bindings;
-import javax.script.ScriptEngine;
 
 public class OMailPlugin extends OServerPluginAbstract
     implements OScriptInjection, OServerPluginConfigurable {
@@ -71,12 +70,12 @@ public class OMailPlugin extends OServerPluginAbstract
   }
 
   @Override
-  public void bind(ScriptEngine engine, Bindings binding, ODatabaseDocument database) {
+  public void bind(Bindings binding, ODatabaseDocument database) {
     binding.put("mail", this);
   }
 
   @Override
-  public void unbind(ScriptEngine engine, Bindings binding) {
+  public void unbind(Bindings binding) {
     binding.put("mail", null);
   }
 

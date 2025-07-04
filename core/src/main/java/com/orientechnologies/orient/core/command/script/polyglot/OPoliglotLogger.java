@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.core.command.script;
+package com.orientechnologies.orient.core.command.script.polyglot;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;

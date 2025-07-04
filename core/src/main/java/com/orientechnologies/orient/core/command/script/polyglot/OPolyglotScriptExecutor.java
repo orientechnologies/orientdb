@@ -1,10 +1,13 @@
-package com.orientechnologies.orient.core.command.script;
+package com.orientechnologies.orient.core.command.script.polyglot;
 
 import com.orientechnologies.common.concur.resource.OResourcePool;
 import com.orientechnologies.common.concur.resource.OResourcePoolListener;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.command.script.OAbstractScriptExecutor;
+import com.orientechnologies.orient.core.command.script.OCommandScriptException;
+import com.orientechnologies.orient.core.command.script.OScriptManager;
 import com.orientechnologies.orient.core.command.script.transformer.OScriptTransformer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -31,14 +34,18 @@ import org.graalvm.polyglot.io.IOAccess;
 /** Created by Luca Garulli */
 public class OPolyglotScriptExecutor extends OAbstractScriptExecutor
     implements OResourcePoolListener<ODatabaseDocumentInternal, Context> {
+
   private final OScriptTransformer transformer;
   protected ConcurrentHashMap<String, OResourcePool<ODatabaseDocumentInternal, Context>>
       contextPools =
           new ConcurrentHashMap<String, OResourcePool<ODatabaseDocumentInternal, Context>>();
-  private final OrientDBEmbedded context;
+  private OrientDBEmbedded context;
 
   public OPolyglotScriptExecutor(
-      OrientDBEmbedded context, final String language, OScriptTransformer scriptTransformer) {
+      OrientDBEmbedded context,
+      OScriptManager scriptManager,
+      final String language,
+      OScriptTransformer scriptTransformer) {
     super("javascript".equalsIgnoreCase(language) ? "js" : language);
     this.transformer = scriptTransformer;
     this.context = context;
@@ -65,7 +72,8 @@ public class OPolyglotScriptExecutor extends OAbstractScriptExecutor
 
   @Override
   public Context createNewResource(ODatabaseDocumentInternal database) {
-    final OScriptManager scriptManager = context.getScriptManager();
+
+    OScriptManager scriptManager = context.getScriptManager();
 
     final Set<String> allowedPackaged = scriptManager.getAllowedPackages();
 
@@ -90,14 +98,14 @@ public class OPolyglotScriptExecutor extends OAbstractScriptExecutor
 
     OPolyglotScriptBinding bindings = new OPolyglotScriptBinding(ctx.getBindings(language));
 
-    scriptManager.bindContextVariables(null, bindings, database, null, null);
+    bindContextVariables(bindings, database, null, null, scriptManager);
     final String library =
         scriptManager.getLibrary(
             database, "js".equalsIgnoreCase(language) ? "javascript" : language);
     if (library != null) {
       ctx.eval(language, library);
     }
-    scriptManager.unbind(null, bindings, null, null);
+    unbind(bindings, null, null, scriptManager);
     return ctx;
   }
 
@@ -121,20 +129,17 @@ public class OPolyglotScriptExecutor extends OAbstractScriptExecutor
   @Override
   public OResultSet execute(ODatabaseDocumentInternal database, String script, Map params) {
 
+    OScriptManager scriptManager = context.getScriptManager();
     preExecute(database, script, params);
-
-    final OScriptManager scriptManager =
-        database.getSharedContext().getOrientDB().getScriptManager();
-
     Context ctx = resolveContext(database);
     try {
       OPolyglotScriptBinding bindings = new OPolyglotScriptBinding(ctx.getBindings(language));
 
-      scriptManager.bindContextVariables(null, bindings, database, null, params);
+      bindContextVariables(bindings, database, null, params, scriptManager);
 
       Value result = ctx.eval(language, script);
       OResultSet transformedResult = transformer.toResultSet(result);
-      scriptManager.unbind(null, bindings, null, null);
+      unbind(bindings, null, null, scriptManager);
       return transformedResult;
 
     } catch (PolyglotException e) {
@@ -164,7 +169,7 @@ public class OPolyglotScriptExecutor extends OAbstractScriptExecutor
 
       OPolyglotScriptBinding bindings = new OPolyglotScriptBinding(ctx.getBindings(language));
 
-      scriptManager.bindContextVariables(null, bindings, database, null, iArgs);
+      bindContextVariables(bindings, database, null, iArgs, scriptManager);
       final Object[] args = iArgs == null ? null : iArgs.keySet().toArray();
 
       Value result = ctx.eval(language, scriptManager.getFunctionInvoke(f, args));
@@ -186,7 +191,7 @@ public class OPolyglotScriptExecutor extends OAbstractScriptExecutor
       } else {
         finalResult = result;
       }
-      scriptManager.unbind(null, bindings, null, null);
+      unbind(bindings, null, null, scriptManager);
       return finalResult;
     } catch (PolyglotException e) {
       final int col = e.getSourceLocation() != null ? e.getSourceLocation().getStartColumn() : 0;

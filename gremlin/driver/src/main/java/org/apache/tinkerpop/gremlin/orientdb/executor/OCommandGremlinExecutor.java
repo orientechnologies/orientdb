@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.script.OAbstractScriptExecutor;
 import com.orientechnologies.orient.core.command.script.OCommandExecutorUtility;
 import com.orientechnologies.orient.core.command.script.OCommandScriptException;
+import com.orientechnologies.orient.core.command.script.ODatabaseScriptPool;
 import com.orientechnologies.orient.core.command.script.OScriptInjection;
 import com.orientechnologies.orient.core.command.script.OScriptManager;
 import com.orientechnologies.orient.core.command.script.OScriptResultHandler;
@@ -80,6 +81,7 @@ public class OCommandGremlinExecutor extends OAbstractScriptExecutor
   public static final String GREMLIN_GROOVY = "gremlin-groovy";
   private final OScriptManager scriptManager;
   private GremlinGroovyScriptEngineFactory factory;
+  private final ODatabaseScriptPool pool;
 
   private OScriptTransformer transformer;
 
@@ -105,6 +107,7 @@ public class OCommandGremlinExecutor extends OAbstractScriptExecutor
     scriptManager.registerEngine(GREMLIN_GROOVY, factory);
 
     scriptManager.registerResultHandler(GREMLIN_GROOVY, this);
+    pool = scriptManager.getDatabaseScriptPool();
   }
 
   private void initCustomTransformer(OScriptTransformer transformer) {
@@ -195,16 +198,15 @@ public class OCommandGremlinExecutor extends OAbstractScriptExecutor
 
     final OScriptManager scriptManager = db.getSharedContext().getOrientDB().getScriptManager();
 
-    final ScriptEngine scriptEngine =
-        scriptManager.acquireDatabaseEngine(db.getName(), f.getLanguage());
+    final ScriptEngine scriptEngine = pool.acquireDatabaseEngine(db.getName(), f.getLanguage());
     try {
       final Bindings binding =
-          scriptManager.bind(
-              scriptEngine,
+          bind(
               scriptEngine.getBindings(ScriptContext.ENGINE_SCOPE),
               db,
               context,
-              iArgs);
+              iArgs,
+              scriptManager);
 
       try {
         final Object result;
@@ -243,10 +245,10 @@ public class OCommandGremlinExecutor extends OAbstractScriptExecutor
         throw e;
 
       } finally {
-        scriptManager.unbind(scriptEngine, binding, context, iArgs);
+        unbind(binding, context, iArgs, scriptManager);
       }
     } finally {
-      scriptManager.releaseDatabaseEngine(f.getLanguage(), db.getName(), scriptEngine);
+      pool.releaseDatabaseEngine(f.getLanguage(), db.getName(), scriptEngine);
     }
   }
 
@@ -268,14 +270,14 @@ public class OCommandGremlinExecutor extends OAbstractScriptExecutor
   protected final ScriptEngine acquireGremlinEngine(final OrientGraph graph) {
 
     final ScriptEngine engine =
-        scriptManager.acquireDatabaseEngine(graph.getRawDatabase().getName(), GREMLIN_GROOVY);
+        pool.acquireDatabaseEngine(graph.getRawDatabase().getName(), GREMLIN_GROOVY);
     Bindings bindings = engine.getBindings(ScriptContext.ENGINE_SCOPE);
     bindGraph(graph, bindings);
     return engine;
   }
 
   protected void releaseGremlinEngine(String dbName, ScriptEngine engine) {
-    scriptManager.releaseDatabaseEngine(GREMLIN_GROOVY, dbName, engine);
+    pool.releaseDatabaseEngine(GREMLIN_GROOVY, dbName, engine);
   }
 
   private void bindGraph(OrientGraph graph, Bindings bindings) {
@@ -317,7 +319,7 @@ public class OCommandGremlinExecutor extends OAbstractScriptExecutor
   }
 
   @Override
-  public void bind(ScriptEngine engine, Bindings binding, ODatabaseDocument database) {
+  public void bind(Bindings binding, ODatabaseDocument database) {
 
     OrientGraph graph = acquireGraph(database);
 
@@ -325,7 +327,7 @@ public class OCommandGremlinExecutor extends OAbstractScriptExecutor
   }
 
   @Override
-  public void unbind(ScriptEngine engine, Bindings binding) {
+  public void unbind(Bindings binding) {
     unbindGraph(binding);
   }
 
