@@ -33,7 +33,7 @@ import java.util.concurrent.atomic.AtomicInteger;
  * @author Andrey Lomakin (a.lomakin-at-orientdb.com)
  * @since 6/25/14
  */
-public class OMemoryWriteAheadLog extends OAbstractWriteAheadLog {
+public class OMemoryWriteAheadLog implements OWriteAheadLog {
   private final AtomicInteger nextPosition = new AtomicInteger();
   private final AtomicInteger nextOperationId = new AtomicInteger();
 
