@@ -813,6 +813,36 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
             for (Entry<String, String> entry : customFields.entrySet()) {
               cls.setCustom(entry.getKey(), entry.getValue());
             }
+          } else if (value.equals("\"allocations\"")) {
+            // GET Allocations
+            jsonReader.readNext(OJSONReader.BEGIN_COLLECTION);
+
+            while (jsonReader.lastChar() != ']') {
+
+              jsonReader.readNext(OJSONReader.NEXT_OBJ_IN_ARRAY);
+
+              final String node =
+                  jsonReader
+                      .readNext(OJSONReader.FIELD_ASSIGNMENT)
+                      .checkContent("\"node\"")
+                      .readString(OJSONReader.COMMA_SEPARATOR);
+
+              jsonReader.readNext(OJSONReader.FIELD_ASSIGNMENT);
+              String field = jsonReader.getValue();
+              final List<String> clusters = new ArrayList<String>();
+              if (field.equals("\"clusters\"")) {
+                jsonReader.readNext(OJSONReader.BEGIN_COLLECTION);
+                while (jsonReader.lastChar() != ']') {
+                  jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
+                  final String clsName = jsonReader.getValue();
+                  clusters.add(OIOUtils.getStringContent(clsName));
+                }
+              }
+              jsonReader.readNext(OJSONReader.NEXT_IN_OBJECT);
+              ((OClassEmbedded) cls).addAllocations(database, node, clusters);
+              if (jsonReader.lastChar() == '}') jsonReader.readNext(OJSONReader.NEXT_IN_ARRAY);
+            }
+            jsonReader.readNext(OJSONReader.NEXT_IN_OBJECT);
           } else if (value.equals("\"cluster-selection\"")) {
             // @SINCE 1.7
             cls.setClusterSelection(jsonReader.readString(OJSONReader.NEXT_IN_OBJECT));
