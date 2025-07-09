@@ -29,7 +29,7 @@ public class OTransactionData {
   }
 
   public static OTransactionData read(DataInput dataInput) throws IOException {
-    OTransactionId transactionId = OTransactionId.read(dataInput);
+    OTransactionId transactionId = OTransactionId.readNetwork(dataInput);
     int entries = dataInput.readInt();
     OTransactionData data = new OTransactionData(transactionId);
     while (entries-- > 0) {
@@ -62,7 +62,7 @@ public class OTransactionData {
   }
 
   public void write(DataOutput output) throws IOException {
-    transactionId.write(output);
+    transactionId.writeNetwork(output);
     output.writeInt(changes.size());
     for (OTransactionDataChange change : changes) {
       change.serialize(output);

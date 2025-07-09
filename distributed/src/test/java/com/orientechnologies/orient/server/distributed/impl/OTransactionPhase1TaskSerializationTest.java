@@ -5,7 +5,9 @@ import static org.junit.Assert.assertEquals;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationContextImpl;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkDistributed;
+import com.orientechnologies.orient.core.tx.ONodeId;
 import com.orientechnologies.orient.core.tx.OTransactionId;
+import com.orientechnologies.orient.core.tx.OTransactionIdPromise;
 import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPhase1Task;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTransactionUniqueKey;
 import java.io.ByteArrayInputStream;
@@ -22,11 +24,12 @@ import org.junit.Test;
 public class OTransactionPhase1TaskSerializationTest {
   @Test
   public void testUniqueIndexKeysSerialization() throws IOException {
-    OTransactionId txId = new OTransactionId(Optional.empty(), 0, 1);
+    OTransactionIdPromise txId =
+        new OTransactionIdPromise(new ONodeId("node"), new OTransactionId(Optional.empty(), 0, 1));
     ByteArrayOutputStream outStream = new ByteArrayOutputStream();
     DataOutputStream out = new DataOutputStream(outStream);
 
-    txId.write(out);
+    txId.writeNetwork(out);
     out.writeInt(0);
     OTransactionUniqueKey keyChange1 = new OTransactionUniqueKey("idx1", null, 0);
     OTransactionUniqueKey keyChange2 = new OTransactionUniqueKey("idx2", "k2", 0);

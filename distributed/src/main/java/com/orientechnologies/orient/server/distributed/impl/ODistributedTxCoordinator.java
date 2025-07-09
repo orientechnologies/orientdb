@@ -30,18 +30,35 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransaction;
-import com.orientechnologies.orient.core.tx.OTransactionId;
+import com.orientechnologies.orient.core.tx.OTransactionIdPromise;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
-import com.orientechnologies.orient.server.distributed.*;
+import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
+import com.orientechnologies.orient.server.distributed.ODistributedMessageService;
+import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.distributed.ODistributedTxContext;
 import com.orientechnologies.orient.server.distributed.impl.lock.OLockGuard;
 import com.orientechnologies.orient.server.distributed.impl.task.OLockKeySource;
 import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPhase1Task;
 import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPhase2Task;
-import com.orientechnologies.orient.server.distributed.impl.task.transaction.*;
+import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTransactionResultPayload;
+import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxConcurrentCreation;
+import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxConcurrentModification;
+import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxException;
+import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxInvalidSequential;
+import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxKeyLockTimeout;
+import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxRecordLockTimeout;
+import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxSuccess;
+import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxUniqueIndex;
 import com.orientechnologies.orient.server.distributed.task.ODistributedKeyLockedException;
 import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
 import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Random;
+import java.util.Set;
 
 public class ODistributedTxCoordinator {
   private static final OLogger logger =
@@ -86,9 +103,9 @@ public class ODistributedTxCoordinator {
           new ODistributedRequestId(nodeId, dManager.getNextMessageIdCounter());
       localDistributedDatabase.startOperation();
       try {
-        Optional<OTransactionId> genId = localDistributedDatabase.nextId();
+        Optional<OTransactionIdPromise> genId = localDistributedDatabase.nextId();
         if (genId.isPresent()) {
-          OTransactionId txId = genId.get();
+          OTransactionIdPromise txId = genId.get();
           tryCommit(database, iTx, txId, requestId);
           return;
         } else {
@@ -138,12 +155,12 @@ public class ODistributedTxCoordinator {
   public void tryCommit(
       final ODatabaseDocumentDistributed database,
       final OTransactionInternal iTx,
-      OTransactionId txId,
+      OTransactionIdPromise txId,
       final ODistributedRequestId requestId) {
 
     iTx.setStatus(OTransaction.TXSTATUS.BEGUN);
 
-    OLocalKeySource keySource = new OLocalKeySource(txId, iTx, database);
+    OLocalKeySource keySource = new OLocalKeySource(txId.getId(), iTx, database);
     List<OLockGuard> guards = localDistributedDatabase.localLock(keySource);
     OTransactionResultPayload localResult;
 
@@ -448,7 +465,7 @@ public class ODistributedTxCoordinator {
   }
 
   protected OTransactionPhase1Task createTxPhase1Task(
-      OTransactionId id, final OTransactionInternal transaction) {
+      OTransactionIdPromise id, final OTransactionInternal transaction) {
     final OTransactionPhase1Task txTask = new OTransactionPhase1Task();
     txTask.init(id, transaction);
     return txTask;
@@ -457,7 +474,7 @@ public class ODistributedTxCoordinator {
   private OTransactionPhase2Task createTxPhase2Task(
       ODistributedRequestId requestId, OTransactionPhase1Task txTask, boolean success) {
     return new OTransactionPhase2Task(
-        requestId, success, txTask.getRids(), txTask.getUniqueKeys(), txTask.getTransactionId());
+        requestId, success, txTask.getRids(), txTask.getUniqueKeys(), txTask.getPromise());
   }
 
   /** This is to be used only for testing! */

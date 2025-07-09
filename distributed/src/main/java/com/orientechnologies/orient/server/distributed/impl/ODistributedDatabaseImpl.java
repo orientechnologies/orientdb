@@ -35,7 +35,9 @@ import com.orientechnologies.orient.core.db.OSystemDatabase;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OSyncSource;
+import com.orientechnologies.orient.core.tx.ONodeId;
 import com.orientechnologies.orient.core.tx.OTransactionId;
+import com.orientechnologies.orient.core.tx.OTransactionIdPromise;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import com.orientechnologies.orient.core.tx.OTxMetadataHolder;
 import com.orientechnologies.orient.core.tx.ValidationResult;
@@ -135,7 +137,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
             .getValueAsInteger(DISTRIBUTED_TRANSACTION_SEQUENCE_SET_SIZE);
     recordPromiseManager = new OTxPromiseManager<>();
     indexKeyPromiseManager = new OTxPromiseManager<>();
-    sequenceManager = new ODistributedSynchronizedSequence(localNodeName, sequenceSize);
+    sequenceManager =
+        new ODistributedSynchronizedSequence(new ONodeId(localNodeName), sequenceSize);
   }
 
   public void initProfilerHooks() {
@@ -446,18 +449,18 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     }
   }
 
-  public ValidationResult validate(OTransactionId id) {
+  public ValidationResult validate(OTransactionIdPromise id) {
     // this check should happen only of destination nodes
     return sequenceManager.validateTransactionId(id);
   }
 
   @Override
-  public OTxMetadataHolder commit(OTransactionId id) {
+  public OTxMetadataHolder commit(OTransactionIdPromise id) {
     return sequenceManager.notifySuccess(id);
   }
 
   @Override
-  public void rollback(OTransactionId id) {
+  public void rollback(OTransactionIdPromise id) {
     sequenceManager.notifyFailure(id);
   }
 
@@ -472,11 +475,11 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   @Override
-  public Optional<OTransactionId> nextId() {
+  public Optional<OTransactionIdPromise> nextId() {
     return sequenceManager.next();
   }
 
-  public Optional<ORawPair<OTransactionId, OTransactionId>> nextDDLId() {
+  public Optional<ORawPair<OTransactionIdPromise, OTransactionIdPromise>> nextDDLId() {
     return sequenceManager.nextDDL();
   }
 

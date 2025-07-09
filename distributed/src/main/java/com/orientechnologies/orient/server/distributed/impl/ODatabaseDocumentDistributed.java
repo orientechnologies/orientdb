@@ -54,9 +54,11 @@ import com.orientechnologies.orient.core.sql.executor.stream.OExecutionStream;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.tx.ONodeId;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionData;
 import com.orientechnologies.orient.core.tx.OTransactionId;
+import com.orientechnologies.orient.core.tx.OTransactionIdPromise;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
@@ -511,7 +513,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
   public boolean beginDistributedTx(
       ODistributedRequestId requestId,
-      OTransactionId id,
+      OTransactionIdPromise id,
       OTransactionInternal tx,
       boolean isCoordinator,
       int retryCount) {
@@ -681,7 +683,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
               }
             }
             ValidationResult validateResult =
-                localDistributedDatabase.validate(txContext.getTransactionId());
+                localDistributedDatabase.validate(txContext.getPromise());
 
             if (validateResult == ValidationResult.ALREADY_PRESENT) {
               // Already present do nothing.
@@ -998,7 +1000,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
     retry:
     for (int i = 0; i < nretry; i++) {
-      Optional<ORawPair<OTransactionId, OTransactionId>> ids;
+      Optional<ORawPair<OTransactionIdPromise, OTransactionIdPromise>> ids;
       do {
         ids = local.nextDDLId();
         if (ids.isEmpty()) {
@@ -1278,10 +1280,12 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           OTransactionOptimistic tx = new OTransactionOptimistic(this);
           data.fill(tx, this);
           ODistributedDatabaseImpl ddb = (ODistributedDatabaseImpl) getDistributedShared();
+          ONodeId nodeId = new ONodeId(getLocalNodeName());
+          OTransactionIdPromise primise =
+              new OTransactionIdPromise(nodeId, data.getTransactionId());
           ONewDistributedTxContextImpl txContext =
-              new ONewDistributedTxContextImpl(
-                  ddb, new ODistributedRequestId(-1, -1), tx, data.getTransactionId());
-          ddb.validate(data.getTransactionId());
+              new ONewDistributedTxContextImpl(ddb, new ODistributedRequestId(-1, -1), tx, primise);
+          ddb.validate(primise);
           getStorage().preallocateRids(tx);
           txContext.commit(this);
           return null;
@@ -1290,8 +1294,8 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
   public OTransactionResultPayload firstPhaseDDL(
       String query,
-      OTransactionId preChangeId,
-      OTransactionId afterChangeId,
+      OTransactionIdPromise preChangeId,
+      OTransactionIdPromise afterChangeId,
       ODistributedRequestId requestId) {
     ODistributedDatabase localDistributedDatabase = getDistributedShared();
     ODDLContextImpl ddlContext =
@@ -1331,7 +1335,8 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     if (apply) {
       ((ODistributedDatabaseImpl) localDistributedDatabase).resetLastValidBackup();
       if (context.getStatus() == SUCCESS) {
-        OTxMetadataHolder preMetadata = localDistributedDatabase.commit(context.getPreChangeId());
+        OTxMetadataHolder preMetadata =
+            localDistributedDatabase.commit(context.getPreChangePromise());
 
         storage.metadataOnly(preMetadata.metadata());
         preMetadata.notifyMetadataRead();
@@ -1343,7 +1348,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
             });
 
         OTxMetadataHolder afterMetadata =
-            localDistributedDatabase.commit(context.getAfterChangeId());
+            localDistributedDatabase.commit(context.getAfterChangePromise());
         storage.metadataOnly(afterMetadata.metadata());
         afterMetadata.notifyMetadataRead();
       } else {
@@ -1363,8 +1368,8 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
             OTransactionResultPayload firstPhase =
                 firstPhaseDDL(
                     context.getQuery(),
-                    context.getPreChangeId(),
-                    context.getAfterChangeId(),
+                    context.getPreChangePromise(),
+                    context.getAfterChangePromise(),
                     context.getReqId());
             context = (ODDLContextImpl) localDistributedDatabase.popTxContext(confirmSentRequest);
             if (firstPhase instanceof OTxSuccess) {
@@ -1401,8 +1406,8 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         }
       }
     } else if (context != null) {
-      localDistributedDatabase.rollback(context.getPreChangeId());
-      localDistributedDatabase.rollback(context.getAfterChangeId());
+      localDistributedDatabase.rollback(context.getPreChangePromise());
+      localDistributedDatabase.rollback(context.getAfterChangePromise());
     }
   }
 }

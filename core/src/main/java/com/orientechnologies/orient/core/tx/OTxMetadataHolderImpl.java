@@ -26,7 +26,7 @@ public class OTxMetadataHolderImpl implements OTxMetadataHolder {
     ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
     DataOutput output = new DataOutputStream(outputStream);
     try {
-      id.write(output);
+      id.writeDisk(output);
       byte[] status = this.status.store();
       output.writeInt(status.length);
       output.write(status, 0, status.length);
@@ -40,7 +40,7 @@ public class OTxMetadataHolderImpl implements OTxMetadataHolder {
     final ByteArrayInputStream inputStream = new ByteArrayInputStream(data);
     final DataInput input = new DataInputStream(inputStream);
     try {
-      final OTransactionId txId = OTransactionId.read(input);
+      final OTransactionId txId = OTransactionId.readDisk(input);
       int size = input.readInt();
       byte[] status = new byte[size];
       input.readFully(status);

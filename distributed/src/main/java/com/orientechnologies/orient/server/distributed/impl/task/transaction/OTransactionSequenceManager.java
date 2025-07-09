@@ -2,7 +2,9 @@ package com.orientechnologies.orient.server.distributed.impl.task.transaction;
 
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.tx.ONodeId;
 import com.orientechnologies.orient.core.tx.OTransactionId;
+import com.orientechnologies.orient.core.tx.OTransactionIdPromise;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import com.orientechnologies.orient.core.tx.ValidationResult;
 import java.util.ArrayList;
@@ -14,27 +16,27 @@ import java.util.Random;
 public class OTransactionSequenceManager {
 
   private volatile long[] sequentials;
-  private volatile OTransactionId[] promisedSequential;
-  private final String node;
+  private volatile OTransactionIdPromise[] promisedSequential;
+  private final ONodeId coordinator;
   private final int sequenceSize;
 
-  public OTransactionSequenceManager(String node, int size) {
+  public OTransactionSequenceManager(ONodeId coordinator, int size) {
     if (size < 2) {
       throw new OConfigurationException("Sequence size need to be at least of size 3");
     }
     this.sequentials = new long[size];
-    this.promisedSequential = new OTransactionId[size];
-    this.node = node;
+    this.promisedSequential = new OTransactionIdPromise[size];
+    this.coordinator = coordinator;
     // Reserve position 0,1 for DDLs, so the random range is one less
     this.sequenceSize = size - 2;
   }
 
   public synchronized void fill(OTransactionSequenceStatus data) {
     this.sequentials = data.getStatus();
-    this.promisedSequential = new OTransactionId[this.sequentials.length];
+    this.promisedSequential = new OTransactionIdPromise[this.sequentials.length];
   }
 
-  public synchronized Optional<OTransactionId> next() {
+  public synchronized Optional<OTransactionIdPromise> next() {
     int pos;
     int retry = 0;
     do {
@@ -51,10 +53,9 @@ public class OTransactionSequenceManager {
   /** As today DDLs are not atomic, so we used two sequential for pre-operation and
    * post operation to assert that the DDL was completed, as soon as DDLs will be
    * atomic we can revert to a single sequential
-   *
    * @return
    */
-  public synchronized Optional<ORawPair<OTransactionId, OTransactionId>> nextDDL() {
+  public synchronized Optional<ORawPair<OTransactionIdPromise, OTransactionIdPromise>> nextDDL() {
     if (this.promisedSequential[0] != null || this.promisedSequential[1] != null) {
       return Optional.empty();
     }
@@ -67,19 +68,21 @@ public class OTransactionSequenceManager {
    * @param pos
    * @return
    */
-  public synchronized OTransactionId nextAt(int pos) {
-    OTransactionId id = new OTransactionId(Optional.of(this.node), pos, this.sequentials[pos] + 1);
-    this.promisedSequential[pos] = id;
-    return id;
+  public synchronized OTransactionIdPromise nextAt(int pos) {
+    OTransactionId id = new OTransactionId(Optional.empty(), pos, this.sequentials[pos] + 1);
+    OTransactionIdPromise promise = new OTransactionIdPromise(this.coordinator, id);
+    this.promisedSequential[pos] = promise;
+    return promise;
   }
 
-  public synchronized ValidationResult notifySuccess(OTransactionId transactionId) {
+  public synchronized ValidationResult notifySuccess(OTransactionIdPromise promise) {
+    OTransactionId transactionId = promise.getId();
     if (this.promisedSequential[transactionId.getPosition()] != null) {
-      if (this.promisedSequential[transactionId.getPosition()].getSequence()
+      if (this.promisedSequential[transactionId.getPosition()].getId().getSequence()
           == transactionId.getSequence()) {
         this.sequentials[transactionId.getPosition()] = transactionId.getSequence();
         this.promisedSequential[transactionId.getPosition()] = null;
-      } else if (this.promisedSequential[transactionId.getPosition()].getSequence()
+      } else if (this.promisedSequential[transactionId.getPosition()].getId().getSequence()
           > transactionId.getSequence()) {
         return ValidationResult.ALREADY_PRESENT;
       } else {
@@ -99,10 +102,11 @@ public class OTransactionSequenceManager {
     return ValidationResult.VALID;
   }
 
-  public synchronized ValidationResult validateTransactionId(OTransactionId transactionId) {
+  public synchronized ValidationResult validateTransactionId(OTransactionIdPromise promise) {
+    OTransactionId transactionId = promise.getId();
     if (this.promisedSequential[transactionId.getPosition()] == null) {
       if (this.sequentials[transactionId.getPosition()] + 1 == transactionId.getSequence()) {
-        this.promisedSequential[transactionId.getPosition()] = transactionId;
+        this.promisedSequential[transactionId.getPosition()] = promise;
         return ValidationResult.VALID;
       } else if (this.sequentials[transactionId.getPosition()] + 1 < transactionId.getSequence()) {
         return ValidationResult.MISSING_PREVIOUS;
@@ -112,8 +116,8 @@ public class OTransactionSequenceManager {
     } else {
       if (this.sequentials[transactionId.getPosition()] + 1 == transactionId.getSequence()) {
         if (this.promisedSequential[transactionId.getPosition()]
-            .getNodeOwner()
-            .equals(transactionId.getNodeOwner())) {
+            .getCoordinator()
+            .equals(promise.getCoordinator())) {
           return ValidationResult.VALID;
         } else {
           return ValidationResult.ALREADY_PROMISED;
@@ -136,8 +140,8 @@ public class OTransactionSequenceManager {
           for (long x = this.sequentials[i] + 1; x <= status[i]; x++) {
             missing.add(new OTransactionId(Optional.empty(), i, x));
           }
-        } else if (this.promisedSequential[i].getSequence() != status[i]) {
-          for (long x = this.promisedSequential[i].getPosition() + 1; x <= status[i]; x++) {
+        } else if (this.promisedSequential[i].getId().getSequence() != status[i]) {
+          for (long x = this.promisedSequential[i].getId().getPosition() + 1; x <= status[i]; x++) {
             missing.add(new OTransactionId(Optional.empty(), i, x));
           }
         }
@@ -160,11 +164,12 @@ public class OTransactionSequenceManager {
     return missing;
   }
 
-  public synchronized boolean notifyFailure(OTransactionId id) {
-    OTransactionId promised = this.promisedSequential[id.getPosition()];
+  public synchronized boolean notifyFailure(OTransactionIdPromise promise) {
+    OTransactionId id = promise.getId();
+    OTransactionIdPromise promised = this.promisedSequential[id.getPosition()];
     if (promised != null) {
-      if (promised.getSequence() == id.getSequence()
-          && promised.getNodeOwner().equals(id.getNodeOwner())) {
+      if (promised.getId().getSequence() == id.getSequence()
+          && promised.getCoordinator().equals(promise.getCoordinator())) {
         this.promisedSequential[id.getPosition()] = null;
         return true;
       }

@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
+import com.orientechnologies.orient.core.tx.ONodeId;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
@@ -65,10 +66,12 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
       new ConcurrentHashMap<String, ODistributedConfigurationManager>();
 
   private final ODistributedMessageServiceImpl messageService;
+  private final ONodeState nodeState;
 
   public OrientDBDistributed(String directoryPath, OrientDBConfig config, Orient instance) {
     super(directoryPath, config, instance);
     messageService = new ODistributedMessageServiceImpl(this);
+    nodeState = new ONodeState(new ONodeId("ahrgg"));
   }
 
   @Override

@@ -2,7 +2,7 @@ package com.orientechnologies.orient.server.distributed.impl.task;
 
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.tx.OTransactionId;
+import com.orientechnologies.orient.core.tx.OTransactionIdPromise;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
@@ -19,13 +19,13 @@ public class OSQLCommandTaskFirstPhase extends OAbstractRemoteTask {
   public static final int FACTORYID = 59;
 
   private String query;
-  private OTransactionId preChangeId;
-  private OTransactionId afterChangeId;
+  private OTransactionIdPromise preChangeId;
+  private OTransactionIdPromise afterChangeId;
 
   public OSQLCommandTaskFirstPhase() {}
 
   public OSQLCommandTaskFirstPhase(
-      String query, OTransactionId preChangeId, OTransactionId afterChangeId) {
+      String query, OTransactionIdPromise preChangeId, OTransactionIdPromise afterChangeId) {
     this.query = query;
     this.preChangeId = preChangeId;
     this.afterChangeId = afterChangeId;
@@ -58,16 +58,16 @@ public class OSQLCommandTaskFirstPhase extends OAbstractRemoteTask {
   public void toStream(DataOutput out) throws IOException {
     super.toStream(out);
     out.writeUTF(query);
-    preChangeId.write(out);
-    afterChangeId.write(out);
+    preChangeId.writeNetwork(out);
+    afterChangeId.writeNetwork(out);
   }
 
   @Override
   public void fromStream(DataInput in, ORemoteTaskFactory factory) throws IOException {
     super.fromStream(in, factory);
     query = in.readUTF();
-    preChangeId = OTransactionId.read(in);
-    afterChangeId = OTransactionId.read(in);
+    preChangeId = OTransactionIdPromise.readNetwork(in);
+    afterChangeId = OTransactionIdPromise.readNetwork(in);
   }
 
   @Override
@@ -79,11 +79,11 @@ public class OSQLCommandTaskFirstPhase extends OAbstractRemoteTask {
     return query;
   }
 
-  public OTransactionId getPreChangeId() {
+  public OTransactionIdPromise getPreChangeId() {
     return preChangeId;
   }
 
-  public OTransactionId getAfterChangeId() {
+  public OTransactionIdPromise getAfterChangeId() {
     return afterChangeId;
   }
 }

@@ -22,6 +22,7 @@ import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.tx.OTransactionData;
 import com.orientechnologies.orient.core.tx.OTransactionDataChange;
 import com.orientechnologies.orient.core.tx.OTransactionId;
+import com.orientechnologies.orient.core.tx.OTransactionIdPromise;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.server.OServer;
@@ -40,7 +41,7 @@ public class OTransactionDataTest {
 
   @Test
   public void testReadWriteTransactionData() throws IOException {
-    OTransactionData data = new OTransactionData(new OTransactionId(Optional.of("one"), 1, 2));
+    OTransactionData data = new OTransactionData(new OTransactionId(Optional.empty(), 1, 2));
     byte[] recordData = new byte[] {1, 2, 3};
     ORecordId recordId = new ORecordId(10, 10);
     OTransactionDataChange change =
@@ -167,9 +168,10 @@ public class OTransactionDataTest {
         }
         db.commit();
       }
-      OTransactionId id = server0.getDistributedManager().getDatabase("test1").nextId().get();
+      OTransactionIdPromise id =
+          server0.getDistributedManager().getDatabase("test1").nextId().get();
       server0.getDistributedManager().getDatabase("test1").rollback(id);
-      OTransactionData data = new OTransactionData(id);
+      OTransactionData data = new OTransactionData(id.getId());
       for (byte[] change : changes) {
         data.addRecord(change);
       }

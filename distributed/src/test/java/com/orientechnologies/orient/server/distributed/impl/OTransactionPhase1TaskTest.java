@@ -13,7 +13,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.tx.OTransactionId;
+import com.orientechnologies.orient.core.tx.OTransactionIdPromise;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPhase1Task;
@@ -72,7 +72,7 @@ public class OTransactionPhase1TaskTest {
     operations.add(new ORecordOperation(rec1, ORecordOperation.UPDATED));
     operations.add(new ORecordOperation(id1.getIdentity(), ORecordOperation.DELETED));
     operations.add(new ORecordOperation(rec2, ORecordOperation.CREATED));
-    OTransactionId txId =
+    OTransactionIdPromise txId =
         server.getDistributedManager().getDatabase(session.getName()).nextId().get();
     server.getDistributedManager().getDatabase(session.getName()).rollback(txId);
 
@@ -103,7 +103,7 @@ public class OTransactionPhase1TaskTest {
     final List<ORecordOperation> operations = new ArrayList<>();
     operations.add(new ORecordOperation(old, ORecordOperation.UPDATED));
 
-    OTransactionId id =
+    OTransactionIdPromise id =
         server.getDistributedManager().getDatabase(session.getName()).nextId().get();
     server.getDistributedManager().getDatabase(session.getName()).rollback(id);
     OTransactionPhase1Task task = new OTransactionPhase1Task(operations, id, new TreeSet<>());
@@ -134,7 +134,7 @@ public class OTransactionPhase1TaskTest {
     final List<ORecordOperation> operations = new ArrayList<>();
     operations.add(new ORecordOperation(old, ORecordOperation.DELETED));
 
-    OTransactionId id =
+    OTransactionIdPromise id =
         server.getDistributedManager().getDatabase(session.getName()).nextId().get();
     server.getDistributedManager().getDatabase(session.getName()).rollback(id);
 
@@ -168,7 +168,7 @@ public class OTransactionPhase1TaskTest {
     final SortedSet<OTransactionUniqueKey> uniqueIndexKeys = new TreeSet<OTransactionUniqueKey>();
     uniqueIndexKeys.add(new OTransactionUniqueKey("TestClassInd.one", "value", 0));
 
-    OTransactionId id =
+    OTransactionIdPromise id =
         server.getDistributedManager().getDatabase(session.getName()).nextId().get();
     server.getDistributedManager().getDatabase(session.getName()).rollback(id);
 

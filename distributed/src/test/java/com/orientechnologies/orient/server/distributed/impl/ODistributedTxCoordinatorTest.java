@@ -4,6 +4,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.tx.ONodeId;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.server.distributed.*;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxSuccess;
@@ -37,7 +38,8 @@ public class ODistributedTxCoordinatorTest {
     List<String> remoteNodes = Arrays.asList("node1", "node2");
     Set<String> clusters = new HashSet<>(Collections.singleton("c1"));
 
-    ODistributedSynchronizedSequence seq = new ODistributedSynchronizedSequence(localNode, 10);
+    ODistributedSynchronizedSequence seq =
+        new ODistributedSynchronizedSequence(new ONodeId(localNode), 10);
     OTransactionInternal tx = mock(OTransactionInternal.class);
     ODistributedConfiguration distributedConfig = mock(ODistributedConfiguration.class);
     ODistributedTxResponseManager responseManager = mock(ODistributedTxResponseManager.class);

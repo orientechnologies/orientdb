@@ -4,6 +4,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.tx.OTransactionId;
+import com.orientechnologies.orient.core.tx.OTransactionIdPromise;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
@@ -14,8 +15,8 @@ import java.util.Set;
 public class ODDLContextImpl implements ODistributedTxContext {
 
   private String query;
-  private OTransactionId preChangeId;
-  private OTransactionId afterChangeId;
+  private OTransactionIdPromise preChangeId;
+  private OTransactionIdPromise afterChangeId;
   private ODistributedRequestId requestId;
   private TxContextStatus status;
   private ODistributedDatabase shared;
@@ -24,8 +25,8 @@ public class ODDLContextImpl implements ODistributedTxContext {
   public ODDLContextImpl(
       ODistributedDatabase shared,
       String query,
-      OTransactionId preChangeId,
-      OTransactionId afterChangeId,
+      OTransactionIdPromise preChangeId,
+      OTransactionIdPromise afterChangeId,
       ODistributedRequestId requestId) {
     this.query = query;
     this.preChangeId = preChangeId;
@@ -76,7 +77,7 @@ public class ODDLContextImpl implements ODistributedTxContext {
 
   @Override
   public OTransactionId getTransactionId() {
-    return preChangeId;
+    return preChangeId.getId();
   }
 
   @Override
@@ -93,10 +94,18 @@ public class ODDLContextImpl implements ODistributedTxContext {
   }
 
   public OTransactionId getPreChangeId() {
-    return preChangeId;
+    return preChangeId.getId();
   }
 
   public OTransactionId getAfterChangeId() {
+    return afterChangeId.getId();
+  }
+
+  public OTransactionIdPromise getPreChangePromise() {
+    return preChangeId;
+  }
+
+  public OTransactionIdPromise getAfterChangePromise() {
     return afterChangeId;
   }
 

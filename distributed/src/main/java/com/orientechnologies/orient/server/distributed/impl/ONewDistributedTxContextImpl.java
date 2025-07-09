@@ -5,9 +5,14 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.tx.OTransactionId;
+import com.orientechnologies.orient.core.tx.OTransactionIdPromise;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.core.tx.OTxMetadataHolder;
-import com.orientechnologies.orient.server.distributed.*;
+import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
+import com.orientechnologies.orient.server.distributed.ODistributedException;
+import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.distributed.ODistributedTxContext;
 import com.orientechnologies.orient.server.distributed.exception.OTxPromiseException;
 import com.orientechnologies.orient.server.distributed.impl.lock.OTxPromise;
 import com.orientechnologies.orient.server.distributed.impl.lock.OTxPromiseManager;
@@ -26,19 +31,19 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
   private final long startedOn;
   private final Set<OTxPromise<ORID>> promisedRids = new HashSet<>();
   private final Set<OTxPromise<Object>> promisedKeys = new HashSet<>();
-  private final OTransactionId transactionId;
+  private final OTransactionIdPromise promise;
   private TxContextStatus status;
 
   public ONewDistributedTxContextImpl(
       ODistributedDatabaseImpl shared,
       ODistributedRequestId reqId,
       OTransactionInternal tx,
-      OTransactionId id) {
+      OTransactionIdPromise id) {
     this.shared = shared;
     this.id = reqId;
     this.tx = tx;
     this.startedOn = System.currentTimeMillis();
-    transactionId = id;
+    promise = id;
   }
 
   @Override
@@ -46,12 +51,12 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
     OTxPromiseManager<Object> promiseManager = shared.getIndexKeyPromiseManager();
     OTransactionId cancelledPromise = null;
     try {
-      cancelledPromise = promiseManager.promise(key, version, transactionId, force);
+      cancelledPromise = promiseManager.promise(key, version, promise.getId(), force);
     } catch (OTxPromiseException ex) {
       this.releasePromises();
       throw new ODistributedKeyLockedException(shared.getLocalNodeName(), key);
     }
-    promisedKeys.add(new OTxPromise<>(key, version, transactionId));
+    promisedKeys.add(new OTxPromise<>(key, version, promise.getId()));
     return cancelledPromise;
   }
 
@@ -60,12 +65,12 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
     OTxPromiseManager<ORID> promiseManager = shared.getRecordPromiseManager();
     OTransactionId cancelledPromise = null;
     try {
-      cancelledPromise = promiseManager.promise(rid, version, transactionId, force);
+      cancelledPromise = promiseManager.promise(rid, version, promise.getId(), force);
     } catch (OTxPromiseException ex) {
       this.releasePromises();
       throw new ODistributedRecordLockedException(shared.getLocalNodeName(), rid);
     }
-    promisedRids.add(new OTxPromise<>(rid, version, transactionId));
+    promisedRids.add(new OTxPromise<>(rid, version, promise.getId()));
     return cancelledPromise;
   }
 
@@ -83,7 +88,7 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
   public synchronized void commit(ODatabaseDocumentInternal database) {
     ODistributedDatabase localDistributedDatabase =
         ((ODatabaseDocumentDistributed) database).getDistributedShared();
-    OTxMetadataHolder metadataHolder = localDistributedDatabase.commit(getTransactionId());
+    OTxMetadataHolder metadataHolder = localDistributedDatabase.commit(promise);
     try {
       tx.setMetadataHolder(Optional.of(metadataHolder));
       tx.prepareSerializedOperations();
@@ -113,13 +118,13 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
 
   @Override
   public void releasePromises() {
-    shared.rollback(this.transactionId);
+    shared.rollback(this.promise);
     for (OTxPromise<ORID> promise : promisedRids) {
-      shared.getRecordPromiseManager().release(promise.getKey(), transactionId);
+      shared.getRecordPromiseManager().release(promise.getKey(), this.promise.getId());
     }
     promisedRids.clear();
     for (OTxPromise<Object> promisedKey : promisedKeys) {
-      shared.getIndexKeyPromiseManager().release(promisedKey.getKey(), transactionId);
+      shared.getIndexKeyPromiseManager().release(promisedKey.getKey(), this.promise.getId());
     }
     promisedKeys.clear();
   }
@@ -159,6 +164,10 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
 
   @Override
   public OTransactionId getTransactionId() {
-    return transactionId;
+    return promise.getId();
+  }
+
+  public OTransactionIdPromise getPromise() {
+    return promise;
   }
 }

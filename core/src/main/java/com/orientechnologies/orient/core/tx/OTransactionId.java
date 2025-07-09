@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.tx;
 
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.OVarIntSerializer;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -26,6 +27,7 @@ public class OTransactionId {
     return sequence;
   }
 
+  @Deprecated
   public Optional<String> getNodeOwner() {
     return nodeOwner;
   }
@@ -66,6 +68,32 @@ public class OTransactionId {
     }
     out.writeInt(position);
     out.writeLong(sequence);
+  }
+
+  public static OTransactionId readDisk(DataInput input) throws IOException {
+    return read(input);
+  }
+
+  /** Write the record without the node name, but still keep the boolean for back compatibility
+   *
+   * @param out
+   * @throws IOException
+   */
+  public void writeDisk(DataOutput out) throws IOException {
+    out.writeBoolean(false);
+    out.writeInt(position);
+    out.writeLong(sequence);
+  }
+
+  public static OTransactionId readNetwork(DataInput input) throws IOException {
+    int position = OVarIntSerializer.readAsInt(input);
+    long sequence = OVarIntSerializer.readAsLong(input);
+    return new OTransactionId(Optional.empty(), position, sequence);
+  }
+
+  public void writeNetwork(DataOutput out) throws IOException {
+    OVarIntSerializer.write(out, position);
+    OVarIntSerializer.write(out, sequence);
   }
 
   @Override
