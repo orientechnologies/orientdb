@@ -15,11 +15,13 @@ public class ONodeState {
   private OTransactionSequenceManager sequenceManager;
   private ODistributedMessageLog log;
   private OPromisedDistributedOps promised;
+  private OCoordinatedDistributedOps coordinated;
 
   public ONodeState(ONodeId coordinator) {
     sequenceManager = new OTransactionSequenceManager(coordinator, 3);
     log = new ODistributedMessageLogMemory();
     promised = new OPromisedDistributedOpsImpl();
+    coordinated = new OCoordinatedDistributedOpsImpl();
   }
 
   private void fill(Optional<byte[]> lastMetadata) {

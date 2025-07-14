@@ -31,7 +31,7 @@ public class OMinimumSequenceStatus {
     nodesSequentials = new HashMap<>();
   }
 
-  public void updateNode(ONodeId nodeID, long[] sequences) {
+  public synchronized void updateNode(ONodeId nodeID, long[] sequences) {
     assert sequences.length == this.minimumSequentials.length;
     for (int i = 0; i < sequences.length; i++) {
       this.minimumSequentials[i].nodeUpdate(nodeID, sequences[i]);
@@ -39,7 +39,7 @@ public class OMinimumSequenceStatus {
     nodesSequentials.put(nodeID, sequences);
   }
 
-  public long[] getMinimumSequence() {
+  public synchronized long[] getMinimumSequence() {
     long[] seqs = new long[this.minimumSequentials.length];
     for (int i = 0; i < minimumSequentials.length; i++) {
       seqs[i] = minimumSequentials[i].getMinimum();
