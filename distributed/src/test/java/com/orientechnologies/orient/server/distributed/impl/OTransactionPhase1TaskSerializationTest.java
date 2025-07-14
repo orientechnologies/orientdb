@@ -16,7 +16,6 @@ import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.Iterator;
-import java.util.Optional;
 import java.util.SortedSet;
 import java.util.TreeSet;
 import org.junit.Test;
@@ -25,7 +24,7 @@ public class OTransactionPhase1TaskSerializationTest {
   @Test
   public void testUniqueIndexKeysSerialization() throws IOException {
     OTransactionIdPromise txId =
-        new OTransactionIdPromise(new ONodeId("node"), new OTransactionId(Optional.empty(), 0, 1));
+        new OTransactionIdPromise(new ONodeId("node"), new OTransactionId(0, 1));
     ByteArrayOutputStream outStream = new ByteArrayOutputStream();
     DataOutputStream out = new DataOutputStream(outStream);
 

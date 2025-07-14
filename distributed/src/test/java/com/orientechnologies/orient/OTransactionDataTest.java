@@ -41,7 +41,7 @@ public class OTransactionDataTest {
 
   @Test
   public void testReadWriteTransactionData() throws IOException {
-    OTransactionData data = new OTransactionData(new OTransactionId(Optional.empty(), 1, 2));
+    OTransactionData data = new OTransactionData(new OTransactionId(1, 2));
     byte[] recordData = new byte[] {1, 2, 3};
     ORecordId recordId = new ORecordId(10, 10);
     OTransactionDataChange change =

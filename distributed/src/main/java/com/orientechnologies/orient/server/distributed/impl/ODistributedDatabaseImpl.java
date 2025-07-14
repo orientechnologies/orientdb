@@ -451,7 +451,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
   public ValidationResult validate(OTransactionIdPromise id) {
     // this check should happen only of destination nodes
-    return sequenceManager.validateTransactionId(id);
+    return sequenceManager.validate(id);
   }
 
   @Override

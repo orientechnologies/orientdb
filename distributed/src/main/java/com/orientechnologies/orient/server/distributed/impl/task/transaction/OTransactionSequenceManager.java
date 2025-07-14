@@ -69,7 +69,7 @@ public class OTransactionSequenceManager {
    * @return
    */
   public synchronized OTransactionIdPromise nextAt(int pos) {
-    OTransactionId id = new OTransactionId(Optional.empty(), pos, this.sequentials[pos] + 1);
+    OTransactionId id = new OTransactionId(pos, this.sequentials[pos] + 1);
     OTransactionIdPromise promise = new OTransactionIdPromise(this.coordinator, id);
     this.promisedSequential[pos] = promise;
     return promise;
@@ -102,7 +102,7 @@ public class OTransactionSequenceManager {
     return ValidationResult.VALID;
   }
 
-  public synchronized ValidationResult validateTransactionId(OTransactionIdPromise promise) {
+  public synchronized ValidationResult validate(OTransactionIdPromise promise) {
     OTransactionId transactionId = promise.getId();
     if (this.promisedSequential[transactionId.getPosition()] == null) {
       if (this.sequentials[transactionId.getPosition()] + 1 == transactionId.getSequence()) {
@@ -138,11 +138,11 @@ public class OTransactionSequenceManager {
       if (this.sequentials[i] < status[i]) {
         if (this.promisedSequential[i] == null) {
           for (long x = this.sequentials[i] + 1; x <= status[i]; x++) {
-            missing.add(new OTransactionId(Optional.empty(), i, x));
+            missing.add(new OTransactionId(i, x));
           }
         } else if (this.promisedSequential[i].getId().getSequence() != status[i]) {
           for (long x = this.promisedSequential[i].getId().getPosition() + 1; x <= status[i]; x++) {
-            missing.add(new OTransactionId(Optional.empty(), i, x));
+            missing.add(new OTransactionId(i, x));
           }
         }
       }
@@ -157,7 +157,7 @@ public class OTransactionSequenceManager {
     for (int i = 0; i < status.length; i++) {
       if (this.sequentials[i] > status[i]) {
         for (long x = status[i] + 1; x <= this.sequentials[i]; x++) {
-          missing.add(new OTransactionId(Optional.empty(), i, x));
+          missing.add(new OTransactionId(i, x));
         }
       }
     }

@@ -15,7 +15,6 @@ import com.orientechnologies.orient.core.tx.OTransactionIdPromise;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import java.io.IOException;
 import java.util.List;
-import java.util.Optional;
 import org.junit.Test;
 
 public class OTransactionSequenceManagerTest {
@@ -29,8 +28,8 @@ public class OTransactionSequenceManagerTest {
 
     OTransactionSequenceManager sequenceManagerRecv =
         new OTransactionSequenceManager(new ONodeId("two"), 1000);
-    assertEquals(sequenceManagerRecv.validateTransactionId(one), VALID);
-    assertEquals(sequenceManagerRecv.validateTransactionId(two), VALID);
+    assertEquals(sequenceManagerRecv.validate(one), VALID);
+    assertEquals(sequenceManagerRecv.validate(two), VALID);
 
     assertEquals(sequenceManager.notifySuccess(one), VALID);
     assertEquals(sequenceManager.notifySuccess(two), VALID);
@@ -49,8 +48,8 @@ public class OTransactionSequenceManagerTest {
 
     OTransactionSequenceManager sequenceManagerRecv =
         new OTransactionSequenceManager(new ONodeId("two"), 1000);
-    assertEquals(sequenceManagerRecv.validateTransactionId(one), VALID);
-    assertEquals(sequenceManagerRecv.validateTransactionId(three), VALID);
+    assertEquals(sequenceManagerRecv.validate(one), VALID);
+    assertEquals(sequenceManagerRecv.validate(three), VALID);
 
     assertEquals(sequenceManager.notifySuccess(one), VALID);
     assertEquals(sequenceManager.notifySuccess(two), VALID);
@@ -64,9 +63,7 @@ public class OTransactionSequenceManagerTest {
     List<OTransactionId> list = sequenceManagerRecv.checkSelfStatus(status);
     assertNotNull(list);
     assertTrue(
-        list.contains(
-            new OTransactionId(
-                Optional.empty(), two.getId().getPosition(), two.getId().getSequence())));
+        list.contains(new OTransactionId(two.getId().getPosition(), two.getId().getSequence())));
   }
 
   @Test
@@ -79,8 +76,8 @@ public class OTransactionSequenceManagerTest {
 
     OTransactionSequenceManager sequenceManagerRecv =
         new OTransactionSequenceManager(new ONodeId("two"), 1000);
-    assertEquals(sequenceManagerRecv.validateTransactionId(one), VALID);
-    assertEquals(sequenceManagerRecv.validateTransactionId(three), VALID);
+    assertEquals(sequenceManagerRecv.validate(one), VALID);
+    assertEquals(sequenceManagerRecv.validate(three), VALID);
 
     assertEquals(sequenceManager.notifySuccess(one), VALID);
     assertEquals(sequenceManager.notifySuccess(two), VALID);
@@ -93,9 +90,7 @@ public class OTransactionSequenceManagerTest {
     List<OTransactionId> list = sequenceManagerRecv.checkSelfStatus(status);
     assertNotNull(list);
     assertTrue(
-        list.contains(
-            new OTransactionId(
-                Optional.empty(), two.getId().getPosition(), two.getId().getSequence())));
+        list.contains(new OTransactionId(two.getId().getPosition(), two.getId().getSequence())));
     assertEquals(list.size(), 1);
   }
 
@@ -112,8 +107,8 @@ public class OTransactionSequenceManagerTest {
 
     OTransactionSequenceManager sequenceManagerRecv =
         new OTransactionSequenceManager(new ONodeId("two"), 1000);
-    assertEquals(sequenceManagerRecv.validateTransactionId(one), VALID);
-    assertEquals(sequenceManagerRecv.validateTransactionId(three), MISSING_PREVIOUS);
+    assertEquals(sequenceManagerRecv.validate(one), VALID);
+    assertEquals(sequenceManagerRecv.validate(three), MISSING_PREVIOUS);
 
     assertEquals(sequenceManagerRecv.notifySuccess(one), VALID);
     // This may fail in some cases as early detection
@@ -125,13 +120,10 @@ public class OTransactionSequenceManagerTest {
     List<OTransactionId> list = sequenceManagerRecv.checkSelfStatus(status);
     assertNotNull(list);
     assertTrue(
-        list.contains(
-            new OTransactionId(
-                Optional.empty(), two.getId().getPosition(), two.getId().getSequence())));
+        list.contains(new OTransactionId(two.getId().getPosition(), two.getId().getSequence())));
     assertTrue(
         list.contains(
-            new OTransactionId(
-                Optional.empty(), three.getId().getPosition(), three.getId().getSequence())));
+            new OTransactionId(three.getId().getPosition(), three.getId().getSequence())));
   }
 
   @Test
@@ -147,8 +139,8 @@ public class OTransactionSequenceManagerTest {
 
     OTransactionSequenceManager sequenceManagerRecv =
         new OTransactionSequenceManager(new ONodeId("two"), 1000);
-    assertEquals(sequenceManagerRecv.validateTransactionId(one), VALID);
-    assertEquals(sequenceManagerRecv.validateTransactionId(three), MISSING_PREVIOUS);
+    assertEquals(sequenceManagerRecv.validate(one), VALID);
+    assertEquals(sequenceManagerRecv.validate(three), MISSING_PREVIOUS);
 
     assertEquals(sequenceManagerRecv.notifySuccess(one), VALID);
     // This may fail in some cases as early detection
@@ -160,13 +152,10 @@ public class OTransactionSequenceManagerTest {
     List<OTransactionId> list = sequenceManagerRecv.checkSelfStatus(status);
     assertNotNull(list);
     assertTrue(
-        list.contains(
-            new OTransactionId(
-                Optional.empty(), two.getId().getPosition(), two.getId().getSequence())));
+        list.contains(new OTransactionId(two.getId().getPosition(), two.getId().getSequence())));
     assertTrue(
         list.contains(
-            new OTransactionId(
-                Optional.empty(), three.getId().getPosition(), three.getId().getSequence())));
+            new OTransactionId(three.getId().getPosition(), three.getId().getSequence())));
   }
 
   @Test
@@ -175,11 +164,10 @@ public class OTransactionSequenceManagerTest {
         new OTransactionSequenceManager(new ONodeId("one"), 1000);
     OTransactionIdPromise one = sequenceManager.nextAt(1);
     assertEquals(
-        sequenceManager.validateTransactionId(
+        sequenceManager.validate(
             new OTransactionIdPromise(
                 new ONodeId("one"),
-                new OTransactionId(
-                    Optional.empty(), one.getId().getPosition(), one.getId().getSequence()))),
+                new OTransactionId(one.getId().getPosition(), one.getId().getSequence()))),
         VALID);
     assertEquals(sequenceManager.notifySuccess(one), VALID);
   }
@@ -197,9 +185,9 @@ public class OTransactionSequenceManagerTest {
 
     OTransactionSequenceManager sequenceManagerRecv =
         new OTransactionSequenceManager(new ONodeId("two"), 1000);
-    assertEquals(sequenceManagerRecv.validateTransactionId(one), VALID);
+    assertEquals(sequenceManagerRecv.validate(one), VALID);
     assertEquals(sequenceManagerRecv.notifySuccess(one), VALID);
-    assertEquals(sequenceManagerRecv.validateTransactionId(three), MISSING_PREVIOUS);
+    assertEquals(sequenceManagerRecv.validate(three), MISSING_PREVIOUS);
   }
 
   @Test
@@ -218,12 +206,12 @@ public class OTransactionSequenceManagerTest {
 
     OTransactionSequenceManager sequenceManagerRecv =
         new OTransactionSequenceManager(new ONodeId("two"), 1000);
-    assertEquals(sequenceManagerRecv.validateTransactionId(one), VALID);
+    assertEquals(sequenceManagerRecv.validate(one), VALID);
     assertEquals(sequenceManagerRecv.notifySuccess(one), VALID);
-    assertEquals(sequenceManagerRecv.validateTransactionId(two), VALID);
+    assertEquals(sequenceManagerRecv.validate(two), VALID);
     assertEquals(sequenceManagerRecv.notifySuccess(two), VALID);
 
-    assertEquals(sequenceManagerRecv.validateTransactionId(otherOne), ALREADY_PRESENT);
+    assertEquals(sequenceManagerRecv.validate(otherOne), ALREADY_PRESENT);
   }
 
   @Test
@@ -239,9 +227,9 @@ public class OTransactionSequenceManagerTest {
 
     OTransactionSequenceManager sequenceManagerRecv =
         new OTransactionSequenceManager(new ONodeId("two"), 1000);
-    assertEquals(sequenceManagerRecv.validateTransactionId(one), VALID);
+    assertEquals(sequenceManagerRecv.validate(one), VALID);
     assertEquals(sequenceManagerRecv.notifySuccess(one), VALID);
-    assertEquals(sequenceManagerRecv.validateTransactionId(two), VALID);
+    assertEquals(sequenceManagerRecv.validate(two), VALID);
     // This may fail in some cases as early detection
     assertEquals(sequenceManagerRecv.notifySuccess(three), MISSING_PREVIOUS);
 
@@ -253,8 +241,7 @@ public class OTransactionSequenceManagerTest {
     // assertTrue(list.contains(two));
     assertTrue(
         list.contains(
-            new OTransactionId(
-                Optional.empty(), three.getId().getPosition(), three.getId().getSequence())));
+            new OTransactionId(three.getId().getPosition(), three.getId().getSequence())));
   }
 
   @Test
@@ -296,23 +283,23 @@ public class OTransactionSequenceManagerTest {
 
     OTransactionSequenceManager sequenceManagerOther =
         new OTransactionSequenceManager(new ONodeId("two"), 1000);
-    assertEquals(sequenceManagerOther.validateTransactionId(one), VALID);
+    assertEquals(sequenceManagerOther.validate(one), VALID);
     assertEquals(sequenceManagerOther.notifySuccess(one), VALID);
-    assertEquals(sequenceManagerOther.validateTransactionId(two), VALID);
+    assertEquals(sequenceManagerOther.validate(two), VALID);
     assertEquals(sequenceManagerOther.notifySuccess(two), VALID);
 
     OTransactionIdPromise otherThree = sequenceManagerOther.nextAt(1);
 
     OTransactionSequenceManager sequenceManagerRecv =
         new OTransactionSequenceManager(new ONodeId("three"), 1000);
-    assertEquals(sequenceManagerRecv.validateTransactionId(one), VALID);
+    assertEquals(sequenceManagerRecv.validate(one), VALID);
     assertEquals(sequenceManagerRecv.notifySuccess(one), VALID);
-    assertEquals(sequenceManagerRecv.validateTransactionId(two), VALID);
+    assertEquals(sequenceManagerRecv.validate(two), VALID);
     assertEquals(sequenceManagerRecv.notifySuccess(two), VALID);
-    assertEquals(sequenceManagerRecv.validateTransactionId(three), VALID);
-    assertEquals(sequenceManagerRecv.validateTransactionId(otherThree), ALREADY_PROMISED);
+    assertEquals(sequenceManagerRecv.validate(three), VALID);
+    assertEquals(sequenceManagerRecv.validate(otherThree), ALREADY_PROMISED);
     assertFalse(sequenceManagerRecv.notifyFailure(otherThree));
     assertTrue(sequenceManagerRecv.notifyFailure(three));
-    assertEquals(sequenceManagerRecv.validateTransactionId(otherThree), VALID);
+    assertEquals(sequenceManagerRecv.validate(otherThree), VALID);
   }
 }

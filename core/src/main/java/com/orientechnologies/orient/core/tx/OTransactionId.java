@@ -8,13 +8,10 @@ import java.util.Objects;
 import java.util.Optional;
 
 public class OTransactionId {
-  private Optional<String> nodeOwner;
   private int position;
   private long sequence;
 
-  public OTransactionId(Optional<String> nodeOwner, int position, long sequence) {
-    assert nodeOwner != null;
-    this.nodeOwner = nodeOwner;
+  public OTransactionId(int position, long sequence) {
     this.position = position;
     this.sequence = sequence;
   }
@@ -27,24 +24,17 @@ public class OTransactionId {
     return sequence;
   }
 
-  @Deprecated
-  public Optional<String> getNodeOwner() {
-    return nodeOwner;
-  }
-
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
     OTransactionId that = (OTransactionId) o;
-    return position == that.position
-        && sequence == that.sequence
-        && Objects.equals(nodeOwner, that.nodeOwner);
+    return position == that.position && sequence == that.sequence;
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(nodeOwner, position, sequence);
+    return Objects.hash(position, sequence);
   }
 
   public static OTransactionId read(DataInput input) throws IOException {
@@ -56,16 +46,11 @@ public class OTransactionId {
     }
     int position = input.readInt();
     long sequence = input.readLong();
-    return new OTransactionId(nodeOwner, position, sequence);
+    return new OTransactionId(position, sequence);
   }
 
   public void write(DataOutput out) throws IOException {
-    if (nodeOwner.isPresent()) {
-      out.writeBoolean(true);
-      out.writeUTF(nodeOwner.get());
-    } else {
-      out.writeBoolean(false);
-    }
+    out.writeBoolean(false);
     out.writeInt(position);
     out.writeLong(sequence);
   }
@@ -88,7 +73,7 @@ public class OTransactionId {
   public static OTransactionId readNetwork(DataInput input) throws IOException {
     int position = OVarIntSerializer.readAsInt(input);
     long sequence = OVarIntSerializer.readAsLong(input);
-    return new OTransactionId(Optional.empty(), position, sequence);
+    return new OTransactionId(position, sequence);
   }
 
   public void writeNetwork(DataOutput out) throws IOException {
@@ -98,6 +83,6 @@ public class OTransactionId {
 
   @Override
   public String toString() {
-    return "" + position + ":" + sequence + " owner:" + nodeOwner;
+    return "" + position + ":" + sequence;
   }
 }

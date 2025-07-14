@@ -24,8 +24,8 @@ public class ODistributedSynchronizedSequence {
     request.countDown();
   }
 
-  public ValidationResult validateTransactionId(OTransactionIdPromise id) {
-    return sequenceManager.validateTransactionId(id);
+  public ValidationResult validate(OTransactionIdPromise id) {
+    return sequenceManager.validate(id);
   }
 
   public void notifyFailure(OTransactionIdPromise id) {
@@ -40,6 +40,12 @@ public class ODistributedSynchronizedSequence {
     return sequenceManager.nextDDL();
   }
 
+  /** This make sure that there is a synchronization between the apply of the status of transactions sequence
+   * and the logging of it in the database, to avoid to have in the status a transaction that has not yet been logged.
+   *
+   * @param id
+   * @return
+   */
   public synchronized OTxMetadataHolderImpl notifySuccess(OTransactionIdPromise id) {
     try {
       request.await();

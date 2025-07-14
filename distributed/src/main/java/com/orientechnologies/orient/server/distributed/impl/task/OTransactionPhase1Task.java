@@ -228,8 +228,6 @@ public class OTransactionPhase1Task extends OAbstractRemoteTask implements OLock
                   (ODistributedDatabaseImpl) localDistributedDatabase, requestId, tx, id);
           txContext.setStatus(TIMEDOUT);
           database.register(requestId, localDistributedDatabase, txContext);
-          // This send OK to the sender even if already present, the second phase will skip the
-          // apply if already present
           return new OTxInvalidSequential();
         }
       }

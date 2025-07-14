@@ -10,7 +10,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.Optional;
 import org.junit.Test;
 
 public class OSQLCommandFirstPhaseTest {
@@ -19,10 +18,8 @@ public class OSQLCommandFirstPhaseTest {
   public void testReadWrite() throws IOException {
     String command = "create cluster bla";
     ONodeId nodeId = new ONodeId("node");
-    OTransactionIdPromise first =
-        new OTransactionIdPromise(nodeId, new OTransactionId(Optional.empty(), 10, 20));
-    OTransactionIdPromise second =
-        new OTransactionIdPromise(nodeId, new OTransactionId(Optional.empty(), 30, 40));
+    OTransactionIdPromise first = new OTransactionIdPromise(nodeId, new OTransactionId(10, 20));
+    OTransactionIdPromise second = new OTransactionIdPromise(nodeId, new OTransactionId(30, 40));
     OSQLCommandTaskFirstPhase message = new OSQLCommandTaskFirstPhase(command, first, second);
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     message.toStream(new DataOutputStream(out));

@@ -1,0 +1,13 @@
+package com.orientechnologies.orient.distributed.db;
+
+import com.orientechnologies.orient.core.tx.OTransactionIdPromise;
+import com.orientechnologies.orient.server.distributed.ODistributedMessage;
+
+public interface OPromisedDistributedOps {
+
+  void add(ODistributedMessage message);
+
+  ODistributedMessage get(OTransactionIdPromise promise);
+
+  void remove(OTransactionIdPromise promise);
+}

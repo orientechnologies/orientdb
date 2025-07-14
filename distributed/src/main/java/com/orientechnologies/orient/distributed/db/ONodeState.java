@@ -1,14 +1,11 @@
 package com.orientechnologies.orient.distributed.db;
 
-import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.tx.ONodeId;
 import com.orientechnologies.orient.core.tx.OTransactionId;
 import com.orientechnologies.orient.core.tx.OTransactionIdPromise;
-import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import com.orientechnologies.orient.core.tx.OTxMetadataHolderImpl;
 import com.orientechnologies.orient.core.tx.ValidationResult;
-import com.orientechnologies.orient.server.distributed.ODistributedException;
-import com.orientechnologies.orient.server.distributed.exception.OTransactionAlreadyPresentException;
+import com.orientechnologies.orient.server.distributed.ODistributedMessage;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTransactionSequenceManager;
 import java.util.List;
 import java.util.Optional;
@@ -16,50 +13,80 @@ import java.util.Optional;
 public class ONodeState {
 
   private OTransactionSequenceManager sequenceManager;
+  private ODistributedMessageLog log;
+  private OPromisedDistributedOps promised;
 
   public ONodeState(ONodeId coordinator) {
     sequenceManager = new OTransactionSequenceManager(coordinator, 3);
+    log = new ODistributedMessageLogMemory();
+    promised = new OPromisedDistributedOpsImpl();
   }
 
-  public ValidationResult validateTransactionId(OTransactionIdPromise id) {
-    return sequenceManager.validateTransactionId(id);
-  }
-
-  public void notifyFailure(OTransactionIdPromise id) {
-    sequenceManager.notifyFailure(id);
-  }
-
-  public Optional<OTransactionIdPromise> next() {
-    return sequenceManager.next();
-  }
-
-  public Optional<ORawPair<OTransactionIdPromise, OTransactionIdPromise>> nextDDL() {
-    return sequenceManager.nextDDL();
-  }
-
-  public synchronized OTxMetadataHolderImpl notifySuccess(OTransactionIdPromise id) {
-    ValidationResult status = sequenceManager.notifySuccess(id);
-    if (status == ValidationResult.ALREADY_PRESENT) {
-      throw new OTransactionAlreadyPresentException("Tx Already present in the current context");
-    } else {
-      throw new ODistributedException("Failed transaction sequence need a reinstall");
-    }
-  }
-
-  public List<OTransactionId> missingTransactions(OTransactionSequenceStatus lastState) {
-    return sequenceManager.checkOtherStatus(lastState);
-  }
-
-  public void fill(Optional<byte[]> lastMetadata) {
+  private void fill(Optional<byte[]> lastMetadata) {
     lastMetadata.ifPresent(
         (data) -> sequenceManager.fill(OTxMetadataHolderImpl.read(data).getStatus()));
   }
 
-  public OTransactionSequenceStatus currentStatus() {
-    return sequenceManager.currentStatus();
+  public boolean receive(ODistributedMessage message) {
+    ValidationResult result = sequenceManager.validate(message.getPromiseId());
+    switch (result) {
+      case VALID -> {
+        this.log.log(message);
+        this.promised.add(message);
+        return true;
+      }
+      case ALREADY_PRESENT -> {
+        // Already present ... maybe do nothing, already done
+        return false;
+      }
+      case ALREADY_PROMISED -> {
+        // Fail for promised to someone else
+        return false;
+      }
+      case MISSING_PREVIOUS -> {
+        // wait for previous one
+        return false;
+      }
+    }
+    return false;
   }
 
-  public List<OTransactionId> checkSelfStatus(OTransactionSequenceStatus status) {
-    return sequenceManager.checkSelfStatus(status);
+  public void receiveFailure(OTransactionIdPromise promise) {
+    boolean promised = sequenceManager.notifyFailure(promise);
+    if (promised) {
+      this.promised.remove(promise);
+    }
+  }
+
+  public ODistributedMessage receiveSuccess(OTransactionIdPromise promise) {
+    // TODO: the verification of success also close the promise, maybe is better to close
+    // the promise after the execution;
+    ValidationResult result = sequenceManager.notifySuccess(promise);
+    switch (result) {
+      case VALID -> {
+        ODistributedMessage message = this.promised.get(promise);
+        return message;
+      }
+      case ALREADY_PRESENT -> {
+        // Already present ... maybe do nothing, already done
+        this.promised.remove(promise);
+      }
+      case ALREADY_PROMISED -> {
+        // Fail for promised to someone else
+      }
+      case MISSING_PREVIOUS -> {
+        // wait for previous one
+      }
+    }
+
+    return null;
+  }
+
+  public void complete(OTransactionIdPromise promise) {
+    this.promised.remove(promise);
+  }
+
+  public List<ODistributedMessage> recover(List<OTransactionId> ids) {
+    return this.log.recover(ids);
   }
 }

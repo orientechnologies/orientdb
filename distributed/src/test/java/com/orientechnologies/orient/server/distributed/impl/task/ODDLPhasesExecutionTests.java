@@ -11,7 +11,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxSuccess;
 import java.io.IOException;
-import java.util.Optional;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -40,10 +39,8 @@ public class ODDLPhasesExecutionTests {
         (ODatabaseDocumentDistributed)
             orientDB.open(ODDLPhasesExecutionTests.class.getSimpleName(), "admin", "adminpwd");
     String command = "create cluster bla";
-    OTransactionIdPromise first =
-        new OTransactionIdPromise(nodeId, new OTransactionId(Optional.empty(), 10, 1));
-    OTransactionIdPromise second =
-        new OTransactionIdPromise(nodeId, new OTransactionId(Optional.empty(), 30, 1));
+    OTransactionIdPromise first = new OTransactionIdPromise(nodeId, new OTransactionId(10, 1));
+    OTransactionIdPromise second = new OTransactionIdPromise(nodeId, new OTransactionId(30, 1));
 
     OSQLCommandTaskFirstPhase message = new OSQLCommandTaskFirstPhase(command, first, second);
     ODistributedRequestId requestId = new ODistributedRequestId(1, 10);

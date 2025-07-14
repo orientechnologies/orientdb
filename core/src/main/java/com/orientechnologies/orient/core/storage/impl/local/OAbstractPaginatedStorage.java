@@ -1545,8 +1545,7 @@ public abstract class OAbstractPaginatedStorage
               // status
               //noinspection ConstantConditions
               OTransactionId txId =
-                  new OTransactionId(
-                      Optional.empty(), data.getId().getPosition(), data.getId().getSequence());
+                  new OTransactionId(data.getId().getPosition(), data.getId().getSequence());
               if (transactionsToRead.contains(txId)) {
                 long unitId = ((OAtomicUnitStartMetadataRecord) record).getOperationUnitId();
                 units.put(unitId, new OTransactionData(txId));

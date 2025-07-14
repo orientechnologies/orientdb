@@ -4,14 +4,13 @@ import static org.junit.Assert.*;
 
 import com.orientechnologies.orient.core.tx.OTransactionId;
 import com.orientechnologies.orient.server.distributed.exception.OTxPromiseException;
-import java.util.Optional;
 import org.junit.Test;
 
 public class OTxPromiseManagerTest {
   @Test
   public void testReaquirePromise() {
     OTxPromiseManager<String> mgr = new OTxPromiseManager<>();
-    OTransactionId txId = new OTransactionId(Optional.of("0"), 1, 1);
+    OTransactionId txId = new OTransactionId(1, 1);
     OTransactionId returnedId = mgr.promise("key1", 0, txId, false);
     assertNull(returnedId);
     assertEquals(mgr.size(), 1);
@@ -25,8 +24,8 @@ public class OTxPromiseManagerTest {
   @Test
   public void testForcePromise() {
     OTxPromiseManager<String> mgr = new OTxPromiseManager<>();
-    OTransactionId txId1 = new OTransactionId(Optional.of("0"), 1, 1);
-    OTransactionId txId2 = new OTransactionId(Optional.of("0"), 1, 2);
+    OTransactionId txId1 = new OTransactionId(1, 1);
+    OTransactionId txId2 = new OTransactionId(1, 2);
     OTransactionId returnedId = mgr.promise("key1", 0, txId1, false);
     assertNull(returnedId);
     assertEquals(mgr.size(), 1);
@@ -42,8 +41,8 @@ public class OTxPromiseManagerTest {
   @Test(expected = OTxPromiseException.class)
   public void testForcePromise_differentVersion() {
     OTxPromiseManager<String> mgr = new OTxPromiseManager<>();
-    OTransactionId txId1 = new OTransactionId(Optional.of("0"), 1, 1);
-    OTransactionId txId2 = new OTransactionId(Optional.of("0"), 1, 2);
+    OTransactionId txId1 = new OTransactionId(1, 1);
+    OTransactionId txId2 = new OTransactionId(1, 2);
     OTransactionId returnedId = mgr.promise("key1", 0, txId1, false);
     assertNull(returnedId);
     try {
