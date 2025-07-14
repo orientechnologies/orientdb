@@ -64,9 +64,7 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
   private final boolean groupResponsesByResult;
   private final List<List<ODistributedResponse>> responseGroups =
       new ArrayList<List<ODistributedResponse>>();
-  private int totalExpectedResponses;
   private final long synchTimeout;
-  private final long totalTimeout;
   private final Lock synchronousResponsesLock = new ReentrantLock();
   private final CountDownLatch synchronousResponsesArrived = new CountDownLatch(1);
   private final int quorum;
@@ -75,7 +73,6 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
   private volatile int receivedResponses = 0;
   private volatile boolean receivedCurrentNode;
   private ODistributedResponse quorumResponse = null;
-  private final Set<String> followupToNodes = new HashSet<String>();
   private AtomicBoolean canceled = new AtomicBoolean(false);
 
   public ODistributedResponseManagerImpl(
@@ -83,20 +80,16 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
       final ODistributedRequest iRequest,
       final Collection<String> expectedResponses,
       final Set<String> iNodesConcurInQuorum,
-      final int iTotalExpectedResponses,
       final int iQuorum,
       final boolean iWaitForLocalNode,
       final long iSynchTimeout,
-      final long iTotalTimeout,
       final boolean iGroupResponsesByResult) {
     this.dManager = iManager;
     this.request = iRequest;
     this.sentOn = System.nanoTime();
-    this.totalExpectedResponses = iTotalExpectedResponses;
     this.quorum = iQuorum;
     this.waitForLocalNode = iWaitForLocalNode;
     this.synchTimeout = iSynchTimeout;
-    this.totalTimeout = iTotalTimeout;
     this.groupResponsesByResult = iGroupResponsesByResult;
     this.nodesConcurInQuorum = iNodesConcurInQuorum;
 
@@ -240,7 +233,6 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
     try {
 
       if (responses.remove(node) != null) {
-        totalExpectedResponses--;
         nodesConcurInQuorum.remove(node);
 
         checkForCompletion();
@@ -630,9 +622,6 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
     final int bestResponsesGroupIndex = getBestResponsesGroup();
     final List<ODistributedResponse> bestResponsesGroup =
         responseGroups.get(bestResponsesGroupIndex);
-
-    final int maxCoherentResponses = bestResponsesGroup.size();
-    final int conflicts = getExpectedResponses() - (maxCoherentResponses);
 
     if (isMinimumQuorumReached(true)) {
       // QUORUM SATISFIED

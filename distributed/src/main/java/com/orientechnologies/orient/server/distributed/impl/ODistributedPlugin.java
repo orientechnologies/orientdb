@@ -820,13 +820,10 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
               iRequest,
               iNodes,
               nodesConcurToTheQuorum,
-              expectedResponses,
               quorum,
               waitLocalNode,
               adjustTimeoutWithLatency(
                   iNodes, task.getSynchronousTimeout(expectedResponses), iRequest.getId()),
-              adjustTimeoutWithLatency(
-                  iNodes, task.getTotalTimeout(availableNodes), iRequest.getId()),
               groupByResponse);
         });
   }

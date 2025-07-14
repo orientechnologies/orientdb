@@ -20,9 +20,7 @@ import java.util.Set;
 public class ODistributedTxResponseManagerImpl implements ODistributedTxResponseManager {
 
   private final ORemoteTask iRequest;
-  private final Collection<String> iNodes;
   private final Set<String> nodesConcurToTheQuorum;
-  private final int availableNodes;
   private final int expectedResponses;
   private final int quorum;
   private volatile long timeout;
@@ -45,9 +43,7 @@ public class ODistributedTxResponseManagerImpl implements ODistributedTxResponse
       int expectedResponses,
       int quorum) {
     this.iRequest = iRequest;
-    this.iNodes = iNodes;
     this.nodesConcurToTheQuorum = nodesConcurToTheQuorum;
-    this.availableNodes = availableNodes;
     this.expectedResponses = expectedResponses;
     this.quorum = quorum;
     timeout = iRequest.getSynchronousTimeout(expectedResponses);
