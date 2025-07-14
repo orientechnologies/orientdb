@@ -2,9 +2,9 @@ package com.orientechnologies.orient.server.distributed.impl.task;
 
 import static org.junit.Assert.assertEquals;
 
-import com.orientechnologies.orient.core.tx.ONodeId;
-import com.orientechnologies.orient.core.tx.OTransactionId;
-import com.orientechnologies.orient.core.tx.OTransactionIdPromise;
+import com.orientechnologies.orient.core.transaction.ONodeId;
+import com.orientechnologies.orient.core.transaction.OTransactionId;
+import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;

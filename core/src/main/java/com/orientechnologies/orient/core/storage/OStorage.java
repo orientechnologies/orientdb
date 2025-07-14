@@ -41,7 +41,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OBackgroundNewDelta;
 import com.orientechnologies.orient.core.storage.impl.local.OIndexEngineCallback;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
-import com.orientechnologies.orient.core.tx.OTransactionId;
+import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.core.util.OBackupable;
 import java.io.InputStream;

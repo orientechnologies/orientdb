@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.core.tx;
+package com.orientechnologies.orient.core.transaction;
 
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.OVarIntSerializer;
 import java.io.DataInput;

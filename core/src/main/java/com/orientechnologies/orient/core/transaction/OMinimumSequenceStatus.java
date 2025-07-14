@@ -1,6 +1,5 @@
-package com.orientechnologies.orient.server.distributed.impl.task.transaction;
+package com.orientechnologies.orient.core.transaction;
 
-import com.orientechnologies.orient.core.tx.ONodeId;
 import java.util.HashMap;
 import java.util.Map;
 

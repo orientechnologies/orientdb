@@ -1,12 +1,12 @@
 package com.orientechnologies.orient.distributed.db;
 
-import com.orientechnologies.orient.core.tx.ONodeId;
-import com.orientechnologies.orient.core.tx.OTransactionId;
-import com.orientechnologies.orient.core.tx.OTransactionIdPromise;
+import com.orientechnologies.orient.core.transaction.ONodeId;
+import com.orientechnologies.orient.core.transaction.OTransactionId;
+import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
+import com.orientechnologies.orient.core.transaction.OTransactionSequenceManager;
 import com.orientechnologies.orient.core.tx.OTxMetadataHolderImpl;
 import com.orientechnologies.orient.core.tx.ValidationResult;
 import com.orientechnologies.orient.server.distributed.ODistributedMessage;
-import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTransactionSequenceManager;
 import java.util.List;
 import java.util.Optional;
 

@@ -2,7 +2,7 @@ package com.orientechnologies.orient.server.distributed.impl.lock;
 
 import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.tx.OTransactionId;
+import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTransactionUniqueKey;
 import java.util.ArrayList;
 import java.util.Collections;

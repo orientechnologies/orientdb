@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.server.distributed.impl.task.transaction;
+package com.orientechnologies.orient.core.transaction;
 
 import static com.orientechnologies.orient.core.tx.ValidationResult.ALREADY_PRESENT;
 import static com.orientechnologies.orient.core.tx.ValidationResult.ALREADY_PROMISED;
@@ -9,9 +9,6 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
-import com.orientechnologies.orient.core.tx.ONodeId;
-import com.orientechnologies.orient.core.tx.OTransactionId;
-import com.orientechnologies.orient.core.tx.OTransactionIdPromise;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import java.io.IOException;
 import java.util.List;

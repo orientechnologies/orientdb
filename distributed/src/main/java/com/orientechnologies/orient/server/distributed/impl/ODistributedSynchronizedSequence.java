@@ -1,15 +1,15 @@
 package com.orientechnologies.orient.server.distributed.impl;
 
 import com.orientechnologies.common.util.ORawPair;
-import com.orientechnologies.orient.core.tx.ONodeId;
-import com.orientechnologies.orient.core.tx.OTransactionId;
-import com.orientechnologies.orient.core.tx.OTransactionIdPromise;
+import com.orientechnologies.orient.core.transaction.ONodeId;
+import com.orientechnologies.orient.core.transaction.OTransactionId;
+import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
+import com.orientechnologies.orient.core.transaction.OTransactionSequenceManager;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import com.orientechnologies.orient.core.tx.OTxMetadataHolderImpl;
 import com.orientechnologies.orient.core.tx.ValidationResult;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.exception.OTransactionAlreadyPresentException;
-import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTransactionSequenceManager;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;

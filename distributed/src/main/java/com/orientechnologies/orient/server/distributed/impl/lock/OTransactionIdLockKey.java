@@ -1,6 +1,6 @@
 package com.orientechnologies.orient.server.distributed.impl.lock;
 
-import com.orientechnologies.orient.core.tx.OTransactionId;
+import com.orientechnologies.orient.core.transaction.OTransactionId;
 import java.util.Objects;
 
 public class OTransactionIdLockKey implements OLockKey {

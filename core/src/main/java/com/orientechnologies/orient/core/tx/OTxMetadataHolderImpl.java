@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.tx;
 
+import com.orientechnologies.orient.core.transaction.OTransactionId;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInput;

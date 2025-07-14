@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.core.tx;
+package com.orientechnologies.orient.core.transaction;
 
 import java.io.DataInput;
 import java.io.DataOutput;

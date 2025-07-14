@@ -1,10 +1,7 @@
-package com.orientechnologies.orient.server.distributed.impl.task.transaction;
+package com.orientechnologies.orient.core.transaction;
 
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.tx.ONodeId;
-import com.orientechnologies.orient.core.tx.OTransactionId;
-import com.orientechnologies.orient.core.tx.OTransactionIdPromise;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import com.orientechnologies.orient.core.tx.ValidationResult;
 import java.util.ArrayList;
