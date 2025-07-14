@@ -903,9 +903,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
           new File(basePath),
           (name) -> {
             if (!storages.containsKey(name)) {
-              OStorage storage = getOrInitStorage(name);
-              // THIS OPEN THE STORAGE ONLY THE FIRST TIME
-              storage.open(getConfigurations().getConfigurations());
+              getAndOpenStorage(name, getConfigurations());
             }
           });
     }
