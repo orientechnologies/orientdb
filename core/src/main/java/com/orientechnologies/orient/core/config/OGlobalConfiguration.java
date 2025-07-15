@@ -26,7 +26,6 @@ import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.util.OApi;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
 import com.orientechnologies.orient.core.storage.OChecksumMode;
@@ -1681,13 +1680,7 @@ public enum OGlobalConfiguration { // ENVIRONMENT
 
     @Override
     public void change(Object currentValue, Object newValue) {
-      final Orient orient = Orient.instance();
-      if (orient != null) {
-        final OEngineLocalPaginated engineLocalPaginated =
-            (OEngineLocalPaginated) orient.getEngineIfRunning(OEngineLocalPaginated.NAME);
-        if (engineLocalPaginated != null)
-          engineLocalPaginated.changeCacheSize(((Integer) (newValue)) * 1024L * 1024L);
-      }
+      // TODO: new cache refresh
     }
   }
 
