@@ -36,6 +36,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.zip.ZipOutputStream;
 
@@ -211,5 +212,10 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
   @Override
   public boolean isMemory() {
     return true;
+  }
+
+  @Override
+  public Optional<Path> getPath() {
+    return Optional.empty();
   }
 }

@@ -20,8 +20,6 @@
 
 package com.orientechnologies.orient.core.db;
 
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.FILE_DELETE_DELAY;
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.FILE_DELETE_RETRY;
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.WARNING_DEFAULT_USERS;
 
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
@@ -34,7 +32,6 @@ import com.orientechnologies.common.util.OClassLoaderHelper;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.script.OScriptManager;
-import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -51,7 +48,6 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEngine;
 import com.orientechnologies.orient.core.storage.OStorageEngine.OBackupType;
 import com.orientechnologies.orient.core.storage.config.OClusterBasedStorageConfiguration;
-import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import java.io.File;
 import java.io.InputStream;
 import java.nio.file.Path;
@@ -533,30 +529,19 @@ public class OrientDBEmbedded implements OrientDBInternal {
         }
         OStorage storage = storages.get(name);
         if (storage != null) {
+          dbCount.decrementAndGet();
           storage.close();
         }
       }
-      getDefaultEngine()
-          .restoreStream(
-              this, name, getConfigurations().getConfigurations(), in, OBackupType.FOLDER_ZIP);
+      OStorage storage =
+          getDefaultEngine()
+              .restoreStream(
+                  this, name, getConfigurations().getConfigurations(), in, OBackupType.FOLDER_ZIP);
+      storages.put(name, storage);
+      dbCount.incrementAndGet();
       distributedSetOnline(name);
     } catch (OModificationOperationProhibitedException e) {
       throw e;
-    } catch (Exception e) {
-      synchronized (this) {
-        sharedContexts.remove(name);
-        storages.remove(name);
-        dbCount.decrementAndGet();
-      }
-
-      OContextConfiguration configs = getConfigurations().getConfigurations();
-      OLocalPaginatedStorage.deleteFilesFromDisc(
-          name,
-          configs.getValueAsInteger(FILE_DELETE_RETRY),
-          configs.getValueAsInteger(FILE_DELETE_DELAY),
-          buildName(name));
-      throw OException.wrapException(
-          new ODatabaseException("Cannot create database '" + name + "'"), e);
     }
   }
 
@@ -599,34 +584,23 @@ public class OrientDBEmbedded implements OrientDBInternal {
       Callable<Object> callable,
       OCommandOutputListener iListener) {
     checkDatabaseName(name);
-    try {
-      synchronized (this) {
-        dbCount.decrementAndGet();
-        OSharedContext context = sharedContexts.remove(name);
-        if (context != null) {
-          context.close();
-        }
-        OStorage storage = storages.get(name);
-        if (storage != null) {
-          storage.close();
-        }
+    synchronized (this) {
+      dbCount.decrementAndGet();
+      OSharedContext context = sharedContexts.remove(name);
+      if (context != null) {
+        context.close();
       }
-      getDefaultEngine()
-          .restoreStream(
-              this, name, getConfigurations().getConfigurations(), in, OBackupType.FOLDER_ZIP);
-    } catch (Exception e) {
-      synchronized (this) {
-        storages.remove(name);
+      OStorage storage = storages.get(name);
+      if (storage != null) {
+        storage.close();
       }
-      OContextConfiguration configs = getConfigurations().getConfigurations();
-      OLocalPaginatedStorage.deleteFilesFromDisc(
-          name,
-          configs.getValueAsInteger(FILE_DELETE_RETRY),
-          configs.getValueAsInteger(FILE_DELETE_DELAY),
-          buildName(name));
-      throw OException.wrapException(
-          new ODatabaseException("Cannot create database '" + name + "'"), e);
     }
+    OStorage storage =
+        getDefaultEngine()
+            .restoreStream(
+                this, name, getConfigurations().getConfigurations(), in, OBackupType.FOLDER_ZIP);
+    storages.put(name, storage);
+    dbCount.incrementAndGet();
   }
 
   protected ODatabaseDocumentEmbedded internalCreate(OrientDBConfig config, OStorage storage) {
@@ -653,7 +627,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
     OStorage storage = storages.get(name);
     if (storage == null) {
       if (basePath != null) {
-        return OLocalPaginatedStorage.exists(Paths.get(buildName(name)));
+        return getDefaultEngine().exists(name);
       } else {
         return false;
       }
@@ -877,21 +851,12 @@ public class OrientDBEmbedded implements OrientDBInternal {
 
   public synchronized void initCustomStorage(
       String name, String path, String userName, String userPassword) {
-    ODatabaseDocumentEmbedded embedded = null;
     synchronized (this) {
       Path p = Paths.get(path);
-      boolean exists = OLocalPaginatedStorage.exists(p);
       OStorage storage =
           getDefaultEngine().registerLocal(this, name, p, getConfigurations().getConfigurations());
       // TODO: Add Creation settings and parameters
-      if (!exists) {
-        embedded = internalCreate(getConfigurations(), storage);
-      }
       storages.put(name, storage);
-    }
-    if (embedded != null) {
-      embedded.callOnCreateListeners();
-      ODatabaseRecordThreadLocal.instance().remove();
     }
   }
 
@@ -918,8 +883,11 @@ public class OrientDBEmbedded implements OrientDBInternal {
 
   public String getDatabasePath(String iDatabaseName) {
     OStorage storage = storages.get(iDatabaseName);
-    if (storage != null && storage instanceof OLocalPaginatedStorage) {
-      return ((OLocalPaginatedStorage) storage).getStoragePath().toString();
+    if (storage != null) {
+      Optional<Path> path = storage.getPath();
+      if (path.isPresent()) {
+        return path.get().toString();
+      }
     }
     return null;
   }

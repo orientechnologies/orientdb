@@ -1,5 +1,8 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.FILE_DELETE_DELAY;
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.FILE_DELETE_RETRY;
+
 import com.orientechnologies.common.collection.closabledictionary.OClosableLinkedContainer;
 import com.orientechnologies.common.directmemory.MemTrace;
 import com.orientechnologies.common.directmemory.OByteBufferPool;
@@ -404,16 +407,26 @@ public class OStorageEnginePaginatedLocal implements OStorageEngine {
       InputStream stream,
       OBackupType type) {
 
-    OLocalPaginatedStorage storage = createLocal(context, name, config);
-    switch (type) {
-      case FOLDER_ZIP -> {
-        storage.restore(stream, null, null, null);
+    try {
+      OLocalPaginatedStorage storage = createLocal(context, name, config);
+      switch (type) {
+        case FOLDER_ZIP -> {
+          storage.restore(stream, null, null, null);
+        }
+        case FULL_INCREMENTAL -> {
+          storage.restoreFullIncrementalBackup(stream);
+        }
       }
-      case FULL_INCREMENTAL -> {
-        storage.restoreFullIncrementalBackup(stream);
-      }
+      return storage;
+    } catch (Exception e) {
+      OLocalPaginatedStorage.deleteFilesFromDisc(
+          name,
+          config.getValueAsInteger(FILE_DELETE_RETRY),
+          config.getValueAsInteger(FILE_DELETE_DELAY),
+          name);
+      throw OException.wrapException(
+          new ODatabaseException("Cannot create database '" + name + "'"), e);
     }
-    return storage;
   }
 
   @Override

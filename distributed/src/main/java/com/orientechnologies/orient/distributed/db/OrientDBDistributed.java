@@ -1,14 +1,10 @@
 package com.orientechnologies.orient.distributed.db;
 
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.FILE_DELETE_DELAY;
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.FILE_DELETE_RETRY;
-
 import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentEmbeddedPooled;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -27,7 +23,7 @@ import com.orientechnologies.orient.core.db.OrientDBEmbedded;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
+import com.orientechnologies.orient.core.storage.OStorageEngine.OBackupType;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.distributed.context.ONodeState;
 import com.orientechnologies.orient.distributed.context.coordination.message.ONodeFirstConnect;
@@ -56,6 +52,7 @@ import com.orientechnologies.orient.server.distributed.impl.ORemoteServerManager
 import com.orientechnologies.orient.server.distributed.impl.metadata.OSharedContextDistributed;
 import java.io.File;
 import java.io.InputStream;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -136,7 +133,6 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
       OSharedContext sharedContext = getOrCreateSharedContext(storage);
       embedded = new ODatabaseDocumentDistributed(storage, plugin);
       embedded.init(config, sharedContext);
-      //      getOrInitDistributedConfiguration(storage.getName());
     }
     return embedded;
   }
@@ -184,11 +180,12 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   public void fullSync(String dbName, InputStream backupStream, OrientDBConfig config) {
     OStorage storage = null;
     ODatabaseDocumentEmbedded embedded;
-    synchronized (this) {
-      if (!isOpen()) {
-        return;
-      }
-      try {
+
+    if (!isOpen()) {
+      return;
+    }
+    try {
+      synchronized (this) {
         storage = storages.get(dbName);
 
         if (storage != null) {
@@ -197,48 +194,32 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
           OSharedContext context = sharedContexts.remove(dbName);
           dbCount.decrementAndGet();
           context.close();
-          dropStorageFiles((OLocalPaginatedStorage) storage);
+          dropStorageFiles(storage);
 
           storage.delete();
           storages.remove(dbName);
           ODatabaseRecordThreadLocal.instance().remove();
         }
-        storage = getDefaultEngine().createLocal(this, dbName, config.getConfigurations());
-        embedded = internalCreate(config, storage);
-        storages.put(dbName, storage);
-      } catch (OModificationOperationProhibitedException e) {
-        throw e;
-      } catch (Exception e) {
-        if (storage != null) {
-          storage.delete();
-        }
-
-        throw OException.wrapException(
-            new ODatabaseException("Cannot restore database '" + dbName + "'"), e);
       }
-    }
-    try {
-      storage.restoreFullIncrementalBackup(backupStream);
-    } catch (RuntimeException e) {
-      try {
-        if (storage != null) {
-          storage.delete();
-        }
-      } catch (Exception e1) {
-        logger.warn("Error doing cleanups, should be safe do progress anyway", e1);
-      }
-      synchronized (this) {
-        sharedContexts.remove(dbName);
-        storages.remove(dbName);
-      }
-
-      OContextConfiguration configs = getConfigurations().getConfigurations();
-      OLocalPaginatedStorage.deleteFilesFromDisc(
-          dbName,
-          configs.getValueAsInteger(FILE_DELETE_RETRY),
-          configs.getValueAsInteger(FILE_DELETE_DELAY),
-          buildName(dbName));
+      storage =
+          getDefaultEngine()
+              .restoreStream(
+                  this,
+                  dbName,
+                  config.getConfigurations(),
+                  backupStream,
+                  OBackupType.FULL_INCREMENTAL);
+      embedded = internalCreate(config, storage);
+      storages.put(dbName, storage);
+    } catch (OModificationOperationProhibitedException e) {
       throw e;
+    } catch (Exception e) {
+      if (storage != null) {
+        storage.delete();
+      }
+
+      throw OException.wrapException(
+          new ODatabaseException("Cannot restore database '" + dbName + "'"), e);
     }
 
     embedded.getSharedContext().reInit(storage, embedded);
@@ -288,9 +269,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
         if (sharedContext != null) {
           sharedContext.close();
         }
-        if (storage instanceof OLocalPaginatedStorage) {
-          dropStorageFiles((OLocalPaginatedStorage) storage);
-        }
+        dropStorageFiles(storage);
         storage.delete();
         storages.remove(name);
         sharedContexts.remove(name);
@@ -398,33 +377,33 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     }
   }
 
-  public static void dropStorageFiles(OLocalPaginatedStorage storage) {
-    // REMOVE distributed-config.json and distributed-sync.json files to allow removal of directory
-    final File dCfg =
-        new File(
-            storage.getStoragePath() + "/" + ODistributedServerManager.FILE_DISTRIBUTED_DB_CONFIG);
+  public static void dropStorageFiles(OStorage storage) {
+    Optional<Path> path = storage.getPath();
+    if (path.isPresent()) {
+      Path p = path.get();
+      // REMOVE distributed-config.json and distributed-sync.json files to allow removal of
+      // directory
+      final File dCfg = new File(p + "/" + ODistributedServerManager.FILE_DISTRIBUTED_DB_CONFIG);
 
-    try {
-      if (dCfg.exists()) {
-        for (int i = 0; i < 10; ++i) {
-          if (dCfg.delete()) break;
-          Thread.sleep(100);
+      try {
+        if (dCfg.exists()) {
+          for (int i = 0; i < 10; ++i) {
+            if (dCfg.delete()) break;
+            Thread.sleep(100);
+          }
         }
-      }
 
-      final File dCfg2 =
-          new File(
-              storage.getStoragePath()
-                  + "/"
-                  + ODistributedDatabaseImpl.DISTRIBUTED_SYNC_JSON_FILENAME);
-      if (dCfg2.exists()) {
-        for (int i = 0; i < 10; ++i) {
-          if (dCfg2.delete()) break;
-          Thread.sleep(100);
+        final File dCfg2 =
+            new File(p + "/" + ODistributedDatabaseImpl.DISTRIBUTED_SYNC_JSON_FILENAME);
+        if (dCfg2.exists()) {
+          for (int i = 0; i < 10; ++i) {
+            if (dCfg2.delete()) break;
+            Thread.sleep(100);
+          }
         }
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
       }
-    } catch (InterruptedException e) {
-      // IGNORE IT
     }
   }
 
