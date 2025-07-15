@@ -23,8 +23,6 @@ import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
-import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -57,10 +55,10 @@ public class LuceneInsertMultithreadTest {
 
     String storageType;
     if ("ci".equals(config) || "release".equals(config)) {
-      storageType = OEngineLocalPaginated.NAME;
+      storageType = "plocal";
       databaseType = ODatabaseType.PLOCAL;
     } else {
-      storageType = OEngineMemory.NAME;
+      storageType = "memory";
       databaseType = ODatabaseType.MEMORY;
     }
 

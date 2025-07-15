@@ -39,7 +39,6 @@ import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.OrientDBEmbedded;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
-import com.orientechnologies.orient.core.engine.local.OEngineLocalPaginated;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.index.engine.v1.OCellBTreeMultiValueIndexEngine;
 import com.orientechnologies.orient.core.storage.OChecksumMode;
@@ -236,7 +235,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
 
   @Override
   public String getURL() {
-    return OEngineLocalPaginated.NAME + ":" + url;
+    return "plocal:" + url;
   }
 
   public final Path getStoragePath() {
@@ -259,7 +258,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
 
   @Override
   public String getType() {
-    return OEngineLocalPaginated.NAME;
+    return "plocal";
   }
 
   @Override

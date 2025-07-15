@@ -40,9 +40,9 @@ public class OStorageEnginePaginatedLocal implements OStorageEngine {
   private static final OLogger logger =
       OLogManager.instance().logger(OStorageEnginePaginatedLocal.class);
 
-  private volatile OReadCache readCache;
+  protected volatile OReadCache readCache;
 
-  private OClosableLinkedContainer<Long, OFile> files;
+  protected OClosableLinkedContainer<Long, OFile> files;
 
   /** Keeps track of next possible storage id. */
   private static final AtomicInteger nextStorageId = new AtomicInteger();
@@ -51,8 +51,8 @@ public class OStorageEnginePaginatedLocal implements OStorageEngine {
   private static final Set<Integer> currentStorageIds =
       Collections.newSetFromMap(new ConcurrentHashMap<>());
 
-  private long maxWALSegmentSize;
-  private long doubleWriteLogMaxSegSize;
+  protected long maxWALSegmentSize;
+  protected long doubleWriteLogMaxSegSize;
   private Path basePath;
 
   protected final int generateStorageId() {
@@ -152,17 +152,8 @@ public class OStorageEnginePaginatedLocal implements OStorageEngine {
       OrientDBInternal context, String name, OContextConfiguration config) {
 
     try {
-      Path path = this.basePath.resolve(name);
-      OLocalPaginatedStorage storage =
-          new OLocalPaginatedStorage(
-              name,
-              path.toString(),
-              generateStorageId(),
-              readCache,
-              files,
-              maxWALSegmentSize,
-              doubleWriteLogMaxSegSize,
-              context);
+      Path path = buildPath(name);
+      OLocalPaginatedStorage storage = newLocalInstance(context, name, path);
       storage.create(config);
       return storage;
     } catch (Exception e) {
@@ -175,6 +166,18 @@ public class OStorageEnginePaginatedLocal implements OStorageEngine {
 
       throw OException.wrapException(new ODatabaseException(message), e);
     }
+  }
+
+  @Override
+  public OStorage registerLocal(
+      OrientDBInternal context, String name, Path path, OContextConfiguration config) {
+    OLocalPaginatedStorage storage = newLocalInstance(context, name, path);
+    if (exists(name)) {
+      storage.open(config);
+    } else {
+      storage.create(config);
+    }
+    return storage;
   }
 
   private boolean getBoolConfig(OContextConfiguration configurations, OGlobalConfiguration config) {
@@ -316,7 +319,10 @@ public class OStorageEnginePaginatedLocal implements OStorageEngine {
   public OStorage createMemory(
       OrientDBInternal context, String name, OContextConfiguration config) {
     try {
-      return new ODirectMemoryStorage(name, name, generateStorageId(), context);
+      ODirectMemoryStorage storage =
+          new ODirectMemoryStorage(name, name, generateStorageId(), context);
+      storage.create(config);
+      return storage;
     } catch (Exception e) {
       logger.error("Error on opening in memory storage: %s", e, name);
 
@@ -326,20 +332,28 @@ public class OStorageEnginePaginatedLocal implements OStorageEngine {
   }
 
   @Override
+  public boolean exists(String name) {
+    if (basePath == null) {
+      return false;
+    } else {
+      return OLocalPaginatedStorage.exists(buildPath(name));
+    }
+  }
+
+  protected Path buildPath(String name) {
+    if (basePath == null) {
+      throw new ODatabaseException(
+          "OrientDB instanced created without physical path, only memory databases are allowed");
+    }
+    return this.basePath.resolve(name);
+  }
+
+  @Override
   public OStorage openLocal(OrientDBInternal context, String name, OContextConfiguration config) {
     try {
-      Path path = this.basePath.resolve(name);
+      Path path = buildPath(name);
 
-      OLocalPaginatedStorage storage =
-          new OLocalPaginatedStorage(
-              name,
-              path.toString(),
-              generateStorageId(),
-              readCache,
-              files,
-              maxWALSegmentSize,
-              doubleWriteLogMaxSegSize,
-              context);
+      OLocalPaginatedStorage storage = newLocalInstance(context, name, path);
       storage.open(config);
       return storage;
     } catch (Exception e) {
@@ -354,16 +368,17 @@ public class OStorageEnginePaginatedLocal implements OStorageEngine {
     }
   }
 
-  @Override
-  public OStorage openMemory(OrientDBInternal context, String name, OContextConfiguration config) {
-    try {
-      return new ODirectMemoryStorage(name, name, generateStorageId(), context);
-    } catch (Exception e) {
-      logger.error("Error on opening in memory storage: %s", e, name);
-
-      throw OException.wrapException(
-          new ODatabaseException("Error on opening in memory storage:" + name), e);
-    }
+  protected OLocalPaginatedStorage newLocalInstance(
+      OrientDBInternal context, String name, Path path) {
+    return new OLocalPaginatedStorage(
+        name,
+        path.toString(),
+        generateStorageId(),
+        readCache,
+        files,
+        maxWALSegmentSize,
+        doubleWriteLogMaxSegSize,
+        context);
   }
 
   @Override
@@ -405,5 +420,10 @@ public class OStorageEnginePaginatedLocal implements OStorageEngine {
   public void shutdown() {
     readCache.clear();
     files.clear();
+  }
+
+  @Override
+  public String getName() {
+    return "plocal";
   }
 }

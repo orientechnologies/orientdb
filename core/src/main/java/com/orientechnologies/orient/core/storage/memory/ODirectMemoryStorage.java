@@ -24,7 +24,6 @@ import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
-import com.orientechnologies.orient.core.engine.memory.OEngineMemory;
 import com.orientechnologies.orient.core.storage.cluster.OPaginatedCluster;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
@@ -92,12 +91,12 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
 
   @Override
   public String getType() {
-    return OEngineMemory.NAME;
+    return "memory";
   }
 
   @Override
   public String getURL() {
-    return OEngineMemory.NAME + ":" + url;
+    return "memory:" + url;
   }
 
   @Override

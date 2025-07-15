@@ -203,13 +203,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
           storages.remove(dbName);
           ODatabaseRecordThreadLocal.instance().remove();
         }
-        storage =
-            disk.createStorage(
-                buildName(dbName),
-                maxWALSegmentSize,
-                doubleWriteLogMaxSegSize,
-                generateStorageId(),
-                this);
+        storage = getDefaultEngine().createLocal(this, dbName, config.getConfigurations());
         embedded = internalCreate(config, storage);
         storages.put(dbName, storage);
       } catch (OModificationOperationProhibitedException e) {
@@ -289,7 +283,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
     synchronized (this) {
       if (exists(name, null, null)) {
-        OStorage storage = getOrInitStorage(name);
+        OStorage storage = getAndOpenStorage(name, getConfigurations());
         OSharedContext sharedContext = sharedContexts.get(name);
         if (sharedContext != null) {
           sharedContext.close();

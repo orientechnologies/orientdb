@@ -18,7 +18,7 @@ public interface OStorageEngine {
 
   OStorage openLocal(OrientDBInternal context, String name, OContextConfiguration config);
 
-  OStorage openMemory(OrientDBInternal context, String name, OContextConfiguration config);
+  boolean exists(String name);
 
   OStorage restoreStream(
       OrientDBInternal context,
@@ -32,5 +32,10 @@ public interface OStorageEngine {
 
   void init(Path basePath, OContextConfiguration configurations);
 
+  String getName();
+
   void shutdown();
+
+  OStorage registerLocal(
+      OrientDBInternal orientDBEmbedded, String name, Path p, OContextConfiguration configurations);
 }
