@@ -44,6 +44,7 @@ import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.util.OBackupable;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Path;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
@@ -391,4 +392,6 @@ public interface OStorage extends OBackupable, OStorageInfo {
   boolean isDeleted(final ORID rid);
 
   void incrementalSync(OutputStream dest, Runnable started);
+
+  Optional<Path> getPath();
 }

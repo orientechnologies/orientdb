@@ -922,4 +922,9 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
           generateDatabaseInstanceId(atomicOperation2);
         });
   }
+
+  @Override
+  public Optional<Path> getPath() {
+    return Optional.of(getStoragePath());
+  }
 }
