@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.distributed.db;
+package com.orientechnologies.orient.distributed.context;
 
 import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.server.distributed.ODistributedMessage;

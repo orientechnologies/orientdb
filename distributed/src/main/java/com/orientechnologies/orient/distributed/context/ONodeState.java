@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.distributed.db;
+package com.orientechnologies.orient.distributed.context;
 
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionId;
@@ -9,6 +9,7 @@ import com.orientechnologies.orient.core.tx.ValidationResult;
 import com.orientechnologies.orient.server.distributed.ODistributedMessage;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 public class ONodeState {
 
@@ -21,7 +22,33 @@ public class ONodeState {
     sequenceManager = new OTransactionSequenceManager(coordinator, 3);
     log = new ODistributedMessageLogMemory();
     promised = new OPromisedDistributedOpsImpl();
-    coordinated = new OCoordinatedDistributedOpsImpl();
+    // TODO: provide minimum quorum;
+    coordinated = new OCoordinatedDistributedOpsImpl(0);
+  }
+
+  public record StartOp(OTransactionIdPromise promise, Set<ONodeId> nodes) {}
+  ;
+
+  public StartOp start(OCompleteAction action) {
+    Optional<OTransactionIdPromise> prom = this.sequenceManager.next();
+    Set<ONodeId> nodes = this.coordinated.start(prom.get(), action);
+    return new StartOp(prom.get(), nodes);
+  }
+
+  public void success(ONodeId node, OTransactionIdPromise promise) {
+    this.coordinated.success(node, promise);
+  }
+
+  public void failure(ONodeId node, OTransactionIdPromise promise) {
+    this.coordinated.failure(node, promise);
+  }
+
+  public void register(ONodeId node) {
+    this.coordinated.registerNode(node);
+  }
+
+  public void unregister(ONodeId node) {
+    this.coordinated.unregisterNode(node);
   }
 
   private void fill(Optional<byte[]> lastMetadata) {
