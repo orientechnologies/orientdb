@@ -6,7 +6,7 @@ import java.util.Set;
 
 public interface OCompleteAction {
 
-  void success(OTransactionIdPromise promise, Set<ONodeId> expected);
+  void success(OTransactionIdPromise promise, Set<ONodeId> all);
 
-  void failure(OTransactionIdPromise promise, Set<ONodeId> expected);
+  void failure(OTransactionIdPromise promise, Set<ONodeId> all);
 }

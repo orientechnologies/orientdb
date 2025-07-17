@@ -1,0 +1,36 @@
+package com.orientechnologies.orient.distributed.db;
+
+import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
+import com.orientechnologies.orient.server.distributed.ODistributedMessage;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+
+public class OConfirmOp implements OStructuralMessage {
+  private OTransactionIdPromise promise;
+
+  public OConfirmOp(OTransactionIdPromise promise) {
+    this.promise = promise;
+  }
+
+  @Override
+  public void execute(OrientDBDistributed ctx) {
+    ODistributedMessage message = ctx.getNodeState().receiveSuccess(promise);
+    message.apply(ctx);
+  }
+
+  @Override
+  public void serialize(DataOutput out) throws IOException {
+    promise.writeNetwork(out);
+  }
+
+  public static OConfirmOp fromNetwork(DataInput input) throws IOException {
+    OTransactionIdPromise promise = OTransactionIdPromise.readNetwork(input);
+    return new OConfirmOp(promise);
+  }
+
+  @Override
+  public short getType() {
+    return 4;
+  }
+}

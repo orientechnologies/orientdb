@@ -309,6 +309,19 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     }
   }
 
+  private void dropFlow(String name) {
+
+    var start = nodeState.start(new OStandardCompleteAction(this));
+    ODropDbMessage op = new ODropDbMessage(start.promise(), name);
+    OProposeOp propose = new OProposeOp(start.promise(), op);
+    sendMessage(start.nodes(), propose);
+  }
+
+  public void sendMessage(Set<ONodeId> set, OStructuralMessage op) {
+    // TODO Auto-generated method stub
+
+  }
+
   private boolean checkDbAvailable(String name) {
     if (getPlugin() == null || !getPlugin().isEnabled()) {
       return true;
@@ -635,5 +648,9 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   public ODistributedMessageService getMessageService() {
     return messageService;
+  }
+
+  public ONodeState getNodeState() {
+    return this.nodeState;
   }
 }

@@ -13,10 +13,11 @@ import java.util.Set;
 
 public class ONodeState {
 
-  private OTransactionSequenceManager sequenceManager;
-  private ODistributedMessageLog log;
-  private OPromisedDistributedOps promised;
-  private OCoordinatedDistributedOps coordinated;
+  private final OTransactionSequenceManager sequenceManager;
+  private final ODistributedMessageLog log;
+  private final OPromisedDistributedOps promised;
+  private final OCoordinatedDistributedOps coordinated;
+  private final ONodeId nodeId;
 
   public ONodeState(ONodeId coordinator) {
     sequenceManager = new OTransactionSequenceManager(coordinator, 3);
@@ -24,6 +25,7 @@ public class ONodeState {
     promised = new OPromisedDistributedOpsImpl();
     // TODO: provide minimum quorum;
     coordinated = new OCoordinatedDistributedOpsImpl(0);
+    nodeId = coordinator;
   }
 
   public record StartOp(OTransactionIdPromise promise, Set<ONodeId> nodes) {}
@@ -117,5 +119,9 @@ public class ONodeState {
 
   public List<ODistributedMessage> recover(List<OTransactionId> ids) {
     return this.log.recover(ids);
+  }
+
+  public ONodeId getNodeId() {
+    return nodeId;
   }
 }
