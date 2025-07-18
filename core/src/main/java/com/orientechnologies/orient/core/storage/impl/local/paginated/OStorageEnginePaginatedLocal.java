@@ -172,15 +172,16 @@ public class OStorageEnginePaginatedLocal implements OStorageEngine {
   }
 
   @Override
-  public OStorage registerLocal(
+  public RegisterResult registerLocal(
       OrientDBInternal context, String name, Path path, OContextConfiguration config) {
     OLocalPaginatedStorage storage = newLocalInstance(context, name, path);
-    if (exists(name)) {
+    if (OLocalPaginatedStorage.exists(path)) {
       storage.open(config);
+      return new RegisterResult(storage, false);
     } else {
       storage.create(config);
+      return new RegisterResult(storage, true);
     }
-    return storage;
   }
 
   private boolean getBoolConfig(OContextConfiguration configurations, OGlobalConfiguration config) {

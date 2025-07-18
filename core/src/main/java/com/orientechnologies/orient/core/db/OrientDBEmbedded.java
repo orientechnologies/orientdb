@@ -47,6 +47,7 @@ import com.orientechnologies.orient.core.sql.parser.OServerStatement;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEngine;
 import com.orientechnologies.orient.core.storage.OStorageEngine.OBackupType;
+import com.orientechnologies.orient.core.storage.OStorageEngine.RegisterResult;
 import com.orientechnologies.orient.core.storage.config.OClusterBasedStorageConfiguration;
 import java.io.File;
 import java.io.InputStream;
@@ -853,10 +854,15 @@ public class OrientDBEmbedded implements OrientDBInternal {
       String name, String path, String userName, String userPassword) {
     synchronized (this) {
       Path p = Paths.get(path);
-      OStorage storage =
+      RegisterResult registerd =
           getDefaultEngine().registerLocal(this, name, p, getConfigurations().getConfigurations());
       // TODO: Add Creation settings and parameters
-      storages.put(name, storage);
+      storages.put(name, registerd.storage());
+      if (registerd.created()) {
+        newCreateSessionInstance(registerd.storage(), configurations);
+      } else {
+        newSessionInstance(registerd.storage(), configurations).close();
+      }
     }
   }
 

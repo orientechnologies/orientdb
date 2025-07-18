@@ -36,6 +36,9 @@ public interface OStorageEngine {
 
   void shutdown();
 
-  OStorage registerLocal(
+  record RegisterResult(OStorage storage, boolean created) {}
+  ;
+
+  RegisterResult registerLocal(
       OrientDBInternal orientDBEmbedded, String name, Path p, OContextConfiguration configurations);
 }

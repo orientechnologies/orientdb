@@ -209,7 +209,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
                   config.getConfigurations(),
                   backupStream,
                   OBackupType.FULL_INCREMENTAL);
-      embedded = internalCreate(config, storage);
+      embedded = newSessionInstance(storage, config);
       storages.put(dbName, storage);
     } catch (OModificationOperationProhibitedException e) {
       throw e;
