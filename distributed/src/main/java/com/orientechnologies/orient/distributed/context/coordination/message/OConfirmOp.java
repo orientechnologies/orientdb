@@ -18,6 +18,7 @@ public class OConfirmOp implements OStructuralMessage {
   public void execute(OrientDBDistributed ctx) {
     ODistributedMessage message = ctx.getNodeState().receiveSuccess(promise);
     message.apply(ctx);
+    ctx.getNodeState().complete(promise);
   }
 
   @Override

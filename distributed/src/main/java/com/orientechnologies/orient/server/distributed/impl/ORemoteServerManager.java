@@ -1,11 +1,8 @@
 package com.orientechnologies.orient.server.distributed.impl;
 
-import com.orientechnologies.orient.core.db.ONetworkMessage;
-import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.server.distributed.ORemoteServerAvailabilityCheck;
 import com.orientechnologies.orient.server.distributed.ORemoteServerController;
 import java.io.IOException;
-import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -45,12 +42,5 @@ public class ORemoteServerManager {
   public void closeAll() {
     for (ORemoteServerController server : remoteServers.values()) server.close();
     remoteServers.clear();
-  }
-
-  public void sendMessage(Set<ONodeId> nodes, ONetworkMessage message) {
-    for (ONodeId node : nodes) {
-      ORemoteServerController rem = remoteServers.get(node.getNode());
-      rem.sendMessage(message);
-    }
   }
 }

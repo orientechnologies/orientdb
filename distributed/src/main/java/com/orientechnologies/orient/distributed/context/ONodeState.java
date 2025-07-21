@@ -10,6 +10,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedMessage;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
 
 public class ONodeState {
 
@@ -18,13 +19,17 @@ public class ONodeState {
   private final OPromisedDistributedOps promised;
   private final OCoordinatedDistributedOps coordinated;
   private final ONodeId nodeId;
+  private final OAppliedState state;
 
   public ONodeState(ONodeId coordinator) {
     sequenceManager = new OTransactionSequenceManager(coordinator, 3);
+    state = new OAppliedState(3);
     log = new ODistributedMessageLogMemory();
     promised = new OPromisedDistributedOpsImpl();
     // TODO: provide minimum quorum;
     coordinated = new OCoordinatedDistributedOpsImpl(0);
+    coordinated.registerNode(coordinator);
+
     nodeId = coordinator;
   }
 
@@ -85,7 +90,7 @@ public class ONodeState {
   public void receiveFailure(OTransactionIdPromise promise) {
     boolean promised = sequenceManager.notifyFailure(promise);
     if (promised) {
-      this.promised.remove(promise);
+      finalize(promise);
     }
   }
 
@@ -100,7 +105,7 @@ public class ONodeState {
       }
       case ALREADY_PRESENT -> {
         // Already present ... maybe do nothing, already done
-        this.promised.remove(promise);
+        finalize(promise);
       }
       case ALREADY_PROMISED -> {
         // Fail for promised to someone else
@@ -113,8 +118,13 @@ public class ONodeState {
     return null;
   }
 
-  public void complete(OTransactionIdPromise promise) {
+  private void finalize(OTransactionIdPromise promise) {
     this.promised.remove(promise);
+  }
+
+  public void complete(OTransactionIdPromise promise) {
+    finalize(promise);
+    this.state.complete(promise.getId());
   }
 
   public List<ODistributedMessage> recover(List<OTransactionId> ids) {
@@ -123,5 +133,17 @@ public class ONodeState {
 
   public ONodeId getNodeId() {
     return nodeId;
+  }
+
+  public void waitComplete(OTransactionIdPromise promise) {
+    Optional<CountDownLatch> value = this.state.watch(promise.getId());
+    if (value.isPresent()) {
+      try {
+        // TODO: use timeout
+        value.get().await();
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+      }
+    }
   }
 }

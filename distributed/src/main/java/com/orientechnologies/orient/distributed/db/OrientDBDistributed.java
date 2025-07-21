@@ -39,6 +39,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.DB_STATUS;
 import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
 import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
+import com.orientechnologies.orient.server.distributed.ORemoteServerController;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributedPooled;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedConfigurationManager;
@@ -46,6 +47,7 @@ import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabase
 import com.orientechnologies.orient.server.distributed.impl.ODistributedMessageServiceImpl;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedPlugin;
 import com.orientechnologies.orient.server.distributed.impl.ONewDeltaSyncImporter;
+import com.orientechnologies.orient.server.distributed.impl.ORemoteServerManager;
 import com.orientechnologies.orient.server.distributed.impl.metadata.OSharedContextDistributed;
 import java.io.File;
 import java.io.InputStream;
@@ -67,12 +69,12 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
       new ConcurrentHashMap<String, ODistributedConfigurationManager>();
 
   private final ODistributedMessageServiceImpl messageService;
-  private final ONodeState nodeState;
+  // TODO: this require the node name to be instantiate.
+  private ONodeState nodeState = null;
 
   public OrientDBDistributed(String directoryPath, OrientDBConfig config, Orient instance) {
     super(directoryPath, config, instance);
     messageService = new ODistributedMessageServiceImpl(this);
-    nodeState = new ONodeState(new ONodeId("ahrgg"));
   }
 
   @Override
@@ -102,7 +104,9 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     if (plugin == null) {
       synchronized (this) {
         if (plugin == null) {
-          if (server != null && server.isActive()) plugin = server.getPlugin("cluster");
+          if (server != null && server.isActive()) {
+            plugin = server.getPlugin("cluster");
+          }
         }
       }
     }
@@ -310,19 +314,28 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   }
 
   private void dropFlow(String name) {
-
-    var start = nodeState.start(new OStandardCompleteAction(this));
+    var start = getNodeState().start(new OStandardCompleteAction(this));
     ODropDbMessage op = new ODropDbMessage(name);
     OProposeOp propose = new OProposeOp(start.promise(), op);
     sendMessage(start.nodes(), propose);
+    getNodeState().waitComplete(start.promise());
   }
 
   public void sendMessage(Set<ONodeId> set, OStructuralMessage op) {
-    getPlugin().getRemoteServerManager().sendMessage(set, new ONetworkMessageStructural(this, op));
+    ONetworkMessageStructural message = new ONetworkMessageStructural(this, op);
+    ORemoteServerManager remote = getPlugin().getRemoteServerManager();
+    for (ONodeId node : set) {
+      if (node.equals(getNodeState().getNodeId())) {
+        this.receiveMessage(op);
+      } else {
+        ORemoteServerController rem = remote.getRemoteServer(node.getNode());
+        rem.sendMessage(message);
+      }
+    }
   }
 
   public void receiveMessage(OStructuralMessage op) {
-    op.execute(this);
+    this.execute(() -> op.execute(this));
   }
 
   private boolean checkDbAvailable(String name) {
@@ -646,7 +659,10 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     return messageService;
   }
 
-  public ONodeState getNodeState() {
+  public synchronized ONodeState getNodeState() {
+    if (nodeState == null) {
+      nodeState = new ONodeState(new ONodeId(getPlugin().getLocalNodeName()));
+    }
     return this.nodeState;
   }
 

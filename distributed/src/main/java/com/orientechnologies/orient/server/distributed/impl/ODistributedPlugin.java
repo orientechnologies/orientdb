@@ -56,6 +56,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.tx.OTxMetadataHolder;
 import com.orientechnologies.orient.core.tx.OTxMetadataHolderImpl;
 import com.orientechnologies.orient.distributed.ONodeConfig;
@@ -2180,6 +2181,9 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
         return false;
       }
     }
+    ((OrientDBDistributed) serverInstance.getDatabases())
+        .getNodeState()
+        .register(new ONodeId(joinedNodeName));
     return true;
   }
 
