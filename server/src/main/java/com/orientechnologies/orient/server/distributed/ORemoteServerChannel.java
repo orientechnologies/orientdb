@@ -26,6 +26,7 @@ import com.orientechnologies.orient.client.remote.message.ODistributedConnectReq
 import com.orientechnologies.orient.client.remote.message.ODistributedConnectResponse;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ONetworkMessage;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.metadata.security.binary.OBinaryTokenSerializer;
 import com.orientechnologies.orient.enterprise.channel.OSocketFactory;
@@ -172,6 +173,19 @@ public class ORemoteServerChannel {
           }
           networkOperation(operationId, operation, errorMessage, maxRetry, autoReconnect);
         });
+  }
+
+  public void sendMessage(final ONetworkMessage message) {
+    executeNetworkOperation(
+        OChannelBinaryProtocol.DISTRIBUTED_MESSAGE,
+        () -> {
+          message.serialize(channel.getDataOutput());
+          channel.flush();
+          return null;
+        },
+        "Cannot send distributed request " + message.getClass(),
+        MAX_RETRY,
+        true);
   }
 
   public void sendRequest(final ODistributedRequest request) {

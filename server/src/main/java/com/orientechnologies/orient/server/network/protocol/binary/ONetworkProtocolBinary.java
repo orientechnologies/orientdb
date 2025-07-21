@@ -41,6 +41,7 @@ import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.ONetworkMessage;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCoreException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -65,7 +66,6 @@ import com.orientechnologies.orient.enterprise.channel.binary.OTokenSecurityExce
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OConnectionBinaryExecutor;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.OServerAware;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
@@ -190,11 +190,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
   private boolean isDistributed(int requestType) {
     return requestType == OChannelBinaryProtocol.DISTRIBUTED_REQUEST
-        || requestType == OChannelBinaryProtocol.DISTRIBUTED_RESPONSE;
-  }
-
-  private boolean isCoordinated(int requestType) {
-    return requestType == OChannelBinaryProtocol.COORDINATED_DISTRIBUTED_MESSAGE;
+        || requestType == OChannelBinaryProtocol.DISTRIBUTED_RESPONSE
+        || requestType == OChannelBinaryProtocol.DISTRIBUTED_MESSAGE;
   }
 
   @Override
@@ -242,9 +239,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       // GET THE CONNECTION IF EXIST
       OClientConnection connection =
           server.getClientConnectionManager().getConnection(clientTxId, this);
-      if (isCoordinated(requestType)) {
-        coordinatedRequest(connection, requestType, clientTxId);
-      } else if (isDistributed(requestType)) {
+      if (isDistributed(requestType)) {
         distributedRequest(connection, requestType, clientTxId);
       } else sessionRequest(connection, requestType, clientTxId);
     } catch (IOException e) {
@@ -252,14 +247,6 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       sendShutdown();
       throw e;
     }
-  }
-
-  private void coordinatedRequest(OClientConnection connection, int requestType, int clientTxId)
-      throws IOException {
-    byte[] tokenBytes = channel.readBytes();
-    connection = onBeforeOperationalRequest(connection, tokenBytes);
-    ((OServerAware) server.getDatabases())
-        .coordinatedRequest(connection, requestType, clientTxId, channel);
   }
 
   private void handleHandshake() throws IOException {
@@ -503,6 +490,9 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
           case OChannelBinaryProtocol.DISTRIBUTED_RESPONSE:
             executeDistributedResponse(connection);
             break;
+          case OChannelBinaryProtocol.DISTRIBUTED_MESSAGE:
+            executeDistributedMessage(connection);
+            break;
         }
       } finally {
         requests++;
@@ -672,6 +662,17 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     else {
       manager.executeOnLocalNodeFromRemote(req);
     }
+  }
+
+  private void executeDistributedMessage(OClientConnection connection) throws IOException {
+    setDataCommandInfo(connection, "Distributed request");
+
+    checkServerAccess("server.replication", connection);
+
+    ONetworkMessage message = server.getDatabases().newNetworkMessage();
+
+    message.deserialize(channel.getDataInput());
+    message.execute();
   }
 
   private void executeDistributedResponse(OClientConnection connection) throws IOException {

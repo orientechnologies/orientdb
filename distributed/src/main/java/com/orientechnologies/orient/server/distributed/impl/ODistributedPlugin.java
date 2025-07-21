@@ -223,6 +223,10 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
     clusterManager.configHazelcastPlugin(oServer, iParams, nodeName);
   }
 
+  public ORemoteServerManager getRemoteServerManager() {
+    return remoteServerManager;
+  }
+
   public File getDefaultDatabaseConfigFile() {
     return defaultDatabaseConfigFile;
   }

@@ -399,4 +399,8 @@ public interface OrientDBInternal extends AutoCloseable, OSchedulerInternal {
   public default void startCommand(Optional<Long> timeout) {}
 
   public default void endCommand() {}
+
+  default ONetworkMessage newNetworkMessage() {
+    throw new UnsupportedOperationException();
+  }
 }

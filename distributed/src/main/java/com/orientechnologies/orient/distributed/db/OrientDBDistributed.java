@@ -17,6 +17,7 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.ODatabaseTask;
 import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.ONetworkMessage;
 import com.orientechnologies.orient.core.db.OSharedContext;
 import com.orientechnologies.orient.core.db.OSharedContextEmbedded;
 import com.orientechnologies.orient.core.db.OSystemDatabase;
@@ -30,8 +31,6 @@ import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.distributed.context.ONodeState;
 import com.orientechnologies.orient.distributed.context.coordination.message.OProposeOp;
 import com.orientechnologies.orient.distributed.context.coordination.message.OStructuralMessage;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
-import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerAware;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
@@ -49,7 +48,6 @@ import com.orientechnologies.orient.server.distributed.impl.ODistributedPlugin;
 import com.orientechnologies.orient.server.distributed.impl.ONewDeltaSyncImporter;
 import com.orientechnologies.orient.server.distributed.impl.metadata.OSharedContextDistributed;
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -320,8 +318,11 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   }
 
   public void sendMessage(Set<ONodeId> set, OStructuralMessage op) {
-    // TODO Auto-generated method stub
+    getPlugin().getRemoteServerManager().sendMessage(set, new ONetworkMessageStructural(this, op));
+  }
 
+  public void receiveMessage(OStructuralMessage op) {
+    op.execute(this);
   }
 
   private boolean checkDbAvailable(String name) {
@@ -382,13 +383,6 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
       }
       throw new OOfflineNodeException("database " + name + " not online on " + getNodeName());
     }
-  }
-
-  @Override
-  public void coordinatedRequest(
-      OClientConnection connection, int requestType, int clientTxId, OChannelBinary channel)
-      throws IOException {
-    throw new UnsupportedOperationException("old implementation do not support new flow");
   }
 
   public static void dropStorageFiles(OLocalPaginatedStorage storage) {
@@ -654,5 +648,10 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   public ONodeState getNodeState() {
     return this.nodeState;
+  }
+
+  @Override
+  public ONetworkMessage newNetworkMessage() {
+    return new ONetworkMessageStructural(this);
   }
 }

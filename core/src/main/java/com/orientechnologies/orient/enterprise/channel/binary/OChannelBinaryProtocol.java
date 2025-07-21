@@ -110,7 +110,7 @@ public class OChannelBinaryProtocol {
   public static final byte DISTRIBUTED_REQUEST = 120;
   public static final byte DISTRIBUTED_RESPONSE = 121;
   public static final byte DISTRIBUTED_CONNECT = 122;
-  public static final byte COORDINATED_DISTRIBUTED_MESSAGE = 123;
+  public static final byte DISTRIBUTED_MESSAGE = 123;
 
   // INCOMING
   public static final byte RESPONSE_STATUS_OK = 0;

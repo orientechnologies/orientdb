@@ -23,6 +23,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.ONetworkMessage;
 import java.io.IOException;
 
 /**
@@ -80,6 +81,16 @@ public class ORemoteServerController {
       throw OException.wrapException(
           new OIOException(String.format("fail to connect to remote host %s", url)), e);
     }
+  }
+
+  public void sendMessage(final ONetworkMessage req) {
+    int idx;
+    synchronized (requestChannels) {
+      requestChannelIndex++;
+      if (requestChannelIndex < 0) requestChannelIndex = 0;
+      idx = requestChannelIndex % requestChannels.length;
+    }
+    requestChannels[idx].sendMessage(req);
   }
 
   public void sendRequest(final ODistributedRequest req) {
