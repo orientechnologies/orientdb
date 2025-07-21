@@ -1,6 +1,7 @@
-package com.orientechnologies.orient.distributed.db;
+package com.orientechnologies.orient.distributed.context.coordination.message;
 
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
+import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.distributed.ODistributedMessage;
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -32,5 +33,9 @@ public class OConfirmOp implements OStructuralMessage {
   @Override
   public short getType() {
     return 4;
+  }
+
+  public OTransactionIdPromise getPromise() {
+    return promise;
   }
 }

@@ -1,7 +1,8 @@
 package com.orientechnologies.orient.distributed.db;
 
 import com.orientechnologies.orient.core.db.OrientDBInternal;
-import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
+import com.orientechnologies.orient.distributed.context.coordination.message.OAcceptResult;
+import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Optional;
@@ -10,7 +11,7 @@ public class ODropDbMessage implements OOperationMessage {
 
   private String name;
 
-  public ODropDbMessage(OTransactionIdPromise promise, String name) {
+  public ODropDbMessage(String name) {
     this.name = name;
   }
 
@@ -26,8 +27,22 @@ public class ODropDbMessage implements OOperationMessage {
     return Optional.empty();
   }
 
+  public static ODropDbMessage readNetwork(DataInput input) throws IOException {
+    String name = input.readUTF();
+    return new ODropDbMessage(name);
+  }
+
   @Override
-  public void writeNetwork(DataOutput out) throws IOException {
+  public short getType() {
+    return 1;
+  }
+
+  @Override
+  public void serialize(DataOutput out) throws IOException {
     out.writeUTF(name);
+  }
+
+  public String getName() {
+    return name;
   }
 }

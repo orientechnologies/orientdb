@@ -1,8 +1,10 @@
-package com.orientechnologies.orient.distributed.db;
+package com.orientechnologies.orient.distributed.context.coordination.message;
 
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.distributed.context.ONodeState;
+import com.orientechnologies.orient.distributed.db.OOperationMessage;
+import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.distributed.ODistributedMessage;
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -61,6 +63,10 @@ public class OProposeOp implements OStructuralMessage, ODistributedMessage {
     OTransactionIdPromise promise = OTransactionIdPromise.readNetwork(input);
     OOperationMessage op = OOperationMessage.readNetwork(input);
     return new OProposeOp(promise, op);
+  }
+
+  public OOperationMessage getOp() {
+    return op;
   }
 
   @Override

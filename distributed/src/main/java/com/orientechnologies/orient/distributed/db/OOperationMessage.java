@@ -1,6 +1,8 @@
 package com.orientechnologies.orient.distributed.db;
 
 import com.orientechnologies.orient.core.db.OrientDBInternal;
+import com.orientechnologies.orient.distributed.context.coordination.message.OAcceptResult;
+import com.orientechnologies.orient.server.distributed.ODistributedException;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -13,9 +15,18 @@ public interface OOperationMessage {
   void apply(OrientDBInternal ctx);
 
   static OOperationMessage readNetwork(DataInput input) throws IOException {
-    // TODO Auto-generated method stub
-    return null;
+    return switch (input.readShort()) {
+      case 1 -> ODropDbMessage.readNetwork(input);
+      default -> throw new ODistributedException("wrong operation message type from network");
+    };
   }
 
-  void writeNetwork(DataOutput out) throws IOException;
+  default void writeNetwork(DataOutput out) throws IOException {
+    out.writeShort(getType());
+    serialize(out);
+  }
+
+  void serialize(DataOutput out) throws IOException;
+
+  short getType();
 }

@@ -1,5 +1,6 @@
-package com.orientechnologies.orient.distributed.db;
+package com.orientechnologies.orient.distributed.context.coordination.message;
 
+import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -11,14 +12,14 @@ public interface OStructuralMessage {
 
   void serialize(DataOutput out) throws IOException;
 
-  default OStructuralMessage readNetwork(DataInput input) throws IOException {
+  static OStructuralMessage readNetwork(DataInput input) throws IOException {
     return switch (input.readShort()) {
       case 1 -> OProposeOp.fromNetwork(input);
       case 2 -> OSuccessPropose.fromNetwork(input);
       case 3 -> OFailPropose.fromNetwork(input);
       case 4 -> OConfirmOp.fromNetwork(input);
       case 5 -> OFailOp.fromNetwork(input);
-      default -> throw new ODistributedException("wrong message type from network");
+      default -> throw new ODistributedException("wrong structural message type from network");
     };
   }
 

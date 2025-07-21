@@ -1,7 +1,8 @@
-package com.orientechnologies.orient.distributed.db;
+package com.orientechnologies.orient.distributed.context.coordination.message;
 
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
+import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -42,5 +43,17 @@ public class OFailPropose implements OStructuralMessage {
   @Override
   public short getType() {
     return 3;
+  }
+
+  public ONodeId getNodeId() {
+    return nodeId;
+  }
+
+  public OTransactionIdPromise getPromise() {
+    return promise;
+  }
+
+  public OAcceptResult getAcceptResult() {
+    return acceptResult;
   }
 }

@@ -28,6 +28,8 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.distributed.context.ONodeState;
+import com.orientechnologies.orient.distributed.context.coordination.message.OProposeOp;
+import com.orientechnologies.orient.distributed.context.coordination.message.OStructuralMessage;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
@@ -312,7 +314,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   private void dropFlow(String name) {
 
     var start = nodeState.start(new OStandardCompleteAction(this));
-    ODropDbMessage op = new ODropDbMessage(start.promise(), name);
+    ODropDbMessage op = new ODropDbMessage(name);
     OProposeOp propose = new OProposeOp(start.promise(), op);
     sendMessage(start.nodes(), propose);
   }
