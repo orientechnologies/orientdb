@@ -71,7 +71,7 @@ public class ONodeConfig {
     config.setProperty("connections", total);
   }
 
-  public int getConnections() {
+  public Integer getConnections() {
     return config.getProperty("connections");
   }
 
@@ -95,7 +95,7 @@ public class ONodeConfig {
     config.setProperty("usedMemory", usedMem);
   }
 
-  public long getUsedMemory() {
+  public Long getUsedMemory() {
     return config.getProperty("usedMemory");
   }
 
