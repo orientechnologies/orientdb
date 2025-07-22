@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.distributed.context.ONodeState;
 import com.orientechnologies.orient.distributed.context.coordination.message.OProposeOp;
 import com.orientechnologies.orient.distributed.context.coordination.message.OStructuralMessage;
+import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerAware;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
@@ -56,8 +57,10 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 
 /** Created by tglman on 08/08/17. */
 public class OrientDBDistributed extends OrientDBEmbedded implements OServerAware {
@@ -307,6 +310,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
             plugin.dropOnAllServers(name);
             return null;
           });
+      //      dropFlow(name);
       plugin.dropConfig(name);
     } else {
       super.drop(name, user, password);
@@ -318,7 +322,11 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     ODropDbMessage op = new ODropDbMessage(name);
     OProposeOp propose = new OProposeOp(start.promise(), op);
     sendMessage(start.nodes(), propose);
-    getNodeState().waitComplete(start.promise());
+    try {
+      Optional<OAcceptResult> result = start.result().get();
+    } catch (InterruptedException | ExecutionException e) {
+      Thread.currentThread().interrupt();
+    }
   }
 
   public void sendMessage(Set<ONodeId> set, OStructuralMessage op) {

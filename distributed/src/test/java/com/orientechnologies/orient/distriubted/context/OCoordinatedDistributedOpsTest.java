@@ -9,8 +9,12 @@ import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.distributed.context.OCompleteAction;
 import com.orientechnologies.orient.distributed.context.OCoordinatedDistributedOps;
 import com.orientechnologies.orient.distributed.context.OCoordinatedDistributedOpsImpl;
+import com.orientechnologies.orient.distributed.context.OOperationStart;
+import com.orientechnologies.orient.distributed.context.coordination.result.OInvalidSequentialAcceptResult;
+import com.orientechnologies.orient.distributed.context.coordination.result.OQuorumNotReached;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ExecutionException;
 import org.junit.Test;
 
 public class OCoordinatedDistributedOpsTest {
@@ -66,7 +70,7 @@ public class OCoordinatedDistributedOpsTest {
     OTransactionIdPromise promise = new OTransactionIdPromise(nodeId, txId);
     ops.start(promise, action);
     ops.success(nodeId, promise);
-    ops.failure(nodeIdtwo, promise);
+    ops.failure(nodeIdtwo, promise, new OInvalidSequentialAcceptResult());
 
     assertFalse(action.success);
     assertTrue(action.failure);
@@ -125,7 +129,7 @@ public class OCoordinatedDistributedOpsTest {
   }
 
   @Test
-  public void baseFailureeNodesUregistered() {
+  public void baseFailureeNodesUregistered() throws InterruptedException, ExecutionException {
     TestAction action = new TestAction();
     OCoordinatedDistributedOps ops = new OCoordinatedDistributedOpsImpl(2);
     ONodeId nodeId = newRandomNodeId();
@@ -135,15 +139,17 @@ public class OCoordinatedDistributedOpsTest {
 
     OTransactionId txId = new OTransactionId(0, 1);
     OTransactionIdPromise promise = new OTransactionIdPromise(nodeId, txId);
-    ops.start(promise, action);
+    OOperationStart start = ops.start(promise, action);
     ops.success(nodeId, promise);
     ops.unregisterNode(nodeIdtwo);
     assertTrue(action.failure);
     assertFalse(action.success);
+    assertTrue(start.result().get().get() instanceof OQuorumNotReached);
   }
 
   @Test
-  public void baseFailureeNodesUregisteredAndFailed() {
+  public void baseFailureeNodesUregisteredAndFailed()
+      throws InterruptedException, ExecutionException {
     TestAction action = new TestAction();
     OCoordinatedDistributedOps ops = new OCoordinatedDistributedOpsImpl(2);
     ONodeId nodeId = newRandomNodeId();
@@ -157,12 +163,13 @@ public class OCoordinatedDistributedOpsTest {
 
     OTransactionId txId = new OTransactionId(0, 1);
     OTransactionIdPromise promise = new OTransactionIdPromise(nodeId, txId);
-    ops.start(promise, action);
+    OOperationStart start = ops.start(promise, action);
     ops.success(nodeId, promise);
     ops.success(nodeIdtwo, promise);
     ops.unregisterNode(nodeIdthree);
-    ops.failure(nodeIdFour, promise);
+    ops.failure(nodeIdFour, promise, new OInvalidSequentialAcceptResult());
     assertTrue(action.failure);
     assertFalse(action.success);
+    assertTrue(start.result().get().get() instanceof OQuorumNotReached);
   }
 }

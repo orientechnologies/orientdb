@@ -1,7 +1,7 @@
 package com.orientechnologies.orient.distributed.db;
 
 import com.orientechnologies.orient.core.db.OrientDBInternal;
-import com.orientechnologies.orient.distributed.context.coordination.message.OAcceptResult;
+import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import java.io.DataInput;
 import java.io.DataOutput;

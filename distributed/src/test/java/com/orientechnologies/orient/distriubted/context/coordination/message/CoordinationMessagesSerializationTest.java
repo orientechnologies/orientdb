@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.distriubted.coordination.message;
+package com.orientechnologies.orient.distriubted.context.coordination.message;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -9,10 +9,10 @@ import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.distributed.context.coordination.message.OConfirmOp;
 import com.orientechnologies.orient.distributed.context.coordination.message.OFailOp;
 import com.orientechnologies.orient.distributed.context.coordination.message.OFailPropose;
-import com.orientechnologies.orient.distributed.context.coordination.message.OInvalidSequentialAcceptResutl;
 import com.orientechnologies.orient.distributed.context.coordination.message.OProposeOp;
 import com.orientechnologies.orient.distributed.context.coordination.message.OStructuralMessage;
 import com.orientechnologies.orient.distributed.context.coordination.message.OSuccessPropose;
+import com.orientechnologies.orient.distributed.context.coordination.result.OInvalidSequentialAcceptResult;
 import com.orientechnologies.orient.distributed.db.ODropDbMessage;
 import com.orientechnologies.orient.distributed.db.OOperationMessage;
 import java.io.ByteArrayInputStream;
@@ -77,13 +77,13 @@ public class CoordinationMessagesSerializationTest {
 
     ONodeId reply = newNodeId();
     OTransactionIdPromise id = newPromiseId();
-    OFailPropose succ = new OFailPropose(reply, id, new OInvalidSequentialAcceptResutl());
+    OFailPropose succ = new OFailPropose(reply, id, new OInvalidSequentialAcceptResult());
 
     OFailPropose read = (OFailPropose) writeRead(succ);
 
     assertEquals(read.getPromise(), id);
     assertEquals(read.getNodeId(), reply);
-    assertTrue(read.getAcceptResult() instanceof OInvalidSequentialAcceptResutl);
+    assertTrue(read.getAcceptResult() instanceof OInvalidSequentialAcceptResult);
   }
 
   @Test

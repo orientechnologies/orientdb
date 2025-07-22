@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.distributed.context.coordination.message;
+package com.orientechnologies.orient.distributed.context.coordination.result;
 
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import java.io.DataInput;
@@ -11,7 +11,8 @@ public interface OAcceptResult {
 
   static OAcceptResult readNetwork(DataInput input) throws IOException {
     return switch (input.readShort()) {
-      case 1 -> OInvalidSequentialAcceptResutl.fromNetwork(input);
+      case 1 -> OInvalidSequentialAcceptResult.fromNetwork(input);
+      case 2 -> OQuorumNotReached.fromNetwork(input);
       default -> throw new ODistributedException("wrong accept result message type from network");
     };
   }

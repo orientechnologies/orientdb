@@ -2,14 +2,21 @@ package com.orientechnologies.orient.distributed.context;
 
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
+import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
+import com.orientechnologies.orient.distributed.context.coordination.result.OQuorumNotReached;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
 public class OResponseCollector {
 
   public record CompleteInfo(
-      OCompleteAction action, OTransactionIdPromise promise, Set<ONodeId> nodes) {}
+      OCompleteAction action,
+      OTransactionIdPromise promise,
+      Set<ONodeId> nodes,
+      Optional<OAcceptResult> result) {}
   ;
 
   private final OCompleteAction action;
@@ -20,6 +27,7 @@ public class OResponseCollector {
   private final Set<ONodeId> success = new HashSet<>();
   private final Set<ONodeId> lost = new HashSet<>();
   private final Set<ONodeId> failure = new HashSet<>();
+  private final Map<OAcceptResult, Integer> results = new HashMap<>();
 
   public OResponseCollector(
       OCompleteAction action, OTransactionIdPromise promise, int quorum, Set<ONodeId> activeNodes) {
@@ -34,7 +42,7 @@ public class OResponseCollector {
     if (toReceive.remove(node)) {
       success.add(node);
       if (success.size() == quorum) {
-        return Optional.of(new CompleteInfo(action, promise, expected));
+        return Optional.of(new CompleteInfo(action, promise, expected, Optional.empty()));
       }
     }
     return Optional.empty();
@@ -64,25 +72,47 @@ public class OResponseCollector {
     if (toReceive.remove(node)) {
       lost.add(node);
       if (lost.size() + failure.size() == quorum) {
-        return Optional.of(new CompleteInfo(action, promise, expected));
+        OAcceptResult result = computeResult();
+        return Optional.of(new CompleteInfo(action, promise, expected, Optional.of(result)));
       }
       if (isFinishedNotQuorum()) {
-        return Optional.of(new CompleteInfo(action, promise, expected));
+        OAcceptResult result = computeResult();
+        return Optional.of(new CompleteInfo(action, promise, expected, Optional.of(result)));
       }
     }
     return Optional.empty();
   }
 
-  public Optional<CompleteInfo> fail(ONodeId node) {
+  public Optional<CompleteInfo> fail(ONodeId node, OAcceptResult acceptResult) {
     if (toReceive.remove(node)) {
       failure.add(node);
+      this.results.compute(
+          acceptResult,
+          (k, v) -> {
+            if (v == null) {
+              return 1;
+            } else {
+              return v + 1;
+            }
+          });
       if (lost.size() + failure.size() == quorum) {
-        return Optional.of(new CompleteInfo(action, promise, expected));
+        OAcceptResult result = computeResult();
+        return Optional.of(new CompleteInfo(action, promise, expected, Optional.of(result)));
       }
       if (isFinishedNotQuorum()) {
-        return Optional.of(new CompleteInfo(action, promise, expected));
+        OAcceptResult result = computeResult();
+        return Optional.of(new CompleteInfo(action, promise, expected, Optional.of(result)));
       }
     }
     return Optional.empty();
+  }
+
+  private OAcceptResult computeResult() {
+    for (var res : this.results.entrySet()) {
+      if (res.getValue() >= quorum) {
+        return res.getKey();
+      }
+    }
+    return new OQuorumNotReached(this.results.keySet());
   }
 }

@@ -6,10 +6,10 @@ import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.core.transaction.OTransactionSequenceManager;
 import com.orientechnologies.orient.core.tx.OTxMetadataHolderImpl;
 import com.orientechnologies.orient.core.tx.ValidationResult;
+import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import com.orientechnologies.orient.server.distributed.ODistributedMessage;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 
 public class ONodeState {
@@ -33,21 +33,17 @@ public class ONodeState {
     nodeId = coordinator;
   }
 
-  public record StartOp(OTransactionIdPromise promise, Set<ONodeId> nodes) {}
-  ;
-
-  public StartOp start(OCompleteAction action) {
+  public OOperationStart start(OCompleteAction action) {
     Optional<OTransactionIdPromise> prom = this.sequenceManager.next();
-    Set<ONodeId> nodes = this.coordinated.start(prom.get(), action);
-    return new StartOp(prom.get(), nodes);
+    return this.coordinated.start(prom.get(), action);
   }
 
   public void success(ONodeId node, OTransactionIdPromise promise) {
     this.coordinated.success(node, promise);
   }
 
-  public void failure(ONodeId node, OTransactionIdPromise promise) {
-    this.coordinated.failure(node, promise);
+  public void failure(ONodeId node, OTransactionIdPromise promise, OAcceptResult acceptResult) {
+    this.coordinated.failure(node, promise, acceptResult);
   }
 
   public void register(ONodeId node) {
@@ -124,6 +120,7 @@ public class ONodeState {
 
   public void complete(OTransactionIdPromise promise) {
     finalize(promise);
+    this.coordinated.completeExecution(promise.getId());
     this.state.complete(promise.getId());
   }
 

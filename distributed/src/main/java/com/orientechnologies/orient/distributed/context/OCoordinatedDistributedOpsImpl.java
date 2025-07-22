@@ -1,8 +1,10 @@
 package com.orientechnologies.orient.distributed.context;
 
 import com.orientechnologies.orient.core.transaction.ONodeId;
+import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.distributed.context.OResponseCollector.CompleteInfo;
+import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import java.util.Collections;
 import java.util.HashMap;
@@ -11,10 +13,13 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 
 public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOps {
 
   private final Map<OTransactionIdPromise, OResponseCollector> coordination = new HashMap<>();
+  private final Map<OTransactionId, CompletableFuture<Optional<OAcceptResult>>> completion =
+      new HashMap<>();
   private final Set<ONodeId> activeNodes = new HashSet<>();
   private final Set<ONodeId> publicNodes = Collections.unmodifiableSet(activeNodes);
   private final int minQuorum;
@@ -53,14 +58,14 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
       }
     }
     if (action.isPresent()) {
-      // TODO: run in a context
       CompleteInfo info = action.get();
       info.action().failure(info.promise(), info.nodes());
+      completeWithResult(info.promise().getId(), info.result());
     }
   }
 
   @Override
-  public synchronized Set<ONodeId> start(OTransactionIdPromise promise, OCompleteAction action) {
+  public synchronized OOperationStart start(OTransactionIdPromise promise, OCompleteAction action) {
     if (this.activeNodes.size() < this.minQuorum) {
       throw new ODistributedException(
           String.format(
@@ -69,7 +74,9 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
     }
     Set<ONodeId> nodes = Collections.unmodifiableSet(new HashSet<>(activeNodes));
     coordination.put(promise, new OResponseCollector(action, promise, quorum, nodes));
-    return nodes;
+    CompletableFuture<Optional<OAcceptResult>> future = new CompletableFuture<>();
+    completion.put(promise.getId(), future);
+    return new OOperationStart(promise, nodes, future);
   }
 
   @Override
@@ -85,29 +92,43 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
       }
     }
     if (action.isPresent()) {
-      // TODO: run in a context
       CompleteInfo info = action.get();
       info.action().success(info.promise(), info.nodes());
+      // This do not call the complete with result, because it will be left to the
+      // post execution call to completeExecution
     }
   }
 
   @Override
-  public void failure(ONodeId node, OTransactionIdPromise promise) {
+  public void failure(ONodeId node, OTransactionIdPromise promise, OAcceptResult acceptResult) {
     Optional<CompleteInfo> action = Optional.empty();
     synchronized (this) {
       OResponseCollector coll = coordination.get(promise);
       if (coll != null) {
-        action = coll.fail(node);
+        action = coll.fail(node, acceptResult);
         if (coll.isFinished()) {
           coordination.remove(promise);
         }
       }
     }
     if (action.isPresent()) {
-      // TODO: run in a context
       CompleteInfo info = action.get();
       info.action().failure(promise, activeNodes);
+      completeWithResult(promise.getId(), info.result());
     }
+  }
+
+  private synchronized void completeWithResult(
+      OTransactionId complete, Optional<OAcceptResult> result) {
+    CompletableFuture<Optional<OAcceptResult>> future = this.completion.remove(complete);
+    if (future != null) {
+      // if called twice is not there, is already complete
+      future.complete(result);
+    }
+  }
+
+  public void completeExecution(OTransactionId complete) {
+    completeWithResult(complete, Optional.empty());
   }
 
   public Set<ONodeId> getActiveNodes() {

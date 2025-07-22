@@ -2,6 +2,7 @@ package com.orientechnologies.orient.distributed.context.coordination.message;
 
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
+import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -14,7 +15,6 @@ public class OFailPropose implements OStructuralMessage {
   private OAcceptResult acceptResult;
 
   public OFailPropose(ONodeId nodeId, OTransactionIdPromise promise, OAcceptResult acceptResult) {
-    // TOOD: handle failure reason
     this.nodeId = nodeId;
     this.promise = promise;
     this.acceptResult = acceptResult;
@@ -22,8 +22,7 @@ public class OFailPropose implements OStructuralMessage {
 
   @Override
   public void execute(OrientDBDistributed ctx) {
-    // TODO: pass a failure reason
-    ctx.getNodeState().failure(nodeId, promise);
+    ctx.getNodeState().failure(nodeId, promise, acceptResult);
   }
 
   @Override

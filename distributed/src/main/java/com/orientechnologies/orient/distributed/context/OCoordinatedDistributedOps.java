@@ -1,14 +1,18 @@
 package com.orientechnologies.orient.distributed.context;
 
 import com.orientechnologies.orient.core.transaction.ONodeId;
+import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
+import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import java.util.Set;
 
 public interface OCoordinatedDistributedOps {
 
-  Set<ONodeId> start(OTransactionIdPromise promise, OCompleteAction action);
+  OOperationStart start(OTransactionIdPromise promise, OCompleteAction action);
 
   void success(ONodeId node, OTransactionIdPromise promise);
+
+  void failure(ONodeId node, OTransactionIdPromise promise, OAcceptResult acceptResult);
 
   void unregisterNode(ONodeId node);
 
@@ -16,5 +20,5 @@ public interface OCoordinatedDistributedOps {
 
   Set<ONodeId> getActiveNodes();
 
-  void failure(ONodeId node, OTransactionIdPromise promise);
+  void completeExecution(OTransactionId complete);
 }
