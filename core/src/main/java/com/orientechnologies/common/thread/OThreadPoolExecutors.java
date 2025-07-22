@@ -1,5 +1,6 @@
 package com.orientechnologies.common.thread;
 
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import java.util.concurrent.*;
 
 public class OThreadPoolExecutors {
@@ -112,7 +113,13 @@ public class OThreadPoolExecutors {
 
   public static ScheduledExecutorService newSingleThreadScheduledPool(
       String threadName, ThreadGroup parentThreadGroup) {
-    return new OScheduledThreadPoolExecutorWithLogging(
-        1, new SingletonNamedThreadFactory(threadName, parentThreadGroup));
+    OScheduledThreadPoolExecutorWithLogging exec =
+        new OScheduledThreadPoolExecutorWithLogging(
+            1, new SingletonNamedThreadFactory(threadName, parentThreadGroup));
+    if (OGlobalConfiguration.EXECUTOR_DEBUG_TRACE_SOURCE.getValueAsBoolean()) {
+      return new OSourceTraceScheduledExecutorService(exec);
+    } else {
+      return exec;
+    }
   }
 }
