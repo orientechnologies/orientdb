@@ -56,7 +56,6 @@ public class OGraphServerHandler extends OServerPluginAbstract {
         (OCommandGremlinExecutor)
             OrientDBInternal.extract(server.getContext())
                 .getScriptManager()
-                .getCommandManager()
                 .getScriptExecutor("gremlin");
     enabled = true;
     logger.info(

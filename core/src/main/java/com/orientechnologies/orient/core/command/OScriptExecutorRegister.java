@@ -6,8 +6,7 @@ import java.util.List;
 
 /** Created by Enrico Risa on 25/01/17. */
 public interface OScriptExecutorRegister {
-  void registerExecutor(
-      OrientDBEmbedded ctx, OScriptManager scriptManager, OCommandManager commandManager);
+  void registerExecutor(OrientDBEmbedded ctx, OScriptManager scriptManager);
 
   List<String> getLanguages();
 

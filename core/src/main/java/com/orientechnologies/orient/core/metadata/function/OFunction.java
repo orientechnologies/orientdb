@@ -168,7 +168,6 @@ public class OFunction {
             .getSharedContext()
             .getOrientDB()
             .getScriptManager()
-            .getCommandManager()
             .getScriptExecutor(getLanguage());
 
     return executor.executeFunction(iContext, getName(), args);
@@ -205,7 +204,6 @@ public class OFunction {
             .getSharedContext()
             .getOrientDB()
             .getScriptManager()
-            .getCommandManager()
             .getScriptExecutor(getLanguage());
 
     return executor.executeFunction(iContext, getName(), args);

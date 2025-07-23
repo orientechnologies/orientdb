@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.core.command.script.polyglot;
 
-import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.OScriptExecutorRegister;
 import com.orientechnologies.orient.core.command.script.OScriptManager;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -11,12 +10,11 @@ import java.util.List;
 public class OPolyglotScriptExecutorRegister implements OScriptExecutorRegister {
 
   @Override
-  public void registerExecutor(
-      OrientDBEmbedded ctx, OScriptManager scriptManager, OCommandManager commandManager) {
+  public void registerExecutor(OrientDBEmbedded ctx, OScriptManager scriptManager) {
     final boolean useGraal = OGlobalConfiguration.SCRIPT_POLYGLOT_USE_GRAAL.getValueAsBoolean();
     if (useGraal) {
       for (String lang : getLanguages()) {
-        commandManager.registerScriptExecutor(
+        scriptManager.registerScriptExecutor(
             lang,
             new OPolyglotScriptExecutor(ctx, scriptManager, lang, new OPolyglotTransformerImpl()));
       }

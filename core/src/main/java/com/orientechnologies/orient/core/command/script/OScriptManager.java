@@ -21,8 +21,9 @@ package com.orientechnologies.orient.core.command.script;
 
 import static com.orientechnologies.common.util.OClassLoaderHelper.lookupProviderWithOrientClassLoader;
 
-import com.orientechnologies.orient.core.command.OCommandManager;
+import com.orientechnologies.orient.core.command.OScriptExecutor;
 import com.orientechnologies.orient.core.command.OScriptExecutorRegister;
+import com.orientechnologies.orient.core.command.OSqlScriptExecutor;
 import com.orientechnologies.orient.core.command.script.formatter.OGroovyScriptFormatter;
 import com.orientechnologies.orient.core.command.script.formatter.OJSScriptFormatter;
 import com.orientechnologies.orient.core.command.script.formatter.ORubyScriptFormatter;
@@ -53,18 +54,20 @@ import javax.script.ScriptEngine;
  */
 public class OScriptManager {
   protected static final String DEF_LANGUAGE = "javascript";
-  protected Map<String, OScriptFormatter> formatters = new HashMap<String, OScriptFormatter>();
-  protected List<OScriptInjection> injections = new ArrayList<OScriptInjection>();
-  protected Map<String, OScriptResultHandler> handlers =
-      new HashMap<String, OScriptResultHandler>();
-  protected OCommandManager commandManager = new OCommandManager(this);
+  protected Map<String, OScriptFormatter> formatters = new HashMap<>();
+  protected List<OScriptInjection> injections = new ArrayList<>();
+  protected Map<String, OScriptResultHandler> handlers = new HashMap<>();
   private Set<String> allowedPackages = Collections.newSetFromMap(new ConcurrentHashMap<>());
+  private Map<String, OScriptExecutor> scriptExecutors = new HashMap<>();
 
   public OScriptManager(OrientDBEmbedded context) {
     registerFormatter("sql", new OSQLScriptFormatter());
     registerFormatter(DEF_LANGUAGE, new OJSScriptFormatter());
     registerFormatter("ruby", new ORubyScriptFormatter());
     registerFormatter("groovy", new OGroovyScriptFormatter());
+
+    registerScriptExecutor("sql", new OSqlScriptExecutor());
+    registerScriptExecutor("script", new OSqlScriptExecutor());
 
     Iterator<OScriptExecutorRegister> customExecutors =
         lookupProviderWithOrientClassLoader(OScriptExecutorRegister.class);
@@ -74,7 +77,7 @@ public class OScriptManager {
       OScriptExecutorRegister x = customExecutors.next();
       registers.add(x);
     }
-    registers.forEach(e -> e.registerExecutor(context, this, commandManager));
+    registers.forEach(e -> e.registerExecutor(context, this));
   }
 
   public String getFunctionDefinition(final OFunction iFunction) {
@@ -131,7 +134,7 @@ public class OScriptManager {
   }
 
   public Iterable<String> getSupportedLanguages() {
-    return getCommandManager().getSupprotedLanguages();
+    return Collections.unmodifiableSet(this.scriptExecutors.keySet());
   }
 
   public void registerInjection(final OScriptInjection iInj) {
@@ -202,14 +205,37 @@ public class OScriptManager {
    * @param iDatabaseName
    */
   public void close(final String iDatabaseName) {
-    commandManager.close(iDatabaseName);
+    for (OScriptExecutor executor : scriptExecutors.values()) {
+      executor.close(iDatabaseName);
+    }
   }
 
   public void closeAll() {
-    commandManager.closeAll();
+    for (OScriptExecutor executor : scriptExecutors.values()) {
+      executor.closeAll();
+    }
   }
 
-  public OCommandManager getCommandManager() {
-    return commandManager;
+  public OScriptExecutor getScriptExecutor(String language) {
+    if (language == null) {
+      throw new IllegalArgumentException("Invalid script languange: null");
+    }
+    OScriptExecutor scriptExecutor = this.scriptExecutors.get(language);
+    if (scriptExecutor == null) {
+      scriptExecutor = this.scriptExecutors.get(language.toLowerCase(Locale.ENGLISH));
+    }
+    if (scriptExecutor == null)
+      throw new IllegalArgumentException(
+          "Cannot find a script executor requester for language: " + language);
+
+    return scriptExecutor;
+  }
+
+  public void registerScriptExecutor(String language, OScriptExecutor executor) {
+    this.scriptExecutors.put(language, executor);
+  }
+
+  public Map<String, OScriptExecutor> getScriptExecutors() {
+    return scriptExecutors;
   }
 }

@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.core.command.script.jsr223;
 
-import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.OScriptExecutorRegister;
 import com.orientechnologies.orient.core.command.script.OScriptManager;
 import com.orientechnologies.orient.core.command.script.transformer.OScriptTransformerImpl;
@@ -27,10 +26,9 @@ public class OJsr223ScriptExecutorRegister implements OScriptExecutorRegister {
   }
 
   @Override
-  public void registerExecutor(
-      OrientDBEmbedded ctx, OScriptManager scriptManager, OCommandManager commandManager) {
+  public void registerExecutor(OrientDBEmbedded ctx, OScriptManager scriptManager) {
     for (var lang : languages.entrySet()) {
-      commandManager.registerScriptExecutor(
+      scriptManager.registerScriptExecutor(
           lang.getKey(),
           new OJsr223ScriptExecutor(
               lang.getKey(), ctx, new OScriptTransformerImpl(), scriptManager, lang.getValue()));

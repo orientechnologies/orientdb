@@ -1,6 +1,5 @@
 package org.apache.tinkerpop.gremlin.orientdb.executor;
 
-import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.OScriptExecutorRegister;
 import com.orientechnologies.orient.core.command.script.OScriptManager;
 import com.orientechnologies.orient.core.command.script.transformer.OScriptTransformerImpl;
@@ -12,15 +11,14 @@ import org.apache.tinkerpop.gremlin.orientdb.executor.transformer.OGremlinTransf
 public class OGremlinExecutorRegister implements OScriptExecutorRegister {
 
   @Override
-  public void registerExecutor(
-      OrientDBEmbedded ctx, OScriptManager scriptManager, OCommandManager commandManager) {
-    commandManager.registerScriptExecutor(
+  public void registerExecutor(OrientDBEmbedded ctx, OScriptManager scriptManager) {
+    scriptManager.registerScriptExecutor(
         OCommandGremlinExecutor.GREMLIN,
         new OCommandGremlinExecutor(
             OCommandGremlinExecutor.GREMLIN,
             scriptManager,
             new OGremlinTransformer(new OScriptTransformerImpl())));
-    commandManager.registerScriptExecutor(
+    scriptManager.registerScriptExecutor(
         OCommandGremlinExecutor.GREMLIN_GROOVY,
         new OCommandGremlinExecutor(
             OCommandGremlinExecutor.GREMLIN_GROOVY,

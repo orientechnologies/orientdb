@@ -739,11 +739,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
     try {
       preQueryStart();
       OScriptExecutor executor =
-          getSharedContext()
-              .getOrientDB()
-              .getScriptManager()
-              .getCommandManager()
-              .getScriptExecutor(language);
+          getSharedContext().getOrientDB().getScriptManager().getScriptExecutor(language);
 
       this.storage.pauseConfigurationUpdateNotifications();
       OResultSet original;
@@ -793,11 +789,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
     try {
       preQueryStart();
       OScriptExecutor executor =
-          sharedContext
-              .getOrientDB()
-              .getScriptManager()
-              .getCommandManager()
-              .getScriptExecutor(language);
+          sharedContext.getOrientDB().getScriptManager().getScriptExecutor(language);
       OResultSet original;
 
       this.storage.fireConfigurationUpdateNotifications();

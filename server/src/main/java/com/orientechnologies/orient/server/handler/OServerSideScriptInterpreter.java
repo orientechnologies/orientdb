@@ -83,7 +83,6 @@ public class OServerSideScriptInterpreter extends OServerPluginAbstract {
 
     OrientDBInternal.extract(server.getContext())
         .getScriptManager()
-        .getCommandManager()
         .getScriptExecutors()
         .entrySet()
         .forEach(e -> e.getValue().registerInterceptor(interceptor));
@@ -100,7 +99,6 @@ public class OServerSideScriptInterpreter extends OServerPluginAbstract {
     if (interceptor != null) {
       OrientDBInternal.extract(server.getContext())
           .getScriptManager()
-          .getCommandManager()
           .getScriptExecutors()
           .entrySet()
           .forEach(e -> e.getValue().unregisterInterceptor(interceptor));
