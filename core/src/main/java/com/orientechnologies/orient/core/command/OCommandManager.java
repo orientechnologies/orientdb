@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.command;
 
 import com.orientechnologies.orient.core.command.script.OScriptManager;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
@@ -65,5 +66,9 @@ public class OCommandManager {
     for (OScriptExecutor executor : scriptExecutors.values()) {
       executor.closeAll();
     }
+  }
+
+  public Iterable<String> getSupprotedLanguages() {
+    return Collections.unmodifiableSet(this.scriptExecutors.keySet());
   }
 }

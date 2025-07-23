@@ -15,13 +15,17 @@ public class OGremlinExecutorRegister implements OScriptExecutorRegister {
   public void registerExecutor(
       OrientDBEmbedded ctx, OScriptManager scriptManager, OCommandManager commandManager) {
     commandManager.registerScriptExecutor(
-        "gremlin",
+        OCommandGremlinExecutor.GREMLIN,
         new OCommandGremlinExecutor(
-            scriptManager, new OGremlinTransformer(new OScriptTransformerImpl())));
+            OCommandGremlinExecutor.GREMLIN,
+            scriptManager,
+            new OGremlinTransformer(new OScriptTransformerImpl())));
     commandManager.registerScriptExecutor(
-        "gremlin-groovy",
+        OCommandGremlinExecutor.GREMLIN_GROOVY,
         new OCommandGremlinExecutor(
-            scriptManager, new OGremlinTransformer(new OScriptTransformerImpl())));
+            OCommandGremlinExecutor.GREMLIN_GROOVY,
+            scriptManager,
+            new OGremlinTransformer(new OScriptTransformerImpl())));
   }
 
   @Override

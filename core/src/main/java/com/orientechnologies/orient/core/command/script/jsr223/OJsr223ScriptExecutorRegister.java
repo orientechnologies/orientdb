@@ -2,42 +2,44 @@ package com.orientechnologies.orient.core.command.script.jsr223;
 
 import com.orientechnologies.orient.core.command.OCommandManager;
 import com.orientechnologies.orient.core.command.OScriptExecutorRegister;
-import com.orientechnologies.orient.core.command.script.ODatabaseScriptPool;
 import com.orientechnologies.orient.core.command.script.OScriptManager;
 import com.orientechnologies.orient.core.command.script.transformer.OScriptTransformerImpl;
 import com.orientechnologies.orient.core.db.OrientDBEmbedded;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.script.ScriptEngineFactory;
 import javax.script.ScriptEngineManager;
 
 public class OJsr223ScriptExecutorRegister implements OScriptExecutorRegister {
 
   private final ScriptEngineManager scriptEngineManager;
-  private final List<String> languages;
+  private final Map<String, ScriptEngineFactory> languages;
 
   public OJsr223ScriptExecutorRegister() {
     scriptEngineManager = new ScriptEngineManager();
 
-    languages = new ArrayList<>();
+    languages = new HashMap<>();
     for (ScriptEngineFactory f : scriptEngineManager.getEngineFactories()) {
-      languages.add(f.getLanguageName());
+      languages.put(f.getLanguageName(), f);
     }
   }
 
   @Override
   public void registerExecutor(
       OrientDBEmbedded ctx, OScriptManager scriptManager, OCommandManager commandManager) {
-    ODatabaseScriptPool pool = scriptManager.getDatabaseScriptPool();
-    for (String lang : getLanguages()) {
+    for (var lang : languages.entrySet()) {
       commandManager.registerScriptExecutor(
-          lang, new OJsr223ScriptExecutor(lang, ctx, new OScriptTransformerImpl(), pool));
+          lang.getKey(),
+          new OJsr223ScriptExecutor(
+              lang.getKey(), ctx, new OScriptTransformerImpl(), scriptManager, lang.getValue()));
     }
   }
 
   @Override
   public List<String> getLanguages() {
-    return languages;
+    return new ArrayList<>(languages.keySet());
   }
 
   @Override

@@ -1,15 +1,20 @@
 package com.orientechnologies.orient.core.command.script.jsr223;
 
+import com.orientechnologies.common.concur.resource.OResourcePool;
+import com.orientechnologies.common.concur.resource.OResourcePoolListener;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.script.OAbstractScriptExecutor;
 import com.orientechnologies.orient.core.command.script.OCommandExecutorUtility;
 import com.orientechnologies.orient.core.command.script.OCommandScriptException;
-import com.orientechnologies.orient.core.command.script.ODatabaseScriptPool;
 import com.orientechnologies.orient.core.command.script.OScriptManager;
+import com.orientechnologies.orient.core.command.script.js.OJSScriptEngineFactory;
 import com.orientechnologies.orient.core.command.script.transformer.OScriptTransformer;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.OrientDBEmbedded;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
@@ -17,32 +22,42 @@ import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import javax.script.Bindings;
 import javax.script.Compilable;
 import javax.script.CompiledScript;
 import javax.script.Invocable;
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
+import javax.script.ScriptEngineFactory;
 import javax.script.ScriptException;
 
 /** Created by tglman on 25/01/17. */
 public class OJsr223ScriptExecutor extends OAbstractScriptExecutor {
   protected static final int LINES_AROUND_ERROR = 5;
   private final OScriptTransformer transformer;
-  private final ODatabaseScriptPool pool;
-  private OrientDBEmbedded context;
+  private final ConcurrentMap<String, OResourcePool<ODatabaseSession, ScriptEngine>> pooledEngines =
+      new ConcurrentHashMap<>();
+  private final OrientDBEmbedded context;
+  private final ScriptEngineFactory factory;
+  private final OScriptManager scriptManager;
 
   public OJsr223ScriptExecutor(
       String language,
       OrientDBEmbedded context,
       OScriptTransformer scriptTransformer,
-      ODatabaseScriptPool pool) {
+      OScriptManager scriptManager,
+      ScriptEngineFactory factory) {
     super(language);
     this.transformer = scriptTransformer;
-    this.pool = pool;
     this.context = context;
+    this.scriptManager = scriptManager;
+    this.factory = OJSScriptEngineFactory.maybeWrap(factory);
   }
 
   @Override
@@ -66,7 +81,7 @@ public class OJsr223ScriptExecutor extends OAbstractScriptExecutor {
 
     CompiledScript compiledScript = null;
 
-    final ScriptEngine scriptEngine = pool.acquireDatabaseEngine(database.getName(), language);
+    final ScriptEngine scriptEngine = getEngine(database);
     try {
 
       if (!(scriptEngine instanceof Compilable))
@@ -101,7 +116,7 @@ public class OJsr223ScriptExecutor extends OAbstractScriptExecutor {
         unbind(binding, null, params, scriptManager);
       }
     } finally {
-      pool.releaseDatabaseEngine(language, database.getName(), scriptEngine);
+      releaseEngine(database.getName(), scriptEngine);
     }
   }
 
@@ -116,7 +131,7 @@ public class OJsr223ScriptExecutor extends OAbstractScriptExecutor {
 
     final OScriptManager scriptManager = db.getSharedContext().getOrientDB().getScriptManager();
 
-    final ScriptEngine scriptEngine = pool.acquireDatabaseEngine(db.getName(), f.getLanguage());
+    final ScriptEngine scriptEngine = getEngine(db);
     try {
       final Bindings binding =
           bind(
@@ -166,7 +181,66 @@ public class OJsr223ScriptExecutor extends OAbstractScriptExecutor {
         unbind(binding, context, iArgs, scriptManager);
       }
     } finally {
-      pool.releaseDatabaseEngine(f.getLanguage(), db.getName(), scriptEngine);
+      releaseEngine(db.getName(), scriptEngine);
+    }
+  }
+
+  private ScriptEngine createEngine(ODatabaseSession db) {
+    final ScriptEngine scriptEngine = factory.getScriptEngine();
+    final String library =
+        scriptManager.getLibrary(ODatabaseRecordThreadLocal.instance().get(), language);
+
+    if (library != null)
+      try {
+        scriptEngine.eval(library);
+      } catch (ScriptException e) {
+        OAbstractScriptExecutor.throwErrorMessage(e, library);
+      }
+    return scriptEngine;
+  }
+
+  private ScriptEngine getEngine(ODatabaseSession database) {
+
+    OResourcePool<ODatabaseSession, ScriptEngine> p =
+        pooledEngines.computeIfAbsent(
+            database.getName(),
+            (key) -> {
+              int poolSize =
+                  database.getConfiguration().getValueAsInteger(OGlobalConfiguration.SCRIPT_POOL);
+              return new OResourcePool<ODatabaseSession, ScriptEngine>(
+                  poolSize,
+                  new OResourcePoolListener<ODatabaseSession, ScriptEngine>() {
+
+                    public ScriptEngine createNewResource(ODatabaseSession iKey) {
+                      return createEngine(iKey);
+                    }
+
+                    public boolean reuseResource(ODatabaseSession iKey, ScriptEngine iValue) {
+                      return true;
+                    }
+                  });
+            });
+
+    return p.getResource(database, 0L);
+  }
+
+  private void releaseEngine(String dbName, ScriptEngine engine) {
+    pooledEngines.get(dbName).returnResource(engine);
+  }
+
+  @Override
+  public void close(String iDatabaseName) {
+    OResourcePool<ODatabaseSession, ScriptEngine> pool = pooledEngines.remove(iDatabaseName);
+    if (pool != null) {
+      pool.close();
+    }
+  }
+
+  @Override
+  public void closeAll() {
+    Set<String> dbNames = new HashSet<>(pooledEngines.keySet());
+    for (String db : dbNames) {
+      close(db);
     }
   }
 }

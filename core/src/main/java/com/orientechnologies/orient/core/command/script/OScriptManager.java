@@ -28,7 +28,6 @@ import com.orientechnologies.orient.core.command.script.formatter.OJSScriptForma
 import com.orientechnologies.orient.core.command.script.formatter.ORubyScriptFormatter;
 import com.orientechnologies.orient.core.command.script.formatter.OSQLScriptFormatter;
 import com.orientechnologies.orient.core.command.script.formatter.OScriptFormatter;
-import com.orientechnologies.orient.core.command.script.js.OJSScriptEngineFactory;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OrientDBEmbedded;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -37,7 +36,6 @@ import com.orientechnologies.orient.core.metadata.function.OFunction;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
@@ -47,7 +45,6 @@ import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.script.Bindings;
 import javax.script.ScriptEngine;
-import javax.script.ScriptEngineFactory;
 
 /**
  * Executes Script Commands.
@@ -56,10 +53,8 @@ import javax.script.ScriptEngineFactory;
  */
 public class OScriptManager {
   protected static final String DEF_LANGUAGE = "javascript";
-  protected Map<String, ScriptEngineFactory> engines = new HashMap<String, ScriptEngineFactory>();
   protected Map<String, OScriptFormatter> formatters = new HashMap<String, OScriptFormatter>();
   protected List<OScriptInjection> injections = new ArrayList<OScriptInjection>();
-  private ODatabaseScriptPool databaseScriptPool = new ODatabaseScriptPool(this);
   protected Map<String, OScriptResultHandler> handlers =
       new HashMap<String, OScriptResultHandler>();
   protected OCommandManager commandManager = new OCommandManager(this);
@@ -135,33 +130,8 @@ public class OScriptManager {
     return code.length() == 0 ? null : code.toString();
   }
 
-  public boolean existsEngine(String iLanguage) {
-    if (iLanguage == null) return false;
-
-    iLanguage = iLanguage.toLowerCase(Locale.ENGLISH);
-    return engines.containsKey(iLanguage);
-  }
-
-  public ScriptEngine getEngine(final String iLanguage) {
-    if (iLanguage == null) throw new OCommandScriptException("No language was specified");
-
-    final String lang = iLanguage.toLowerCase(Locale.ENGLISH);
-
-    final ScriptEngineFactory scriptEngineFactory = engines.get(lang);
-    if (scriptEngineFactory == null)
-      throw new OCommandScriptException(
-          "Unsupported language: "
-              + iLanguage
-              + ". Supported languages are: "
-              + getSupportedLanguages());
-
-    return scriptEngineFactory.getScriptEngine();
-  }
-
   public Iterable<String> getSupportedLanguages() {
-    final HashSet<String> result = new HashSet<String>();
-    result.addAll(engines.keySet());
-    return result;
+    return getCommandManager().getSupprotedLanguages();
   }
 
   public void registerInjection(final OScriptInjection iInj) {
@@ -188,11 +158,6 @@ public class OScriptManager {
 
   public List<OScriptInjection> getInjections() {
     return injections;
-  }
-
-  public OScriptManager registerEngine(final String iLanguage, final ScriptEngineFactory iEngine) {
-    engines.put(iLanguage, OJSScriptEngineFactory.maybeWrap(iEngine));
-    return this;
   }
 
   public OScriptManager registerFormatter(
@@ -237,20 +202,14 @@ public class OScriptManager {
    * @param iDatabaseName
    */
   public void close(final String iDatabaseName) {
-    databaseScriptPool.close(iDatabaseName);
     commandManager.close(iDatabaseName);
   }
 
   public void closeAll() {
-    databaseScriptPool.closeAll();
     commandManager.closeAll();
   }
 
   public OCommandManager getCommandManager() {
     return commandManager;
-  }
-
-  public ODatabaseScriptPool getDatabaseScriptPool() {
-    return databaseScriptPool;
   }
 }
