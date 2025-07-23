@@ -97,6 +97,7 @@
         <module>distribution</module>
         <module>gremlin</module>
         <module>tests</module>
+        <module>polyglot</module>
     </modules>
 
     <scm>

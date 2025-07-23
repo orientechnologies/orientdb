@@ -1,2 +1,1 @@
 com.orientechnologies.orient.core.command.script.jsr223.OJsr223ScriptExecutorRegister
-com.orientechnologies.orient.core.command.script.polyglot.OPolyglotScriptExecutorRegister
