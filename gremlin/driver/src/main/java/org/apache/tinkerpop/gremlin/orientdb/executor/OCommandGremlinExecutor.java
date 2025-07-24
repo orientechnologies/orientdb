@@ -25,7 +25,6 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.script.OAbstractScriptExecutor;
-import com.orientechnologies.orient.core.command.script.OCommandExecutorUtility;
 import com.orientechnologies.orient.core.command.script.OCommandScriptException;
 import com.orientechnologies.orient.core.command.script.OScriptInjection;
 import com.orientechnologies.orient.core.command.script.OScriptManager;
@@ -236,8 +235,7 @@ public class OCommandGremlinExecutor extends OAbstractScriptExecutor
           final Object[] args = iArgs == null ? null : iArgs.values().toArray();
           result = scriptEngine.eval(scriptManager.getFunctionInvoke(f, args), binding);
         }
-        return OCommandExecutorUtility.transformResult(
-            scriptManager.handleResult(f.getLanguage(), result, scriptEngine, binding, db));
+        return scriptManager.handleResult(f.getLanguage(), result, scriptEngine, binding, db);
 
       } catch (ScriptException e) {
         throw OException.wrapException(

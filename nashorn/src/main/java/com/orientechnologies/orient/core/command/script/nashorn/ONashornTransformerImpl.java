@@ -10,6 +10,7 @@ import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import org.openjdk.nashorn.api.scripting.JSObject;
 
 /** Created by Enrico Risa on 27/01/17. */
 public class ONashornTransformerImpl extends OScriptTransformerAbstract
@@ -17,27 +18,21 @@ public class ONashornTransformerImpl extends OScriptTransformerAbstract
 
   public ONashornTransformerImpl() {
     super();
-    try {
-      final Class<?> c = Class.forName("org.openjdk.nashorn.api.scripting.JSObject");
-      registerResultTransformer(
-          c,
-          new OResultTransformer() {
-            @Override
-            public OResult transform(Object value) {
-              OResultInternal internal = new OResultInternal();
+    registerResultTransformer(
+        JSObject.class,
+        new OResultTransformer() {
+          @Override
+          public OResult transform(Object value) {
+            OResultInternal internal = new OResultInternal();
 
-              final List res = new ArrayList();
-              internal.setProperty("value", res);
+            final List res = new ArrayList();
+            internal.setProperty("value", res);
 
-              for (Object v : ((Map) value).values())
-                res.add(new OResultInternal((OIdentifiable) v));
+            for (Object v : ((Map) value).values()) res.add(new OResultInternal((OIdentifiable) v));
 
-              return internal;
-            }
-          });
-    } catch (Exception e) {
-      // NASHORN NOT INSTALLED, IGNORE IT
-    }
+            return internal;
+          }
+        });
     registerResultTransformer(Map.class, new MapTransformer(this));
   }
 }

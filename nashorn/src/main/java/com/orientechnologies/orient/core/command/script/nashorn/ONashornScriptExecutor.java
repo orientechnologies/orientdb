@@ -3,10 +3,11 @@ package com.orientechnologies.orient.core.command.script.nashorn;
 import com.orientechnologies.common.concur.resource.OResourcePool;
 import com.orientechnologies.common.concur.resource.OResourcePoolListener;
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.script.OAbstractScriptExecutor;
-import com.orientechnologies.orient.core.command.script.OCommandExecutorUtility;
 import com.orientechnologies.orient.core.command.script.OCommandScriptException;
 import com.orientechnologies.orient.core.command.script.OScriptManager;
 import com.orientechnologies.orient.core.command.script.transformer.OScriptTransformer;
@@ -20,8 +21,10 @@ import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
@@ -34,10 +37,14 @@ import javax.script.Invocable;
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
 import javax.script.ScriptException;
+import org.openjdk.nashorn.api.scripting.JSObject;
 import org.openjdk.nashorn.api.scripting.NashornScriptEngineFactory;
 
 /** Created by tglman on 25/01/17. */
 public class ONashornScriptExecutor extends OAbstractScriptExecutor {
+
+  private static final OLogger logger = OLogManager.instance().logger(ONashornScriptExecutor.class);
+
   protected static final int LINES_AROUND_ERROR = 5;
   private final OScriptTransformer transformer;
   private final ConcurrentMap<String, OResourcePool<ODatabaseSession, ScriptEngine>> pooledEngines =
@@ -160,7 +167,7 @@ public class ONashornScriptExecutor extends OAbstractScriptExecutor {
           final Object[] args = iArgs == null ? null : iArgs.values().toArray();
           result = scriptEngine.eval(scriptManager.getFunctionInvoke(f, args), binding);
         }
-        return OCommandExecutorUtility.transformResult(
+        return transformResult(
             scriptManager.handleResult(f.getLanguage(), result, scriptEngine, binding, db));
 
       } catch (ScriptException e) {
@@ -181,6 +188,41 @@ public class ONashornScriptExecutor extends OAbstractScriptExecutor {
     } finally {
       releaseEngine(db.getName(), scriptEngine);
     }
+  }
+
+  /**
+   * Manages cross compiler compatibility issues.
+   *
+   * @param result Result to transform
+   */
+  public static Object transformResult(Object result) {
+    if (!(result instanceof Map)) {
+      return result;
+    }
+    try {
+      if (result instanceof JSObject jsRes) {
+        if (jsRes.isArray()) {
+          List<?> partial = new ArrayList(((Map) result).values());
+          List<Object> finalResult = new ArrayList<Object>();
+          for (Object o : partial) {
+            finalResult.add(transformResult(o));
+          }
+          return finalResult;
+        } else {
+          Map<Object, Object> mapResult = (Map) result;
+          List<Object> keys = new ArrayList<Object>(mapResult.keySet());
+          for (Object key : keys) {
+            mapResult.put(key, transformResult(mapResult.get(key)));
+          }
+          return mapResult;
+        }
+      }
+    } catch (Exception e) {
+      logger.error(
+          "Error converting js object value, ignoring and returning the original value", e);
+    }
+
+    return result;
   }
 
   private ScriptEngine createEngine(ODatabaseSession db) {
