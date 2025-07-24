@@ -763,12 +763,12 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
   }
 
   private void queryCompleted() {
-    OQueryDatabaseState state = this.queryState.peekLast();
+    OQueryDatabaseState state = this.queryState.peekFirst();
     state.closeInternal(this);
   }
 
   private void queryStarted(OLocalResultSetLifecycleDecorator result) {
-    OQueryDatabaseState state = this.queryState.peekLast();
+    OQueryDatabaseState state = this.queryState.peekFirst();
     state.setResultSet(result);
     this.queryStarted(result.getQueryId(), state);
     result.addLifecycleListener(this);
@@ -837,14 +837,14 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
     OSharedContext sharedContext = getSharedContext();
     ViewManager viewManager = sharedContext.getViewManager();
     viewManager.startUsingViewCluster(clusterId);
-    this.queryState.peekLast().addViewUseCluster(clusterId);
+    this.queryState.peekFirst().addViewUseCluster(clusterId);
   }
 
   public void queryStartUsingViewIndex(String index) {
     OSharedContext sharedContext = getSharedContext();
     ViewManager viewManager = sharedContext.getViewManager();
     viewManager.startUsingViewIndex(index);
-    this.queryState.peekLast().addViewUseIndex(index);
+    this.queryState.peekFirst().addViewUseIndex(index);
   }
 
   @Override
