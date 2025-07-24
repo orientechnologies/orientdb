@@ -58,6 +58,12 @@
             <type>test-jar</type>
             <scope>test</scope>
         </dependency>
+         <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-polyglot</artifactId>
+            <version>${project.version}</version>
+            <scope>test</scope>
+        </dependency>
 
         <dependency>
             <groupId>org.glassfish.jaxb</groupId>
