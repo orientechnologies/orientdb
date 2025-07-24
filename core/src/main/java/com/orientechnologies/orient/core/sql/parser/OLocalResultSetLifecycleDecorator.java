@@ -14,9 +14,9 @@ import java.util.Optional;
 /** Created by luigidellaquila on 05/12/16. */
 public class OLocalResultSetLifecycleDecorator implements OResultSetInternal {
 
-  private OResultSetInternal entity;
-  private List<OQueryLifecycleListener> lifecycleListeners = new ArrayList<>();
-  private String queryId;
+  private final OResultSetInternal entity;
+  private final List<OQueryLifecycleListener> lifecycleListeners = new ArrayList<>();
+  private final String queryId;
   private boolean includePlan = false;
   private boolean hasNextPage;
   private boolean closed = false;
