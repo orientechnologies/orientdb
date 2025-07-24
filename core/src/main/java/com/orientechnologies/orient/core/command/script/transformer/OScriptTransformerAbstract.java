@@ -2,55 +2,22 @@ package com.orientechnologies.orient.core.command.script.transformer;
 
 import com.orientechnologies.orient.core.command.script.OScriptResultSet;
 import com.orientechnologies.orient.core.command.script.OScriptResultSets;
-import com.orientechnologies.orient.core.command.script.transformer.result.MapTransformer;
 import com.orientechnologies.orient.core.command.script.transformer.result.OResultTransformer;
 import com.orientechnologies.orient.core.command.script.transformer.resultset.OResultSetTransformer;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
 /** Created by Enrico Risa on 27/01/17. */
-public class OScriptTransformerImpl implements OScriptTransformer {
+public abstract class OScriptTransformerAbstract implements OScriptTransformer {
 
   protected Map<Class, OResultSetTransformer> resultSetTransformers = new HashMap<>();
   protected Map<Class, OResultTransformer> transformers = new LinkedHashMap<>(2);
-
-  public OScriptTransformerImpl() {
-
-    if (!OGlobalConfiguration.SCRIPT_POLYGLOT_USE_GRAAL.getValueAsBoolean()) {
-      try {
-        final Class<?> c = Class.forName("jdk.nashorn.api.scripting.JSObject");
-        registerResultTransformer(
-            c,
-            new OResultTransformer() {
-              @Override
-              public OResult transform(Object value) {
-                OResultInternal internal = new OResultInternal();
-
-                final List res = new ArrayList();
-                internal.setProperty("value", res);
-
-                for (Object v : ((Map) value).values())
-                  res.add(new OResultInternal((OIdentifiable) v));
-
-                return internal;
-              }
-            });
-      } catch (Exception e) {
-        // NASHORN NOT INSTALLED, IGNORE IT
-      }
-    }
-    registerResultTransformer(Map.class, new MapTransformer(this));
-  }
 
   @Override
   public OResultSet toResultSet(Object value) {
@@ -71,7 +38,7 @@ public class OScriptTransformerImpl implements OScriptTransformer {
     return defaultResultSet(value);
   }
 
-  private OResultSet defaultResultSet(Object value) {
+  protected OResultSet defaultResultSet(Object value) {
     return new OScriptResultSet(Collections.singletonList(value).iterator(), this);
   }
 
@@ -99,7 +66,7 @@ public class OScriptTransformerImpl implements OScriptTransformer {
     return getTransformer(value.getClass()) != null;
   }
 
-  private OResult defaultTransformer(Object value) {
+  protected OResult defaultTransformer(Object value) {
     OResultInternal internal = new OResultInternal();
     internal.setProperty("value", value);
     return internal;

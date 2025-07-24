@@ -94,8 +94,7 @@ public class OCommandGremlinExecutor extends OAbstractScriptExecutor
 
   private OScriptTransformer transformer;
 
-  public OCommandGremlinExecutor(
-      String language, OScriptManager scriptManager, OScriptTransformer transformer) {
+  public OCommandGremlinExecutor(String language, OScriptManager scriptManager) {
     super(language);
     factory = new GremlinGroovyScriptEngineFactory();
     CachedGremlinScriptEngineManager customizationManager = new CachedGremlinScriptEngineManager();
@@ -107,7 +106,7 @@ public class OCommandGremlinExecutor extends OAbstractScriptExecutor
         GroovyCompilerGremlinPlugin.build().compilerConfigurationOptions(compilerConfigs).create());
     factory.setCustomizerManager(customizationManager);
     this.scriptManager = scriptManager;
-    this.transformer = new OGremlinTransformer(transformer);
+    this.transformer = new OGremlinTransformer();
 
     initCustomTransformer(this.transformer);
 

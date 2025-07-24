@@ -83,8 +83,10 @@
 
     <modules>
         <module>test-commons</module>
-        <module>client</module>
         <module>core</module>
+        <module>client</module>
+        <module>polyglot</module>
+        <module>nashorn</module>
         <module>object</module>
         <module>server</module>
         <module>security</module>
@@ -97,7 +99,6 @@
         <module>distribution</module>
         <module>gremlin</module>
         <module>tests</module>
-        <module>polyglot</module>
     </modules>
 
     <scm>

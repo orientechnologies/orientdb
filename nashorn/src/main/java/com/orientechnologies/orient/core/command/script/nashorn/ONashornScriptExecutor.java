@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.core.command.script.jsr223;
+package com.orientechnologies.orient.core.command.script.nashorn;
 
 import com.orientechnologies.common.concur.resource.OResourcePool;
 import com.orientechnologies.common.concur.resource.OResourcePoolListener;
@@ -9,7 +9,6 @@ import com.orientechnologies.orient.core.command.script.OAbstractScriptExecutor;
 import com.orientechnologies.orient.core.command.script.OCommandExecutorUtility;
 import com.orientechnologies.orient.core.command.script.OCommandScriptException;
 import com.orientechnologies.orient.core.command.script.OScriptManager;
-import com.orientechnologies.orient.core.command.script.js.OJSScriptEngineFactory;
 import com.orientechnologies.orient.core.command.script.transformer.OScriptTransformer;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -34,30 +33,29 @@ import javax.script.CompiledScript;
 import javax.script.Invocable;
 import javax.script.ScriptContext;
 import javax.script.ScriptEngine;
-import javax.script.ScriptEngineFactory;
 import javax.script.ScriptException;
+import org.openjdk.nashorn.api.scripting.NashornScriptEngineFactory;
 
 /** Created by tglman on 25/01/17. */
-public class OJsr223ScriptExecutor extends OAbstractScriptExecutor {
+public class ONashornScriptExecutor extends OAbstractScriptExecutor {
   protected static final int LINES_AROUND_ERROR = 5;
   private final OScriptTransformer transformer;
   private final ConcurrentMap<String, OResourcePool<ODatabaseSession, ScriptEngine>> pooledEngines =
       new ConcurrentHashMap<>();
   private final OrientDBEmbedded context;
-  private final ScriptEngineFactory factory;
+  private final NashornScriptEngineFactory factory;
   private final OScriptManager scriptManager;
 
-  public OJsr223ScriptExecutor(
+  public ONashornScriptExecutor(
       String language,
       OrientDBEmbedded context,
-      OScriptTransformer scriptTransformer,
       OScriptManager scriptManager,
-      ScriptEngineFactory factory) {
+      NashornScriptEngineFactory factory) {
     super(language);
-    this.transformer = scriptTransformer;
+    this.transformer = new ONashornTransformerImpl();
     this.context = context;
     this.scriptManager = scriptManager;
-    this.factory = OJSScriptEngineFactory.maybeWrap(factory);
+    this.factory = (NashornScriptEngineFactory) factory;
   }
 
   @Override
@@ -186,7 +184,16 @@ public class OJsr223ScriptExecutor extends OAbstractScriptExecutor {
   }
 
   private ScriptEngine createEngine(ODatabaseSession db) {
-    final ScriptEngine scriptEngine = factory.getScriptEngine();
+    final ScriptEngine scriptEngine =
+        factory.getScriptEngine(
+            (className) -> {
+              var allowedPackaged = scriptManager.getAllowedPackages();
+              if (allowedPackaged.contains(className)) return true;
+
+              final int pos = className.lastIndexOf('.');
+              if (pos > -1) return allowedPackaged.contains(className.substring(0, pos) + ".*");
+              return false;
+            });
     final String library =
         scriptManager.getLibrary(ODatabaseRecordThreadLocal.instance().get(), language);
 

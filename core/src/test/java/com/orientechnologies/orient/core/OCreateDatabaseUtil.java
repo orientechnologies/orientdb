@@ -7,7 +7,6 @@ import com.orientechnologies.orient.core.db.OrientDBConfig;
 
 /**
  * Used as part of the security test refactoring of the ODB `core` module, cf.
- * https://gist.github.com/tglman/4a24fa59efd88415e765a78487d64366#file-test-migrations-md
  */
 public class OCreateDatabaseUtil {
   public static final String NEW_ADMIN_PASSWORD = "adminpwd";
