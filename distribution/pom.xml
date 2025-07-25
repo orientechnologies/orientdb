@@ -89,6 +89,11 @@
             <version>${project.version}</version>
             <type>zip</type>
         </dependency>
+        <dependency>
+            <groupId>com.orientechnologies</groupId>
+            <artifactId>orientdb-polyglot</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
 
         <dependency>
