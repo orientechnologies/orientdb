@@ -60,7 +60,9 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 
 /** Created by tglman on 08/08/17. */
 public class OrientDBDistributed extends OrientDBEmbedded implements OServerAware {
@@ -68,7 +70,8 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
       OLoggerDistributed.logger(OrientDBDistributed.class);
   private volatile OServer server;
   private volatile ODistributedPlugin plugin;
-  private final ConcurrentHashMap<String, ODistributedConfigurationManager> configurations =
+  private final CountDownLatch pluginStartupLatch = new CountDownLatch(1);
+  protected final ConcurrentHashMap<String, ODistributedConfigurationManager> configurations =
       new ConcurrentHashMap<String, ODistributedConfigurationManager>();
 
   private final ODistributedMessageServiceImpl messageService;
@@ -103,16 +106,29 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     }
   }
 
-  public ODistributedPlugin getPlugin() {
-    if (plugin == null) {
-      synchronized (this) {
-        if (plugin == null) {
-          if (server != null && server.isActive()) {
-            plugin = server.getPlugin("cluster");
-          }
+  private void waitForPluginStartup() {
+    if (isDistributedPluginEnabled() && plugin == null) {
+      try {
+        logger.info("Waiting for plugin startup");
+        if (!pluginStartupLatch.await(10, TimeUnit.SECONDS)) {
+          throw new OOfflineNodeException(
+              "Distributed manager is offline on " + server.getServerId());
         }
+        logger.info("Plugin startup complete");
+      } catch (InterruptedException ignored) {
       }
     }
+  }
+
+  public void setPlugin(ODistributedPlugin plugin) {
+    logger.info("Setting plugin");
+    this.plugin = plugin;
+    this.pluginStartupLatch.countDown();
+  }
+
+  public ODistributedPlugin getPlugin() {
+    logger.info("Getting plugin, server?=%s, server.active?=%s", server != null, server.isActive());
+    waitForPluginStartup();
     return plugin;
   }
 
@@ -175,10 +191,6 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
       //      getOrInitDistributedConfiguration(storage.getName());
     }
     return embedded;
-  }
-
-  public void setPlugin(ODistributedPlugin plugin) {
-    this.plugin = plugin;
   }
 
   public void fullSync(String dbName, InputStream backupStream, OrientDBConfig config) {

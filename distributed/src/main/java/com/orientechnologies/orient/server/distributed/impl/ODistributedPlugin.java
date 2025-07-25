@@ -262,8 +262,6 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
   @Override
   public void startup() {
     if (!enabled) return;
-    if (serverInstance.getDatabases() instanceof OrientDBDistributed)
-      ((OrientDBDistributed) serverInstance.getDatabases()).setPlugin(this);
 
     // REGISTER TEMPORARY USER FOR REPLICATION PURPOSE
     serverInstance.addTemporaryUser(REPLICATOR_USER, "" + new SecureRandom().nextLong(), "*");
@@ -314,6 +312,10 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
       throw OException.wrapException(
           new ODistributedStartupException("Error on starting distributed plugin"), e);
     }
+
+    // TODO: Might need to separate plugin setting and plugin startup completed flag...
+    if (serverInstance.getDatabases() instanceof OrientDBDistributed)
+      ((OrientDBDistributed) serverInstance.getDatabases()).setPlugin(this);
 
     dumpServersStatus();
   }
