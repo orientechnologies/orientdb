@@ -123,6 +123,10 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     return new OSharedContextDistributed(storage, this);
   }
 
+  private boolean isDistributedPluginEnabled() {
+    return server.isDistributedPluginEnabled();
+  }
+
   protected ODatabaseDocumentEmbedded newSessionInstance(OStorage storage, OrientDBConfig config) {
     ODatabaseDocumentEmbedded embedded;
     if (isDistributedDisabled(storage.getName())) {
@@ -138,7 +142,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   }
 
   protected boolean isDistributedDisabled(String storage) {
-    return OSystemDatabase.SYSTEM_DB_NAME.equals(storage) || plugin == null || !plugin.isEnabled();
+    return OSystemDatabase.SYSTEM_DB_NAME.equals(storage) || isDistributedPluginEnabled();
   }
 
   @Override
