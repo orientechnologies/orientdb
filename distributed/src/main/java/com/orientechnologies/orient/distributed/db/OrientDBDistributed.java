@@ -149,6 +149,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
       embedded = new ODatabaseDocumentEmbedded(storage);
       embedded.init(config, getOrCreateSharedContext(storage));
     } else {
+      waitForPluginStartup();
       OSharedContext sharedContext = getOrCreateSharedContext(storage);
       embedded = new ODatabaseDocumentDistributed(storage, plugin);
       embedded.init(config, sharedContext);
@@ -171,6 +172,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
       OSharedContext sharedContext = getOrCreateSharedContext(storage);
       embedded.internalCreate(config, sharedContext);
     } else {
+      waitForPluginStartup();
       embedded = new ODatabaseDocumentDistributed(storage, plugin);
       OSharedContext sharedContext = getOrCreateSharedContext(storage);
       embedded.internalCreate(config, sharedContext);
@@ -186,6 +188,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
       embedded = new ODatabaseDocumentEmbeddedPooled(pool, storage);
       embedded.init(pool.getConfig(), getOrCreateSharedContext(storage));
     } else {
+      waitForPluginStartup();
       embedded = new ODatabaseDocumentDistributedPooled(pool, storage, plugin);
       embedded.init(pool.getConfig(), getOrCreateSharedContext(storage));
       //      getOrInitDistributedConfiguration(storage.getName());
@@ -274,6 +277,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   @Override
   public void internalDrop(String name) {
+    waitForPluginStartup();
     synchronized (this) {
       checkOpen();
       // This is a temporary fix for distributed drop that avoid scheduled view update to re-open
@@ -318,7 +322,8 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   @Override
   public void drop(String name, String user, String password) {
-    if (getPlugin() != null && getPlugin().isEnabled()) {
+    if (isDistributedPluginEnabled()) {
+      waitForPluginStartup();
       plugin.executeInDistributedDatabaseLock(
           name,
           20000,
@@ -459,6 +464,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   @Override
   public boolean deltaSync(String dbName, InputStream backupStream, OrientDBConfig config) {
+    waitForPluginStartup();
     if (new ONewDeltaSyncImporter().importDelta(this, dbName, backupStream, getNodeName())) {
       getDatabase(dbName).setOnline();
       return true;
@@ -472,6 +478,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   }
 
   private void offlineOnShutdown() {
+    waitForPluginStartup();
     // SET ALL DATABASES TO NOT_AVAILABLE
     for (String dbName : listLodadedDatabases()) {
 
@@ -493,6 +500,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   }
 
   public ODistributedDatabaseImpl unregisterDatabase(final String iDatabaseName) {
+    waitForPluginStartup();
     try {
       plugin.setDatabaseStatus(getNodeName(), iDatabaseName, DB_STATUS.OFFLINE);
     } catch (Exception t) {
@@ -515,6 +523,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
       ODatabaseType type,
       OrientDBConfig config,
       ODatabaseTask<Void> createOps) {
+    waitForPluginStartup();
     super.create(name, user, password, type, config, createOps);
     if (!isDistributedDisabled(name)) {
       Set<String> nodes = plugin.getActiveServers();
@@ -557,6 +566,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   }
 
   public ODistributedConfigurationManager getOrInitConfigurationManager(String database) {
+    waitForPluginStartup();
     return configurations.computeIfAbsent(
         database,
         (key) -> {
