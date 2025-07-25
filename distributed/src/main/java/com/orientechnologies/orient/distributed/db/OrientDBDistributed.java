@@ -25,7 +25,6 @@ import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.OrientDBEmbedded;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
-import com.orientechnologies.orient.core.metadata.security.auth.OAuthenticationInfo;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -112,7 +111,8 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
       try {
         OLogManager.instance().info(this, "Waiting for plugin startup");
         if (!pluginStartupLatch.await(10, TimeUnit.SECONDS)) {
-          throw new OOfflineNodeException("Distributed manager is offline on " + server.getServerId());
+          throw new OOfflineNodeException(
+              "Distributed manager is offline on " + server.getServerId());
         }
         OLogManager.instance().info(this, "Plugin startup complete");
       } catch (InterruptedException ignored) {
@@ -124,7 +124,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     OLogManager.instance().info(this, "Setting plugin");
     this.plugin = plugin;
     this.pluginStartupLatch.countDown();
-    }
+  }
 
   public ODistributedPlugin getPlugin() {
     OLogManager.instance()
