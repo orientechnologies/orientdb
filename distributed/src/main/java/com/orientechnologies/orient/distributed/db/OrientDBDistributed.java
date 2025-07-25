@@ -155,6 +155,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
       embedded = new ODatabaseDocumentEmbedded(storage);
       embedded.init(config, sharedContext);
     } else {
+      waitForPluginStartup();
       embedded = new ODatabaseDocumentDistributed(storage, plugin, sharedContext);
       embedded.init(config, sharedContext);
       registerNewDatabaseIfNeeded(embedded, sharedContext);
@@ -170,6 +171,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
       embedded = new ODatabaseDocumentEmbedded(storage);
       embedded.internalCreate(config, getOrCreateSharedContext(storage));
     } else {
+      waitForPluginStartup();
       embedded = new ODatabaseDocumentDistributed(storage, plugin, sharedContext);
       embedded.internalCreate(config, getOrCreateSharedContext(storage));
       registerNewDatabaseIfNeeded(embedded, sharedContext);
@@ -184,6 +186,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
       embedded = new ODatabaseDocumentEmbeddedPooled(pool, storage);
       embedded.init(pool.getConfig(), getOrCreateSharedContext(storage));
     } else {
+      waitForPluginStartup();
       embedded = new ODatabaseDocumentDistributedPooled(pool, storage, plugin, sharedContext);
       embedded.init(pool.getConfig(), getOrCreateSharedContext(storage));
       registerNewDatabaseIfNeeded(embedded, sharedContext);
@@ -269,7 +272,20 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   }
 
   @Override
+  public void create(
+      String name,
+      String user,
+      String password,
+      ODatabaseType type,
+      OrientDBConfig config,
+      ODatabaseTask<Void> createOps) {
+    waitForPluginStartup();
+    super.create(name, user, password, type, config, createOps);
+  }
+
+  @Override
   public void internalDrop(String name) {
+    waitForPluginStartup();
     synchronized (this) {
       checkOpen();
       // This is a temporary fix for distributed drop that avoid scheduled view update to re-open
@@ -314,7 +330,8 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   @Override
   public void drop(String name, String user, String password) {
-    if (getPlugin() != null && getPlugin().isEnabled()) {
+    if (isDistributedPluginEnabled()) {
+      waitForPluginStartup();
       plugin.executeInDistributedDatabaseLock(
           name,
           20000,
@@ -434,6 +451,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   @Override
   public boolean deltaSync(String dbName, InputStream backupStream, OrientDBConfig config) {
+    waitForPluginStartup();
     if (new ONewDeltaSyncImporter()
         .importDelta(server, dbName, backupStream, plugin.getLocalNodeName())) {
       getDatabase(dbName).setOnline();
@@ -444,6 +462,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   }
 
   private void offlineOnShutdown() {
+    waitForPluginStartup();
     // SET ALL DATABASES TO NOT_AVAILABLE
     for (Entry<String, ODistributedDatabaseImpl> m : databases.entrySet()) {
       if (OSystemDatabase.SYSTEM_DB_NAME.equals(m.getKey())) continue;
@@ -464,12 +483,14 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   private ODistributedDatabaseImpl newDistributedDatabase(
       String key, ODatabaseDocumentInternal session) {
+    waitForPluginStartup();
     ODistributedDatabaseImpl db = new ODistributedDatabaseImpl(this, plugin, key);
     db.initFirstOpen(session);
     return db;
   }
 
   public ODistributedDatabaseImpl unregisterDatabase(final String iDatabaseName) {
+    waitForPluginStartup();
     try {
       plugin.setDatabaseStatus(plugin.getLocalNodeName(), iDatabaseName, DB_STATUS.OFFLINE);
     } catch (Exception t) {
@@ -529,6 +550,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   }
 
   public ODistributedConfigurationManager getOrInitConfigurationManager(String database) {
+    waitForPluginStartup();
     return configurations.computeIfAbsent(
         database,
         (key) -> {
