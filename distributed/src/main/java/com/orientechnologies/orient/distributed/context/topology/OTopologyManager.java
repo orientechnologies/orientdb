@@ -1,17 +1,22 @@
-package com.orientechnologies.orient.distributed;
+package com.orientechnologies.orient.distributed.context.topology;
 
 import java.util.Set;
+
+import com.orientechnologies.orient.core.transaction.ONodeId;
 
 public class OTopologyManager implements OTopologyEvents {
 
   private OTopologyState state = OTopologyState.INITIAL;
-  private Set<ONodeInfo> members;
-  private Set<ONodeInfo> candidates;
-  private long version;
-  private int quorum;
+  private Set<ONodeId> members;
+  private Set<ONodeId> candidates;
+  private long version=0;
+  private int minimumQuorum;
+  public OTopologyManager(int minimumQuorum) {
+    this.minimumQuorum =minimumQuorum;
+  }
 
   @Override
-  public void nodeDiscovered(ONodeInfo node) {
+  public void nodeDiscovered(ONodeId node) {
     if (state == OTopologyState.INITIAL) {
       addToPotential(node);
       enstablishIfPossible();
@@ -23,10 +28,10 @@ public class OTopologyManager implements OTopologyEvents {
   /** Run a two phase operation for add the member to the list of the member
    * if the quorum allow it
    */
-  private void tryAddNewMember(ONodeInfo node) {}
+  private void tryAddNewMember(ONodeId node) {}
 
   private void enstablishIfPossible() {
-    if (candidates.size() > quorum) {
+    if (candidates.size() > minimumQuorum) {
       enstablish();
     }
   }
@@ -36,7 +41,7 @@ public class OTopologyManager implements OTopologyEvents {
    */
   private void enstablish() {}
 
-  private void addToPotential(ONodeInfo node) {
+  private void addToPotential(ONodeId node) {
     candidates.add(node);
   }
 }
