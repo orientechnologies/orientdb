@@ -2,6 +2,7 @@ package com.orientechnologies.orient.distributed.db;
 
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
+import com.orientechnologies.orient.distributed.context.topology.OAddTopologyMember;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -17,6 +18,7 @@ public interface OOperationMessage {
   static OOperationMessage readNetwork(DataInput input) throws IOException {
     return switch (input.readShort()) {
       case 1 -> ODropDbMessage.readNetwork(input);
+      case 2 -> OAddTopologyMember.readNetwork(input);
       default -> throw new ODistributedException("wrong operation message type from network");
     };
   }

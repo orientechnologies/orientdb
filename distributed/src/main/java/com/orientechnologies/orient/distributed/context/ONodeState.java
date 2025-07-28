@@ -7,6 +7,7 @@ import com.orientechnologies.orient.core.transaction.OTransactionSequenceManager
 import com.orientechnologies.orient.core.tx.OTxMetadataHolderImpl;
 import com.orientechnologies.orient.core.tx.ValidationResult;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
+import com.orientechnologies.orient.distributed.context.topology.OTopologyManager;
 import com.orientechnologies.orient.server.distributed.ODistributedMessage;
 import java.util.List;
 import java.util.Optional;
@@ -20,17 +21,20 @@ public class ONodeState {
   private final OCoordinatedDistributedOps coordinated;
   private final ONodeId nodeId;
   private final OAppliedState state;
+  private final OTopologyManager topology;
 
-  public ONodeState(ONodeId coordinator) {
-    sequenceManager = new OTransactionSequenceManager(coordinator, 3);
+  public ONodeState(ONodeId current) {
+    sequenceManager = new OTransactionSequenceManager(current, 3);
     state = new OAppliedState(3);
     log = new ODistributedMessageLogMemory();
     promised = new OPromisedDistributedOpsImpl();
     // TODO: provide minimum quorum;
     coordinated = new OCoordinatedDistributedOpsImpl(0);
-    coordinated.registerNode(coordinator);
+    coordinated.registerNode(current);
+    topology = new OTopologyManager(0, null);
+    topology.nodeDiscovered(current);
 
-    nodeId = coordinator;
+    nodeId = current;
   }
 
   public OOperationStart start(OCompleteAction action) {
@@ -46,7 +50,12 @@ public class ONodeState {
     this.coordinated.failure(node, promise, acceptResult);
   }
 
+  public void discover(ONodeId node) {
+    this.topology.nodeDiscovered(node);
+  }
+
   public void register(ONodeId node) {
+    this.topology.finalize(node);
     this.coordinated.registerNode(node);
   }
 
@@ -142,5 +151,9 @@ public class ONodeState {
         Thread.currentThread().interrupt();
       }
     }
+  }
+
+  public OTopologyManager getTopology() {
+    return topology;
   }
 }
