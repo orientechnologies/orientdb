@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.OrientDBEmbedded;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.metadata.security.auth.OAuthenticationInfo;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.transaction.ONodeId;
@@ -271,6 +272,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   @Override
   public ODatabaseDocumentInternal poolOpen(
       String name, String user, String password, ODatabasePoolInternal pool) {
+    checkDbAvailableOpen(name);
     ODatabaseDocumentInternal session = super.poolOpen(name, user, password, pool);
     return session;
   }
@@ -368,47 +370,36 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   }
 
   private boolean checkDbAvailable(String name) {
-    if (getPlugin() == null || !getPlugin().isEnabled()) {
+    if (!isDistributedPluginEnabled() || OSystemDatabase.SYSTEM_DB_NAME.equals(name)) {
       return true;
     }
     if (OSystemDatabase.SYSTEM_DB_NAME.equals(name)) return true;
+    waitForPluginStartup();
     DB_STATUS dbStatus = plugin.getDatabaseStatus(getNodeName(), name);
     return dbStatus == DB_STATUS.ONLINE || dbStatus == DB_STATUS.BACKUP;
   }
 
-  private boolean checkDbAvailableOpen(String name) {
-    if (!checkDbAvailable(name)) {
-      long waitTime =
-          getConfigurations()
-              .getConfigurations()
-              .getValueAsLong(OGlobalConfiguration.DISTRIBUTED_DATABASE_ONLINE_GRACE_PERIOD);
-      if (waitTime != 0) {
-        long retry = waitTime / 500;
-        // TODO: when there will be proper node online event this should attach to that with a
-        // notification instead of sleep
-        for (long i = 0; i < retry; i++) {
-          try {
-            Thread.sleep(500);
-          } catch (InterruptedException e) {
-            e.printStackTrace();
-          }
-          if (checkDbAvailable(name)) {
-            return true;
-          }
-        }
-      }
-    }
-    return false;
-  }
+  private void checkDbAvailableOpen(String name) {
+    if (checkDbAvailable(name)) return;
 
-  @Override
-  public ODatabaseDocumentInternal open(String name, String user, String password) {
-    if (checkDbAvailableOpen(name)) {
-      return super.open(name, user, password);
-    } else {
-      if (exists(name, user, password)) {
-        return super.open(name, user, password);
+    long waitTime =
+        getConfigurations()
+            .getConfigurations()
+            .getValueAsLong(OGlobalConfiguration.DISTRIBUTED_DATABASE_ONLINE_GRACE_PERIOD);
+    long endTime = System.currentTimeMillis() + waitTime;
+    boolean dbAvailable = false;
+    do {
+      // TODO: when there will be proper node online event this should attach to that with a
+      //  notification instead of sleep
+      try {
+        Thread.sleep(100);
+      } catch (InterruptedException ignored) {
       }
+      dbAvailable = checkDbAvailable(name);
+    } while (!dbAvailable && (System.currentTimeMillis() < endTime));
+
+    if (!dbAvailable) {
+
       throw new OOfflineNodeException("database " + name + " not online on " + getNodeName());
     }
   }
@@ -416,15 +407,45 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   @Override
   public ODatabaseDocumentInternal open(
       String name, String user, String password, OrientDBConfig config) {
+    checkDbAvailableOpen(name);
+    return super.open(name, user, password, config);
+  }
 
-    if (checkDbAvailableOpen(name)) {
-      return super.open(name, user, password, config);
+  @Override
+  public ODatabaseDocumentInternal open(
+      OAuthenticationInfo authenticationInfo, OrientDBConfig config) {
+    if (authenticationInfo.getDatabase().isPresent()) {
+      checkDbAvailableOpen(authenticationInfo.getDatabase().get());
     } else {
-      if (exists(name, user, password)) {
-        return super.open(name, user, password, config);
-      }
-      throw new OOfflineNodeException("database " + name + " not online on " + getNodeName());
+      waitForPluginStartup();
     }
+    return super.open(authenticationInfo, config);
+  }
+
+  @Override
+  public ODatabaseDocumentEmbedded openNoAuthenticate(String name, String user) {
+    checkDbAvailableOpen(name);
+    return super.openNoAuthenticate(name, user);
+  }
+
+  @Override
+  public ODatabaseDocumentEmbedded openNoAuthorization(String name) {
+    // TODO: Some paths might need protection
+    return super.openNoAuthorization(name);
+  }
+
+  @Override
+  public ODatabasePoolInternal openPool(
+      String name, String user, String password, OrientDBConfig config) {
+    checkDbAvailableOpen(name);
+    return super.openPool(name, user, password, config);
+  }
+
+  @Override
+  public ODatabasePoolInternal cachedPool(
+      String database, String user, String password, OrientDBConfig config) {
+    checkDbAvailableOpen(database);
+    return super.cachedPool(database, user, password, config);
   }
 
   public static void dropStorageFiles(OLocalPaginatedStorage storage) {
