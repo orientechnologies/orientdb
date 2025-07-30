@@ -408,7 +408,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
   }
 
   @Override
-  public ODatabaseDocumentInternal open(String name, String user, String password) {
+  public final ODatabaseDocumentInternal open(String name, String user, String password) {
     return open(name, user, password, null);
   }
 
@@ -637,12 +637,12 @@ public class OrientDBEmbedded implements OrientDBInternal {
     return basePath + "/" + name;
   }
 
-  public void create(String name, String user, String password, ODatabaseType type) {
+  public final void create(String name, String user, String password, ODatabaseType type) {
     create(name, user, password, type, null);
   }
 
   @Override
-  public void create(
+  public final void create(
       String name, String user, String password, ODatabaseType type, OrientDBConfig config) {
     create(name, user, password, type, config, null);
   }
@@ -920,7 +920,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
     }
   }
 
-  public ODatabasePoolInternal openPool(String name, String user, String password) {
+  public final ODatabasePoolInternal openPool(String name, String user, String password) {
     return openPool(name, user, password, null);
   }
 
@@ -935,7 +935,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
   }
 
   @Override
-  public ODatabasePoolInternal cachedPool(String database, String user, String password) {
+  public final ODatabasePoolInternal cachedPool(String database, String user, String password) {
     return cachedPool(database, user, password, null);
   }
 
