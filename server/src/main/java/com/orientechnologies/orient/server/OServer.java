@@ -108,6 +108,7 @@ public class OServer {
       new ArrayList<OServerLifecycleListener>();
   protected OServerPluginManager pluginManager;
   protected OConfigurableHooksManager hookManager;
+
   /** Whether a distributed plugin is registered in the configuration */
   private volatile boolean distributedPluginEnabled;
 

@@ -141,7 +141,11 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   }
 
   private boolean isDistributedPluginEnabled() {
-    return server.isDistributedPluginEnabled();
+    if (server != null) {
+      return server.isDistributedPluginEnabled();
+    } else {
+      return false;
+    }
   }
 
   protected ODatabaseDocumentEmbedded newSessionInstance(OStorage storage, OrientDBConfig config) {
