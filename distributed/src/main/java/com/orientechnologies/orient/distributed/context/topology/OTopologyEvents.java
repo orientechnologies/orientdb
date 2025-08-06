@@ -4,5 +4,5 @@ import com.orientechnologies.orient.core.transaction.ONodeId;
 
 public interface OTopologyEvents {
 
-  void nodeDiscovered(ONodeId node);
+  ODiscoverAction nodeDiscovered(ONodeId node);
 }

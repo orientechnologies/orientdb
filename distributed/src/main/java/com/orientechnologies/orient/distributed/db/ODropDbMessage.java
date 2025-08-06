@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.distributed.db;
 
-import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -15,7 +14,7 @@ public class ODropDbMessage implements OOperationMessage {
     this.name = name;
   }
 
-  public void apply(OrientDBInternal ctx) {
+  public void apply(OrientDBDistributed ctx) {
     ctx.internalDrop(name);
   }
 

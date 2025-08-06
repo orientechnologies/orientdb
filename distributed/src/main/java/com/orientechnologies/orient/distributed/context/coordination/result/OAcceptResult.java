@@ -11,8 +11,9 @@ public interface OAcceptResult {
 
   static OAcceptResult readNetwork(DataInput input) throws IOException {
     return switch (input.readShort()) {
-      case 1 -> OInvalidSequentialAcceptResult.fromNetwork(input);
+      case 1 -> OInvalidSequential.fromNetwork(input);
       case 2 -> OQuorumNotReached.fromNetwork(input);
+      case 3 -> OAlreadyEnstablishedTopologyState.fromNetwork(input);
       default -> throw new ODistributedException("wrong accept result message type from network");
     };
   }

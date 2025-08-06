@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.distributed.context.topology;
 
-public enum OTopologyState {
-  BOOT,
-  ESTABLISHED
+public enum ODiscoverAction {
+  ESTABLISH,
+  ADD_NODE,
+  NONE,
 }

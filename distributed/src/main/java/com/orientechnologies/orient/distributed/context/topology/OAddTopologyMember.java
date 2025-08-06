@@ -1,9 +1,8 @@
 package com.orientechnologies.orient.distributed.context.topology;
 
-import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
-import com.orientechnologies.orient.distributed.context.coordination.result.OInvalidSequentialAcceptResult;
+import com.orientechnologies.orient.distributed.context.coordination.result.OInvalidSequential;
 import com.orientechnologies.orient.distributed.db.OOperationMessage;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import java.io.DataInput;
@@ -23,17 +22,16 @@ public class OAddTopologyMember implements OOperationMessage {
 
   @Override
   public Optional<OAcceptResult> validate(OrientDBDistributed ctx) {
-    if (ctx.getNodeState().getTopology().promise(version, node)) {
+    if (ctx.getNodeState().promiseRegister(node, version)) {
       return Optional.empty();
     } else {
-      return Optional.of(new OInvalidSequentialAcceptResult());
+      return Optional.of(new OInvalidSequential());
     }
   }
 
   @Override
-  public void apply(OrientDBInternal ctx) {
-    ((OrientDBDistributed) ctx).getNodeState().getTopology().confirm(version);
-    ((OrientDBDistributed) ctx).getNodeState().register(node);
+  public void apply(OrientDBDistributed ctx) {
+    ctx.getNodeState().register(node, version);
   }
 
   @Override

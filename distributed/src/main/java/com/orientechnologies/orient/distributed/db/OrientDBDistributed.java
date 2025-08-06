@@ -4,6 +4,7 @@ import static com.orientechnologies.orient.core.config.OGlobalConfiguration.FILE
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.FILE_DELETE_RETRY;
 
 import com.orientechnologies.common.concur.OOfflineNodeException;
+import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.Orient;
@@ -32,6 +33,10 @@ import com.orientechnologies.orient.distributed.context.ONodeState;
 import com.orientechnologies.orient.distributed.context.coordination.message.OProposeOp;
 import com.orientechnologies.orient.distributed.context.coordination.message.OStructuralMessage;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
+import com.orientechnologies.orient.distributed.context.topology.OAddTopologyMember;
+import com.orientechnologies.orient.distributed.context.topology.ODiscoverAction;
+import com.orientechnologies.orient.distributed.context.topology.OEnstablishTopology;
+import com.orientechnologies.orient.distributed.context.topology.StartEnstablish;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerAware;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
@@ -318,15 +323,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   }
 
   private void dropFlow(String name) {
-    var start = getNodeState().start(new OStandardCompleteAction(this));
-    ODropDbMessage op = new ODropDbMessage(name);
-    OProposeOp propose = new OProposeOp(start.promise(), op);
-    sendMessage(start.nodes(), propose);
-    try {
-      Optional<OAcceptResult> result = start.result().get();
-    } catch (InterruptedException | ExecutionException e) {
-      Thread.currentThread().interrupt();
-    }
+    distributedOperation(new ODropDbMessage(name));
   }
 
   public void sendMessage(Set<ONodeId> set, OStructuralMessage op) {
@@ -667,9 +664,42 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     return messageService;
   }
 
+  public void discover(ONodeId node) {
+    ONodeState state = getNodeState();
+    ODiscoverAction action = state.discover(node);
+    switch (action) {
+      case ESTABLISH -> {
+        StartEnstablish start = state.startEnstablish(new OStandardCompleteAction(this));
+        OEnstablishTopology operation = new OEnstablishTopology(start.candidates());
+        sendMessage(start.candidates(), new OProposeOp(start.idPromise(), operation));
+      }
+      case ADD_NODE -> {
+        distributedOperation(new OAddTopologyMember(state.getTopologyVersion(), node));
+      }
+      case NONE -> {}
+    }
+  }
+
+  private Optional<OAcceptResult> distributedOperation(OOperationMessage operation) {
+    var start = getNodeState().start(new OStandardCompleteAction(this));
+    OProposeOp propose = new OProposeOp(start.promise(), operation);
+    sendMessage(start.nodes(), propose);
+    try {
+      return start.result().get();
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw OException.wrapException(
+          new OInterruptedException("Interrupted distributed future"), e);
+    } catch (ExecutionException e) {
+      throw OException.wrapException(
+          new OInterruptedException("Execution exception distributed future"), e);
+    }
+  }
+
   public synchronized ONodeState getNodeState() {
     if (nodeState == null) {
-      nodeState = new ONodeState(new ONodeId(getPlugin().getLocalNodeName()));
+      // TODO: provide minimum quorum;
+      nodeState = new ONodeState(new ONodeId(getPlugin().getLocalNodeName()), 0);
     }
     return this.nodeState;
   }

@@ -12,7 +12,7 @@ import com.orientechnologies.orient.distributed.context.coordination.message.OFa
 import com.orientechnologies.orient.distributed.context.coordination.message.OProposeOp;
 import com.orientechnologies.orient.distributed.context.coordination.message.OStructuralMessage;
 import com.orientechnologies.orient.distributed.context.coordination.message.OSuccessPropose;
-import com.orientechnologies.orient.distributed.context.coordination.result.OInvalidSequentialAcceptResult;
+import com.orientechnologies.orient.distributed.context.coordination.result.OInvalidSequential;
 import com.orientechnologies.orient.distributed.db.ODropDbMessage;
 import com.orientechnologies.orient.distributed.db.OOperationMessage;
 import java.io.ByteArrayInputStream;
@@ -77,13 +77,13 @@ public class CoordinationMessagesSerializationTest {
 
     ONodeId reply = newNodeId();
     OTransactionIdPromise id = newPromiseId();
-    OFailPropose succ = new OFailPropose(reply, id, new OInvalidSequentialAcceptResult());
+    OFailPropose succ = new OFailPropose(reply, id, new OInvalidSequential());
 
     OFailPropose read = (OFailPropose) writeRead(succ);
 
     assertEquals(read.getPromise(), id);
     assertEquals(read.getNodeId(), reply);
-    assertTrue(read.getAcceptResult() instanceof OInvalidSequentialAcceptResult);
+    assertTrue(read.getAcceptResult() instanceof OInvalidSequential);
   }
 
   @Test

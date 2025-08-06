@@ -1,13 +1,11 @@
 package com.orientechnologies.orient.distributed.context.coordination.message;
 
-import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.distributed.context.ONodeState;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
-import com.orientechnologies.orient.distributed.context.coordination.result.OInvalidSequentialAcceptResult;
+import com.orientechnologies.orient.distributed.context.coordination.result.OInvalidSequential;
 import com.orientechnologies.orient.distributed.db.OOperationMessage;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
-import com.orientechnologies.orient.server.distributed.ODistributedMessage;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -41,12 +39,12 @@ public class OProposeOp implements OStructuralMessage, ODistributedMessage {
     } else {
       ctx.sendMessage(
           Collections.singleton(promise.getCoordinator()),
-          new OFailPropose(nodeState.getNodeId(), promise, new OInvalidSequentialAcceptResult()));
+          new OFailPropose(nodeState.getNodeId(), promise, new OInvalidSequential()));
     }
   }
 
   @Override
-  public void apply(OrientDBInternal ctx) {
+  public void apply(OrientDBDistributed ctx) {
     this.op.apply(ctx);
   }
 

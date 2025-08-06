@@ -5,6 +5,9 @@ import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.distributed.context.OResponseCollector.CompleteInfo;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
+import com.orientechnologies.orient.distributed.context.topology.ODiscoverAction;
+import com.orientechnologies.orient.distributed.context.topology.OTopologyManager;
+import com.orientechnologies.orient.distributed.context.topology.StartEnstablish;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import java.util.Collections;
 import java.util.HashMap;
@@ -17,37 +20,29 @@ import java.util.concurrent.CompletableFuture;
 
 public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOps {
 
+  private OTopologyManager topology;
+
   private final Map<OTransactionIdPromise, OResponseCollector> coordination = new HashMap<>();
   private final Map<OTransactionId, CompletableFuture<Optional<OAcceptResult>>> completion =
       new HashMap<>();
-  private final Set<ONodeId> activeNodes = new HashSet<>();
-  private final Set<ONodeId> publicNodes = Collections.unmodifiableSet(activeNodes);
-  private final int minQuorum;
-  private volatile int quorum;
 
   public OCoordinatedDistributedOpsImpl(int quorum) {
-    this.minQuorum = quorum;
-    this.quorum = quorum;
+    topology = new OTopologyManager(quorum);
   }
 
-  public synchronized void registerNode(ONodeId node) {
-    if (activeNodes.add(node)) {
-      int newQuorum = (activeNodes.size() / 2) + 1;
-      if (newQuorum >= minQuorum) {
-        this.quorum = newQuorum;
-      }
-    }
+  @Override
+  public ODiscoverAction discoverNode(ONodeId node) {
+    return this.topology.nodeDiscovered(node);
   }
 
-  public void unregisterNode(ONodeId node) {
+  public synchronized void registerNode(ONodeId node, long version) {
+    this.topology.register(node, version);
+  }
+
+  public void unregisterNode(ONodeId node, long version) {
     Optional<CompleteInfo> action = Optional.empty();
     synchronized (this) {
-      if (activeNodes.remove(node)) {
-        int newQuorum = (activeNodes.size() / 2) + 1;
-        if (newQuorum >= minQuorum) {
-          this.quorum = newQuorum;
-        }
-      }
+      this.topology.unregister(node, version);
       Iterator<OResponseCollector> iterator = coordination.values().iterator();
       while (iterator.hasNext()) {
         OResponseCollector coll = iterator.next();
@@ -66,14 +61,14 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
 
   @Override
   public synchronized OOperationStart start(OTransactionIdPromise promise, OCompleteAction action) {
-    if (this.activeNodes.size() < this.minQuorum) {
+    if (this.topology.enoughNodes()) {
       throw new ODistributedException(
           String.format(
               "No enough nodes to coordinate an opertion with quorum: %d know nodes:%s",
-              this.minQuorum, this.activeNodes.toString()));
+              this.topology.getMinimumQuorum(), this.getMembers().toString()));
     }
-    Set<ONodeId> nodes = Collections.unmodifiableSet(new HashSet<>(activeNodes));
-    coordination.put(promise, new OResponseCollector(action, promise, quorum, nodes));
+    Set<ONodeId> nodes = Collections.unmodifiableSet(new HashSet<>(topology.getMembers()));
+    coordination.put(promise, new OResponseCollector(action, promise, topology.getQuorum(), nodes));
     CompletableFuture<Optional<OAcceptResult>> future = new CompletableFuture<>();
     completion.put(promise.getId(), future);
     return new OOperationStart(promise, nodes, future);
@@ -113,7 +108,7 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
     }
     if (action.isPresent()) {
       CompleteInfo info = action.get();
-      info.action().failure(promise, activeNodes);
+      info.action().failure(promise, this.topology.getMembers());
       completeWithResult(promise.getId(), info.result());
     }
   }
@@ -131,7 +126,38 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
     completeWithResult(complete, Optional.empty());
   }
 
-  public Set<ONodeId> getActiveNodes() {
-    return this.publicNodes;
+  @Override
+  public Set<ONodeId> getMembers() {
+    return topology.getMembers();
+  }
+
+  @Override
+  public boolean promiseRegister(ONodeId node, long version) {
+    return topology.promise(node, version);
+  }
+
+  @Override
+  public void enstablish(Set<ONodeId> candidates) {
+    this.topology.finalizeEnstablish(candidates);
+  }
+
+  @Override
+  public Optional<OAcceptResult> validateEnstablish(Set<ONodeId> candidates) {
+    return this.topology.validateEnstablish(candidates);
+  }
+
+  @Override
+  public StartEnstablish startEnstablish(OTransactionIdPromise idPromise, OCompleteAction action) {
+    StartEnstablish start = this.topology.startEnstablish(idPromise);
+    coordination.put(
+        start.idPromise(),
+        new OResponseCollector(
+            action, start.idPromise(), topology.getQuorum(), start.candidates()));
+    return start;
+  }
+
+  @Override
+  public long getTopologyVersion() {
+    return topology.getVersion();
   }
 }

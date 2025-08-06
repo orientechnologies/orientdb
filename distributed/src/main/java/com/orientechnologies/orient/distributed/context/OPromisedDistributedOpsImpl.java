@@ -1,7 +1,7 @@
 package com.orientechnologies.orient.distributed.context;
 
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
-import com.orientechnologies.orient.server.distributed.ODistributedMessage;
+import com.orientechnologies.orient.distributed.context.coordination.message.ODistributedMessage;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 

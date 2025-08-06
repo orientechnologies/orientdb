@@ -4,15 +4,15 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-public class OInvalidSequentialAcceptResult implements OAcceptResult {
+public class OInvalidSequential implements OAcceptResult {
 
   @Override
   public boolean canRetry() {
     return true;
   }
 
-  public static OInvalidSequentialAcceptResult fromNetwork(DataInput input) throws IOException {
-    return new OInvalidSequentialAcceptResult();
+  public static OInvalidSequential fromNetwork(DataInput input) throws IOException {
+    return new OInvalidSequential();
   }
 
   @Override

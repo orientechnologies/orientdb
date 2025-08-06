@@ -6,11 +6,13 @@ import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.core.transaction.OTransactionSequenceManager;
 import com.orientechnologies.orient.core.tx.OTxMetadataHolderImpl;
 import com.orientechnologies.orient.core.tx.ValidationResult;
+import com.orientechnologies.orient.distributed.context.coordination.message.ODistributedMessage;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
-import com.orientechnologies.orient.distributed.context.topology.OTopologyManager;
-import com.orientechnologies.orient.server.distributed.ODistributedMessage;
+import com.orientechnologies.orient.distributed.context.topology.ODiscoverAction;
+import com.orientechnologies.orient.distributed.context.topology.StartEnstablish;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 
 public class ONodeState {
@@ -21,19 +23,14 @@ public class ONodeState {
   private final OCoordinatedDistributedOps coordinated;
   private final ONodeId nodeId;
   private final OAppliedState state;
-  private final OTopologyManager topology;
 
-  public ONodeState(ONodeId current) {
+  public ONodeState(ONodeId current, int minimumQuorum) {
     sequenceManager = new OTransactionSequenceManager(current, 3);
     state = new OAppliedState(3);
     log = new ODistributedMessageLogMemory();
     promised = new OPromisedDistributedOpsImpl();
-    // TODO: provide minimum quorum;
-    coordinated = new OCoordinatedDistributedOpsImpl(0);
-    coordinated.registerNode(current);
-    topology = new OTopologyManager(0, null);
-    topology.nodeDiscovered(current);
-
+    coordinated = new OCoordinatedDistributedOpsImpl(minimumQuorum);
+    coordinated.discoverNode(current);
     nodeId = current;
   }
 
@@ -50,17 +47,16 @@ public class ONodeState {
     this.coordinated.failure(node, promise, acceptResult);
   }
 
-  public void discover(ONodeId node) {
-    this.topology.nodeDiscovered(node);
+  public ODiscoverAction discover(ONodeId node) {
+    return this.coordinated.discoverNode(node);
   }
 
-  public void register(ONodeId node) {
-    this.topology.finalize(node);
-    this.coordinated.registerNode(node);
+  public void register(ONodeId node, long version) {
+    this.coordinated.registerNode(node, version);
   }
 
-  public void unregister(ONodeId node) {
-    this.coordinated.unregisterNode(node);
+  public void unregister(ONodeId node, long version) {
+    this.coordinated.unregisterNode(node, version);
   }
 
   private void fill(Optional<byte[]> lastMetadata) {
@@ -153,7 +149,24 @@ public class ONodeState {
     }
   }
 
-  public OTopologyManager getTopology() {
-    return topology;
+  public boolean promiseRegister(ONodeId node, long version) {
+    return this.coordinated.promiseRegister(node, version);
+  }
+
+  public void enstablish(Set<ONodeId> candidates) {
+    this.coordinated.enstablish(candidates);
+  }
+
+  public Optional<OAcceptResult> validateEnstablish(Set<ONodeId> candidates) {
+    return this.coordinated.validateEnstablish(candidates);
+  }
+
+  public StartEnstablish startEnstablish(OCompleteAction action) {
+    Optional<OTransactionIdPromise> prom = this.sequenceManager.next();
+    return this.coordinated.startEnstablish(prom.get(), action);
+  }
+
+  public long getTopologyVersion() {
+    return this.coordinated.getTopologyVersion();
   }
 }

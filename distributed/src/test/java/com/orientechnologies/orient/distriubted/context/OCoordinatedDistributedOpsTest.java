@@ -10,7 +10,7 @@ import com.orientechnologies.orient.distributed.context.OCompleteAction;
 import com.orientechnologies.orient.distributed.context.OCoordinatedDistributedOps;
 import com.orientechnologies.orient.distributed.context.OCoordinatedDistributedOpsImpl;
 import com.orientechnologies.orient.distributed.context.OOperationStart;
-import com.orientechnologies.orient.distributed.context.coordination.result.OInvalidSequentialAcceptResult;
+import com.orientechnologies.orient.distributed.context.coordination.result.OInvalidSequential;
 import com.orientechnologies.orient.distributed.context.coordination.result.OQuorumNotReached;
 import java.util.Set;
 import java.util.UUID;
@@ -43,9 +43,9 @@ public class OCoordinatedDistributedOpsTest {
     TestAction action = new TestAction();
     OCoordinatedDistributedOps ops = new OCoordinatedDistributedOpsImpl(2);
     ONodeId nodeId = newRandomNodeId();
-    ops.registerNode(nodeId);
+    ops.registerNode(nodeId, 0);
     ONodeId nodeIdtwo = newRandomNodeId();
-    ops.registerNode(nodeIdtwo);
+    ops.registerNode(nodeIdtwo, 0);
 
     OTransactionId txId = new OTransactionId(0, 1);
     OTransactionIdPromise promise = new OTransactionIdPromise(nodeId, txId);
@@ -62,15 +62,15 @@ public class OCoordinatedDistributedOpsTest {
     TestAction action = new TestAction();
     OCoordinatedDistributedOps ops = new OCoordinatedDistributedOpsImpl(2);
     ONodeId nodeId = newRandomNodeId();
-    ops.registerNode(nodeId);
+    ops.registerNode(nodeId, 0);
     ONodeId nodeIdtwo = newRandomNodeId();
-    ops.registerNode(nodeIdtwo);
+    ops.registerNode(nodeIdtwo, 0);
 
     OTransactionId txId = new OTransactionId(0, 1);
     OTransactionIdPromise promise = new OTransactionIdPromise(nodeId, txId);
     ops.start(promise, action);
     ops.success(nodeId, promise);
-    ops.failure(nodeIdtwo, promise, new OInvalidSequentialAcceptResult());
+    ops.failure(nodeIdtwo, promise, new OInvalidSequential());
 
     assertFalse(action.success);
     assertTrue(action.failure);
@@ -81,13 +81,13 @@ public class OCoordinatedDistributedOpsTest {
     TestAction action = new TestAction();
     OCoordinatedDistributedOps ops = new OCoordinatedDistributedOpsImpl(2);
     ONodeId nodeId = newRandomNodeId();
-    ops.registerNode(nodeId);
+    ops.registerNode(nodeId, 0);
     ONodeId nodeIdtwo = newRandomNodeId();
-    ops.registerNode(nodeIdtwo);
+    ops.registerNode(nodeIdtwo, 0);
     ONodeId nodeIdthree = newRandomNodeId();
-    ops.registerNode(nodeIdthree);
+    ops.registerNode(nodeIdthree, 0);
     ONodeId nodeIdFour = newRandomNodeId();
-    ops.registerNode(nodeIdFour);
+    ops.registerNode(nodeIdFour, 0);
 
     OTransactionId txId = new OTransactionId(0, 1);
     OTransactionIdPromise promise = new OTransactionIdPromise(nodeId, txId);
@@ -108,16 +108,16 @@ public class OCoordinatedDistributedOpsTest {
     TestAction action = new TestAction();
     OCoordinatedDistributedOps ops = new OCoordinatedDistributedOpsImpl(2);
     ONodeId nodeId = newRandomNodeId();
-    ops.registerNode(nodeId);
+    ops.registerNode(nodeId, 0);
     ONodeId nodeIdtwo = newRandomNodeId();
-    ops.registerNode(nodeIdtwo);
+    ops.registerNode(nodeIdtwo, 0);
     ONodeId nodeIdthree = newRandomNodeId();
-    ops.registerNode(nodeIdthree);
+    ops.registerNode(nodeIdthree, 0);
     ONodeId nodeIdFour = newRandomNodeId();
-    ops.registerNode(nodeIdFour);
+    ops.registerNode(nodeIdFour, 0);
 
-    ops.unregisterNode(nodeIdthree);
-    ops.unregisterNode(nodeIdFour);
+    ops.unregisterNode(nodeIdthree, 0);
+    ops.unregisterNode(nodeIdFour, 0);
 
     OTransactionId txId = new OTransactionId(0, 1);
     OTransactionIdPromise promise = new OTransactionIdPromise(nodeId, txId);
@@ -133,15 +133,15 @@ public class OCoordinatedDistributedOpsTest {
     TestAction action = new TestAction();
     OCoordinatedDistributedOps ops = new OCoordinatedDistributedOpsImpl(2);
     ONodeId nodeId = newRandomNodeId();
-    ops.registerNode(nodeId);
+    ops.registerNode(nodeId, 0);
     ONodeId nodeIdtwo = newRandomNodeId();
-    ops.registerNode(nodeIdtwo);
+    ops.registerNode(nodeIdtwo, 0);
 
     OTransactionId txId = new OTransactionId(0, 1);
     OTransactionIdPromise promise = new OTransactionIdPromise(nodeId, txId);
     OOperationStart start = ops.start(promise, action);
     ops.success(nodeId, promise);
-    ops.unregisterNode(nodeIdtwo);
+    ops.unregisterNode(nodeIdtwo, 0);
     assertTrue(action.failure);
     assertFalse(action.success);
     assertTrue(start.result().get().get() instanceof OQuorumNotReached);
@@ -153,21 +153,21 @@ public class OCoordinatedDistributedOpsTest {
     TestAction action = new TestAction();
     OCoordinatedDistributedOps ops = new OCoordinatedDistributedOpsImpl(2);
     ONodeId nodeId = newRandomNodeId();
-    ops.registerNode(nodeId);
+    ops.registerNode(nodeId, 0);
     ONodeId nodeIdtwo = newRandomNodeId();
-    ops.registerNode(nodeIdtwo);
+    ops.registerNode(nodeIdtwo, 0);
     ONodeId nodeIdthree = newRandomNodeId();
-    ops.registerNode(nodeIdthree);
+    ops.registerNode(nodeIdthree, 0);
     ONodeId nodeIdFour = newRandomNodeId();
-    ops.registerNode(nodeIdFour);
+    ops.registerNode(nodeIdFour, 0);
 
     OTransactionId txId = new OTransactionId(0, 1);
     OTransactionIdPromise promise = new OTransactionIdPromise(nodeId, txId);
     OOperationStart start = ops.start(promise, action);
     ops.success(nodeId, promise);
     ops.success(nodeIdtwo, promise);
-    ops.unregisterNode(nodeIdthree);
-    ops.failure(nodeIdFour, promise, new OInvalidSequentialAcceptResult());
+    ops.unregisterNode(nodeIdthree, 0);
+    ops.failure(nodeIdFour, promise, new OInvalidSequential());
     assertTrue(action.failure);
     assertFalse(action.success);
     assertTrue(start.result().get().get() instanceof OQuorumNotReached);

@@ -1,7 +1,7 @@
 package com.orientechnologies.orient.distributed.context;
 
 import com.orientechnologies.orient.core.transaction.OTransactionId;
-import com.orientechnologies.orient.server.distributed.ODistributedMessage;
+import com.orientechnologies.orient.distributed.context.coordination.message.ODistributedMessage;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;

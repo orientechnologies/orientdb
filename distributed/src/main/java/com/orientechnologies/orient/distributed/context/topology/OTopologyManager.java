@@ -1,77 +1,56 @@
 package com.orientechnologies.orient.distributed.context.topology;
 
 import com.orientechnologies.orient.core.transaction.ONodeId;
+import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
+import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
+import com.orientechnologies.orient.distributed.context.coordination.result.OAlreadyEnstablishedTopologyState;
+import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 
 public class OTopologyManager implements OTopologyEvents {
 
-  private OTopologyState state = OTopologyState.INITIAL;
-  private Set<ONodeId> members;
-  private Set<ONodeId> candidates;
-  private long version = 0;
-  private int minimumQuorum;
-  private final OTopologyAction action;
+  private OTopologyState state = OTopologyState.BOOT;
+  private Set<ONodeId> members = new HashSet<>();
+  private Set<ONodeId> candidates = new HashSet<>();
+  private volatile long version = 0;
+  private volatile int minimumQuorum;
+  private volatile int quorum = 0;
 
-  public OTopologyManager(int minimumQuorum, OTopologyAction action) {
+  public OTopologyManager(int minimumQuorum) {
     this.minimumQuorum = minimumQuorum;
-    this.action = action;
   }
 
   @Override
-  public void nodeDiscovered(ONodeId node) {
-    Runnable toRun = null;
-    synchronized (this) {
-      if (state == OTopologyState.INITIAL) {
-        addToPotential(node);
-        if (canEstablish()) {
-          toRun = enstablish(candidates);
-        }
-      } else if (!hasMember(node)) {
-        toRun = newMemberAction(node);
+  public synchronized ODiscoverAction nodeDiscovered(ONodeId node) {
+    if (state == OTopologyState.BOOT) {
+      addToCandidates(node);
+      if (canEstablish()) {
+        return ODiscoverAction.ESTABLISH;
       }
+    } else if (!hasMember(node)) {
+      return ODiscoverAction.ADD_NODE;
     }
-    if (toRun != null) {
-      toRun.run();
-    }
+    return ODiscoverAction.NONE;
   }
 
   protected boolean hasMember(ONodeId node) {
     return members.contains(node);
   }
 
-  /** Run a two phase operation for add the member to the list of the member
-   * @param version
-   *
-   */
-  private Runnable newMemberAction(ONodeId node) {
-    return () -> {
-      action.send(new OAddTopologyMember(version, node));
-    };
-  }
-
   private boolean canEstablish() {
     return candidates.size() > minimumQuorum;
   }
 
-  /** Run a two phase operation for agree the initial list of nodes participating in the network
-   * @param candidates
-   *
-   */
-  private Runnable enstablish(Set<ONodeId> candidates) {
-    return () -> {
-      action.enstablish(new OEnstablishTopology());
-    };
-  }
-
-  private void addToPotential(ONodeId node) {
+  private synchronized void addToCandidates(ONodeId node) {
     candidates.add(node);
   }
 
-  public synchronized long getVersion() {
+  public long getVersion() {
     return version;
   }
 
-  public synchronized boolean promise(long version, ONodeId node) {
+  public synchronized boolean promise(ONodeId node, long version) {
     if (this.version == version) {
       // TOOD: hold and check promise
       return true;
@@ -80,11 +59,57 @@ public class OTopologyManager implements OTopologyEvents {
     }
   }
 
-  public synchronized void finalize(ONodeId node) {
-    this.members.add(node);
+  public synchronized void register(ONodeId node, long version) {
+    if (members.add(node)) {
+      int newQuorum = (members.size() / 2) + 1;
+      if (newQuorum >= minimumQuorum) {
+        this.quorum = newQuorum;
+      }
+    }
+    this.version = version;
   }
 
-  public synchronized void confirm(long version) {
+  public synchronized boolean enoughNodes() {
+    return this.members.size() < this.minimumQuorum;
+  }
+
+  public synchronized void unregister(ONodeId node, long version) {
+    if (members.remove(node)) {
+      int newQuorum = (members.size() / 2) + 1;
+      if (newQuorum >= minimumQuorum) {
+        this.quorum = newQuorum;
+      }
+    }
     this.version = version;
+  }
+
+  public int getQuorum() {
+    return quorum;
+  }
+
+  public int getMinimumQuorum() {
+    return minimumQuorum;
+  }
+
+  public Set<ONodeId> getMembers() {
+    // Would be better to have members being copy on write
+    return new HashSet(members);
+  }
+
+  public synchronized void finalizeEnstablish(Set<ONodeId> candidates) {
+    this.state = OTopologyState.ESTABLISHED;
+    this.candidates = candidates;
+    this.version = 0;
+  }
+
+  public synchronized Optional<OAcceptResult> validateEnstablish(Set<ONodeId> candidates) {
+    if (this.state == OTopologyState.BOOT) {
+      return Optional.empty();
+    }
+    return Optional.of(new OAlreadyEnstablishedTopologyState());
+  }
+
+  public synchronized StartEnstablish startEnstablish(OTransactionIdPromise idPromise) {
+    return new StartEnstablish(idPromise, candidates);
   }
 }
