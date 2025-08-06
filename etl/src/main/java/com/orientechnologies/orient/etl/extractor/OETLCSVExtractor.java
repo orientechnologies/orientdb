@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVFormat.Builder;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
 
@@ -95,19 +96,20 @@ public class OETLCSVExtractor extends OETLAbstractSourceExtractor {
   public void configure(ODocument iConfiguration, OCommandContext iContext) {
     super.configure(iConfiguration, iContext);
 
-    csvFormat =
+    Builder builder =
         CSVFormat.newFormat(',')
-            .withNullString(NULL_STRING)
-            .withEscape('\\')
-            .withQuote('"')
-            .withCommentMarker('#');
+            .builder()
+            .setNullString(NULL_STRING)
+            .setEscape('\\')
+            .setQuote('"')
+            .setCommentMarker('#');
 
     if (iConfiguration.containsField("predefinedFormat")) {
-      csvFormat = CSVFormat.valueOf(iConfiguration.<String>field("predefinedFormat"));
+      builder = CSVFormat.valueOf(iConfiguration.<String>field("predefinedFormat")).builder();
     }
 
     if (iConfiguration.containsField("separator")) {
-      csvFormat = csvFormat.withDelimiter(iConfiguration.field("separator").toString().charAt(0));
+      builder = builder.setDelimiter(iConfiguration.field("separator").toString().charAt(0));
     }
 
     if (iConfiguration.containsField("dateFormat")) {
@@ -119,24 +121,24 @@ public class OETLCSVExtractor extends OETLAbstractSourceExtractor {
 
     if (iConfiguration.containsField("ignoreEmptyLines")) {
       boolean ignoreEmptyLines = iConfiguration.field("ignoreEmptyLines");
-      csvFormat = csvFormat.withIgnoreEmptyLines(ignoreEmptyLines);
+      builder = builder.setIgnoreEmptyLines(ignoreEmptyLines);
     }
 
     if (iConfiguration.containsField("ignoreMissingColumns")) {
       boolean ignoreMissingColumns = iConfiguration.field("ignoreMissingColumns");
-      csvFormat = csvFormat.withAllowMissingColumnNames(ignoreMissingColumns);
+      builder = builder.setAllowMissingColumnNames(ignoreMissingColumns);
     }
 
     if (iConfiguration.containsField("columnsOnFirstLine")) {
       Boolean columnsOnFirstLine = (Boolean) iConfiguration.field("columnsOnFirstLine");
       if (columnsOnFirstLine.equals(Boolean.TRUE)) {
-        csvFormat = csvFormat.withHeader();
+        builder = builder.setHeader();
       } else {
-        csvFormat = csvFormat.withAllowMissingColumnNames();
+        builder = builder.setAllowMissingColumnNames(true);
       }
     } else {
-      csvFormat = csvFormat.withHeader();
-      csvFormat = csvFormat.withAllowMissingColumnNames();
+      builder = builder.setHeader();
+      builder = builder.setAllowMissingColumnNames(true);
     }
 
     if (iConfiguration.containsField("columns")) {
@@ -155,7 +157,8 @@ public class OETLCSVExtractor extends OETLAbstractSourceExtractor {
       }
 
       info("column types: %s", columnTypes);
-      csvFormat = csvFormat.withHeader(columnNames.toArray(new String[] {})).withSkipHeaderRecord();
+      builder = builder.setHeader(columnNames.toArray(new String[] {}));
+      builder = builder.setSkipHeaderRecord(true);
     }
 
     if (iConfiguration.containsField("skipFrom")) {
@@ -168,15 +171,16 @@ public class OETLCSVExtractor extends OETLAbstractSourceExtractor {
 
     if (iConfiguration.containsField("nullValue")) {
       nullValue = iConfiguration.<String>field("nullValue");
-      csvFormat = csvFormat.withNullString(nullValue);
+      builder = builder.setNullString(nullValue);
     }
 
     if (iConfiguration.containsField("quote")) {
       final String value = iConfiguration.field("quote").toString();
       if (!value.isEmpty()) {
-        csvFormat = csvFormat.withQuote(value.charAt(0));
+        builder = builder.setQuote(value.charAt(0));
       }
     }
+    csvFormat = builder.get();
   }
 
   @Override
@@ -184,7 +188,7 @@ public class OETLCSVExtractor extends OETLAbstractSourceExtractor {
     super.extract(iReader);
     try {
 
-      CSVParser parser = new CSVParser(iReader, csvFormat);
+      CSVParser parser = CSVParser.parse(iReader, csvFormat);
 
       recordIterator = parser.iterator();
     } catch (IOException e) {
