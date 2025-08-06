@@ -584,8 +584,8 @@ public class OETLCSVExtractorTest extends OETLBaseTest {
   @Test
   public void testMissingColumns() {
     String cfgJson =
-        "{source: { content: { value: 'name,value,,\n"
-            + "frank,myvalue,,'} }, extractor : { csv : { \"ignoreMissingColumns\": true } },"
+        "{source: { content: { value: 'name,value,\n"
+            + "frank,myvalue,'} }, extractor : { csv : { \"ignoreMissingColumns\": true } },"
             + " loader : { test: {} } }";
     configure(cfgJson);
     proc.execute();
