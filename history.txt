@@ -26,6 +26,25 @@
 
 This document contains the last changes of OrientDB Community Edition.
 
+
+-----------------------------------------------------------------------------------------------------------------------------------
+VERSION 3.2.43 - (August, 7 2025)
+- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3243---7-August-2025
+
+# Core
+
+- Fix tracking of nested queries called by functions or scripts
+- Add tracing support to scheduled executor services
+- Eliminate duplicate schedule task code
+
+# Distributed
+
+- Minor consistency fixes in embedded DB create/open input validation
+- Detect distributed setup early in activate process
+- Detect when distributed plugin startup is complete
+- Reliably detect distributed plugin enabled
+- Guard distributed database open actions
+
 -----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.42 - (July, 4 2025)
 - Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3242---4-July-2025
