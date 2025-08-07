@@ -7,7 +7,7 @@ import com.orientechnologies.orient.distributed.context.coordination.message.OCo
 import com.orientechnologies.orient.distributed.context.coordination.message.OFailOp;
 import java.util.Set;
 
-final class OStandardCompleteAction implements OCompleteAction {
+public final class OStandardCompleteAction implements OCompleteAction {
   private final OrientDBDistributed context;
 
   public OStandardCompleteAction(OrientDBDistributed context) {

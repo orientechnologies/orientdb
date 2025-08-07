@@ -33,10 +33,7 @@ import com.orientechnologies.orient.distributed.context.ONodeState;
 import com.orientechnologies.orient.distributed.context.coordination.message.OProposeOp;
 import com.orientechnologies.orient.distributed.context.coordination.message.OStructuralMessage;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
-import com.orientechnologies.orient.distributed.context.topology.OAddTopologyMember;
 import com.orientechnologies.orient.distributed.context.topology.ODiscoverAction;
-import com.orientechnologies.orient.distributed.context.topology.OEnstablishTopology;
-import com.orientechnologies.orient.distributed.context.topology.StartEnstablish;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerAware;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
@@ -667,20 +664,10 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   public void discover(ONodeId node) {
     ONodeState state = getNodeState();
     ODiscoverAction action = state.discover(node);
-    switch (action) {
-      case ESTABLISH -> {
-        StartEnstablish start = state.startEnstablish(new OStandardCompleteAction(this));
-        OEnstablishTopology operation = new OEnstablishTopology(start.candidates());
-        sendMessage(start.candidates(), new OProposeOp(start.idPromise(), operation));
-      }
-      case ADD_NODE -> {
-        distributedOperation(new OAddTopologyMember(state.getTopologyVersion(), node));
-      }
-      case NONE -> {}
-    }
+    action.execute(this);
   }
 
-  private Optional<OAcceptResult> distributedOperation(OOperationMessage operation) {
+  public Optional<OAcceptResult> distributedOperation(OOperationMessage operation) {
     var start = getNodeState().start(new OStandardCompleteAction(this));
     OProposeOp propose = new OProposeOp(start.promise(), operation);
     sendMessage(start.nodes(), propose);

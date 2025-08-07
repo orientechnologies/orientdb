@@ -1,9 +1,11 @@
 package com.orientechnologies.orient.distributed.context.topology;
 
 import com.orientechnologies.orient.core.transaction.ONodeId;
-import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAlreadyEnstablishedTopologyState;
+import com.orientechnologies.orient.distributed.context.topology.ODiscoverAction.OAddNodeAction;
+import com.orientechnologies.orient.distributed.context.topology.ODiscoverAction.OEstablishAction;
+import com.orientechnologies.orient.distributed.context.topology.ODiscoverAction.ONoneAction;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -26,12 +28,12 @@ public class OTopologyManager implements OTopologyEvents {
     if (state == OTopologyState.BOOT) {
       addToCandidates(node);
       if (canEstablish()) {
-        return ODiscoverAction.ESTABLISH;
+        return new OEstablishAction(new HashSet<>(candidates));
       }
     } else if (!hasMember(node)) {
-      return ODiscoverAction.ADD_NODE;
+      return new OAddNodeAction(node, version);
     }
-    return ODiscoverAction.NONE;
+    return new ONoneAction();
   }
 
   protected boolean hasMember(ONodeId node) {
@@ -107,9 +109,5 @@ public class OTopologyManager implements OTopologyEvents {
       return Optional.empty();
     }
     return Optional.of(new OAlreadyEnstablishedTopologyState());
-  }
-
-  public synchronized StartEnstablish startEnstablish(OTransactionIdPromise idPromise) {
-    return new StartEnstablish(idPromise, candidates);
   }
 }

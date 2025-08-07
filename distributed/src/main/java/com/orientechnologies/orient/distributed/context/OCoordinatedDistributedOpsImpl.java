@@ -7,7 +7,6 @@ import com.orientechnologies.orient.distributed.context.OResponseCollector.Compl
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import com.orientechnologies.orient.distributed.context.topology.ODiscoverAction;
 import com.orientechnologies.orient.distributed.context.topology.OTopologyManager;
-import com.orientechnologies.orient.distributed.context.topology.StartEnstablish;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import java.util.Collections;
 import java.util.HashMap;
@@ -147,17 +146,9 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   }
 
   @Override
-  public StartEnstablish startEnstablish(OTransactionIdPromise idPromise, OCompleteAction action) {
-    StartEnstablish start = this.topology.startEnstablish(idPromise);
+  public void startEstablish(
+      OTransactionIdPromise idPromise, Set<ONodeId> nodes, OCompleteAction action) {
     coordination.put(
-        start.idPromise(),
-        new OResponseCollector(
-            action, start.idPromise(), topology.getQuorum(), start.candidates()));
-    return start;
-  }
-
-  @Override
-  public long getTopologyVersion() {
-    return topology.getVersion();
+        idPromise, new OResponseCollector(action, idPromise, topology.getQuorum(), nodes));
   }
 }

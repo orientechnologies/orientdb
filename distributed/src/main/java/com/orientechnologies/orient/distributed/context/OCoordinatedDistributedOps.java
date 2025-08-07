@@ -5,11 +5,12 @@ import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import com.orientechnologies.orient.distributed.context.topology.ODiscoverAction;
-import com.orientechnologies.orient.distributed.context.topology.StartEnstablish;
 import java.util.Optional;
 import java.util.Set;
 
 public interface OCoordinatedDistributedOps {
+
+  // Methods for coordinations of structural operations not of nodes
 
   OOperationStart start(OTransactionIdPromise promise, OCompleteAction action);
 
@@ -17,23 +18,24 @@ public interface OCoordinatedDistributedOps {
 
   void failure(ONodeId node, OTransactionIdPromise promise, OAcceptResult acceptResult);
 
-  void unregisterNode(ONodeId node, long version);
+  void completeExecution(OTransactionId complete);
 
-  void registerNode(ONodeId node, long version);
+  // Methods for coordinations of operations to add and remove nodes
 
   ODiscoverAction discoverNode(ONodeId node);
 
-  Set<ONodeId> getMembers();
-
-  void completeExecution(OTransactionId complete);
-
   boolean promiseRegister(ONodeId node, long version);
 
-  void enstablish(Set<ONodeId> candidates);
+  void registerNode(ONodeId node, long version);
+
+  void unregisterNode(ONodeId node, long version);
+
+  // Methods for coordinations of  operations to add establish the first network of nodes
+  void startEstablish(OTransactionIdPromise idPromise, Set<ONodeId> nodes, OCompleteAction action);
 
   Optional<OAcceptResult> validateEnstablish(Set<ONodeId> candidates);
 
-  StartEnstablish startEnstablish(OTransactionIdPromise idPromise, OCompleteAction action);
+  void enstablish(Set<ONodeId> candidates);
 
-  long getTopologyVersion();
+  Set<ONodeId> getMembers();
 }

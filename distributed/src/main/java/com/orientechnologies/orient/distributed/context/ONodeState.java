@@ -9,7 +9,6 @@ import com.orientechnologies.orient.core.tx.ValidationResult;
 import com.orientechnologies.orient.distributed.context.coordination.message.ODistributedMessage;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import com.orientechnologies.orient.distributed.context.topology.ODiscoverAction;
-import com.orientechnologies.orient.distributed.context.topology.StartEnstablish;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -161,12 +160,9 @@ public class ONodeState {
     return this.coordinated.validateEnstablish(candidates);
   }
 
-  public StartEnstablish startEnstablish(OCompleteAction action) {
+  public OTransactionIdPromise startEnstablish(Set<ONodeId> nodes, OCompleteAction action) {
     Optional<OTransactionIdPromise> prom = this.sequenceManager.next();
-    return this.coordinated.startEnstablish(prom.get(), action);
-  }
-
-  public long getTopologyVersion() {
-    return this.coordinated.getTopologyVersion();
+    this.coordinated.startEstablish(prom.get(), nodes, action);
+    return prom.get();
   }
 }
