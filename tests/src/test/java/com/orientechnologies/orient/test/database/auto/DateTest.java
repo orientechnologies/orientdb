@@ -45,12 +45,12 @@ public class DateTest extends DocumentDBBaseTest {
     ODocument doc1 = new ODocument("Order");
     doc1.field("context", "test");
     doc1.field("date", new Date());
-    doc1.save();
+    database.save(doc1);
 
     ODocument doc2 = new ODocument("Order");
     doc2.field("context", "test");
     doc2.field("date", System.currentTimeMillis());
-    doc2.save();
+    database.save(doc2);
 
     doc2.reload();
     Assert.assertTrue(doc2.field("date", OType.DATE) instanceof Date);
@@ -74,7 +74,7 @@ public class DateTest extends DocumentDBBaseTest {
     ODocument doc = new ODocument("Order");
     doc.field("context", "testPrecision");
     doc.field("date", ODateHelper.now(), OType.DATETIME);
-    doc.save();
+    database.save(doc);
 
     List<OResult> result =
         database

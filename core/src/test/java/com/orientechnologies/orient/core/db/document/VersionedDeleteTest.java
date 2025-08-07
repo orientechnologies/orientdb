@@ -31,7 +31,7 @@ public class VersionedDeleteTest extends BaseMemoryDatabase {
   @Test(expected = OConcurrentModificationException.class)
   public void testDeleteFutureVersion() {
     final ODocument doc = new ODocument();
-    doc.save(db.getClusterNameById(db.getDefaultClusterId())); // version is 1
+    db.save(doc, db.getClusterNameById(db.getDefaultClusterId())); // version is 1
 
     db.delete(doc.getIdentity(), 2);
   }
@@ -39,9 +39,9 @@ public class VersionedDeleteTest extends BaseMemoryDatabase {
   @Test(expected = OConcurrentModificationException.class)
   public void testDeletePreviousVersion() {
     final ODocument doc = new ODocument();
-    doc.save(db.getClusterNameById(db.getDefaultClusterId())); // version is 1
+    db.save(doc, db.getClusterNameById(db.getDefaultClusterId())); // version is 1
 
-    doc.field("key", "value").save(); // version is 2
+    db.save(doc.field("key", "value")); // version is 2
 
     db.delete(doc.getIdentity(), 1);
   }
@@ -51,7 +51,7 @@ public class VersionedDeleteTest extends BaseMemoryDatabase {
   public void testDeleteFutureVersionTx() {
     db.begin();
     final ODocument doc = new ODocument();
-    doc.save(db.getClusterNameById(db.getDefaultClusterId())); // version is 1
+    db.save(doc, db.getClusterNameById(db.getDefaultClusterId())); // version is 1
 
     db.delete(doc.getIdentity(), 2);
     db.commit();
@@ -62,9 +62,9 @@ public class VersionedDeleteTest extends BaseMemoryDatabase {
   public void testDeletePreviousVersionTx() {
     db.begin();
     final ODocument doc = new ODocument();
-    doc.save(db.getClusterNameById(db.getDefaultClusterId())); // version is 1
+    db.save(doc, db.getClusterNameById(db.getDefaultClusterId())); // version is 1
 
-    doc.field("key", "value").save(); // version is 2
+    db.save(doc.field("key", "value")); // version is 2
 
     db.delete(doc.getIdentity(), 1);
     db.commit();

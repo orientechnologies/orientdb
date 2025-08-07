@@ -19,7 +19,7 @@ public class ODeleteStatementExecutionTest extends BaseMemoryDatabase {
     for (int i = 0; i < 10; i++) {
       ODocument doc = db.newInstance(className);
       doc.setProperty("name", "name" + i);
-      doc.save();
+      db.save(doc);
     }
     OResultSet result = db.command("delete from  " + className + " where name = 'name4'");
     printExecutionPlan(result);
@@ -53,7 +53,7 @@ public class ODeleteStatementExecutionTest extends BaseMemoryDatabase {
     for (int i = 0; i < 10; i++) {
       ODocument doc = db.newInstance(className);
       doc.setProperty("name", "name" + i);
-      doc.save();
+      db.save(doc);
     }
     try {
       OResultSet result = db.command("delete from  " + className + " where name = 'name4'");
@@ -76,7 +76,7 @@ public class ODeleteStatementExecutionTest extends BaseMemoryDatabase {
     for (int i = 0; i < 10; i++) {
       ODocument doc = db.newInstance(className);
       doc.setProperty("name", "name" + i);
-      doc.save();
+      db.save(doc);
     }
 
     OResultSet result = db.command("delete from  " + className + " where name = 'name4' unsafe");
@@ -108,7 +108,7 @@ public class ODeleteStatementExecutionTest extends BaseMemoryDatabase {
     for (int i = 0; i < 10; i++) {
       ODocument doc = db.newInstance(className);
       doc.setProperty("name", "name" + i);
-      doc.save();
+      db.save(doc);
     }
     OResultSet result =
         db.command("delete from  " + className + " return before where name = 'name4' ");
@@ -139,7 +139,7 @@ public class ODeleteStatementExecutionTest extends BaseMemoryDatabase {
     for (int i = 0; i < 10; i++) {
       ODocument doc = db.newInstance(className);
       doc.setProperty("name", "name" + i);
-      doc.save();
+      db.save(doc);
     }
     OResultSet result = db.command("delete from  " + className + " limit 5");
     printExecutionPlan(result);

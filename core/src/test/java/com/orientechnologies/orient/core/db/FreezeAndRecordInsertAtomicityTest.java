@@ -115,16 +115,16 @@ public class FreezeAndRecordInsertAtomicityTest {
                   for (int i1 = 0; i1 < ITERATIONS; ++i1)
                     switch (random.nextInt(3)) {
                       case 0:
-                        db.<ODocument>newInstance("Person")
-                            .field("name", "name-" + thread + "-" + i1)
-                            .save();
+                        db.save(
+                            db.<ODocument>newInstance("Person")
+                                .field("name", "name-" + thread + "-" + i1));
                         break;
 
                       case 1:
                         db.begin();
-                        db.<ODocument>newInstance("Person")
-                            .field("name", "name-" + thread + "-" + i1)
-                            .save();
+                        db.save(
+                            db.<ODocument>newInstance("Person")
+                                .field("name", "name-" + thread + "-" + i1));
                         db.commit();
                         break;
 

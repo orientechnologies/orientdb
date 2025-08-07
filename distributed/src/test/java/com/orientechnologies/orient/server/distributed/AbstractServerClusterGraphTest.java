@@ -191,7 +191,7 @@ public abstract class AbstractServerClusterGraphTest extends AbstractServerClust
 
   protected void updateVertex(ODatabaseDocument graph, OVertex v) {
     v.setProperty("updated", true);
-    v.save();
+    graph.save(v);
   }
 
   protected void checkVertex(ODatabaseDocument graph, OVertex v) {

@@ -480,7 +480,7 @@ public class HALocalGraphIT extends AbstractServerClusterTxTest {
       vertex.setProperty("prop1", "v1-" + i);
       vertex.setProperty("prop2", "v2-1");
       vertex.setProperty("prop3", "v3-1");
-      vertex.save();
+      graph.save(vertex);
       graph.commit();
       graph.begin();
       if ((i % 100) == 0) {
@@ -492,7 +492,7 @@ public class HALocalGraphIT extends AbstractServerClusterTxTest {
       vertex.setProperty("prop1", "v1-" + i);
       vertex.setProperty("prop2", "v2-1");
       vertex.setProperty("prop3", "v3-1");
-      vertex.save();
+      graph.save(vertex);
       graph.commit();
       graph.begin();
       if ((i % 10) == 0) {

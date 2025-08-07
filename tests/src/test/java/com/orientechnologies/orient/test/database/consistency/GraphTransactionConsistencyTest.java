@@ -112,7 +112,7 @@ public class GraphTransactionConsistencyTest {
                         v1.setProperty("i", i);
                         v1.setProperty("type", "Main");
                         v1.setProperty("lastUpdate", new Date());
-                        v1.save();
+                        graph.save(v1);
 
                         for (int e = 0; e < EDGENUM; ++e) {
                           var v2 = graph.newVertex();
@@ -122,7 +122,7 @@ public class GraphTransactionConsistencyTest {
                           v2.setProperty("lastUpdate", new Date());
                           v1.addEdge(v2);
 
-                          v1.save();
+                          graph.save(v1);
                         }
 
                         if (i % TXBATCH == 0) {

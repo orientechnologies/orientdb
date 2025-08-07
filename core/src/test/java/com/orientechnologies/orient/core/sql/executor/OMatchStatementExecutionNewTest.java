@@ -68,7 +68,7 @@ public class OMatchStatementExecutionNewTest extends BaseMemoryDatabase {
     for (int i = 0; i < nodes; i++) {
       ODocument doc = new ODocument("IndexedVertex");
       doc.field("uid", i);
-      doc.save();
+      db.save(doc);
     }
 
     for (int i = 0; i < 100; i++) {
@@ -2153,23 +2153,23 @@ public class OMatchStatementExecutionNewTest extends BaseMemoryDatabase {
 
     OVertex v1 = db.newVertex(clazz);
     v1.setProperty("name", "one");
-    v1.save(clazz.toLowerCase() + "_one");
+    db.save(v1, clazz.toLowerCase() + "_one");
 
     OVertex vx = db.newVertex(clazz);
     vx.setProperty("name", "onex");
-    vx.save(clazz.toLowerCase() + "_one");
+    db.save(vx, clazz.toLowerCase() + "_one");
 
     OVertex v2 = db.newVertex(clazz);
     v2.setProperty("name", "two");
-    v2.save(clazz.toLowerCase() + "_two");
+    db.save(v2, clazz.toLowerCase() + "_two");
 
     OVertex v3 = db.newVertex(clazz);
     v3.setProperty("name", "three");
-    v3.save(clazz.toLowerCase() + "_three");
+    db.save(v3, clazz.toLowerCase() + "_three");
 
-    v1.addEdge(v2).save();
-    v2.addEdge(v3).save();
-    v1.addEdge(v3).save();
+    db.save(v1.addEdge(v2));
+    db.save(v2.addEdge(v3));
+    db.save(v1.addEdge(v3));
 
     String query =
         "MATCH { cluster: "
@@ -2197,18 +2197,18 @@ public class OMatchStatementExecutionNewTest extends BaseMemoryDatabase {
 
     OVertex v1 = db.newVertex(clazz);
     v1.setProperty("name", "a");
-    v1.save();
+    db.save(v1);
 
     OVertex v2 = db.newVertex(clazz);
     v2.setProperty("name", "b");
-    v2.save();
+    db.save(v2);
 
     OVertex v3 = db.newVertex(clazz);
     v3.setProperty("name", "c");
-    v3.save();
+    db.save(v3);
 
-    v1.addEdge(v2).save();
-    v2.addEdge(v3).save();
+    db.save(v1.addEdge(v2));
+    db.save(v2.addEdge(v3));
 
     String query = "MATCH { class:" + clazz + ", as:a} --> {as:b} --> {as:c}, ";
     query += " NOT {as:a} --> {as:c}";
@@ -2229,19 +2229,19 @@ public class OMatchStatementExecutionNewTest extends BaseMemoryDatabase {
 
     OVertex v1 = db.newVertex(clazz);
     v1.setProperty("name", "a");
-    v1.save();
+    db.save(v1);
 
     OVertex v2 = db.newVertex(clazz);
     v2.setProperty("name", "b");
-    v2.save();
+    db.save(v2);
 
     OVertex v3 = db.newVertex(clazz);
     v3.setProperty("name", "c");
-    v3.save();
+    db.save(v3);
 
-    v1.addEdge(v2).save();
-    v2.addEdge(v3).save();
-    v1.addEdge(v3).save();
+    db.save(v1.addEdge(v2));
+    db.save(v2.addEdge(v3));
+    db.save(v1.addEdge(v3));
 
     String query = "MATCH { class:" + clazz + ", as:a} --> {as:b} --> {as:c}, ";
     query += " NOT {as:a} --> {as:c}";
@@ -2260,19 +2260,19 @@ public class OMatchStatementExecutionNewTest extends BaseMemoryDatabase {
 
     OVertex v1 = db.newVertex(clazz);
     v1.setProperty("name", "a");
-    v1.save();
+    db.save(v1);
 
     OVertex v2 = db.newVertex(clazz);
     v2.setProperty("name", "b");
-    v2.save();
+    db.save(v2);
 
     OVertex v3 = db.newVertex(clazz);
     v3.setProperty("name", "c");
-    v3.save();
+    db.save(v3);
 
-    v1.addEdge(v2).save();
-    v2.addEdge(v3).save();
-    v1.addEdge(v3).save();
+    db.save(v1.addEdge(v2));
+    db.save(v2.addEdge(v3));
+    db.save(v1.addEdge(v3));
 
     String query = "MATCH { class:" + clazz + ", as:a} --> {as:b} --> {as:c}, ";
     query += " NOT {as:a} --> {as:c, where:(name <> 'c')}";
@@ -2293,21 +2293,21 @@ public class OMatchStatementExecutionNewTest extends BaseMemoryDatabase {
 
     OVertex v1 = db.newVertex(clazz);
     v1.setProperty("name", "a");
-    v1.save();
+    db.save(v1);
 
     OVertex v2 = db.newVertex(clazz);
     v2.setProperty("name", "b");
-    v2.save();
+    db.save(v2);
 
     OVertex v3 = db.newVertex(clazz);
     v3.setProperty("name", "c");
-    v3.save();
+    db.save(v3);
 
     v1.setProperty("next", v2);
     v2.setProperty("next", v3);
 
-    v1.save();
-    v2.save();
+    db.save(v1);
+    db.save(v2);
 
     String query = "MATCH { class:" + clazz + ", as:a}.next{as:b, where:(name ='b')}";
     query += " RETURN a.name as a, b.name as b";

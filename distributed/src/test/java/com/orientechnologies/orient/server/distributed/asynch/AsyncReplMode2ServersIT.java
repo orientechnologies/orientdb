@@ -30,14 +30,14 @@ public class AsyncReplMode2ServersIT extends BareBoneBase2ServerTest {
       graph.begin();
       try {
         OVertex parentV1 = graph.newVertex("vertextype");
-        parentV1.save();
+        graph.save(parentV1);
         graph.commit();
         graph.begin();
         assertEquals(1, parentV1.getRecord().getVersion());
         parentV1Id = parentV1.getIdentity();
 
         OVertex parentV2 = graph.newVertex("vertextype");
-        parentV2.save();
+        graph.save(parentV2);
         graph.commit();
         graph.begin();
         assertEquals(1, parentV2.getRecord().getVersion());
@@ -52,7 +52,7 @@ public class AsyncReplMode2ServersIT extends BareBoneBase2ServerTest {
           for (int attempt = 0; attempt < NUM_OF_RETRIES; attempt++) {
             try {
               parentV1.setProperty(CNT_PROP_NAME, ++countPropValue);
-              parentV1.save();
+              graph.save(parentV1);
               graph.commit();
               graph.begin();
               System.out.println("Committing parentV1" + parentV1.getRecord() + "...");
@@ -67,7 +67,7 @@ public class AsyncReplMode2ServersIT extends BareBoneBase2ServerTest {
           for (int attempt = 0; attempt < NUM_OF_RETRIES; attempt++) {
             try {
               parentV2.setProperty(CNT_PROP_NAME, countPropValue);
-              parentV2.save();
+              graph.save(parentV2);
               graph.commit();
               graph.begin();
               System.out.println("Committing parentV2" + parentV2.getRecord() + "...");

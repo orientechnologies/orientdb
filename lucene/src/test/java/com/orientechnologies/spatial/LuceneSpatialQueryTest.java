@@ -107,7 +107,7 @@ public class LuceneSpatialQueryTest extends BaseLuceneTest {
               continue;
             }
 
-            doc.save();
+            db.save(doc);
             if (i % 100000 == 0) {
               logger.info("Imported: [%d] records", i);
               db.commit();

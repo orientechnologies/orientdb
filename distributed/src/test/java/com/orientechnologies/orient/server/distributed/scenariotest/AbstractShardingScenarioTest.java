@@ -441,7 +441,7 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
     protected void updateVertex(ODatabaseDocument graph, int i) {
       OVertex vertex = loadVertex(graph, this.shardName, this.serverId, this.threadId, i);
       vertex.setProperty("updated", true);
-      vertex.save();
+      graph.save(vertex);
     }
 
     protected void checkVertex(ODatabaseDocument graph, int i) {
@@ -451,7 +451,7 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
 
     protected void updateVertex(ODatabaseDocument graph, OVertex vertex) {
       vertex.setProperty("updated", true);
-      vertex.save();
+      graph.save(vertex);
     }
 
     protected void checkVertex(ODatabaseDocument graph, OVertex vertex) {
@@ -460,7 +460,7 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
     }
 
     protected void deleteRecord(ODatabaseDocument graph, OVertex vertex) {
-      vertex.delete();
+      graph.delete(vertex);
     }
 
     protected void checkRecordIsDeleted(ODatabaseDocument graph, OVertex vertex) {

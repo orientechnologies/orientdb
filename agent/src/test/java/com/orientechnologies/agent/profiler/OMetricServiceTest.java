@@ -18,8 +18,6 @@
 
 package com.orientechnologies.agent.profiler;
 
-import static org.junit.Assert.*;
-
 import com.orientechnologies.agent.OEnterpriseAgent;
 import com.orientechnologies.agent.profiler.metrics.OGauge;
 import com.orientechnologies.agent.profiler.metrics.OMeter;
@@ -34,7 +32,11 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
 import java.io.InputStream;
 import java.util.Map;
-import org.junit.*;
+import org.junit.After;
+import org.junit.Assert;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
 import org.junit.rules.TestName;
 
 /** Created by Enrico Risa on 22/03/16. */
@@ -85,13 +87,13 @@ public class OMetricServiceTest {
 
     OVertex v = db.newVertex("V");
 
-    v.save();
+    db.save(v);
 
     v.setProperty("name", "Foo");
 
-    v.save();
+    db.save(v);
 
-    v.delete();
+    db.delete(v);
 
     String create =
         String.format(OGlobalMetrics.DATABASE_CREATE_OPS.name, testName.getMethodName());

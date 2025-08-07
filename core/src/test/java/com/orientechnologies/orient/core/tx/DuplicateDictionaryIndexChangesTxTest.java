@@ -56,8 +56,10 @@ public class DuplicateDictionaryIndexChangesTxTest extends BaseMemoryDatabase {
     db.save(person3);
 
     // change some names to not null
-    person1.field("name", "Name1").save();
-    person2.field("name", "Name1").save();
+    person1.field("name", "Name1");
+    db.save(person1);
+    person2.field("name", "Name1");
+    db.save(person2);
 
     // should never throw
     db.commit();
@@ -94,13 +96,18 @@ public class DuplicateDictionaryIndexChangesTxTest extends BaseMemoryDatabase {
     db.begin();
 
     // change some names
-    person1.field("name", "Name2").save();
-    person2.field("name", "Name2").save();
-    person3.field("name", "Name3").save();
+    person1.field("name", "Name2");
+    db.save(person1);
+    person2.field("name", "Name2");
+    db.save(person2);
+    person3.field("name", "Name3");
+    db.save(person3);
 
     // and again
-    person1.field("name", "Name1").save();
-    person2.field("name", "Name1").save();
+    person1.field("name", "Name1");
+    db.save(person1);
+    person2.field("name", "Name1");
+    db.save(person2);
 
     // should never throw
     db.commit();
@@ -127,12 +134,15 @@ public class DuplicateDictionaryIndexChangesTxTest extends BaseMemoryDatabase {
     db.save(person2);
     final ODocument person3 = db.newInstance("Person");
     person3.field("name", "same");
-    person3.save();
+    db.save(person3);
 
     // change names to unique
-    person1.field("name", "Name1").save();
-    person2.field("name", "Name2").save();
-    person3.field("name", "Name1").save();
+    person1.field("name", "Name1");
+    db.save(person1);
+    person2.field("name", "Name2");
+    db.save(person2);
+    person3.field("name", "Name1");
+    db.save(person3);
 
     // should never throw
     db.commit();
@@ -181,14 +191,20 @@ public class DuplicateDictionaryIndexChangesTxTest extends BaseMemoryDatabase {
     db.begin();
 
     // saved persons will have same name
-    person1.field("name", "same").save();
-    person2.field("name", "same").save();
-    person3.field("name", "same").save();
+    person1.field("name", "same");
+    db.save(person1);
+    person2.field("name", "same");
+    db.save(person2);
+    person3.field("name", "same");
+    db.save(person3);
 
     // change names back to unique in reverse order
-    person3.field("name", "Name3").save();
-    person2.field("name", "Name2").save();
-    person1.field("name", "Name1").save();
+    person3.field("name", "Name3");
+    db.save(person3);
+    person2.field("name", "Name2");
+    db.save(person2);
+    person1.field("name", "Name1");
+    db.save(person1);
 
     // should never throw
     db.commit();
@@ -229,11 +245,13 @@ public class DuplicateDictionaryIndexChangesTxTest extends BaseMemoryDatabase {
     person4.field("name", "same");
     db.save(person4);
 
-    person1.delete();
-    person2.field("name", "Name2").save();
-    person3.delete();
-    person4.field("name", "Name2").save();
-    person4.delete();
+    db.delete(person1);
+    person2.field("name", "Name2");
+    db.save(person2);
+    db.delete(person3);
+    person4.field("name", "Name2");
+    db.save(person4);
+    db.delete(person4);
 
     // should never throw
     db.commit();
@@ -276,12 +294,16 @@ public class DuplicateDictionaryIndexChangesTxTest extends BaseMemoryDatabase {
 
     db.begin();
 
-    person1.delete();
-    person2.field("name", "same").save();
-    person3.delete();
-    person4.field("name", "same").save();
-    person2.field("name", "Name2").save();
-    person4.field("name", "Name2").save();
+    db.delete(person1);
+    person2.field("name", "same");
+    db.save(person2);
+    db.delete(person3);
+    person4.field("name", "same");
+    db.save(person4);
+    person2.field("name", "Name2");
+    db.save(person2);
+    person4.field("name", "Name2");
+    db.save(person4);
 
     // should never throw
     db.commit();
@@ -291,8 +313,8 @@ public class DuplicateDictionaryIndexChangesTxTest extends BaseMemoryDatabase {
     Assert.assertNull(getDocumentByKey("same"));
 
     db.begin();
-    person2.delete();
-    person4.delete();
+    db.delete(person2);
+    db.delete(person4);
     db.commit();
 
     // verify index state

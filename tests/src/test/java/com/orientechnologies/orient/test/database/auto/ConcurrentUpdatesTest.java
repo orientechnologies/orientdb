@@ -75,11 +75,11 @@ public class ConcurrentUpdatesTest extends DocumentDBBaseTest {
 
                 ODocument vDoc1 = db.load(rid1, null, true);
                 vDoc1.field(threadName, vDoc1.field(threadName) + ";" + i);
-                vDoc1.save();
+                db.save(vDoc1);
 
                 ODocument vDoc2 = db.load(rid2, null, true);
                 vDoc2.field(threadName, vDoc2.field(threadName) + ";" + i);
-                vDoc2.save();
+                db.save(vDoc2);
 
                 db.commit();
               }

@@ -36,7 +36,7 @@ public class OViewRefreshIT {
         OElement elem = db.newElement(className);
         elem.setProperty("name", "name" + i);
         elem.setProperty("surname", "surname" + i);
-        elem.save();
+        db.save(elem);
       }
 
       String statement =
@@ -73,7 +73,7 @@ public class OViewRefreshIT {
         OElement elem = db.newElement(className);
         elem.setProperty("name", "name" + i);
         elem.setProperty("surname", "surname" + i);
-        elem.save();
+        db.save(elem);
       }
 
       String statement =
@@ -95,7 +95,7 @@ public class OViewRefreshIT {
         OElement elem = db.newElement(className);
         elem.setProperty("name", "name" + i);
         elem.setProperty("surname", "surname" + i);
-        elem.save();
+        db.save(elem);
       }
 
       Thread.sleep(3000);
@@ -116,7 +116,7 @@ public class OViewRefreshIT {
         OElement elem = db.newElement(className);
         elem.setProperty("name", "name" + i);
         elem.setProperty("surname", "surname" + i);
-        elem.save();
+        db.save(elem);
       }
 
       String statement =
@@ -155,7 +155,7 @@ public class OViewRefreshIT {
         elem.setProperty("name", "name" + i);
         elem.setProperty("surname", "surname" + i);
         elem.setProperty("toChange", "data");
-        elem.save();
+        db.save(elem);
       }
 
       for (int i = 0; i < 20; i++) {
@@ -205,7 +205,7 @@ public class OViewRefreshIT {
         elem.setProperty("name", "name" + i);
         elem.setProperty("surname", "surname" + i);
         elem.setProperty("toChange", "data");
-        elem.save();
+        db.save(elem);
       }
 
       for (int i = 0; i < 20; i++) {
@@ -265,7 +265,7 @@ public class OViewRefreshIT {
         elem.setProperty("name", "name" + i);
         elem.setProperty("surname", "surname" + i);
         elem.setProperty("toChange", "data");
-        elem.save();
+        db.save(elem);
       }
 
       String statement =
@@ -315,7 +315,7 @@ public class OViewRefreshIT {
           OElement elem = db.newElement(className);
           elem.setProperty("name", "name" + i);
           elem.setProperty("surname", "surname" + i);
-          elem.save();
+          db.save(elem);
         }
 
         String statement =
@@ -337,7 +337,7 @@ public class OViewRefreshIT {
           OElement elem = db.newElement(className);
           elem.setProperty("name", "name" + i);
           elem.setProperty("surname", "surname" + i);
-          elem.save();
+          db.save(elem);
         }
       }
     }
@@ -356,7 +356,7 @@ public class OViewRefreshIT {
           OElement elem = db.newElement(className);
           elem.setProperty("name", "name" + i);
           elem.setProperty("surname", "surname" + i);
-          elem.save();
+          db.save(elem);
         }
         Thread.sleep(2000);
         try (OResultSet result = db.query("SELECT FROM " + viewName)) {
@@ -380,7 +380,7 @@ public class OViewRefreshIT {
         OElement elem = db.newElement(className);
         elem.setProperty("name", "name" + i);
         elem.setProperty("surname", "surname" + i);
-        elem.save();
+        db.save(elem);
       }
 
       String statement =
@@ -410,7 +410,7 @@ public class OViewRefreshIT {
         OElement elem = db.newElement(className);
         elem.setProperty("name", "name" + i);
         elem.setProperty("surname", "surname" + i);
-        elem.save();
+        db.save(elem);
       }
 
       Thread.sleep(5000);

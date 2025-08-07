@@ -29,12 +29,12 @@ public class IndexConcurrentCommitTest extends DocumentDBBaseTest {
       ODocument person1 = new ODocument("Person");
       person1.field("name", "John Doe");
       person1.field("ssn", "111-11-1111");
-      person1.save();
+      database.save(person1);
 
       ODocument person2 = new ODocument("Person");
       person2.field("name", "Jane Doe");
       person2.field("ssn", "222-22-2222");
-      person2.save();
+      database.save(person2);
 
       // Commit
       database.commit();
@@ -49,11 +49,11 @@ public class IndexConcurrentCommitTest extends DocumentDBBaseTest {
 
       // Update the ssn for the second person
       person2.field("ssn", "111-11-1111");
-      person2.save();
+      database.save(person2);
 
       // Update the ssn for the first person
       person1.field("ssn", "222-22-2222");
-      person1.save();
+      database.save(person1);
 
       System.out.println("To be committed:");
       System.out.println(person1);

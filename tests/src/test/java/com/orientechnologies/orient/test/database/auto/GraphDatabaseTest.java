@@ -69,7 +69,7 @@ public class GraphDatabaseTest extends DocumentDBBaseTest {
     database.save(motoNode);
 
     database.commit();
-    database.newEdge(carNode, motoNode).save();
+    database.save(database.newEdge(carNode, motoNode));
 
     List<OResult> result =
         database.query("select from GraphVehicle").stream().collect(Collectors.toList());

@@ -139,7 +139,7 @@ public class ShutdownAndRestartNodeScenarioIT extends AbstractScenarioTest {
         // trying write on server3, writes must be served from the first available node
         try {
           dbServer3.activateOnCurrentThread();
-          new ODocument("Person").fields("name", "Joe", "surname", "Black").save();
+          dbServer3.save(new ODocument("Person").fields("name", "Joe", "surname", "Black"));
           this.initialCount++;
           try (OResultSet result = dbServer3.query("select count(*) as count from Person")) {
             assertEquals(1, ((Number) result.next().getProperty("count")).intValue());
@@ -248,7 +248,8 @@ public class ShutdownAndRestartNodeScenarioIT extends AbstractScenarioTest {
         System.out.print("Insert operation in the database...");
         dbServer1.activateOnCurrentThread();
         try {
-          new ODocument("Person").fields("id", "L-001", "name", "John", "surname", "Black").save();
+          dbServer1.save(
+              new ODocument("Person").fields("id", "L-001", "name", "John", "surname", "Black"));
           fail("Error: record inserted with 2 server running and writeWuorum=3.");
         } catch (Exception e) {
           e.printStackTrace();

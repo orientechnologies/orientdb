@@ -58,7 +58,7 @@ public class DocumentTest extends BaseMemoryDatabase {
     final ODocument doc = new ODocument("V");
     doc.field("name", "Jay");
     doc.field("surname", "Miner");
-    doc.save();
+    db.save(doc);
     Map<String, Object> map = doc.toMap();
 
     Assert.assertEquals(map.size(), 4);

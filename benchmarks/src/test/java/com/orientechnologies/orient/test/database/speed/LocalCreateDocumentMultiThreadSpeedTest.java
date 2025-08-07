@@ -57,7 +57,7 @@ public class LocalCreateDocumentMultiThreadSpeedTest extends OrientMultiThreadDB
       record.field("birthDate", date);
       record.field("salary", 3000f + data.getCyclesDone());
 
-      record.save();
+      database.save(record);
 
       if (data.getCyclesDone() == data.getCycles() - 1) database.commit();
     }

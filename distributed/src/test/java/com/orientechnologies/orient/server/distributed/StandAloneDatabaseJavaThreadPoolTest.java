@@ -213,7 +213,7 @@ public final class StandAloneDatabaseJavaThreadPoolTest {
                           try {
                             vtx1.setProperty("prop5", "prop55");
                             vtx1.setProperty("updateTime", new Date().toString());
-                            vtx1.save();
+                            graph.save(vtx1);
                             graph.commit();
                             graph.begin();
                             if (isException) {

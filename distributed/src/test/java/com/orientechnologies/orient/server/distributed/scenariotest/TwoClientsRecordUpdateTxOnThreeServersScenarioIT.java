@@ -88,7 +88,7 @@ public class TwoClientsRecordUpdateTxOnThreeServersScenarioIT extends AbstractSc
 
     // inserts record
     ODocument recordServer0 = new ODocument("Person").fromMap(hanFields);
-    recordServer0.save();
+    dbServer0.save(recordServer0);
 
     // waits for propagation of the record on all the servers
     waitForInsertedRecordPropagation(RECORD_ID);

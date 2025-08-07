@@ -148,7 +148,7 @@ public class TxWriter {
   private static OVertex createVertex(ODatabaseSession graph, String id) {
     OVertex v = graph.newVertex("Person");
     v.setProperty("id", id);
-    v.save();
+    graph.save(v);
     return v;
   }
 

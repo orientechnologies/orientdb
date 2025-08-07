@@ -70,7 +70,7 @@ public class HAClusterStrategyIT extends AbstractHARemoveNode {
       OVertex v = graph.newVertex("Test");
       v.setProperty("firstName", "Roger");
       v.setProperty("lastName", "Smith");
-      v.save();
+      graph.save(v);
 
       graph.commit();
 

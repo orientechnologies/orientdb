@@ -129,7 +129,7 @@ public class WWConflictAndNodeInDeadlockScenarioIT extends AbstractScenarioTest 
       dbServer1.activateOnCurrentThread();
       ODocument r1onServer1 =
           new ODocument("Person").fields("id", "R001", "firstName", "Han", "lastName", "Solo");
-      r1onServer1.save();
+      dbServer1.save(r1onServer1);
       Thread.sleep(200);
       r1onServer1 =
           retrieveRecord(

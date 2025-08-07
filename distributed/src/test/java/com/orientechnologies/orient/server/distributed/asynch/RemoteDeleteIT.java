@@ -24,24 +24,27 @@ public class RemoteDeleteIT extends BareBoneBase1ClientTest {
 
     graph.begin();
     try {
-      OVertex v1 = graph.newVertex("vertextype").save();
+      OVertex v1 = graph.newVertex("vertextype");
+      graph.save(v1);
       graph.commit();
       graph.begin();
       assertEquals(1, v1.getVersion());
 
-      OVertex v2 = graph.newVertex("vertextype").save();
+      OVertex v2 = graph.newVertex("vertextype");
+      graph.save(v2);
 
       graph.commit();
       graph.begin();
       assertEquals(1, v2.getVersion());
 
-      OEdge e = v1.addEdge(v2, "edgetype").save();
+      OEdge e = v1.addEdge(v2, "edgetype");
+      graph.save(e);
       graph.commit();
       graph.begin();
       assertEquals(2, v1.getVersion());
       assertEquals(2, v2.getVersion());
 
-      e.delete();
+      graph.delete(e);
       graph.commit();
       graph.begin();
       assertFalse(v1.getVertices(ODirection.OUT, "edgetype").iterator().hasNext());

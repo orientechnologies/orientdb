@@ -64,7 +64,7 @@ public class ConcurrentDistributedUpdateIT extends AbstractScenarioTest {
       vertex.setProperty("prop1", "v1-" + i);
       vertex.setProperty("prop2", "v2-1");
       vertex.setProperty("prop3", "v3-1");
-      vertex.save();
+      graph.save(vertex);
       if ((i % 100) == 0) {
         log("Created " + i + " nodes");
       }
@@ -113,7 +113,7 @@ public class ConcurrentDistributedUpdateIT extends AbstractScenarioTest {
                     OElement vtx1 = vtx;
                     try {
                       vtx1.setProperty("prop5", "prop55");
-                      vtx1.save();
+                      graph.save(vtx1);
                       graph.commit();
                       graph.begin();
                       // log("[" + id + "/" + i + "/" + k + "] OK!\n");

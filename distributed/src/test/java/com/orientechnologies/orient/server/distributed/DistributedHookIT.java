@@ -152,13 +152,13 @@ public class DistributedHookIT extends AbstractServerClusterTest {
 
         // UPDATE
         loadedDoc.field("additionalProperty", "test");
-        loadedDoc.save();
+        g.save(loadedDoc);
 
         assertEquals(beforeUpdate.get(), s);
         assertEquals(afterUpdate.get(), s);
 
         // DELETE
-        loadedDoc.delete();
+        g.delete(loadedDoc);
 
         assertEquals(beforeDelete.get(), s);
         assertEquals(afterDelete.get(), s);

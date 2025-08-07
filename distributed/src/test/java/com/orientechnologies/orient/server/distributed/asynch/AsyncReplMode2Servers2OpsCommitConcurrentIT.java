@@ -30,7 +30,7 @@ public class AsyncReplMode2Servers2OpsCommitConcurrentIT extends BareBoneBase2Se
     orientdb.createIfNotExists(getDatabaseName(), ODatabaseType.PLOCAL);
     ODatabaseDocument graph = orientdb.open(getDatabaseName(), "admin", "adminpwd");
     OVertex vertex1 = graph.newVertex("vertextype");
-    vertex1.save();
+    graph.save(vertex1);
     graph.commit();
     graph.close();
 
@@ -65,7 +65,7 @@ public class AsyncReplMode2Servers2OpsCommitConcurrentIT extends BareBoneBase2Se
           try {
             OVertex vertex2 = graph.newVertex("vertextype");
             vertex1.addEdge(vertex2, "edgetype");
-            vertex1.save();
+            graph.save(vertex1);
             graph.commit();
 
             System.out.println(
@@ -84,7 +84,7 @@ public class AsyncReplMode2Servers2OpsCommitConcurrentIT extends BareBoneBase2Se
                     + " retry: "
                     + retry);
             graph.rollback();
-            vertex1.reload();
+            graph.reload(vertex1);
           }
         }
       }

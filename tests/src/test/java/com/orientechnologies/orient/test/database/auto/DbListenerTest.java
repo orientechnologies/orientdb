@@ -285,13 +285,13 @@ public class DbListenerTest extends DocumentDBBaseTest {
     database.begin();
     var v = database.newVertex();
     v.setProperty("name", "Jay");
-    v.save();
+    database.save(v);
 
     database.commit();
     final DocumentChangeListener cl = new DocumentChangeListener(database);
 
     v.setProperty("surname", "Miner");
-    v.save();
+    database.save(v);
     database.close();
 
     Assert.assertEquals(cl.getChanges().size(), 1);

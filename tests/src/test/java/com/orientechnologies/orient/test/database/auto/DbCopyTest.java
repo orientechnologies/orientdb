@@ -47,7 +47,7 @@ public class DbCopyTest extends DocumentDBBaseTest implements OCommandOutputList
             for (int i = 0; i < 5; i++) {
               ODocument doc = otherDB.newInstance(className);
               doc.field("num", i);
-              doc.save();
+              otherDB.save(doc);
               try {
                 Thread.sleep(10);
               } catch (InterruptedException e) {
@@ -62,7 +62,7 @@ public class DbCopyTest extends DocumentDBBaseTest implements OCommandOutputList
     for (int i = 0; i < 20; i++) {
       ODocument doc = database.newInstance(className);
       doc.field("num", i);
-      doc.save();
+      database.save(doc);
       try {
         Thread.sleep(10);
       } catch (InterruptedException e) {

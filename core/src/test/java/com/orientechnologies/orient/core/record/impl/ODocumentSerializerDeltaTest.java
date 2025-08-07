@@ -1066,7 +1066,7 @@ public class ODocumentSerializerDeltaTest {
       doc.field(fieldName, ridBag, OType.LINKBAG);
       doc = db.save(doc);
 
-      ODocument originalDoc = doc.save();
+      ODocument originalDoc = db.save(doc);
 
       ODocument third = new ODocument(claz);
       third = db.save(third);

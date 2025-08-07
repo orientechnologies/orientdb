@@ -66,7 +66,7 @@ public class OStorageTestIT {
     for (int i = 0; i < 10; i++) {
       ODocument document = new ODocument("PageBreak");
       document.field("value", "value");
-      document.save();
+      session.save(document);
     }
 
     OLocalPaginatedStorage storage =
@@ -130,7 +130,7 @@ public class OStorageTestIT {
     for (int i = 0; i < 10; i++) {
       ODocument document = new ODocument("PageBreak");
       document.field("value", "value");
-      document.save();
+      session.save(document);
     }
 
     OLocalPaginatedStorage storage =
@@ -190,7 +190,7 @@ public class OStorageTestIT {
     for (int i = 0; i < 10; i++) {
       ODocument document = new ODocument("PageBreak");
       document.field("value", "value");
-      document.save();
+      session.save(document);
     }
 
     OLocalPaginatedStorage storage =
@@ -223,7 +223,7 @@ public class OStorageTestIT {
     ODocument document = new ODocument("PageBreak");
     document.field("value", "value");
 
-    document.save();
+    session.save(document);
 
     session.close();
   }
@@ -252,7 +252,7 @@ public class OStorageTestIT {
     for (int i = 0; i < 10; i++) {
       ODocument document = new ODocument("PageBreak");
       document.field("value", "value");
-      document.save();
+      session.save(document);
     }
 
     OLocalPaginatedStorage storage =
@@ -288,7 +288,7 @@ public class OStorageTestIT {
     ODocument document = new ODocument("PageBreak");
     document.field("value", "value");
 
-    document.save();
+    session.save(document);
 
     session.close();
   }

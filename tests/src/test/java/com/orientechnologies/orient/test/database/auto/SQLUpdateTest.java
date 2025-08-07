@@ -311,7 +311,7 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
     doc.field("name", "Pawel");
     doc.field("city", "Wroclaw");
     doc.field("really_big_field", "BIIIIIIIIIIIIIIIGGGGGGG!!!");
-    doc.save();
+    database.save(doc);
     // check AFTER
     String sqlString = "UPDATE " + doc.getIdentity().toString() + " SET gender='male' RETURN AFTER";
     List<OResult> result1 = database.command(sqlString).stream().toList();
@@ -351,7 +351,7 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
     doc.field("name", "Raf");
     doc.field("city", "Torino");
     doc.field("gender", "fmale");
-    doc.save();
+    database.save(doc);
 
     String updatecommand = "update Data set gender = :gender , city = :city where name = :name";
     Map<String, Object> params = new HashMap<String, Object>();

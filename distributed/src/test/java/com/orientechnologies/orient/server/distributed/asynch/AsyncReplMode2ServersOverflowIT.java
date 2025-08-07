@@ -43,7 +43,7 @@ public class AsyncReplMode2ServersOverflowIT extends BareBoneBase2ServerTest {
       int i = 0;
       for (; i < TOTAL; ++i) {
         final OVertex v = graph.newVertex();
-        v.save();
+        graph.save(v);
         Assert.assertTrue(v.getIdentity().isPersistent());
       }
 

@@ -155,9 +155,9 @@ public class IncrementalRestartScenarioIT extends AbstractScenarioTest {
         // writes on server1
         dbServer1.activateOnCurrentThread();
         try {
-          new ODocument("Person").fields("name", "Jay", "surname", "Miner").save();
-          new ODocument("Person").fields("name", "Luke", "surname", "Skywalker").save();
-          new ODocument("Person").fields("name", "Yoda", "surname", "Nothing").save();
+          dbServer1.save(new ODocument("Person").fields("name", "Jay", "surname", "Miner"));
+          dbServer1.save(new ODocument("Person").fields("name", "Luke", "surname", "Skywalker"));
+          dbServer1.save(new ODocument("Person").fields("name", "Yoda", "surname", "Nothing"));
           fail("Record inserted with server1 running and writeQuorum=2");
         } catch (Exception e) {
           e.printStackTrace();
@@ -283,9 +283,9 @@ public class IncrementalRestartScenarioIT extends AbstractScenarioTest {
         dbServer1.activateOnCurrentThread();
         try {
           System.out.println("Inserting 3 record on server1...");
-          new ODocument("Person").fields("name", "Darth", "surname", "Vader").save();
-          new ODocument("Person").fields("name", "Luke", "surname", "Skywalker").save();
-          new ODocument("Person").fields("name", "Yoda", "surname", "Nothing").save();
+          dbServer1.save(new ODocument("Person").fields("name", "Darth", "surname", "Vader"));
+          dbServer1.save(new ODocument("Person").fields("name", "Luke", "surname", "Skywalker"));
+          dbServer1.save(new ODocument("Person").fields("name", "Yoda", "surname", "Nothing"));
           System.out.println("Done.");
         } catch (Exception e) {
           e.printStackTrace();

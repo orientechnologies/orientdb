@@ -123,7 +123,7 @@ public class SimulateOperationsAgainstServer {
       for (int i = 0; i < iProperties; ++i) {
         doc.field("prop" + i, "propValue" + i);
       }
-      doc.save();
+      db.save(doc);
     } finally {
       db.close();
     }
@@ -171,7 +171,7 @@ public class SimulateOperationsAgainstServer {
         else {
           doc = (ODocument) result.get(0).getElement().get();
           doc.field("updated", "" + (doc.getVersion() + 1));
-          doc.save();
+          db.save(doc);
           log(threadId, iCycle, dbUrl, " updated item " + iSkip + " RID=" + result.get(0));
         }
 

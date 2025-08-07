@@ -77,7 +77,7 @@ public class StorageBackupTest {
       document.field("num", num);
       document.field("data", data);
 
-      document.save();
+      db.save(document);
     }
 
     final File backupDir = new File(buildDirectory, "backupDir");
@@ -153,7 +153,7 @@ public class StorageBackupTest {
       document.field("num", num);
       document.field("data", data);
 
-      document.save();
+      db.save(document);
     }
 
     final File backupDir = new File(buildDirectory, "backupDir");
@@ -174,7 +174,7 @@ public class StorageBackupTest {
         document.field("num", num);
         document.field("data", data);
 
-        document.save();
+        db.save(document);
       }
 
       db.incrementalBackup(backupDir.getAbsolutePath());
@@ -255,7 +255,7 @@ public class StorageBackupTest {
       document.field("num", num);
       document.field("data", data);
 
-      document.save();
+      db.save(document);
     }
 
     final File backupDir = new File(buildDirectory, "backupDir");
@@ -276,7 +276,7 @@ public class StorageBackupTest {
         document.field("num", num);
         document.field("data", data);
 
-        document.save();
+        db.save(document);
       }
 
       db.incrementalBackup(backupDir.getAbsolutePath());

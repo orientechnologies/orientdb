@@ -26,10 +26,10 @@ public class OCommandExecutorSQLCreateEdgeTest extends BaseMemoryDatabase {
 
     owner1 = new ODocument("Owner");
     owner1.field("id", 1);
-    owner1.save();
+    db.save(owner1);
     owner2 = new ODocument("Owner");
     owner2.field("id", 2);
-    owner2.save();
+    db.save(owner2);
   }
 
   @Test

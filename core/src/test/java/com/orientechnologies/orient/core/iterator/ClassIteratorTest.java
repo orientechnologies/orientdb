@@ -20,7 +20,7 @@ public class ClassIteratorTest extends BaseMemoryDatabase {
     // Create Person document
     final ODocument personDoc = db.newInstance(iClassName);
     personDoc.field("First", first);
-    personDoc.save();
+    db.save(personDoc);
   }
 
   public void beforeTest() {

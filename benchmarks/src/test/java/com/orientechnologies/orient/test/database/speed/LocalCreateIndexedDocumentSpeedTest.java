@@ -60,7 +60,7 @@ public class LocalCreateIndexedDocumentSpeedTest extends OrientMonoThreadDBTest 
     record.field("name", "Luca");
     record.field("surname", "Garulli");
 
-    record.save();
+    database.save(record);
 
     if (data.getCyclesDone() == data.getCycles() - 1) {
       database.commit();

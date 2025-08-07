@@ -95,7 +95,8 @@ public class ServerClusterSchemaIT extends AbstractServerClusterTest {
       try {
         for (int i = 0; i < SERVERS; ++i) {
           try {
-            final OVertex v = g.newVertex("Client" + i).save();
+            final OVertex v = g.newVertex("Client" + i);
+            g.save(v);
             Assert.assertTrue(false);
           } catch (OValidationException e) {
             // EXPECTED
@@ -119,7 +120,7 @@ public class ServerClusterSchemaIT extends AbstractServerClusterTest {
       try {
         for (int i = 0; i < SERVERS; ++i) {
           try {
-            final OVertex v = g.newVertex("Client" + i).save();
+            final OVertex v = g.save(g.newVertex("Client" + i));
             g.commit();
             g.begin();
 

@@ -62,7 +62,7 @@ public class ServerClusterGraphIT extends AbstractServerClusterTest {
         g.createVertexClass("User");
         g.createEdgeClass("Own");
 
-        g.newVertex("User").save();
+        g.save(g.newVertex("User"));
 
         g.command("insert into Post (content, timestamp) values('test', 1)").close();
       } finally {

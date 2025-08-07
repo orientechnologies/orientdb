@@ -43,7 +43,7 @@ public class ORestricetedUserCleanUpTest extends BaseMemoryDatabase {
     Assert.assertEquals(((Set<?>) doc.field(OSecurityShared.ALLOW_DELETE_FIELD)).size(), 2);
     Assert.assertEquals(((Set<?>) doc.field(OSecurityShared.ALLOW_ALL_FIELD)).size(), 2);
     doc.field("abc", "abc");
-    doc.save();
+    db.save(doc);
 
     System.gc();
     ODirectMemoryAllocator.instance().checkTrackedPointerLeaks();
@@ -59,7 +59,7 @@ public class ORestricetedUserCleanUpTest extends BaseMemoryDatabase {
     Assert.assertEquals(((Set<?>) doc.field(OSecurityShared.ALLOW_DELETE_FIELD)).size(), 1);
     Assert.assertEquals(((Set<?>) doc.field(OSecurityShared.ALLOW_ALL_FIELD)).size(), 1);
     doc.field("abc", "abc");
-    doc.save();
+    db.save(doc);
     System.gc();
     ODirectMemoryAllocator.instance().checkTrackedPointerLeaks();
 

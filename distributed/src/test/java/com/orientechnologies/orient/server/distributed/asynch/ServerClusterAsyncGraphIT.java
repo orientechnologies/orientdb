@@ -38,9 +38,6 @@ import org.junit.Test;
 /** Check vertex and edge creation are propagated across all the nodes in asynchronous mode. */
 public class ServerClusterAsyncGraphIT extends AbstractServerClusterTest {
   static final int SERVERS = 2;
-  private OVertex v1;
-  private OVertex v2;
-  private OVertex v3;
 
   public String getDatabaseName() {
     return "distributed-graphtest";
@@ -70,7 +67,8 @@ public class ServerClusterAsyncGraphIT extends AbstractServerClusterTest {
         g.createClass("User", "V");
         g.createClass("Own", "E");
 
-        g.newVertex("User").save();
+        OVertex v = g.newVertex("User");
+        g.save(v);
 
         g.command("insert into Post (content, timestamp) values('test', 1)").close();
       } finally {

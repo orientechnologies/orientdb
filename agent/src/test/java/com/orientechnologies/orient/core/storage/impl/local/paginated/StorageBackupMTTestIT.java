@@ -284,7 +284,7 @@ public class StorageBackupMTTestIT {
                 document.field("num", num);
                 document.field("data", data);
 
-                ORID id = document.save().getIdentity();
+                ORID id = db.save(document).getIdentity();
                 if (ids.size() < 100) {
                   ids.add(id);
                 }

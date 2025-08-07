@@ -103,7 +103,8 @@ public class ReplicaServerIT extends AbstractServerClusterTest {
       g.begin();
 
       try {
-        final OVertex v = g.newVertex("Client" + s).save();
+        final OVertex v = g.newVertex("Client" + s);
+        g.save(v);
         g.commit();
         Assert.assertTrue(s == 0);
 

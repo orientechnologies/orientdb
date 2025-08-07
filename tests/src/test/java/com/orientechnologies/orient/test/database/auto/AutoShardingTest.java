@@ -161,7 +161,8 @@ public class AutoShardingTest extends DocumentDBBaseTest {
           database.command("insert into AutoShardingTest (id) values (" + i + ")").next();
       Assert.assertEquals(sqlRecord.getIdentity().get().getClusterId(), selectedClusterId);
 
-      ODocument apiRecord = new ODocument("AutoShardingTest").field("id", i).save();
+      ODocument apiRecord = new ODocument("AutoShardingTest").field("id", i);
+      database.save(apiRecord);
       Assert.assertEquals(apiRecord.getIdentity().getClusterId(), selectedClusterId);
     }
 

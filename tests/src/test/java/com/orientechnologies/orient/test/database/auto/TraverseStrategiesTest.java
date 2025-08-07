@@ -37,46 +37,46 @@ public class TraverseStrategiesTest extends DocumentDBBaseTest {
   public void init() {
     var first = database.newVertex("tc");
     first.setProperty("name", 1.0);
-    first.save();
+    database.save(first);
 
     ++totalElements;
     var firstFirstChild = database.newVertex("tc");
     firstFirstChild.setProperty("name", 1.1);
-    firstFirstChild.save();
+    database.save(firstFirstChild);
 
     ++totalElements;
     var firstSecondChild = database.newVertex("tc");
     firstSecondChild.setProperty("name", 1.2);
-    firstSecondChild.save();
+    database.save(firstSecondChild);
 
     ++totalElements;
     var second = database.newVertex("tc");
     second.setProperty("name", 2.0);
-    second.save();
+    database.save(second);
 
     ++totalElements;
     var secondFirstCHild = database.newVertex("tc");
     secondFirstCHild.setProperty("name", 2.1);
-    secondFirstCHild.save();
+    database.save(secondFirstCHild);
 
     ++totalElements;
     var secondSecondChild = database.newVertex("tc");
     secondSecondChild.setProperty("name", 2.2);
-    secondSecondChild.save();
+    database.save(secondSecondChild);
 
     ++totalElements;
 
     var e = database.newEdge(first, firstFirstChild, "te");
-    e.save();
+    database.save(e);
 
     e = database.newEdge(first, firstSecondChild, "te");
-    e.save();
+    database.save(e);
 
     e = database.newEdge(second, secondFirstCHild, "te");
-    e.save();
+    database.save(e);
 
     e = database.newEdge(second, secondSecondChild, "te");
-    e.save();
+    database.save(e);
   }
 
   @Test

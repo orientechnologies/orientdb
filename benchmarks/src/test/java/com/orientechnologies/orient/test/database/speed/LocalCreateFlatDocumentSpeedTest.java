@@ -59,7 +59,7 @@ public class LocalCreateFlatDocumentSpeedTest extends OrientMonoThreadDBTest {
                 + "d,salary:"
                 + 3000f
                 + data.getCyclesDone()));
-    record.save();
+    database.save(record);
 
     if (data.getCyclesDone() == data.getCycles() - 1) database.commit();
   }

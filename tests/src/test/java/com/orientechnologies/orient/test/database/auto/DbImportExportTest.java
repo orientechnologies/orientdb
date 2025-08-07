@@ -159,12 +159,12 @@ public class DbImportExportTest extends DocumentDBBaseTest implements OCommandOu
         final List<ORID> ridsToDelete = new ArrayList<>();
         for (int i = 0; i < 100; i++) {
           final ODocument document = new ODocument(childCls);
-          document.save();
+          session.save(document);
           ridsToDelete.add(document.getIdentity());
         }
 
         for (final ORID rid : ridsToDelete) {
-          rid.getRecord().delete();
+          session.delete(rid);
         }
 
         final ODocument rootDocument = new ODocument(rootCls);
@@ -174,14 +174,14 @@ public class DbImportExportTest extends DocumentDBBaseTest implements OCommandOu
           final ODocument embeddedDocument = new ODocument();
 
           final ODocument doc = new ODocument(childCls);
-          doc.save();
+          session.save(doc);
 
           embeddedDocument.field("link", doc.getIdentity());
           documents.add(embeddedDocument);
         }
 
         rootDocument.field("embeddedList", documents);
-        rootDocument.save();
+        session.save(rootDocument);
 
         final ODatabaseExport databaseExport =
             new ODatabaseExport(

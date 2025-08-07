@@ -127,7 +127,7 @@ public class LocalMTCreateDocumentSpeedTest {
         record.field("surname", "Garulli");
         record.field("birthDate", date);
         record.field("salary", 3000f);
-        record.save();
+        database.save(record);
 
         counter++;
 

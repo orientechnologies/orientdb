@@ -25,11 +25,11 @@ public class OCreateEdgeStatementExecutionTest extends BaseMemoryDatabase {
 
     OVertex v1 = db.newVertex(vClass);
     v1.setProperty("name", "v1");
-    v1.save();
+    db.save(v1);
 
     OVertex v2 = db.newVertex(vClass);
     v2.setProperty("name", "v2");
-    v2.save();
+    db.save(v2);
 
     OResultSet createREs =
         db.command(
@@ -64,11 +64,11 @@ public class OCreateEdgeStatementExecutionTest extends BaseMemoryDatabase {
 
     OVertex v1 = db.newVertex(vClass);
     v1.setProperty("name", "v1");
-    v1.save();
+    db.save(v1);
 
     OVertex v2 = db.newVertex(vClass);
     v2.setProperty("name", "v2");
-    v2.save();
+    db.save(v2);
 
     OResultSet createREs =
         db.command(
@@ -102,7 +102,7 @@ public class OCreateEdgeStatementExecutionTest extends BaseMemoryDatabase {
     for (int i = 0; i < 4; i++) {
       OVertex v1 = db.newVertex(vClass);
       v1.setProperty("name", "v" + i);
-      v1.save();
+      db.save(v1);
     }
 
     OResultSet createREs =
@@ -158,13 +158,13 @@ public class OCreateEdgeStatementExecutionTest extends BaseMemoryDatabase {
     for (int i = 0; i < 2; i++) {
       OVertex v1 = db.newVertex(vClass1);
       v1.setProperty("name", "v" + i);
-      v1.save();
+      db.save(v1);
     }
 
     for (int i = 0; i < 2; i++) {
       OVertex v1 = db.newVertex(vClass2);
       v1.setProperty("name", "v" + i);
-      v1.save();
+      db.save(v1);
     }
 
     db.command(
@@ -224,13 +224,13 @@ public class OCreateEdgeStatementExecutionTest extends BaseMemoryDatabase {
     for (int i = 0; i < 2; i++) {
       OVertex v1 = db.newVertex(vClass1);
       v1.setProperty("name", "v" + i);
-      v1.save();
+      db.save(v1);
     }
 
     for (int i = 0; i < 2; i++) {
       OVertex v1 = db.newVertex(vClass2);
       v1.setProperty("name", "v" + i);
-      v1.save();
+      db.save(v1);
     }
 
     db.command(
@@ -289,13 +289,13 @@ public class OCreateEdgeStatementExecutionTest extends BaseMemoryDatabase {
     for (int i = 0; i < 2; i++) {
       OVertex v1 = db.newVertex(vClass1);
       v1.setProperty("name", "v" + i);
-      v1.save();
+      db.save(v1);
     }
 
     for (int i = 0; i < 2; i++) {
       OVertex v1 = db.newVertex(vClass2);
       v1.setProperty("name", "v" + i);
-      v1.save();
+      db.save(v1);
     }
 
     db.command(
@@ -345,13 +345,13 @@ public class OCreateEdgeStatementExecutionTest extends BaseMemoryDatabase {
     for (int i = 0; i < 2; i++) {
       OVertex v1 = db.newVertex(vClass1);
       v1.setProperty("name", "v" + i);
-      v1.save();
+      db.save(v1);
     }
 
     for (int i = 0; i < 2; i++) {
       OVertex v1 = db.newVertex(vClass2);
       v1.setProperty("name", "v" + i);
-      v1.save();
+      db.save(v1);
     }
 
     try {
@@ -382,7 +382,7 @@ public class OCreateEdgeStatementExecutionTest extends BaseMemoryDatabase {
     for (int i = 0; i < 2; i++) {
       OVertex v1 = db.newVertex(vClass1);
       v1.setProperty("name", "v" + i);
-      v1.save();
+      db.save(v1);
     }
 
     db.command(

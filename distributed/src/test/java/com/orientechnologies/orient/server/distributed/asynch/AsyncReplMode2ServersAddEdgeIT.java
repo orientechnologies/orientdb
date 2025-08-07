@@ -38,7 +38,7 @@ public class AsyncReplMode2ServersAddEdgeIT extends BareBoneBase2ServerTest {
       graph.begin();
       try {
         OVertex parentV1 = graph.newVertex("vertextype");
-        parentV1.save();
+        graph.save(parentV1);
         graph.commit();
         graph.begin();
         assertEquals(1, parentV1.getRecord().getVersion());
@@ -46,12 +46,12 @@ public class AsyncReplMode2ServersAddEdgeIT extends BareBoneBase2ServerTest {
 
         for (int i = 0; i < NUM_OF_LOOP_ITERATIONS; i++) {
           OVertex childV = graph.newVertex("vertextype");
-          childV.save();
+          graph.save(childV);
           graph.commit();
           graph.begin();
           assertEquals(1, childV.getVersion());
 
-          parentV1.addEdge(childV, "edgetype").save();
+          graph.save(parentV1.addEdge(childV, "edgetype"));
 
           graph.commit();
           graph.begin();

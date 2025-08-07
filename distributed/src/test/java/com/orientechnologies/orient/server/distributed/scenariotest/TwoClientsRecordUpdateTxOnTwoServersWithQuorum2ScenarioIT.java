@@ -79,7 +79,7 @@ public class TwoClientsRecordUpdateTxOnTwoServersWithQuorum2ScenarioIT
       // inserts record
       ODocument recordServer0 =
           new ODocument("Person").fields("id", RECORD_ID, "firstName", "Han", "lastName", "Solo");
-      recordServer0.save();
+      dbServer0.save(recordServer0);
 
       // waits for propagation of the record on all the servers
       waitForInsertedRecordPropagation(RECORD_ID);

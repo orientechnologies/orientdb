@@ -410,7 +410,7 @@ public class JSONStreamTest extends DocumentDBBaseTest {
                 new ByteArrayInputStream(
                     "{name:{\"%Field\":[\"value1\",\"value2\"],\"%Field2\":{},\"%Field3\":\"value3\"}}"
                         .getBytes(StandardCharsets.UTF_8)));
-    doc.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(doc, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument loadedDoc = database.load(doc.getIdentity());
     Assert.assertEquals(doc, loadedDoc);
@@ -423,7 +423,7 @@ public class JSONStreamTest extends DocumentDBBaseTest {
         new ByteArrayInputStream(
             "{\"@type\": \"d\",\"@class\": \"Track\",\"type\": \"LineString\",\"coordinates\": [ [ 100,  0 ],  [ 101, 1 ] ]}"
                 .getBytes(StandardCharsets.UTF_8)));
-    doc.save();
+    database.save(doc);
     final ODocument loadedDoc = database.load(doc.getIdentity());
     Assert.assertTrue(doc.hasSameContentOf(loadedDoc));
   }
@@ -435,7 +435,7 @@ public class JSONStreamTest extends DocumentDBBaseTest {
         new ByteArrayInputStream(
             "{\"@type\": \"d\",\"@class\": \"Track\",\"type\": \"LineString\",\"coordinates\": [ [ 32874387347347,  0 ],  [ -23736753287327, 1 ] ]}"
                 .getBytes(StandardCharsets.UTF_8)));
-    doc.save();
+    database.save(doc);
     final ODocument loadedDoc = database.load(doc.getIdentity());
     Assert.assertTrue(doc.hasSameContentOf(loadedDoc));
   }
@@ -448,7 +448,7 @@ public class JSONStreamTest extends DocumentDBBaseTest {
                 new ByteArrayInputStream(
                     "{Field:{\"Key1\":[\"Value1\",\"Value2\"],\"Key2\":{\"%%dummy%%\":null},\"Key3\":\"Value3\"}}"
                         .getBytes(StandardCharsets.UTF_8)));
-    doc.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(doc, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument loadedDoc = database.load(doc.getIdentity());
     Assert.assertEquals(doc, loadedDoc);
@@ -876,7 +876,7 @@ public class JSONStreamTest extends DocumentDBBaseTest {
     final String jsonString =
         "{\"@type\":\"d\",\"name\":\"cersei\",\"valonqar\":" + jaimeDoc.toJSON() + "}";
     cerseiDoc.fromJSON(new ByteArrayInputStream(jsonString.getBytes(StandardCharsets.UTF_8)));
-    cerseiDoc.save();
+    database.save(cerseiDoc);
 
     // The link between jamie and tyrion is not saved properly
     final ODocument tyrionDoc = new ODocument("NestedLinkCreation");
@@ -886,7 +886,7 @@ public class JSONStreamTest extends DocumentDBBaseTest {
             + jaimeDoc.toJSON()
             + "}}";
     tyrionDoc.fromJSON(new ByteArrayInputStream(jsonString2.getBytes(StandardCharsets.UTF_8)));
-    tyrionDoc.save();
+    database.save(tyrionDoc);
 
     final Map<ORID, ODocument> contentMap = new HashMap<ORID, ODocument>();
 
@@ -1021,13 +1021,13 @@ public class JSONStreamTest extends DocumentDBBaseTest {
     ODocument adamDoc = new ODocument("InnerDocCreation");
     adamDoc.fromJSON(
         new ByteArrayInputStream("{\"name\":\"adam\"}".getBytes(StandardCharsets.UTF_8)));
-    adamDoc.save();
+    database.save(adamDoc);
 
     ODocument eveDoc = new ODocument("InnerDocCreation");
     final String jsonString =
         "{\"@type\":\"d\",\"name\":\"eve\",\"friends\":[" + adamDoc.toJSON() + "]}";
     eveDoc.fromJSON(new ByteArrayInputStream(jsonString.getBytes(StandardCharsets.UTF_8)));
-    eveDoc.save();
+    database.save(eveDoc);
 
     Map<ORID, ODocument> contentMap = new HashMap<ORID, ODocument>();
     ODocument adam = new ODocument("InnerDocCreation");
@@ -1148,7 +1148,7 @@ public class JSONStreamTest extends DocumentDBBaseTest {
     final String jsonString =
         "{\"@type\":\"d\",\"event_name\":\"world cup 2014\",\"admin\":[" + eveDoc.toJSON() + "]}";
     nestedWithTypeD.fromJSON(new ByteArrayInputStream(jsonString.getBytes(StandardCharsets.UTF_8)));
-    nestedWithTypeD.save();
+    database.save(nestedWithTypeD);
     database.commit();
     Assert.assertEquals(database.countClass(classNameOne), 1);
 
@@ -1174,12 +1174,12 @@ public class JSONStreamTest extends DocumentDBBaseTest {
     }
     final ODocument adamDoc = new ODocument("JSONTxDocOne");
     adamDoc.field("name", "adam");
-    adamDoc.save();
+    database.save(adamDoc);
 
     database.begin();
     final ODocument eveDoc = new ODocument("JSONTxDocOne");
     eveDoc.field("name", "eve");
-    eveDoc.save();
+    database.save(eveDoc);
 
     final ODocument nestedWithTypeD = new ODocument("JSONTxDocTwo");
     final String jsonString =

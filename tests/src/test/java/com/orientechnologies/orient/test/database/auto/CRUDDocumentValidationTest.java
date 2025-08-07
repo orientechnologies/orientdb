@@ -56,7 +56,7 @@ public class CRUDDocumentValidationTest extends DocumentDBBaseTest {
   @Test(dependsOnMethods = "openDb", expectedExceptions = OValidationException.class)
   public void validationMandatory() {
     record.clear();
-    record.save();
+    database.save(record);
   }
 
   @Test(dependsOnMethods = "validationMandatory", expectedExceptions = OValidationException.class)
@@ -65,7 +65,7 @@ public class CRUDDocumentValidationTest extends DocumentDBBaseTest {
     record.field("account", account);
     record.field("id", 23723);
     record.field("text", "");
-    record.save();
+    database.save(record);
   }
 
   @Test(
@@ -80,7 +80,7 @@ public class CRUDDocumentValidationTest extends DocumentDBBaseTest {
         "text",
         "clfdkkjsd hfsdkjhf fjdkghjkfdhgjdfh gfdgjfdkhgfd skdjaksdjf skdjf sdkjfsd jfkldjfkjsdf"
             + " kljdk fsdjf kldjgjdhjg khfdjgk hfjdg hjdfhgjkfhdgj kfhdjghrjg");
-    record.save();
+    database.save(record);
   }
 
   @Test(
@@ -92,14 +92,14 @@ public class CRUDDocumentValidationTest extends DocumentDBBaseTest {
     record.field("account", account);
     record.field("date", new SimpleDateFormat("dd/MM/yyyy").parse("01/33/1976"));
     record.field("text", "test");
-    record.save();
+    database.save(record);
   }
 
   @Test(dependsOnMethods = "validationMinDate", expectedExceptions = OValidationException.class)
   public void validationEmbeddedType() throws ParseException {
     record.clear();
     record.field("account", database.getUser());
-    record.save();
+    database.save(record);
   }
 
   @Test(
@@ -109,7 +109,7 @@ public class CRUDDocumentValidationTest extends DocumentDBBaseTest {
     ODocument doc = new ODocument("StrictTest");
     doc.field("id", 122112);
     doc.field("antani", "122112");
-    doc.save();
+    database.save(doc);
   }
 
   @Test(dependsOnMethods = "validationStrictClass")
@@ -161,7 +161,7 @@ public class CRUDDocumentValidationTest extends DocumentDBBaseTest {
     Assert.assertEquals(1, result.size());
     OElement readDoc = result.get(0).toElement();
     readDoc.setProperty("keyField", "K1N");
-    readDoc.save();
+    database.save(readDoc);
   }
 
   @Test(dependsOnMethods = "testUpdateDocDefined")
@@ -170,7 +170,7 @@ public class CRUDDocumentValidationTest extends DocumentDBBaseTest {
     doc.field("keyField", "K2");
     doc.field("dateTimeField", (Date) null);
     doc.field("stringField", (String) null);
-    doc.save();
+    database.save(doc);
 
     database.close();
     reopendb("admin", "admin");
@@ -181,7 +181,7 @@ public class CRUDDocumentValidationTest extends DocumentDBBaseTest {
     Assert.assertEquals(1, result.size());
     OElement readDoc = result.get(0).toElement();
     readDoc.setProperty("keyField", "K2N");
-    readDoc.save();
+    database.save(readDoc);
   }
 
   @Test(dependsOnMethods = "validationMandatoryNullableCloseDb")
@@ -190,7 +190,7 @@ public class CRUDDocumentValidationTest extends DocumentDBBaseTest {
     doc.field("keyField", "K3");
     doc.field("dateTimeField", (Date) null);
     doc.field("stringField", (String) null);
-    doc.save();
+    database.save(doc);
 
     List<OResult> result =
         database.query("SELECT FROM MyTestClass WHERE keyField = ?", "K3").stream()
@@ -198,7 +198,7 @@ public class CRUDDocumentValidationTest extends DocumentDBBaseTest {
     Assert.assertEquals(1, result.size());
     OElement readDoc = result.get(0).toElement();
     readDoc.setProperty("keyField", "K3N");
-    readDoc.save();
+    database.save(readDoc);
   }
 
   @Test(dependsOnMethods = "validationMandatoryNullableNoCloseDb")
@@ -206,7 +206,7 @@ public class CRUDDocumentValidationTest extends DocumentDBBaseTest {
     database.getMetadata().reload();
     try {
       ODocument doc = new ODocument("MyTestClass");
-      doc.save();
+      database.save(doc);
       Assert.fail();
     } catch (OValidationException e) {
     }
@@ -216,7 +216,7 @@ public class CRUDDocumentValidationTest extends DocumentDBBaseTest {
     try {
 
       ODocument doc = new ODocument("MyTestClass");
-      doc.save();
+      database.save(doc);
 
       doc.delete();
     } finally {

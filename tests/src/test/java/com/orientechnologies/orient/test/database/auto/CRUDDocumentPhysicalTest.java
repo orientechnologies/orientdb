@@ -111,7 +111,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
       record.field("extra", "This is an extra field not included in the schema");
       record.field("value", (byte) 10);
 
-      record.save();
+      database.save(record);
       Assert.assertEquals(record.getIdentity().getClusterId(), accountClusterId);
     }
 
@@ -173,7 +173,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
 
       rec.field("price", i + 100);
 
-      rec.save();
+      database.save(rec);
 
       i++;
     }
@@ -528,7 +528,8 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
   @Test
   public void polymorphicQuery() {
     final ORecordAbstract newAccount =
-        new ODocument("Account").field("name", "testInheritanceName").save();
+        new ODocument("Account").field("name", "testInheritanceName");
+    database.save(newAccount);
 
     List<ODocument> superClassResult =
         database.query("select from Account").stream()
@@ -660,7 +661,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
         };
     bank.field("linkeds", linkeds, OType.LINKLIST);
 
-    bank.save();
+    database.save(bank);
 
     database.close();
     reopendb("admin", "admin");
@@ -752,7 +753,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
 
     ODocument testClass2Document = new ODocument(testClass2);
     testClass2Document.field("testClass1Property", new ODocument(testClass1));
-    testClass2Document.save("testCreateEmbddedClass2" + SUFFIX);
+    database.save(testClass2Document, "testCreateEmbddedClass2" + SUFFIX);
 
     testClass2Document = database.load(testClass2Document.getIdentity(), "*:-1", true);
     Assert.assertNotNull(testClass2Document);
@@ -776,7 +777,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     }
 
     doc.field("linkList", allDocs);
-    doc.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(doc, database.getClusterNameById(database.getDefaultClusterId()));
 
     doc.reload();
 
@@ -808,7 +809,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     database.begin();
     {
       doc1 = new ODocument();
-      doc1.save(database.getClusterNameById(database.getDefaultClusterId()));
+      database.save(doc1, database.getClusterNameById(database.getDefaultClusterId()));
     }
     database.commit();
 

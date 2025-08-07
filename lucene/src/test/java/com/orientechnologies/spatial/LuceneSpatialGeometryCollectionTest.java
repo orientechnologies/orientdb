@@ -53,7 +53,7 @@ public class LuceneSpatialGeometryCollectionTest extends BaseSpatialLuceneTest {
                 Arrays.asList(0.0, 0.0))));
     geometry.field("geometries", Arrays.asList(point, polygon));
     test1.field("geometry", geometry);
-    test1.save();
+    db.save(test1);
 
     OResultSet execute =
         db.command(
@@ -83,7 +83,7 @@ public class LuceneSpatialGeometryCollectionTest extends BaseSpatialLuceneTest {
                 Arrays.asList(0.0, 0.0))));
     geometry.field("geometries", Arrays.asList(point, polygon));
     test1.field("geometry", geometry);
-    test1.save();
+    db.save(test1);
 
     db.commit();
 

@@ -90,7 +90,7 @@ public class ThreeClientsRecordUpdateWithTransactionsOnMultipleServersScenarioIT
 
     // inserts record1
     ODocument record1Server1 = new ODocument("Person").fromMap(hanFields);
-    record1Server1.save();
+    dbServer1.save(record1Server1);
 
     // waits for propagation of the record on all the servers
     waitForInsertedRecordPropagation(RECORD_ID);

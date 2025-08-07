@@ -154,7 +154,7 @@ public class IndexUniqueTest {
 
           for (int n = 0; n < 10; n++) document.field("prop" + n, propValues[n].get());
 
-          document.save();
+          db.save(document);
 
           if (tx) db.commit();
 

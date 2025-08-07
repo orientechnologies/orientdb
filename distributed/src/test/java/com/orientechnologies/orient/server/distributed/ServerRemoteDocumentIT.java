@@ -67,8 +67,8 @@ public class ServerRemoteDocumentIT extends AbstractServerClusterTest {
         List clientMatters = new ArrayList();
         clientMatters.add(matter);
         client.field("matters", clientMatters);
-        client.save();
-        matter.save();
+        db.save(client);
+        db.save(matter);
         db.commit();
       } finally {
         db.close();
@@ -89,7 +89,7 @@ public class ServerRemoteDocumentIT extends AbstractServerClusterTest {
         }
         matter.field(
             "client", new ODocument().save(db2.getClusterNameById(db2.getDefaultClusterId())));
-        matter.save();
+        db.save(matter);
         db2.commit();
       } finally {
         db2.close();

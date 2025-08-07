@@ -123,7 +123,7 @@ public class OInsertStatementExecutionTest extends BaseMemoryDatabase {
       ODocument doc = db.newInstance(className1);
       doc.setProperty("name", "name" + i);
       doc.setProperty("surname", "surname" + i);
-      doc.save();
+      db.save(doc);
     }
     OResultSet result = db.command("insert into " + className2 + " from select from " + className1);
     printExecutionPlan(result);
@@ -166,7 +166,7 @@ public class OInsertStatementExecutionTest extends BaseMemoryDatabase {
       ODocument doc = db.newInstance(className1);
       doc.setProperty("name", "name" + i);
       doc.setProperty("surname", "surname" + i);
-      doc.save();
+      db.save(doc);
     }
     OResultSet result =
         db.command("insert into " + className2 + " ( select from " + className1 + ")");

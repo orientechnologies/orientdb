@@ -56,9 +56,12 @@ public class BasicScenarioIT extends AbstractScenarioTest {
 
     ODatabaseDocument database = getDatabase(0);
     try {
-      new ODocument("Customer").fields("name", "Jay", "surname", "Miner").save();
-      new ODocument("Customer").fields("name", "Luke", "surname", "Skywalker").save();
-      new ODocument("Provider").fields("name", "Yoda", "surname", "Nothing").save();
+      ODocument d = new ODocument("Customer").fields("name", "Jay", "surname", "Miner");
+      database.save(d);
+      d = new ODocument("Customer").fields("name", "Luke", "surname", "Skywalker");
+      database.save(d);
+      d = new ODocument("Provider").fields("name", "Yoda", "surname", "Nothing");
+      database.save(d);
     } finally {
       database.close();
     }

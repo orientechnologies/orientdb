@@ -247,7 +247,7 @@ public class OLiveQueryRemoteTest {
       OElement elem = db.newElement("test");
       elem.setProperty("name", "foo");
       elem.setProperty("surname", "bar" + i);
-      elem.save();
+      db.save(elem);
     }
     db.commit();
 

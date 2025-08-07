@@ -2138,7 +2138,7 @@ public class CRUDObjectPhysicalTestSchemaFull extends ObjectDBBaseTest {
             .getBytes();
     oRecordBytes =
         new ORecordBytes((ODatabaseDocumentInternal) database.getUnderlying(), thumbnailImageBytes);
-    oRecordBytes.save();
+    database.getUnderlying().save(oRecordBytes);
     p.setByteArray(oRecordBytes);
     p = database.save(p);
     Assert.assertTrue(p.getByteArray() instanceof OBlob);

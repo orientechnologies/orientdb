@@ -55,7 +55,7 @@ public class CheckHookCallCountTest extends BaseMemoryDatabase {
     ODocument doc = new ODocument(oClass);
     doc.field("a", 2);
     doc.field("b", 2);
-    doc.save();
+    db.save(doc);
     doc.reload();
     assertEquals(Integer.valueOf(2), doc.field("a"));
     assertEquals(Integer.valueOf(2), doc.field("b"));

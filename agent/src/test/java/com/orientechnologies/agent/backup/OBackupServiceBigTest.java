@@ -151,7 +151,7 @@ public class OBackupServiceBigTest {
 
         session.begin();
         values.entrySet().stream().forEach(e -> element.setProperty(e.getKey(), e.getValue()));
-        element.save();
+        session.save(element);
         // slower with continuous changes for reproducing the full backup displacment problem.
         session.commit();
       }

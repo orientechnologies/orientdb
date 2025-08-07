@@ -66,7 +66,8 @@ public class SQLSelectTest extends AbstractSelectTest {
       database.getMetadata().getSchema().createClass("Profile", 1);
 
       for (int i = 0; i < 1000; ++i) {
-        database.<ODocument>newInstance("Profile").field("test", i).field("name", "N" + i).save();
+        database.save(
+            database.<ODocument>newInstance("Profile").field("test", i).field("name", "N" + i));
       }
     }
 

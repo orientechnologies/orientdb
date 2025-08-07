@@ -83,7 +83,7 @@ public class ConcurrentQueriesTest extends DocumentDBBaseTest {
     database.getMetadata().getSchema().createClass("Concurrent");
 
     for (int i = 0; i < 1000; ++i) {
-      database.<ODocument>newInstance("Concurrent").field("test", i).save();
+      database.save(database.<ODocument>newInstance("Concurrent").field("test", i));
     }
   }
 

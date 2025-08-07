@@ -199,7 +199,7 @@ public class OSBTreeRidBagConcurrencyMultiRidBag {
             for (ORID rid : ridsToAdd) ridBag.add(rid);
 
             try {
-              document.save();
+              db.save(document);
             } catch (OConcurrentModificationException e) {
               retries++;
               continue;
@@ -267,7 +267,7 @@ public class OSBTreeRidBagConcurrencyMultiRidBag {
             }
 
             try {
-              document.save();
+              db.save(document);
             } catch (OConcurrentModificationException e) {
               retries++;
               continue;

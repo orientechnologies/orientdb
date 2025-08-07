@@ -69,10 +69,10 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     checkEmbeddedDB();
 
     final ODocument docOne = new ODocument();
-    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docOne, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docTwo, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument document = new ODocument("LinkSetIndexTestClass");
     final Set<OIdentifiable> linkSet = new HashSet<>();
@@ -80,7 +80,7 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     linkSet.add(docTwo);
 
     document.field("linkSet", linkSet);
-    document.save();
+    database.save(document);
 
     OIndex index = getIndex("linkSetIndex");
     Assert.assertEquals(index.getInternal().size(), 2);
@@ -103,10 +103,10 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     checkEmbeddedDB();
 
     final ODocument docOne = new ODocument();
-    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docOne, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docTwo, database.getClusterNameById(database.getDefaultClusterId()));
 
     try {
       database.begin();
@@ -116,7 +116,7 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
       linkSet.add(docTwo);
 
       document.field("linkSet", linkSet);
-      document.save();
+      database.save(document);
       database.commit();
     } catch (Exception e) {
       database.rollback();
@@ -144,13 +144,13 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     checkEmbeddedDB();
 
     final ODocument docOne = new ODocument();
-    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docOne, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docTwo, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docThree = new ODocument();
-    docThree.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docThree, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument document = new ODocument("LinkSetIndexTestClass");
     final Set<OIdentifiable> linkSetOne = new HashSet<>();
@@ -158,14 +158,14 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     linkSetOne.add(docTwo);
 
     document.field("linkSet", linkSetOne);
-    document.save();
+    database.save(document);
 
     final Set<OIdentifiable> linkSetTwo = new HashSet<>();
     linkSetTwo.add(docOne);
     linkSetTwo.add(docThree);
 
     document.field("linkSet", linkSetTwo);
-    document.save();
+    database.save(document);
 
     OIndex index = getIndex("linkSetIndex");
     Assert.assertEquals(index.getInternal().size(), 2);
@@ -188,13 +188,13 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     checkEmbeddedDB();
 
     final ODocument docOne = new ODocument();
-    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docOne, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docTwo, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docThree = new ODocument();
-    docThree.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docThree, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument document = new ODocument("LinkSetIndexTestClass");
     final Set<OIdentifiable> linkSetOne = new HashSet<>();
@@ -202,7 +202,7 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     linkSetOne.add(docTwo);
 
     document.field("linkSet", linkSetOne);
-    document.save();
+    database.save(document);
 
     try {
       database.begin();
@@ -212,7 +212,7 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
       linkSetTwo.add(docThree);
 
       document.field("linkSet", linkSetTwo);
-      document.save();
+      database.save(document);
       database.commit();
     } catch (Exception e) {
       database.rollback();
@@ -240,13 +240,13 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     checkEmbeddedDB();
 
     final ODocument docOne = new ODocument();
-    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docOne, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docTwo, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docThree = new ODocument();
-    docThree.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docThree, database.getClusterNameById(database.getDefaultClusterId()));
 
     final Set<OIdentifiable> linkSetOne = new HashSet<>();
     linkSetOne.add(docOne);
@@ -254,7 +254,7 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
 
     final ODocument document = new ODocument("LinkSetIndexTestClass");
     document.field("linkSet", linkSetOne);
-    document.save();
+    database.save(document);
 
     database.begin();
 
@@ -263,7 +263,7 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     linkSetTwo.add(docThree);
 
     document.field("linkSet", linkSetTwo);
-    document.save();
+    database.save(document);
     database.rollback();
 
     OIndex index = getIndex("linkSetIndex");
@@ -287,13 +287,13 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     checkEmbeddedDB();
 
     final ODocument docOne = new ODocument();
-    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docOne, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docTwo, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docThree = new ODocument();
-    docThree.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docThree, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument document = new ODocument("LinkSetIndexTestClass");
     final Set<OIdentifiable> linkSet = new HashSet<>();
@@ -301,7 +301,7 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     linkSet.add(docTwo);
     document.field("linkSet", linkSet);
 
-    document.save();
+    database.save(document);
 
     database
         .command(
@@ -333,13 +333,13 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     checkEmbeddedDB();
 
     final ODocument docOne = new ODocument();
-    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docOne, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docTwo, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docThree = new ODocument();
-    docThree.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docThree, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument document = new ODocument("LinkSetIndexTestClass");
     final Set<OIdentifiable> linkSet = new HashSet<>();
@@ -347,13 +347,13 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     linkSet.add(docTwo);
 
     document.field("linkSet", linkSet);
-    document.save();
+    database.save(document);
 
     try {
       database.begin();
       ODocument loadedDocument = database.load(document.getIdentity());
       loadedDocument.<Set<OIdentifiable>>field("linkSet").add(docThree);
-      document.save();
+      database.save(document);
       database.commit();
     } catch (Exception e) {
       database.rollback();
@@ -382,13 +382,13 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     checkEmbeddedDB();
 
     final ODocument docOne = new ODocument();
-    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docOne, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docTwo, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docThree = new ODocument();
-    docThree.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docThree, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument document = new ODocument("LinkSetIndexTestClass");
     final Set<OIdentifiable> linkSet = new HashSet<>();
@@ -396,12 +396,12 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     linkSet.add(docTwo);
 
     document.field("linkSet", linkSet);
-    document.save();
+    database.save(document);
 
     database.begin();
     ODocument loadedDocument = database.load(document.getIdentity());
     loadedDocument.<Set<OIdentifiable>>field("linkSet").add(docThree);
-    loadedDocument.save();
+    database.save(loadedDocument);
     database.rollback();
 
     OIndex index = getIndex("linkSetIndex");
@@ -425,23 +425,23 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     checkEmbeddedDB();
 
     final ODocument docOne = new ODocument();
-    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docOne, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docTwo, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument document = new ODocument("LinkSetIndexTestClass");
     final Set<OIdentifiable> linkSet = new HashSet<>();
     linkSet.add(docOne);
     linkSet.add(docTwo);
     document.field("linkSet", linkSet);
-    document.save();
+    database.save(document);
 
     try {
       database.begin();
       ODocument loadedDocument = database.load(document.getIdentity());
       loadedDocument.<Set<OIdentifiable>>field("linkSet").remove(docTwo);
-      loadedDocument.save();
+      database.save(loadedDocument);
       database.commit();
     } catch (Exception e) {
       database.rollback();
@@ -468,22 +468,22 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     checkEmbeddedDB();
 
     final ODocument docOne = new ODocument();
-    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docOne, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docTwo, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument document = new ODocument("LinkSetIndexTestClass");
     final Set<OIdentifiable> linkSet = new HashSet<>();
     linkSet.add(docOne);
     linkSet.add(docTwo);
     document.field("linkSet", linkSet);
-    document.save();
+    database.save(document);
 
     database.begin();
     ODocument loadedDocument = database.load(document.getIdentity());
     loadedDocument.<Set<OIdentifiable>>field("linkSet").remove(docTwo);
-    loadedDocument.save();
+    database.save(loadedDocument);
     database.rollback();
 
     OIndex index = getIndex("linkSetIndex");
@@ -507,10 +507,10 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     checkEmbeddedDB();
 
     final ODocument docOne = new ODocument();
-    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docOne, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docTwo, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument document = new ODocument("LinkSetIndexTestClass");
     final Set<OIdentifiable> linkSet = new HashSet<>();
@@ -518,7 +518,7 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     linkSet.add(docTwo);
 
     document.field("linkSet", linkSet);
-    document.save();
+    database.save(document);
 
     database
         .command("UPDATE " + document.getIdentity() + " remove linkSet = " + docTwo.getIdentity())
@@ -544,10 +544,10 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     checkEmbeddedDB();
 
     final ODocument docOne = new ODocument();
-    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docOne, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docTwo, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument document = new ODocument("LinkSetIndexTestClass");
 
@@ -556,7 +556,7 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     linkSet.add(docTwo);
 
     document.field("linkSet", linkSet);
-    document.save();
+    database.save(document);
     document.delete();
 
     OIndex index = getIndex("linkSetIndex");
@@ -567,10 +567,10 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     checkEmbeddedDB();
 
     final ODocument docOne = new ODocument();
-    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docOne, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docTwo, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument document = new ODocument("LinkSetIndexTestClass");
 
@@ -579,7 +579,7 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     linkSet.add(docTwo);
 
     document.field("linkSet", linkSet);
-    document.save();
+    database.save(document);
     try {
       database.begin();
       document.delete();
@@ -597,10 +597,10 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     checkEmbeddedDB();
 
     final ODocument docOne = new ODocument();
-    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docOne, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docTwo, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument document = new ODocument("LinkSetIndexTestClass");
     final Set<OIdentifiable> linkSet = new HashSet<>();
@@ -609,7 +609,7 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     linkSet.add(docTwo);
 
     document.field("linkSet", linkSet);
-    document.save();
+    database.save(document);
 
     database.begin();
     document.delete();
@@ -636,13 +636,13 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     checkEmbeddedDB();
 
     final ODocument docOne = new ODocument();
-    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docOne, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docTwo, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docThree = new ODocument();
-    docThree.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docThree, database.getClusterNameById(database.getDefaultClusterId()));
 
     ODocument document = new ODocument("LinkSetIndexTestClass");
     final Set<OIdentifiable> linkSetOne = new HashSet<>();
@@ -650,7 +650,7 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     linkSetOne.add(docTwo);
 
     document.field("linkSet", linkSetOne);
-    document.save();
+    database.save(document);
 
     document = new ODocument("LinkSetIndexTestClass");
     final Set<OIdentifiable> linkSet = new HashSet<>();
@@ -658,7 +658,7 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     linkSet.add(docTwo);
 
     document.field("linkSet", linkSet);
-    document.save();
+    database.save(document);
 
     OResultSet result =
         database.query(

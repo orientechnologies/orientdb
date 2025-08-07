@@ -57,9 +57,9 @@ public class DuplicateUniqueIndexChangesTxTest extends BaseMemoryDatabase {
     db.save(person3);
 
     // change names to unique
-    person1.field("name", "Name1").save();
-    person2.field("name", "Name2").save();
-    person3.field("name", "Name3").save();
+    db.save(person1.field("name", "Name1"));
+    db.save(person2.field("name", "Name2"));
+    db.save(person3.field("name", "Name3"));
 
     // should not throw ORecordDuplicatedException exception
     db.commit();
@@ -100,18 +100,18 @@ public class DuplicateUniqueIndexChangesTxTest extends BaseMemoryDatabase {
     db.begin();
 
     // saved persons will have null name
-    person1.field("name", (Object) null).save();
-    person2.field("name", (Object) null).save();
-    person3.field("name", (Object) null).save();
+    db.save(person1.field("name", (Object) null));
+    db.save(person2.field("name", (Object) null));
+    db.save(person3.field("name", (Object) null));
 
     // change names back to unique swapped
-    person1.field("name", "Name2").save();
-    person2.field("name", "Name1").save();
-    person3.field("name", "Name3").save();
+    db.save(person1.field("name", "Name2"));
+    db.save(person2.field("name", "Name1"));
+    db.save(person3.field("name", "Name3"));
 
     // and again
-    person1.field("name", "Name1").save();
-    person2.field("name", "Name2").save();
+    db.save(person1.field("name", "Name1"));
+    db.save(person2.field("name", "Name2"));
 
     // should not throw ORecordDuplicatedException exception
     db.commit();
@@ -139,9 +139,9 @@ public class DuplicateUniqueIndexChangesTxTest extends BaseMemoryDatabase {
     db.save(person3);
 
     // change names to unique
-    person1.field("name", "Name1").save();
-    person2.field("name", "Name2").save();
-    person3.field("name", "Name3").save();
+    db.save(person1.field("name", "Name1"));
+    db.save(person2.field("name", "Name2"));
+    db.save(person3.field("name", "Name3"));
 
     // should not throw ORecordDuplicatedException exception
     db.commit();
@@ -175,14 +175,14 @@ public class DuplicateUniqueIndexChangesTxTest extends BaseMemoryDatabase {
     db.begin();
 
     // saved persons will have same name
-    person1.field("name", "same").save();
-    person2.field("name", "same").save();
-    person3.field("name", "same").save();
+    db.save(person1.field("name", "same"));
+    db.save(person2.field("name", "same"));
+    db.save(person3.field("name", "same"));
 
     // change names back to unique in reverse order
-    person3.field("name", "Name3").save();
-    person2.field("name", "Name2").save();
-    person1.field("name", "Name1").save();
+    db.save(person3.field("name", "Name3"));
+    db.save(person2.field("name", "Name2"));
+    db.save(person1.field("name", "Name1"));
 
     // should not throw ORecordDuplicatedException exception
     db.commit();
@@ -212,9 +212,9 @@ public class DuplicateUniqueIndexChangesTxTest extends BaseMemoryDatabase {
     person4.field("name", "same");
     db.save(person4);
 
-    person1.delete();
-    person2.field("name", "Name2").save();
-    person3.delete();
+    db.delete(person1);
+    db.save(person2.field("name", "Name2"));
+    db.delete(person3);
 
     // should not throw ORecordDuplicatedException exception
     db.commit();
@@ -249,11 +249,11 @@ public class DuplicateUniqueIndexChangesTxTest extends BaseMemoryDatabase {
 
     db.begin();
 
-    person1.delete();
-    person2.field("name", "same").save();
-    person3.delete();
-    person4.field("name", "same").save();
-    person2.field("name", "Name2").save();
+    db.delete(person1);
+    db.save(person2.field("name", "same"));
+    db.delete(person3);
+    db.save(person4.field("name", "same"));
+    db.save(person2.field("name", "Name2"));
 
     // should not throw ORecordDuplicatedException exception
     db.commit();
@@ -263,8 +263,8 @@ public class DuplicateUniqueIndexChangesTxTest extends BaseMemoryDatabase {
     Assert.assertEquals(person4, fetchDocumentFromIndex("same"));
 
     db.begin();
-    person2.delete();
-    person4.delete();
+    db.delete(person2);
+    db.delete(person4);
     db.commit();
 
     // verify index state
@@ -318,10 +318,10 @@ public class DuplicateUniqueIndexChangesTxTest extends BaseMemoryDatabase {
     Assert.assertEquals(person4, fetchDocumentFromIndex("Name4"));
 
     db.begin();
-    person1.field("name", "Name1").save();
-    person2.field("name", (Object) null).save();
-    person3.field("name", "Name1").save();
-    person4.field("name", (Object) null).save();
+    db.save(person1.field("name", "Name1"));
+    db.save(person2.field("name", (Object) null));
+    db.save(person3.field("name", "Name1"));
+    db.save(person4.field("name", (Object) null));
     //    Assert.assertThrows(ORecordDuplicatedException.class, new Assert.ThrowingRunnable() {
     //      @Override
     //      public void run() throws Throwable {

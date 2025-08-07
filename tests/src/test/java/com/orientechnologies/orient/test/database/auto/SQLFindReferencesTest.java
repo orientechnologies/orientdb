@@ -150,25 +150,25 @@ public class SQLFindReferencesTest extends DocumentDBBaseTest {
     johnDoe.field("name", "John");
     johnDoe.field("surname", "Doe");
     johnDoe.field("car", car);
-    johnDoe.save();
+    database.save(johnDoe);
     johnDoeID = johnDoe.getIdentity().copy();
 
     ODocument janeDoe = new ODocument(WORKER);
     janeDoe.field("name", "Jane");
     janeDoe.field("surname", "Doe");
-    janeDoe.save();
+    database.save(janeDoe);
     janeDoeID = janeDoe.getIdentity().copy();
 
     ODocument chuckNorris = new ODocument(WORKER);
     chuckNorris.field("name", "Chuck");
     chuckNorris.field("surname", "Norris");
-    chuckNorris.save();
+    database.save(chuckNorris);
     chuckNorrisID = chuckNorris.getIdentity().copy();
 
     ODocument jackBauer = new ODocument(WORKER);
     jackBauer.field("name", "Jack");
     jackBauer.field("surname", "Bauer");
-    jackBauer.save();
+    database.save(jackBauer);
     jackBauerID = jackBauer.getIdentity().copy();
 
     ODocument ctu = new ODocument(WORKPLACE);
@@ -178,7 +178,7 @@ public class SQLFindReferencesTest extends DocumentDBBaseTest {
     workplace1Workers.add(chuckNorris);
     workplace1Workers.add(janeDoe);
     ctu.field("workers", workplace1Workers);
-    ctu.save();
+    database.save(ctu);
     ctuID = ctu.getIdentity().copy();
 
     ODocument fbi = new ODocument(WORKPLACE);
@@ -188,11 +188,11 @@ public class SQLFindReferencesTest extends DocumentDBBaseTest {
     workplace2Workers.add(chuckNorris);
     workplace2Workers.add(jackBauer);
     fbi.field("workers", workplace2Workers);
-    fbi.save();
+    database.save(fbi);
     fbiID = fbi.getIdentity().copy();
 
     car.field("owner", jackBauer);
-    car.save();
+    database.save(car);
     carID = car.getIdentity().copy();
   }
 

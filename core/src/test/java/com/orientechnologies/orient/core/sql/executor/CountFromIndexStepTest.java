@@ -50,7 +50,7 @@ public class CountFromIndexStepTest extends TestUtilsFixture {
     for (int i = 0; i < 20; i++) {
       ODocument document = new ODocument(className);
       document.field(PROPERTY_NAME, PROPERTY_VALUE);
-      document.save();
+      db.save(document);
     }
   }
 

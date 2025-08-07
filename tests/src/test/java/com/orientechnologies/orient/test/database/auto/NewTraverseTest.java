@@ -56,31 +56,31 @@ public class NewTraverseTest extends DocumentDBBaseTest {
 
     tomCruise = database.newVertex("Actor");
     tomCruise.setProperty("name", "Tom Cruise");
-    tomCruise.save();
+    database.save(tomCruise);
 
     totalElements++;
     megRyan = database.newVertex("Actor");
     megRyan.setProperty("name", "Meg Ryan");
-    megRyan.save();
+    database.save(megRyan);
 
     totalElements++;
     nicoleKidman = database.newVertex("Actor");
     nicoleKidman.setProperty("name", "Nicole Kidman");
     nicoleKidman.setProperty("attributeWithDotValue", "a.b");
-    nicoleKidman.save();
+    database.save(nicoleKidman);
 
     totalElements++;
 
     var topGun = database.newVertex("Movie");
     topGun.setProperty("name", "Top Gun");
     topGun.setProperty("year", 1986);
-    topGun.save();
+    database.save(topGun);
 
     totalElements++;
     var missionImpossible = database.newVertex("Movie");
     missionImpossible.setProperty("name", "Mission: Impossible");
     missionImpossible.setProperty("year", 1996);
-    missionImpossible.save();
+    database.save(missionImpossible);
 
     totalElements++;
     var youHaveGotMail = database.newVertex("Movie");
@@ -90,30 +90,30 @@ public class NewTraverseTest extends DocumentDBBaseTest {
     totalElements++;
 
     var e = database.newEdge(tomCruise, topGun, "actorIn");
-    e.save();
+    database.save(e);
 
     totalElements++;
     e = database.newEdge(megRyan, topGun, "actorIn");
-    e.save();
+    database.save(e);
 
     totalElements++;
     e = database.newEdge(tomCruise, missionImpossible, "actorIn");
-    e.save();
+    database.save(e);
 
     totalElements++;
     e = database.newEdge(megRyan, youHaveGotMail, "actorIn");
-    e.save();
+    database.save(e);
 
     totalElements++;
 
     e = database.newEdge(tomCruise, megRyan, "friend");
-    e.save();
+    database.save(e);
 
     totalElements++;
     e = database.newEdge(tomCruise, nicoleKidman, "married");
 
     e.setProperty("year", 1990);
-    e.save();
+    database.save(e);
 
     totalElements++;
   }

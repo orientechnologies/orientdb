@@ -117,7 +117,7 @@ public class DateIndexTest extends DocumentDBBaseTest {
 
     dateDoc.field("value", "v1");
 
-    dateDoc.save();
+    database.save(dateDoc);
 
     final OIndex dateIndexTestDateIndex =
         database

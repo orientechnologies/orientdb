@@ -15,7 +15,7 @@ public class ODeleteVertexStatementExecutionTest extends BaseMemoryDatabase {
     for (int i = 0; i < 10; i++) {
       OVertex v1 = db.newVertex(className);
       v1.setProperty("name", "a" + i);
-      v1.save();
+      db.save(v1);
     }
 
     db.command("DELETE VERTEX " + className + " WHERE name = 'a3'").close();
@@ -31,7 +31,7 @@ public class ODeleteVertexStatementExecutionTest extends BaseMemoryDatabase {
     for (int i = 0; i < 10; i++) {
       OVertex v1 = db.newVertex(className);
       v1.setProperty("name", "a" + i);
-      v1.save();
+      db.save(v1);
     }
 
     db.command("DELETE VERTEX " + className).close();
@@ -47,7 +47,7 @@ public class ODeleteVertexStatementExecutionTest extends BaseMemoryDatabase {
     for (int i = 0; i < 10; i++) {
       OVertex v1 = db.newVertex(className1);
       v1.setProperty("name", "a" + i);
-      v1.save();
+      db.save(v1);
     }
 
     String className2 = "testDeleteAllVertices2";
@@ -55,7 +55,7 @@ public class ODeleteVertexStatementExecutionTest extends BaseMemoryDatabase {
     for (int i = 0; i < 10; i++) {
       OVertex v1 = db.newVertex(className2);
       v1.setProperty("name", "a" + i);
-      v1.save();
+      db.save(v1);
     }
 
     db.command("DELETE VERTEX " + className1).close();

@@ -667,7 +667,7 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
         for (String fieldName : fields.keySet()) {
           this.recordToUpdate.field(fieldName, fields.get(fieldName));
         }
-        this.recordToUpdate.save();
+        dbServer.save(this.recordToUpdate);
 
         if (useTransaction) {
           dbServer.commit();
@@ -711,8 +711,8 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
           dbServer.begin();
         }
 
-        this.recordToDelete.delete();
-        this.recordToDelete.save();
+        dbServer.delete(this.recordToDelete);
+        dbServer.save(this.recordToDelete);
 
         if (useTransaction) {
           dbServer.commit();

@@ -44,14 +44,14 @@ public class AsyncReplModeIT extends BareBoneBase2ClientTest {
       try {
         // Create 2 parent vertices.
         OVertex parentV1 = graph.newVertex("vertextype1");
-        parentV1.save();
+        graph.save(parentV1);
         graph.commit();
         graph.begin();
         assertEquals(1, parentV1.getRecord().getVersion());
         parentV1Id = parentV1.getIdentity();
 
         OVertex parentV2 = graph.newVertex("vertextype2");
-        parentV2.save();
+        graph.save(parentV2);
         graph.commit();
         graph.begin();
         assertEquals(1, parentV2.getRecord().getVersion());
@@ -64,13 +64,13 @@ public class AsyncReplModeIT extends BareBoneBase2ClientTest {
           if (exceptionInThread != null) break;
           //          sleep(500);
           OVertex vertex = graph.newVertex("vertextype3");
-          vertex.save();
+          graph.save(vertex);
           graph.commit();
           graph.begin();
           assertEquals(1, vertex.getRecord().getVersion());
 
           vertex.setProperty("num", i);
-          vertex.save();
+          graph.save(vertex);
           graph.commit();
           graph.begin();
           assertEquals(2, vertex.getRecord().getVersion());

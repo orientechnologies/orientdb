@@ -61,7 +61,7 @@ public class DuplicateNonUniqueIndexChangesTxTest extends BaseMemoryDatabase {
     db.save(person3);
 
     // change some names
-    person3.field("name", "Name3").save();
+    db.save(person3.field("name", "Name3"));
 
     db.commit();
 

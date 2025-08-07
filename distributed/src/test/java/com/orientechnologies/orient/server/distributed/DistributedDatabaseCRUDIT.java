@@ -91,7 +91,7 @@ public final class DistributedDatabaseCRUDIT {
         vertex.setProperty("prop13", "v7-1");
         vertex.setProperty("prop14", "v7-1");
         vertex.setProperty("prop15", System.currentTimeMillis());
-        vertex.save();
+        graph.save(vertex);
         graph.commit();
         graph.begin();
         if ((i % 100) == 0) {
@@ -120,7 +120,7 @@ public final class DistributedDatabaseCRUDIT {
         vertex.setProperty("prop13", "value7-1");
         vertex.setProperty("prop14", System.currentTimeMillis());
         vertex.setProperty("prop15", System.currentTimeMillis());
-        vertex.save();
+        graph.save(vertex);
         graph.commit();
         graph.begin();
         if ((i % 200) == 0) {

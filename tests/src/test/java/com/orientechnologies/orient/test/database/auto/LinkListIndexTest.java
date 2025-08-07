@@ -64,16 +64,16 @@ public class LinkListIndexTest extends DocumentDBBaseTest {
     checkEmbeddedDB();
 
     final ODocument docOne = new ODocument();
-    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docOne, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docTwo, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument document = new ODocument("LinkListIndexTestClass");
     document.field(
         "linkCollection",
         new ArrayList<>(Arrays.asList(docOne.getIdentity(), docTwo.getIdentity())));
-    document.save();
+    database.save(document);
 
     OIndex index = getIndex("linkCollectionIndex");
     Assert.assertEquals(index.getInternal().size(), 2);
@@ -97,10 +97,10 @@ public class LinkListIndexTest extends DocumentDBBaseTest {
     checkEmbeddedDB();
 
     final ODocument docOne = new ODocument();
-    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docOne, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docTwo, database.getClusterNameById(database.getDefaultClusterId()));
 
     try {
       database.begin();
@@ -108,7 +108,7 @@ public class LinkListIndexTest extends DocumentDBBaseTest {
       document.field(
           "linkCollection",
           new ArrayList<>(Arrays.asList(docOne.getIdentity(), docTwo.getIdentity())));
-      document.save();
+      database.save(document);
       database.commit();
     } catch (Exception e) {
       database.rollback();
@@ -136,24 +136,24 @@ public class LinkListIndexTest extends DocumentDBBaseTest {
     checkEmbeddedDB();
 
     final ODocument docOne = new ODocument();
-    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docOne, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docTwo, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docThree = new ODocument();
-    docThree.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docThree, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument document = new ODocument("LinkListIndexTestClass");
     document.field(
         "linkCollection",
         new ArrayList<>(Arrays.asList(docOne.getIdentity(), docTwo.getIdentity())));
-    document.save();
+    database.save(document);
 
     document.field(
         "linkCollection",
         new ArrayList<>(Arrays.asList(docOne.getIdentity(), docThree.getIdentity())));
-    document.save();
+    database.save(document);
 
     OIndex index = getIndex("linkCollectionIndex");
     Assert.assertEquals(index.getInternal().size(), 2);
@@ -176,26 +176,26 @@ public class LinkListIndexTest extends DocumentDBBaseTest {
     checkEmbeddedDB();
 
     final ODocument docOne = new ODocument();
-    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docOne, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docTwo, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docThree = new ODocument();
-    docThree.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docThree, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument document = new ODocument("LinkListIndexTestClass");
     document.field(
         "linkCollection",
         new ArrayList<>(Arrays.asList(docOne.getIdentity(), docTwo.getIdentity())));
-    document.save();
+    database.save(document);
 
     try {
       database.begin();
       document.field(
           "linkCollection",
           new ArrayList<>(Arrays.asList(docOne.getIdentity(), docThree.getIdentity())));
-      document.save();
+      database.save(document);
       database.commit();
     } catch (Exception e) {
       database.rollback();
@@ -224,25 +224,25 @@ public class LinkListIndexTest extends DocumentDBBaseTest {
     checkEmbeddedDB();
 
     final ODocument docOne = new ODocument();
-    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docOne, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docTwo, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docThree = new ODocument();
-    docThree.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docThree, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument document = new ODocument("LinkListIndexTestClass");
     document.field(
         "linkCollection",
         new ArrayList<>(Arrays.asList(docOne.getIdentity(), docTwo.getIdentity())));
-    document.save();
+    database.save(document);
 
     database.begin();
     document.field(
         "linkCollection",
         new ArrayList<>(Arrays.asList(docOne.getIdentity(), docThree.getIdentity())));
-    document.save();
+    database.save(document);
     database.rollback();
 
     OIndex index = getIndex("linkCollectionIndex");
@@ -266,19 +266,19 @@ public class LinkListIndexTest extends DocumentDBBaseTest {
     checkEmbeddedDB();
 
     final ODocument docOne = new ODocument();
-    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docOne, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docTwo, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docThree = new ODocument();
-    docThree.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docThree, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument document = new ODocument("LinkListIndexTestClass");
     document.field(
         "linkCollection",
         new ArrayList<>(Arrays.asList(docOne.getIdentity(), docTwo.getIdentity())));
-    document.save();
+    database.save(document);
 
     database
         .command(
@@ -310,25 +310,25 @@ public class LinkListIndexTest extends DocumentDBBaseTest {
     checkEmbeddedDB();
 
     final ODocument docOne = new ODocument();
-    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docOne, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docTwo, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docThree = new ODocument();
-    docThree.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docThree, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument document = new ODocument("LinkListIndexTestClass");
     document.field(
         "linkCollection",
         new ArrayList<>(Arrays.asList(docOne.getIdentity(), docTwo.getIdentity())));
-    document.save();
+    database.save(document);
 
     try {
       database.begin();
       ODocument loadedDocument = database.load(document.getIdentity());
       loadedDocument.<List<OIdentifiable>>field("linkCollection").add(docThree.getIdentity());
-      document.save();
+      database.save(document);
       database.commit();
     } catch (Exception e) {
       database.rollback();
@@ -357,24 +357,24 @@ public class LinkListIndexTest extends DocumentDBBaseTest {
     checkEmbeddedDB();
 
     final ODocument docOne = new ODocument();
-    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docOne, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docTwo, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docThree = new ODocument();
-    docThree.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docThree, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument document = new ODocument("LinkListIndexTestClass");
     document.field(
         "linkCollection",
         new ArrayList<>(Arrays.asList(docOne.getIdentity(), docTwo.getIdentity())));
-    document.save();
+    database.save(document);
 
     database.begin();
     ODocument loadedDocument = database.load(document.getIdentity());
     loadedDocument.<List<OIdentifiable>>field("linkCollection").add(docThree.getIdentity());
-    loadedDocument.save();
+    database.save(loadedDocument);
     database.rollback();
 
     OIndex index = getIndex("linkCollectionIndex");
@@ -398,22 +398,22 @@ public class LinkListIndexTest extends DocumentDBBaseTest {
     checkEmbeddedDB();
 
     final ODocument docOne = new ODocument();
-    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docOne, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docTwo, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument document = new ODocument("LinkListIndexTestClass");
     document.field(
         "linkCollection",
         new ArrayList<>(Arrays.asList(docOne.getIdentity(), docTwo.getIdentity())));
-    document.save();
+    database.save(document);
 
     try {
       database.begin();
       ODocument loadedDocument = database.load(document.getIdentity());
       loadedDocument.<List>field("linkCollection").remove(docTwo.getIdentity());
-      loadedDocument.save();
+      database.save(loadedDocument);
       database.commit();
     } catch (Exception e) {
       database.rollback();
@@ -440,21 +440,21 @@ public class LinkListIndexTest extends DocumentDBBaseTest {
     checkEmbeddedDB();
 
     final ODocument docOne = new ODocument();
-    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docOne, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docTwo, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument document = new ODocument("LinkListIndexTestClass");
     document.field(
         "linkCollection",
         new ArrayList<>(Arrays.asList(docOne.getIdentity(), docTwo.getIdentity())));
-    document.save();
+    database.save(document);
 
     database.begin();
     ODocument loadedDocument = database.load(document.getIdentity());
     loadedDocument.<List>field("linkCollection").remove(docTwo.getIdentity());
-    loadedDocument.save();
+    database.save(loadedDocument);
     database.rollback();
 
     OIndex index = getIndex("linkCollectionIndex");
@@ -478,16 +478,16 @@ public class LinkListIndexTest extends DocumentDBBaseTest {
     checkEmbeddedDB();
 
     final ODocument docOne = new ODocument();
-    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docOne, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docTwo, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument document = new ODocument("LinkListIndexTestClass");
     document.field(
         "linkCollection",
         new ArrayList<>(Arrays.asList(docOne.getIdentity(), docTwo.getIdentity())));
-    document.save();
+    database.save(document);
 
     database.command(
         "UPDATE " + document.getIdentity() + " remove linkCollection = " + docTwo.getIdentity());
@@ -513,17 +513,17 @@ public class LinkListIndexTest extends DocumentDBBaseTest {
     checkEmbeddedDB();
 
     final ODocument docOne = new ODocument();
-    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docOne, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docTwo, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument document = new ODocument("LinkListIndexTestClass");
     document.field(
         "linkCollection",
         new ArrayList<>(Arrays.asList(docOne.getIdentity(), docTwo.getIdentity())));
-    document.save();
-    document.delete();
+    database.save(document);
+    database.delete(document);
 
     OIndex index = getIndex("linkCollectionIndex");
 
@@ -534,19 +534,19 @@ public class LinkListIndexTest extends DocumentDBBaseTest {
     checkEmbeddedDB();
 
     final ODocument docOne = new ODocument();
-    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docOne, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docTwo, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument document = new ODocument("LinkListIndexTestClass");
     document.field(
         "linkCollection",
         new ArrayList<>(Arrays.asList(docOne.getIdentity(), docTwo.getIdentity())));
-    document.save();
+    database.save(document);
     try {
       database.begin();
-      document.delete();
+      database.delete(document);
       database.commit();
     } catch (Exception e) {
       database.rollback();
@@ -561,19 +561,19 @@ public class LinkListIndexTest extends DocumentDBBaseTest {
     checkEmbeddedDB();
 
     final ODocument docOne = new ODocument();
-    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docOne, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docTwo, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument document = new ODocument("LinkListIndexTestClass");
     document.field(
         "linkCollection",
         new ArrayList<>(Arrays.asList(docOne.getIdentity(), docTwo.getIdentity())));
-    document.save();
+    database.save(document);
 
     database.begin();
-    document.delete();
+    database.delete(document);
     database.rollback();
 
     OIndex index = getIndex("linkCollectionIndex");
@@ -596,16 +596,16 @@ public class LinkListIndexTest extends DocumentDBBaseTest {
 
   public void testIndexCollectionSQL() {
     final ODocument docOne = new ODocument();
-    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docOne, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument docTwo = new ODocument();
-    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docTwo, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument document = new ODocument("LinkListIndexTestClass");
     document.field(
         "linkCollection",
         new ArrayList<>(Arrays.asList(docOne.getIdentity(), docTwo.getIdentity())));
-    document.save();
+    database.save(document);
 
     OResultSet result =
         database.query(

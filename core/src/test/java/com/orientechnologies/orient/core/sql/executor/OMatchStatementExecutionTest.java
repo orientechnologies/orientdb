@@ -77,7 +77,7 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
     for (int i = 0; i < nodes; i++) {
       ODocument doc = new ODocument("IndexedVertex");
       doc.field("uid", i);
-      doc.save();
+      db.save(doc);
     }
 
     for (int i = 0; i < 100; i++) {

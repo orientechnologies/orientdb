@@ -55,16 +55,16 @@ public class IndexTxTest extends DocumentDBBaseTest {
     final ODocument doc1 = new ODocument("IndexTxTestClass");
     final ODocument doc2 = new ODocument("IndexTxTestClass");
 
-    doc1.save();
-    doc2.save();
+    database.save(doc1);
+    database.save(doc2);
 
     doc1.field("ref", doc2.getIdentity().copy());
     doc1.field("name", "doc1");
     doc2.field("ref", doc1.getIdentity().copy());
     doc2.field("name", "doc2");
 
-    doc1.save();
-    doc2.save();
+    database.save(doc1);
+    database.save(doc2);
 
     database.commit();
 

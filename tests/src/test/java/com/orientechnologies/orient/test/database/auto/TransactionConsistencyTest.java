@@ -308,7 +308,7 @@ public class TransactionConsistencyTest extends DocumentDBBaseTest {
     ((HashSet<ODocument>) teri.field("following", new HashSet<ODocument>()).field("following"))
         .add(jack);
 
-    jack.save();
+    database.save(jack);
 
     database.commit();
 
@@ -320,7 +320,7 @@ public class TransactionConsistencyTest extends DocumentDBBaseTest {
     int jackLastVersion = loadedJack.getVersion();
     database.begin();
     loadedJack.field("occupation", "agent");
-    loadedJack.save();
+    database.save(loadedJack);
     database.commit();
     Assert.assertTrue(jackLastVersion != loadedJack.getVersion());
 
@@ -360,13 +360,13 @@ public class TransactionConsistencyTest extends DocumentDBBaseTest {
     ODocument jack = new ODocument("MyProfile").field("name", "Jack").field("surname", "Bauer");
 
     ODocument myedge = new ODocument("MyEdge").field("in", kim).field("out", jack);
-    myedge.save();
+    database.save(myedge);
     ((HashSet<ODocument>) kim.field("out", new HashSet<ORID>()).field("out")).add(myedge);
     ((HashSet<ODocument>) jack.field("in", new HashSet<ORID>()).field("in")).add(myedge);
 
-    jack.save();
-    kim.save();
-    teri.save();
+    database.save(jack);
+    database.save(kim);
+    database.save(teri);
 
     database.commit();
 
@@ -405,10 +405,10 @@ public class TransactionConsistencyTest extends DocumentDBBaseTest {
 
     int profileClusterId = database.getClusterIdByName("Profile");
 
-    jack.save();
-    kim.save();
-    teri.save();
-    chloe.save();
+    database.save(jack);
+    database.save(kim);
+    database.save(teri);
+    database.save(chloe);
 
     database.commit();
 
@@ -477,7 +477,7 @@ public class TransactionConsistencyTest extends DocumentDBBaseTest {
                 .field("name", "" + i)
                 .field("color", "FOO")
                 .field("flavor", "BAR" + i);
-        d.save();
+        database.save(d);
         v.addElement(d);
       }
 
@@ -527,15 +527,15 @@ public class TransactionConsistencyTest extends DocumentDBBaseTest {
       // Create several foo's
       var v = database.newVertex("Foo");
       v.setProperty("address", "test1");
-      v.save();
+      database.save(v);
 
       v = database.newVertex("Foo");
       v.setProperty("address", "test2");
-      v.save();
+      database.save(v);
 
       v = database.newVertex("Foo");
       v.setProperty("address", "test3");
-      v.save();
+      database.save(v);
       database.commit();
 
       // remove those foos in a transaction
@@ -582,17 +582,17 @@ public class TransactionConsistencyTest extends DocumentDBBaseTest {
       // Commenting out the transaction will result in the test succeeding.
       var foo = database.newVertex("Foo");
       foo.setProperty("prop", "test1");
-      foo.save();
+      database.save(foo);
 
       // Comment out these two lines and the test will succeed. The issue appears to be related to
       // an edge
       // connecting a deleted vertex during a transaction
       var bar = database.newVertex("Bar");
       bar.setProperty("prop", "test1");
-      bar.save();
+      database.save(bar);
 
       var sees = database.newEdge(foo, bar, "Sees");
-      sees.save();
+      database.save(sees);
 
       database.commit();
 
@@ -643,10 +643,10 @@ public class TransactionConsistencyTest extends DocumentDBBaseTest {
         edge.field("out", inserted.elementAt(i - 1));
         ((Set<ODocument>) person.field("out")).add(edge);
         ((Set<ODocument>) ((ODocument) inserted.elementAt(i - 1)).field("in")).add(edge);
-        edge.save();
+        database.save(edge);
       }
       inserted.add(person);
-      person.save();
+      database.save(person);
     }
     database.commit();
 
@@ -674,22 +674,22 @@ public class TransactionConsistencyTest extends DocumentDBBaseTest {
           edge.field("out", inserted2.elementAt(i - 1));
           ((Set<ODocument>) person.field("out")).add(edge);
           ((Set<ODocument>) ((ODocument) inserted2.elementAt(i - 1)).field("in")).add(edge);
-          edge.save();
+          database.save(edge);
         }
         inserted2.add(person);
-        person.save();
+        database.save(person);
       }
 
       for (int i = 0; i < cnt; i++) {
         if (i != cnt - 1) {
           ((ODocument) inserted.elementAt(i)).field("myversion", 2);
-          ((ODocument) inserted.elementAt(i)).save();
+          database.save(((ODocument) inserted.elementAt(i)));
         }
       }
 
-      ((ODocument) inserted.elementAt(cnt - 1)).delete();
+      database.delete(((ODocument) inserted.elementAt(cnt - 1)));
       ORecordInternal.setVersion(((ODocument) inserted.elementAt(cnt - 2)), 0);
-      ((ODocument) inserted.elementAt(cnt - 2)).save();
+      database.save(((ODocument) inserted.elementAt(cnt - 2)));
       database.commit();
       Assert.assertTrue(false);
     } catch (OConcurrentModificationException e) {

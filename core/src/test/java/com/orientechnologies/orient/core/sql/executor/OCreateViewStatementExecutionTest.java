@@ -39,7 +39,7 @@ public class OCreateViewStatementExecutionTest extends BaseMemoryDatabase {
 
     OElement elem = db.newElement(className);
     elem.setProperty("name", "foo");
-    elem.save();
+    db.save(elem);
 
     OViewConfig cfg = new OViewConfig(viewName, "SELECT FROM " + className);
     cfg.setOriginRidField("origin");
@@ -113,7 +113,7 @@ public class OCreateViewStatementExecutionTest extends BaseMemoryDatabase {
       OElement elem = db.newElement(className);
       elem.setProperty("name", "name" + i);
       elem.setProperty("surname", "surname" + i);
-      elem.save();
+      db.save(elem);
     }
 
     String statement =
@@ -143,7 +143,7 @@ public class OCreateViewStatementExecutionTest extends BaseMemoryDatabase {
       OElement elem = db.newElement(className);
       elem.setProperty("name", "name" + i);
       elem.setProperty("data", Arrays.asList(new Integer[] {20 + i, 40 + i, 50 + i}));
-      elem.save();
+      db.save(elem);
     }
 
     String statement =
@@ -175,7 +175,7 @@ public class OCreateViewStatementExecutionTest extends BaseMemoryDatabase {
       OElement elem = db.newElement(className);
       elem.setProperty("name", "name" + i);
       elem.setProperty("surname", "surname" + i);
-      elem.save();
+      db.save(elem);
     }
 
     String statement =
@@ -215,7 +215,7 @@ public class OCreateViewStatementExecutionTest extends BaseMemoryDatabase {
       OElement elem = db.newElement(className);
       elem.setProperty("name", "name" + i);
       elem.setProperty("surname", "surname" + i);
-      elem.save();
+      db.save(elem);
     }
 
     String statement =
@@ -254,7 +254,7 @@ public class OCreateViewStatementExecutionTest extends BaseMemoryDatabase {
       OElement elem = db.newElement(className);
       elem.setProperty("name", "name" + i);
       elem.setProperty("surname", "surname" + i);
-      elem.save();
+      db.save(elem);
     }
 
     String statement =
@@ -302,7 +302,7 @@ public class OCreateViewStatementExecutionTest extends BaseMemoryDatabase {
       OElement elem = db.newElement(className);
       elem.setProperty("name", "name" + i);
       elem.setProperty("surname", "surname" + i);
-      elem.save();
+      db.save(elem);
     }
 
     String statement =
