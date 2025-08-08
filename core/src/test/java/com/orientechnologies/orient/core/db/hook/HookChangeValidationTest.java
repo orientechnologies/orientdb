@@ -47,7 +47,7 @@ public class HookChangeValidationTest extends BaseMemoryDatabase {
     doc.field("property2", "value2-create");
     doc.field("property3", "value3-create");
     try {
-      doc.save();
+      db.save(doc);
       Assert.fail("The document save should fail for validation exception");
     } catch (OValidationException ex) {
 
@@ -86,7 +86,7 @@ public class HookChangeValidationTest extends BaseMemoryDatabase {
     doc.field("property1", "value1-create");
     doc.field("property2", "value2-create");
     doc.field("property3", "value3-create");
-    doc.save();
+    db.save(doc);
     assertEquals("value1-create", doc.field("property1"));
     assertEquals("value2-create", doc.field("property2"));
     assertEquals("value3-create", doc.field("property3"));
@@ -94,7 +94,7 @@ public class HookChangeValidationTest extends BaseMemoryDatabase {
     doc.field("property1", "value1-update");
     doc.field("property2", "value2-update");
     try {
-      doc.save();
+      db.save(doc);
       Assert.fail("The document save should fail for validation exception");
     } catch (OValidationException ex) {
 
@@ -135,7 +135,7 @@ public class HookChangeValidationTest extends BaseMemoryDatabase {
     doc.field("property3", "value3-create");
     try {
       db.begin();
-      doc.save();
+      db.save(doc);
       db.commit();
       Assert.fail("The document save should fail for validation exception");
     } catch (OValidationException ex) {
@@ -175,7 +175,7 @@ public class HookChangeValidationTest extends BaseMemoryDatabase {
     doc.field("property1", "value1-create");
     doc.field("property2", "value2-create");
     doc.field("property3", "value3-create");
-    doc.save();
+    db.save(doc);
     assertEquals("value1-create", doc.field("property1"));
     assertEquals("value2-create", doc.field("property2"));
     assertEquals("value3-create", doc.field("property3"));
@@ -184,7 +184,7 @@ public class HookChangeValidationTest extends BaseMemoryDatabase {
     doc.field("property2", "value2-update");
     try {
       db.begin();
-      doc.save();
+      db.save(doc);
       db.commit();
       Assert.fail("The document save should fail for validation exception");
     } catch (OValidationException ex) {

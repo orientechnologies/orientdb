@@ -532,7 +532,7 @@ public class ColumnSecurityTest {
       OElement doc = item.getElement().get();
       doc.setProperty("name", "bar");
       try {
-        doc.save();
+        db.save(doc);
         Assert.fail();
       } catch (Exception e) {
 

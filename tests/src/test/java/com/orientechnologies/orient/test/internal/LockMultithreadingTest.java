@@ -53,7 +53,7 @@ public class LockMultithreadingTest {
         Thread.sleep(200);
         ODocument document = new ODocument(STUDENT_CLASS_NAME);
         document.field("counter", value);
-        document.save();
+        db.save(document);
         System.out.println(Thread.currentThread() + " : document " + value + " added");
         value = createCounter.getAndIncrement();
       }
@@ -90,7 +90,7 @@ public class LockMultithreadingTest {
           ODocument document = (ODocument) execute.next().getElement().get();
           document.field("counter2", document.<Object>field("counter"));
           try {
-            document.save();
+            db.save(document);
             System.out.println(
                 Thread.currentThread() + " : document " + updateCounter + " updated");
             updateCounter++;
@@ -137,7 +137,7 @@ public class LockMultithreadingTest {
           } while (execute == null || !execute.hasNext());
           System.out.println(Thread.currentThread() + " : after search cycle (delete)" + number);
           ODocument document = (ODocument) execute.next().getElement().get();
-          document.delete();
+          db.delete(document);
           deleted.add(number);
           System.out.println(Thread.currentThread() + " : document deleted " + number);
           number = deleteCounter.getAndIncrement();

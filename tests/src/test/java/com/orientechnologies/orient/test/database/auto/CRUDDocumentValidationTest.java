@@ -218,7 +218,7 @@ public class CRUDDocumentValidationTest extends DocumentDBBaseTest {
       ODocument doc = new ODocument("MyTestClass");
       database.save(doc);
 
-      doc.delete();
+      database.delete(doc);
     } finally {
       database.setValidationEnabled(true);
       database

@@ -503,7 +503,7 @@ public class OClassImplTest extends BaseMemoryInternalDatabase {
 
     ODocument record = db.newInstance(className);
     record.field("name", "foo");
-    record.save();
+    db.save(record);
 
     oClass.createProperty("name", OType.ANY);
 

@@ -50,7 +50,7 @@ public class LuceneGraphTXTest extends BaseLuceneTest {
 
     v.setProperty("name", "Berlin");
 
-    v.save();
+    db.save(v);
 
     results = db.command("select from City where name lucene 'Berlin'");
     Assert.assertEquals(results.stream().count(), 1);

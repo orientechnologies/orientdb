@@ -58,19 +58,19 @@ public class OSQLFunctionDijkstraTest {
 
     OEdge e1 = graph.newEdge(v1, v2, "weight");
     e1.setProperty("weight", 1.0f);
-    e1.save();
+    graph.save(e1);
 
     OEdge e2 = graph.newEdge(v2, v3, "weight");
     e2.setProperty("weight", 1.0f);
-    e2.save();
+    graph.save(e2);
 
     OEdge e3 = graph.newEdge(v1, v3, "weight");
     e3.setProperty("weight", 100.0f);
-    e3.save();
+    graph.save(e3);
 
     OEdge e4 = graph.newEdge(v3, v4, "weight");
     e4.setProperty("weight", 1.0f);
-    e4.save();
+    graph.save(e4);
   }
 
   @Test

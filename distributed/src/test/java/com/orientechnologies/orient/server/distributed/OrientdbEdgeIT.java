@@ -203,15 +203,15 @@ public class OrientdbEdgeIT {
     t.begin();
     try {
       OVertex v1 = t.newVertex("some-v-label");
-      v1.save();
+      t.save(v1);
       OVertex v2 = t.newVertex("some-v-label");
       v1.setProperty("_id", "v1");
       v2.setProperty("_id", "v2");
-      v2.save();
+      t.save(v2);
 
       OEdge edge = v1.addEdge(v2, "some-label");
       edge.setProperty("some", "thing");
-      edge.save();
+      t.save(edge);
       t.commit();
       t.close();
 

@@ -112,7 +112,7 @@ public class OSBTreeRidBagTest extends ORidBagTest {
     ODocument docClusterOne = new ODocument();
     ORidBag ridBagClusterOne = new ORidBag();
     docClusterOne.field("ridBag", ridBagClusterOne);
-    docClusterOne.save("clusterOne");
+    database.save(docClusterOne, "clusterOne");
 
     final String directory = database.getStorage().getConfiguration().getDirectory();
 
@@ -132,17 +132,17 @@ public class OSBTreeRidBagTest extends ORidBagTest {
 
   public void testIteratorOverAfterRemove() {
     ODocument scuti =
-        new ODocument()
-            .field("name", "UY Scuti")
-            .save(database.getClusterNameById(database.getDefaultClusterId()));
+        database.save(
+            new ODocument().field("name", "UY Scuti"),
+            database.getClusterNameById(database.getDefaultClusterId()));
     ODocument cygni =
-        new ODocument()
-            .field("name", "NML Cygni")
-            .save(database.getClusterNameById(database.getDefaultClusterId()));
+        database.save(
+            new ODocument().field("name", "NML Cygni"),
+            database.getClusterNameById(database.getDefaultClusterId()));
     ODocument scorpii =
-        new ODocument()
-            .field("name", "AH Scorpii")
-            .save(database.getClusterNameById(database.getDefaultClusterId()));
+        database.save(
+            new ODocument().field("name", "AH Scorpii"),
+            database.getClusterNameById(database.getDefaultClusterId()));
 
     HashSet<ODocument> expectedResult = new HashSet<ODocument>();
     expectedResult.addAll(Arrays.asList(scuti, scorpii));
@@ -154,7 +154,7 @@ public class OSBTreeRidBagTest extends ORidBagTest {
 
     ODocument doc = new ODocument();
     doc.field("ridBag", bag);
-    doc.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(doc, database.getClusterNameById(database.getDefaultClusterId()));
 
     bag.remove(cygni);
 
@@ -172,16 +172,16 @@ public class OSBTreeRidBagTest extends ORidBagTest {
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(5);
 
     ODocument doc_1 = new ODocument();
-    doc_1.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(doc_1, database.getClusterNameById(database.getDefaultClusterId()));
 
     ODocument doc_2 = new ODocument();
-    doc_2.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(doc_2, database.getClusterNameById(database.getDefaultClusterId()));
 
     ODocument doc_3 = new ODocument();
-    doc_3.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(doc_3, database.getClusterNameById(database.getDefaultClusterId()));
 
     ODocument doc_4 = new ODocument();
-    doc_4.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(doc_4, database.getClusterNameById(database.getDefaultClusterId()));
 
     ODocument doc = new ODocument();
 
@@ -192,21 +192,21 @@ public class OSBTreeRidBagTest extends ORidBagTest {
     bag.add(doc_4);
 
     doc.field("ridBag", bag);
-    doc.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(doc, database.getClusterNameById(database.getDefaultClusterId()));
 
     doc.reload();
 
     ODocument doc_5 = new ODocument();
-    doc_5.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(doc_5, database.getClusterNameById(database.getDefaultClusterId()));
 
     ODocument doc_6 = new ODocument();
-    doc_6.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(doc_6, database.getClusterNameById(database.getDefaultClusterId()));
 
     bag = doc.field("ridBag");
     bag.add(doc_5);
     bag.add(doc_6);
 
-    doc.save();
+    database.save(doc);
     doc.reload();
 
     bag = doc.field("ridBag");
@@ -241,7 +241,7 @@ public class OSBTreeRidBagTest extends ORidBagTest {
     }
 
     assertEmbedded(realDocRidBag.isEmbedded());
-    realDoc.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(realDoc, database.getClusterNameById(database.getDefaultClusterId()));
 
     final int clusterId = database.addCluster("ridBagDeleteTest");
 
@@ -262,7 +262,7 @@ public class OSBTreeRidBagTest extends ORidBagTest {
     for (int i = 0; i < 100; i++) {
       testDocument.reload();
 
-      testDocument.delete();
+      database.delete(testDocument);
       testDocument = crateTestDeleteDoc(realDoc);
     }
 
@@ -289,7 +289,7 @@ public class OSBTreeRidBagTest extends ORidBagTest {
     testDocument.field("ridBag", highLevelRidBag);
     testDocument.field("realDoc", realDoc);
 
-    testDocument.save("ridBagDeleteTest");
+    database.save(testDocument, "ridBagDeleteTest");
 
     return testDocument;
   }

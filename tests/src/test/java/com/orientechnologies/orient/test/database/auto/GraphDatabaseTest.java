@@ -398,7 +398,7 @@ public class GraphDatabaseTest extends DocumentDBBaseTest {
 
     ODocument doc = new ODocument();
     doc.field("foo", "bar");
-    doc.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(doc, database.getClusterNameById(database.getDefaultClusterId()));
 
     vertex.setProperty("emb1", doc);
 

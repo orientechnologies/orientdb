@@ -183,9 +183,9 @@ public class DbListenerTest extends DocumentDBBaseTest {
     database.begin(TXTYPE.OPTIMISTIC);
     Assert.assertEquals(onBeforeTxBegin, baseOnBeforeTxBegin + 1);
 
-    database
-        .<ODocument>newInstance()
-        .save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(
+        database.<ODocument>newInstance(),
+        database.getClusterNameById(database.getDefaultClusterId()));
     database.commit();
     Assert.assertEquals(onBeforeTxCommit, baseOnBeforeTxCommit + 1);
     Assert.assertEquals(onAfterTxCommit, baseOnAfterTxCommit + 1);
@@ -193,9 +193,9 @@ public class DbListenerTest extends DocumentDBBaseTest {
     database.begin(TXTYPE.OPTIMISTIC);
     Assert.assertEquals(onBeforeTxBegin, baseOnBeforeTxBegin + 2);
 
-    database
-        .<ODocument>newInstance()
-        .save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(
+        database.<ODocument>newInstance(),
+        database.getClusterNameById(database.getDefaultClusterId()));
     database.rollback();
     Assert.assertEquals(onBeforeTxRollback, 1);
     Assert.assertEquals(onAfterTxRollback, 1);
@@ -221,19 +221,18 @@ public class DbListenerTest extends DocumentDBBaseTest {
     database.begin(TXTYPE.OPTIMISTIC);
     Assert.assertEquals(onBeforeTxBegin, 1);
 
-    database
-        .<ODocument>newInstance()
-        .save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(
+        database.<ODocument>newInstance(),
+        database.getClusterNameById(database.getDefaultClusterId()));
     database.commit();
     Assert.assertEquals(onBeforeTxCommit, 1);
     Assert.assertEquals(onAfterTxCommit, 1);
 
     database.begin(TXTYPE.OPTIMISTIC);
     Assert.assertEquals(onBeforeTxBegin, 2);
-
-    database
-        .<ODocument>newInstance()
-        .save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(
+        database.<ODocument>newInstance(),
+        database.getClusterNameById(database.getDefaultClusterId()));
     database.rollback();
     Assert.assertEquals(onBeforeTxRollback, 1);
     Assert.assertEquals(onAfterTxRollback, 1);
@@ -255,16 +254,15 @@ public class DbListenerTest extends DocumentDBBaseTest {
 
     database.begin(TXTYPE.OPTIMISTIC);
     ODocument rec =
-        database
-            .<ODocument>newInstance()
-            .field("name", "Jay")
-            .save(database.getClusterNameById(database.getDefaultClusterId()));
+        database.save(
+            database.<ODocument>newInstance().field("name", "Jay"),
+            database.getClusterNameById(database.getDefaultClusterId()));
     database.commit();
 
     final DocumentChangeListener cl = new DocumentChangeListener(database);
 
     database.begin(TXTYPE.OPTIMISTIC);
-    rec.field("surname", "Miner").save();
+    database.save(rec.field("surname", "Miner"));
     database.commit();
 
     Assert.assertEquals(cl.getChanges().size(), 1);

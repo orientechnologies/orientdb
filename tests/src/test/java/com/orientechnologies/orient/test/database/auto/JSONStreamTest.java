@@ -869,7 +869,7 @@ public class JSONStreamTest extends DocumentDBBaseTest {
   public void testNestedLinkCreation() throws IOException {
     ODocument jaimeDoc = new ODocument("NestedLinkCreation");
     jaimeDoc.field("name", "jaime");
-    jaimeDoc.save();
+    database.save(jaimeDoc);
 
     // The link between jaime and cersei is saved properly - the #2263 test case
     ODocument cerseiDoc = new ODocument("NestedLinkCreation");
@@ -1142,7 +1142,7 @@ public class JSONStreamTest extends DocumentDBBaseTest {
     database.begin();
     final ODocument eveDoc = new ODocument(classNameOne);
     eveDoc.field("name", "eve");
-    eveDoc.save();
+    database.save(eveDoc);
 
     final ODocument nestedWithTypeD = new ODocument(classNameTwo);
     final String jsonString =
@@ -1189,7 +1189,7 @@ public class JSONStreamTest extends DocumentDBBaseTest {
             + adamDoc.toJSON()
             + "]}";
     nestedWithTypeD.fromJSON(new ByteArrayInputStream(jsonString.getBytes(StandardCharsets.UTF_8)));
-    nestedWithTypeD.save();
+    database.save(nestedWithTypeD);
     database.commit();
     Assert.assertEquals(database.countClass("JSONTxDocOne"), 2);
 

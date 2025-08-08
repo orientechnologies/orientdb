@@ -42,7 +42,7 @@ public class OCompositeIndexGrowShrinkIT extends BaseMemoryDatabase {
           Arrays.asList(
               "soem long and more complex tezxt just un case it may be important", "two"));
       rec.setProperty("name", "name" + i);
-      rec.save();
+      db.save(rec);
     }
     db.command("delete from CompositeIndex").close();
   }
@@ -70,7 +70,7 @@ public class OCompositeIndexGrowShrinkIT extends BaseMemoryDatabase {
           Arrays.asList(
               "soem long and more complex tezxt just un case it may be important", "two"));
       rec.setProperty("name", "name" + i);
-      rec.save();
+      db.save(rec);
     }
     db.command("drop index CompositeIndex_id_tags_name").close();
   }

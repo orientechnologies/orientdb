@@ -24,6 +24,7 @@ import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.client.remote.ORemoteClient;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentAbstract;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -268,9 +269,10 @@ public class OCRUDWorkload extends OBaseDocumentWorkload implements OCheckWorklo
             new OCallable<Object, Integer>() {
               @Override
               public Object call(Integer iArgument) {
+                ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
                 ODocument doc = new ODocument(CLASS_NAME);
                 doc.field("name", "value" + n);
-                doc.save();
+                db.save(doc);
                 return doc;
               }
             },
@@ -305,7 +307,7 @@ public class OCRUDWorkload extends OBaseDocumentWorkload implements OCheckWorklo
           public Object call(Integer iArgument) {
             final ODocument doc = rec.getRecord();
             doc.field("updated", true);
-            doc.save();
+            database.save(doc);
             return doc;
           }
         },

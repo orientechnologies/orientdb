@@ -89,10 +89,10 @@ public class ShardingIT extends AbstractServerClusterTest {
 
       try {
         product = graph.newVertex("Product-Type");
-        product.save();
+        graph.save(product);
         fishing = graph.newVertex("Hobby-Type");
         fishing.setProperty("name-property", "Fishing");
-        fishing.save();
+        graph.save(fishing);
         graph.commit();
       } finally {
         graph.close();
@@ -116,7 +116,7 @@ public class ShardingIT extends AbstractServerClusterTest {
         try {
 
           vertices[i] = graph.newVertex("Client-Type");
-          vertices[i].save();
+          graph.save(vertices[i]);
 
           final int clId = vertices[i].getIdentity().getClusterId();
 
@@ -144,13 +144,13 @@ public class ShardingIT extends AbstractServerClusterTest {
             // CREATE A LIGHT-WEIGHT EDGE
             final OEdge e = vertices[i].addEdge(vertices[i - 1], "Knows-Type");
             e.setProperty("blob", new byte[1000]);
-            e.save();
+            graph.save(e);
           }
 
           // CREATE A REGULAR EDGE
           final OEdge edge = vertices[i].addEdge(product, "Buy-Type");
           edge.setProperty("price", 1000 * i);
-          edge.save();
+          graph.save(edge);
 
         } finally {
           graph.close();
@@ -449,7 +449,7 @@ public class ShardingIT extends AbstractServerClusterTest {
 
           if (count % 2 == 0) {
             // DELETE ONLY EVEN INSTANCES
-            v.delete();
+            g.delete(v);
             count++;
           }
         }
@@ -482,11 +482,11 @@ public class ShardingIT extends AbstractServerClusterTest {
       try {
         v1 = gTx.newVertex("Client-Type");
         v1.setProperty("name-property", "test1");
-        v1.save();
+        gTx.save(v1);
 
         v2 = gTx.newVertex("Client-Type");
         v2.setProperty("name-property", "test1");
-        v2.save();
+        gTx.save(v2);
         gTx.commit();
       } finally {
         gTx.close();
@@ -500,8 +500,8 @@ public class ShardingIT extends AbstractServerClusterTest {
       gTx.begin();
       try {
         // DELETE IN TX
-        v1.delete();
-        v2.delete();
+        gTx.delete(v1);
+        gTx.delete(v2);
         gTx.commit();
       } finally {
         gTx.close();

@@ -62,7 +62,7 @@ public class ServerClusterRemoteInsertBalancedIT extends AbstractServerClusterTe
     for (int i = 0; i < ITERATIONS; ++i) {
       graph = pool.acquire();
       try {
-        final OVertex v = graph.newVertex("Client").save();
+        final OVertex v = graph.save(graph.newVertex("Client"));
 
         Integer value = clusterIds.get(v.getIdentity().getClusterId());
         if (value == null) value = 1;
@@ -94,7 +94,7 @@ public class ServerClusterRemoteInsertBalancedIT extends AbstractServerClusterTe
 
     try {
       for (int i = 0; i < ITERATIONS; ++i) {
-        final OVertex v = graph.newVertex("Client").save();
+        final OVertex v = graph.save(graph.newVertex("Client"));
 
         Integer value = clusterIds.get(v.getIdentity().getClusterId());
         if (value == null) value = 1;

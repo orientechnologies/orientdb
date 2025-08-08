@@ -557,7 +557,7 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
 
     document.field("linkSet", linkSet);
     database.save(document);
-    document.delete();
+    database.delete(document);
 
     OIndex index = getIndex("linkSetIndex");
     Assert.assertEquals(index.getInternal().size(), 0);
@@ -582,7 +582,7 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     database.save(document);
     try {
       database.begin();
-      document.delete();
+      database.delete(document);
       database.commit();
     } catch (Exception e) {
       database.rollback();
@@ -612,7 +612,7 @@ public class LinkSetIndexTest extends DocumentDBBaseTest {
     database.save(document);
 
     database.begin();
-    document.delete();
+    database.delete(document);
     database.rollback();
 
     OIndex index = getIndex("linkSetIndex");

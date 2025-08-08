@@ -78,7 +78,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     // DELETE ALL THE RECORDS IN THE CLUSTER
     while (database.countClusterElements("Account") > 0)
       for (ODocument rec : database.<ODocument>browseCluster("Account"))
-        if (rec != null) rec.delete();
+        if (rec != null) database.delete(rec);
 
     Assert.assertEquals(database.countClusterElements("Account"), 0);
 
@@ -285,7 +285,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
 
     database.save(linkDoc, database.getClusterNameById(database.getDefaultClusterId()));
     coreDoc.field("link", linkDoc);
-    coreDoc.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(coreDoc, database.getClusterNameById(database.getDefaultClusterId()));
 
     ODocument coreDocCopy = database.load(coreDoc.getIdentity(), "*:-1", true);
     Assert.assertNotSame(coreDocCopy, coreDoc);
@@ -320,7 +320,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     ((Collection<String>) dexter.field("tag_list")).add("actor");
 
     dexter.setDirty();
-    dexter.save();
+    database.save(dexter);
 
     result =
         database
@@ -361,7 +361,9 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
 
     final ORecordId rid =
         (ORecordId)
-            newDoc.save(database.getClusterNameById(database.getDefaultClusterId())).getIdentity();
+            database
+                .save(newDoc, database.getClusterNameById(database.getDefaultClusterId()))
+                .getIdentity();
 
     final ODocument loadedDoc = database.load(rid);
 
@@ -473,7 +475,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
   public void testInvalidFetchplanLoad() {
     ODocument doc = database.newInstance();
     doc.field("test", "test");
-    doc.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(doc, database.getClusterNameById(database.getDefaultClusterId()));
     ORID docRid = doc.getIdentity().copy();
 
     try {
@@ -511,7 +513,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     doc = testInvalidFetchPlanClearL1Cache(doc, new ORecordId(4, 0));
     testInvalidFetchPlanClearL1Cache(doc, new ORecordId(4, 1));
     doc = database.load(docRid);
-    doc.delete();
+    database.delete(doc);
   }
 
   public void testEncoding() {
@@ -519,7 +521,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
 
     ODocument doc = new ODocument();
     doc.field("test", s);
-    doc.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(doc, database.getClusterNameById(database.getDefaultClusterId()));
 
     doc.reload(null, true);
     Assert.assertEquals(doc.field("test"), s);
@@ -556,7 +558,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
       browsed.add(d);
     }
 
-    newAccount.delete();
+    database.delete(newAccount);
   }
 
   @Test(dependsOnMethods = "testCreate")
@@ -620,7 +622,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
 
     ODocument bank2 = database.newInstance("Account");
     bank.field("embedded", bank2, OType.EMBEDDED);
-    bank.save();
+    database.save(bank);
 
     database.commit();
 
@@ -631,7 +633,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     Assert.assertTrue(((ODocument) bank.field("embedded")).isEmbedded());
     Assert.assertFalse(((ODocument) bank.field("embedded")).getIdentity().isPersistent());
 
-    bank.delete();
+    database.delete(bank);
   }
 
   @Test(dependsOnMethods = "cleanAll")
@@ -691,10 +693,10 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     } catch (IllegalArgumentException ignored) {
     }
 
-    ((ODocument) bank.field("linked")).delete();
+    database.delete(((ODocument) bank.field("linked")));
     //noinspection unchecked
-    for (ODocument l : (Collection<ODocument>) bank.field("linkeds")) l.delete();
-    bank.delete();
+    for (ODocument l : (Collection<ODocument>) bank.field("linkeds")) database.delete(l);
+    database.delete(bank);
   }
 
   public void testSerialization() {

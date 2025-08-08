@@ -54,11 +54,11 @@ public class IndexChangesQueryTest {
 
     ODocument doc = new ODocument(CLASS_NAME);
     doc.field(FIELD_NAME, 1);
-    doc.save();
+    database.save(doc);
 
     ODocument doc1 = new ODocument(CLASS_NAME);
     doc1.field(FIELD_NAME, 2);
-    doc1.save();
+    database.save(doc1);
     Assert.assertNotNull(database.getTransaction().getIndexChanges(INDEX_NAME));
 
     Assert.assertFalse(fetchCollectionFromIndex(index, 1).isEmpty());
@@ -83,15 +83,15 @@ public class IndexChangesQueryTest {
 
     ODocument doc1 = new ODocument(CLASS_NAME);
     doc1.field(FIELD_NAME, 1);
-    doc1.save();
+    database.save(doc1);
 
     ODocument doc2 = new ODocument(CLASS_NAME);
     doc2.field(FIELD_NAME, 1);
-    doc2.save();
+    database.save(doc2);
 
     ODocument doc3 = new ODocument(CLASS_NAME);
     doc3.field(FIELD_NAME, 2);
-    doc3.save();
+    database.save(doc3);
 
     final OIndex index =
         database.getMetadata().getIndexManagerInternal().getIndex(database, INDEX_NAME);
@@ -104,17 +104,17 @@ public class IndexChangesQueryTest {
 
     database.begin();
 
-    doc1.delete();
-    doc2.delete();
-    doc3.delete();
+    database.delete(doc1);
+    database.delete(doc2);
+    database.delete(doc3);
 
     doc3 = new ODocument(CLASS_NAME);
     doc3.field(FIELD_NAME, 1);
-    doc3.save();
+    database.save(doc3);
 
     ODocument doc = new ODocument(CLASS_NAME);
     doc.field(FIELD_NAME, 2);
-    doc.save();
+    database.save(doc);
 
     Assert.assertEquals(1, (fetchCollectionFromIndex(index, 1)).size());
     Assert.assertEquals(1, (fetchCollectionFromIndex(index, 2)).size());

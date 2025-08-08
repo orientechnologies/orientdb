@@ -101,7 +101,7 @@ public class DistributedIndexesIT extends AbstractServerClusterTest {
       test1.field("dictionary", "test1");
       test1.field("unique_hash", "test1");
       test1.field("notunique_hash", "test1");
-      test1.save();
+      db.save(test1);
 
       final ODocument test2 = new ODocument("DistributedIndexTest");
       test2.field("unique", "test2");
@@ -109,7 +109,7 @@ public class DistributedIndexesIT extends AbstractServerClusterTest {
       test2.field("dictionary", "test2");
       test2.field("unique_hash", "test2");
       test2.field("notunique_hash", "test2");
-      test2.save();
+      db.save(test2);
 
       final ODocument test3 = new ODocument("DistributedIndexTest");
       test3.field("unique", "test2");
@@ -118,7 +118,7 @@ public class DistributedIndexesIT extends AbstractServerClusterTest {
       test3.field("unique_hash", "test3");
       test3.field("notunique_hash", "test3");
       try {
-        test3.save();
+        db.save(test3);
         fail();
       } catch (Exception e) {
         // CHECK DB COHERENCY
@@ -134,7 +134,7 @@ public class DistributedIndexesIT extends AbstractServerClusterTest {
       test4.field("unique_hash", "test2");
       test4.field("notunique_hash", "test4");
       try {
-        test4.save();
+        db.save(test4);
         fail();
       } catch (Exception e) {
         // CHECK DB COHERENCY

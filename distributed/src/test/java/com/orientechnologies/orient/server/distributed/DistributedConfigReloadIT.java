@@ -162,7 +162,7 @@ public final class DistributedConfigReloadIT {
                     boolean needRetry = true;
                     for (int i = 0; i < 10 && needRetry; i++) {
                       try {
-                        vtx.delete();
+                        graph.delete(vtx);
                         graph.commit();
                         needRetry = false;
                       } catch (ONeedRetryException ex) {

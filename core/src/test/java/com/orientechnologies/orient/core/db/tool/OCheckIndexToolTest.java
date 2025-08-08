@@ -21,7 +21,7 @@ public class OCheckIndexToolTest extends BaseMemoryInternalDatabase {
 
     ODocument doc = db.newInstance("Foo");
     doc.field("name", "a");
-    doc.save();
+    db.save(doc);
 
     ORID rid = doc.getIdentity();
 
@@ -29,7 +29,7 @@ public class OCheckIndexToolTest extends BaseMemoryInternalDatabase {
     for (int i = 0; i < N_RECORDS; i++) {
       doc = db.newInstance("Foo");
       doc.field("name", "x" + i);
-      doc.save();
+      db.save(doc);
     }
 
     OIndex idx = db.getMetadata().getIndexManagerInternal().getIndex(db, "Foo.name");

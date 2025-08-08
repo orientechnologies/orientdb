@@ -239,17 +239,17 @@ public class ODocumentTest {
       ODocument doc = new ODocument(classA);
       doc.field("name", "My Name");
       doc.field("property", "value1");
-      doc.save();
+      db.save(doc);
 
       doc.field("name", "My Name 2");
       doc.field("property", "value2");
       doc.undo(); // we decided undo everything
       doc.field("name", "My Name 3"); // change something
-      doc.save();
+      db.save(doc);
       doc.field("name", "My Name 4");
       doc.field("property", "value4");
       doc.undo("property"); // we decided undo readonly field
-      doc.save();
+      db.save(doc);
     } finally {
       if (db != null) db.close();
       if (odb != null) {
@@ -305,7 +305,7 @@ public class ODocumentTest {
       ODocument doc = new ODocument(classA);
       doc.field("name", "My Name");
       doc.field("property", "value1");
-      doc.save();
+      db.save(doc);
       assertEquals(doc.field("name"), "My Name");
       assertEquals(doc.field("property"), "value1");
       doc.undo();
@@ -317,13 +317,13 @@ public class ODocumentTest {
       doc.field("name", "My Name 3");
       assertEquals(doc.field("name"), "My Name 3");
       assertEquals(doc.field("property"), "value1");
-      doc.save();
+      db.save(doc);
       doc.field("name", "My Name 4");
       doc.field("property", "value4");
       doc.undo("property");
       assertEquals(doc.field("name"), "My Name 4");
       assertEquals(doc.field("property"), "value1");
-      doc.save();
+      db.save(doc);
       doc.undo("property");
       assertEquals(doc.field("name"), "My Name 4");
       assertEquals(doc.field("property"), "value1");

@@ -19,28 +19,28 @@ public class LinksetInTransactionTest extends BaseMemoryDatabase {
     /* A link must already be there */
     OElement withLinks1 = db.newInstance("WithLinks");
     OElement link1 = db.newInstance("Linked");
-    link1.save();
+    db.save(link1);
     Set set = new HashSet<>();
     set.add(link1);
     withLinks1.setProperty("links", set);
-    withLinks1.save();
+    db.save(withLinks1);
 
     /* Only in transaction - without transaction all OK */
     db.begin();
 
     /* Add a new linked record */
     OElement link2 = db.newInstance("Linked");
-    link2.save();
+    db.save(link2);
     Set links = withLinks1.getProperty("links");
     links.add(link2);
-    withLinks1.save();
+    db.save(withLinks1);
 
     /* Remove all from ORecordLazySet - if only link2 removed all OK */
     links = withLinks1.getProperty("links");
     links.remove(link1);
     links = withLinks1.getProperty("links");
     links.remove(link2);
-    withLinks1.save();
+    db.save(withLinks1);
 
     /* All seems OK before commit */
     links = withLinks1.getProperty("links");

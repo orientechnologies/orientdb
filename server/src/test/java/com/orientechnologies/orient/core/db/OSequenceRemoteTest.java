@@ -41,7 +41,7 @@ public class OSequenceRemoteTest extends AbstractRemoteTest {
     for (int i = 0; i < 10; i++) {
       OVertex person = db.newVertex("Person");
       person.setProperty("name", "Foo" + i);
-      person.save();
+      db.save(person);
     }
 
     assertThat(db.countClass("Person")).isEqualTo(10);
@@ -63,7 +63,7 @@ public class OSequenceRemoteTest extends AbstractRemoteTest {
     for (int i = 0; i < 10; i++) {
       OVertex person = db.newVertex("Person");
       person.setProperty("name", "Foo" + i);
-      person.save();
+      db.save(person);
     }
 
     db.commit();

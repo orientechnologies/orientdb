@@ -67,10 +67,10 @@ public class ReinstallDatabaseTestIT {
       session.begin();
       OElement person = session.newElement("Person");
       person.setProperty("id", i);
-      person.save();
+      session.save(person);
       person = session.newElement("Person1");
       person.setProperty("id", i);
-      person.save();
+      session.save(person);
       session.commit();
     }
     OServer server2Instance = setup.getServer(server2).getServerInstance();
@@ -95,10 +95,10 @@ public class ReinstallDatabaseTestIT {
       session.begin();
       OElement person = session.newElement("Person");
       person.setProperty("id", i);
-      person.save();
+      session.save(person);
       person = session.newElement("Person1");
       person.setProperty("id", i);
-      person.save();
+      session.save(person);
       session.commit();
     }
     latch.await();

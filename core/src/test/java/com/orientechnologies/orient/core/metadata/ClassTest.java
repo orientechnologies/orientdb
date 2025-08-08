@@ -109,13 +109,13 @@ public class ClassTest extends BaseMemoryInternalDatabase {
     classTwo.addClusterId(clusterId);
 
     ODocument document = new ODocument("ClassTwo");
-    document.save("classthree");
+    db.save(document, "classthree");
 
     document = new ODocument("ClassTwo");
-    document.save();
+    db.save(document);
 
     document = new ODocument("ClassOne");
-    document.save();
+    db.save(document);
 
     assertEquals(db.countClass("ClassTwo"), 2);
     assertEquals(db.countClass("ClassOne"), 1);

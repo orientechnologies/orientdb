@@ -26,7 +26,7 @@ public class UniqueIndexTest extends BaseMemoryDatabase {
 
     ODocument jane = new ODocument("User");
     jane.field("MailAddress", "jane@doe.com");
-    ODocument id = jane.save();
+    ODocument id = db.save(jane);
     db.save(jane);
 
     try {
@@ -48,7 +48,7 @@ public class UniqueIndexTest extends BaseMemoryDatabase {
 
     ODocument jane = new ODocument("User");
     jane.field("MailAddress", "jane@doe.com");
-    jane.save();
+    db.save(jane);
 
     final ORID rid = jane.getIdentity();
 
@@ -59,7 +59,7 @@ public class UniqueIndexTest extends BaseMemoryDatabase {
     joneJane.field("MailAddress", "john@doe.com");
     joneJane.field("@version", -1);
 
-    joneJane.save();
+    db.save(joneJane);
 
     reOpen("admin", "adminpwd");
 

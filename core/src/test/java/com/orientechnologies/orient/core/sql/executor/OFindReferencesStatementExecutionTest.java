@@ -21,7 +21,7 @@ public class OFindReferencesStatementExecutionTest extends BaseMemoryDatabase {
     db.getMetadata().getSchema().createClass(name2);
     ODocument linked = new ODocument(name);
     linked.field("foo", "bar");
-    linked.save();
+    db.save(linked);
 
     Set<ORID> ridsToMatch = new HashSet<>();
 
@@ -31,7 +31,7 @@ public class OFindReferencesStatementExecutionTest extends BaseMemoryDatabase {
       if (i % 2 == 0) {
         doc.field("link", linked);
       }
-      doc.save();
+      db.save(doc);
       if (i % 2 == 0) {
         ridsToMatch.add(doc.getIdentity());
       }

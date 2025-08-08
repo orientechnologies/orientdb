@@ -39,9 +39,9 @@ public class CountRealationshipsTest {
         orientDB.open(CountRealationshipsTest.class.getSimpleName(), "admin", "admin");
     g.begin();
     OVertex vertex1 = g.newVertex("V");
-    vertex1.save();
+    g.save(vertex1);
     OVertex vertex2 = g.newVertex("V");
-    vertex2.save();
+    g.save(vertex2);
     g.commit();
 
     int version = vertex1.getProperty("@version");
@@ -56,7 +56,7 @@ public class CountRealationshipsTest {
 
     g.begin();
     vertex1.addEdge(vertex2);
-    vertex1.save();
+    g.save(vertex1);
 
     version = vertex1.getProperty("@version");
     assertEquals(1, countEdges(vertex1, ODirection.OUT));

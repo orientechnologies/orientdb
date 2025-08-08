@@ -96,9 +96,9 @@ public class ComplexTypesTest extends DocumentDBBaseTest {
     final ArrayList<ODocument> list = new ArrayList<ODocument>();
     newDoc.field("linkedList", list, OType.LINKLIST);
     list.add(
-        new ODocument()
-            .field("name", "Luca")
-            .save(database.getClusterNameById(database.getDefaultClusterId())));
+        database.save(
+            new ODocument().field("name", "Luca"),
+            database.getClusterNameById(database.getDefaultClusterId())));
     list.add(new ODocument("Account").field("name", "Marcus"));
 
     database.save(newDoc, database.getClusterNameById(database.getDefaultClusterId()));
@@ -163,9 +163,9 @@ public class ComplexTypesTest extends DocumentDBBaseTest {
     final Set<ODocument> set = new HashSet<ODocument>();
     newDoc.field("linkedSet", set, OType.LINKSET);
     set.add(
-        new ODocument()
-            .field("name", "Luca")
-            .save(database.getClusterNameById(database.getDefaultClusterId())));
+        database.save(
+            new ODocument().field("name", "Luca"),
+            database.getClusterNameById(database.getDefaultClusterId())));
     set.add(new ODocument("Account").field("name", "Marcus"));
 
     database.save(newDoc, database.getClusterNameById(database.getDefaultClusterId()));
@@ -258,14 +258,14 @@ public class ComplexTypesTest extends DocumentDBBaseTest {
     newDoc.field("linkedMap", map, OType.LINKMAP);
     map.put(
         "Luca",
-        new ODocument()
-            .field("name", "Luca")
-            .save(database.getClusterNameById(database.getDefaultClusterId())));
+        database.save(
+            new ODocument().field("name", "Luca"),
+            database.getClusterNameById(database.getDefaultClusterId())));
     map.put(
         "Marcus",
-        new ODocument()
-            .field("name", "Marcus")
-            .save(database.getClusterNameById(database.getDefaultClusterId())));
+        database.save(
+            new ODocument().field("name", "Marcus"),
+            database.getClusterNameById(database.getDefaultClusterId())));
     map.put("Cesare", new ODocument("Account").field("name", "Cesare"));
 
     database.save(newDoc, database.getClusterNameById(database.getDefaultClusterId()));

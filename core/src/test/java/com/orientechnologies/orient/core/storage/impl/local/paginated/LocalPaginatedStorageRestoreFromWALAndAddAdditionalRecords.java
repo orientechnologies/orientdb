@@ -358,11 +358,11 @@ public class LocalPaginatedStorageRestoreFromWALAndAddAdditionalRecords {
 
       ODocument testDoc = new ODocument();
       document.copyTo(testDoc);
-      document.save();
+      baseDB.save(document);
 
       if (testDB != null) {
         ODatabaseRecordThreadLocal.instance().set(testDB);
-        testDoc.save();
+        testDB.save(testDoc);
 
         Assert.assertEquals(testDoc.getIdentity(), document.getIdentity());
 

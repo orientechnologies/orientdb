@@ -95,7 +95,7 @@ public class CheckHookCallCountTest extends BaseMemoryDatabase {
     doc = new ODocument(oClass);
     doc.field("a", 3);
     doc.field("b", 3);
-    doc.save(); // FAILING here: infinite recursion
+    db.save(doc); // FAILING here: infinite recursion
 
     assertEquals(Integer.valueOf(3), doc.field("a"));
     assertEquals(Integer.valueOf(3), doc.field("b"));

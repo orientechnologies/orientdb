@@ -52,7 +52,8 @@ public class ODatabaseDocumentTxTest extends BaseMemoryDatabase {
       Assert.assertEquals(db.countClass("TestSubclass", false), 2);
       Assert.assertEquals(db.countClass("TestSubclass", true), 2);
 
-      toDelete.delete().save();
+      db.delete(toDelete);
+      db.save(toDelete);
       // 1 SUB, 1 SUPER
 
       Assert.assertEquals(db.countClass("TestSuperclass", false), 1);
@@ -501,7 +502,7 @@ public class ODatabaseDocumentTxTest extends BaseMemoryDatabase {
     OResultSet rs = db.query("select from " + V + " where name = 'root'");
     while (rs.hasNext()) {
       OResult item = rs.next();
-      item.getVertex().get().delete();
+      db.delete(item.getVertex().get());
     }
     rs.close();
     db.commit();

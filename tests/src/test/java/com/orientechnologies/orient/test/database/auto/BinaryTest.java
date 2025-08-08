@@ -38,7 +38,7 @@ public class BinaryTest extends DocumentDBBaseTest {
     ODocument doc = new ODocument();
     doc.field("binary", "Binary data".getBytes());
 
-    doc.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(doc, database.getClusterNameById(database.getDefaultClusterId()));
 
     doc.reload();
     Assert.assertEquals(new String((byte[]) doc.field("binary", OType.BINARY)), "Binary data");
@@ -47,7 +47,7 @@ public class BinaryTest extends DocumentDBBaseTest {
   @Test
   public void testBasicCreateExternal() {
     OBlob record = new ORecordBytes(database, "This is a test".getBytes());
-    record.save();
+    database.save(record);
     rid = record.getIdentity();
   }
 
@@ -63,7 +63,7 @@ public class BinaryTest extends DocumentDBBaseTest {
     ODocument doc = new ODocument();
     doc.field("binary", new ORecordBytes(database, "Binary data".getBytes()));
 
-    doc.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(doc, database.getClusterNameById(database.getDefaultClusterId()));
     rid = doc.getIdentity();
   }
 

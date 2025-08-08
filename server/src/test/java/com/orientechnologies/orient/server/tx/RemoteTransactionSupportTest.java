@@ -175,7 +175,7 @@ public class RemoteTransactionSupportTest extends BaseServerMemoryDatabase {
     OElement someTx = db.newElement("SomeTx");
     someTx.setProperty("name", "foo");
 
-    someTx.save();
+    db.save(someTx);
 
     db.begin();
 

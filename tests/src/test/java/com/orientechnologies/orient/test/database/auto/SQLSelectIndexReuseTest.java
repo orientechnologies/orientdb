@@ -2845,12 +2845,12 @@ public class SQLSelectIndexReuseTest extends AbstractIndexReuseTest {
     final ODocument docOne = new ODocument("sqlSelectIndexReuseTestChildClass");
     docOne.field("prop0", 0);
     docOne.field("prop1", 1);
-    docOne.save();
+    database.save(docOne);
 
     final ODocument docTwo = new ODocument("sqlSelectIndexReuseTestChildClass");
     docTwo.field("prop0", 2);
     docTwo.field("prop1", 3);
-    docTwo.save();
+    database.save(docTwo);
 
     final List<OResult> result =
         database

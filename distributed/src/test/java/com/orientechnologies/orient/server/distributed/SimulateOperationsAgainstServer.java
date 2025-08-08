@@ -219,7 +219,7 @@ public class SimulateOperationsAgainstServer {
           log(threadId, iCycle, dbUrl, " delete no item " + iSkip + " because out of range");
         else {
           doc = result.get(0).getElement().get().getRecord();
-          doc.delete();
+          db.delete(doc);
           log(threadId, iCycle, dbUrl, " deleted item " + iSkip + " RID=" + result.get(0));
         }
         break;

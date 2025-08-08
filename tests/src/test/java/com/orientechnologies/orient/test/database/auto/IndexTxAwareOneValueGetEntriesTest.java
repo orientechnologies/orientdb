@@ -57,8 +57,8 @@ public class IndexTxAwareOneValueGetEntriesTest extends DocumentDBBaseTest {
     database.begin();
     final OIndex index = database.getMetadata().getIndexManagerInternal().getIndex(database, INDEX);
 
-    new ODocument(CLASS_NAME).field(PROPERTY_NAME, 1).save();
-    new ODocument(CLASS_NAME).field(PROPERTY_NAME, 2).save();
+    database.save(new ODocument(CLASS_NAME).field(PROPERTY_NAME, 1));
+    database.save(new ODocument(CLASS_NAME).field(PROPERTY_NAME, 2));
 
     database.commit();
 
@@ -71,7 +71,7 @@ public class IndexTxAwareOneValueGetEntriesTest extends DocumentDBBaseTest {
 
     database.begin();
 
-    new ODocument(CLASS_NAME).field(PROPERTY_NAME, 3).save();
+    database.save(new ODocument(CLASS_NAME).field(PROPERTY_NAME, 3));
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges(INDEX));
     Set<OIdentifiable> resultTwo = new HashSet<>();
@@ -98,8 +98,8 @@ public class IndexTxAwareOneValueGetEntriesTest extends DocumentDBBaseTest {
     database.begin();
     final OIndex index = database.getMetadata().getIndexManagerInternal().getIndex(database, INDEX);
 
-    ODocument document = new ODocument(CLASS_NAME).field(PROPERTY_NAME, 1).save();
-    new ODocument(CLASS_NAME).field(PROPERTY_NAME, 2).save();
+    ODocument document = database.save(new ODocument(CLASS_NAME).field(PROPERTY_NAME, 1));
+    database.save(new ODocument(CLASS_NAME).field(PROPERTY_NAME, 2));
 
     database.commit();
 
@@ -112,7 +112,7 @@ public class IndexTxAwareOneValueGetEntriesTest extends DocumentDBBaseTest {
 
     database.begin();
 
-    document.delete();
+    database.delete(document);
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges(INDEX));
     Set<OIdentifiable> resultTwo = new HashSet<>();
@@ -138,8 +138,8 @@ public class IndexTxAwareOneValueGetEntriesTest extends DocumentDBBaseTest {
     database.begin();
     final OIndex index = database.getMetadata().getIndexManagerInternal().getIndex(database, INDEX);
 
-    ODocument document = new ODocument(CLASS_NAME).field(PROPERTY_NAME, 1).save();
-    new ODocument(CLASS_NAME).field(PROPERTY_NAME, 2).save();
+    ODocument document = database.save(new ODocument(CLASS_NAME).field(PROPERTY_NAME, 1));
+    database.save(new ODocument(CLASS_NAME).field(PROPERTY_NAME, 2));
 
     database.commit();
 
@@ -153,9 +153,9 @@ public class IndexTxAwareOneValueGetEntriesTest extends DocumentDBBaseTest {
     database.begin();
 
     document.removeField(PROPERTY_NAME);
-    document.save();
+    database.save(document);
 
-    document.field(PROPERTY_NAME, 1).save();
+    database.save(document.field(PROPERTY_NAME, 1));
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges(INDEX));
     Set<OIdentifiable> resultTwo = new HashSet<>();
@@ -176,12 +176,12 @@ public class IndexTxAwareOneValueGetEntriesTest extends DocumentDBBaseTest {
 
     final OIndex index = database.getMetadata().getIndexManagerInternal().getIndex(database, INDEX);
 
-    ODocument document = new ODocument(CLASS_NAME).field(PROPERTY_NAME, 1).save();
+    ODocument document = database.save(new ODocument(CLASS_NAME).field(PROPERTY_NAME, 1));
     document.field(PROPERTY_NAME, 0);
     document.field(PROPERTY_NAME, 1);
-    document.save();
+    database.save(document);
 
-    new ODocument(CLASS_NAME).field(PROPERTY_NAME, 2).save();
+    database.save(new ODocument(CLASS_NAME).field(PROPERTY_NAME, 2));
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges(INDEX));
     Set<OIdentifiable> result = new HashSet<>();
@@ -208,8 +208,8 @@ public class IndexTxAwareOneValueGetEntriesTest extends DocumentDBBaseTest {
 
     final OIndex index = database.getMetadata().getIndexManagerInternal().getIndex(database, INDEX);
 
-    new ODocument(CLASS_NAME).field(PROPERTY_NAME, 1).save();
-    new ODocument(CLASS_NAME).field(PROPERTY_NAME, 2).save();
+    database.save(new ODocument(CLASS_NAME).field(PROPERTY_NAME, 1));
+    database.save(new ODocument(CLASS_NAME).field(PROPERTY_NAME, 2));
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges(INDEX));
     Set<OIdentifiable> result = new HashSet<>();
@@ -220,7 +220,7 @@ public class IndexTxAwareOneValueGetEntriesTest extends DocumentDBBaseTest {
     Assert.assertEquals(result.size(), 2);
     database.commit();
 
-    new ODocument(CLASS_NAME).field(PROPERTY_NAME, 3).save();
+    database.save(new ODocument(CLASS_NAME).field(PROPERTY_NAME, 3));
 
     stream = index.getInternal().streamEntries(Arrays.asList(1, 2, 3), true);
     streamToSet(stream, result);
@@ -237,10 +237,10 @@ public class IndexTxAwareOneValueGetEntriesTest extends DocumentDBBaseTest {
 
     final OIndex index = database.getMetadata().getIndexManagerInternal().getIndex(database, INDEX);
 
-    final ODocument document = new ODocument(CLASS_NAME).field(PROPERTY_NAME, 1).save();
-    new ODocument(CLASS_NAME).field(PROPERTY_NAME, 2).save();
+    final ODocument document = database.save(new ODocument(CLASS_NAME).field(PROPERTY_NAME, 1));
+    database.save(new ODocument(CLASS_NAME).field(PROPERTY_NAME, 2));
 
-    document.delete();
+    database.delete(document);
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges(INDEX));
     Set<OIdentifiable> result = new HashSet<>();
@@ -266,13 +266,13 @@ public class IndexTxAwareOneValueGetEntriesTest extends DocumentDBBaseTest {
 
     final OIndex index = database.getMetadata().getIndexManagerInternal().getIndex(database, INDEX);
 
-    ODocument document = new ODocument(CLASS_NAME).field(PROPERTY_NAME, 1).save();
-    new ODocument(CLASS_NAME).field(PROPERTY_NAME, 2).save();
+    ODocument document = database.save(new ODocument(CLASS_NAME).field(PROPERTY_NAME, 1));
+    database.save(new ODocument(CLASS_NAME).field(PROPERTY_NAME, 2));
 
     document.removeField(PROPERTY_NAME);
-    document.save();
+    database.save(document);
 
-    document.field(PROPERTY_NAME, 1).save();
+    database.save(document.field(PROPERTY_NAME, 1));
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges(INDEX));
     Set<OIdentifiable> result = new HashSet<>();

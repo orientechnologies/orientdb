@@ -56,7 +56,7 @@ public class RestrictedTest extends DocumentDBBaseTest {
         .getMetadata()
         .getSchema()
         .createClass("CMSDocument", database.getMetadata().getSchema().getClass("ORestricted"));
-    adminRecord = new ODocument("CMSDocument").field("user", "admin").save();
+    adminRecord = database.save(new ODocument("CMSDocument").field("user", "admin"));
     adminRecord.reload();
 
     readerUser = database.getMetadata().getSecurity().getUser("reader");
@@ -73,7 +73,7 @@ public class RestrictedTest extends DocumentDBBaseTest {
   @Test(dependsOnMethods = "testFilteredQuery")
   public void testCreateAsWriter() throws IOException {
     reopendb("writer", "writer");
-    writerRecord = new ODocument("CMSDocument").field("user", "writer").save();
+    writerRecord = database.save(new ODocument("CMSDocument").field("user", "writer"));
     writerRecord.reload();
   }
 
@@ -127,7 +127,7 @@ public class RestrictedTest extends DocumentDBBaseTest {
   public void testFilteredDirectDeleteAsWriter() throws IOException {
     reopendb("writer", "writer");
     try {
-      adminRecord.delete();
+      database.delete(adminRecord);
     } catch (OSecurityException e) {
       // OK AS EXCEPTION
     } catch (ORecordNotFoundException e) {
@@ -301,7 +301,7 @@ public class RestrictedTest extends DocumentDBBaseTest {
         .getSchema()
         .createClass(
             "TestUpdateRestricted", database.getMetadata().getSchema().getClass("ORestricted"));
-    adminRecord = new ODocument("TestUpdateRestricted").field("user", "admin").save();
+    adminRecord = database.save(new ODocument("TestUpdateRestricted").field("user", "admin"));
 
     database.close();
 

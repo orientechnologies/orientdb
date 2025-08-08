@@ -75,13 +75,13 @@ public class ODatabaseSuperNodeTest {
 
       // session.begin();
       final OVertex fromNode = session.newVertex("SuperNodeClass");
-      fromNode.save();
+      session.save(fromNode);
       final OVertex toNode = session.newVertex("SuperNodeClass");
-      toNode.save();
+      session.save(toNode);
 
       for (int i = 0; i < edgeNumber; i++) {
         final OEdge edge = session.newEdge(fromNode, toNode, "NonSuperEdgeClass");
-        edge.save();
+        session.save(edge);
       }
       session.commit();
 

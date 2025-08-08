@@ -76,7 +76,7 @@ public class OS3DeltaUploadingStrategyTest {
             oDatabaseSession -> {
               OVertex v = session.newVertex("Person");
               v.setProperty("id", vertexId);
-              v.save();
+              session.save(v);
               return null;
             });
       }

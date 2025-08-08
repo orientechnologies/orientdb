@@ -148,7 +148,7 @@ public class OSimpleKeyIndexDefinitionTest {
         orientdb.open("osimplekeyindexdefinitiontest", "admin", "adminpwd")) {
 
       final ODocument storeDocument = simpleKeyIndexDefinition.toStream();
-      storeDocument.save(db.getClusterNameById(db.getDefaultClusterId()));
+      db.save(storeDocument, db.getClusterNameById(db.getDefaultClusterId()));
 
       final ODocument loadDocument = db.load(storeDocument.getIdentity());
       final OSimpleKeyIndexDefinition loadedKeyIndexDefinition = new OSimpleKeyIndexDefinition();

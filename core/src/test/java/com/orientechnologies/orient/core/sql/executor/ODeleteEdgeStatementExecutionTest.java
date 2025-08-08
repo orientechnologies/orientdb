@@ -20,9 +20,9 @@ public class ODeleteEdgeStatementExecutionTest extends BaseMemoryDatabase {
     for (int i = 0; i < 10; i++) {
       OVertex v1 = db.newVertex(vertexClassName);
       v1.setProperty("name", "a" + i);
-      v1.save();
+      db.save(v1);
       if (prev != null) {
-        prev.addEdge(v1, edgeClassName).save();
+        db.save(prev.addEdge(v1, edgeClassName));
       }
       prev = v1;
     }

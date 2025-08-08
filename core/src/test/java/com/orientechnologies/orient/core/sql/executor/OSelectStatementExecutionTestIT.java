@@ -16,7 +16,7 @@ public class OSelectStatementExecutionTestIT extends BaseMemoryDatabase {
       ODocument doc = db.newInstance(className);
       doc.setProperty("name", "name" + i);
       doc.setProperty("surname", "surname" + i);
-      doc.save();
+      db.save(doc);
     }
 
     for (int run = 0; run < 5; run++) {
@@ -43,7 +43,7 @@ public class OSelectStatementExecutionTestIT extends BaseMemoryDatabase {
       ODocument doc = db.newInstance(className);
       doc.setProperty("name", "name" + i);
       doc.setProperty("surname", "surname" + i);
-      doc.save();
+      db.save(doc);
     }
     for (int run = 0; run < 5; run++) {
       long begin = System.nanoTime();

@@ -237,11 +237,11 @@ public class OSecurityEngineTest {
     db.createClass("Person");
     OElement record1 = db.newElement("Person");
     record1.setProperty("name", "foo");
-    record1.save();
+    db.save(record1);
 
     OElement record2 = db.newElement("Person");
     record2.setProperty("name", "bar");
-    record2.save();
+    db.save(record2);
 
     OSecurityPolicyImpl policy = security.createSecurityPolicy(db, "policy1");
     policy.setActive(true);

@@ -137,7 +137,7 @@ public class DeleteAndLazarusScenarioIT extends AbstractScenarioTest {
       dbServer3 = getDatabase(2);
       r1onServer3.field("firstName", "Darth");
       r1onServer3.field("lastName", "Vader");
-      r1onServer3.save();
+      dbServer3.save(r1onServer3);
       System.out.println(r1onServer3.getRecord().toString());
     } catch (Exception e) {
       e.printStackTrace();

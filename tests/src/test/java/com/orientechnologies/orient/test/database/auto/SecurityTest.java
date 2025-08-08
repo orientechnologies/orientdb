@@ -86,17 +86,17 @@ public class SecurityTest extends DocumentDBBaseTest {
     reopendb("reader", "reader");
 
     try {
-      new ODocument("Profile")
-          .fields(
-              "nick",
-              "error",
-              "password",
-              "I don't know",
-              "lastAccessOn",
-              new Date(),
-              "registeredOn",
-              new Date())
-          .save();
+      database.save(
+          new ODocument("Profile")
+              .fields(
+                  "nick",
+                  "error",
+                  "password",
+                  "I don't know",
+                  "lastAccessOn",
+                  new Date(),
+                  "registeredOn",
+                  new Date()));
     } catch (OSecurityAccessException e) {
       Assert.assertTrue(true);
     } finally {

@@ -48,9 +48,9 @@ public class TransactionIsolationTest extends DocumentDBBaseTest {
     ODatabaseSession db1 = openSession("admin", "admin");
 
     ODocument record1 = new ODocument();
-    record1
-        .field("name", "This is the first version")
-        .save(db1.getClusterNameById(db1.getDefaultClusterId()));
+    db1.save(
+        record1.field("name", "This is the first version"),
+        db1.getClusterNameById(db1.getDefaultClusterId()));
 
     db1.begin();
     try {
@@ -63,7 +63,7 @@ public class TransactionIsolationTest extends DocumentDBBaseTest {
       ODatabaseSession db2 = openSession("admin", "admin");
 
       ODocument record2 = db2.load(record1.getIdentity());
-      record2.field("name", "This is the second version").save();
+      db2.save(record2.field("name", "This is the second version"));
 
       db2.close();
 
@@ -85,9 +85,9 @@ public class TransactionIsolationTest extends DocumentDBBaseTest {
     ODatabaseSession db1 = openSession("admin", "admin");
 
     ODocument record1 = new ODocument();
-    record1
-        .field("name", "This is the first version")
-        .save(db1.getClusterNameById(db1.getDefaultClusterId()));
+    db1.save(
+        record1.field("name", "This is the first version"),
+        db1.getClusterNameById(db1.getDefaultClusterId()));
 
     db1.begin();
     db1.getTransaction().setIsolationLevel(OTransaction.ISOLATION_LEVEL.READ_COMMITTED);
@@ -99,7 +99,7 @@ public class TransactionIsolationTest extends DocumentDBBaseTest {
     ODatabaseSession db2 = openSession("admin", "admin");
 
     ODocument record2 = db2.load(record1.getIdentity());
-    record2.field("name", "This is the second version").save();
+    db2.save(record2.field("name", "This is the second version"));
 
     db1.activateOnCurrentThread();
     db1.reload(record1, null, true);
@@ -117,9 +117,9 @@ public class TransactionIsolationTest extends DocumentDBBaseTest {
     ODatabaseSession db1 = openSession("admin", "admin");
 
     final ODocument record1 = new ODocument();
-    record1
-        .field("name", "This is the first version")
-        .save(db1.getClusterNameById(db1.getDefaultClusterId()));
+    db1.save(
+        record1.field("name", "This is the first version"),
+        db1.getClusterNameById(db1.getDefaultClusterId()));
 
     Future<List<OResult>> txFuture =
         ((ODatabaseDocumentInternal) db1)
@@ -152,7 +152,7 @@ public class TransactionIsolationTest extends DocumentDBBaseTest {
     ODatabaseSession db2 = openSession("admin", "admin");
 
     ODocument record2 = db2.load(record1.getIdentity());
-    record2.field("name", "This is the second version").save();
+    db2.save(record2.field("name", "This is the second version"));
 
     List<OResult> txRecord = txFuture.get();
 
@@ -172,9 +172,9 @@ public class TransactionIsolationTest extends DocumentDBBaseTest {
     ODatabaseSession db1 = openSession("admin", "admin");
 
     final ODocument record1 = new ODocument();
-    record1
-        .field("name", "This is the first version")
-        .save(db1.getClusterNameById(db1.getDefaultClusterId()));
+    db1.save(
+        record1.field("name", "This is the first version"),
+        db1.getClusterNameById(db1.getDefaultClusterId()));
 
     Future<List<OResult>> txFuture =
         ((ODatabaseDocumentInternal) db1)

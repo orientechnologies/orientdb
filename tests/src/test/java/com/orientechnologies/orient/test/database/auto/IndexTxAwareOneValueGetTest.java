@@ -53,8 +53,8 @@ public class IndexTxAwareOneValueGetTest extends DocumentDBBaseTest {
     database.begin();
     final OIndex index = database.getMetadata().getIndexManagerInternal().getIndex(database, INDEX);
 
-    new ODocument(CLASS_NAME).field(PROPERTY_NAME, 1).save();
-    new ODocument(CLASS_NAME).field(PROPERTY_NAME, 2).save();
+    database.save(new ODocument(CLASS_NAME).field(PROPERTY_NAME, 1));
+    database.save(new ODocument(CLASS_NAME).field(PROPERTY_NAME, 2));
 
     database.commit();
 
@@ -68,7 +68,7 @@ public class IndexTxAwareOneValueGetTest extends DocumentDBBaseTest {
 
     database.begin();
 
-    new ODocument(CLASS_NAME).field(PROPERTY_NAME, 3).save();
+    database.save(new ODocument(CLASS_NAME).field(PROPERTY_NAME, 3));
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges(INDEX));
     try (Stream<ORID> stream = index.getInternal().getRids(3)) {
@@ -98,8 +98,8 @@ public class IndexTxAwareOneValueGetTest extends DocumentDBBaseTest {
     database.begin();
     final OIndex index = database.getMetadata().getIndexManagerInternal().getIndex(database, INDEX);
 
-    ODocument document = new ODocument(CLASS_NAME).field(PROPERTY_NAME, 1).save();
-    new ODocument(CLASS_NAME).field(PROPERTY_NAME, 2).save();
+    ODocument document = database.save(new ODocument(CLASS_NAME).field(PROPERTY_NAME, 1));
+    database.save(new ODocument(CLASS_NAME).field(PROPERTY_NAME, 2));
 
     database.commit();
 
@@ -113,7 +113,7 @@ public class IndexTxAwareOneValueGetTest extends DocumentDBBaseTest {
 
     database.begin();
 
-    document.delete();
+    database.delete(document);
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges(INDEX));
     try (Stream<ORID> stream = index.getInternal().getRids(1)) {
@@ -143,8 +143,8 @@ public class IndexTxAwareOneValueGetTest extends DocumentDBBaseTest {
     database.begin();
     final OIndex index = database.getMetadata().getIndexManagerInternal().getIndex(database, INDEX);
 
-    ODocument document = new ODocument(CLASS_NAME).field(PROPERTY_NAME, 1).save();
-    new ODocument(CLASS_NAME).field(PROPERTY_NAME, 2).save();
+    ODocument document = database.save(new ODocument(CLASS_NAME).field(PROPERTY_NAME, 1));
+    database.save(new ODocument(CLASS_NAME).field(PROPERTY_NAME, 2));
 
     database.commit();
 
@@ -159,10 +159,10 @@ public class IndexTxAwareOneValueGetTest extends DocumentDBBaseTest {
     database.begin();
 
     document.removeField(PROPERTY_NAME);
-    document.save();
+    database.save(document);
 
     document.field(PROPERTY_NAME, 1);
-    document.save();
+    database.save(document);
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges(INDEX));
     try (Stream<ORID> stream = index.getInternal().getRids(1)) {
@@ -185,10 +185,10 @@ public class IndexTxAwareOneValueGetTest extends DocumentDBBaseTest {
 
     final OIndex index = database.getMetadata().getIndexManagerInternal().getIndex(database, INDEX);
 
-    ODocument document = new ODocument(CLASS_NAME).field(PROPERTY_NAME, 1).save();
+    ODocument document = database.save(new ODocument(CLASS_NAME).field(PROPERTY_NAME, 1));
     document.field(PROPERTY_NAME, 0);
     document.field(PROPERTY_NAME, 1);
-    document.save();
+    database.save(document);
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges(INDEX));
     try (Stream<ORID> stream = index.getInternal().getRids(1)) {
@@ -211,7 +211,7 @@ public class IndexTxAwareOneValueGetTest extends DocumentDBBaseTest {
 
     final OIndex index = database.getMetadata().getIndexManagerInternal().getIndex(database, INDEX);
 
-    new ODocument(CLASS_NAME).field(PROPERTY_NAME, 1).save();
+    database.save(new ODocument(CLASS_NAME).field(PROPERTY_NAME, 1));
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges(INDEX));
     try (Stream<ORID> stream = index.getInternal().getRids(1)) {
@@ -219,7 +219,7 @@ public class IndexTxAwareOneValueGetTest extends DocumentDBBaseTest {
     }
     database.commit();
 
-    new ODocument(CLASS_NAME).field(PROPERTY_NAME, 2).save();
+    database.save(new ODocument(CLASS_NAME).field(PROPERTY_NAME, 2));
 
     try (Stream<ORID> stream = index.getInternal().getRids(2)) {
       Assert.assertTrue(stream.findAny().isPresent());
@@ -236,8 +236,8 @@ public class IndexTxAwareOneValueGetTest extends DocumentDBBaseTest {
 
     final OIndex index = database.getMetadata().getIndexManagerInternal().getIndex(database, INDEX);
 
-    ODocument document = new ODocument(CLASS_NAME).field(PROPERTY_NAME, 1).save();
-    document.delete();
+    ODocument document = database.save(new ODocument(CLASS_NAME).field(PROPERTY_NAME, 1));
+    database.delete(document);
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges(INDEX));
     try (Stream<ORID> stream = index.getInternal().getRids(1)) {
@@ -261,12 +261,12 @@ public class IndexTxAwareOneValueGetTest extends DocumentDBBaseTest {
 
     final OIndex index = database.getMetadata().getIndexManagerInternal().getIndex(database, INDEX);
 
-    ODocument document = new ODocument(CLASS_NAME).field(PROPERTY_NAME, 1).save();
+    ODocument document = database.save(new ODocument(CLASS_NAME).field(PROPERTY_NAME, 1));
 
     document.removeField(PROPERTY_NAME);
-    document.save();
+    database.save(document);
 
-    document.field(PROPERTY_NAME, 1).save();
+    database.save(document.field(PROPERTY_NAME, 1));
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges(INDEX));
     try (Stream<ORID> stream = index.getInternal().getRids(1)) {

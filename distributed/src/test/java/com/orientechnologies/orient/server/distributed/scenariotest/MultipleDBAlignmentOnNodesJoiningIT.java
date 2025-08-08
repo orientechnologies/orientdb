@@ -419,7 +419,7 @@ public class MultipleDBAlignmentOnNodesJoiningIT extends AbstractScenarioTest {
     private void updateRecord(ODatabaseDocument database, int i) {
       ODocument doc = loadRecord(database, i);
       doc.field("updated", true);
-      doc.save();
+      database.save(doc);
     }
 
     private void checkRecord(ODatabaseDocument database, int i) {

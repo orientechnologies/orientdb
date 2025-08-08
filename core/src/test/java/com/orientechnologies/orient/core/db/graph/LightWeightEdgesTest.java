@@ -104,10 +104,10 @@ public class LightWeightEdgesTest {
 
     OVertex v = session.newVertex(vClass);
     v.setProperty("name", "a");
-    v.save();
+    session.save(v);
     OVertex v1 = session.newVertex(vClass);
     v1.setProperty("name", "b");
-    v1.save();
+    session.save(v1);
 
     session.command(
         "create edge "

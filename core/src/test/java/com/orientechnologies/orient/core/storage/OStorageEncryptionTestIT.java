@@ -14,7 +14,6 @@ import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
@@ -56,7 +55,7 @@ public class OStorageEncryptionTestIT {
                   + " incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis"
                   + " nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat."
                   + " ");
-          document.save();
+          session.save(document);
         }
 
         final Random random = ThreadLocalRandom.current();
@@ -65,7 +64,7 @@ public class OStorageEncryptionTestIT {
               session.query("select from EncryptedData where id = ?", random.nextInt(10_000_000))) {
             if (resultSet.hasNext()) {
               final OResult result = resultSet.next();
-              result.getElement().ifPresent(ORecord::delete);
+              result.getElement().ifPresent(session::delete);
             }
           }
         }
@@ -193,7 +192,7 @@ public class OStorageEncryptionTestIT {
                 + " incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis"
                 + " nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat."
                 + " ");
-        document.save();
+        session.save(document);
 
         try (OResultSet resultSet = session.query("select from EncryptedData where id = ?", 10)) {
           assertTrue(resultSet.hasNext());

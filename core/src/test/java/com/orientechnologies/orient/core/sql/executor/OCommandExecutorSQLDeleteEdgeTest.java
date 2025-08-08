@@ -30,10 +30,10 @@ public class OCommandExecutorSQLDeleteEdgeTest extends BaseMemoryDatabase {
     schema.createClass("Folder", schema.getClass("V"));
     schema.createClass("CanAccess", schema.getClass("E"));
 
-    userId1 = new ODocument("User").field("username", "gongolo").save().getIdentity();
-    new ODocument("User").field("username", "user2").save().getIdentity();
-    folderId1 = new ODocument("Folder").field("keyId", "01234567893").save().getIdentity();
-    new ODocument("Folder").field("keyId", "01234567894").save().getIdentity();
+    userId1 = db.save(new ODocument("User").field("username", "gongolo")).getIdentity();
+    db.save(new ODocument("User").field("username", "user2")).getIdentity();
+    folderId1 = db.save(new ODocument("Folder").field("keyId", "01234567893")).getIdentity();
+    db.save(new ODocument("Folder").field("keyId", "01234567894")).getIdentity();
 
     edges =
         db.command("create edge CanAccess from " + userId1 + " to " + folderId1).stream()

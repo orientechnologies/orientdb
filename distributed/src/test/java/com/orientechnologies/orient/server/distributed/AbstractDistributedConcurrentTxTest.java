@@ -79,7 +79,7 @@ public abstract class AbstractDistributedConcurrentTxTest extends AbstractDistri
           boolean success = false;
           for (; retry < 200; ++retry) {
             try {
-              updateVertex(localVertex);
+              updateVertex(graph, localVertex);
               graph.commit();
               logger.info("Success count %d retry %d", i, retry);
               success = true;
@@ -206,8 +206,8 @@ public abstract class AbstractDistributedConcurrentTxTest extends AbstractDistri
     return result.next().getVertex().get();
   }
 
-  protected void updateVertex(OVertex v) {
+  protected void updateVertex(ODatabaseDocument graph, OVertex v) {
     v.setProperty("saved", ((Integer) v.getProperty("saved")) + 1);
-    v.save();
+    graph.save(v);
   }
 }

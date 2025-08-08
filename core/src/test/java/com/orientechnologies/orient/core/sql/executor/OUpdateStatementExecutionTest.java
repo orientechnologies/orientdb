@@ -551,7 +551,7 @@ public class OUpdateStatementExecutionTest {
     }
     doc.setProperty("theProperty", theList);
 
-    doc.save();
+    db.save(doc);
 
     OResultSet result = db.command("update " + className + " remove theProperty[0]");
     printExecutionPlan(result);
@@ -586,7 +586,7 @@ public class OUpdateStatementExecutionTest {
     }
     doc.setProperty("theProperty", theList);
 
-    doc.save();
+    db.save(doc);
 
     OResultSet result = db.command("update " + className + " remove theProperty[0, 1, 3]");
     printExecutionPlan(result);
@@ -635,7 +635,7 @@ public class OUpdateStatementExecutionTest {
     emb.setProperty("aaa", "bar");
     doc.setProperty("theProperty", emb);
 
-    doc.save();
+    db.save(doc);
 
     OResultSet result = db.command("update " + className + " remove theProperty.sub");
     printExecutionPlan(result);

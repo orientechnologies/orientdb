@@ -187,9 +187,10 @@ public class PropertyIndexTest extends DocumentDBBaseTest {
             .size();
 
     ODocument doc =
-        new ODocument("PropertyIndexTestClass").fields("prop1", "testComposite3").save();
-    new ODocument("PropertyIndexTestClass").fields("prop0", doc, "prop1", "testComposite1").save();
-    new ODocument("PropertyIndexTestClass").fields("prop0", doc).save();
+        database.save(new ODocument("PropertyIndexTestClass").fields("prop1", "testComposite3"));
+    database.save(
+        new ODocument("PropertyIndexTestClass").fields("prop0", doc, "prop1", "testComposite1"));
+    database.save(new ODocument("PropertyIndexTestClass").fields("prop0", doc));
 
     Assert.assertEquals(
         database
@@ -229,9 +230,10 @@ public class PropertyIndexTest extends DocumentDBBaseTest {
             .size();
 
     ODocument doc =
-        new ODocument("PropertyIndexTestClass").fields("prop1", "testComposite34").save();
-    new ODocument("PropertyIndexTestClass").fields("prop0", doc, "prop1", "testComposite33").save();
-    new ODocument("PropertyIndexTestClass").fields("prop0", doc).save();
+        database.save(new ODocument("PropertyIndexTestClass").fields("prop1", "testComposite34"));
+    database.save(
+        new ODocument("PropertyIndexTestClass").fields("prop0", doc, "prop1", "testComposite33"));
+    database.save(new ODocument("PropertyIndexTestClass").fields("prop0", doc));
 
     database.commit();
 

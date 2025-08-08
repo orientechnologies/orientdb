@@ -30,7 +30,7 @@ public class EmbeddedObjectSerializationTest extends DocumentDBBaseTest {
     originalDoc.field("compositeKey", compositeKey);
     originalDoc.field("int", 12);
     originalDoc.field("val", "test");
-    originalDoc.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(originalDoc, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument loadedDoc = database.load(originalDoc.getIdentity(), "*:-1", true);
     Assert.assertNotSame(loadedDoc, originalDoc);
@@ -38,7 +38,7 @@ public class EmbeddedObjectSerializationTest extends DocumentDBBaseTest {
     final OCompositeKey loadedCompositeKey = loadedDoc.field("compositeKey");
     Assert.assertEquals(loadedCompositeKey, compositeKey);
 
-    originalDoc.delete();
+    database.delete(originalDoc);
   }
 
   public void testEmbeddedObjectSerializationInsideOfOtherEmbeddedObjects() {
@@ -75,7 +75,7 @@ public class EmbeddedObjectSerializationTest extends DocumentDBBaseTest {
     originalDoc.field("embeddedDoc", embeddedDocOne, OType.EMBEDDED);
     originalDoc.field("embeddedCollection", embeddedCollection, OType.EMBEDDEDLIST);
 
-    originalDoc.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(originalDoc, database.getClusterNameById(database.getDefaultClusterId()));
 
     final ODocument loadedDocument = database.load(originalDoc.getIdentity(), "*:-1", true);
     Assert.assertNotSame(loadedDocument, originalDoc);
@@ -98,6 +98,6 @@ public class EmbeddedObjectSerializationTest extends DocumentDBBaseTest {
 
     Assert.assertEquals(loadedEmbeddedDocThree.field("compositeKey"), compositeKeyThree);
 
-    originalDoc.delete();
+    database.delete(originalDoc);
   }
 }

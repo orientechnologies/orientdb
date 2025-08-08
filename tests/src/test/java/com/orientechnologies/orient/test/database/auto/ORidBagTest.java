@@ -146,7 +146,7 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
 
     ODocument doc = new ODocument();
     doc.field("ridbag", bag);
-    doc.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(doc, database.getClusterNameById(database.getDefaultClusterId()));
 
     ORID rid = doc.getIdentity();
 
@@ -214,7 +214,7 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
 
     ODocument doc = new ODocument();
     doc.field("ridbag", bag);
-    doc.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(doc, database.getClusterNameById(database.getDefaultClusterId()));
 
     ORID rid = doc.getIdentity();
 
@@ -255,7 +255,7 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
 
     ODocument doc = new ODocument();
     doc.field("ridbag", bag);
-    doc.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(doc, database.getClusterNameById(database.getDefaultClusterId()));
 
     ORID rid = doc.getIdentity();
 
@@ -293,7 +293,7 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
 
     assertEmbedded(otherBag.isEmbedded());
     doc.field("ridbag", otherBag);
-    doc.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(doc, database.getClusterNameById(database.getDefaultClusterId()));
 
     rid = doc.getIdentity();
 
@@ -325,7 +325,7 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
 
     ODocument doc = new ODocument();
     doc.field("ridbag", bag);
-    doc.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(doc, database.getClusterNameById(database.getDefaultClusterId()));
 
     ORID rid = doc.getIdentity();
 
@@ -382,7 +382,7 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
 
     assertEmbedded(otherBag.isEmbedded());
     doc.field("ridbag", otherBag);
-    doc.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(doc, database.getClusterNameById(database.getDefaultClusterId()));
 
     rid = doc.getIdentity();
 
@@ -442,7 +442,7 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
 
     ODocument doc = new ODocument();
     doc.field("ridbag", bag);
-    doc.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(doc, database.getClusterNameById(database.getDefaultClusterId()));
 
     ORID rid = doc.getIdentity();
 
@@ -491,7 +491,7 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
 
     for (OIdentifiable identifiable : bag) rids.add(identifiable);
 
-    doc.save();
+    database.save(doc);
 
     doc = database.load(rid);
     doc.setLazyLoad(false);
@@ -540,7 +540,7 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
     database.save(document);
 
     try {
-      copy.save();
+      database.save(copy);
       Assert.assertTrue(!expectCME);
     } catch (OConcurrentModificationException cme) {
       Assert.assertTrue(expectCME);
@@ -597,7 +597,7 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
 
     ODocument doc = new ODocument();
     doc.field("ridbag", bag);
-    doc.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(doc, database.getClusterNameById(database.getDefaultClusterId()));
 
     ORID rid = doc.getIdentity();
 
@@ -642,7 +642,7 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
     for (OIdentifiable id : bag) otherBag.add(id);
 
     doc.field("ridbag", otherBag);
-    doc.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(doc, database.getClusterNameById(database.getDefaultClusterId()));
 
     rid = doc.getIdentity();
 
@@ -667,13 +667,13 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
     docOne.field("ridBag", ridBagOne);
     docTwo.field("ridBag", ridBagTwo);
 
-    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
-    docTwo.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docOne, database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docTwo, database.getClusterNameById(database.getDefaultClusterId()));
 
     ridBagOne.add(docTwo);
     ridBagTwo.add(docOne);
 
-    docOne.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docOne, database.getClusterNameById(database.getDefaultClusterId()));
 
     docOne = database.load(docOne.getIdentity(), "*:-1", false);
     ridBagOne = docOne.field("ridBag");
@@ -717,7 +717,7 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
 
     ODocument doc = new ODocument();
     doc.field("ridbag", bag);
-    doc.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(doc, database.getClusterNameById(database.getDefaultClusterId()));
 
     ORID rid = doc.getIdentity();
     database.close();
@@ -823,7 +823,7 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
     assertEmbedded(otherBag.isEmbedded());
 
     doc.field("ridbag", otherBag);
-    doc.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(doc, database.getClusterNameById(database.getDefaultClusterId()));
 
     rid = doc.getIdentity();
 
@@ -898,7 +898,7 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
 
     doc.field("ridbag", bag);
     assertEmbedded(bag.isEmbedded());
-    doc.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(doc, database.getClusterNameById(database.getDefaultClusterId()));
     final ORID id = doc.getIdentity();
 
     database.close();
@@ -920,16 +920,16 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
   public void testSaveInBackOrder() throws Exception {
     ODocument docA = new ODocument().field("name", "A");
     ODocument docB =
-        new ODocument()
-            .field("name", "B")
-            .save(database.getClusterNameById(database.getDefaultClusterId()));
+        database.save(
+            new ODocument().field("name", "B"),
+            database.getClusterNameById(database.getDefaultClusterId()));
 
     ORidBag ridBag = new ORidBag();
 
     ridBag.add(docA);
     ridBag.add(docB);
 
-    docA.save(database.getClusterNameById(database.getDefaultClusterId()));
+    database.save(docA, database.getClusterNameById(database.getDefaultClusterId()));
     ridBag.remove(docB);
 
     assertEmbedded(ridBag.isEmbedded());
@@ -972,7 +972,7 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
 
       database.save(document);
     }
-    document.delete();
+    database.delete(document);
   }
 
   public void testSimultaneousIterationAndRemove() {
@@ -1395,9 +1395,9 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
   public void testSizeNotChangeAfterRemoveNotExistentElement() throws Exception {
     final ODocument bob = new ODocument();
     final ODocument fred =
-        new ODocument().save(database.getClusterNameById(database.getDefaultClusterId()));
+        database.save(new ODocument(), database.getClusterNameById(database.getDefaultClusterId()));
     final ODocument jim =
-        new ODocument().save(database.getClusterNameById(database.getDefaultClusterId()));
+        database.save(new ODocument(), database.getClusterNameById(database.getDefaultClusterId()));
 
     ORidBag teamMates = new ORidBag();
 
@@ -1416,7 +1416,7 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
     ORidBag teamMates = new ORidBag();
 
     final ODocument bob =
-        new ODocument().save(database.getClusterNameById(database.getDefaultClusterId()));
+        database.save(new ODocument(), database.getClusterNameById(database.getDefaultClusterId()));
 
     teamMates.remove(bob);
 
@@ -1601,7 +1601,8 @@ public abstract class ORidBagTest extends DocumentDBBaseTest {
     final ORidBag highLevelRidBag = new ORidBag();
     for (int i = 0; i < 10; i++) {
       highLevelRidBag.add(
-          new ODocument().save(database.getClusterNameById(database.getDefaultClusterId())));
+          database.save(
+              new ODocument(), database.getClusterNameById(database.getDefaultClusterId())));
     }
     database.save(externalDoc, database.getClusterNameById(database.getDefaultClusterId()));
     testDocument.field("type", "testDocument");

@@ -38,25 +38,22 @@ public class TestImportRewriteLinks {
         cls.createProperty("value", OType.STRING);
         cls.createIndex(EXPORT_IMPORT_INDEX_NAME, OClass.INDEX_TYPE.DICTIONARY, "key");
 
-        new ODocument(EXPORT_IMPORT_CLASS_NAME)
-            .field("key", new ORecordId(10, 4).toString())
-            .field("value", new ORecordId(10, 3).toString())
-            .save();
-
-        new ODocument(EXPORT_IMPORT_CLASS_NAME)
-            .field("key", new ORecordId(11, 1).toString())
-            .field("value", new ORecordId(21, 1).toString())
-            .save();
-
-        new ODocument(EXPORT_IMPORT_CLASS_NAME)
-            .field("key", new ORecordId(31, 1).toString())
-            .field("value", new ORecordId(41, 1).toString())
-            .save();
-
-        new ODocument(EXPORT_IMPORT_CLASS_NAME)
-            .field("key", new ORecordId(51, 1).toString())
-            .field("value", new ORecordId(61, 1).toString())
-            .save();
+        session.save(
+            new ODocument(EXPORT_IMPORT_CLASS_NAME)
+                .field("key", new ORecordId(10, 4).toString())
+                .field("value", new ORecordId(10, 3).toString()));
+        session.save(
+            new ODocument(EXPORT_IMPORT_CLASS_NAME)
+                .field("key", new ORecordId(11, 1).toString())
+                .field("value", new ORecordId(21, 1).toString()));
+        session.save(
+            new ODocument(EXPORT_IMPORT_CLASS_NAME)
+                .field("key", new ORecordId(31, 1).toString())
+                .field("value", new ORecordId(41, 1).toString()));
+        session.save(
+            new ODocument(EXPORT_IMPORT_CLASS_NAME)
+                .field("key", new ORecordId(51, 1).toString())
+                .field("value", new ORecordId(61, 1).toString()));
 
         final Set<ORID> brokenRids = new HashSet<>();
 

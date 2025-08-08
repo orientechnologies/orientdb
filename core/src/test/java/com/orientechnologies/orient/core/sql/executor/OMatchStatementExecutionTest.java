@@ -1534,7 +1534,7 @@ public class OMatchStatementExecutionTest extends BaseMemoryDatabase {
     for (int i = 0; i < 1000; i++) {
       ODocument doc = db.newInstance("testBigEntryPoint1");
       doc.field("a", i);
-      doc.save();
+      db.save(doc);
     }
 
     ODocument doc = db.newInstance("testBigEntryPoint2");

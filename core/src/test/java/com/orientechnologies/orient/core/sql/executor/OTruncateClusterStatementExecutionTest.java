@@ -30,7 +30,7 @@ public class OTruncateClusterStatementExecutionTest extends BaseMemoryDatabase {
     final ODocument document = new ODocument();
     document.field("value", "val");
 
-    document.save(clusterName);
+    db.save(document, clusterName);
 
     Assert.assertEquals(db.countClass(className), 1);
     Assert.assertEquals(db.countClusterElements(clusterId), 1);

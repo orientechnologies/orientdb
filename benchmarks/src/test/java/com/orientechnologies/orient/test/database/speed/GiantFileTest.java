@@ -86,7 +86,7 @@ public class GiantFileTest {
       fileDoc.field("FileName", giantFile.getName());
       fileDoc.field("FileSize", giantFile.length());
       fileDoc.field("DataChunks", (byte[]) null);
-      fileDoc.save();
+      db.save(fileDoc);
 
       // Store the actual file data.
       final long storeFileStartTime = System.currentTimeMillis();
@@ -201,7 +201,7 @@ public class GiantFileTest {
         // Save the chunk to the database.
         final long saveStartTime = System.currentTimeMillis();
         chunk.reset(buffer);
-        chunk.save();
+        database.save(chunk);
         final long saveMs = System.currentTimeMillis() - saveStartTime;
 
         // Log the amount of time taken by the save.
@@ -238,7 +238,7 @@ public class GiantFileTest {
         // Save the chunk to the database.
         final long saveStartTime = System.currentTimeMillis();
         chunk.reset(Arrays.copyOf(buffer, remainder));
-        chunk.save();
+        database.save(chunk);
         final long saveMs = System.currentTimeMillis() - saveStartTime;
 
         // Log the amount of time taken by the save.
@@ -263,7 +263,7 @@ public class GiantFileTest {
       // Save the list of chunk references.
       final long saveChunkListStartTime = System.currentTimeMillis();
       fileDoc.field("DataChunks", chunkRids);
-      fileDoc.save();
+      database.save(fileDoc);
       final long saveChunkListMs = System.currentTimeMillis() - saveChunkListStartTime;
 
       // Log the amount of time taken to save the list of chunk RIDs.

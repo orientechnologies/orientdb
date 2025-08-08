@@ -251,7 +251,6 @@ public class OCommandExecutorSQLUpdateTest extends BaseMemoryDatabase {
     db.save(test);
 
     OElement queried = db.query("SELECT FROM test WHERE id = \"id1\"").next().getElement().get();
-    ;
 
     db.command("UPDATE test set count += 2").close();
     queried.reload();
@@ -444,7 +443,7 @@ public class OCommandExecutorSQLUpdateTest extends BaseMemoryDatabase {
 
     ODocument d = new ODocument("Foo");
     d.field("name", "foo");
-    d.save();
+    db.save(d);
     db.command("update Foo MERGE {\"a\":1}").close();
     db.command("update Foo CONTENT {\"a\":1}").close();
 
@@ -463,10 +462,10 @@ public class OCommandExecutorSQLUpdateTest extends BaseMemoryDatabase {
 
     ODocument d = new ODocument("Foo");
     d.field("name", "foo");
-    d.save();
+    db.save(d);
     d = new ODocument("Foo");
     d.field("name", "bar");
-    d.save();
+    db.save(d);
 
     OResultSet result = db.command("update Foo set surname = 'baz' return count");
 

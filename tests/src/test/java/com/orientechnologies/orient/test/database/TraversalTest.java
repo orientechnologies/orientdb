@@ -41,12 +41,12 @@ public class TraversalTest {
           "bar", "foo adfakbjk lkjaw elkm,nbn apoij w.e,jr ;kjhaw erlkasjf dlkafdjs " + i);
       v.setProperty(
           "baz", "foo laksjdf lakjsdf .lkau s;olknawe; oih;na ero;ij; lkasjf dlkafdjs " + i);
-      v.save();
+      db.save(v);
 
       if (lastRid != null) {
         OVertex lastV = db.load(lastRid);
         OEdge edge = lastV.addEdge(v);
-        edge.save();
+        db.save(edge);
       } else {
         firstRid = v.getIdentity();
       }

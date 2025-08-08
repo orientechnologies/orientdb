@@ -338,7 +338,7 @@ public class LocalPaginatedStorageRestoreFromWAL {
             }
 
             docTwo.field("stringList", stringList);
-            docTwo.save();
+            db.save(docTwo);
 
             testTwoList.add(docTwo.getIdentity());
           }

@@ -21,11 +21,11 @@ public class OOptimizeDatabaseExecutionTest extends BaseMemoryDatabase {
 
     OVertex v1 = db.newVertex(vClass);
     v1.setProperty("name", "v1");
-    v1.save();
+    db.save(v1);
 
     OVertex v2 = db.newVertex(vClass);
     v2.setProperty("name", "v2");
-    v2.save();
+    db.save(v2);
 
     OResultSet createREs =
         db.command(

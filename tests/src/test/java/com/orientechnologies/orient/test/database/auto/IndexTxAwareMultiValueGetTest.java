@@ -52,10 +52,10 @@ public class IndexTxAwareMultiValueGetTest extends DocumentDBBaseTest {
     final OIndex index =
         database.getMetadata().getIndexManagerInternal().getIndex(database, INDEX_NAME);
 
-    new ODocument(CLASS_NAME).field(FIELD_NAME, 1).save();
-    new ODocument(CLASS_NAME).field(FIELD_NAME, 1).save();
+    database.save(new ODocument(CLASS_NAME).field(FIELD_NAME, 1));
+    database.save(new ODocument(CLASS_NAME).field(FIELD_NAME, 1));
 
-    new ODocument(CLASS_NAME).field(FIELD_NAME, 2).save();
+    database.save(new ODocument(CLASS_NAME).field(FIELD_NAME, 2));
 
     database.commit();
 
@@ -69,7 +69,7 @@ public class IndexTxAwareMultiValueGetTest extends DocumentDBBaseTest {
 
     database.begin();
 
-    new ODocument(CLASS_NAME).field(FIELD_NAME, 2).save();
+    database.save(new ODocument(CLASS_NAME).field(FIELD_NAME, 2));
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges(INDEX_NAME));
     try (Stream<ORID> stream = index.getInternal().getRids(2)) {
@@ -97,10 +97,10 @@ public class IndexTxAwareMultiValueGetTest extends DocumentDBBaseTest {
     final OIndex index =
         database.getMetadata().getIndexManagerInternal().getIndex(database, INDEX_NAME);
 
-    final ODocument docOne = new ODocument(CLASS_NAME).field(FIELD_NAME, 1).save();
-    final ODocument docTwo = new ODocument(CLASS_NAME).field(FIELD_NAME, 1).save();
+    final ODocument docOne = database.save(new ODocument(CLASS_NAME).field(FIELD_NAME, 1));
+    final ODocument docTwo = database.save(new ODocument(CLASS_NAME).field(FIELD_NAME, 1));
 
-    new ODocument(CLASS_NAME).field(FIELD_NAME, 2).save();
+    database.save(new ODocument(CLASS_NAME).field(FIELD_NAME, 2));
 
     database.commit();
 
@@ -114,8 +114,8 @@ public class IndexTxAwareMultiValueGetTest extends DocumentDBBaseTest {
 
     database.begin();
 
-    docOne.delete();
-    docTwo.delete();
+    database.delete(docOne);
+    database.delete(docTwo);
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges(INDEX_NAME));
     try (Stream<ORID> stream = index.getInternal().getRids(1)) {
@@ -146,10 +146,10 @@ public class IndexTxAwareMultiValueGetTest extends DocumentDBBaseTest {
     final OIndex index =
         database.getMetadata().getIndexManagerInternal().getIndex(database, INDEX_NAME);
 
-    final ODocument document = new ODocument(CLASS_NAME).field(FIELD_NAME, 1).save();
-    new ODocument(CLASS_NAME).field(FIELD_NAME, 1).save();
+    final ODocument document = database.save(new ODocument(CLASS_NAME).field(FIELD_NAME, 1));
+    database.save(new ODocument(CLASS_NAME).field(FIELD_NAME, 1));
 
-    new ODocument(CLASS_NAME).field(FIELD_NAME, 2).save();
+    database.save(new ODocument(CLASS_NAME).field(FIELD_NAME, 2));
 
     database.commit();
 
@@ -163,7 +163,7 @@ public class IndexTxAwareMultiValueGetTest extends DocumentDBBaseTest {
 
     database.begin();
 
-    document.delete();
+    database.delete(document);
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges(INDEX_NAME));
     try (Stream<ORID> stream = index.getInternal().getRids(1)) {
@@ -195,14 +195,14 @@ public class IndexTxAwareMultiValueGetTest extends DocumentDBBaseTest {
     final OIndex index =
         database.getMetadata().getIndexManagerInternal().getIndex(database, INDEX_NAME);
 
-    final ODocument document = new ODocument(CLASS_NAME).field(FIELD_NAME, 1).save();
+    final ODocument document = database.save(new ODocument(CLASS_NAME).field(FIELD_NAME, 1));
     try (Stream<ORID> stream = index.getInternal().getRids(1)) {
       Assert.assertEquals(stream.count(), 1);
     }
 
     document.field(FIELD_NAME, 0);
     document.field(FIELD_NAME, 1);
-    document.save();
+    database.save(document);
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges(INDEX_NAME));
     try (Stream<ORID> stream = index.getInternal().getRids(1)) {
@@ -226,7 +226,7 @@ public class IndexTxAwareMultiValueGetTest extends DocumentDBBaseTest {
     final OIndex index =
         database.getMetadata().getIndexManagerInternal().getIndex(database, INDEX_NAME);
 
-    new ODocument(CLASS_NAME).field(FIELD_NAME, 1).save();
+    database.save(new ODocument(CLASS_NAME).field(FIELD_NAME, 1));
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges(INDEX_NAME));
     try (Stream<ORID> stream = index.getInternal().getRids(1)) {
@@ -234,7 +234,7 @@ public class IndexTxAwareMultiValueGetTest extends DocumentDBBaseTest {
     }
     database.commit();
 
-    new ODocument(CLASS_NAME).field(FIELD_NAME, 1).save();
+    database.save(new ODocument(CLASS_NAME).field(FIELD_NAME, 1));
 
     try (Stream<ORID> stream = index.getInternal().getRids(1)) {
       Assert.assertEquals(stream.count(), 2);
@@ -252,8 +252,8 @@ public class IndexTxAwareMultiValueGetTest extends DocumentDBBaseTest {
     final OIndex index =
         database.getMetadata().getIndexManagerInternal().getIndex(database, INDEX_NAME);
 
-    final ODocument document = new ODocument(CLASS_NAME).field(FIELD_NAME, 1).save();
-    document.delete();
+    final ODocument document = database.save(new ODocument(CLASS_NAME).field(FIELD_NAME, 1));
+    database.delete(document);
 
     Assert.assertNotNull(database.getTransaction().getIndexChanges(INDEX_NAME));
     try (Stream<ORID> stream = index.getInternal().getRids(1)) {
@@ -278,11 +278,11 @@ public class IndexTxAwareMultiValueGetTest extends DocumentDBBaseTest {
     final OIndex index =
         database.getMetadata().getIndexManagerInternal().getIndex(database, INDEX_NAME);
 
-    final ODocument document = new ODocument(CLASS_NAME).field(FIELD_NAME, 1).save();
+    final ODocument document = database.save(new ODocument(CLASS_NAME).field(FIELD_NAME, 1));
     document.removeField(FIELD_NAME);
-    document.save();
+    database.save(document);
 
-    document.field(FIELD_NAME, 1).save();
+    database.save(document.field(FIELD_NAME, 1));
     try (Stream<ORID> stream = index.getInternal().getRids(1)) {
       Assert.assertEquals(stream.count(), 1);
     }

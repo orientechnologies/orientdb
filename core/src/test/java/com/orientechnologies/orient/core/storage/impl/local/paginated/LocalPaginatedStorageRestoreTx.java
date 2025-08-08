@@ -296,7 +296,7 @@ public class LocalPaginatedStorageRestoreTx {
               }
 
               docTwo.field("stringList", stringList);
-              docTwo.save();
+              db.save(docTwo);
             }
 
             if (!secondDocs.isEmpty()) {

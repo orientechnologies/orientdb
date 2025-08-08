@@ -93,18 +93,18 @@ public class DuplicateNonUniqueIndexChangesTxTest extends BaseMemoryDatabase {
     db.begin();
 
     // saved persons will have null name
-    person1.field("name", (Object) null).save();
-    person2.field("name", (Object) null).save();
-    person3.field("name", (Object) null).save();
+    db.save(person1.field("name", (Object) null));
+    db.save(person2.field("name", (Object) null));
+    db.save(person3.field("name", (Object) null));
 
     // change names
-    person1.field("name", "Name2").save();
-    person2.field("name", "Name1").save();
-    person3.field("name", "Name2").save();
+    db.save(person1.field("name", "Name2"));
+    db.save(person2.field("name", "Name1"));
+    db.save(person3.field("name", "Name2"));
 
     // and again
-    person1.field("name", "Name1").save();
-    person2.field("name", "Name2").save();
+    db.save(person1.field("name", "Name1"));
+    db.save(person2.field("name", "Name2"));
 
     db.commit();
 
@@ -131,9 +131,9 @@ public class DuplicateNonUniqueIndexChangesTxTest extends BaseMemoryDatabase {
     db.save(person3);
 
     // change some names
-    person2.field("name", "Name1").save();
-    person2.field("name", "Name2").save();
-    person3.field("name", "Name2").save();
+    db.save(person2.field("name", "Name1"));
+    db.save(person2.field("name", "Name2"));
+    db.save(person3.field("name", "Name2"));
 
     db.commit();
 
@@ -166,14 +166,14 @@ public class DuplicateNonUniqueIndexChangesTxTest extends BaseMemoryDatabase {
     db.begin();
 
     // saved persons will have same name
-    person1.field("name", "same").save();
-    person2.field("name", "same").save();
-    person3.field("name", "same").save();
+    db.save(person1.field("name", "same"));
+    db.save(person2.field("name", "same"));
+    db.save(person3.field("name", "same"));
 
     // change names back to unique in reverse order
-    person3.field("name", "Name3").save();
-    person2.field("name", "Name2").save();
-    person1.field("name", "Name1").save();
+    db.save(person3.field("name", "Name3"));
+    db.save(person2.field("name", "Name2"));
+    db.save(person1.field("name", "Name1"));
 
     db.commit();
 
@@ -202,10 +202,10 @@ public class DuplicateNonUniqueIndexChangesTxTest extends BaseMemoryDatabase {
     person4.field("name", "same");
     db.save(person4);
 
-    person1.delete();
-    person2.field("name", "Name2").save();
-    person3.delete();
-    person4.field("name", "Name2").save();
+    db.delete(person1);
+    db.save(person2.field("name", "Name2"));
+    db.delete(person3);
+    db.save(person4.field("name", "Name2"));
 
     db.commit();
 
@@ -241,12 +241,12 @@ public class DuplicateNonUniqueIndexChangesTxTest extends BaseMemoryDatabase {
 
     db.begin();
 
-    person1.delete();
-    person2.field("name", "same").save();
-    person3.delete();
-    person4.field("name", "same").save();
-    person2.field("name", "Name2").save();
-    person4.field("name", "Name2").save();
+    db.delete(person1);
+    db.save(person2.field("name", "same"));
+    db.delete(person3);
+    db.save(person4.field("name", "same"));
+    db.save(person2.field("name", "Name2"));
+    db.save(person4.field("name", "Name2"));
 
     db.commit();
 
@@ -258,8 +258,8 @@ public class DuplicateNonUniqueIndexChangesTxTest extends BaseMemoryDatabase {
     assertRids("Name4");
 
     db.begin();
-    person2.delete();
-    person4.delete();
+    db.delete(person2);
+    db.delete(person4);
     db.commit();
 
     // verify index state

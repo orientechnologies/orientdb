@@ -40,7 +40,7 @@ public class ExternalCollectionsTest extends BaseMemoryDatabase {
     final ODocument document = new ODocument();
     document.field("list", list);
     Assert.assertEquals(document.field("list"), list);
-    document.save();
+    db.save(document);
     Assert.assertEquals(document.field("list"), list);
     db.commit();
     Assert.assertEquals(document.field("list"), list);
@@ -48,7 +48,7 @@ public class ExternalCollectionsTest extends BaseMemoryDatabase {
     db.begin();
     list.add(1);
     Assert.assertEquals(document.field("list"), list);
-    document.save();
+    db.save(document);
     Assert.assertEquals(document.field("list"), list);
     db.commit();
     Assert.assertEquals(document.field("list"), list);
@@ -63,13 +63,13 @@ public class ExternalCollectionsTest extends BaseMemoryDatabase {
     final ODocument document = new ODocument();
     document.field("list", list);
     Assert.assertEquals(document.field("list"), list);
-    document.save();
+    db.save(document);
     Assert.assertEquals(document.field("list"), list);
 
     db.begin();
     list.add(1);
     Assert.assertEquals(document.field("list"), list);
-    document.save();
+    db.save(document);
     Assert.assertEquals(document.field("list"), list);
     db.commit();
     Assert.assertEquals(document.field("list"), list);
@@ -85,14 +85,14 @@ public class ExternalCollectionsTest extends BaseMemoryDatabase {
     final ODocument document = new ODocument();
     document.field("list", list);
     Assert.assertEquals(document.field("list"), list);
-    document.save();
+    db.save(document);
     Assert.assertEquals(document.field("list"), list);
     db.commit();
     Assert.assertEquals(document.field("list"), list);
 
     list.add(1);
     Assert.assertEquals(document.field("list"), list);
-    document.save();
+    db.save(document);
     Assert.assertEquals(document.field("list"), list);
   }
 
@@ -105,12 +105,12 @@ public class ExternalCollectionsTest extends BaseMemoryDatabase {
     final ODocument document = new ODocument();
     document.field("list", list);
     Assert.assertEquals(document.field("list"), list);
-    document.save();
+    db.save(document);
     Assert.assertEquals(document.field("list"), list);
 
     list.add(1);
     Assert.assertEquals(document.field("list"), list);
-    document.save();
+    db.save(document);
     Assert.assertEquals(document.field("list"), list);
   }
 }

@@ -86,7 +86,7 @@ public class NewTraverseTest extends DocumentDBBaseTest {
     var youHaveGotMail = database.newVertex("Movie");
     youHaveGotMail.setProperty("name", "You've Got Mail");
     youHaveGotMail.setProperty("year", 1998);
-    youHaveGotMail.save();
+    database.save(youHaveGotMail);
     totalElements++;
 
     var e = database.newEdge(tomCruise, topGun, "actorIn");

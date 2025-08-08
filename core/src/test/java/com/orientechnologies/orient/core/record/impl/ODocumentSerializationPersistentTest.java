@@ -39,7 +39,7 @@ public class ODocumentSerializationPersistentTest extends BaseMemoryInternalData
 
     doc.field("country", linkedDoc);
     doc.field("numbers", Arrays.asList(0, 1, 2, 3, 4, 5));
-    doc.save(db.getClusterNameById(db.getDefaultClusterId()));
+    db.save(doc, db.getClusterNameById(db.getDefaultClusterId()));
     docId = doc.getIdentity();
     linkedId = linkedDoc.getIdentity();
   }

@@ -433,7 +433,7 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
       OVertex client = graph.newVertex("Client");
       client.setProperty("name", uniqueId);
       client.setProperty("updated", false);
-      client.save(shardName);
+      graph.save(client, shardName);
 
       return client;
     }

@@ -64,7 +64,7 @@ public class OETLMergeTransformerTest extends OETLBaseTest {
     OVertex person = db.newVertex("Person");
     person.setProperty("num", 10000);
     person.setProperty("name", "FirstName");
-    person.save();
+    db.save(person);
     db.commit();
     db.close();
 
