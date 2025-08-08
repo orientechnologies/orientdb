@@ -152,7 +152,8 @@ public class OCoordinatedDistributedOpsTest {
   }
 
   @Test
-  public void baseFailureeNodesUregisteredAndFailed() throws InterruptedException, ExecutionException {
+  public void baseFailureeNodesUregisteredAndFailed()
+      throws InterruptedException, ExecutionException {
     TestAction action = new TestAction();
     OCoordinatedDistributedOps ops = new OCoordinatedDistributedOpsImpl(2);
     ONodeId nodeId = newRandomNodeId();
@@ -216,7 +217,9 @@ public class OCoordinatedDistributedOpsTest {
     ONodeId nodeId2 = newRandomNodeId();
     action = ops.discoverNode(nodeId2);
     assertTrue(action instanceof ODiscoverAction.OAddNodeAction);
-    ops.registerNode(((ODiscoverAction.OAddNodeAction) action).node(), ((ODiscoverAction.OAddNodeAction) action).version());
+    ops.registerNode(
+        ((ODiscoverAction.OAddNodeAction) action).node(),
+        ((ODiscoverAction.OAddNodeAction) action).version());
     assertEquals(ops.getMembers().size(), 3);
   }
 

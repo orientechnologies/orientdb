@@ -50,4 +50,12 @@ public class OAddTopologyMember implements OOperationMessage {
   public short getType() {
     return 2;
   }
+
+  public ONodeId getNode() {
+    return node;
+  }
+
+  public long getVersion() {
+    return version;
+  }
 }

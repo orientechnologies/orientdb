@@ -13,6 +13,8 @@ import com.orientechnologies.orient.distributed.context.coordination.message.OPr
 import com.orientechnologies.orient.distributed.context.coordination.message.OStructuralMessage;
 import com.orientechnologies.orient.distributed.context.coordination.message.OSuccessPropose;
 import com.orientechnologies.orient.distributed.context.coordination.result.OInvalidSequential;
+import com.orientechnologies.orient.distributed.context.topology.OAddTopologyMember;
+import com.orientechnologies.orient.distributed.context.topology.OEnstablishTopology;
 import com.orientechnologies.orient.distributed.db.ODropDbMessage;
 import com.orientechnologies.orient.distributed.db.OOperationMessage;
 import java.io.ByteArrayInputStream;
@@ -22,6 +24,8 @@ import java.io.DataInputStream;
 import java.io.DataOutput;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 import org.junit.Test;
 
@@ -46,7 +50,7 @@ public class CoordinationMessagesSerializationTest {
   }
 
   @Test
-  public void propose() throws IOException {
+  public void proposeDrop() throws IOException {
 
     OTransactionIdPromise id = newPromiseId();
     OProposeOp propose = new OProposeOp(id, new ODropDbMessage("db-name"));
@@ -57,6 +61,42 @@ public class CoordinationMessagesSerializationTest {
     OOperationMessage operation = read.getOp();
 
     assertEquals(((ODropDbMessage) operation).getName(), "db-name");
+  }
+
+  @Test
+  public void proposeEnstablish() throws IOException {
+
+    OTransactionIdPromise id = newPromiseId();
+    var node1 = newNodeId();
+    var node2 = newNodeId();
+    Set<ONodeId> nodes = new HashSet<>();
+    nodes.add(node1);
+    nodes.add(node2);
+    OProposeOp propose = new OProposeOp(id, new OEnstablishTopology(nodes));
+
+    OProposeOp read = (OProposeOp) writeRead(propose);
+
+    assertEquals(read.getPromiseId(), id);
+    OOperationMessage operation = read.getOp();
+
+    assertTrue(((OEnstablishTopology) operation).getCandidates().contains(node1));
+    assertTrue(((OEnstablishTopology) operation).getCandidates().contains(node2));
+  }
+
+  @Test
+  public void proposeAddNode() throws IOException {
+
+    OTransactionIdPromise id = newPromiseId();
+    var node1 = newNodeId();
+    OProposeOp propose = new OProposeOp(id, new OAddTopologyMember(1, node1));
+
+    OProposeOp read = (OProposeOp) writeRead(propose);
+
+    assertEquals(read.getPromiseId(), id);
+    OOperationMessage operation = read.getOp();
+
+    assertEquals(((OAddTopologyMember) operation).getVersion(), 1);
+    assertEquals(((OAddTopologyMember) operation).getNode(), node1);
   }
 
   @Test

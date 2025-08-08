@@ -50,4 +50,8 @@ public class OEnstablishTopology implements OOperationMessage {
       id.writeNetwork(out);
     }
   }
+
+  public Set<ONodeId> getCandidates() {
+    return candidates;
+  }
 }
