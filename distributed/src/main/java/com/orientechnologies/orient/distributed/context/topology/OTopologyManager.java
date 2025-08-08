@@ -31,7 +31,7 @@ public class OTopologyManager implements OTopologyEvents {
         return new OEstablishAction(new HashSet<>(candidates));
       }
     } else if (!hasMember(node)) {
-      return new OAddNodeAction(node, version);
+      return new OAddNodeAction(node, version + 1);
     }
     return new ONoneAction();
   }
@@ -41,7 +41,7 @@ public class OTopologyManager implements OTopologyEvents {
   }
 
   private boolean canEstablish() {
-    return candidates.size() > minimumQuorum;
+    return candidates.size() >= minimumQuorum;
   }
 
   private synchronized void addToCandidates(ONodeId node) {
@@ -52,17 +52,18 @@ public class OTopologyManager implements OTopologyEvents {
     return version;
   }
 
-  public synchronized boolean promise(ONodeId node, long version) {
-    if (this.version == version) {
-      // TOOD: hold and check promise
+  public synchronized boolean promise(ONodeId toAdd, long version) {
+    if (this.version + 1 == version) {
+      // TODO: hold and check promise for avoid double promise
       return true;
     } else {
       return false;
     }
   }
 
-  public synchronized void register(ONodeId node, long version) {
-    if (members.add(node)) {
+  public synchronized void register(ONodeId toRegister, long version) {
+    // TODO: verify promise and clean it, verification is not needed is just for solidity
+    if (members.add(toRegister)) {
       int newQuorum = (members.size() / 2) + 1;
       if (newQuorum >= minimumQuorum) {
         this.quorum = newQuorum;
@@ -100,7 +101,8 @@ public class OTopologyManager implements OTopologyEvents {
 
   public synchronized void finalizeEnstablish(Set<ONodeId> candidates) {
     this.state = OTopologyState.ESTABLISHED;
-    this.candidates = candidates;
+    this.members = candidates;
+    this.candidates = new HashSet<>();
     this.version = 0;
   }
 
