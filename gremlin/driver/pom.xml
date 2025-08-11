@@ -17,7 +17,7 @@
         <javac.target.version>${maven.compiler.target}</javac.target.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <gremlin.version>3.7.3</gremlin.version>
+        <gremlin.version>3.7.4</gremlin.version>
         <project.rootdir>${project.basedir}/../</project.rootdir>
     </properties>
 
