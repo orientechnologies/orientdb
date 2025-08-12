@@ -58,18 +58,7 @@ import java.nio.file.FileStore;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
-import java.util.Timer;
-import java.util.TimerTask;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -77,7 +66,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-import org.apache.commons.lang.NullArgumentException;
 
 /** Created by tglman on 08/04/16. */
 public class OrientDBEmbedded implements OrientDBInternal {
@@ -1226,9 +1214,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
   }
 
   private void checkDatabaseName(String name) {
-    if (name == null) {
-      throw new NullArgumentException("database");
-    }
+    Objects.requireNonNull(name, "Database name is null");
     if (name.contains("/") || name.contains(":")) {
       throw new ODatabaseException(String.format("Invalid database name:'%s'", name));
     }
