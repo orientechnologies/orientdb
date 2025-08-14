@@ -301,6 +301,7 @@ public final class AsyncReadCache implements OReadCache {
       throw new IllegalStateException(
           "Page  " + fileId + ":" + pageIndex + " was allocated in other thread");
     }
+    cacheSize.incrementAndGet();
 
     afterAdd(cacheEntry);
 
