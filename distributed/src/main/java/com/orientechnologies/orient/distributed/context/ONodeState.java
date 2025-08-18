@@ -7,6 +7,7 @@ import com.orientechnologies.orient.core.transaction.OTransactionSequenceManager
 import com.orientechnologies.orient.core.tx.OTxMetadataHolderImpl;
 import com.orientechnologies.orient.core.tx.ValidationResult;
 import com.orientechnologies.orient.distributed.context.coordination.message.ODistributedMessage;
+import com.orientechnologies.orient.distributed.context.coordination.message.ONodeStateNetwork;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import com.orientechnologies.orient.distributed.context.topology.ODiscoverAction;
 import java.util.List;
@@ -164,5 +165,15 @@ public class ONodeState {
     Optional<OTransactionIdPromise> prom = this.sequenceManager.next();
     this.coordinated.startEstablish(prom.get(), nodes, action);
     return prom.get();
+  }
+
+  public void checkExternNodeState(ONodeStateNetwork state) {
+    // TODO Auto-generated method stub
+
+  }
+
+  public ONodeStateNetwork getNetworkState() {
+    // TODO Auto-generated method stub
+    return null;
   }
 }

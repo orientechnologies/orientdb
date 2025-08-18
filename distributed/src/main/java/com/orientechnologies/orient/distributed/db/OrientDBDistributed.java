@@ -30,6 +30,8 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.distributed.context.ONodeState;
+import com.orientechnologies.orient.distributed.context.coordination.message.ONodeFirstConnect;
+import com.orientechnologies.orient.distributed.context.coordination.message.ONodeStateNetwork;
 import com.orientechnologies.orient.distributed.context.coordination.message.OProposeOp;
 import com.orientechnologies.orient.distributed.context.coordination.message.OStructuralMessage;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
@@ -694,5 +696,16 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   @Override
   public ONetworkMessage newNetworkMessage() {
     return new ONetworkMessageStructural(this);
+  }
+
+  public void firstConnect(ONodeId nodeId, ONodeStateNetwork state) {
+    this.nodeState.checkExternNodeState(state);
+    this.sendNodeState(nodeId);
+  }
+
+  private void sendNodeState(ONodeId nodeId) {
+    ONodeStateNetwork st = this.nodeState.getNetworkState();
+    this.sendMessage(
+        Collections.singleton(nodeId), new ONodeFirstConnect(getNodeState().getNodeId(), st));
   }
 }

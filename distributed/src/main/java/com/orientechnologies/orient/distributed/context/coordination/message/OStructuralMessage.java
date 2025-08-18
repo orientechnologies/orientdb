@@ -19,6 +19,7 @@ public interface OStructuralMessage {
       case 3 -> OFailPropose.fromNetwork(input);
       case 4 -> OConfirmOp.fromNetwork(input);
       case 5 -> OFailOp.fromNetwork(input);
+      case 6 -> ONodeFirstConnect.fromNetwork(input);
       default -> throw new ODistributedException("wrong structural message type from network");
     };
   }
