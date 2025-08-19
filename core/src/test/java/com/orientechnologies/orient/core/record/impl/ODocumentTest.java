@@ -406,5 +406,25 @@ public class ODocumentTest {
     doc.field("bytes", bytes.clone());
     assertFalse(doc.isDirty());
     assertNull(doc.getOriginalValue("bytes"));
+
+    doc.setProperty("bytes", bytes.clone());
+    assertFalse(doc.isDirty());
+    assertNull(doc.getOriginalValue("bytes"));
+  }
+
+  @Test
+  public void testNoDirtySameString() {
+    ODocument doc = new ODocument();
+    doc.field("string", "value");
+    ODocumentInternal.clearTrackData(doc);
+    ORecordInternal.unsetDirty(doc);
+    assertFalse(doc.isDirty());
+    assertNull(doc.getOriginalValue("string"));
+    doc.field("string", "value");
+    assertFalse(doc.isDirty());
+    assertNull(doc.getOriginalValue("string"));
+    doc.setProperty("string", "value");
+    assertFalse(doc.isDirty());
+    assertNull(doc.getOriginalValue("string"));
   }
 }
