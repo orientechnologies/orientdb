@@ -556,7 +556,7 @@ public class SchemaTest extends DocumentDBBaseTest {
 
     // TEST UPDATE RECORD -> EXCEPTION
     try {
-      record.field("status", "offline").save();
+      record.field("status", "offline1").save();
       Assert.assertTrue(false);
     } catch (OException e) {
       Throwable cause = e;
