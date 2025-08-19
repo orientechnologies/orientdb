@@ -541,13 +541,18 @@ public class ODocument extends ORecordAbstract
         try {
           if (iPropertyValue.equals(oldValue)) {
             if (fieldType == oldType) {
-              if (!(iPropertyValue instanceof ORecordElement))
+              if (!(iPropertyValue instanceof ORecordElement)
+                  && !OType.isSimpleType(iPropertyValue))
                 // SAME BUT NOT TRACKABLE: SET THE RECORD AS DIRTY TO BE SURE IT'S SAVED
                 setDirty();
 
               // SAVE VALUE: UNCHANGED
               return;
             }
+          } else if (iPropertyValue instanceof byte[]
+              && Arrays.equals((byte[]) iPropertyValue, (byte[]) oldValue)) {
+            // SAVE VALUE: UNCHANGED
+            return;
           }
         } catch (Exception e) {
           logger.warn(
@@ -1687,7 +1692,8 @@ public class ODocument extends ORecordAbstract
         try {
           if (iPropertyValue.equals(oldValue)) {
             if (fieldType == oldType) {
-              if (!(iPropertyValue instanceof ORecordElement))
+              if (!(iPropertyValue instanceof ORecordElement)
+                  && !OType.isSimpleType(iPropertyValue))
                 // SAME BUT NOT TRACKABLE: SET THE RECORD AS DIRTY TO BE SURE IT'S SAVED
                 setDirty();
 
