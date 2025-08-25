@@ -470,9 +470,10 @@ angular-route@1.5.9:
   version "1.5.9"
   resolved "https://registry.yarnpkg.com/angular-route/-/angular-route-1.5.9.tgz#4f0582eb0fb4435443a05a7d8c5eb9bdc2c5c41c"
 
-angular-sanitize@1.5.9:
-  version "1.5.9"
-  resolved "https://registry.yarnpkg.com/angular-sanitize/-/angular-sanitize-1.5.9.tgz#e2d7dd8e8587f1342b6d2efdfa67311fcf1f65ed"
+angular-sanitize@1.8.3:
+  version "1.8.3"
+  resolved "https://registry.yarnpkg.com/angular-sanitize/-/angular-sanitize-1.8.3.tgz#51378e990e78c7ecc1fb31cd68655aff690a3bf1"
+  integrity sha512-2rxdqzlUVafUeWOwvY/FtyWk1pFTyCtzreeiTytG9m4smpuAEKaIJAjYeVwWsoV+nlTOcgpwV4W1OCmR+BQbUg==
 
 angular-scroll@^1.0.2:
   version "1.0.2"
