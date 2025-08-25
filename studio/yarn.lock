@@ -1343,9 +1343,10 @@ bootstrap-switch@3.3.2:
   dependencies:
     jquery ">=1.9.0"
 
-bootstrap-switch@^3.3.4:
-  version "3.3.4"
-  resolved "https://registry.yarnpkg.com/bootstrap-switch/-/bootstrap-switch-3.3.4.tgz#70e0aeb2a877c0dc766991de108e2170fc29a2ff"
+bootstrap-switch@^3.3.5:
+  version "3.3.5"
+  resolved "https://registry.yarnpkg.com/bootstrap-switch/-/bootstrap-switch-3.3.5.tgz#3f02d73177471d5c1766c5b227a5dc1c5d8fdfd7"
+  integrity sha512-aRwgTPO7QPvTtUxit2ucXgs/P+dp3Y8Qy41XOOqTXZiJvfI6b87+hP+r4B4+3y7bptu0P6KHIyEc4ordEVIVkg==
 
 bootstrap@>=2.3.2, bootstrap@^3.4.1:
   version "3.4.1"
