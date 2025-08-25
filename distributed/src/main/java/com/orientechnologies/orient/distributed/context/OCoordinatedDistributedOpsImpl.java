@@ -4,6 +4,7 @@ import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.distributed.context.OResponseCollector.CompleteInfo;
+import com.orientechnologies.orient.distributed.context.coordination.message.ONodeStateNetwork;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import com.orientechnologies.orient.distributed.context.topology.ODiscoverAction;
 import com.orientechnologies.orient.distributed.context.topology.OTopologyManager;
@@ -150,5 +151,20 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
       OTransactionIdPromise idPromise, Set<ONodeId> nodes, OCompleteAction action) {
     coordination.put(
         idPromise, new OResponseCollector(action, idPromise, topology.getQuorum(), nodes));
+  }
+
+  @Override
+  public ODiscoverAction checkExternNodeState(ONodeId node, ONodeStateNetwork state) {
+    return this.topology.checkExternNodeState(node, state);
+  }
+
+  @Override
+  public ONodeStateNetwork getNetworkState() {
+    return this.topology.getNetworkState();
+  }
+
+  @Override
+  public void load(ONodeStateStore nodeStateStore) {
+    this.topology.load(nodeStateStore);
   }
 }

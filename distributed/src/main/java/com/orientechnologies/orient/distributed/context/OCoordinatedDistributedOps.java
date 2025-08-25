@@ -3,6 +3,7 @@ package com.orientechnologies.orient.distributed.context;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
+import com.orientechnologies.orient.distributed.context.coordination.message.ONodeStateNetwork;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import com.orientechnologies.orient.distributed.context.topology.ODiscoverAction;
 import java.util.Optional;
@@ -38,4 +39,10 @@ public interface OCoordinatedDistributedOps {
   void enstablish(Set<ONodeId> candidates);
 
   Set<ONodeId> getMembers();
+
+  ODiscoverAction checkExternNodeState(ONodeId node, ONodeStateNetwork state);
+
+  ONodeStateNetwork getNetworkState();
+
+  void load(ONodeStateStore oNodeStateStore);
 }

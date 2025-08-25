@@ -2181,9 +2181,7 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
         return false;
       }
     }
-    ((OrientDBDistributed) serverInstance.getDatabases())
-        .getNodeState()
-        .register(new ONodeId(joinedNodeName), 0);
+    ((OrientDBDistributed) serverInstance.getDatabases()).connected(new ONodeId(joinedNodeName));
     return true;
   }
 

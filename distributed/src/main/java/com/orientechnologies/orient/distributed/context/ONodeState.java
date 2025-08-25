@@ -23,15 +23,29 @@ public class ONodeState {
   private final OCoordinatedDistributedOps coordinated;
   private final ONodeId nodeId;
   private final OAppliedState state;
+  private final OStateStore store;
 
-  public ONodeState(ONodeId current, int minimumQuorum) {
+  public ONodeState(ONodeId current, int minimumQuorum, OStateStore store) {
     sequenceManager = new OTransactionSequenceManager(current, 3);
     state = new OAppliedState(3);
     log = new ODistributedMessageLogMemory();
     promised = new OPromisedDistributedOpsImpl();
     coordinated = new OCoordinatedDistributedOpsImpl(minimumQuorum);
-    coordinated.discoverNode(current);
     nodeId = current;
+    this.store = store;
+    initFromStore();
+  }
+
+  public void initFromStore() {
+    Optional<ONodeStateStore> load = store.loadState();
+    if (load.isPresent()) {
+      coordinated.load(load.get());
+    }
+    coordinated.discoverNode(nodeId);
+    Optional<byte[]> seq = store.loadSequence();
+    if (seq.isPresent()) {
+      sequenceManager.fill(OTxMetadataHolderImpl.read(seq.get()).getStatus());
+    }
   }
 
   public OOperationStart start(OCompleteAction action) {
@@ -167,13 +181,11 @@ public class ONodeState {
     return prom.get();
   }
 
-  public void checkExternNodeState(ONodeStateNetwork state) {
-    // TODO Auto-generated method stub
-
+  public ODiscoverAction checkExternNodeState(ONodeId node, ONodeStateNetwork state) {
+    return this.coordinated.checkExternNodeState(node, state);
   }
 
   public ONodeStateNetwork getNetworkState() {
-    // TODO Auto-generated method stub
-    return null;
+    return this.coordinated.getNetworkState();
   }
 }

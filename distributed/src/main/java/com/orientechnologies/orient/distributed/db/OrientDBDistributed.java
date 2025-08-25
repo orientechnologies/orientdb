@@ -688,7 +688,12 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   public synchronized ONodeState getNodeState() {
     if (nodeState == null) {
       // TODO: provide minimum quorum;
-      nodeState = new ONodeState(new ONodeId(getPlugin().getLocalNodeName()), 0);
+      nodeState =
+          new ONodeState(
+              new ONodeId(getPlugin().getLocalNodeName()),
+              0,
+              new OSystemStateStore(getSystemDatabase()));
+      nodeState.initFromStore();
     }
     return this.nodeState;
   }
@@ -699,12 +704,17 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   }
 
   public void firstConnect(ONodeId nodeId, ONodeStateNetwork state) {
-    this.nodeState.checkExternNodeState(state);
-    this.sendNodeState(nodeId);
+    ONodeState localState = getNodeState();
+    ODiscoverAction action = localState.checkExternNodeState(nodeId, state);
+    action.execute(this);
   }
 
-  private void sendNodeState(ONodeId nodeId) {
-    ONodeStateNetwork st = this.nodeState.getNetworkState();
+  public void connected(ONodeId node) {
+    sendFirstConnect(node);
+  }
+
+  private void sendFirstConnect(ONodeId nodeId) {
+    ONodeStateNetwork st = getNodeState().getNetworkState();
     this.sendMessage(
         Collections.singleton(nodeId), new ONodeFirstConnect(getNodeState().getNodeId(), st));
   }
