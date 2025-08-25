@@ -688,11 +688,9 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   public synchronized ONodeState getNodeState() {
     if (nodeState == null) {
       // TODO: provide minimum quorum;
-      nodeState =
-          new ONodeState(
-              new ONodeId(getPlugin().getLocalNodeName()),
-              0,
-              new OSystemStateStore(getSystemDatabase()));
+      ONodeId nodeId = new ONodeId(getPlugin().getLocalNodeName());
+      OSystemStateStore store = new OSystemStateStore(getSystemDatabase());
+      nodeState = new ONodeState(nodeId, 0, store);
       nodeState.initFromStore();
     }
     return this.nodeState;

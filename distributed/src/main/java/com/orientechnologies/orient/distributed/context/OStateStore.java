@@ -8,5 +8,7 @@ public interface OStateStore {
 
   Optional<byte[]> loadSequence();
 
+  void saveSequence(byte[] seq);
+
   void saveState(ONodeStateStore store);
 }

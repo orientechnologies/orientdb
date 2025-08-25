@@ -37,4 +37,12 @@ public class ONodeFirstConnect implements OStructuralMessage {
   public short getType() {
     return 6;
   }
+
+  public ONodeId getNodeId() {
+    return nodeId;
+  }
+
+  public ONodeStateNetwork getState() {
+    return state;
+  }
 }

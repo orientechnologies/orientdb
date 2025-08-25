@@ -149,8 +149,10 @@ public class OTopologyManager implements OTopologyEvents {
     return new ONodeStateNetwork(this.networkId, this.state, this.members, this.version);
   }
 
-  public void load(ONodeStateStore nodeStateStore) {
-    // TODO Auto-generated method stub
-
+  public synchronized void load(ONodeStateStore nodeStateStore) {
+    this.networkId = nodeStateStore.getNetworkId();
+    this.state = nodeStateStore.getState();
+    this.version = nodeStateStore.getVersion();
+    this.members = nodeStateStore.getMembers();
   }
 }

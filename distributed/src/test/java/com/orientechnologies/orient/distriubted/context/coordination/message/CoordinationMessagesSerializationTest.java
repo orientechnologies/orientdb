@@ -9,12 +9,15 @@ import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.distributed.context.coordination.message.OConfirmOp;
 import com.orientechnologies.orient.distributed.context.coordination.message.OFailOp;
 import com.orientechnologies.orient.distributed.context.coordination.message.OFailPropose;
+import com.orientechnologies.orient.distributed.context.coordination.message.ONodeFirstConnect;
+import com.orientechnologies.orient.distributed.context.coordination.message.ONodeStateNetwork;
 import com.orientechnologies.orient.distributed.context.coordination.message.OProposeOp;
 import com.orientechnologies.orient.distributed.context.coordination.message.OStructuralMessage;
 import com.orientechnologies.orient.distributed.context.coordination.message.OSuccessPropose;
 import com.orientechnologies.orient.distributed.context.coordination.result.OInvalidSequential;
 import com.orientechnologies.orient.distributed.context.topology.OAddTopologyMember;
 import com.orientechnologies.orient.distributed.context.topology.OEnstablishTopology;
+import com.orientechnologies.orient.distributed.context.topology.OTopologyState;
 import com.orientechnologies.orient.distributed.db.ODropDbMessage;
 import com.orientechnologies.orient.distributed.db.OOperationMessage;
 import java.io.ByteArrayInputStream;
@@ -25,6 +28,7 @@ import java.io.DataOutput;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import org.junit.Test;
@@ -146,5 +150,33 @@ public class CoordinationMessagesSerializationTest {
     OFailOp read = (OFailOp) writeRead(succ);
 
     assertEquals(read.getPromise(), id);
+  }
+
+  @Test
+  public void firstConnectTest() throws IOException {
+
+    ONodeId nodeId = newNodeId();
+    ONodeStateNetwork net =
+        new ONodeStateNetwork(Optional.empty(), OTopologyState.BOOT, new HashSet<>(), 0);
+    ONodeFirstConnect succ = new ONodeFirstConnect(nodeId, net);
+
+    ONodeFirstConnect read = (ONodeFirstConnect) writeRead(succ);
+
+    assertEquals(read.getNodeId(), nodeId);
+    assertEquals(read.getState().getState(), OTopologyState.BOOT);
+    assertEquals(read.getState().getVersion(), 0);
+    assertTrue(read.getState().getNetworkId().isEmpty());
+    assertTrue(read.getState().getMembers().isEmpty());
+    Set<ONodeId> nodes = Set.of(newNodeId(), newNodeId());
+    net = new ONodeStateNetwork(Optional.of("examplenetid"), OTopologyState.ESTABLISHED, nodes, 10);
+    succ = new ONodeFirstConnect(nodeId, net);
+
+    read = (ONodeFirstConnect) writeRead(succ);
+
+    assertEquals(read.getNodeId(), nodeId);
+    assertEquals(read.getState().getState(), OTopologyState.ESTABLISHED);
+    assertEquals(read.getState().getVersion(), 10);
+    assertEquals(read.getState().getMembers(), nodes);
+    assertEquals(read.getState().getNetworkId(), Optional.of("examplenetid"));
   }
 }

@@ -18,8 +18,11 @@ public class ONodeStateNetwork {
   public ONodeStateNetwork(
       Optional<String> networkId, OTopologyState state, Set<ONodeId> members, long version) {
     super();
-    assert state == OTopologyState.BOOT && networkId.isEmpty() && members.isEmpty() && version == 0;
-    assert state == OTopologyState.ESTABLISHED && networkId.isPresent();
+    assert (state == OTopologyState.BOOT
+            && networkId.isEmpty()
+            && members.isEmpty()
+            && version == 0)
+        || (state == OTopologyState.ESTABLISHED && networkId.isPresent());
     this.networkId = networkId;
     this.state = state;
     this.members = members;

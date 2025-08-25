@@ -39,6 +39,24 @@ public class OSystemStateStore implements OStateStore {
   }
 
   @Override
+  public void saveSequence(byte[] seq) {
+    systemDatabase.executeWithDB(
+        (session) -> {
+          try (OResultSet res = session.query("select * from ODistributedSequenceState")) {
+            OElement el;
+            if (res.hasNext()) {
+              el = res.next().getElement().get();
+            } else {
+              el = session.newElement("ODistributedSequenceState");
+            }
+            el.setProperty("sequenceBytes", seq);
+            session.save(el);
+          }
+          return (Void) null;
+        });
+  }
+
+  @Override
   public Optional<byte[]> loadSequence() {
     Optional<byte[]> ret =
         systemDatabase.executeWithDB(

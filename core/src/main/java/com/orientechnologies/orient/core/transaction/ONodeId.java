@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.core.transaction;
 
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -49,5 +51,18 @@ public class ONodeId {
   @Override
   public String toString() {
     return "ONodeId [node=" + node + "]";
+  }
+
+  public ODocument toDocument() {
+    ODocument doc = new ODocument();
+    doc.setProperty("serializationVersion", 1);
+    doc.setProperty("node", node);
+    return doc;
+  }
+
+  public static ONodeId readResult(OResult e) {
+    assert (int) e.getProperty("serializationVersion") == 1;
+    String node = e.getProperty("node");
+    return new ONodeId(node);
   }
 }
