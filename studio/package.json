@@ -19,7 +19,7 @@
     "angular-bootstrap-switch": "^0.5.2",
     "angular-local-storage": "^0.7.1",
     "angular-motion": "0.4.4",
-    "angular-resource": "1.5.9",
+    "angular-resource": "1.8.3",
     "angular-route": "1.5.9",
     "angular-sanitize": "1.5.9",
     "angular-scroll": "^1.0.2",

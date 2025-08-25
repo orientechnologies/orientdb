@@ -458,9 +458,10 @@ angular-motion@0.4.4:
   version "0.4.4"
   resolved "https://registry.yarnpkg.com/angular-motion/-/angular-motion-0.4.4.tgz#fc4a33643383ebdedc23964468b60c26a302f238"
 
-angular-resource@1.5.9:
-  version "1.5.9"
-  resolved "https://registry.yarnpkg.com/angular-resource/-/angular-resource-1.5.9.tgz#b062c444725305c812961220f408e66fe01faaf3"
+angular-resource@1.8.3:
+  version "1.8.3"
+  resolved "https://registry.yarnpkg.com/angular-resource/-/angular-resource-1.8.3.tgz#013994c332f0e084f2735fe28af7bccc82f0774c"
+  integrity sha512-x3+4w2SyIDEIe6PUBTzcjDFI5MhZNWAPELUxkYK0QMOkOo4w3BN/qhpd+fO1deFiDS23mZKqT8kfctO1IDkCDA==
 
 angular-route@1.5.9:
   version "1.5.9"
