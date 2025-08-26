@@ -63,7 +63,7 @@ public class OZIPCompressionUtil {
   public static void uncompressDirectory(
       final InputStream in, final String out, final OCommandOutputListener iListener)
       throws IOException {
-    final Path outdir = Path.of(out).toAbsolutePath();
+    final Path outdir = Paths.get(out).toAbsolutePath();
 
     try (ZipInputStream zin = new ZipInputStream(in)) {
       ZipEntry entry;
