@@ -200,7 +200,7 @@ Widget.directive('docwidget', ["$compile", "$http", "Database", "CommandApi", "D
         `
     compileForm(tpl, scope, element, attrs);
     // $http.get(url).then(function (response) {
-    //   compileForm(response, scope, element, attrs);
+    //   compileForm(response.data, scope, element, attrs);
     // });
   }
   return {

@@ -14,8 +14,8 @@ bookmark.factory('Bookmarks', ["$resource", "DocumentApi", "$http", "$q", "Datab
     var text = API + 'command/' + database + '/sql/-/-1?format=rid,type,version,class,graph';
     var query = "select * from {{clazz}} where type = '{{type}}' order by name";
     query = S(query).template({clazz: CLAZZ, type: TYPE}).s;
-    $http.post(text, query).success(function (data) {
-      deferred.resolve(data);
+    $http.post(text, query).then(function (data) {
+      deferred.resolve(data.data);
     });
     return deferred.promise;
   }
@@ -25,9 +25,9 @@ bookmark.factory('Bookmarks', ["$resource", "DocumentApi", "$http", "$q", "Datab
     var text = API + 'command/' + database + '/sql/-/20?format=rid,type,version,class,graph';
     var query = "CREATE CLASS {{clazz}}";
     query = S(query).template({clazz: CLAZZ}).s;
-    $http.post(text, query).success(function (data) {
+    $http.post(text, query).then(function (data) {
       Database.refreshMetadata(database, function () {
-        deferred.resolve(data);
+        deferred.resolve(data.data);
       });
 
 
@@ -68,9 +68,9 @@ bookmark.factory('Bookmarks', ["$resource", "DocumentApi", "$http", "$q", "Datab
     var text = API + 'command/' + database + '/sql/-/-1?format=rid,type,version,class,graph';
     var query = "select distinct(value) as value from ( select expand(tags)  from {{clazz}} where type = '{{type}}')";
     query = S(query).template({clazz: CLAZZ, type: TYPE}).s;
-    $http.post(text, query).success(function (data) {
+    $http.post(text, query).then(function (data) {
       var model = [];
-      angular.forEach(data.result, function (v, index) {
+      angular.forEach(data.data.result, function (v, index) {
         model.push(v.value);
       });
       deferred.resolve(model);
@@ -103,9 +103,9 @@ bookmark.factory('GraphConfig', ["$resource", "localStorageService", "DocumentAp
     var text = API + 'command/' + database + '/sql/-/20?format=rid,type,version,class,graph';
     var query = "CREATE CLASS {{clazz}}";
     query = S(query).template({clazz: CLAZZ}).s;
-    $http.post(text, query).success(function (data) {
+    $http.post(text, query).then(function (data) {
       Database.refreshMetadata(database, function () {
-        deferred.resolve(data);
+        deferred.resolve(data.data);
       });
 
 
@@ -121,9 +121,9 @@ bookmark.factory('GraphConfig', ["$resource", "localStorageService", "DocumentAp
     var text = API + 'command/' + database + '/sql/-/-1?format=rid,type,version,class,graph';
     var query = "select * from {{clazz}} where user.name = '{{username}}' and type = '{{type}}'";
     query = S(query).template({clazz: CLAZZ, username: username, type: TYPE}).s;
-    $http.post(text, query).success(function (data) {
-      deferred.resolve(data.result[0]);
-    }).error((err)=> deferred.reject(err));
+    $http.post(text, query).then(function (data) {
+      deferred.resolve(data.data.result[0]);
+    }, (err)=> deferred.reject(err.data));
     return deferred.promise;
   }
   resource.set = function (config) {
@@ -137,17 +137,17 @@ bookmark.factory('GraphConfig', ["$resource", "localStorageService", "DocumentAp
       var text = API + 'command/' + database + '/sql/-/-1?format=rid,type,version,class,graph';
       var query = "select * from OUser where name = '{{username}}'";
       query = S(query).template({username: username}).s;
-      $http.post(text, query).success(function (data) {
-        config.user = data.result[0];
+      $http.post(text, query).then(function (data) {
+        config.user = data.data.result[0];
         DocumentApi.createDocument(database, config['@rid'], config, function (data) {
-          deferred.resolve(data);
+          deferred.resolve(data.data);
         });
       });
 
     }
     else {
       DocumentApi.updateDocument(database, config['@rid'], config, function (data) {
-        deferred.resolve(data);
+        deferred.resolve(data.data);
       });
     }
     return deferred.promise;

@@ -19,8 +19,8 @@ ee.factory('CommandLogApi', ["$http", "$resource", function ($http, $resource) {
 
     var datefrom = params.dateFrom;
 
-    $http.get(API + '/log/tail/' + datefrom).success(function (data) {
-    }).error(function (data) {
+    $http.get(API + '/log/tail/' + datefrom).then(function (data) {
+    }, function (data) {
     })
   }
   resource.getLastLogs = function (params, callback) {
@@ -60,10 +60,10 @@ ee.factory('CommandLogApi', ["$http", "$resource", function ($http, $resource) {
       file = '&file=' + params.file;
 
     }
-    $http.get(API + 'log/' + params.typeofSearch + '?' + 'tail=100000' + server + searchValue + logtype + dateFrom + hourFrom + dateTo + hourTo + file).success(function (data) {
-      callback(data);
-    }).error(function (data) {
-      callback(data);
+    $http.get(API + 'log/' + params.typeofSearch + '?' + 'tail=100000' + server + searchValue + logtype + dateFrom + hourFrom + dateTo + hourTo + file).then(function (data) {
+      callback(data.data);
+    }, function (data) {
+      callback(data.data);
 
     })
   }
@@ -71,18 +71,18 @@ ee.factory('CommandLogApi', ["$http", "$resource", function ($http, $resource) {
   resource.getListFiles = function (params, callback) {
     var server = params.server;
     var url = API + 'log/files?node=' + encodeURIComponent(server);
-    $http.get(url).success(function (data) {
-      callback(data);
-    }).error(function (data) {
+    $http.get(url).then(function (data) {
+      callback(data.data);
+    },function (data) {
     })
   }
 
   resource.purge = function (params, callback) {
 
     var type = params.type;
-    $http.get('/purge/monitor/' + type).success(function (data) {
+    $http.get('/purge/monitor/' + type).then(function (data) {
 
-    }).error(function (data) {
+    }, function (data) {
 
     })
   }
@@ -100,10 +100,10 @@ ee.factory('Cluster', ["$http", "$resource", "$q", function ($http, $resource, $
 
     var deferred = $q.defer();
     var text = API + 'distributed/node';
-    $http.get(text).success(function (data) {
-      deferred.resolve(data)
-    }).error(function (data, status, headers, config) {
-      deferred.reject({data: data, status: status});
+    $http.get(text).then(function (data) {
+      deferred.resolve(data.data)
+    },function (data) {
+      deferred.reject({data: data.data, status: data.status});
     });
     return deferred.promise;
   }
@@ -130,10 +130,10 @@ ee.factory('Cluster', ["$http", "$resource", "$q", function ($http, $resource, $
     if (server && server.name) {
       url += '?node=' + server.name;
     }
-    $http.get(url).success(function (data) {
-      deferred.resolve(data)
-    }).error(function (data, status, headers, config) {
-      deferred.reject({data: data, status: status});
+    $http.get(url).then(function (data) {
+      deferred.resolve(data.data)
+    },function (data) {
+      deferred.reject({data: data.data, status: data.status});
     });
 
     return deferred.promise;
@@ -148,10 +148,10 @@ ee.factory('Cluster', ["$http", "$resource", "$q", function ($http, $resource, $
     if (server && server.name) {
       url += '?node=' + server.name;
     }
-    $http.get(url).success(function (data) {
-      deferred.resolve(data)
-    }).error(function (data, status, headers, config) {
-      deferred.reject({data: data, status: status});
+    $http.get(url).then(function (data) {
+      deferred.resolve(data.data)
+    }, function (data) {
+      deferred.reject({data: data.data, status: data.status});
     });
     return deferred.promise;
   }
@@ -162,10 +162,10 @@ ee.factory('Cluster', ["$http", "$resource", "$q", function ($http, $resource, $
 
     var deferred = $q.defer();
     var text = API + 'distributed/database/' + db;
-    $http.get(text).success(function (data) {
-      deferred.resolve(data)
-    }).error(function (data, status, headers, config) {
-      deferred.reject({data: data, status: status});
+    $http.get(text).then(function (data) {
+      deferred.resolve(data.data)
+    },function (data) {
+      deferred.reject({data: data.data, status: data.status});
     });
     return deferred.promise;
   }
@@ -181,7 +181,7 @@ ee.factory('Cluster', ["$http", "$resource", "$q", function ($http, $resource, $
     if (server && server.name) {
       url += '?node=' + server.name;
     }
-    $http.post(url).success(function () {
+    $http.post(url).then(function () {
       deferred.resolve()
     });
     return deferred.promise;
@@ -195,7 +195,7 @@ ee.factory('Cluster', ["$http", "$resource", "$q", function ($http, $resource, $
     if (server && server.name) {
       url += '?node=' + server.name;
     }
-    $http.post(url).success(function () {
+    $http.post(url).then(function () {
       deferred.resolve()
     });
     return deferred.promise;
@@ -204,10 +204,10 @@ ee.factory('Cluster', ["$http", "$resource", "$q", function ($http, $resource, $
 
     var deferred = $q.defer();
     var url = API + 'distributed/database/' + params.name;
-    $http.put(url, params.config).success(function (data) {
-      deferred.resolve(data)
-    }).error(function (data, status, headers, config) {
-      deferred.reject({data: data, status: status});
+    $http.put(url, params.config).then(function (data) {
+      deferred.resolve(data.data)
+    }, function (data) {
+      deferred.reject({data: data.data, status: data.status});
     });
     return deferred.promise;
   }
@@ -218,10 +218,10 @@ ee.factory('Cluster', ["$http", "$resource", "$q", function ($http, $resource, $
 
     var deferred = $q.defer();
     var text = API + 'distributed/stats' + (name ? ("/" + name) : "");
-    $http.get(text).success(function (data) {
-      deferred.resolve(data)
-    }).error(function (data, status, headers, config) {
-      deferred.reject({data: data, status: status});
+    $http.get(text).then(function (data) {
+      deferred.resolve(data.data)
+    },function (data) {
+      deferred.reject({data: data.data, status: data.status});
     });
     return deferred.promise;
   }
@@ -245,10 +245,10 @@ ee.factory('Profiler', ["$http", "$resource", "$q", function ($http, $resource, 
     if (params.server) {
       text += "?node=" + params.server;
     }
-    $http.get(text).success(function (data) {
-      deferred.resolve(data)
-    }).error(function (data, status, headers, config) {
-      deferred.reject({data: data, status: status});
+    $http.get(text).then(function (data) {
+      deferred.resolve(data.data)
+    },function (data) {
+      deferred.reject({data: data.data, status: data.status});
     });
     return deferred.promise;
   }
@@ -260,10 +260,10 @@ ee.factory('Profiler', ["$http", "$resource", "$q", function ($http, $resource, 
     if (params.server) {
       text += "?node=" + params.server;
     }
-    $http.post(text).success(function (data) {
-      deferred.resolve(data)
-    }).error(function (data, status, headers, config) {
-      deferred.reject({data: data, status: status});
+    $http.post(text).then(function (data) {
+      deferred.resolve(data.data)
+    },function (data) {
+      deferred.reject({data: data.data, status: data.status});
     });
     return deferred.promise;
   }
@@ -271,20 +271,20 @@ ee.factory('Profiler', ["$http", "$resource", "$q", function ($http, $resource, 
   resource.metadata = function () {
     var deferred = $q.defer();
     var text = API + 'profiler/metadata';
-    $http.get(text).success(function (data) {
-      deferred.resolve(data)
-    }).error(function (data, status, headers, config) {
-      deferred.reject({data: data, status: status});
+    $http.get(text).then(function (data) {
+      deferred.resolve(data.data)
+    },function (data) {
+      deferred.reject({data: data.data, status: data.status});
     });
     return deferred.promise;
   }
   resource.realtime = function () {
     var deferred = $q.defer();
     var text = API + 'profiler/realtime';
-    $http.get(text).success(function (data) {
-      deferred.resolve(data)
-    }).error(function (data, status, headers, config) {
-      deferred.reject({data: data, status: status});
+    $http.get(text).then(function (data) {
+      deferred.resolve(data.data)
+    }, function (data) {
+      deferred.reject({data: data.data, status: data.status});
     });
     return deferred.promise;
   }
@@ -308,10 +308,10 @@ ee.factory('CommandCache', ["$http", "$q", function ($http, $q) {
     if (params.server) {
       text += "?node=" + params.server;
     }
-    $http.get(text).success(function (data) {
-      deferred.resolve(data)
-    }).error(function (data, status, headers, config) {
-      deferred.reject({data: data, status: status});
+    $http.get(text).then(function (data) {
+      deferred.resolve(data.data)
+    }, function (data) {
+      deferred.reject({data: data.data, status: data.status});
     });
     return deferred.promise;
   }
@@ -326,10 +326,10 @@ ee.factory('CommandCache', ["$http", "$q", function ($http, $q) {
     if (params.server) {
       text += "?node=" + params.server;
     }
-    $http.post(text).success(function (data) {
-      deferred.resolve(data)
-    }).error(function (data, status, headers, config) {
-      deferred.reject({data: data, status: status});
+    $http.post(text).then(function (data) {
+      deferred.resolve(data.data)
+    }, function (data) {
+      deferred.reject({data: data.data, status: data.status});
     });
     return deferred.promise;
   }
@@ -344,10 +344,10 @@ ee.factory('CommandCache', ["$http", "$q", function ($http, $q) {
     if (params.server) {
       text += "?node=" + params.server;
     }
-    $http.get(text).success(function (data) {
-      deferred.resolve(data)
-    }).error(function (data, status, headers, config) {
-      deferred.reject({data: data, status: status});
+    $http.get(text).then(function (data) {
+      deferred.resolve(data.data)
+    },function (data) {
+      deferred.reject({data: data.data, status: data.status});
     });
     return deferred.promise;
   }
@@ -361,10 +361,10 @@ ee.factory('CommandCache', ["$http", "$q", function ($http, $q) {
     if (params.server) {
       text += "?node=" + params.server;
     }
-    $http.post(text, {query: params.query}).success(function (data) {
-      deferred.resolve(data)
-    }).error(function (data, status, headers, config) {
-      deferred.reject({data: data, status: status});
+    $http.post(text, {query: params.query}).then(function (data) {
+      deferred.resolve(data.data)
+    }, function (data) {
+      deferred.reject({data: data.data, status: data.status});
     });
     return deferred.promise;
   }
@@ -378,10 +378,10 @@ ee.factory('CommandCache', ["$http", "$q", function ($http, $q) {
     if (params.server) {
       text += "?node=" + params.server;
     }
-    $http.put(text, params.config).success(function (data) {
-      deferred.resolve(data)
-    }).error(function (data, status, headers, config) {
-      deferred.reject({data: data, status: status});
+    $http.put(text, params.config).then(function (data) {
+      deferred.resolve(data.data)
+    }, function (data) {
+      deferred.reject({data: data.data, status: data.status});
     });
     return deferred.promise;
   }
@@ -395,10 +395,10 @@ ee.factory('CommandCache', ["$http", "$q", function ($http, $q) {
     if (params.server) {
       url += "?node=" + params.server;
     }
-    $http.put(url).success(function (data) {
-      deferred.resolve(data)
-    }).error(function (data, status, headers, config) {
-      deferred.reject({data: data, status: status});
+    $http.put(url).then(function (data) {
+      deferred.resolve(data.data)
+    }, function (data) {
+      deferred.reject({data: data.data, status: data.status});
     });
     return deferred.promise;
   }
@@ -412,10 +412,10 @@ ee.factory('CommandCache', ["$http", "$q", function ($http, $q) {
     if (params.server) {
       url += "?node=" + params.server;
     }
-    $http.put(url).success(function (data) {
-      deferred.resolve(data)
-    }).error(function (data, status, headers, config) {
-      deferred.reject({data: data, status: status});
+    $http.put(url).then(function (data) {
+      deferred.resolve(data.data)
+    }, function (data) {
+      deferred.reject({data: data.data, status: data.status});
     });
     return deferred.promise;
   }
@@ -432,20 +432,20 @@ ee.factory('Auditing', ["$http", "$resource", "$q", function ($http, $resource, 
 
     var deferred = $q.defer();
     var text = API + 'auditing/' + params.db + "/config";
-    $http.get(text).success(function (data) {
-      deferred.resolve(data)
-    }).error(function (data, status, headers, config) {
-      deferred.reject({data: data, status: status});
+    $http.get(text).then(function (data) {
+      deferred.resolve(data.data)
+    }, function (data) {
+      deferred.reject({data: data.data, status: data.status});
     });
     return deferred.promise;
   }
   resource.saveConfig = function (params, cfg) {
     var deferred = $q.defer();
     var text = API + 'auditing/' + params.db + "/config";
-    $http.post(text, cfg).success(function (data) {
-      deferred.resolve(data)
-    }).error(function (data, status, headers, config) {
-      deferred.reject({data: data, status: status});
+    $http.post(text, cfg).then(function (data) {
+      deferred.resolve(data.data)
+    },function (data) {
+      deferred.reject({data: data.data, status: data.status});
     });
     return deferred.promise;
   }
@@ -455,10 +455,10 @@ ee.factory('Auditing', ["$http", "$resource", "$q", function ($http, $resource, 
 
 
     var text = API + 'auditing/logs/query';
-    $http.post(text, params.query).success(function (data) {
-      deferred.resolve(data)
-    }).error(function (data, status, headers, config) {
-      deferred.reject({data: data, status: status});
+    $http.post(text, params.query).then(function (data) {
+      deferred.resolve(data.data)
+    }, function (data) {
+      deferred.reject({data: data.data, status: data.status});
     });
 
 
@@ -480,10 +480,10 @@ ee.factory('Plugins', ["$http", "$q", function ($http, $q) {
     if (server) {
       url += '?node=' + server;
     }
-    $http.get(url).success(function (data) {
-      deferred.resolve(data)
-    }).error(function (data, status, headers, config) {
-      deferred.reject({data: data, status: status});
+    $http.get(url).then(function (data) {
+      deferred.resolve(data.data)
+    }, function (data) {
+      deferred.reject({data: data.data, status: data.status});
     });
     return deferred.promise;
 
@@ -495,10 +495,10 @@ ee.factory('Plugins', ["$http", "$q", function ($http, $q) {
     if (params.server) {
       url += '?node=' + params.server;
     }
-    $http.get(url).success(function (data) {
+    $http.get(url).then(function (data) {
       deferred.resolve(data)
-    }).error(function (data, status, headers, config) {
-      deferred.reject({data: data, status: status});
+    }, function (data) {
+      deferred.reject({data: data.data, status: data.status});
     });
     return deferred.promise;
 
@@ -509,10 +509,10 @@ ee.factory('Plugins', ["$http", "$q", function ($http, $q) {
     if (server) {
       url += '?node=' + server;
     }
-    $http.put(url, config).success(function (data) {
-      deferred.resolve(data)
-    }).error(function (data, status, headers, config) {
-      deferred.reject({data: data, status: status});
+    $http.put(url, config).then(function (data) {
+      deferred.resolve(data.data)
+    }, function (data) {
+      deferred.reject({data: data.data, status: data.status});
     });
     return deferred.promise;
   }
@@ -532,10 +532,10 @@ ee.factory('Teleporter', ["$http", "$q", function ($http, $q) {
     if (params.server) {
       url += '?node=' + params.server;
     }
-    $http.post(url, params.config).success(function (data) {
-      deferred.resolve(data)
-    }).error(function (data, status, headers, config) {
-      deferred.reject({data: data, status: status});
+    $http.post(url, params.config).then(function (data) {
+      deferred.resolve(data.data)
+    }, function (data) {
+      deferred.reject({data: data.data, status: data.status});
     });
     return deferred.promise;
   };
@@ -547,10 +547,10 @@ ee.factory('Teleporter', ["$http", "$q", function ($http, $q) {
     if (params.server) {
       url += '?node=' + params.server;
     }
-    $http.post(url, params.config).success(function (data) {
-      deferred.resolve(data)
-    }).error(function (data, status, headers, config) {
-      deferred.reject({data: data, status: status});
+    $http.post(url, params.config).then(function (data) {
+      deferred.resolve(data.data)
+    }, function (data) {
+      deferred.reject({data: data.data, status: data.status});
     });
     return deferred.promise;
   };
@@ -561,10 +561,10 @@ ee.factory('Teleporter', ["$http", "$q", function ($http, $q) {
     if (params.server) {
       url += '?node=' + params.server;
     }
-    $http.get(url).success(function (data) {
-      deferred.resolve(data)
-    }).error(function (data, status, headers, config) {
-      deferred.reject({data: data, status: status});
+    $http.get(url).then(function (data) {
+      deferred.resolve(data.data)
+    }, function (data) {
+      deferred.reject({data: data.data, status: data.status});
     });
     return deferred.promise;
   }
@@ -575,10 +575,10 @@ ee.factory('Teleporter', ["$http", "$q", function ($http, $q) {
     if (params.server) {
       url += '?node=' + params.server;
     }
-    $http.get(url).success(function (data) {
-      deferred.resolve(data)
-    }).error(function (data, status, headers, config) {
-      deferred.reject({data: data, status: status});
+    $http.get(url).then(function (data) {
+      deferred.resolve(data.data)
+    },function (data) {
+      deferred.reject({data: data.data, status: data.status});
     });
     return deferred.promise;
   }
@@ -593,10 +593,10 @@ ee.factory("BackupService", ["Profiler", "$q", "$http", function (Profiler, $q, 
 
     var deferred = $q.defer();
     var url = API + 'backupManager/' + uuid + "/restore";
-    $http.post(url, restored).success(function (data) {
-      deferred.resolve(data)
-    }).error(function (data, status, headers, config) {
-      deferred.reject({data: data, status: status});
+    $http.post(url, restored).then(function (data) {
+      deferred.resolve(data.data)
+    }, function (data) {
+      deferred.reject({data: data.data, status: data.status});
     });
     return deferred.promise;
   }
@@ -604,20 +604,20 @@ ee.factory("BackupService", ["Profiler", "$q", "$http", function (Profiler, $q, 
   backups.remove = function (uuid, restored) {
     var deferred = $q.defer();
     var url = API + 'backupManager/' + uuid + "/remove?unitId=" + restored.unitId + '&txId=' + restored.log.txId;
-    $http.delete(url).success(function (data) {
-      deferred.resolve(data)
-    }).error(function (data, status, headers, config) {
-      deferred.reject({data: data, status: status});
+    $http.delete(url).then(function (data) {
+      deferred.resolve(data.data)
+    }, function (data) {
+      deferred.reject({data: data.data, status: data.status});
     });
     return deferred.promise;
   }
   backups.get = function () {
     var deferred = $q.defer();
     var url = API + 'backupManager';
-    $http.get(url).success(function (data) {
-      deferred.resolve(data)
-    }).error(function (data, status, headers, config) {
-      deferred.reject({data: data, status: status});
+    $http.get(url).then(function (data) {
+      deferred.resolve(data.data)
+    }, function (data) {
+      deferred.reject({data: data.data, status: data.status});
     });
     return deferred.promise;
   }
@@ -630,10 +630,10 @@ ee.factory("BackupService", ["Profiler", "$q", "$http", function (Profiler, $q, 
     if (params) {
       url += serialize(params);
     }
-    $http.get(url).success(function (data) {
-      deferred.resolve(data)
-    }).error(function (data, status, headers, config) {
-      deferred.reject({data: data, status: status});
+    $http.get(url).then(function (data) {
+      deferred.resolve(data.data)
+    },function (data) {
+      deferred.reject({data: data.data, status: data.status});
     });
     return deferred.promise;
   }
@@ -644,10 +644,10 @@ ee.factory("BackupService", ["Profiler", "$q", "$http", function (Profiler, $q, 
     if (params) {
       url += serialize(params);
     }
-    $http.get(url).success(function (data) {
-      deferred.resolve(data)
-    }).error(function (data, status, headers, config) {
-      deferred.reject({data: data, status: status});
+    $http.get(url).then(function (data) {
+      deferred.resolve(data.data)
+    }, function (data) {
+      deferred.reject({data: data.data, status: data.status});
     });
 
     return deferred.promise;
@@ -664,16 +664,16 @@ ee.factory("BackupService", ["Profiler", "$q", "$http", function (Profiler, $q, 
     var url = API + 'backupManager';
 
     if (backup.uuid) {
-      $http.put(url + "/" + backup.uuid, backup).success(function (data) {
-        deferred.resolve(data)
-      }).error(function (data, status, headers, config) {
-        deferred.reject({data: data, status: status});
+      $http.put(url + "/" + backup.uuid, backup).then(function (data) {
+        deferred.resolve(data.data)
+      },function (data) {
+        deferred.reject({data: data.data, status: data.status});
       });
     } else {
-      $http.post(url, backup).success(function (data) {
-        deferred.resolve(data)
-      }).error(function (data, status, headers, config) {
-        deferred.reject({data: data, status: status});
+      $http.post(url, backup).then(function (data) {
+        deferred.resolve(data.data)
+      },function (data) {
+        deferred.reject({data: data.data, status: data.status});
       });
     }
 
@@ -692,10 +692,10 @@ ee.factory("ThreadService", ["$q", "$http", function ($q, $http) {
     if (server && server.name) {
       url += '?node=' + server.name;
     }
-    $http.get(url).success(function (data) {
-      deferred.resolve(data)
-    }).error(function (data, status, headers, config) {
-      deferred.reject({data: data, status: status});
+    $http.get(url).then(function (data) {
+      deferred.resolve(data.data)
+    },function (data) {
+      deferred.reject({data: data.data, status: data.status});
     });
     return deferred.promise;
   }
@@ -856,10 +856,10 @@ ee.factory('HaCommand', ["$http", "$resource", "$q", function ($http, $resource,
     var text = API + 'command/' + database + '/sql/-/-1?format=rid,type,version,class,graph';
     var query = "Ha remove server {{name}}"
     var queryText = S(query).template({name: server}).s;
-    $http.post(text, queryText).success(function (data) {
-      deferred.resolve(data)
-    }).error(function (data) {
-      deferred.reject(data);
+    $http.post(text, queryText).then(function (data) {
+      deferred.resolve(data.data)
+    },function (data) {
+      deferred.reject(data.data);
     });
     return deferred.promise;
   }
@@ -870,10 +870,10 @@ ee.factory('HaCommand', ["$http", "$resource", "$q", function ($http, $resource,
     if (server) {
       url += '?node=' + server;
     }
-    $http.post(url).success(function (data) {
-      deferred.resolve(data)
-    }).error(function (data) {
-      deferred.reject(data);
+    $http.post(url).then(function (data) {
+      deferred.resolve(data.data)
+    }, function (data) {
+      deferred.reject(data.data);
     });
     return deferred.promise;
   }
@@ -884,10 +884,10 @@ ee.factory('HaCommand', ["$http", "$resource", "$q", function ($http, $resource,
     if (server) {
       url += '?node=' + server;
     }
-    $http.post(url).success(function (data) {
-      deferred.resolve(data)
-    }).error(function (data) {
-      deferred.reject(data);
+    $http.post(url).then(function (data) {
+      deferred.resolve(data.data)
+    }, function (data) {
+      deferred.reject(data.data);
     });
     return deferred.promise;
   }
@@ -899,10 +899,10 @@ ee.factory('HaCommand', ["$http", "$resource", "$q", function ($http, $resource,
     if (server) {
       url += '?node=' + server;
     }
-    $http.post(encodeURI(url), null).success(function (data) {
-      deferred.resolve(data)
-    }).error(function (data) {
-      deferred.reject(data);
+    $http.post(encodeURI(url), null).then(function (data) {
+      deferred.resolve(data.data)
+    },function (data) {
+      deferred.reject(data.data);
     });
     return deferred.promise;
   }
@@ -913,10 +913,10 @@ ee.factory('HaCommand', ["$http", "$resource", "$q", function ($http, $resource,
     if (server) {
       url += '?node=' + server;
     }
-    $http.post(encodeURI(url), null).success(function (data) {
-      deferred.resolve(data)
-    }).error(function (data) {
-      deferred.reject(data);
+    $http.post(encodeURI(url), null).then(function (data) {
+      deferred.resolve(data.data)
+    }, function (data) {
+      deferred.reject(data.data);
     });
     return deferred.promise;
   }
@@ -927,10 +927,10 @@ ee.factory('HaCommand', ["$http", "$resource", "$q", function ($http, $resource,
     if (server) {
       url += '?node=' + server;
     }
-    $http.post(encodeURI(url), null).success(function (data) {
-      deferred.resolve(data)
-    }).error(function (data) {
-      deferred.reject(data);
+    $http.post(encodeURI(url), null).then(function (data) {
+      deferred.resolve(data.data)
+    }, function (data) {
+      deferred.reject(data.data);
     });
     return deferred.promise;
   }
@@ -941,10 +941,10 @@ ee.factory('HaCommand', ["$http", "$resource", "$q", function ($http, $resource,
     if (server) {
       url += '?node=' + server;
     }
-    $http.post(encodeURI(url), null).success(function (data) {
-      deferred.resolve(data)
-    }).error(function (data) {
-      deferred.reject(data);
+    $http.post(encodeURI(url), null).then(function (data) {
+      deferred.resolve(data.data)
+    }, function (data) {
+      deferred.reject(data.data);
     });
     return deferred.promise;
   }
@@ -958,10 +958,10 @@ ee.factory("SecurityService", ["Profiler", "$q", "$http", function (Profiler, $q
   config.get = function () {
     var deferred = $q.defer();
     var url = API + 'security/config';
-    $http.get(url).success(function (data) {
-      deferred.resolve(data)
-    }).error(function (data, status, headers, config) {
-      deferred.reject({data: data, status: status});
+    $http.get(url).then(function (data) {
+      deferred.resolve(data.data)
+    }, function (data) {
+      deferred.reject({data: data.data, status: data.status});
     });
     return deferred.promise;
   }
@@ -969,10 +969,10 @@ ee.factory("SecurityService", ["Profiler", "$q", "$http", function (Profiler, $q
   config.reload = function (config) {
     var deferred = $q.defer();
     var url = API + 'security/reload';
-    $http.post(url, config).success(function (data) {
-      deferred.resolve(data)
-    }).error(function (data, status, headers, config) {
-      deferred.reject({data: data, status: status});
+    $http.post(url, config).then(function (data) {
+      deferred.resolve(data.data)
+    }, function (data) {
+      deferred.reject({data: data.data, status: data.status});
     });
     return deferred.promise;
   }

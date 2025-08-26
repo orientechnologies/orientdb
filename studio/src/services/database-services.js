@@ -526,12 +526,11 @@ database.factory("DatabaseApi", [
 
       $http
         .get(API + "sso")
-        .success(function(data) {
-          resource.sso = data.enabled;
-          deferred.resolve(data);
-        })
-        .error(function(data) {
-          deferred.reject(data);
+        .then(function(data) {
+          resource.sso = data.data.enabled;
+          deferred.resolve(data.data);
+        }, function(data) {
+          deferred.reject(data.data);
         });
 
       return deferred.promise;
@@ -540,15 +539,15 @@ database.factory("DatabaseApi", [
       var deferred = $q.defer();
       $http
         .get(API + "listDatabases")
-        .success(function(data) {
+        .then(function(data) {
           if (callback) {
-            callback(data);
+            callback(data.data);
           } else {
-            deferred.resolve(data);
+            deferred.resolve(data.data);
           }
-        })
-        .error(function(data) {
-          deferred.reject(data);
+        },
+        function(data) {
+          deferred.reject(data.data);
         });
       return deferred.promise;
     };
@@ -560,13 +559,12 @@ database.factory("DatabaseApi", [
         var deferred = $q.defer();
         $http
           .get(API + "isEE")
-          .success(function(data) {
-            resource.ee = data;
-            deferred.resolve(data);
-          })
-          .error(function(data) {
+          .then(function(data) {
+            resource.ee = data.data;
+            deferred.resolve(data.data);
+          }, function(data) {
             resource.ee = { enterprise: false };
-            deferred.reject(data);
+            deferred.reject(data.data);
           });
         promise = deferred.promise;
         resource.ee = promise;
@@ -588,11 +586,10 @@ database.factory("DatabaseApi", [
       }
       $http
         .post(API + "installDatabase", db.url, { headers: headers })
-        .success(function(data) {
-          deferred.resolve(data);
-        })
-        .error(function(data) {
-          deferred.reject(data);
+        .then(function(data) {
+          deferred.resolve(data.data);
+        },function(data) {
+          deferred.reject(data.data);
         });
       return deferred.promise;
     };
@@ -611,8 +608,7 @@ database.factory("DatabaseApi", [
       }
       $http
         .get(API + "connect/" + database, { headers: headers })
-        .success(callback)
-        .error(error);
+        .then(function(data) { callback(data.data);}, function (data) {error(data.data)});
     };
     resource.createDatabase = function(
       name,
@@ -643,12 +639,11 @@ database.factory("DatabaseApi", [
         .post(API + "database/" + name + "/" + stype + "/" + type, payload, {
           headers: headers
         })
-        .success(function(data) {
+        .then(function(data) {
           delete $http.defaults.headers.common["Authorization"];
-          callback(data);
-        })
-        .error(function(data) {
-          error(data);
+          callback(data.data);
+        }, function(data) {
+          error(data.data);
         });
     };
     resource.deleteDatabase = function(name, username, password) {
@@ -661,11 +656,10 @@ database.factory("DatabaseApi", [
       }
       $http
         .delete(API + "database/" + name, { headers: headers })
-        .success(function(data) {
-          deferred.resolve(data);
-        })
-        .error(function(data) {
-          deferred.reject(data);
+        .then(function(data) {
+          deferred.resolve(data.data);
+        }, function(data) {
+          deferred.reject(data.data);
         });
       return deferred.promise;
     };
@@ -683,11 +677,10 @@ database.factory("DatabaseApi", [
       }
       $http
         .get(API + "server")
-        .success(function(data) {
-          deferred.resolve(data);
-        })
-        .error(function(data) {
-          deferred.reject(data);
+        .then(function(data) {
+          deferred.resolve(data.data);
+        }, function(data) {
+          deferred.reject(data.data);
         });
 
       return deferred.promise;
@@ -704,29 +697,27 @@ database.factory("DatabaseApi", [
       });
     };
     resource.getAllocation = function(database, callback) {
-      $http.get(API + "allocation/" + database).success(callback);
+      $http.get(API + "allocation/" + database).then(function(response) { callback(response.data)});
     };
     resource.getAvailableLanguages = function(database) {
       var deferred = $q.defer();
 
       $http
         .get(API + "supportedLanguages/" + database)
-        .success(function(data) {
-          deferred.resolve(data);
-        })
-        .error(function(err) {
-          deferred.reject(err);
+        .then(function(data) {
+          deferred.resolve(data.data);
+        }, function(err) {
+          deferred.reject(err.data);
         });
       return deferred.promise;
     };
     resource.disconnect = function(callback) {
       $http
         .get(API + "disconnect")
-        .success(function() {
+        .then(function() {
           delete $http.defaults.headers.common["Authorization"];
           callback();
-        })
-        .error(function() {
+        }, function() {
           delete $http.defaults.headers.common["Authorization"];
           callback();
         });
@@ -769,7 +760,8 @@ database.factory("CommandApi", [
 
         $http
           .post(text, query, config)
-          .success(function(data) {
+          .then(function(resp) {
+            var data = resp.data;
             var time = (new Date().getTime() - startTime) / 1000;
             var records = data.result ? data.result.length : "";
             var form = $(
@@ -799,10 +791,9 @@ database.factory("CommandApi", [
               Notification.push({ content: noti });
             }
             callback(data);
-          })
-          .error(function(data) {
-            Notification.push({ content: data });
-            if (error) error(data);
+          }, function(data) {
+            Notification.push({ content: data.data });
+            if (error) error(data.data);
           });
       } else {
         if (params.text) {
@@ -810,7 +801,8 @@ database.factory("CommandApi", [
           var config = { headers: { accept: contentType } };
           $http
             .post(text, query, config)
-            .success(function(data) {
+            .then(function(resp) {
+              var data = resp.data;
               var time = (new Date().getTime() - startTime) / 1000;
               var records = data.result ? data.result.length : "";
 
@@ -832,15 +824,14 @@ database.factory("CommandApi", [
               } else {
                 callback("ok");
               }
-            })
-            .error(function(data) {
+            }, function(data) {
               if (verbose) {
-                Notification.push({ content: data, error: true });
+                Notification.push({ content: data.data, error: true });
               }
               if (!verbose && !error) {
-                Notification.push({ content: data, error: true });
+                Notification.push({ content: data.data, error: true });
               }
-              if (error) error(data);
+              if (error) error(data.data);
             });
         }
       }
@@ -866,8 +857,7 @@ database.factory("CommandApi", [
       };
       $http
         .post(text, opts)
-        .success(deferred.resolve)
-        .error(deferred.reject);
+        .then(function(response) { deferred.resolve(response.data); }, function(response) { deferred.reject(response.data) });
       return deferred.promise;
     };
     resource.getAll = function(database, clazz, callback) {
@@ -877,15 +867,15 @@ database.factory("CommandApi", [
         database +
         "/sql/-/-1?format=rid,type,version,class,shallow,graph";
       var query = "select * from " + clazz;
-      $http.post(text, query).success(function(data) {
-        callback(data);
+      $http.post(text, query).then(function(data) {
+        callback(data.data);
       });
     };
     resource.interrupt = function(database, command) {
       var deferred = $q.defer();
       var text = API + "dbconnection/" + database;
-      $http.post(text, command).success(function(data) {
-        deferred.resolve(data);
+      $http.post(text, command).then(function(data) {
+        deferred.resolve(data.data);
       });
       return deferred.promise;
     };
@@ -919,7 +909,8 @@ database.factory("BatchApi", [
       var startTime = new Date().getTime();
       $http
         .post(url, operations)
-        .success(function(data) {
+        .then(function(resp) {
+          var data = resp.data;
           if (data && data.result) {
             var time = (new Date().getTime() - startTime) / 1000;
             var records = data.result ? data.result.length : "";
@@ -933,9 +924,8 @@ database.factory("BatchApi", [
           }
 
           deferred.resolve(data);
-        })
-        .error(function(data) {
-          deferred.reject(data);
+        }, function(data) {
+          deferred.reject(data.data);
         });
       return deferred.promise;
     };
@@ -953,17 +943,16 @@ database.factory("DocumentApi", [
       var deferred = $q.defer();
       $http
         .put(API + "document/" + database + "/" + rid.replace("#", ""), doc)
-        .success(function(data) {
+        .then(function(data) {
           if (callback) {
-            callback(data);
+            callback(data.data);
           }
-          deferred.resolve(data);
-        })
-        .error(function(data) {
+          deferred.resolve(data.data);
+        }, function(data) {
           if (callback) {
-            err(data);
+            err(data.data);
           }
-          deferred.reject(data);
+          deferred.reject(data.data);
         });
       return deferred.promise;
     };
@@ -982,23 +971,23 @@ database.factory("DocumentApi", [
         headers: { "Content-Type": undefined },
         transformRequest: angular.identity
       });
-      //$http.put(API + 'document/' + database + "/" + rid.replace('#',''),doc,{headers: { 'Content-Type': undefined }}).success(callback).error(callback);
+      //$http.put(API + 'document/' + database + "/" + rid.replace('#',''),doc,{headers: { 'Content-Type': undefined }}).then(function(res) {callback(res.data)}, function(res) {callback(res.data)});
+      //
     };
     resource.createDocument = function(database, rid, doc, callback, err) {
       var deferred = $q.defer();
       $http
         .post(API + "document/" + database + "/" + rid.replace("#", ""), doc)
-        .success(function(data) {
+        .then(function(data) {
           if (callback) {
-            callback(data);
+            callback(data.data);
           }
-          deferred.resolve(data);
-        })
-        .error(function(data) {
+          deferred.resolve(data.data);
+        }, function(data) {
           if (err) {
-            err(data);
+            err(data.data);
           }
-          deferred.reject(data);
+          deferred.reject(data.data);
         });
       return deferred.promise;
     };
@@ -1006,17 +995,16 @@ database.factory("DocumentApi", [
       var deferred = $q.defer();
       $http
         .delete(API + "document/" + database + "/" + rid.replace("#", ""))
-        .success(function(data) {
+        .then(function(data) {
           if (callback) {
-            callback(data);
+            callback(data.data);
           }
-          deferred.resolve(data);
-        })
-        .error(function(data) {
+          deferred.resolve(data.data);
+        }, function(data) {
           if (callback) {
-            callback(data);
+            callback(data.data);
           }
-          deferred.reject(data);
+          deferred.reject(data.data);
         });
       return deferred.promise;
     };
@@ -1054,18 +1042,18 @@ database.factory("ServerApi", [
           deferred.resolve(data.data);
         })
         .catch(function(data) {
-          deferred.reject(data);
+          deferred.reject(data.data);
         });
       return deferred.promise;
     };
 
     resource.killConnection = function(n, callback) {
-      $http.post(API + "connection/kill/" + n).success(function() {
+      $http.post(API + "connection/kill/" + n).then(function() {
         callback();
       });
     };
     resource.interruptConnection = function(n, callback) {
-      $http.post(API + "connection/interrupt/" + n).success(function() {
+      $http.post(API + "connection/interrupt/" + n).then(function() {
         callback();
       });
     };
@@ -1075,11 +1063,10 @@ database.factory("ServerApi", [
       var text = API + "server/configuration." + name + "/" + val;
       $http
         .post(text)
-        .success(function(data) {
-          deferred.resolve(data);
-        })
-        .error(function(data) {
-          deferred.reject(data);
+        .then(function(data) {
+          deferred.resolve(data.data);
+        }, function(data) {
+          deferred.reject(data.data);
         });
       return deferred.promise;
     };
@@ -1112,7 +1099,8 @@ database.factory("FunctionApi", [
 
       $http
         .post(text)
-        .success(function(data) {
+        .then(function(resp) {
+          var data = resp;
           var time = (new Date().getTime() - startTime) / 1000;
           var records = data.result ? data.result.length : "";
           if (verbose) {
@@ -1125,8 +1113,7 @@ database.factory("FunctionApi", [
             Notification.push({ content: noti, autoHide: true });
           }
           callback(data);
-        })
-        .error(function(data) {
+        }, function(data) {
           if (verbose) {
             Notification.push({
               content: "Error executing function " + params.functionName + ".",
@@ -1134,7 +1121,7 @@ database.factory("FunctionApi", [
               autoHide: true
             });
           }
-          if (error) error(data);
+          if (error) error(data.data);
         });
     };
     return resource;
@@ -1159,11 +1146,10 @@ database.factory("DatabaseAlterApi", [
       var queryText = S(query).template(props).s;
       $http
         .post(text, queryText)
-        .success(function(data) {
-          deferred.resolve(data);
-        })
-        .error(function(data) {
-          deferred.reject(data);
+        .then(function(data) {
+          deferred.resolve(data.data);
+        }, function(data) {
+          deferred.reject(data.data);
         });
       return deferred.promise;
     };
@@ -1178,11 +1164,10 @@ database.factory("DatabaseAlterApi", [
       var queryText = S(query).template(props).s;
       $http
         .post(text, queryText)
-        .success(function(data) {
-          deferred.resolve(data);
-        })
-        .error(function(data) {
-          deferred.reject(data);
+        .then(function(data) {
+          deferred.resolve(data.data);
+        },function(data) {
+          deferred.reject(data.data);
         });
       return deferred.promise;
     };
@@ -1207,11 +1192,10 @@ database.factory("ClassAlterApi", [
       var queryText = S(query).template(props).s;
       $http
         .post(text, queryText)
-        .success(function(data) {
-          deferred.resolve(data);
-        })
-        .error(function(data) {
-          deferred.reject(data);
+        .then(function(data) {
+          deferred.resolve(data.data);
+        },function(data) {
+          deferred.reject(data.data);
         });
       return deferred.promise;
     };
@@ -1236,11 +1220,10 @@ database.factory("PropertyAlterApi", [
       var queryText = S(query).template(props).s;
       $http
         .post(text, queryText)
-        .success(function(data) {
-          deferred.resolve(data);
-        })
-        .error(function(data) {
-          deferred.reject(data);
+        .then(function(data) {
+          deferred.resolve(data.data);
+        }, function(data) {
+          deferred.reject(data.data);
         });
       return deferred.promise;
     };
@@ -1265,11 +1248,10 @@ database.factory("ClusterAlterApi", [
       var queryText = S(query).template(props).s;
       $http
         .post(text, queryText)
-        .success(function(data) {
-          deferred.resolve(data);
-        })
-        .error(function(data) {
-          deferred.reject(data);
+        .then(function(data) {
+          deferred.resolve(data.data);
+        },function(data) {
+          deferred.reject(data.data);
         });
       return deferred.promise;
     };
