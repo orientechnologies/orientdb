@@ -66,8 +66,7 @@ public class OZIPCompressionUtil {
   public static void uncompressDirectory(
       final InputStream in, final String out, final OCommandOutputListener iListener)
       throws IOException {
-    final File outdir = new File(out);
-    final String targetDirPath = outdir.getCanonicalPath() + File.separator;
+    final Path outdir = Path.of(out).toAbsolutePath();
 
     try (ZipInputStream zin = new ZipInputStream(in)) {
       ZipEntry entry;
@@ -76,8 +75,8 @@ public class OZIPCompressionUtil {
       while ((entry = zin.getNextEntry()) != null) {
         name = entry.getName();
 
-        final File file = new File(outdir, name);
-        if (!file.getCanonicalPath().startsWith(targetDirPath))
+        Path targetPath = outdir.resolve(name);
+        if (!targetPath.startsWith(outdir))
           throw new IOException(
               "Expanding '"
                   + entry.getName()
@@ -103,20 +102,20 @@ public class OZIPCompressionUtil {
 
   private static void extractFile(
       final ZipInputStream in,
-      final File outdir,
+      final Path outdir,
       final String name,
       final OCommandOutputListener iListener)
       throws IOException {
     if (iListener != null) iListener.onMessage("\n- Uncompressing file " + name + "...");
 
     try (BufferedOutputStream out =
-        new BufferedOutputStream(new FileOutputStream(new File(outdir, name)))) {
+        new BufferedOutputStream(new FileOutputStream(outdir.resolve(name).toFile()))) {
       OIOUtils.copyStream(in, out);
     }
   }
 
-  private static void mkdirs(final File outdir, final String path) {
-    final File d = new File(outdir, path);
+  private static void mkdirs(final Path outdir, final String path) {
+    final File d = outdir.resolve(path).toFile();
     if (!d.exists()) d.mkdirs();
   }
 
