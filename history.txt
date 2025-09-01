@@ -27,6 +27,19 @@
 This document contains the last changes of OrientDB Community Edition.
 
 
+
+-----------------------------------------------------------------------------------------------------------------------------------
+version 3.2.44 - (September, 3 2025)
+- release notes: https://github.com/orientechnologies/orientdb/wiki/orientdb-3.2-release-notes#3243---3-September-2025
+
+# Core
+- Updated commons-lang 2.6 dependency which is obsolete and unsupported
+- Correct disk cache size tracking.
+- Make sure to not mark document dirty if setting a property to exactly the same simple value, issue #10514
+- Correct array handling in polyglot script executor, issue #10532
+- Correct class cast exception on index query lookup: issue #10530
+
+
 -----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.43 - (August, 7 2025)
 - Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3243---7-August-2025
