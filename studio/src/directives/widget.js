@@ -441,7 +441,7 @@ Widget.directive('ridrender', ["Database", "$http", "$compile", function (Databa
       if (typeof value == 'string') {
         if (value.indexOf('#') == 0) {
           var dbName = Database.getName();
-          var link = '<a href="#/database/' + dbName + '/browse/edit/' + value.replace('#', '') + '">' + value + '</a>';
+          var link = '<a href="#!/database/' + dbName + '/browse/edit/' + value.replace('#', '') + '">' + value + '</a>';
           element.html(link);
         }
       }
@@ -473,7 +473,7 @@ Widget.directive('ridrender', ["Database", "$http", "$compile", function (Databa
           var html = "<div class='rid-list'>";
           value.some(function (elem) {
             if (typeof elem == 'string' && elem.indexOf('#') == 0) {
-              var link = '<span class="label label-warning badge-edge"><a href="#/database/' + dbName + '/browse/edit/' + elem.replace('#', '') + '">' + elem + '</a></span> ';
+              var link = '<span class="label label-warning badge-edge"><a href="#!/database/' + dbName + '/browse/edit/' + elem.replace('#', '') + '">' + elem + '</a></span> ';
               html += link;
 
               if (i == PAGE) {
@@ -508,7 +508,7 @@ Widget.directive('ridrender', ["Database", "$http", "$compile", function (Databa
           }
         }
         if (value) {
-          var link = '<a href="#/database/' + dbName + '/schema/editclass/' + value + '">' + "<span class='label label-primary' style='background-color: " + color + "'> " + value + "</span>" + '</a>';
+          var link = '<a href="#!/database/' + dbName + '/schema/editclass/' + value + '">' + "<span class='label label-primary' style='background-color: " + color + "'> " + value + "</span>" + '</a>';
           element.html(link);
         }
       }
@@ -553,7 +553,7 @@ Widget.directive('ridrender2', ["Database", "$http", "$compile", function (Datab
         var html = "<div class='rid-list'>";
         value.some(function (elem) {
           if (typeof elem == 'string' && elem.indexOf('#') == 0) {
-            var link = '<span class="label label-warning badge-edge"><a href="#/database/' + dbName + '/browse/edit/' + elem.replace('#', '') + '">' + elem + '</a></span> ';
+            var link = '<span class="label label-warning badge-edge"><a href="#!/database/' + dbName + '/browse/edit/' + elem.replace('#', '') + '">' + elem + '</a></span> ';
             html += link;
 
             if (i == PAGE) {

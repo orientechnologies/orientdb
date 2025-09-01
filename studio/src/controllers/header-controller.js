@@ -38,12 +38,12 @@ let HeaderController = angular.module('header.controller', [databaseServices]).c
     if (data != null) {
 
       $scope.menus = [
-        {name: "browse", link: '#/database/' + data + '/browse', icon: "fa fa-eye", show: true},
-        {name: "schema", link: '#/database/' + data + '/schema', icon: "fa fa-tasks", show: true},
-        {name: "security", link: '#/database/' + data + '/security', icon: 'fa fa-user', show: true},
-        {name: "graph", link: '#/database/' + data + '/graph', icon: 'fa fa-circle-o', show: true},
-        {name: "functions", link: '#/database/' + data + '/functions', icon: 'fa fa-code', show: true},
-        {name: "DB", link: '#/database/' + data + '/db', icon: 'fa fa-database', show: true}
+        {name: "browse", link: '#!/database/' + data + '/browse', icon: "fa fa-eye", show: true},
+        {name: "schema", link: '#!/database/' + data + '/schema', icon: "fa fa-tasks", show: true},
+        {name: "security", link: '#!/database/' + data + '/security', icon: 'fa fa-user', show: true},
+        {name: "graph", link: '#!/database/' + data + '/graph', icon: 'fa fa-circle-o', show: true},
+        {name: "functions", link: '#!/database/' + data + '/functions', icon: 'fa fa-code', show: true},
+        {name: "DB", link: '#!/database/' + data + '/db', icon: 'fa fa-database', show: true}
 
 
       ];
