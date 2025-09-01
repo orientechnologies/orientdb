@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.io.IOException;
@@ -294,5 +295,31 @@ public class JSScriptTest {
       orientDB.drop(name.getMethodName());
       orientDB.close();
     }
+  }
+
+  @Test
+  public void jsFunctionArray() throws IOException {
+    final OrientDB orientDB =
+        OCreateDatabaseUtil.createDatabase("test", "embedded:", OCreateDatabaseUtil.TYPE_MEMORY);
+    final ODatabaseDocument db =
+        orientDB.open("test", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
+    try {
+      OFunction func = db.getMetadata().getFunctionLibrary().createFunction("testFunction");
+      func.setLanguage("javascript");
+      func.setCode(
+          "     \n"
+              + "\n"
+              + "// Convert to JS native array\n"
+              + "var jsList = [];\n"
+              + "for (var i = 0; i < 10; i++) {\n"
+              + "    jsList.push(i);\n"
+              + "}\n"
+              + "\n"
+              + "return jsList;");
+      func.execute();
+    } finally {
+      orientDB.drop("test");
+    }
+    orientDB.close();
   }
 }
