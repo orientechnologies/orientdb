@@ -92,7 +92,7 @@
     "chai": "^4.5.0",
     "css-loader": "0.28.11",
     "file-loader": "^0.11.2",
-    "html-loader": "0.4.5",
+    "html-loader": "0.5.5",
     "html-webpack-plugin": "^3.2.0",
     "ng-annotate-loader": "0.7.0",
     "ng-annotate-webpack-plugin": "^0.3.0",
