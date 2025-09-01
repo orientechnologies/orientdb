@@ -255,4 +255,20 @@ public abstract class JSScriptTest extends BaseMemoryDatabase {
     Assert.assertEquals("foobar", next.getProperty("sum"));
     result.close();
   }
+
+  public void jsFunctionArray() throws IOException {
+    OFunction func = db.getMetadata().getFunctionLibrary().createFunction("testFunction");
+    func.setLanguage("javascript");
+    func.setCode(
+        "     \n"
+            + "\n"
+            + "// Convert to JS native array\n"
+            + "var jsList = [];\n"
+            + "for (var i = 0; i < 10; i++) {\n"
+            + "    jsList.push(i);\n"
+            + "}\n"
+            + "\n"
+            + "return jsList;");
+    func.execute();
+  }
 }

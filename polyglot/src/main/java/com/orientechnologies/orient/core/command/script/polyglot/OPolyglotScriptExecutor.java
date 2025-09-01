@@ -12,11 +12,9 @@ import com.orientechnologies.orient.core.command.script.transformer.OScriptTrans
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OrientDBEmbedded;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
-import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -174,23 +172,7 @@ public class OPolyglotScriptExecutor extends OAbstractScriptExecutor
 
       Value result = ctx.eval(language, scriptManager.getFunctionInvoke(f, args));
 
-      Object finalResult;
-      if (result.isNull()) {
-        finalResult = null;
-      } else if (result.hasArrayElements()) {
-        final List<Object> array = new ArrayList<>((int) result.getArraySize());
-        for (int i = 0; i < result.getArraySize(); ++i)
-          array.add(new OResultInternal((OIdentifiable) result.getArrayElement(i).asHostObject()));
-        finalResult = array;
-      } else if (result.isHostObject()) {
-        finalResult = result.asHostObject();
-      } else if (result.isString()) {
-        finalResult = result.asString();
-      } else if (result.isNumber()) {
-        finalResult = result.asDouble();
-      } else {
-        finalResult = result;
-      }
+      Object finalResult = toObject(result);
       unbind(bindings, null, null, scriptManager);
       return finalResult;
     } catch (PolyglotException e) {
@@ -201,6 +183,27 @@ public class OPolyglotScriptExecutor extends OAbstractScriptExecutor
     } finally {
       returnContext(ctx, database);
     }
+  }
+
+  protected Object toObject(Value result) {
+    Object finalResult;
+    if (result.isNull()) {
+      finalResult = null;
+    } else if (result.hasArrayElements()) {
+      final List<Object> array = new ArrayList<>((int) result.getArraySize());
+      for (int i = 0; i < result.getArraySize(); ++i)
+        array.add(toObject(result.getArrayElement(i)));
+      finalResult = array;
+    } else if (result.isHostObject()) {
+      finalResult = result.asHostObject();
+    } else if (result.isString()) {
+      finalResult = result.asString();
+    } else if (result.isNumber()) {
+      finalResult = result.asDouble();
+    } else {
+      finalResult = transformer.toResult(result);
+    }
+    return finalResult;
   }
 
   @Override
