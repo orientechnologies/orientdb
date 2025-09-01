@@ -929,6 +929,29 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
   }
 
   @Test
+  public void testFetchFromClassWithIndexComposite() {
+    db.command("create class CompositeIndexWithoutNullValues").close();
+    db.command("create property CompositeIndexWithoutNullValues.one String").close();
+    db.command("create property CompositeIndexWithoutNullValues.two String").close();
+    db.command(
+            "create index CompositeIndexWithoutNullValues.one_two on"
+                + " CompositeIndexWithoutNullValues (one, two) NOTUNIQUE METADATA"
+                + " {ignoreNullValues: true}")
+        .close();
+
+    db.command("insert into CompositeIndexWithoutNullValues set one = 'foo', two = 'beer' ")
+        .close();
+    db.command("insert into CompositeIndexWithoutNullValues set one = 'foo', two = 'bar'").close();
+    List<OResult> results =
+        db
+            .query(
+                "select from index:CompositeIndexWithoutNullValues.one_two where key in [['beer','foo']]")
+            .stream()
+            .collect(Collectors.toList());
+    assertEquals(results.size(), 0);
+  }
+
+  @Test
   public void testQueryAsTarget() {
     String className = "testQueryAsTarget";
     OSchema schema = db.getMetadata().getSchema();

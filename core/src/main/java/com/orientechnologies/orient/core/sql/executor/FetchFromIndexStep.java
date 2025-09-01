@@ -319,10 +319,32 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     if (OMultiValue.isMultiValue(rightValue)) {
       customIterator = new OMultiCollectionIterator<>();
       Set<Object> itemsSet;
+      Comparator<Object> com =
+          new Comparator<Object>() {
+
+            @Override
+            public int compare(Object o1, Object o2) {
+              if (o1 instanceof Collection && o2 instanceof Collection) {
+                Collection c1 = (Collection) o1;
+                Collection c2 = (Collection) o2;
+                if (c1.size() != c2.size()) {
+                  return c1.size() - c2.size();
+                }
+                Iterator i1 = c1.iterator();
+                Iterator i2 = c2.iterator();
+                while (i1.hasNext() && i2.hasNext()) {
+                  int comp = ((Comparable) i1.next()).compareTo(i2.next());
+                  if (comp != 0) return comp;
+                }
+                return 1;
+              }
+              return ((Comparable) o1).compareTo(o2);
+            }
+          };
       if (orderAsc) {
-        itemsSet = new TreeSet<>();
+        itemsSet = new TreeSet<>(com);
       } else {
-        itemsSet = new TreeSet<>((Comparator<Object>) Collections.reverseOrder());
+        itemsSet = new TreeSet<>((Comparator<Object>) Collections.reverseOrder(com));
       }
       for (Object item : OMultiValue.getMultiValueIterable(rightValue)) {
         if (item instanceof OResult) {
@@ -333,6 +355,8 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
                 ((OResult) item).getProperty(((OResult) item).getPropertyNames().iterator().next());
           }
         }
+        if (item instanceof List) {}
+
         itemsSet.add(item);
       }
       for (Object item : itemsSet) {
