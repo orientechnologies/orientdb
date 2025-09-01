@@ -33,7 +33,7 @@
     "babel-preset-angular2": "0.0.2",
     "bootstrap-switch": "^3.3.5",
     "c3": "^0.7.20",
-    "codemirror": "^5.65.19",
+    "codemirror": "^5.65.20",
     "core-js": "^2.6.12",
     "d3": "^3.5.17",
     "filesize": "^3.5.11",
