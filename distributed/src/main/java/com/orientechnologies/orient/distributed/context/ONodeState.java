@@ -42,7 +42,8 @@ public class ONodeState {
     if (load.isPresent()) {
       coordinated.load(load.get());
     }
-    coordinated.discoverNode(nodeId);
+    // TODO: see action here ...
+    ODiscoverAction action = coordinated.discoverNode(nodeId);
     Optional<byte[]> seq = store.loadSequence();
     if (seq.isPresent()) {
       sequenceManager.fill(OTxMetadataHolderImpl.read(seq.get()).getStatus());
@@ -60,10 +61,6 @@ public class ONodeState {
 
   public void failure(ONodeId node, OTransactionIdPromise promise, OAcceptResult acceptResult) {
     this.coordinated.failure(node, promise, acceptResult);
-  }
-
-  public ODiscoverAction discover(ONodeId node) {
-    return this.coordinated.discoverNode(node);
   }
 
   public void register(ONodeId node, long version) {
@@ -182,8 +179,8 @@ public class ONodeState {
     return prom.get();
   }
 
-  public ODiscoverAction checkExternNodeState(ONodeId node, ONodeStateNetwork state) {
-    return this.coordinated.checkExternNodeState(node, state);
+  public ODiscoverAction nodeJoinStart(ONodeId node, ONodeStateNetwork state) {
+    return this.coordinated.nodeJoinStart(node, state);
   }
 
   public ONodeStateNetwork getNetworkState() {

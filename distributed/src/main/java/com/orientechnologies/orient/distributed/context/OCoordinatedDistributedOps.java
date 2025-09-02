@@ -26,7 +26,7 @@ public interface OCoordinatedDistributedOps {
 
   ODiscoverAction discoverNode(ONodeId node);
 
-  ODiscoverAction checkExternNodeState(ONodeId node, ONodeStateNetwork state);
+  ODiscoverAction nodeJoinStart(ONodeId node, ONodeStateNetwork state);
 
   boolean promiseRegister(ONodeId node, long version);
 

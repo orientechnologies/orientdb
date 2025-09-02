@@ -121,12 +121,13 @@ public class OTopologyManager implements OTopologyEvents {
     return Optional.of(new OAlreadyEnstablishedTopologyState());
   }
 
-  public ODiscoverAction checkExternNodeState(ONodeId node, ONodeStateNetwork externState) {
+  public ODiscoverAction nodeJoinStart(ONodeId node, ONodeStateNetwork externState) {
     if (externState.getState() == OTopologyState.BOOT) {
       return nodeDiscovered(node);
     } else {
       synchronized (this) {
         // TODO: before applying check if any promise or running a coordination
+        // TODO: accept external state only if current node is part of it
         if (state == OTopologyState.BOOT) {
           this.state = externState.getState();
           this.members = externState.getMembers();

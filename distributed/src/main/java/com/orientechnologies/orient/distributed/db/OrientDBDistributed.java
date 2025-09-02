@@ -663,12 +663,6 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     return messageService;
   }
 
-  public void discover(ONodeId node) {
-    ONodeState state = getNodeState();
-    ODiscoverAction action = state.discover(node);
-    action.execute(this);
-  }
-
   public Optional<OAcceptResult> distributedOperation(OOperationMessage operation) {
     var start = getNodeState().start(new OStandardCompleteAction(this));
     OProposeOp propose = new OProposeOp(start.promise(), operation);
@@ -703,7 +697,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   public void firstConnect(ONodeId nodeId, ONodeStateNetwork state) {
     ONodeState localState = getNodeState();
-    ODiscoverAction action = localState.checkExternNodeState(nodeId, state);
+    ODiscoverAction action = localState.nodeJoinStart(nodeId, state);
     action.execute(this);
   }
 

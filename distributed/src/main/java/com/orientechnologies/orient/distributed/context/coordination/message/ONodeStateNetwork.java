@@ -6,6 +6,7 @@ import com.orientechnologies.orient.distributed.context.topology.OTopologyState;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -15,6 +16,10 @@ public class ONodeStateNetwork {
   private final OTopologyState state;
   private final Set<ONodeId> members;
   private Optional<OGroupId> groupId;
+
+  public static ONodeStateNetwork boot() {
+    return new ONodeStateNetwork(Optional.empty(), OTopologyState.BOOT, Collections.emptySet(), 0);
+  }
 
   public ONodeStateNetwork(
       Optional<OGroupId> groupId, OTopologyState state, Set<ONodeId> members, long version) {

@@ -155,8 +155,8 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   }
 
   @Override
-  public ODiscoverAction checkExternNodeState(ONodeId node, ONodeStateNetwork state) {
-    return this.topology.checkExternNodeState(node, state);
+  public ODiscoverAction nodeJoinStart(ONodeId node, ONodeStateNetwork state) {
+    return this.topology.nodeJoinStart(node, state);
   }
 
   @Override
