@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.distributed.context;
 
+import com.orientechnologies.orient.core.transaction.OGroupId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
@@ -167,12 +168,12 @@ public class ONodeState {
     return this.coordinated.promiseRegister(node, version);
   }
 
-  public void enstablish(Set<ONodeId> candidates) {
-    this.coordinated.enstablish(candidates);
+  public void enstablish(OGroupId groupId, Set<ONodeId> candidates) {
+    this.coordinated.enstablish(groupId, candidates);
   }
 
-  public Optional<OAcceptResult> validateEnstablish(Set<ONodeId> candidates) {
-    return this.coordinated.validateEnstablish(candidates);
+  public Optional<OAcceptResult> validateEnstablish(OGroupId groupId, Set<ONodeId> candidates) {
+    return this.coordinated.validateEnstablish(groupId, candidates);
   }
 
   public OTransactionIdPromise startEnstablish(Set<ONodeId> nodes, OCompleteAction action) {

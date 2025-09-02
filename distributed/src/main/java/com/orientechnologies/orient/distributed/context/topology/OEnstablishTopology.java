@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.distributed.context.topology;
 
+import com.orientechnologies.orient.core.transaction.OGroupId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import com.orientechnologies.orient.distributed.db.OOperationMessage;
@@ -14,28 +15,31 @@ import java.util.Set;
 public class OEnstablishTopology implements OOperationMessage {
 
   private Set<ONodeId> candidates;
+  private OGroupId groupId;
 
-  public OEnstablishTopology(Set<ONodeId> candidates) {
+  public OEnstablishTopology(OGroupId groupId, Set<ONodeId> candidates) {
     this.candidates = candidates;
+    this.groupId = groupId;
   }
 
   @Override
   public void apply(OrientDBDistributed ctx) {
-    ctx.getNodeState().enstablish(candidates);
+    ctx.getNodeState().enstablish(groupId, candidates);
   }
 
   @Override
   public Optional<OAcceptResult> validate(OrientDBDistributed ctx) {
-    return ctx.getNodeState().validateEnstablish(candidates);
+    return ctx.getNodeState().validateEnstablish(groupId, candidates);
   }
 
   public static OEnstablishTopology readNetwork(DataInput input) throws IOException {
+    OGroupId networkId = OGroupId.readNetwork(input);
     int size = input.readInt();
     Set<ONodeId> candidates = new HashSet<>();
     while (size-- > 0) {
       candidates.add(ONodeId.readNetwork(input));
     }
-    return new OEnstablishTopology(candidates);
+    return new OEnstablishTopology(networkId, candidates);
   }
 
   @Override
@@ -45,6 +49,7 @@ public class OEnstablishTopology implements OOperationMessage {
 
   @Override
   public void serialize(DataOutput out) throws IOException {
+    groupId.writeNetwork(out);
     out.writeInt(candidates.size());
     for (ONodeId id : candidates) {
       id.writeNetwork(out);
@@ -53,5 +58,9 @@ public class OEnstablishTopology implements OOperationMessage {
 
   public Set<ONodeId> getCandidates() {
     return candidates;
+  }
+
+  public OGroupId getGroupId() {
+    return groupId;
   }
 }

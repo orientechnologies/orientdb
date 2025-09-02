@@ -196,7 +196,9 @@ public class OCoordinatedDistributedOpsTest {
     ONodeId nodeId1 = newRandomNodeId();
     action = ops.discoverNode(nodeId1);
     assertTrue(action instanceof ODiscoverAction.OEstablishAction);
-    ops.enstablish(((ODiscoverAction.OEstablishAction) action).candidates());
+    ops.enstablish(
+        ((ODiscoverAction.OEstablishAction) action).groupId(),
+        ((ODiscoverAction.OEstablishAction) action).candidates());
 
     assertEquals(ops.getMembers().size(), 2);
   }
@@ -211,7 +213,9 @@ public class OCoordinatedDistributedOpsTest {
     ONodeId nodeId1 = newRandomNodeId();
     action = ops.discoverNode(nodeId1);
     assertTrue(action instanceof ODiscoverAction.OEstablishAction);
-    ops.enstablish(((ODiscoverAction.OEstablishAction) action).candidates());
+    ops.enstablish(
+        ((ODiscoverAction.OEstablishAction) action).groupId(),
+        ((ODiscoverAction.OEstablishAction) action).candidates());
 
     assertEquals(ops.getMembers().size(), 2);
     ONodeId nodeId2 = newRandomNodeId();
@@ -237,12 +241,13 @@ public class OCoordinatedDistributedOpsTest {
     action = node1.discoverNode(nodeId2);
     assertTrue(action instanceof ODiscoverAction.OEstablishAction);
     var candidates = ((ODiscoverAction.OEstablishAction) action).candidates();
-    Optional<OAcceptResult> result = node2.validateEnstablish(candidates);
+    var networkId = ((ODiscoverAction.OEstablishAction) action).groupId();
+    Optional<OAcceptResult> result = node2.validateEnstablish(networkId, candidates);
     assertTrue(result.isEmpty());
     assertTrue(result.isEmpty());
 
-    node1.enstablish(candidates);
-    node2.enstablish(candidates);
+    node1.enstablish(networkId, candidates);
+    node2.enstablish(networkId, candidates);
     assertEquals(node1.getMembers().size(), 2);
     assertEquals(node2.getMembers().size(), 2);
 
@@ -276,12 +281,13 @@ public class OCoordinatedDistributedOpsTest {
     action = node1.discoverNode(nodeId2);
     assertTrue(action instanceof ODiscoverAction.OEstablishAction);
     var candidates = ((ODiscoverAction.OEstablishAction) action).candidates();
-    Optional<OAcceptResult> result = node2.validateEnstablish(candidates);
+    var networkId = ((ODiscoverAction.OEstablishAction) action).groupId();
+    Optional<OAcceptResult> result = node2.validateEnstablish(networkId, candidates);
     assertTrue(result.isEmpty());
     assertTrue(result.isEmpty());
 
-    node1.enstablish(candidates);
-    node2.enstablish(candidates);
+    node1.enstablish(networkId, candidates);
+    node2.enstablish(networkId, candidates);
     assertEquals(node1.getMembers().size(), 2);
     assertEquals(node2.getMembers().size(), 2);
 

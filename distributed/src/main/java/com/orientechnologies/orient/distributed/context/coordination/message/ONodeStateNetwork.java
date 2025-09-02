@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.distributed.context.coordination.message;
 
+import com.orientechnologies.orient.core.transaction.OGroupId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.distributed.context.topology.OTopologyState;
 import java.io.DataInput;
@@ -13,17 +14,14 @@ public class ONodeStateNetwork {
   private final long version;
   private final OTopologyState state;
   private final Set<ONodeId> members;
-  private Optional<String> networkId;
+  private Optional<OGroupId> groupId;
 
   public ONodeStateNetwork(
-      Optional<String> networkId, OTopologyState state, Set<ONodeId> members, long version) {
+      Optional<OGroupId> groupId, OTopologyState state, Set<ONodeId> members, long version) {
     super();
-    assert (state == OTopologyState.BOOT
-            && networkId.isEmpty()
-            && members.isEmpty()
-            && version == 0)
-        || (state == OTopologyState.ESTABLISHED && networkId.isPresent());
-    this.networkId = networkId;
+    assert (state == OTopologyState.BOOT && groupId.isEmpty() && members.isEmpty() && version == 0)
+        || (state == OTopologyState.ESTABLISHED && groupId.isPresent());
+    this.groupId = groupId;
     this.state = state;
     this.members = members;
     this.version = version;
@@ -36,7 +34,7 @@ public class ONodeStateNetwork {
       }
       case ESTABLISHED -> {
         output.writeByte(2);
-        output.writeUTF(this.networkId.get());
+        this.groupId.get().writeNetwork(output);
         output.writeLong(version);
         output.writeInt(members.size());
         for (ONodeId node : members) {
@@ -55,7 +53,7 @@ public class ONodeStateNetwork {
         }
       case 2:
         {
-          String networkId = input.readUTF();
+          OGroupId networkId = OGroupId.readNetwork(input);
           long version = input.readLong();
           int size = input.readInt();
           Set<ONodeId> members = new HashSet<ONodeId>(size);
@@ -85,7 +83,7 @@ public class ONodeStateNetwork {
     return version;
   }
 
-  public Optional<String> getNetworkId() {
-    return networkId;
+  public Optional<OGroupId> getGroupId() {
+    return groupId;
   }
 }

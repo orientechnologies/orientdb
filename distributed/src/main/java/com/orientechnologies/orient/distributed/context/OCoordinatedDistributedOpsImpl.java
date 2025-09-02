@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.distributed.context;
 
+import com.orientechnologies.orient.core.transaction.OGroupId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
@@ -137,13 +138,13 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   }
 
   @Override
-  public void enstablish(Set<ONodeId> candidates) {
-    this.topology.finalizeEnstablish(candidates);
+  public void enstablish(OGroupId groupId, Set<ONodeId> candidates) {
+    this.topology.finalizeEnstablish(groupId, candidates);
   }
 
   @Override
-  public Optional<OAcceptResult> validateEnstablish(Set<ONodeId> candidates) {
-    return this.topology.validateEnstablish(candidates);
+  public Optional<OAcceptResult> validateEnstablish(OGroupId groupId, Set<ONodeId> candidates) {
+    return this.topology.validateEnstablish(groupId, candidates);
   }
 
   @Override

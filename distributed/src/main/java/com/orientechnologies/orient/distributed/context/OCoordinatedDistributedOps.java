@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.distributed.context;
 
+import com.orientechnologies.orient.core.transaction.OGroupId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
@@ -25,6 +26,8 @@ public interface OCoordinatedDistributedOps {
 
   ODiscoverAction discoverNode(ONodeId node);
 
+  ODiscoverAction checkExternNodeState(ONodeId node, ONodeStateNetwork state);
+
   boolean promiseRegister(ONodeId node, long version);
 
   void registerNode(ONodeId node, long version);
@@ -32,17 +35,16 @@ public interface OCoordinatedDistributedOps {
   void unregisterNode(ONodeId node, long version);
 
   // Methods for coordinations of  operations to add establish the first network of nodes
+
   void startEstablish(OTransactionIdPromise idPromise, Set<ONodeId> nodes, OCompleteAction action);
 
-  Optional<OAcceptResult> validateEnstablish(Set<ONodeId> candidates);
+  Optional<OAcceptResult> validateEnstablish(OGroupId networkId, Set<ONodeId> candidates);
 
-  void enstablish(Set<ONodeId> candidates);
+  void enstablish(OGroupId networkId, Set<ONodeId> candidates);
 
   Set<ONodeId> getMembers();
 
-  ODiscoverAction checkExternNodeState(ONodeId node, ONodeStateNetwork state);
-
   ONodeStateNetwork getNetworkState();
 
-  void load(ONodeStateStore oNodeStateStore);
+  void load(ONodeStateStore nodeStateStore);
 }

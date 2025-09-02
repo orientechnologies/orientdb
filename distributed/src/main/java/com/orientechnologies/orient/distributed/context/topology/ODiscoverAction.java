@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.distributed.context.topology;
 
+import com.orientechnologies.orient.core.transaction.OGroupId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.distributed.context.coordination.message.OProposeOp;
@@ -14,7 +15,7 @@ public sealed interface ODiscoverAction
 
   void execute(OrientDBDistributed context);
 
-  record OEstablishAction(Set<ONodeId> candidates) implements ODiscoverAction {
+  record OEstablishAction(OGroupId groupId, Set<ONodeId> candidates) implements ODiscoverAction {
 
     @Override
     public void execute(OrientDBDistributed context) {
@@ -22,7 +23,7 @@ public sealed interface ODiscoverAction
           context
               .getNodeState()
               .startEnstablish(this.candidates(), new OStandardCompleteAction(context));
-      OEnstablishTopology operation = new OEnstablishTopology(candidates());
+      OEnstablishTopology operation = new OEnstablishTopology(groupId(), candidates());
       context.sendMessage(candidates(), new OProposeOp(promise, operation));
     }
   }

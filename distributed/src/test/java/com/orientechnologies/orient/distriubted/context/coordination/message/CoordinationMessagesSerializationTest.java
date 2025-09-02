@@ -3,6 +3,7 @@ package com.orientechnologies.orient.distriubted.context.coordination.message;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import com.orientechnologies.orient.core.transaction.OGroupId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
@@ -73,10 +74,11 @@ public class CoordinationMessagesSerializationTest {
     OTransactionIdPromise id = newPromiseId();
     var node1 = newNodeId();
     var node2 = newNodeId();
+    var groupId = newGroupId();
     Set<ONodeId> nodes = new HashSet<>();
     nodes.add(node1);
     nodes.add(node2);
-    OProposeOp propose = new OProposeOp(id, new OEnstablishTopology(nodes));
+    OProposeOp propose = new OProposeOp(id, new OEnstablishTopology(groupId, nodes));
 
     OProposeOp read = (OProposeOp) writeRead(propose);
 
@@ -85,6 +87,11 @@ public class CoordinationMessagesSerializationTest {
 
     assertTrue(((OEnstablishTopology) operation).getCandidates().contains(node1));
     assertTrue(((OEnstablishTopology) operation).getCandidates().contains(node2));
+    assertTrue(((OEnstablishTopology) operation).getGroupId().equals(groupId));
+  }
+
+  private OGroupId newGroupId() {
+    return new OGroupId("netId");
   }
 
   @Test
@@ -165,10 +172,11 @@ public class CoordinationMessagesSerializationTest {
     assertEquals(read.getNodeId(), nodeId);
     assertEquals(read.getState().getState(), OTopologyState.BOOT);
     assertEquals(read.getState().getVersion(), 0);
-    assertTrue(read.getState().getNetworkId().isEmpty());
+    assertTrue(read.getState().getGroupId().isEmpty());
     assertTrue(read.getState().getMembers().isEmpty());
     Set<ONodeId> nodes = Set.of(newNodeId(), newNodeId());
-    net = new ONodeStateNetwork(Optional.of("examplenetid"), OTopologyState.ESTABLISHED, nodes, 10);
+    var groupId = newGroupId();
+    net = new ONodeStateNetwork(Optional.of(groupId), OTopologyState.ESTABLISHED, nodes, 10);
     succ = new ONodeFirstConnect(nodeId, net);
 
     read = (ONodeFirstConnect) writeRead(succ);
@@ -177,6 +185,6 @@ public class CoordinationMessagesSerializationTest {
     assertEquals(read.getState().getState(), OTopologyState.ESTABLISHED);
     assertEquals(read.getState().getVersion(), 10);
     assertEquals(read.getState().getMembers(), nodes);
-    assertEquals(read.getState().getNetworkId(), Optional.of("examplenetid"));
+    assertEquals(read.getState().getGroupId().get(), groupId);
   }
 }

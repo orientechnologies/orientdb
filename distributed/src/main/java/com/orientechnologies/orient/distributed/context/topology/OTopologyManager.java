@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.distributed.context.topology;
 
+import com.orientechnologies.orient.core.transaction.OGroupId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.distributed.context.ONodeStateStore;
 import com.orientechnologies.orient.distributed.context.coordination.message.ONodeStateNetwork;
@@ -15,7 +16,7 @@ import java.util.UUID;
 
 public class OTopologyManager implements OTopologyEvents {
 
-  private Optional<String> networkId = Optional.empty();
+  private Optional<OGroupId> groupId = Optional.empty();
   private OTopologyState state = OTopologyState.BOOT;
   private Set<ONodeId> members = new HashSet<>();
   private Set<ONodeId> candidates = new HashSet<>();
@@ -32,7 +33,8 @@ public class OTopologyManager implements OTopologyEvents {
     if (state == OTopologyState.BOOT) {
       addToCandidates(node);
       if (canEstablish()) {
-        return new OEstablishAction(new HashSet<>(candidates));
+        return new OEstablishAction(
+            new OGroupId(UUID.randomUUID().toString()), new HashSet<>(candidates));
       }
     } else if (!hasMember(node)) {
       return new OAddNodeAction(node, version + 1);
@@ -103,15 +105,16 @@ public class OTopologyManager implements OTopologyEvents {
     return new HashSet(members);
   }
 
-  public synchronized void finalizeEnstablish(Set<ONodeId> candidates) {
+  public synchronized void finalizeEnstablish(OGroupId groupId, Set<ONodeId> candidates) {
     this.state = OTopologyState.ESTABLISHED;
-    this.networkId = Optional.of(UUID.randomUUID().toString());
+    this.groupId = Optional.of(groupId);
     this.members = candidates;
     this.candidates = new HashSet<>();
     this.version = 0;
   }
 
-  public synchronized Optional<OAcceptResult> validateEnstablish(Set<ONodeId> candidates) {
+  public synchronized Optional<OAcceptResult> validateEnstablish(
+      OGroupId groupId, Set<ONodeId> candidates) {
     if (this.state == OTopologyState.BOOT) {
       return Optional.empty();
     }
@@ -128,8 +131,8 @@ public class OTopologyManager implements OTopologyEvents {
           this.state = externState.getState();
           this.members = externState.getMembers();
           this.version = externState.getVersion();
-          this.networkId = externState.getNetworkId();
-        } else if (this.networkId.equals(externState.getNetworkId())) {
+          this.groupId = externState.getGroupId();
+        } else if (this.groupId.equals(externState.getGroupId())) {
           if (externState.getVersion() > version) {
             // TODO: check also matching network id
             this.members = externState.getMembers();
@@ -146,11 +149,11 @@ public class OTopologyManager implements OTopologyEvents {
   }
 
   public synchronized ONodeStateNetwork getNetworkState() {
-    return new ONodeStateNetwork(this.networkId, this.state, this.members, this.version);
+    return new ONodeStateNetwork(this.groupId, this.state, this.members, this.version);
   }
 
   public synchronized void load(ONodeStateStore nodeStateStore) {
-    this.networkId = nodeStateStore.getNetworkId();
+    this.groupId = nodeStateStore.getGroupId();
     this.state = nodeStateStore.getState();
     this.version = nodeStateStore.getVersion();
     this.members = nodeStateStore.getMembers();
