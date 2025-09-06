@@ -710,4 +710,10 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     this.sendMessage(
         Collections.singleton(nodeId), new ONodeFirstConnect(getNodeState().getNodeId(), st));
   }
+
+  public void registerNode(ONodeId node, long version) {
+    getNodeState().register(node, version);
+    // This should make aware of the added node of the fact it joined the network
+    sendFirstConnect(node);
+  }
 }

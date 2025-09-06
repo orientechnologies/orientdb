@@ -27,8 +27,8 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   private final Map<OTransactionId, CompletableFuture<Optional<OAcceptResult>>> completion =
       new HashMap<>();
 
-  public OCoordinatedDistributedOpsImpl(int quorum) {
-    topology = new OTopologyManager(quorum);
+  public OCoordinatedDistributedOpsImpl(ONodeId current, int quorum) {
+    topology = new OTopologyManager(current, quorum);
   }
 
   @Override

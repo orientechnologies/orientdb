@@ -31,7 +31,7 @@ public class OAddTopologyMember implements OOperationMessage {
 
   @Override
   public void apply(OrientDBDistributed ctx) {
-    ctx.getNodeState().register(node, version);
+    ctx.registerNode(node, version);
   }
 
   @Override

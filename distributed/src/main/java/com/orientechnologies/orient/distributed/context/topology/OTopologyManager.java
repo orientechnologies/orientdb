@@ -16,6 +16,7 @@ import java.util.UUID;
 
 public class OTopologyManager implements OTopologyEvents {
 
+  private final ONodeId current;
   private Optional<OGroupId> groupId = Optional.empty();
   private OTopologyState state = OTopologyState.BOOT;
   private Set<ONodeId> members = new HashSet<>();
@@ -24,7 +25,8 @@ public class OTopologyManager implements OTopologyEvents {
   private volatile int minimumQuorum;
   private volatile int quorum = 0;
 
-  public OTopologyManager(int minimumQuorum) {
+  public OTopologyManager(ONodeId current, int minimumQuorum) {
+    this.current = current;
     this.minimumQuorum = minimumQuorum;
   }
 
@@ -127,19 +129,18 @@ public class OTopologyManager implements OTopologyEvents {
     } else {
       synchronized (this) {
         // TODO: before applying check if any promise or running a coordination
-        // TODO: accept external state only if current node is part of it
-        if (state == OTopologyState.BOOT) {
+        if (state == OTopologyState.BOOT && externState.getMembers().contains(current)) {
           this.state = externState.getState();
           this.members = externState.getMembers();
           this.version = externState.getVersion();
           this.groupId = externState.getGroupId();
         } else if (this.groupId.equals(externState.getGroupId())) {
           if (externState.getVersion() > version) {
-            // TODO: check also matching network id
             this.members = externState.getMembers();
             this.version = externState.getVersion();
           } else if (externState.getVersion() != version) {
-            // TODO: send local version to the sender because is outdated
+            // TODO: send local version to the sender because is outdated, it may as well happen
+            // with a heartbeat
           }
         } else {
           // TODO: failure crashed different networks ...

@@ -31,7 +31,7 @@ public class ONodeState {
     state = new OAppliedState(3);
     log = new ODistributedMessageLogMemory();
     promised = new OPromisedDistributedOpsImpl();
-    coordinated = new OCoordinatedDistributedOpsImpl(minimumQuorum);
+    coordinated = new OCoordinatedDistributedOpsImpl(current, minimumQuorum);
     nodeId = current;
     this.store = store;
     initFromStore();
