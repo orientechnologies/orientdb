@@ -198,10 +198,10 @@ public class ShardingIT extends AbstractServerClusterTest {
           Assert.assertEquals(e.getProperty("real"), true);
 
           Assert.assertEquals(1, e.getRecord().getVersion());
-          e.getFrom().getRecord().reload();
+          graph.reload(e.getFrom().getRecord());
           Assert.assertEquals(versions[i] + 1, e.getFrom().getRecord().getVersion());
 
-          e.getTo().getRecord().reload();
+          graph.reload(e.getTo().getRecord());
           Assert.assertEquals(
               fishing.getRecord().getVersion() + i + 1, e.getTo().getRecord().getVersion());
 

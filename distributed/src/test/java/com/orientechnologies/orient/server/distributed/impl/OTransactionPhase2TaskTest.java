@@ -122,7 +122,7 @@ public class OTransactionPhase2TaskTest {
         (String) tx2p2.execute(new ODistributedRequestId(10, 22), server, null, db);
     assertEquals(tx2p2Result, "OK");
 
-    doc1.reload();
+    db.reload(doc1);
     assertEquals("2", doc1.getProperty("value"));
   }
 

@@ -279,7 +279,9 @@ public class OrientJdbcResultSet implements ResultSet {
   }
 
   public void deleteRow() throws SQLException {
-    result.toElement().delete();
+    if (result.getElement().isPresent()) {
+      statement.database.delete(result.getElement().get());
+    }
   }
 
   public int findColumn(String columnLabel) throws SQLException {

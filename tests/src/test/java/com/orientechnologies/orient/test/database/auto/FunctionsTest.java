@@ -49,7 +49,7 @@ public class FunctionsTest extends DocumentDBBaseTest {
             .get();
 
     final ODocument record = result.getRecord();
-    record.reload();
+    database.reload(record);
 
     final List<String> parameters = record.field("parameters");
 

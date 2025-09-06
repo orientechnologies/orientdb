@@ -523,7 +523,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     doc.field("test", s);
     database.save(doc, database.getClusterNameById(database.getDefaultClusterId()));
 
-    doc.reload(null, true);
+    database.reload(doc, null, true);
     Assert.assertEquals(doc.field("test"), s);
   }
 
@@ -629,7 +629,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     database.close();
     reopendb("admin", "admin");
 
-    bank.reload();
+    database.reload(bank);
     Assert.assertTrue(((ODocument) bank.field("embedded")).isEmbedded());
     Assert.assertFalse(((ODocument) bank.field("embedded")).getIdentity().isPersistent());
 
@@ -668,7 +668,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     database.close();
     reopendb("admin", "admin");
 
-    bank.reload();
+    database.reload(bank);
 
     ODocument changedDoc1 = bank.field("embedded.total", 100);
     // MUST CHANGE THE PARENT DOC BECAUSE IT'S EMBEDDED
@@ -781,7 +781,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
     doc.field("linkList", allDocs);
     database.save(doc, database.getClusterNameById(database.getDefaultClusterId()));
 
-    doc.reload();
+    database.reload(doc);
 
     final List<ODocument> docsToRemove = new ArrayList<>(allDocs.size() / 2);
     for (int i = 0; i < 5; i++) {
@@ -797,7 +797,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
 
     database.save(doc);
 
-    doc.reload();
+    database.reload(doc);
 
     linkList = doc.field("linkList");
     Assert.assertEquals(linkList.size(), 5);
@@ -830,7 +830,7 @@ public class CRUDDocumentPhysicalTest extends DocumentDBBaseTest {
 
     database.begin();
     try {
-      doc1.reload();
+      database.reload(doc1);
       Assert.fail(); // <=================== AssertionError
     } catch (ORecordNotFoundException e) {
       // OK

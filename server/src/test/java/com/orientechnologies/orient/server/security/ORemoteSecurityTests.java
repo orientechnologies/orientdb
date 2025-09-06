@@ -163,7 +163,7 @@ public class ORemoteSecurityTests {
         Assert.fail();
       } catch (OSecurityException ex) {
       }
-      elem = elem.reload(null, true, true);
+      elem = filteredSession.reload(elem, null, true, true);
       Assert.assertEquals("foo", elem.getProperty("name"));
     }
   }
@@ -183,7 +183,7 @@ public class ORemoteSecurityTests {
       } catch (OSecurityException ex) {
       }
 
-      elem = elem.reload(null, true, true);
+      elem = filteredSession.reload(elem, null, true, true);
       Assert.assertEquals("foo", elem.getProperty("name"));
     }
   }
@@ -204,7 +204,7 @@ public class ORemoteSecurityTests {
       } catch (OSecurityException ex) {
       }
 
-      elem = elem.reload(null, true, true);
+      elem = filteredSession.reload(elem, null, true, true);
       Assert.assertEquals("foo", elem.getProperty("name"));
     }
   }
@@ -224,7 +224,7 @@ public class ORemoteSecurityTests {
       } catch (OSecurityException ex) {
       }
 
-      elem = elem.reload(null, true, true);
+      elem = filteredSession.reload(elem);
       Assert.assertEquals("foo", elem.getProperty("name"));
     }
   }

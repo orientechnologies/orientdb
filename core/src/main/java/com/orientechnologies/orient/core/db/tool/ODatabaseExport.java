@@ -645,7 +645,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
   private boolean exportRecord(long recordTot, long recordNum, ORecord rec, Set<ORID> brokenRids) {
     if (rec != null)
       try {
-        if (rec.getIdentity().isValid()) rec.reload();
+        if (rec.getIdentity().isValid()) database.reload(rec, null, true, true);
         if (useLineFeedForRecords) writer.append("\n");
         if (recordExported > 0) writer.append(",");
 

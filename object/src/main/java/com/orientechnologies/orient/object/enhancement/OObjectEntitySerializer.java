@@ -1213,7 +1213,9 @@ public class OObjectEntitySerializer {
                   + " Object",
               id.getClass());
       }
-      if (iRecord.getIdentity().isValid() && iRecord.getIdentity().isPersistent()) iRecord.reload();
+      if (iRecord.getIdentity().isValid() && iRecord.getIdentity().isPersistent()) {
+        ODatabaseRecordThreadLocal.instance().get().reload(iRecord);
+      }
     }
 
     // CHECK FOR VERSION BINDING

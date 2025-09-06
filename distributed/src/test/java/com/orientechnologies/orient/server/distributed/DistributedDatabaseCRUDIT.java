@@ -435,7 +435,7 @@ public final class DistributedDatabaseCRUDIT {
                               } catch (InterruptedException e) {
                                 e.printStackTrace();
                               }
-                              vtx1.reload();
+                              graph.reload(vtx1);
                             } else {
                               log(
                                   "["

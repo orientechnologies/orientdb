@@ -194,7 +194,7 @@ public class OSBTreeRidBagTest extends ORidBagTest {
     doc.field("ridBag", bag);
     database.save(doc, database.getClusterNameById(database.getDefaultClusterId()));
 
-    doc.reload();
+    database.reload(doc);
 
     ODocument doc_5 = new ODocument();
     database.save(doc_5, database.getClusterNameById(database.getDefaultClusterId()));
@@ -207,7 +207,7 @@ public class OSBTreeRidBagTest extends ORidBagTest {
     bag.add(doc_6);
 
     database.save(doc);
-    doc.reload();
+    database.reload(doc);
 
     bag = doc.field("ridBag");
     Assert.assertEquals(bag.size(), 6);
@@ -260,7 +260,7 @@ public class OSBTreeRidBagTest extends ORidBagTest {
     long testRidBagSize = testRidBagFile.length();
 
     for (int i = 0; i < 100; i++) {
-      testDocument.reload();
+      database.reload(testDocument);
 
       database.delete(testDocument);
       testDocument = crateTestDeleteDoc(realDoc);

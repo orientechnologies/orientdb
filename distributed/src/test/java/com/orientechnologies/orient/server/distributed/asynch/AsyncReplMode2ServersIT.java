@@ -60,7 +60,7 @@ public class AsyncReplMode2ServersIT extends BareBoneBase2ServerTest {
             } catch (OConcurrentModificationException c) {
               graph.rollback();
               graph.begin();
-              parentV1.reload();
+              graph.reload(parentV1);
             }
           }
 
@@ -75,7 +75,7 @@ public class AsyncReplMode2ServersIT extends BareBoneBase2ServerTest {
             } catch (OConcurrentModificationException c) {
               graph.rollback();
               graph.begin();
-              parentV2.reload();
+              graph.reload(parentV2);
             }
           }
         }
@@ -114,8 +114,8 @@ public class AsyncReplMode2ServersIT extends BareBoneBase2ServerTest {
           if (exceptionInThread != null) break;
           sleep(500);
 
-          parentV1.reload();
-          parentV2.reload();
+          graph.reload(parentV1);
+          graph.reload(parentV2);
           assertEquals(
               "parentV1 (" + parentV1.getRecord() + ")",
               ++countPropValue,

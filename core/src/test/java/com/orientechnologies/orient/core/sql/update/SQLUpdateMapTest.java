@@ -30,7 +30,7 @@ public class SQLUpdateMapTest extends BaseMemoryDatabase {
     reOpen("admin", "adminpwd");
     db.getLocalCache().clear();
     db.command("update " + ret.getIdentity() + " set attrs['test'] = 'test value' ").close();
-    ret.reload();
+    db.reload(ret);
     assertEquals(2, ((Map) ret.field("attrs")).size());
     assertEquals("test value", ((Map) ret.field("attrs")).get("test"));
     assertEquals(ret1.getIdentity(), ((Map) ret.field("attrs")).get("test1"));

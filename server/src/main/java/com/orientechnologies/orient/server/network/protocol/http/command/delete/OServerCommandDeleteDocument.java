@@ -77,11 +77,11 @@ public class OServerCommandDeleteDocument extends OServerCommandDocumentAbstract
           // DELETE IT AS EDGE
           db.command("DELETE EDGE ?", recordId).close();
         else {
-          doc.reload(null, true);
+          db.reload(doc, null, true);
           db.delete(doc);
         }
       } else {
-        doc.reload(null, true);
+        db.reload(doc, null, true);
         db.delete(doc);
       }
 

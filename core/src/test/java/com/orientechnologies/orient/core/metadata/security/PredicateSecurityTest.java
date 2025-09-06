@@ -235,7 +235,7 @@ public class PredicateSecurityTest {
     } catch (OSecurityException ex) {
     }
 
-    elem = elem.reload(null, true, true);
+    elem = db.reload(elem);
     Assert.assertEquals("foo", elem.getProperty("name"));
   }
 
@@ -274,7 +274,7 @@ public class PredicateSecurityTest {
     } catch (OSecurityException ex) {
     }
 
-    elem = elem.reload(null, true, true);
+    elem = db.reload(elem, null, true, true);
     Assert.assertEquals("foo", elem.getProperty("name"));
     return true;
   }
@@ -304,7 +304,7 @@ public class PredicateSecurityTest {
     } catch (OSecurityException ex) {
     }
 
-    elem = elem.reload(null, true, true);
+    elem = db.reload(elem, null, true, true);
     Assert.assertEquals("foo", elem.getProperty("name"));
   }
 
@@ -332,7 +332,7 @@ public class PredicateSecurityTest {
     } catch (OSecurityException ex) {
     }
 
-    elem = elem.reload(null, true, true);
+    elem = db.reload(elem);
     Assert.assertEquals("foo", elem.getProperty("name"));
   }
 

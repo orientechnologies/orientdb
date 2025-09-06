@@ -99,7 +99,7 @@ public abstract class AbstractDistributedConcurrentTxTest extends AbstractDistri
 
             Thread.sleep(10 + new Random().nextInt(500));
 
-            localVertex.reload();
+            graph.reload(localVertex);
 
             logger.info(
                 "Retry %d with reloaded vertex v=%d", retry, localVertex.getRecord().getVersion());

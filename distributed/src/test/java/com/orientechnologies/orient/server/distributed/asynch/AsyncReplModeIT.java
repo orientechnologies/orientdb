@@ -103,8 +103,8 @@ public class AsyncReplModeIT extends BareBoneBase2ClientTest {
             } catch (OConcurrentModificationException c) {
               System.out.println("***********ROLLBACK***************");
               graph.rollback();
-              parentV1.reload();
-              vertex.reload();
+              graph.reload(parentV1);
+              graph.reload(vertex);
             }
           }
 
@@ -136,8 +136,8 @@ public class AsyncReplModeIT extends BareBoneBase2ClientTest {
             } catch (OConcurrentModificationException c) {
               System.out.println("***********ROLLBACK***************");
               graph.rollback();
-              parentV2.reload();
-              vertex.reload();
+              graph.reload(parentV2);
+              graph.reload(vertex);
             }
           }
         }
@@ -180,7 +180,7 @@ public class AsyncReplModeIT extends BareBoneBase2ClientTest {
               graph.commit();
             } catch (OConcurrentModificationException c) {
               graph.rollback();
-              parentV1.reload();
+              graph.reload(parentV1);
             }
           }
 
@@ -194,7 +194,7 @@ public class AsyncReplModeIT extends BareBoneBase2ClientTest {
               graph.commit();
             } catch (OConcurrentModificationException c) {
               graph.rollback();
-              parentV2.reload();
+              graph.reload(parentV2);
             }
           }
         }

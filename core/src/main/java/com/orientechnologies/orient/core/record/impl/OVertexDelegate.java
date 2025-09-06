@@ -45,7 +45,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -203,14 +202,6 @@ public class OVertexDelegate implements OVertex {
   public OVertex delete() {
     element.delete();
     return this;
-  }
-
-  @Deprecated
-  public static void deleteLinks(OVertex delegate) {
-    Iterable<OEdge> allEdges = delegate.getEdges(ODirection.BOTH);
-    for (OEdge edge : allEdges) {
-      edge.delete();
-    }
   }
 
   @Override
@@ -591,72 +582,6 @@ public class OVertexDelegate implements OVertex {
 
   public ORID moveTo(final String iClassName, final String iClusterName) {
     return OVertexDocument.moveTo(iClassName, iClusterName, this, (ODatabaseSession) getDatabase());
-  }
-
-  public static String getConnectionFieldName(
-      final ODirection iDirection,
-      final String iClassName,
-      final boolean useVertexFieldsForEdgeLabels) {
-    if (iDirection == null || iDirection == ODirection.BOTH)
-      throw new IllegalArgumentException("Direction not valid");
-
-    if (useVertexFieldsForEdgeLabels) {
-      // PREFIX "out_" or "in_" TO THE FIELD NAME
-      final String prefix =
-          iDirection == ODirection.OUT ? CONNECTION_OUT_PREFIX : CONNECTION_IN_PREFIX;
-      if (iClassName == null || iClassName.isEmpty() || iClassName.equals("E")) return prefix;
-
-      return prefix + iClassName;
-    } else
-      // "out" or "in"
-      return iDirection == ODirection.OUT ? "out" : "in";
-  }
-
-  public static void replaceLinks(
-      final ODocument iVertex,
-      final String iFieldName,
-      final OIdentifiable iVertexToRemove,
-      final OIdentifiable iNewVertex) {
-    if (iVertex == null) return;
-
-    final Object fieldValue =
-        iVertexToRemove != null ? iVertex.field(iFieldName) : iVertex.removeField(iFieldName);
-    if (fieldValue == null) return;
-
-    if (fieldValue instanceof OIdentifiable) {
-      // SINGLE RECORD
-
-      if (iVertexToRemove != null) {
-        if (!fieldValue.equals(iVertexToRemove)) {
-          return;
-        }
-        iVertex.setProperty(iFieldName, iNewVertex);
-      }
-
-    } else if (fieldValue instanceof ORidBag) {
-      // COLLECTION OF RECORDS: REMOVE THE ENTRY
-      final ORidBag bag = (ORidBag) fieldValue;
-
-      boolean found = false;
-      final Iterator<OIdentifiable> it = bag.rawIterator();
-      while (it.hasNext()) {
-        if (it.next().equals(iVertexToRemove)) {
-          // REMOVE THE OLD ENTRY
-          found = true;
-          it.remove();
-        }
-      }
-      if (found)
-        // ADD THE NEW ONE
-        bag.add(iNewVertex);
-
-    } else if (fieldValue instanceof Collection) {
-      final Collection col = (Collection) fieldValue;
-
-      if (col.remove(iVertexToRemove)) col.add(iNewVertex);
-    }
-
-    iVertex.save();
   }
 
   @Override

@@ -90,7 +90,7 @@ public class AsyncReplMode2Servers2OpsCommitConcurrentIT extends BareBoneBase2Se
       }
 
       // STATISTICALLY HERE AT LEAST ONE CONFLICT HAS BEEN RECEIVED
-      vertex1.reload();
+      graph.reload(vertex1);
 
       Assert.assertTrue(vertex1.getRecord().getVersion() > TOTAL + 1);
       Assert.assertEquals(TOTAL, i);

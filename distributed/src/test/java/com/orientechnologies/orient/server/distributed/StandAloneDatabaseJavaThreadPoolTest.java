@@ -224,11 +224,11 @@ public final class StandAloneDatabaseJavaThreadPoolTest {
                             retry = false;
                             break;
                           } catch (OConcurrentModificationException ex) {
-                            vtx1.reload();
+                            graph.reload(vtx1);
                           } catch (ONeedRetryException ex) {
                             if (ex instanceof ONeedRetryException
                                 || ex.getCause() instanceof ONeedRetryException) {
-                              vtx1.reload();
+                              graph.reload(vtx1);
                             } else {
                               if (ex.getCause() instanceof ConcurrentModificationException) {
                                 ex.printStackTrace();
@@ -252,7 +252,7 @@ public final class StandAloneDatabaseJavaThreadPoolTest {
                             isException = true;
                           } catch (ODistributedException ex) {
                             if (ex.getCause() instanceof ONeedRetryException) {
-                              vtx1.reload();
+                              graph.reload(vtx1);
                             } else {
                               if (ex.getCause() instanceof ConcurrentModificationException) {
                                 ex.printStackTrace();

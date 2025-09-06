@@ -195,7 +195,7 @@ public abstract class AbstractServerClusterGraphTest extends AbstractServerClust
   }
 
   protected void checkVertex(ODatabaseDocument graph, OVertex v) {
-    v.reload();
+    graph.reload(v);
     Assert.assertEquals(v.getProperty("updated"), Boolean.TRUE);
   }
 }

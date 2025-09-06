@@ -57,7 +57,7 @@ public class RestrictedTest extends DocumentDBBaseTest {
         .getSchema()
         .createClass("CMSDocument", database.getMetadata().getSchema().getClass("ORestricted"));
     adminRecord = database.save(new ODocument("CMSDocument").field("user", "admin"));
-    adminRecord.reload();
+    database.reload(adminRecord);
 
     readerUser = database.getMetadata().getSecurity().getUser("reader");
     readerRole = database.getMetadata().getSecurity().getRole("reader");
@@ -74,7 +74,7 @@ public class RestrictedTest extends DocumentDBBaseTest {
   public void testCreateAsWriter() throws IOException {
     reopendb("writer", "writer");
     writerRecord = database.save(new ODocument("CMSDocument").field("user", "writer"));
-    writerRecord.reload();
+    database.reload(writerRecord);
   }
 
   @Test(dependsOnMethods = "testCreateAsWriter")
@@ -136,7 +136,7 @@ public class RestrictedTest extends DocumentDBBaseTest {
     database.close();
 
     reopendb("admin", "admin");
-    adminRecord.reload();
+    database.reload(adminRecord);
     Assert.assertEquals(adminRecord.field("user"), "admin");
   }
 
@@ -157,14 +157,14 @@ public class RestrictedTest extends DocumentDBBaseTest {
     database.close();
 
     reopendb("admin", "admin");
-    adminRecord.reload();
+    database.reload(adminRecord);
   }
 
   @Test(dependsOnMethods = "testFilteredHackingAllowFieldAsWriter")
   public void testAddReaderAsRole() throws IOException {
     reopendb("writer", "writer");
     Set<OIdentifiable> allows =
-        ((ODocument) writerRecord.reload()).field(OSecurityShared.ALLOW_ALL_FIELD);
+        ((ODocument) database.reload(writerRecord)).field(OSecurityShared.ALLOW_ALL_FIELD);
     allows.add(readerRole.getIdentity());
     database.save(writerRecord);
   }

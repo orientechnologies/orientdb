@@ -42,6 +42,7 @@ import com.orientechnologies.orient.core.exception.OQueryParsingException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
@@ -573,9 +574,10 @@ public class ODocumentHelper {
             value = getIdentifiableValue(currentRecord, fieldName);
             if (value != null
                 && value instanceof ORecord
-                && ((ORecord) value).getInternalStatus() == STATUS.NOT_LOADED)
+                && ((ORecord) value).getInternalStatus() == STATUS.NOT_LOADED) {
               // RELOAD IT
-              ((ORecord) value).reload();
+              iContext.getDatabase().reload((OElement) value);
+            }
           } else if (value instanceof Map<?, ?>)
             value = getMapEntry((Map<String, ?>) value, fieldName);
           else if (OMultiValue.isMultiValue(value)) {
@@ -932,7 +934,7 @@ public class ODocumentHelper {
           iMyDb,
           new ODbRelatedCall<Object>() {
             public Object call(ODatabaseDocumentInternal database) {
-              if (iCurrent.getInternalStatus() == STATUS.NOT_LOADED) iCurrent.reload();
+              if (iCurrent.getInternalStatus() == STATUS.NOT_LOADED) database.reload(iCurrent);
               return null;
             }
           });
@@ -942,7 +944,7 @@ public class ODocumentHelper {
           iOtherDb,
           new ODbRelatedCall<Object>() {
             public Object call(ODatabaseDocumentInternal database) {
-              if (iOther.getInternalStatus() == STATUS.NOT_LOADED) iOther.reload();
+              if (iOther.getInternalStatus() == STATUS.NOT_LOADED) database.reload(iOther);
               return null;
             }
           });

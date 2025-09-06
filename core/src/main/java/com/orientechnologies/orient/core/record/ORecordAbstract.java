@@ -462,7 +462,9 @@ public abstract class ORecordAbstract implements ORecord {
 
   protected void checkForLoading() {
     if (status == ORecordElement.STATUS.NOT_LOADED
-        && ODatabaseRecordThreadLocal.instance().isDefined()) reload(null, true);
+        && ODatabaseRecordThreadLocal.instance().isDefined()) {
+      ODatabaseRecordThreadLocal.instance().get().reload(this, null, true);
+    }
   }
 
   protected boolean isContentChanged() {

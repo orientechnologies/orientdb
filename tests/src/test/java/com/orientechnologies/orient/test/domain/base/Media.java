@@ -16,6 +16,9 @@
  */
 package com.orientechnologies.orient.test.domain.base;
 
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
 import javax.persistence.Id;
@@ -65,7 +68,10 @@ public class Media {
   public void setContent(OBlob content) {
     OBlob current = this.getContent();
     this.content = content;
-    if (current != null) current.getRecord().delete();
+    if (current != null) {
+      ODatabaseDocumentInternal session = ODatabaseRecordThreadLocal.instance().get();
+      session.delete((ORecord) current.getRecord());
+    }
   }
 
   public void setContent(byte[] bytes) {

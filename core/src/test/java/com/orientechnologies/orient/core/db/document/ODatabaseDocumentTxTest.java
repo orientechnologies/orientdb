@@ -284,7 +284,7 @@ public class ODatabaseDocumentTxTest extends BaseMemoryDatabase {
     for (Thread t : threads) {
       t.join();
     }
-    v.reload();
+    db.reload(v);
     Assert.assertEquals(nThreads, (int) v.getProperty("count"));
   }
 
@@ -328,7 +328,7 @@ public class ODatabaseDocumentTxTest extends BaseMemoryDatabase {
     for (Thread t : threads) {
       t.join();
     }
-    v.reload();
+    db.reload(v);
     Assert.assertEquals(nThreads, (int) v.getProperty("count"));
   }
 

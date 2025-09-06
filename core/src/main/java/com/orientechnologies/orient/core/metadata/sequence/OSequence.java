@@ -557,7 +557,8 @@ public abstract class OSequence {
   public abstract SEQUENCE_TYPE getSequenceType();
 
   protected void reloadSequence() {
-    tlDocument.set(tlDocument.get().reload(null, true));
+    ODatabaseDocumentInternal session = ODatabaseRecordThreadLocal.instance().get();
+    tlDocument.set(session.reload(tlDocument.get(), null, true));
   }
 
   protected <T> T callRetry(

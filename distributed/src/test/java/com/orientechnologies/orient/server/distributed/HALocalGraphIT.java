@@ -328,7 +328,7 @@ public class HALocalGraphIT extends AbstractServerClusterTxTest {
                             retry = false;
                             break;
                           } catch (OConcurrentModificationException ex) {
-                            vtx1.reload();
+                            graph.reload(vtx1);
                           } catch (ONeedRetryException ex) {
                             if (ex instanceof ODistributedRecordLockedException) {
                               if (k > 20)
@@ -343,10 +343,10 @@ public class HALocalGraphIT extends AbstractServerClusterTxTest {
                                         + (ex.getCause() != null ? ex.getCause() : "--")
                                         + "] for vertex "
                                         + vtx1);
-                              vtx1.reload();
+                              graph.reload(vtx1);
                             } else if (ex instanceof ONeedRetryException
                                 || ex.getCause() instanceof ONeedRetryException) {
-                              vtx1.reload();
+                              graph.reload(vtx1);
                             } else {
                               if (ex.getCause() instanceof ConcurrentModificationException) {
                                 ex.printStackTrace();
@@ -370,7 +370,7 @@ public class HALocalGraphIT extends AbstractServerClusterTxTest {
                             isException = true;
                           } catch (ODistributedException ex) {
                             if (ex.getCause() instanceof ONeedRetryException) {
-                              vtx1.reload();
+                              graph.reload(vtx1);
                             } else {
                               if (ex.getCause() instanceof ConcurrentModificationException) {
                                 ex.printStackTrace();

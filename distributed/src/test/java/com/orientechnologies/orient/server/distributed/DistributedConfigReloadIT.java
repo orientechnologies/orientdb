@@ -24,7 +24,6 @@ import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
@@ -167,7 +166,7 @@ public final class DistributedConfigReloadIT {
                         needRetry = false;
                       } catch (ONeedRetryException ex) {
                         try {
-                          ((OElement) vtx).reload();
+                          graph.reload(vtx);
                         } catch (ORecordNotFoundException e) {
                           // BY LUCA
                           log(

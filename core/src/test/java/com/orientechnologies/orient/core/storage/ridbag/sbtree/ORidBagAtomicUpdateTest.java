@@ -188,7 +188,7 @@ public class ORidBagAtomicUpdateTest extends BaseMemoryDatabase {
     Assert.assertEquals(ridBag.size(), 2);
     Assert.assertEquals(rootDoc.getVersion(), version);
 
-    rootDoc = (ODocument) rootDoc.reload();
+    rootDoc = (ODocument) db.reload(rootDoc);
 
     Assert.assertEquals(ridBag.size(), 2);
     Assert.assertEquals(rootDoc.getVersion(), version);
@@ -222,7 +222,7 @@ public class ORidBagAtomicUpdateTest extends BaseMemoryDatabase {
     Assert.assertEquals(ridBag.size(), 2);
     Assert.assertEquals(rootDoc.getVersion(), version);
 
-    rootDoc = (ODocument) rootDoc.reload();
+    rootDoc = (ODocument) db.reload(rootDoc);
 
     Assert.assertEquals(ridBag.size(), 2);
     Assert.assertEquals(rootDoc.getVersion(), version);

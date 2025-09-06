@@ -27,6 +27,7 @@ import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -327,7 +328,10 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
           }
         } else if (v instanceof ODocument && type != null && type.isLink()) {
           String className1 = ((ODocument) v).getClassName();
-          if (className1 != null && className1.length() > 0) ((ODocument) v).save();
+          if (className1 != null && className1.length() > 0) {
+            ODatabaseDocumentInternal session = ODatabaseRecordThreadLocal.instance().get();
+            session.save((ORecord) v);
+          }
         }
 
       if (type == null && fieldTypes != null && fieldTypes.containsKey(fieldName))

@@ -52,10 +52,10 @@ public class DateTest extends DocumentDBBaseTest {
     doc2.field("date", System.currentTimeMillis());
     database.save(doc2);
 
-    doc2.reload();
+    database.reload(doc2);
     Assert.assertTrue(doc2.field("date", OType.DATE) instanceof Date);
 
-    doc2.reload();
+    database.reload(doc2);
     Assert.assertTrue(doc2.field("date", Date.class) instanceof Date);
 
     OResultSet result =

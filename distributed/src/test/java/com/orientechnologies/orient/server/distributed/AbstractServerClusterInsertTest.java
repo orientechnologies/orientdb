@@ -252,7 +252,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
     protected void checkRecord(ODatabaseDocument database, ODocument doc) {
       checkClusterStrategy(database);
 
-      doc.reload();
+      database.reload(doc);
       Assert.assertEquals(doc.field("updated"), Boolean.TRUE);
     }
 
@@ -272,7 +272,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
       checkClusterStrategy(database);
 
       try {
-        doc.reload();
+        database.reload(doc);
         Assert.fail("Record found while it should be deleted");
       } catch (ORecordNotFoundException e) {
       }

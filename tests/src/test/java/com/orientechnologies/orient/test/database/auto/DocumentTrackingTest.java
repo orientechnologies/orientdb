@@ -916,7 +916,7 @@ public class DocumentTrackingTest extends DocumentDBBaseTest {
     final List<String> trackedList = document.field("embeddedlist");
     trackedList.add("value2");
 
-    document.reload();
+    database.reload(document);
 
     Assert.assertEquals(document.getDirtyFields(), new String[] {});
     Assert.assertFalse(document.isDirty());

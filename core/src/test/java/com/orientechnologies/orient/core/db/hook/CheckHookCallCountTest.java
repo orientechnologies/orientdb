@@ -56,7 +56,7 @@ public class CheckHookCallCountTest extends BaseMemoryDatabase {
     doc.field("a", 2);
     doc.field("b", 2);
     db.save(doc);
-    doc.reload();
+    db.reload(doc);
     assertEquals(Integer.valueOf(2), doc.field("a"));
     assertEquals(Integer.valueOf(2), doc.field("b"));
     assertNull(doc.field("c"));
@@ -87,7 +87,7 @@ public class CheckHookCallCountTest extends BaseMemoryDatabase {
             return DISTRIBUTED_EXECUTION_MODE.SOURCE_NODE;
           }
         });
-    doc.reload();
+    db.reload(doc);
     assertEquals(Integer.valueOf(2), doc.field("a"));
     assertEquals(Integer.valueOf(2), doc.field("b"));
     assertEquals(Integer.valueOf(4), doc.field("c"));

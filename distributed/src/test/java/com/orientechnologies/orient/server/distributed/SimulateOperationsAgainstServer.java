@@ -190,7 +190,7 @@ public class SimulateOperationsAgainstServer {
                 + "/"
                 + MAX_RETRY
                 + "...");
-        if (doc != null) doc.reload(null, true);
+        if (doc != null) db.reload(doc, null, true);
 
       } catch (ORecordNotFoundException e) {
         log(threadId, iCycle, dbUrl, " update no item " + iSkip + " because not found");
@@ -235,7 +235,7 @@ public class SimulateOperationsAgainstServer {
                 + "/"
                 + MAX_RETRY
                 + "...");
-        if (doc != null) doc.reload(null, true);
+        if (doc != null) db.reload(doc, null, true);
       } catch (ORecordNotFoundException e) {
         log(threadId, iCycle, dbUrl, " delete no item " + iSkip + " because not found");
       } finally {

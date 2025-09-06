@@ -134,7 +134,7 @@ public class OConflictManagementTest extends BaseMemoryDatabase {
     copy.field("relationships", new OIdentifiable[] {linkedDoc, linkedDoc3}, OType.LINKSET);
     db.save(copy, db.getClusterNameById(db.getDefaultClusterId()));
 
-    ODocument reloadedDoc = (ODocument) rootDoc.reload();
+    ODocument reloadedDoc = (ODocument) db.reload(rootDoc);
     Assert.assertEquals(((Collection) reloadedDoc.field("relationships")).size(), 3);
     Collection<OIdentifiable> rels = reloadedDoc.field("relationships");
     Assert.assertTrue(rels.contains(linkedDoc));

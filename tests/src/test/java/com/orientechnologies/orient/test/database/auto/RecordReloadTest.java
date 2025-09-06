@@ -44,7 +44,7 @@ public class RecordReloadTest extends DocumentDBBaseTest {
 
     future.get();
 
-    document.reload();
+    database.reload(document);
 
     Assert.assertEquals(document.getProperty("value"), "value two");
   }
@@ -74,7 +74,7 @@ public class RecordReloadTest extends DocumentDBBaseTest {
 
     future.get();
 
-    document.reload(null, true, false);
+    database.reload(document, null, true, false);
 
     Assert.assertEquals(document.getProperty("value"), "value two");
   }
@@ -114,7 +114,7 @@ public class RecordReloadTest extends DocumentDBBaseTest {
 
     future.get();
 
-    document.reload("*:1", true);
+    database.reload(document, "*:1", true);
 
     linkedValue = document.getProperty("link");
     Assert.assertEquals(linkedValue.getProperty("val"), "value 2");
@@ -155,7 +155,7 @@ public class RecordReloadTest extends DocumentDBBaseTest {
 
     future.get();
 
-    document.reload("*:1", true, false);
+    database.reload(document, "*:1", true, false);
 
     linkedValue = document.getProperty("link");
     Assert.assertEquals(linkedValue.getProperty("val"), "value 1");

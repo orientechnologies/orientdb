@@ -64,7 +64,7 @@ public class OCommandExecutorSQLUpdateTest extends BaseMemoryDatabase {
 
     db.command("UPDATE company set employees = (SELECT FROM employee)").close();
 
-    r.reload();
+    db.reload(r);
     assertEquals(((Set) r.getProperty("employees")).size(), 4);
 
     db.command(
@@ -72,7 +72,7 @@ public class OCommandExecutorSQLUpdateTest extends BaseMemoryDatabase {
                 + " name = 'MyCompany'")
         .close();
 
-    r.reload();
+    db.reload(r);
     assertEquals(((Set) r.getProperty("employees")).size(), 3);
   }
 
@@ -253,19 +253,19 @@ public class OCommandExecutorSQLUpdateTest extends BaseMemoryDatabase {
     OElement queried = db.query("SELECT FROM test WHERE id = \"id1\"").next().getElement().get();
 
     db.command("UPDATE test set count += 2").close();
-    queried.reload();
+    db.reload(queried);
     //    assertEquals(queried.field("count"), 22);
 
     Assertions.assertThat(queried.<Integer>getProperty("count")).isEqualTo(22);
 
     db.command("UPDATE test set map.nestedCount = map.nestedCount + 5").close();
-    queried.reload();
+    db.reload(queried);
     //    assertEquals(queried.field("map.nestedCount"), 15);
 
     Assertions.assertThat(queried.<Map>getProperty("map").get("nestedCount")).isEqualTo(15);
 
     db.command("UPDATE test set map.nestedCount = map.nestedCount+ 5").close();
-    queried.reload();
+    db.reload(queried);
 
     Assertions.assertThat(queried.<Map>getProperty("map").get("nestedCount")).isEqualTo(20);
 
@@ -290,7 +290,7 @@ public class OCommandExecutorSQLUpdateTest extends BaseMemoryDatabase {
     params.put("text", "single \"");
 
     db.command("UPDATE test SET text = :text", params).close();
-    queried.reload();
+    db.reload(queried);
     assertEquals(queried.getProperty("text"), "single \"");
   }
 
@@ -312,7 +312,7 @@ public class OCommandExecutorSQLUpdateTest extends BaseMemoryDatabase {
 
     db.command("UPDATE test SET text = :text", params).close();
 
-    queried.reload();
+    db.reload(queried);
     assertEquals(queried.getProperty("text"), "quoted \"value\" string");
   }
 

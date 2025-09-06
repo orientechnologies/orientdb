@@ -455,7 +455,7 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
     }
 
     protected void checkVertex(ODatabaseDocument graph, OVertex vertex) {
-      vertex.reload();
+      graph.reload(vertex);
       assertEquals(vertex.getProperty("updated"), Boolean.TRUE);
     }
 
@@ -465,7 +465,7 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
 
     protected void checkRecordIsDeleted(ODatabaseDocument graph, OVertex vertex) {
       try {
-        vertex.reload();
+        graph.reload(vertex);
         fail("Record found while it should be deleted");
       } catch (ORecordNotFoundException e) {
       }

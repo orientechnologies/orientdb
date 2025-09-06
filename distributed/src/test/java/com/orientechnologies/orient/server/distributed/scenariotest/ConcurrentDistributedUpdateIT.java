@@ -119,7 +119,7 @@ public class ConcurrentDistributedUpdateIT extends AbstractScenarioTest {
                       // log("[" + id + "/" + i + "/" + k + "] OK!\n");
                       break;
                     } catch (OConcurrentModificationException ex) {
-                      vtx1.reload();
+                      graph.reload(vtx1);
                     } catch (ODistributedRecordLockedException ex) {
                       log(
                           "["

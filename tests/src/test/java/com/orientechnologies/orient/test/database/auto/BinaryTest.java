@@ -40,7 +40,7 @@ public class BinaryTest extends DocumentDBBaseTest {
 
     database.save(doc, database.getClusterNameById(database.getDefaultClusterId()));
 
-    doc.reload();
+    database.reload(doc);
     Assert.assertEquals(new String((byte[]) doc.field("binary", OType.BINARY)), "Binary data");
   }
 
@@ -70,7 +70,7 @@ public class BinaryTest extends DocumentDBBaseTest {
   @Test(dependsOnMethods = "testMixedCreateExternal")
   public void testMixedReadExternal() {
     ODocument doc = new ODocument(rid);
-    doc.reload();
+    database.reload(doc);
 
     Assert.assertEquals("Binary data", new String(((OBlob) doc.field("binary")).toStream()));
   }
