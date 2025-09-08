@@ -993,7 +993,6 @@ let OrientGraph = (function () {
         .attr('class', function (d) {
           var name = self.getClazzConfigVal(getClazzName(d), "icon");
           return 'vlabel-icon vicon' + (!name ? ' elem-invisible' : '')
-          bind;
         })
         .style("font-size", function (d) {
           var size = self.getClazzConfigVal(getClazzName(d), "iconSize");

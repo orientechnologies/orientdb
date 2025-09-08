@@ -23,7 +23,11 @@ class NotificationService {
     }
     if (notification.error) {
       if (typeof notification.content != 'string') {
-        notification.content = notification.content.errors[0].content;
+        if (typeof notification.content.message == 'string') {
+          notification.content = notification.content.message;
+        } else {
+          notification.content = notification.content.errors[0].content;
+        }
       }
       n = noty({text: _.escape(notification.content), layout: 'bottom', type: 'error', theme: 'relax'});
     } else if (notification.warning) {
