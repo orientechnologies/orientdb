@@ -36,7 +36,7 @@
     "codemirror": "^5.65.20",
     "core-js": "^2.6.12",
     "d3": "^3.5.17",
-    "filesize": "^3.5.11",
+    "filesize": "^3.6.1",
     "font-awesome": "^4.6.3",
     "fullcalendar": "^3.10.5",
     "ie-shim": "^0.1.0",
