@@ -333,7 +333,9 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
         this.receiveMessage(op);
       } else {
         ORemoteServerController rem = remote.getRemoteServer(node.getNode());
-        rem.sendMessage(message);
+        if (rem != null) {
+          rem.sendMessage(message);
+        }
       }
     }
   }

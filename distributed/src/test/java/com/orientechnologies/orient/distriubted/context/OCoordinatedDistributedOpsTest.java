@@ -3,6 +3,7 @@ package com.orientechnologies.orient.distriubted.context;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 import com.orientechnologies.orient.core.transaction.OGroupId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
@@ -317,6 +318,11 @@ public class OCoordinatedDistributedOpsTest {
 
     assertEquals(node1.getMembers().size(), 2);
     assertEquals(node2.getMembers().size(), 2);
+    try {
+      node1.getMembers().add(newRandomNodeId());
+      fail();
+    } catch (UnsupportedOperationException e) {
+    }
   }
 
   @Test
@@ -343,6 +349,11 @@ public class OCoordinatedDistributedOpsTest {
     assertTrue(action instanceof ODiscoverAction.ONoneAction);
 
     assertEquals(node1.getMembers().size(), 3);
+    try {
+      node1.getMembers().add(newRandomNodeId());
+      fail();
+    } catch (UnsupportedOperationException e) {
+    }
   }
 
   @Test
@@ -426,5 +437,10 @@ public class OCoordinatedDistributedOpsTest {
     assertTrue(action instanceof ODiscoverAction.ONoneAction);
 
     assertEquals(node1.getMembers().size(), 2);
+    try {
+      node1.getMembers().add(newRandomNodeId());
+      fail();
+    } catch (UnsupportedOperationException e) {
+    }
   }
 }

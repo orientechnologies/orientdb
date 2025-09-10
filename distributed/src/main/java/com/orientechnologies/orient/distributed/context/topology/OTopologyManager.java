@@ -9,6 +9,7 @@ import com.orientechnologies.orient.distributed.context.coordination.result.OAlr
 import com.orientechnologies.orient.distributed.context.topology.ODiscoverAction.OAddNodeAction;
 import com.orientechnologies.orient.distributed.context.topology.ODiscoverAction.OEstablishAction;
 import com.orientechnologies.orient.distributed.context.topology.ODiscoverAction.ONoneAction;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -19,7 +20,7 @@ public class OTopologyManager implements OTopologyEvents {
   private final ONodeId current;
   private Optional<OGroupId> groupId = Optional.empty();
   private OTopologyState state = OTopologyState.BOOT;
-  private Set<ONodeId> members = new HashSet<>();
+  private Set<ONodeId> members = Collections.unmodifiableSet(new HashSet<>());
   private Set<ONodeId> candidates = new HashSet<>();
   private volatile long version = 0;
   private volatile int minimumQuorum;
@@ -71,7 +72,10 @@ public class OTopologyManager implements OTopologyEvents {
 
   public synchronized void register(ONodeId toRegister, long version) {
     // TODO: verify promise and clean it, verification is not needed is just for solidity
-    if (members.add(toRegister)) {
+    if (!members.contains(toRegister)) {
+      var newMenbers = new HashSet(members);
+      newMenbers.add(toRegister);
+      this.members = Collections.unmodifiableSet(newMenbers);
       int newQuorum = (members.size() / 2) + 1;
       if (newQuorum >= minimumQuorum) {
         this.quorum = newQuorum;
@@ -85,7 +89,10 @@ public class OTopologyManager implements OTopologyEvents {
   }
 
   public synchronized void unregister(ONodeId node, long version) {
-    if (members.remove(node)) {
+    if (members.contains(node)) {
+      var newMenbers = new HashSet(members);
+      newMenbers.remove(node);
+      this.members = Collections.unmodifiableSet(newMenbers);
       int newQuorum = (members.size() / 2) + 1;
       if (newQuorum >= minimumQuorum) {
         this.quorum = newQuorum;
@@ -103,16 +110,19 @@ public class OTopologyManager implements OTopologyEvents {
   }
 
   public Set<ONodeId> getMembers() {
-    // Would be better to have members being copy on write
-    return new HashSet(members);
+    return members;
   }
 
   public synchronized void finalizeEnstablish(OGroupId groupId, Set<ONodeId> candidates) {
     this.state = OTopologyState.ESTABLISHED;
     this.groupId = Optional.of(groupId);
-    this.members = candidates;
+    setMember(candidates);
     this.candidates = new HashSet<>();
     this.version = 0;
+  }
+
+  private void setMember(Set<ONodeId> members) {
+    this.members = Collections.unmodifiableSet(new HashSet(members));
   }
 
   public synchronized Optional<OAcceptResult> validateEnstablish(
@@ -131,12 +141,12 @@ public class OTopologyManager implements OTopologyEvents {
         // TODO: before applying check if any promise or running a coordination
         if (state == OTopologyState.BOOT && externState.getMembers().contains(current)) {
           this.state = externState.getState();
-          this.members = externState.getMembers();
+          this.setMember(externState.getMembers());
           this.version = externState.getVersion();
           this.groupId = externState.getGroupId();
         } else if (this.groupId.equals(externState.getGroupId())) {
           if (externState.getVersion() > version) {
-            this.members = externState.getMembers();
+            this.setMember(externState.getMembers());
             this.version = externState.getVersion();
           } else if (externState.getVersion() != version) {
             // TODO: send local version to the sender because is outdated, it may as well happen
@@ -158,6 +168,6 @@ public class OTopologyManager implements OTopologyEvents {
     this.groupId = nodeStateStore.getGroupId();
     this.state = nodeStateStore.getState();
     this.version = nodeStateStore.getVersion();
-    this.members = nodeStateStore.getMembers();
+    this.setMember(nodeStateStore.getMembers());
   }
 }
