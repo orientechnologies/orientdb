@@ -49,6 +49,11 @@ public class OProposeOp implements OStructuralMessage, ODistributedMessage {
   }
 
   @Override
+  public void cancel(OrientDBDistributed ctx) {
+    this.op.cancel(ctx);
+  }
+
+  @Override
   public OTransactionIdPromise getPromiseId() {
     return promise;
   }

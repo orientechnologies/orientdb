@@ -2,6 +2,7 @@ package com.orientechnologies.orient.distributed.context;
 
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.distributed.context.coordination.message.ODistributedMessage;
+import java.util.Optional;
 
 public interface OPromisedDistributedOps {
 
@@ -9,5 +10,5 @@ public interface OPromisedDistributedOps {
 
   ODistributedMessage get(OTransactionIdPromise promise);
 
-  void remove(OTransactionIdPromise promise);
+  Optional<ODistributedMessage> remove(OTransactionIdPromise promise);
 }

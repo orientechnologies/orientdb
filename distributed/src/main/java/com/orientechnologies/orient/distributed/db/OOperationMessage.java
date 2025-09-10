@@ -15,6 +15,8 @@ public interface OOperationMessage {
 
   void apply(OrientDBDistributed ctx);
 
+  void cancel(OrientDBDistributed ctx);
+
   static OOperationMessage readNetwork(DataInput input) throws IOException {
     return switch (input.readShort()) {
       case 1 -> ODropDbMessage.readNetwork(input);

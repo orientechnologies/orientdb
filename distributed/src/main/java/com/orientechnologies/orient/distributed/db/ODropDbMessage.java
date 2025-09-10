@@ -32,6 +32,11 @@ public class ODropDbMessage implements OOperationMessage {
   }
 
   @Override
+  public void cancel(OrientDBDistributed ctx) {
+    // Promise not tracked do nothing
+  }
+
+  @Override
   public short getType() {
     return 1;
   }

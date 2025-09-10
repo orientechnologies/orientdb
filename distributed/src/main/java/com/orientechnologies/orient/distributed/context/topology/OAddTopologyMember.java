@@ -35,6 +35,11 @@ public class OAddTopologyMember implements OOperationMessage {
   }
 
   @Override
+  public void cancel(OrientDBDistributed ctx) {
+    ctx.cancelRegisterPromise();
+  }
+
+  @Override
   public void serialize(DataOutput out) throws IOException {
     out.writeLong(version);
     this.node.writeNetwork(out);

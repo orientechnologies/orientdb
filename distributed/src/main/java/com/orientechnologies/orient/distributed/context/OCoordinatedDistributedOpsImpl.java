@@ -134,7 +134,7 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
 
   @Override
   public boolean promiseRegister(ONodeId node, long version) {
-    return topology.promise(node, version);
+    return topology.promiseRegister(node, version);
   }
 
   @Override
@@ -167,5 +167,15 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   @Override
   public void load(ONodeStateStore nodeStateStore) {
     this.topology.load(nodeStateStore);
+  }
+
+  @Override
+  public void cancelRegisterPromise() {
+    this.topology.cancelRegisterPromise();
+  }
+
+  @Override
+  public void cancelEnstablish() {
+    this.topology.cancelEnstablish();
   }
 }

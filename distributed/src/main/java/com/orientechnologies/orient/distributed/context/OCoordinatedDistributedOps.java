@@ -47,4 +47,8 @@ public interface OCoordinatedDistributedOps {
   ONodeStateNetwork getNetworkState();
 
   void load(ONodeStateStore nodeStateStore);
+
+  void cancelRegisterPromise();
+
+  void cancelEnstablish();
 }

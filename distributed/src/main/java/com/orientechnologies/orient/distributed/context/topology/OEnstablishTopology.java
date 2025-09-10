@@ -32,6 +32,11 @@ public class OEnstablishTopology implements OOperationMessage {
     return ctx.getNodeState().validateEnstablish(groupId, candidates);
   }
 
+  @Override
+  public void cancel(OrientDBDistributed ctx) {
+    ctx.getNodeState().cancelEnstablish();
+  }
+
   public static OEnstablishTopology readNetwork(DataInput input) throws IOException {
     OGroupId networkId = OGroupId.readNetwork(input);
     int size = input.readInt();

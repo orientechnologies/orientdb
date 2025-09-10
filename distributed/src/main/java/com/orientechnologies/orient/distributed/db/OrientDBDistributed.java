@@ -718,4 +718,8 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     // This should make aware of the added node of the fact it joined the network
     sendFirstConnect(node);
   }
+
+  public void cancelRegisterPromise() {
+    getNodeState().cancelRegisterPromise();
+  }
 }

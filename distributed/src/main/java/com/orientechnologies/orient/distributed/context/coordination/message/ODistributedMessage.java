@@ -7,4 +7,6 @@ public interface ODistributedMessage {
   OTransactionIdPromise getPromiseId();
 
   void apply(OrientDBDistributed ctx);
+
+  void cancel(OrientDBDistributed ctx);
 }

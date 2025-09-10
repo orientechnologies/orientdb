@@ -100,11 +100,12 @@ public class ONodeState {
     return false;
   }
 
-  public void receiveFailure(OTransactionIdPromise promise) {
+  public Optional<ODistributedMessage> receiveFailure(OTransactionIdPromise promise) {
     boolean promised = sequenceManager.notifyFailure(promise);
     if (promised) {
-      finalize(promise);
+      return this.promised.remove(promise);
     }
+    return Optional.empty();
   }
 
   public ODistributedMessage receiveSuccess(OTransactionIdPromise promise) {
@@ -185,5 +186,13 @@ public class ONodeState {
 
   public ONodeStateNetwork getNetworkState() {
     return this.coordinated.getNetworkState();
+  }
+
+  public void cancelRegisterPromise() {
+    this.coordinated.cancelRegisterPromise();
+  }
+
+  public void cancelEnstablish() {
+    this.coordinated.cancelEnstablish();
   }
 }

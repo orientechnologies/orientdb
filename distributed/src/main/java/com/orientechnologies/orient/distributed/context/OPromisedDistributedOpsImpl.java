@@ -3,6 +3,7 @@ package com.orientechnologies.orient.distributed.context;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.distributed.context.coordination.message.ODistributedMessage;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class OPromisedDistributedOpsImpl implements OPromisedDistributedOps {
@@ -24,7 +25,7 @@ public class OPromisedDistributedOpsImpl implements OPromisedDistributedOps {
   }
 
   @Override
-  public void remove(OTransactionIdPromise promise) {
-    this.promised.remove(promise);
+  public Optional<ODistributedMessage> remove(OTransactionIdPromise promise) {
+    return Optional.of(this.promised.remove(promise));
   }
 }

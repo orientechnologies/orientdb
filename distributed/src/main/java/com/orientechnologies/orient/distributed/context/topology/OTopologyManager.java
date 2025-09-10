@@ -6,6 +6,7 @@ import com.orientechnologies.orient.distributed.context.ONodeStateStore;
 import com.orientechnologies.orient.distributed.context.coordination.message.ONodeStateNetwork;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAlreadyEnstablishedTopologyState;
+import com.orientechnologies.orient.distributed.context.coordination.result.OAlreadyPromised;
 import com.orientechnologies.orient.distributed.context.topology.ODiscoverAction.OAddNodeAction;
 import com.orientechnologies.orient.distributed.context.topology.ODiscoverAction.OEstablishAction;
 import com.orientechnologies.orient.distributed.context.topology.ODiscoverAction.ONoneAction;
@@ -25,6 +26,7 @@ public class OTopologyManager implements OTopologyEvents {
   private volatile long version = 0;
   private volatile int minimumQuorum;
   private volatile int quorum = 0;
+  private volatile boolean promise = false;
 
   public OTopologyManager(ONodeId current, int minimumQuorum) {
     this.current = current;
@@ -61,9 +63,14 @@ public class OTopologyManager implements OTopologyEvents {
     return version;
   }
 
-  public synchronized boolean promise(ONodeId toAdd, long version) {
+  public synchronized boolean promiseRegister(ONodeId toAdd, long version) {
+    if (this.promise) {
+      //      return Optional.of(new OAlreadyPromised());
+      return false;
+    }
     if (this.version + 1 == version) {
-      // TODO: hold and check promise for avoid double promise
+      // TODO: maybe keep the version of promise
+      this.promise = true;
       return true;
     } else {
       return false;
@@ -82,6 +89,7 @@ public class OTopologyManager implements OTopologyEvents {
       }
     }
     this.version = version;
+    this.promise = false;
   }
 
   public synchronized boolean enoughNodes() {
@@ -119,6 +127,7 @@ public class OTopologyManager implements OTopologyEvents {
     setMember(candidates);
     this.candidates = new HashSet<>();
     this.version = 0;
+    this.promise = false;
   }
 
   private void setMember(Set<ONodeId> members) {
@@ -127,7 +136,11 @@ public class OTopologyManager implements OTopologyEvents {
 
   public synchronized Optional<OAcceptResult> validateEnstablish(
       OGroupId groupId, Set<ONodeId> candidates) {
+    if (this.promise) {
+      return Optional.of(new OAlreadyPromised());
+    }
     if (this.state == OTopologyState.BOOT) {
+      promise = true;
       return Optional.empty();
     }
     return Optional.of(new OAlreadyEnstablishedTopologyState());
@@ -169,5 +182,13 @@ public class OTopologyManager implements OTopologyEvents {
     this.state = nodeStateStore.getState();
     this.version = nodeStateStore.getVersion();
     this.setMember(nodeStateStore.getMembers());
+  }
+
+  public synchronized void cancelRegisterPromise() {
+    this.promise = false;
+  }
+
+  public synchronized void cancelEnstablish() {
+    this.promise = false;
   }
 }
