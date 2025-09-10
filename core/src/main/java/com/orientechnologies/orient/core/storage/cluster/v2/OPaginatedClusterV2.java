@@ -600,6 +600,21 @@ public final class OPaginatedClusterV2 extends OPaginatedCluster {
     return entrySize + OByteSerializer.BYTE_SIZE + OLongSerializer.LONG_SIZE;
   }
 
+  private static int calculateContentSizeDeltaFromChunk(final byte[] chunk) {
+    final byte firstChunk =
+        OByteSerializer.INSTANCE.deserialize(
+            chunk, chunk.length - OLongSerializer.LONG_SIZE - OByteSerializer.BYTE_SIZE);
+    if (firstChunk == 0) {
+      // Subsequent chunk, no cluster entry header
+      // entry content - first entry flag - next entry pointer
+      return chunk.length - OLongSerializer.LONG_SIZE - OByteSerializer.BYTE_SIZE;
+    }
+    // entry content - record type - record length - first entry flag - next entry pointer
+    return calculateContentSizeFromClusterEntrySize(chunk.length)
+        - OByteSerializer.BYTE_SIZE
+        - OLongSerializer.LONG_SIZE;
+  }
+
   private static int getEntryContentLength(final int grownContentSize) {
 
     return grownContentSize
@@ -815,7 +830,7 @@ public final class OPaginatedClusterV2 extends OPaginatedCluster {
                 atomicOperation.addDeletedRecordPosition(
                     id, cacheEntry.getPageIndex(), recordPosition);
                 assert content != null;
-                removeRecordSize = calculateContentSizeFromClusterEntrySize(content.length);
+                removeRecordSize += calculateContentSizeDeltaFromChunk(content);
 
                 maxRecordSize = localPage.getMaxRecordSize();
                 removedContentSize += localPage.getFreeSpace() - initialFreeSpace;
@@ -876,7 +891,7 @@ public final class OPaginatedClusterV2 extends OPaginatedCluster {
               final OClusterPage page = new OClusterPage(cacheEntry);
               final byte[] deletedRecord = page.deleteRecord(nextRecordPosition, true);
               assert deletedRecord != null;
-              oldContentSize = calculateContentSizeFromClusterEntrySize(deletedRecord.length);
+              oldContentSize += calculateContentSizeDeltaFromChunk(deletedRecord);
               nextPagePointer =
                   OLongSerializer.INSTANCE.deserializeNative(
                       deletedRecord, deletedRecord.length - OLongSerializer.LONG_SIZE);
