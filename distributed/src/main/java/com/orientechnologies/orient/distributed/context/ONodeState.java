@@ -71,17 +71,12 @@ public class ONodeState {
     this.coordinated.unregisterNode(node, version);
   }
 
-  private void fill(Optional<byte[]> lastMetadata) {
-    lastMetadata.ifPresent(
-        (data) -> sequenceManager.fill(OTxMetadataHolderImpl.read(data).getStatus()));
-  }
-
   public boolean receive(ODistributedMessage message) {
     ValidationResult result = sequenceManager.validate(message.getPromiseId());
     switch (result) {
       case VALID -> {
         this.log.log(message);
-        this.promised.add(message);
+        this.promised.addPromised(message);
         return true;
       }
       case ALREADY_PRESENT -> {
@@ -89,11 +84,13 @@ public class ONodeState {
         return false;
       }
       case ALREADY_PROMISED -> {
-        // Fail for promised to someone else
+        // Fail for promised to someone else this track it anyway in case of minority in quorum
+        this.promised.addNotPromised(message);
         return false;
       }
       case MISSING_PREVIOUS -> {
-        // wait for previous one
+        // wait for previous one, track it anyway
+        this.promised.addNotPromised(message);
         return false;
       }
     }
@@ -103,18 +100,18 @@ public class ONodeState {
   public Optional<ODistributedMessage> receiveFailure(OTransactionIdPromise promise) {
     boolean promised = sequenceManager.notifyFailure(promise);
     if (promised) {
-      return this.promised.remove(promise);
+      return this.promised.removePromised(promise);
     }
     return Optional.empty();
   }
 
   public ODistributedMessage receiveSuccess(OTransactionIdPromise promise) {
-    // TODO: the verification of success also close the promise, maybe is better to close
-    // the promise after the execution;
+    // TODO: if received the confirmation for not promised message have to cancel eventual
+    // promised message and try to promised and apply currently confirmed message.
     ValidationResult result = sequenceManager.notifySuccess(promise);
     switch (result) {
       case VALID -> {
-        ODistributedMessage message = this.promised.get(promise);
+        ODistributedMessage message = this.promised.getPromised(promise);
         return message;
       }
       case ALREADY_PRESENT -> {
@@ -133,7 +130,7 @@ public class ONodeState {
   }
 
   private void finalize(OTransactionIdPromise promise) {
-    this.promised.remove(promise);
+    this.promised.removePromised(promise);
   }
 
   public void complete(OTransactionIdPromise promise) {

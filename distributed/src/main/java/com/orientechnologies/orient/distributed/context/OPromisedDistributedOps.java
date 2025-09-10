@@ -6,9 +6,15 @@ import java.util.Optional;
 
 public interface OPromisedDistributedOps {
 
-  void add(ODistributedMessage message);
+  void addPromised(ODistributedMessage message);
 
-  ODistributedMessage get(OTransactionIdPromise promise);
+  ODistributedMessage getPromised(OTransactionIdPromise promise);
 
-  Optional<ODistributedMessage> remove(OTransactionIdPromise promise);
+  Optional<ODistributedMessage> removePromised(OTransactionIdPromise promise);
+
+  void addNotPromised(ODistributedMessage message);
+
+  ODistributedMessage getNotPromised(OTransactionIdPromise promise);
+
+  Optional<ODistributedMessage> removeNotPromised(OTransactionIdPromise promise);
 }
