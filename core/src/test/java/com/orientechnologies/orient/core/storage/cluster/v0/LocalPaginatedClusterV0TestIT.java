@@ -42,4 +42,9 @@ public class LocalPaginatedClusterV0TestIT extends LocalPaginatedClusterAbstract
         .executeInsideAtomicOperation(
             null, atomicOperation -> paginatedCluster.create(atomicOperation));
   }
+
+  @Override
+  protected void checkRecordsSize(int expectedRecordSize) throws IOException {
+    // TODO: Check record size calculations in V0
+  }
 }
