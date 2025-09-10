@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.distributed.context;
 
+import com.orientechnologies.orient.core.transaction.ONodeId;
+import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.distributed.context.coordination.message.ODistributedMessage;
 import java.util.Map;
@@ -10,15 +12,24 @@ public class OPromisedDistributedOpsImpl implements OPromisedDistributedOps {
 
   private final Map<OTransactionIdPromise, ODistributedMessage> promised;
   private final Map<OTransactionIdPromise, ODistributedMessage> notPromised;
+  private final Map<ONodeId, Map<OTransactionId, ODistributedMessage>> primisedByNode;
 
   public OPromisedDistributedOpsImpl() {
     this.promised = new ConcurrentHashMap<>();
+    this.primisedByNode = new ConcurrentHashMap<>();
     this.notPromised = new ConcurrentHashMap<>();
   }
 
   @Override
   public void addPromised(ODistributedMessage message) {
     this.promised.put(message.getPromiseId(), message);
+    var perNode =
+        this.primisedByNode.computeIfAbsent(
+            message.getPromiseId().getCoordinator(),
+            (node) -> {
+              return new ConcurrentHashMap();
+            });
+    perNode.put(message.getPromiseId().getId(), message);
   }
 
   @Override
@@ -28,7 +39,12 @@ public class OPromisedDistributedOpsImpl implements OPromisedDistributedOps {
 
   @Override
   public Optional<ODistributedMessage> removePromised(OTransactionIdPromise promise) {
-    return Optional.of(this.promised.remove(promise));
+    var messages = this.primisedByNode.get(promise.getCoordinator());
+    if (messages != null) {
+      messages.remove(promise.getId());
+    }
+
+    return Optional.ofNullable(this.promised.remove(promise));
   }
 
   @Override
@@ -43,6 +59,11 @@ public class OPromisedDistributedOpsImpl implements OPromisedDistributedOps {
 
   @Override
   public Optional<ODistributedMessage> removeNotPromised(OTransactionIdPromise promise) {
-    return Optional.of(this.notPromised.remove(promise));
+    return Optional.ofNullable(this.notPromised.remove(promise));
+  }
+
+  @Override
+  public Optional<Map<OTransactionId, ODistributedMessage>> getPromised(ONodeId node) {
+    return Optional.ofNullable(this.primisedByNode.get(node));
   }
 }
