@@ -429,7 +429,8 @@ public class Orient extends OListenerManger<OOrientListener> {
   }
 
   public TimerTask scheduleTask(final Runnable task, final Date firstTime, final long period) {
-    return scheduleTask(task, firstTime.getTime() - System.currentTimeMillis(), period);
+    return scheduleTask(
+        task, Math.max(0, firstTime.getTime() - System.currentTimeMillis()), period);
   }
 
   public boolean isActive() {
