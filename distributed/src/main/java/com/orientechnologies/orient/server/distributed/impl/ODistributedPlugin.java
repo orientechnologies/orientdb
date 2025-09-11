@@ -43,6 +43,7 @@ import com.orientechnologies.orient.core.OSignalHandler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
+import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
@@ -285,6 +286,15 @@ public class ODistributedPlugin extends OServerPluginAbstract
   @Override
   public void startup() {
     if (!enabled) return;
+
+    OContextConfiguration contextConfiguration = serverInstance.getContextConfiguration();
+
+    // force embedded RID bags to avoid replication errors in distributed mode
+    // see https://orientdb.dev/docs/3.2.x/general/Concurrency.html#concurrency-when-adding-edges
+    contextConfiguration.setValue(
+        OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD, Integer.MAX_VALUE);
+    contextConfiguration.setValue(
+        OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD, Integer.MAX_VALUE);
 
     // REGISTER TEMPORARY USER FOR REPLICATION PURPOSE
     serverInstance.addTemporaryUser(REPLICATOR_USER, "" + new SecureRandom().nextLong(), "*");
