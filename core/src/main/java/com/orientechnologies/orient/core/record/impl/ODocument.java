@@ -2468,7 +2468,7 @@ public class ODocument extends ORecordAbstract
         }
       }
 
-      if (additional != null && iFields != null) {
+      if (additional != null) {
         String[] copy = new String[iFields.length + additional.size()];
         System.arraycopy(iFields, 0, copy, 0, iFields.length);
         int next = iFields.length;

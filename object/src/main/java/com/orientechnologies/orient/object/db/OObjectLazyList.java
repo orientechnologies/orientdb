@@ -106,7 +106,7 @@ public class OObjectLazyList<TYPE> extends ArrayList<TYPE>
       if (converted) converted = false;
       if (recordList.add(record)) {
         setDirty();
-        if (orphanRemoval && record != null && sourceRecord != null)
+        if (orphanRemoval && sourceRecord != null)
           ((OObjectProxyMethodHandler) sourceRecord.getHandler())
               .getOrphans()
               .remove(record.getIdentity());
@@ -138,7 +138,7 @@ public class OObjectLazyList<TYPE> extends ArrayList<TYPE>
     if (element instanceof OIdentifiable) {
       record = (OIdentifiable) element;
       if (converted) converted = false;
-      if (orphanRemoval && record != null && sourceRecord != null)
+      if (orphanRemoval && sourceRecord != null)
         ((OObjectProxyMethodHandler) sourceRecord.getHandler())
             .getOrphans()
             .remove(record.getIdentity());
@@ -313,7 +313,7 @@ public class OObjectLazyList<TYPE> extends ArrayList<TYPE>
     if (element instanceof OIdentifiable) {
       record = (OIdentifiable) element;
       if (converted) converted = false;
-      if (orphanRemoval && record != null && sourceRecord != null)
+      if (orphanRemoval && sourceRecord != null)
         ((OObjectProxyMethodHandler) sourceRecord.getHandler())
             .getOrphans()
             .remove(record.getIdentity());

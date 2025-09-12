@@ -57,10 +57,7 @@ public abstract class OServerCommandDistributedScope
     } else {
 
       String currentUserId = iRequest.getData().currentUserId;
-      if (currentUserId != null
-          && currentUserId.length() > 0
-          && localDatabase != null
-          && localDatabase.getUser() != null) {
+      if (currentUserId != null && currentUserId.length() > 0 && localDatabase.getUser() != null) {
         if (!currentUserId.equals(localDatabase.getUser().getIdentity().toString())) {
           ODocument userDoc = localDatabase.load(new ORecordId(currentUserId));
           localDatabase.setUser(new OUser(userDoc));

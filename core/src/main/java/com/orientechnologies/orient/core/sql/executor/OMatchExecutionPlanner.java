@@ -716,7 +716,7 @@ public class OMatchExecutionPlanner {
           aliasFilters.put(alias, previousFilter);
         }
         OAndBlock filterBlock = (OAndBlock) previousFilter.getBaseExpression();
-        if (filter != null && filter.getBaseExpression() != null) {
+        if (filter.getBaseExpression() != null) {
           filterBlock.getSubBlocks().add(filter.getBaseExpression());
         }
       }

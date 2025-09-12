@@ -405,7 +405,7 @@ public class OClientConnectionManager {
               e, entry.getValue().getRemoteAddress());
         }
       }
-      if (protocol.isAlive()) {
+      if (protocol != null && protocol.isAlive()) {
         if (protocol instanceof ONetworkProtocolBinary
             && ((ONetworkProtocolBinary) protocol).getRequestType() == -1) {
           try {

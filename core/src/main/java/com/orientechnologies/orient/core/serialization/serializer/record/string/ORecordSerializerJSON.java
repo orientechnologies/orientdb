@@ -167,16 +167,15 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
             '\r',
             '\t');
 
-    if (fields.size() % 2 != 0)
-      throw new OSerializationException(
-          "Error on unmarshalling JSON content: wrong format \""
-              + source
-              + "\". Use <field> : <value>");
-
     Map<String, Character> fieldTypes = null;
 
     if (fields != null && fields.size() > 0) {
       // SEARCH FOR FIELD TYPES IF ANY
+      if (fields.size() % 2 != 0)
+        throw new OSerializationException(
+            "Error on unmarshalling JSON content: wrong format \""
+                + source
+                + "\". Use <field> : <value>");
       for (int i = 0; i < fields.size(); i += 2) {
         final String fieldName = OIOUtils.getStringContent(fields.get(i));
         final String fieldValue = fields.get(i + 1);

@@ -334,8 +334,13 @@ public class HelperClasses {
     while ((size--) > 0) {
       final String key = readString(bytes);
       final ORecordId value = readOptimizedLink(bytes, justRunThrough);
-      if (value.equals(NULL_RECORD_ID)) result.putInternal(key, null);
-      else result.putInternal(key, value);
+      if (result != null) {
+        if (value.equals(NULL_RECORD_ID)) {
+          result.putInternal(key, null);
+        } else {
+          result.putInternal(key, value);
+        }
+      }
     }
     return result;
   }

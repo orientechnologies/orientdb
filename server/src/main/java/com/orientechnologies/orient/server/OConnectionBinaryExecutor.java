@@ -316,24 +316,22 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
       if (record != null) {
         byte[] bytes = getRecordBytes(connection, record);
         final Set<ORecord> recordsToSend = new HashSet<>();
-        if (record != null) {
-          if (fetchPlanString.length() > 0) {
-            // BUILD THE SERVER SIDE RECORD TO ACCES TO THE FETCH
-            // PLAN
-            if (record instanceof ODocument) {
-              final OFetchPlan fetchPlan = OFetchHelper.buildFetchPlan(fetchPlanString);
+        if (fetchPlanString.length() > 0) {
+          // BUILD THE SERVER SIDE RECORD TO ACCES TO THE FETCH
+          // PLAN
+          if (record instanceof ODocument) {
+            final OFetchPlan fetchPlan = OFetchHelper.buildFetchPlan(fetchPlanString);
 
-              final ODocument doc = (ODocument) record;
-              final OFetchListener listener =
-                  new ORemoteFetchListener() {
-                    @Override
-                    protected void sendRecord(ORecord iLinked) {
-                      recordsToSend.add(iLinked);
-                    }
-                  };
-              final OFetchContext context = new ORemoteFetchContext();
-              OFetchHelper.fetch(doc, doc, fetchPlan, listener, context, "");
-            }
+            final ODocument doc = (ODocument) record;
+            final OFetchListener listener =
+                new ORemoteFetchListener() {
+                  @Override
+                  protected void sendRecord(ORecord iLinked) {
+                    recordsToSend.add(iLinked);
+                  }
+                };
+            final OFetchContext context = new ORemoteFetchContext();
+            OFetchHelper.fetch(doc, doc, fetchPlan, listener, context, "");
           }
         }
         response =

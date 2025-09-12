@@ -5374,8 +5374,8 @@ public abstract class OAbstractPaginatedStorage
       if (restoreLog != null) {
         final OLogSequenceNumber beginLsn = restoreLog.begin();
         restoreFrom(restoreLog, beginLsn);
+        restoreLog.close();
       }
-      restoreLog.close();
 
       if (maxLsn != null && writeAheadLog != null) {
         writeAheadLog.moveLsnAfter(maxLsn);

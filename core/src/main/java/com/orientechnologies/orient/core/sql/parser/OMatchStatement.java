@@ -243,7 +243,7 @@ public class OMatchStatement extends OStatement {
           aliasFilters.put(alias, previousFilter);
         }
         OAndBlock filterBlock = (OAndBlock) previousFilter.baseExpression;
-        if (filter != null && filter.baseExpression != null) {
+        if (filter.baseExpression != null) {
           filterBlock.subBlocks.add(filter.baseExpression);
         }
       }
