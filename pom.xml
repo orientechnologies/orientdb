@@ -157,7 +157,7 @@
         <blueprints.version>2.6.0</blueprints.version>
         <!-- | shared build/report plugins version -->
         <surefire.version>3.5.4</surefire.version>
-        <failsafe.version>3.5.3</failsafe.version>
+        <failsafe.version>3.5.4</failsafe.version>
         <jacoco.version>0.8.13</jacoco.version>
         <sonatypeOssDistMgmtSnapshotsUrl>https://oss.sonatype.org/content/repositories/snapshots/
         </sonatypeOssDistMgmtSnapshotsUrl>
