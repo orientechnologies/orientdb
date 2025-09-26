@@ -795,10 +795,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     List<OTransactionId> res = sequenceManager.checkSelfStatus(status);
     res.removeAll(this.inQueue);
     if (!res.isEmpty()) {
-      context.execute(
-          () -> {
-            manager.installDatabase(false, databaseName, true, true);
-          });
+      context.execute(this::runReverseSync);
     }
   }
 

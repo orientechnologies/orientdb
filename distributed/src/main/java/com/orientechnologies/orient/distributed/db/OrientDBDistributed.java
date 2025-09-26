@@ -603,15 +603,6 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
         });
   }
 
-  public ODistributedConfiguration getOrInitDistributedConfiguration(String database) {
-    ODistributedConfigurationManager cm = getOrInitConfigurationManager(database);
-    if (cm.getExistingDistributedConfiguration() != null) {
-      return cm.getExistingDistributedConfiguration();
-    } else {
-      return cm.getDistributedConfiguration(null);
-    }
-  }
-
   public boolean tryUpdatingDatabaseConfigurationLocally(
       final String database, final OModifiableDistributedConfiguration cfg) {
     ODistributedConfigurationManager cm = getConfigurationManager(database);
