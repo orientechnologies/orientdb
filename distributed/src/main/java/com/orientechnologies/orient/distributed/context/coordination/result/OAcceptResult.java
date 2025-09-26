@@ -14,6 +14,7 @@ public interface OAcceptResult {
       case 1 -> OInvalidSequential.fromNetwork(input);
       case 2 -> OQuorumNotReached.fromNetwork(input);
       case 3 -> OAlreadyEnstablishedTopologyState.fromNetwork(input);
+      case 4 -> ODatabaseNameUsed.fromNetwork(input);
       default -> throw new ODistributedException("wrong accept result message type from network");
     };
   }

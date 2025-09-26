@@ -25,6 +25,8 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEngine.OBackupType;
 import com.orientechnologies.orient.core.transaction.ONodeId;
+import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
+import com.orientechnologies.orient.distributed.context.ODatabaseId;
 import com.orientechnologies.orient.distributed.context.ONodeState;
 import com.orientechnologies.orient.distributed.context.coordination.message.ONodeFirstConnect;
 import com.orientechnologies.orient.distributed.context.coordination.message.ONodeStateNetwork;
@@ -483,6 +485,10 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     }
   }
 
+  private void declareDatabaseFlow(String name) {
+    distributedOperation(new ODeclareDbMessage(name, null));
+  }
+
   public void distributedSetOnline(String database) {
     ODistributedDatabaseImpl distribDatabase = getDatabase(database);
     if (distribDatabase != null) {
@@ -685,5 +691,10 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   public void cancelRegisterPromise() {
     getNodeState().cancelRegisterPromise();
+  }
+
+  public Optional<OAcceptResult> promiseDeclare(
+      OTransactionIdPromise promise, ODatabaseId databaseId, String database) {
+    return getNodeState().promiseDeclare(promise, databaseId, database);
   }
 }

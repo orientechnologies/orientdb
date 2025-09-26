@@ -2,6 +2,7 @@ package com.orientechnologies.orient.distributed.context.topology;
 
 import com.orientechnologies.orient.core.transaction.OGroupId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
+import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import com.orientechnologies.orient.distributed.db.OOperationMessage;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
@@ -23,17 +24,17 @@ public class OEnstablishTopology implements OOperationMessage {
   }
 
   @Override
-  public void apply(OrientDBDistributed ctx) {
+  public void apply(OrientDBDistributed ctx, OTransactionIdPromise promise) {
     ctx.getNodeState().enstablish(groupId, candidates);
   }
 
   @Override
-  public Optional<OAcceptResult> validate(OrientDBDistributed ctx) {
+  public Optional<OAcceptResult> validate(OrientDBDistributed ctx, OTransactionIdPromise promise) {
     return ctx.getNodeState().validateEnstablish(groupId, candidates);
   }
 
   @Override
-  public void cancel(OrientDBDistributed ctx) {
+  public void cancel(OrientDBDistributed ctx, OTransactionIdPromise promise) {
     ctx.getNodeState().cancelEnstablish();
   }
 

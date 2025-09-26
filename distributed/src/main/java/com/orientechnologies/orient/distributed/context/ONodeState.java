@@ -25,6 +25,7 @@ public class ONodeState {
   private final ONodeId nodeId;
   private final OAppliedState state;
   private final OStateStore store;
+  private final ODatabasesTopologyState databaseTopology;
 
   public ONodeState(ONodeId current, int minimumQuorum, OStateStore store) {
     sequenceManager = new OTransactionSequenceManager(current, 3);
@@ -34,6 +35,7 @@ public class ONodeState {
     coordinated = new OCoordinatedDistributedOpsImpl(current, minimumQuorum);
     nodeId = current;
     this.store = store;
+    this.databaseTopology = new ODatabasesTopologyState();
     initFromStore();
   }
 
@@ -191,5 +193,10 @@ public class ONodeState {
 
   public void cancelEnstablish() {
     this.coordinated.cancelEnstablish();
+  }
+
+  public Optional<OAcceptResult> promiseDeclare(
+      OTransactionIdPromise promise, ODatabaseId databaseId, String database) {
+    return this.databaseTopology.promiseDeclare(promise, databaseId, database);
   }
 }
