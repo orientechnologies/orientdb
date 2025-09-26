@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.distributed.db;
 
+import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -14,11 +15,11 @@ public class ODropDbMessage implements OOperationMessage {
     this.name = name;
   }
 
-  public void apply(OrientDBDistributed ctx) {
+  public void apply(OrientDBDistributed ctx, OTransactionIdPromise promise) {
     ctx.internalDrop(name);
   }
 
-  public Optional<OAcceptResult> validate(OrientDBDistributed ctx) {
+  public Optional<OAcceptResult> validate(OrientDBDistributed ctx, OTransactionIdPromise promise) {
     boolean result = ctx.exists(name, null, null);
     if (!result) {
       // Send Error message
@@ -32,7 +33,7 @@ public class ODropDbMessage implements OOperationMessage {
   }
 
   @Override
-  public void cancel(OrientDBDistributed ctx) {
+  public void cancel(OrientDBDistributed ctx, OTransactionIdPromise promise) {
     // Promise not tracked do nothing
   }
 

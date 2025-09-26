@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.distributed.context.topology;
 
 import com.orientechnologies.orient.core.transaction.ONodeId;
+import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import com.orientechnologies.orient.distributed.context.coordination.result.OInvalidSequential;
 import com.orientechnologies.orient.distributed.db.OOperationMessage;
@@ -21,7 +22,7 @@ public class OAddTopologyMember implements OOperationMessage {
   }
 
   @Override
-  public Optional<OAcceptResult> validate(OrientDBDistributed ctx) {
+  public Optional<OAcceptResult> validate(OrientDBDistributed ctx, OTransactionIdPromise promise) {
     if (ctx.getNodeState().promiseRegister(node, version)) {
       return Optional.empty();
     } else {
@@ -30,12 +31,12 @@ public class OAddTopologyMember implements OOperationMessage {
   }
 
   @Override
-  public void apply(OrientDBDistributed ctx) {
+  public void apply(OrientDBDistributed ctx, OTransactionIdPromise promise) {
     ctx.registerNode(node, version);
   }
 
   @Override
-  public void cancel(OrientDBDistributed ctx) {
+  public void cancel(OrientDBDistributed ctx, OTransactionIdPromise promise) {
     ctx.cancelRegisterPromise();
   }
 

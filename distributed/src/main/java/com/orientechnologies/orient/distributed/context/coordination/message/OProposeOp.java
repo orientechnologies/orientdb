@@ -26,7 +26,7 @@ public class OProposeOp implements OStructuralMessage, ODistributedMessage {
     ONodeState nodeState = ctx.getNodeState();
     boolean result = nodeState.receive(this);
     if (result) {
-      Optional<OAcceptResult> res = op.validate(ctx);
+      Optional<OAcceptResult> res = op.validate(ctx, promise);
       if (res.isPresent()) {
         ctx.sendMessage(
             Collections.singleton(promise.getCoordinator()),
@@ -45,12 +45,12 @@ public class OProposeOp implements OStructuralMessage, ODistributedMessage {
 
   @Override
   public void apply(OrientDBDistributed ctx) {
-    this.op.apply(ctx);
+    this.op.apply(ctx, promise);
   }
 
   @Override
   public void cancel(OrientDBDistributed ctx) {
-    this.op.cancel(ctx);
+    this.op.cancel(ctx, promise);
   }
 
   @Override
