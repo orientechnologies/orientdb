@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.distributed.context;
 
+import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.OGroupId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionId;
@@ -198,5 +199,13 @@ public class ONodeState {
   public Optional<OAcceptResult> promiseDeclare(
       OTransactionIdPromise promise, ODatabaseId databaseId, String database) {
     return this.databaseTopology.promiseDeclare(promise, databaseId, database);
+  }
+
+  public void declareDatabase(OTransactionIdPromise promise, ODatabaseId dbId, String database) {
+    this.databaseTopology.declareDatabase(promise, dbId, database);
+  }
+
+  public void cancelDatabase(OTransactionIdPromise promise, ODatabaseId dbId, String database) {
+    this.databaseTopology.cancelPomise(promise, dbId, database);
   }
 }

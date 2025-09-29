@@ -24,9 +24,9 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEngine.OBackupType;
+import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
-import com.orientechnologies.orient.distributed.context.ODatabaseId;
 import com.orientechnologies.orient.distributed.context.ONodeState;
 import com.orientechnologies.orient.distributed.context.coordination.message.ONodeFirstConnect;
 import com.orientechnologies.orient.distributed.context.coordination.message.ONodeStateNetwork;
@@ -696,5 +696,13 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   public Optional<OAcceptResult> promiseDeclare(
       OTransactionIdPromise promise, ODatabaseId databaseId, String database) {
     return getNodeState().promiseDeclare(promise, databaseId, database);
+  }
+
+  public void declareDatabase(OTransactionIdPromise promise, ODatabaseId dbId, String database) {
+    getNodeState().declareDatabase(promise, dbId, database);
+  }
+
+  public void cancelDeclare(OTransactionIdPromise promise, ODatabaseId dbId, String database) {
+    getNodeState().cancelDatabase(promise, dbId, database);
   }
 }

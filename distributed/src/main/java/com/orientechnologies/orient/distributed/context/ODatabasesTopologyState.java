@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.distributed.context;
 
 import com.orientechnologies.common.util.ORawPair;
+import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
@@ -9,6 +10,7 @@ import com.orientechnologies.orient.distributed.context.coordination.result.ODat
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 public class ODatabasesTopologyState {
 
@@ -57,6 +59,16 @@ public class ODatabasesTopologyState {
     }
   }
 
+  public synchronized void cancelPomise(
+      OTransactionIdPromise promise, ODatabaseId db, String name) {
+    if (promised.containsKey(db)) {
+      var prom = promised.remove(db);
+      var inst = prom.getSecond();
+      promisedByName.remove(name);
+      assert inst.getName().equals(name);
+    }
+  }
+
   public synchronized void declareDatabase(
       OTransactionIdPromise promise, ODatabaseId db, String name) {
     if (promised.containsKey(db)) {
@@ -92,5 +104,9 @@ public class ODatabasesTopologyState {
     if (nodes != null) {
       nodes.setState(node, state, version);
     }
+  }
+
+  public synchronized Set<ODatabaseId> listDatabaseIds() {
+    return this.databases.keySet();
   }
 }

@@ -3,6 +3,7 @@ package com.orientechnologies.orient.distriubted.context.coordination.message;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.OGroupId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionId;
@@ -19,6 +20,7 @@ import com.orientechnologies.orient.distributed.context.coordination.result.OInv
 import com.orientechnologies.orient.distributed.context.topology.OAddTopologyMember;
 import com.orientechnologies.orient.distributed.context.topology.OEnstablishTopology;
 import com.orientechnologies.orient.distributed.context.topology.OTopologyState;
+import com.orientechnologies.orient.distributed.db.ODeclareDbMessage;
 import com.orientechnologies.orient.distributed.db.ODropDbMessage;
 import com.orientechnologies.orient.distributed.db.OOperationMessage;
 import java.io.ByteArrayInputStream;
@@ -92,6 +94,26 @@ public class CoordinationMessagesSerializationTest {
 
   private OGroupId newGroupId() {
     return new OGroupId("netId");
+  }
+
+  private ODatabaseId newDatabaseId() {
+    return new ODatabaseId("dbID");
+  }
+
+  @Test
+  public void declareDatabase() throws IOException {
+
+    OTransactionIdPromise id = newPromiseId();
+    ODatabaseId dbId = newDatabaseId();
+    OProposeOp propose = new OProposeOp(id, new ODeclareDbMessage("dbName", dbId));
+
+    OProposeOp read = (OProposeOp) writeRead(propose);
+
+    assertEquals(read.getPromiseId(), id);
+    OOperationMessage operation = read.getOp();
+
+    assertEquals(((ODeclareDbMessage) operation).getName(), "dbName");
+    assertEquals(((ODeclareDbMessage) operation).getId(), dbId);
   }
 
   @Test
