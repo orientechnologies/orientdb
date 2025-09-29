@@ -38,26 +38,36 @@ public class ORecordSaveThreadLocal extends ThreadLocal<ORecord> {
         .registerListener(
             new OOrientListenerAbstract() {
               @Override
-              public void onStartup() {
-                if (INSTANCE == null) INSTANCE = new ORecordSaveThreadLocal();
-              }
-
-              @Override
               public void onShutdown() {
-                INSTANCE = null;
+                synchronized (ORecordSaveThreadLocal.class) {
+                  INSTANCE = null;
+                }
               }
             });
   }
 
+  private static void init() {
+    if (INSTANCE == null) {
+      synchronized (ORecordSaveThreadLocal.class) {
+        if (INSTANCE == null) {
+          INSTANCE = new ORecordSaveThreadLocal();
+        }
+      }
+    }
+  }
+
   public static ORecord getLast() {
+    init();
     return INSTANCE.get();
   }
 
   public static void setLast(final ORecord document) {
+    init();
     INSTANCE.set(document);
   }
 
   public static void removeLast() {
+    init();
     INSTANCE.set(null);
   }
 }

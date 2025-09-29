@@ -557,7 +557,7 @@ public class OObjectDatabaseTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
       }
       return (RET) iPojo;
     } else {
-      OSerializationThreadLocal.INSTANCE.get().clear();
+      OSerializationThreadLocal.instance().get().clear();
 
       // GET THE ASSOCIATED DOCUMENT
       final Object proxiedObject = OObjectEntitySerializer.serializeObject(iPojo, this);

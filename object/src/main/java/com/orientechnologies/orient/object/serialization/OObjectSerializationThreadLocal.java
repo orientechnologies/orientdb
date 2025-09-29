@@ -25,7 +25,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class OObjectSerializationThreadLocal extends ThreadLocal<Map<Integer, Object>> {
-  public static volatile OObjectSerializationThreadLocal INSTANCE =
+  private static volatile OObjectSerializationThreadLocal INSTANCE =
       new OObjectSerializationThreadLocal();
 
   static {
@@ -33,15 +33,26 @@ public class OObjectSerializationThreadLocal extends ThreadLocal<Map<Integer, Ob
         .registerListener(
             new OOrientListenerAbstract() {
               @Override
-              public void onStartup() {
-                if (INSTANCE == null) INSTANCE = new OObjectSerializationThreadLocal();
-              }
+              public void onStartup() {}
 
               @Override
               public void onShutdown() {
-                INSTANCE = null;
+                synchronized (OObjectSerializationThreadLocal.class) {
+                  INSTANCE = null;
+                }
               }
             });
+  }
+
+  public static OObjectSerializationThreadLocal instance() {
+    if (INSTANCE == null) {
+      synchronized (OObjectSerializationThreadLocal.class) {
+        if (INSTANCE == null) {
+          INSTANCE = new OObjectSerializationThreadLocal();
+        }
+      }
+    }
+    return INSTANCE;
   }
 
   @Override

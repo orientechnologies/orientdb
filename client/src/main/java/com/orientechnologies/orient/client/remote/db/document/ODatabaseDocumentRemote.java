@@ -574,7 +574,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
       }
       return id;
     } else if (res == ORecordHook.RESULT.RECORD_REPLACED) {
-      ORecord replaced = OHookReplacedRecordThreadLocal.INSTANCE.get();
+      ORecord replaced = OHookReplacedRecordThreadLocal.instance().get();
       if (replaced instanceof ODocument) {
         ((ODocument) replaced).validate();
       }
@@ -593,7 +593,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
       }
       return id;
     } else if (res == ORecordHook.RESULT.RECORD_REPLACED) {
-      ORecord replaced = OHookReplacedRecordThreadLocal.INSTANCE.get();
+      ORecord replaced = OHookReplacedRecordThreadLocal.instance().get();
       if (replaced instanceof ODocument) {
         ((ODocument) replaced).validate();
       }

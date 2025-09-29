@@ -388,7 +388,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   @Override
   public void internalCommit(OTransactionInternal iTx) {
     int protocolVersion = DISTRIBUTED_REPLICATION_PROTOCOL_VERSION.getValueAsInteger();
-    if (OScenarioThreadLocal.INSTANCE.isRunModeDistributed()
+    if (OScenarioThreadLocal.instance().isRunModeDistributed()
         || (iTx.isSequenceTransaction() && protocolVersion == 2)) {
       // Exclusive for handling schema manipulation, remove after refactor for distributed schema
       super.internalCommit(iTx);
@@ -408,7 +408,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   @Override
   public void internalCommitPreallocate(OTransactionOptimistic iTx) {
     int protocolVersion = DISTRIBUTED_REPLICATION_PROTOCOL_VERSION.getValueAsInteger();
-    if (OScenarioThreadLocal.INSTANCE.isRunModeDistributed()
+    if (OScenarioThreadLocal.instance().isRunModeDistributed()
         || (iTx.isSequenceTransaction() && protocolVersion == 2)) {
       // Exclusive for handling schema manipulation, remove after refactor for distributed schema
       super.internalCommitPreallocate(iTx);
@@ -1254,7 +1254,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   }
 
   public boolean isLocalEnv() {
-    return OScenarioThreadLocal.INSTANCE.isRunModeDistributed();
+    return OScenarioThreadLocal.instance().isRunModeDistributed();
   }
 
   public void acquireDistributedExclusiveLock(int timeout) {

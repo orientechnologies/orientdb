@@ -34,13 +34,10 @@ public class OHookReplacedRecordThreadLocal extends ThreadLocal<ORecord> {
         .registerListener(
             new OOrientListenerAbstract() {
               @Override
-              public void onStartup() {
-                if (INSTANCE == null) INSTANCE = new OHookReplacedRecordThreadLocal();
-              }
-
-              @Override
               public void onShutdown() {
-                INSTANCE = null;
+                synchronized (OHookReplacedRecordThreadLocal.class) {
+                  INSTANCE = null;
+                }
               }
             });
   }
@@ -51,5 +48,16 @@ public class OHookReplacedRecordThreadLocal extends ThreadLocal<ORecord> {
 
   public boolean isDefined() {
     return super.get() != null;
+  }
+
+  public static OHookReplacedRecordThreadLocal instance() {
+    if (INSTANCE == null) {
+      synchronized (OHookReplacedRecordThreadLocal.class) {
+        if (INSTANCE == null) {
+          INSTANCE = new OHookReplacedRecordThreadLocal();
+        }
+      }
+    }
+    return INSTANCE;
   }
 }

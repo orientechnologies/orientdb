@@ -20,23 +20,13 @@
 package com.orientechnologies.orient.core.db;
 
 import com.orientechnologies.common.thread.OSoftThread;
-import com.orientechnologies.orient.core.OOrientListenerAbstract;
-import com.orientechnologies.orient.core.Orient;
 
 /**
  * Thread Local to store execution setting.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-public class OExecutionThreadLocal extends ThreadLocal<OExecutionThreadLocal.OExecutionThreadData> {
-  public class OExecutionThreadData {}
-
-  @Override
-  protected OExecutionThreadData initialValue() {
-    return new OExecutionThreadData();
-  }
-
-  public static volatile OExecutionThreadLocal INSTANCE = new OExecutionThreadLocal();
+public class OExecutionThreadLocal {
 
   public static boolean isInterruptCurrentOperation() {
     final Thread t = Thread.currentThread();
@@ -51,21 +41,5 @@ public class OExecutionThreadLocal extends ThreadLocal<OExecutionThreadLocal.OEx
   public static void setInterruptCurrentOperation() {
     final Thread t = Thread.currentThread();
     if (t instanceof OSoftThread) ((OSoftThread) t).softShutdown();
-  }
-
-  static {
-    final Orient inst = Orient.instance();
-    inst.registerListener(
-        new OOrientListenerAbstract() {
-          @Override
-          public void onStartup() {
-            if (INSTANCE == null) INSTANCE = new OExecutionThreadLocal();
-          }
-
-          @Override
-          public void onShutdown() {
-            INSTANCE = null;
-          }
-        });
   }
 }

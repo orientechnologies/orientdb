@@ -41,14 +41,10 @@ public class ORecordSerializationContext {
         .registerListener(
             new OOrientListenerAbstract() {
               @Override
-              public void onStartup() {
-                if (SERIALIZATION_CONTEXT_STACK == null)
-                  SERIALIZATION_CONTEXT_STACK = new SerializationContextThreadLocal();
-              }
-
-              @Override
               public void onShutdown() {
-                SERIALIZATION_CONTEXT_STACK = null;
+                synchronized (ORecordSerializationContext.class) {
+                  SERIALIZATION_CONTEXT_STACK = null;
+                }
               }
             });
   }
@@ -56,11 +52,11 @@ public class ORecordSerializationContext {
   private final Deque<ORecordSerializationOperation> operations = new ArrayDeque<>();
 
   public static int getDepth() {
-    return ORecordSerializationContext.SERIALIZATION_CONTEXT_STACK.get().size();
+    return getStack().size();
   }
 
   public static ORecordSerializationContext pushContext() {
-    final Deque<ORecordSerializationContext> stack = SERIALIZATION_CONTEXT_STACK.get();
+    final Deque<ORecordSerializationContext> stack = getStack();
 
     final ORecordSerializationContext context = new ORecordSerializationContext();
     stack.push(context);
@@ -68,18 +64,29 @@ public class ORecordSerializationContext {
   }
 
   public static ORecordSerializationContext getContext() {
-    final Deque<ORecordSerializationContext> stack = SERIALIZATION_CONTEXT_STACK.get();
+    final Deque<ORecordSerializationContext> stack = getStack();
     if (stack.isEmpty()) return null;
 
     return stack.peek();
   }
 
   public static ORecordSerializationContext pullContext() {
-    final Deque<ORecordSerializationContext> stack = SERIALIZATION_CONTEXT_STACK.get();
+    final Deque<ORecordSerializationContext> stack = getStack();
     if (stack.isEmpty())
       throw new IllegalStateException("Cannot find current serialization context");
 
     return stack.poll();
+  }
+
+  private static Deque<ORecordSerializationContext> getStack() {
+    if (SERIALIZATION_CONTEXT_STACK == null) {
+      synchronized (ORecordSerializationContext.class) {
+        if (SERIALIZATION_CONTEXT_STACK == null) {
+          SERIALIZATION_CONTEXT_STACK = new SerializationContextThreadLocal();
+        }
+      }
+    }
+    return SERIALIZATION_CONTEXT_STACK.get();
   }
 
   public void push(ORecordSerializationOperation operation) {

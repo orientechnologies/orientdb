@@ -1202,10 +1202,10 @@ public class OObjectEntitySerializer {
 
     final Integer identityRecord = System.identityHashCode(iPojo);
 
-    if (OObjectSerializationThreadLocal.INSTANCE.get().containsKey(identityRecord))
-      return (T) OObjectSerializationThreadLocal.INSTANCE.get().get(identityRecord);
+    if (OObjectSerializationThreadLocal.instance().get().containsKey(identityRecord))
+      return (T) OObjectSerializationThreadLocal.instance().get().get(identityRecord);
 
-    OObjectSerializationThreadLocal.INSTANCE.get().put(identityRecord, iProxiedPojo);
+    OObjectSerializationThreadLocal.instance().get().put(identityRecord, iProxiedPojo);
 
     OProperty schemaProperty;
 
@@ -1330,7 +1330,7 @@ public class OObjectEntitySerializer {
     // CALL AFTER MARSHALLING
     invokeCallback(pojoClass, iPojo, iRecord, OAfterSerialization.class);
 
-    OObjectSerializationThreadLocal.INSTANCE.get().remove(identityRecord);
+    OObjectSerializationThreadLocal.instance().get().remove(identityRecord);
 
     Orient.instance().getProfiler().stopChrono("Object.toStream", "Serialize a POJO", timer);
 
