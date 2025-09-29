@@ -31,7 +31,7 @@
     "angular2-tag-input": "^1.2.3",
     "babel-polyfill": "^6.26.0",
     "babel-preset-angular2": "0.0.2",
-    "bootstrap-switch": "^3.3.5",
+    "bootstrap-switch": "^3.4.0",
     "c3": "^0.7.20",
     "codemirror": "^5.65.20",
     "core-js": "^2.6.12",
