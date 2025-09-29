@@ -1,7 +1,7 @@
 package com.orientechnologies.orient.distributed.db;
 
+import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
-import com.orientechnologies.orient.distributed.context.ODatabaseId;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -10,29 +10,33 @@ import java.util.Optional;
 
 public class ODeclareDbMessage implements OOperationMessage {
 
-  private String database;
-  private String uuid;
+  private String name;
+  private ODatabaseId id;
 
-  public ODeclareDbMessage(String name, String uuid) {
-    this.database = name;
-    this.uuid = uuid;
+  public ODeclareDbMessage(String name, ODatabaseId id) {
+    this.name = name;
+    this.id = id;
   }
 
   @Override
   public Optional<OAcceptResult> validate(OrientDBDistributed ctx, OTransactionIdPromise promise) {
-    return ctx.promiseDeclare(promise, new ODatabaseId(uuid), database);
+    return ctx.promiseDeclare(promise, id, name);
   }
 
   @Override
-  public void apply(OrientDBDistributed ctx, OTransactionIdPromise promise) {}
+  public void apply(OrientDBDistributed ctx, OTransactionIdPromise promise) {
+    ctx.declareDatabase(promise, id, name);
+  }
 
   @Override
-  public void cancel(OrientDBDistributed ctx, OTransactionIdPromise promise) {}
+  public void cancel(OrientDBDistributed ctx, OTransactionIdPromise promise) {
+    ctx.cancelDeclare(promise, id, name);
+  }
 
   @Override
   public void serialize(DataOutput out) throws IOException {
-    out.writeUTF(database);
-    out.writeUTF(uuid);
+    out.writeUTF(name);
+    id.writeNetwork(out);
   }
 
   @Override
@@ -42,7 +46,15 @@ public class ODeclareDbMessage implements OOperationMessage {
 
   public static ODeclareDbMessage readNetwork(DataInput input) throws IOException {
     String database = input.readUTF();
-    String uuid = input.readUTF();
-    return new ODeclareDbMessage(database, uuid);
+    ODatabaseId id = ODatabaseId.readNetwork(input);
+    return new ODeclareDbMessage(database, id);
+  }
+
+  public ODatabaseId getId() {
+    return id;
+  }
+
+  public String getName() {
+    return name;
   }
 }
