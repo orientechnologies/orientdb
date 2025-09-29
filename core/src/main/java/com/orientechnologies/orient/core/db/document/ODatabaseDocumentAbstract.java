@@ -447,7 +447,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
       final ORecord rec = id.getRecord();
       if (rec == null) return ORecordHook.RESULT.RECORD_NOT_CHANGED;
 
-      final OScenarioThreadLocal.RUN_MODE runMode = OScenarioThreadLocal.INSTANCE.getRunMode();
+      final OScenarioThreadLocal.RUN_MODE runMode = OScenarioThreadLocal.instance().getRunMode();
 
       boolean recordChanged = false;
       for (ORecordHook hook : hooksByScope[scopeOrdinal]) {

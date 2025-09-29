@@ -422,7 +422,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
               timer,
               "server.network.requests");
 
-      OSerializationThreadLocal.INSTANCE.get().clear();
+      OSerializationThreadLocal.instance().get().clear();
     }
   }
 

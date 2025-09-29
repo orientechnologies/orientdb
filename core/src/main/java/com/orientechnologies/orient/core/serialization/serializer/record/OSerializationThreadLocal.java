@@ -25,22 +25,30 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class OSerializationThreadLocal extends ThreadLocal<Set<Integer>> {
-  public static volatile OSerializationThreadLocal INSTANCE = new OSerializationThreadLocal();
+  private static volatile OSerializationThreadLocal INSTANCE = new OSerializationThreadLocal();
 
   static {
     Orient.instance()
         .registerListener(
             new OOrientListenerAbstract() {
               @Override
-              public void onStartup() {
-                if (INSTANCE == null) INSTANCE = new OSerializationThreadLocal();
-              }
-
-              @Override
               public void onShutdown() {
-                INSTANCE = null;
+                synchronized (OSerializationThreadLocal.class) {
+                  INSTANCE = null;
+                }
               }
             });
+  }
+
+  public static OSerializationThreadLocal instance() {
+    if (INSTANCE == null) {
+      synchronized (OSerializationThreadLocal.class) {
+        if (INSTANCE == null) {
+          INSTANCE = new OSerializationThreadLocal();
+        }
+      }
+    }
+    return INSTANCE;
   }
 
   @Override

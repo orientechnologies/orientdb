@@ -409,9 +409,9 @@ public class OObjectSerializerHelper {
 
     final Integer identityRecord = System.identityHashCode(iRecord);
 
-    if (OSerializationThreadLocal.INSTANCE.get().contains(identityRecord)) return iRecord;
+    if (OSerializationThreadLocal.instance().get().contains(identityRecord)) return iRecord;
 
-    OSerializationThreadLocal.INSTANCE.get().add(identityRecord);
+    OSerializationThreadLocal.instance().get().add(identityRecord);
 
     OProperty schemaProperty;
 
@@ -516,7 +516,7 @@ public class OObjectSerializerHelper {
     // CALL AFTER MARSHALLING
     invokeCallback(iPojo, iRecord, OAfterSerialization.class);
 
-    OSerializationThreadLocal.INSTANCE.get().remove(identityRecord);
+    OSerializationThreadLocal.instance().get().remove(identityRecord);
 
     Orient.instance()
         .getProfiler()
