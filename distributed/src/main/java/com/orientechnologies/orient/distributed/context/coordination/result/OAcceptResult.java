@@ -15,6 +15,9 @@ public interface OAcceptResult {
       case 2 -> OQuorumNotReached.fromNetwork(input);
       case 3 -> OAlreadyEnstablishedTopologyState.fromNetwork(input);
       case 4 -> ODatabaseNameUsed.fromNetwork(input);
+      case 5 -> OMissingNode.fromNetwork(input);
+      case 6 -> OAlreadyPromised.fromNetwork(input);
+      case 7 -> ODatabaseMissing.fromNetwork(input);
       default -> throw new ODistributedException("wrong accept result message type from network");
     };
   }
