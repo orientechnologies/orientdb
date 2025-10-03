@@ -105,7 +105,13 @@ public class CoordinationMessagesSerializationTest {
 
     OTransactionIdPromise id = newPromiseId();
     ODatabaseId dbId = newDatabaseId();
-    OProposeOp propose = new OProposeOp(id, new ODeclareDbMessage("dbName", dbId));
+    ONodeId nodeId1 = newNodeId();
+    ONodeId nodeId2 = newNodeId();
+    Set<ONodeId> paratecipants = new HashSet<>();
+    paratecipants.add(id.getCoordinator());
+    paratecipants.add(nodeId1);
+    paratecipants.add(nodeId2);
+    OProposeOp propose = new OProposeOp(id, new ODeclareDbMessage("dbName", dbId, paratecipants));
 
     OProposeOp read = (OProposeOp) writeRead(propose);
 
@@ -114,6 +120,7 @@ public class CoordinationMessagesSerializationTest {
 
     assertEquals(((ODeclareDbMessage) operation).getName(), "dbName");
     assertEquals(((ODeclareDbMessage) operation).getId(), dbId);
+    assertEquals(((ODeclareDbMessage) operation).getPartecipants(), paratecipants);
   }
 
   @Test

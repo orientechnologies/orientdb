@@ -486,7 +486,8 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   }
 
   private void declareDatabaseFlow(String name) {
-    distributedOperation(new ODeclareDbMessage(name, null));
+    Set<ONodeId> currentMembers = nodeState.getNetworkState().getMembers();
+    distributedOperation(new ODeclareDbMessage(name, null, currentMembers));
   }
 
   public void distributedSetOnline(String database) {
