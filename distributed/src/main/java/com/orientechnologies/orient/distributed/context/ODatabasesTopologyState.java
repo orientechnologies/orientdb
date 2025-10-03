@@ -31,7 +31,7 @@ public class ODatabasesTopologyState {
         return Optional.empty();
         // Exactly the same
       }
-      // TODO: database id used ....
+      // TODO: database id used probably different error with retry ....
       return Optional.of(new ODatabaseNameUsed());
     } else {
       if (databasesByName.containsKey(name)) {
