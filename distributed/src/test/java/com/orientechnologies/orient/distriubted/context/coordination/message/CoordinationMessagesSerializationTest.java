@@ -16,12 +16,12 @@ import com.orientechnologies.orient.distributed.context.coordination.message.ONo
 import com.orientechnologies.orient.distributed.context.coordination.message.OProposeOp;
 import com.orientechnologies.orient.distributed.context.coordination.message.OStructuralMessage;
 import com.orientechnologies.orient.distributed.context.coordination.message.OSuccessPropose;
+import com.orientechnologies.orient.distributed.context.coordination.message.operation.OAddTopologyMember;
+import com.orientechnologies.orient.distributed.context.coordination.message.operation.ODeclareDbMessage;
+import com.orientechnologies.orient.distributed.context.coordination.message.operation.ODropDbMessage;
+import com.orientechnologies.orient.distributed.context.coordination.message.operation.OEnstablishTopology;
 import com.orientechnologies.orient.distributed.context.coordination.result.OInvalidSequential;
-import com.orientechnologies.orient.distributed.context.topology.OAddTopologyMember;
-import com.orientechnologies.orient.distributed.context.topology.OEnstablishTopology;
 import com.orientechnologies.orient.distributed.context.topology.OTopologyState;
-import com.orientechnologies.orient.distributed.db.ODeclareDbMessage;
-import com.orientechnologies.orient.distributed.db.ODropDbMessage;
 import com.orientechnologies.orient.distributed.db.OOperationMessage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;

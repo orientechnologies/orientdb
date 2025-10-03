@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.distributed.context.topology;
+package com.orientechnologies.orient.distributed.context.coordination.message.operation;
 
 import com.orientechnologies.orient.core.transaction.OGroupId;
 import com.orientechnologies.orient.core.transaction.ONodeId;

@@ -1,9 +1,12 @@
 package com.orientechnologies.orient.distributed.db;
 
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
+import com.orientechnologies.orient.distributed.context.coordination.message.operation.OAddTopologyMember;
+import com.orientechnologies.orient.distributed.context.coordination.message.operation.ODeclareDbMessage;
+import com.orientechnologies.orient.distributed.context.coordination.message.operation.ODropDbMessage;
+import com.orientechnologies.orient.distributed.context.coordination.message.operation.OEnstablishTopology;
+import com.orientechnologies.orient.distributed.context.coordination.message.operation.OSetDatabaseState;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
-import com.orientechnologies.orient.distributed.context.topology.OAddTopologyMember;
-import com.orientechnologies.orient.distributed.context.topology.OEnstablishTopology;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -24,6 +27,7 @@ public interface OOperationMessage {
       case 2 -> OAddTopologyMember.readNetwork(input);
       case 3 -> OEnstablishTopology.readNetwork(input);
       case 4 -> ODeclareDbMessage.readNetwork(input);
+      case 5 -> OSetDatabaseState.readNetwork(input);
       default -> throw new ODistributedException("wrong operation message type from network");
     };
   }

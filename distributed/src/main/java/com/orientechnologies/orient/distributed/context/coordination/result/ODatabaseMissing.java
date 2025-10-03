@@ -4,11 +4,11 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-public class OAlreadyPromised implements OAcceptResult {
+public class ODatabaseMissing implements OAcceptResult {
 
   @Override
   public boolean canRetry() {
-    return true;
+    return false;
   }
 
   @Override
@@ -16,10 +16,10 @@ public class OAlreadyPromised implements OAcceptResult {
 
   @Override
   public short getType() {
-    return 6;
+    return 7;
   }
 
-  public static OAlreadyPromised fromNetwork(DataInput input) {
-    return new OAlreadyPromised();
+  public static ODatabaseMissing fromNetwork(DataInput input) {
+    return new ODatabaseMissing();
   }
 }

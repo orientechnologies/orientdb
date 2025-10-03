@@ -27,11 +27,15 @@ import com.orientechnologies.orient.core.storage.OStorageEngine.OBackupType;
 import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
+import com.orientechnologies.orient.distributed.context.ODatabaseState;
 import com.orientechnologies.orient.distributed.context.ONodeState;
 import com.orientechnologies.orient.distributed.context.coordination.message.ONodeFirstConnect;
 import com.orientechnologies.orient.distributed.context.coordination.message.ONodeStateNetwork;
 import com.orientechnologies.orient.distributed.context.coordination.message.OProposeOp;
 import com.orientechnologies.orient.distributed.context.coordination.message.OStructuralMessage;
+import com.orientechnologies.orient.distributed.context.coordination.message.operation.ODeclareDbMessage;
+import com.orientechnologies.orient.distributed.context.coordination.message.operation.ODropDbMessage;
+import com.orientechnologies.orient.distributed.context.coordination.message.operation.OSetDatabaseState;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import com.orientechnologies.orient.distributed.context.topology.ODiscoverAction;
 import com.orientechnologies.orient.server.OServer;
@@ -487,7 +491,13 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   private void declareDatabaseFlow(String name) {
     Set<ONodeId> currentMembers = nodeState.getNetworkState().getMembers();
-    distributedOperation(new ODeclareDbMessage(name, null, currentMembers));
+    distributedOperation(new ODeclareDbMessage(name, new ODatabaseId(name), currentMembers));
+  }
+
+  private void setDatabaseStatus(String name, ONodeId node, ODatabaseState state) {
+    ODatabaseId dbId = new ODatabaseId(name);
+    long version = this.getNodeState().getDatabaseTopology().getDatabaseVersion(dbId);
+    distributedOperation(new OSetDatabaseState(dbId, node, state, version + 1));
   }
 
   public void distributedSetOnline(String database) {
@@ -695,8 +705,11 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   }
 
   public Optional<OAcceptResult> promiseDeclare(
-      OTransactionIdPromise promise, ODatabaseId databaseId, String database) {
-    return getNodeState().promiseDeclare(promise, databaseId, database);
+      OTransactionIdPromise promise,
+      ODatabaseId databaseId,
+      String database,
+      Set<ONodeId> partecipants) {
+    return getNodeState().promiseDeclare(promise, databaseId, database, partecipants);
   }
 
   public void declareDatabase(OTransactionIdPromise promise, ODatabaseId dbId, String database) {

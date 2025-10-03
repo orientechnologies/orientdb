@@ -11,6 +11,7 @@ import com.orientechnologies.orient.core.tx.ValidationResult;
 import com.orientechnologies.orient.distributed.context.coordination.message.ODistributedMessage;
 import com.orientechnologies.orient.distributed.context.coordination.message.ONodeStateNetwork;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
+import com.orientechnologies.orient.distributed.context.coordination.result.OMissingNode;
 import com.orientechnologies.orient.distributed.context.topology.ODiscoverAction;
 import java.util.List;
 import java.util.Optional;
@@ -197,7 +198,13 @@ public class ONodeState {
   }
 
   public Optional<OAcceptResult> promiseDeclare(
-      OTransactionIdPromise promise, ODatabaseId databaseId, String database) {
+      OTransactionIdPromise promise,
+      ODatabaseId databaseId,
+      String database,
+      Set<ONodeId> partecipants) {
+    if (!partecipants.contains(nodeId)) {
+      return Optional.of(new OMissingNode());
+    }
     return this.databaseTopology.promiseDeclare(promise, databaseId, database);
   }
 
@@ -207,5 +214,9 @@ public class ONodeState {
 
   public void cancelDatabase(OTransactionIdPromise promise, ODatabaseId dbId, String database) {
     this.databaseTopology.cancelPomise(promise, dbId, database);
+  }
+
+  public ODatabasesTopologyState getDatabaseTopology() {
+    return databaseTopology;
   }
 }

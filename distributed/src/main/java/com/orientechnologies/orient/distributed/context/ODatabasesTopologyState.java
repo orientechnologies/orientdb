@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAlreadyPromised;
+import com.orientechnologies.orient.distributed.context.coordination.result.ODatabaseMissing;
 import com.orientechnologies.orient.distributed.context.coordination.result.ODatabaseNameUsed;
 import java.util.HashMap;
 import java.util.Map;
@@ -99,7 +100,7 @@ public class ODatabasesTopologyState {
   }
 
   public synchronized void setState(
-      ODatabaseId db, ONodeId node, ODatabaseState state, int version) {
+      ODatabaseId db, ONodeId node, ODatabaseState state, long version) {
     var nodes = databases.get(db);
     if (nodes != null) {
       nodes.setState(node, state, version);
@@ -108,5 +109,24 @@ public class ODatabasesTopologyState {
 
   public synchronized Set<ODatabaseId> listDatabaseIds() {
     return this.databases.keySet();
+  }
+
+  public synchronized Optional<OAcceptResult> promiseState(
+      ODatabaseId dbId, ONodeId nodeId, ODatabaseState state, long version) {
+    ODatabaseTopologyState dbTopology = this.databases.get(dbId);
+    if (dbTopology != null) {
+      return dbTopology.promiseState(state, nodeId, version);
+    } else {
+      return Optional.of(new ODatabaseMissing());
+    }
+  }
+
+  public synchronized long getDatabaseVersion(ODatabaseId dbId) {
+    ODatabaseTopologyState dbTopology = this.databases.get(dbId);
+    if (dbTopology != null) {
+      return dbTopology.getVersion();
+    } else {
+      return 0;
+    }
   }
 }
