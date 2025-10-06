@@ -712,8 +712,9 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     return getNodeState().promiseDeclare(promise, databaseId, database, partecipants);
   }
 
-  public void declareDatabase(OTransactionIdPromise promise, ODatabaseId dbId, String database) {
-    getNodeState().declareDatabase(promise, dbId, database);
+  public void declareDatabase(
+      OTransactionIdPromise promise, ODatabaseId dbId, String database, Set<ONodeId> partecipants) {
+    getNodeState().declareDatabase(promise, dbId, database, partecipants);
   }
 
   public void cancelDeclare(OTransactionIdPromise promise, ODatabaseId dbId, String database) {

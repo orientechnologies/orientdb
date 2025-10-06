@@ -17,4 +17,16 @@ public class ONodeDatabaseState {
   public void setState(ODatabaseState state) {
     this.state = state;
   }
+
+  public ODatabaseState getState() {
+    return state;
+  }
+
+  public ONodeId getId() {
+    return id;
+  }
+
+  public ONodeRole getRole() {
+    return role;
+  }
 }

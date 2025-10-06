@@ -24,7 +24,7 @@ public class ODatabasesTopologyState {
   public ODatabasesTopologyState() {}
 
   public synchronized Optional<OAcceptResult> promiseDeclare(
-      OTransactionIdPromise promise, ODatabaseId db, String name) {
+      OTransactionIdPromise promise, ODatabaseId db, String name, Set<ONodeId> partecipants) {
 
     if (databases.containsKey(db)) {
       var def = databases.get(db);
@@ -51,7 +51,7 @@ public class ODatabasesTopologyState {
         if (promisedByName.containsKey(name)) {
           return Optional.of(new OAlreadyPromised());
         }
-        var declared = new ODatabaseTopologyState(db, name);
+        var declared = new ODatabaseTopologyState(db, name, partecipants);
         this.promised.put(
             db, new ORawPair<OTransactionIdPromise, ODatabaseTopologyState>(promise, declared));
         this.promisedByName.put(name, declared);
@@ -71,7 +71,7 @@ public class ODatabasesTopologyState {
   }
 
   public synchronized void declareDatabase(
-      OTransactionIdPromise promise, ODatabaseId db, String name) {
+      OTransactionIdPromise promise, ODatabaseId db, String name, Set<ONodeId> partecipants) {
     if (promised.containsKey(db)) {
       var prom = promised.remove(db);
       var inst = prom.getSecond();
@@ -80,7 +80,7 @@ public class ODatabasesTopologyState {
       this.databases.put(db, inst);
       this.databasesByName.put(inst.getName(), inst);
     } else {
-      var declared = new ODatabaseTopologyState(db, name);
+      var declared = new ODatabaseTopologyState(db, name, partecipants);
       this.databases.put(db, declared);
       this.databasesByName.put(declared.getName(), declared);
     }
@@ -92,7 +92,7 @@ public class ODatabasesTopologyState {
         databases.computeIfAbsent(
             db,
             (dbKey) -> {
-              return new ODatabaseTopologyState(db, name);
+              return new ODatabaseTopologyState(db, name, Set.of(node));
             });
 
     // First declare, version 0
@@ -128,5 +128,13 @@ public class ODatabasesTopologyState {
     } else {
       return 0;
     }
+  }
+
+  public synchronized ODatabaseState getNodeState(ODatabaseId dbId, ONodeId nodeId) {
+    return this.databases.get(dbId).getState(nodeId);
+  }
+
+  public void cancelPomiseSetState(ODatabaseId dbId, ONodeId nodeId, long version) {
+    this.databases.get(dbId).cancelSetState(nodeId, version);
   }
 }

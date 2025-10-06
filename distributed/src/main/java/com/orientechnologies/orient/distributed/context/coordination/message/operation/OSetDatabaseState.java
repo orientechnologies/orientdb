@@ -63,4 +63,20 @@ public class OSetDatabaseState implements OOperationMessage {
   public short getType() {
     return 5;
   }
+
+  public ODatabaseId getDbId() {
+    return dbId;
+  }
+
+  public ONodeId getNodeId() {
+    return nodeId;
+  }
+
+  public ODatabaseState getState() {
+    return state;
+  }
+
+  public long getVersion() {
+    return version;
+  }
 }

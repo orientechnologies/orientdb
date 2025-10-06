@@ -8,6 +8,7 @@ import com.orientechnologies.orient.core.transaction.OGroupId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
+import com.orientechnologies.orient.distributed.context.ODatabaseState;
 import com.orientechnologies.orient.distributed.context.coordination.message.OConfirmOp;
 import com.orientechnologies.orient.distributed.context.coordination.message.OFailOp;
 import com.orientechnologies.orient.distributed.context.coordination.message.OFailPropose;
@@ -20,6 +21,7 @@ import com.orientechnologies.orient.distributed.context.coordination.message.ope
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.ODeclareDbMessage;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.ODropDbMessage;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OEnstablishTopology;
+import com.orientechnologies.orient.distributed.context.coordination.message.operation.OSetDatabaseState;
 import com.orientechnologies.orient.distributed.context.coordination.result.OInvalidSequential;
 import com.orientechnologies.orient.distributed.context.topology.OTopologyState;
 import com.orientechnologies.orient.distributed.db.OOperationMessage;
@@ -98,6 +100,26 @@ public class CoordinationMessagesSerializationTest {
 
   private ODatabaseId newDatabaseId() {
     return new ODatabaseId("dbID");
+  }
+
+  @Test
+  public void setDatabaseSetState() throws IOException {
+
+    OTransactionIdPromise id = newPromiseId();
+    ODatabaseId dbId = newDatabaseId();
+    ONodeId nodeId1 = newNodeId();
+    OProposeOp propose =
+        new OProposeOp(id, new OSetDatabaseState(dbId, nodeId1, ODatabaseState.Online, 1));
+
+    OProposeOp read = (OProposeOp) writeRead(propose);
+
+    assertEquals(read.getPromiseId(), id);
+    OOperationMessage operation = read.getOp();
+
+    assertEquals(((OSetDatabaseState) operation).getDbId(), dbId);
+    assertEquals(((OSetDatabaseState) operation).getNodeId(), nodeId1);
+    assertEquals(((OSetDatabaseState) operation).getState(), ODatabaseState.Online);
+    assertEquals(((OSetDatabaseState) operation).getVersion(), 1);
   }
 
   @Test

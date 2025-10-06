@@ -205,11 +205,12 @@ public class ONodeState {
     if (!partecipants.contains(nodeId)) {
       return Optional.of(new OMissingNode());
     }
-    return this.databaseTopology.promiseDeclare(promise, databaseId, database);
+    return this.databaseTopology.promiseDeclare(promise, databaseId, database, partecipants);
   }
 
-  public void declareDatabase(OTransactionIdPromise promise, ODatabaseId dbId, String database) {
-    this.databaseTopology.declareDatabase(promise, dbId, database);
+  public void declareDatabase(
+      OTransactionIdPromise promise, ODatabaseId dbId, String database, Set<ONodeId> partecipants) {
+    this.databaseTopology.declareDatabase(promise, dbId, database, partecipants);
   }
 
   public void cancelDatabase(OTransactionIdPromise promise, ODatabaseId dbId, String database) {

@@ -32,7 +32,7 @@ public class ODeclareDbMessage implements OOperationMessage {
 
   @Override
   public void apply(OrientDBDistributed ctx, OTransactionIdPromise promise) {
-    ctx.declareDatabase(promise, id, name);
+    ctx.declareDatabase(promise, id, name, partecipants);
   }
 
   @Override
