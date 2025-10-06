@@ -1,3 +1,6 @@
 package com.orientechnologies.orient.distributed.context;
 
-public class ONodeRole {}
+public enum ONodeRole {
+  Main,
+  Replica
+}
