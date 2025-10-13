@@ -1,5 +1,5 @@
 import {Component, ViewChild, Input, Output, OnChanges} from '@angular/core';
-import {ModalComponent} from 'ng2-bs3-modal/ng2-bs3-modal';
+import { BsModalComponent as ModalComponent} from 'ng2-bs3-modal';
 import {Select2OptionData} from 'ng2-select2';
 
 import {downgradeComponent} from '@angular/upgrade/static';

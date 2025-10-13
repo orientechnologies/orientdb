@@ -15,7 +15,7 @@ import {
 } from "@angular/core";
 
 import { BackupService, NotificationService } from "../../../../core/services";
-import { ModalComponent } from "ng2-bs3-modal";
+import { BsModalComponent as ModalComponent } from "ng2-bs3-modal";
 
 @Component({
   selector: "backup-generic-event",

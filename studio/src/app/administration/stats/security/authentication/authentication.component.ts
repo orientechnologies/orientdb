@@ -14,7 +14,7 @@ import {
   NotificationService
 } from "../../../../core/services";
 import { PasswordAuthenticatorComponent } from "./authenticators/passwordauthenticator.component";
-import { ModalComponent } from "ng2-bs3-modal";
+import { BsModalComponent as ModalComponent } from "ng2-bs3-modal";
 import { KerberosAuthenticatorComponent } from "./authenticators";
 
 declare const angular: any;

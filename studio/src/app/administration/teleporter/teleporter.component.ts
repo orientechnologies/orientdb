@@ -1,5 +1,5 @@
 import {Component, NgZone, AfterViewChecked, EventEmitter, Output, ViewChild} from '@angular/core';
-import {ModalComponent} from 'ng2-bs3-modal/ng2-bs3-modal';
+import { BsModalComponent as ModalComponent} from 'ng2-bs3-modal';
 
 import * as $ from "jquery"
 
