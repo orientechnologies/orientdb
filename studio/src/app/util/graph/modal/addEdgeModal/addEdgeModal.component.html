@@ -1,8 +1,8 @@
-<modal #addEdgeModal [size]="modalSize" (onDismiss)="dismissEdgeAdding()">
-  <modal-header [show-close]="true">
+<bs-modal #addEdgeModal [size]="modalSize" (onDismiss)="dismissEdgeAdding()">
+  <bs-modal-header [showDismiss]="true">
     <h4 class="modal-title"><b>Add Edge</b></h4>
-  </modal-header>
-  <modal-body>
+  </bs-modal-header>
+  <bs-modal-body>
     <div class="form-group">
       <form class="form-horizontal" #addEdgeForm="ngForm">
         <h5><b>Edge Class</b></h5>
@@ -80,9 +80,9 @@
 
       </form>
     </div>
-  </modal-body>
-  <modal-footer [show-default-buttons]="false">
+  </bs-modal-body>
+  <bs-modal-footer [showDefaultButtons]="false">
     <button type="button" class="btn btn-default" data-dismiss="modal" (click)="dismissEdgeAdding()">Cancel</button>
     <button type="button" class="btn btn-primary" (click)="addNewEdge()" [disabled]="!(addEdgeForm.valid && isMappingFormValid)">Save</button>
-  </modal-footer>
-</modal>
+  </bs-modal-footer>
+</bs-modal>

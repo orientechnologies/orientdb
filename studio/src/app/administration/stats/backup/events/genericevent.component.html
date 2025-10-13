@@ -1,9 +1,9 @@
 <div>
-    <modal #eventModal>
-        <modal-header [show-close]="true">
+    <bs-modal #eventModal>
+        <bs-modal-header [showDismiss]="true">
             <h4 class="modal-title">{{event._source | eventToString}} Event</h4>
-        </modal-header>
-        <modal-body>
+        </bs-modal-header>
+        <bs-modal-body>
 
             <div class="row">
                 <div class="col-md-12 ">
@@ -16,10 +16,10 @@
                     </ul>
                 </div>
             </div>
-        </modal-body>
-        <modal-footer [show-default-buttons]="false">
+        </bs-modal-body>
+        <bs-modal-footer [showDefaultButtons]="false">
             <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
-        </modal-footer>
-    </modal>
+        </bs-modal-footer>
+    </bs-modal>
 
 </div>

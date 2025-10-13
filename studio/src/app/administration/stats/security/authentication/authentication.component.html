@@ -103,11 +103,11 @@
             </div>
         </div>
 
-        <modal #authenticatorModal>
-            <modal-header [show-close]="true">
+        <bs-modal #authenticatorModal>
+            <bs-modal-header [showDismiss]="true">
                 <h4 class="modal-title">Add Authenticator</h4>
-            </modal-header>
-            <modal-body>
+            </bs-modal-header>
+            <bs-modal-body>
                 <div class="row">
                     <div class="span12">
                         <div class="form-group">
@@ -121,11 +121,11 @@
                         </div>
                     </div>
                 </div>
-            </modal-body>
-            <modal-footer [show-default-buttons]="false">
+            </bs-modal-body>
+            <bs-modal-footer [showDefaultButtons]="false">
                 <button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
                 <button class="btn btn-primary" (click)="confirmAuthenticator(selectedAuthenticator)">Add</button>
-            </modal-footer>
-        </modal>
+            </bs-modal-footer>
+        </bs-modal>
     </div>
 </div>

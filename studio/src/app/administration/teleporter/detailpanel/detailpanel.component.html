@@ -3,11 +3,11 @@
   <!--   ****************   Modals' definitions - START -   ****************   -->
 
   <!-- Rename Class Modal -->
-  <modal #renameModal>
-    <modal-header [show-close]="true">
+  <bs-modal #renameModal>
+    <bs-modal-header [showDismiss]="true">
       <h4 class="modal-title">Change Class Name</h4>
-    </modal-header>
-    <modal-body>
+    </bs-modal-header>
+    <bs-modal-body>
 
       <div class="row">
         <div class="form-group">
@@ -20,22 +20,22 @@
         </div>
       </div>
 
-    </modal-body>
-    <modal-footer [show-default-buttons]="false">
+    </bs-modal-body>
+    <bs-modal-footer [showDefaultButtons]="false">
       <ng-container *ngIf="selectedElement">
         <button type="button" class="btn btn-default" data-dismiss="modal" (click)="renameModal.dismiss()">Cancel</button>
         <button *ngIf="selectedElement.name" type="button" class="btn btn-primary" (click)="renameSelectedVertexClass()" [disabled]="!renamePropForm.valid">Rename</button>
         <button *ngIf="!selectedElement.name" type="button" class="btn btn-primary" (click)="renameSelectedEdgeClass()" [disabled]="!renamePropForm.valid">Rename</button>
       </ng-container>
-    </modal-footer>
-  </modal>
+    </bs-modal-footer>
+  </bs-modal>
 
   <!-- Add Property Modal -->
-  <modal #addPropModal (onDismiss)="dismissPropertyAdding()">
-    <modal-header [show-close]="true">
+  <bs-modal #addPropModal (onDismiss)="dismissPropertyAdding()">
+    <bs-modal-header [showDismiss]="true">
       <h4 class="modal-title">Add Property</h4>
-    </modal-header>
-    <modal-body>
+    </bs-modal-header>
+    <bs-modal-body>
       <div class="form-group">
         <form class="form-horizontal" #addPropForm="ngForm">
           <input type="radio" [(ngModel)]="activeFormNewProp" name="activeFormNewProp" value="1" checked> Add New Property<br>
@@ -93,33 +93,33 @@
           </div>
         </form>
       </div>
-    </modal-body>
-    <modal-footer [show-default-buttons]="false">
+    </bs-modal-body>
+    <bs-modal-footer [showDefaultButtons]="false">
       <button type="button" class="btn btn-default" data-dismiss="modal" (click)="dismissPropertyAdding()">Cancel</button>
       <button type="button" class="btn btn-primary" (click)="addNewPropToSelectedClass()" [disabled]="!addPropForm.valid">Save</button>
-    </modal-footer>
-  </modal>
+    </bs-modal-footer>
+  </bs-modal>
 
   <!-- Drop Property Modal -->
-  <modal #dropPropertyModal (onDismiss)="dismissOrCloseDropPropModal('dismiss')">
-    <modal-header [show-close]="true">
+  <bs-modal #dropPropertyModal (onDismiss)="dismissOrCloseDropPropModal('dismiss')">
+    <bs-modal-header [showDismiss]="true">
       <h4 class="modal-title">Warning!</h4>
-    </modal-header>
-    <modal-body>
+    </bs-modal-header>
+    <bs-modal-body>
       You are dropping <b>{{tmpPropertyDefinition.name}}</b> property. Are you sure?
-    </modal-body>
-    <modal-footer [show-default-buttons]="false">
+    </bs-modal-body>
+    <bs-modal-footer [showDefaultButtons]="false">
       <button type="button" class="btn btn-default" data-dismiss="modal" (click)="dismissOrCloseDropPropModal('dismiss')">Cancel</button>
       <button type="button" class="btn btn-primary" (click)="dismissOrCloseDropPropModal('close')">Ok</button>
-    </modal-footer>
-  </modal>
+    </bs-modal-footer>
+  </bs-modal>
 
   <!-- Edit Property Modal -->
-  <modal #editPropertyModal (onDismiss)="dismissEditPropertyModal()">
-    <modal-header [show-close]="true">
+  <bs-modal #editPropertyModal (onDismiss)="dismissEditPropertyModal()">
+    <bs-modal-header [showDismiss]="true">
       <h4 class="modal-title">Property Editing</h4>
-    </modal-header>
-    <modal-body>
+    </bs-modal-header>
+    <bs-modal-body>
 
       <div class="form-group">
         <form class="form-horizontal" #editPropForm="ngForm">
@@ -161,40 +161,40 @@
         </form>
       </div>
 
-    </modal-body>
-    <modal-footer [show-default-buttons]="false">
+    </bs-modal-body>
+    <bs-modal-footer [showDefaultButtons]="false">
       <button type="button" class="btn btn-default" data-dismiss="modal" (click)="dismissEditPropertyModal()">Cancel</button>
       <button type="button" class="btn btn-primary" (click)="closeEditPropertyModal()" [disabled]="!editPropForm.valid">Save</button>
-    </modal-footer>
-  </modal>
+    </bs-modal-footer>
+  </bs-modal>
 
   <!-- Drop Class Modal -->
-  <modal #dropClassModal (onDismiss)="dismissOrCloseDropClassModal('dismiss')">
-    <modal-header [show-close]="true">
+  <bs-modal #dropClassModal (onDismiss)="dismissOrCloseDropClassModal('dismiss')">
+    <bs-modal-header [showDismiss]="true">
       <h4 class="modal-title">Warning!</h4>
-    </modal-header>
-    <modal-body>
+    </bs-modal-header>
+    <bs-modal-body>
       You are dropping <b>{{edgeName}}</b> class. Are you sure?
-    </modal-body>
-    <modal-footer [show-default-buttons]="false">
+    </bs-modal-body>
+    <bs-modal-footer [showDefaultButtons]="false">
       <button type="button" class="btn btn-default" data-dismiss="modal" (click)="dismissOrCloseDropClassModal('dismiss')">Cancel</button>
       <button type="button" class="btn btn-primary" (click)="dismissOrCloseDropClassModal('close')">Ok</button>
-    </modal-footer>
-  </modal>
+    </bs-modal-footer>
+  </bs-modal>
 
   <!-- Drop Edge Class instance Modal -->
-  <modal #dropEdgeInstanceModal (onDismiss)="dismissOrCloseDropEdgeInstanceModal('dismiss')">
-    <modal-header [show-close]="true">
+  <bs-modal #dropEdgeInstanceModal (onDismiss)="dismissOrCloseDropEdgeInstanceModal('dismiss')">
+    <bs-modal-header [showDismiss]="true">
       <h4 class="modal-title">Warning!</h4>
-    </modal-header>
-    <modal-body>
+    </bs-modal-header>
+    <bs-modal-body>
       You are dropping the current selected instance of the <b>{{edgeName}}</b> class. Are you sure?
-    </modal-body>
-    <modal-footer [show-default-buttons]="false">
+    </bs-modal-body>
+    <bs-modal-footer [showDefaultButtons]="false">
       <button type="button" class="btn btn-default" data-dismiss="modal" (click)="dismissOrCloseDropEdgeInstanceModal('dismiss')">Cancel</button>
       <button type="button" class="btn btn-primary" (click)="dismissOrCloseDropEdgeInstanceModal('close')">Ok</button>
-    </modal-footer>
-  </modal>
+    </bs-modal-footer>
+  </bs-modal>
 
   <!--   ****************   Modals' definitions - END -   ****************   -->
 

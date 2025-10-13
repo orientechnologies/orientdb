@@ -1,11 +1,11 @@
 <div class="row">
 
   <!-- Accept Oracle license Modal -->
-  <modal #acceptOracleLicenseModal (onDismiss)="dismissOrCloseAcceptOracleLicenseModal('dismiss')">
-    <modal-header [show-close]="false">
+  <bs-modal #acceptOracleLicenseModal (onDismiss)="dismissOrCloseAcceptOracleLicenseModal('dismiss')">
+    <bs-modal-header [showDismiss]="false">
       <h4 class="modal-title">Warning!</h4>
-    </modal-header>
-    <modal-body>
+    </bs-modal-header>
+    <bs-modal-body>
       <div class="row" style="padding-left: 7%; padding-right: 7%; padding-top: 5%; padding-bottom: 5%;">
       <p style="text-align: justify">
         In order to connect Teleporter to your Oracle database, you need to download the Oracle Database JDBC Driver.<br><br>
@@ -18,12 +18,12 @@
         </a>
       </p>
       </div>
-    </modal-body>
-    <modal-footer [show-default-buttons]="false">
+    </bs-modal-body>
+    <bs-modal-footer [showDefaultButtons]="false">
       <button type="button" class="btn btn-default" data-dismiss="modal" (click)="dismissOrCloseAcceptOracleLicenseModal('reject')">Reject</button>
       <button type="button" class="btn btn-primary" (click)="dismissOrCloseAcceptOracleLicenseModal('accept')">Accept</button>
-    </modal-footer>
-  </modal>
+    </bs-modal-footer>
+  </bs-modal>
 
   <form class="form-horizontal" id="teleporterForm" name="teleporterForm" #form="ngForm">
 
