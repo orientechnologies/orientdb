@@ -12,17 +12,23 @@ import java.util.Optional;
 import java.util.Set;
 
 public class ONodeStateNetwork {
+  private final int quorum;
   private final long version;
   private final OTopologyState state;
   private final Set<ONodeId> members;
   private Optional<OGroupId> groupId;
 
   public static ONodeStateNetwork boot() {
-    return new ONodeStateNetwork(Optional.empty(), OTopologyState.BOOT, Collections.emptySet(), 0);
+    return new ONodeStateNetwork(
+        Optional.empty(), OTopologyState.BOOT, Collections.emptySet(), 0, 0);
   }
 
   public ONodeStateNetwork(
-      Optional<OGroupId> groupId, OTopologyState state, Set<ONodeId> members, long version) {
+      Optional<OGroupId> groupId,
+      OTopologyState state,
+      Set<ONodeId> members,
+      int quorum,
+      long version) {
     super();
     assert (state == OTopologyState.BOOT && groupId.isEmpty() && members.isEmpty() && version == 0)
         || (state == OTopologyState.ESTABLISHED && groupId.isPresent());
@@ -30,6 +36,7 @@ public class ONodeStateNetwork {
     this.state = state;
     this.members = members;
     this.version = version;
+    this.quorum = quorum;
   }
 
   public void writeNetwork(DataOutput output) throws IOException {
@@ -41,6 +48,7 @@ public class ONodeStateNetwork {
         output.writeByte(2);
         this.groupId.get().writeNetwork(output);
         output.writeLong(version);
+        output.writeInt(quorum);
         output.writeInt(members.size());
         for (ONodeId node : members) {
           node.writeNetwork(output);
@@ -54,12 +62,14 @@ public class ONodeStateNetwork {
     switch (state) {
       case 1:
         {
-          return new ONodeStateNetwork(Optional.empty(), OTopologyState.BOOT, new HashSet<>(), 0);
+          return new ONodeStateNetwork(
+              Optional.empty(), OTopologyState.BOOT, new HashSet<>(), 0, 0);
         }
       case 2:
         {
           OGroupId networkId = OGroupId.readNetwork(input);
           long version = input.readLong();
+          int quorum = input.readInt();
           int size = input.readInt();
           Set<ONodeId> members = new HashSet<ONodeId>(size);
           while (size-- > 0) {
@@ -67,7 +77,7 @@ public class ONodeStateNetwork {
             members.add(node);
           }
           return new ONodeStateNetwork(
-              Optional.of(networkId), OTopologyState.ESTABLISHED, members, version);
+              Optional.of(networkId), OTopologyState.ESTABLISHED, members, quorum, version);
         }
       default:
         {
@@ -90,5 +100,9 @@ public class ONodeStateNetwork {
 
   public Optional<OGroupId> getGroupId() {
     return groupId;
+  }
+
+  public int getQuorum() {
+    return quorum;
   }
 }

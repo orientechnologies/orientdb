@@ -80,7 +80,7 @@ public class OTopologyManager implements OTopologyEvents {
   public synchronized void register(ONodeId toRegister, long version) {
     // TODO: verify promise and clean it, verification is not needed is just for solidity
     if (!members.contains(toRegister)) {
-      var newMenbers = new HashSet(members);
+      var newMenbers = new HashSet<ONodeId>(members);
       newMenbers.add(toRegister);
       this.members = Collections.unmodifiableSet(newMenbers);
       int newQuorum = (members.size() / 2) + 1;
@@ -98,7 +98,7 @@ public class OTopologyManager implements OTopologyEvents {
 
   public synchronized void unregister(ONodeId node, long version) {
     if (members.contains(node)) {
-      var newMenbers = new HashSet(members);
+      var newMenbers = new HashSet<ONodeId>(members);
       newMenbers.remove(node);
       this.members = Collections.unmodifiableSet(newMenbers);
       int newQuorum = (members.size() / 2) + 1;
@@ -131,7 +131,7 @@ public class OTopologyManager implements OTopologyEvents {
   }
 
   private void setMember(Set<ONodeId> members) {
-    this.members = Collections.unmodifiableSet(new HashSet(members));
+    this.members = Collections.unmodifiableSet(new HashSet<ONodeId>(members));
   }
 
   public synchronized Optional<OAcceptResult> validateEnstablish(
@@ -174,13 +174,14 @@ public class OTopologyManager implements OTopologyEvents {
   }
 
   public synchronized ONodeStateNetwork getNetworkState() {
-    return new ONodeStateNetwork(this.groupId, this.state, this.members, this.version);
+    return new ONodeStateNetwork(this.groupId, this.state, this.members, this.quorum, this.version);
   }
 
   public synchronized void load(ONodeStateStore nodeStateStore) {
     this.groupId = nodeStateStore.getGroupId();
     this.state = nodeStateStore.getState();
     this.version = nodeStateStore.getVersion();
+    this.quorum = nodeStateStore.getQuorum();
     this.setMember(nodeStateStore.getMembers());
   }
 

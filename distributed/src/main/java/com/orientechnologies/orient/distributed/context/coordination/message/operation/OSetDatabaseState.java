@@ -41,7 +41,9 @@ public class OSetDatabaseState implements OOperationMessage {
   }
 
   @Override
-  public void cancel(OrientDBDistributed ctx, OTransactionIdPromise promise) {}
+  public void cancel(OrientDBDistributed ctx, OTransactionIdPromise promise) {
+    ctx.getNodeState().getDatabaseTopology().cancelPomiseSetState(dbId, nodeId, version);
+  }
 
   @Override
   public void serialize(DataOutput out) throws IOException {

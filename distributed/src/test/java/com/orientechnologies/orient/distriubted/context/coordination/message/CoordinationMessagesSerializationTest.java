@@ -133,7 +133,8 @@ public class CoordinationMessagesSerializationTest {
     paratecipants.add(id.getCoordinator());
     paratecipants.add(nodeId1);
     paratecipants.add(nodeId2);
-    OProposeOp propose = new OProposeOp(id, new ODeclareDbMessage("dbName", dbId, paratecipants));
+    OProposeOp propose =
+        new OProposeOp(id, new ODeclareDbMessage("dbName", dbId, paratecipants, 2));
 
     OProposeOp read = (OProposeOp) writeRead(propose);
 
@@ -143,6 +144,7 @@ public class CoordinationMessagesSerializationTest {
     assertEquals(((ODeclareDbMessage) operation).getName(), "dbName");
     assertEquals(((ODeclareDbMessage) operation).getId(), dbId);
     assertEquals(((ODeclareDbMessage) operation).getPartecipants(), paratecipants);
+    assertEquals(((ODeclareDbMessage) operation).getMinimumQuorum(), 2);
   }
 
   @Test
@@ -215,7 +217,7 @@ public class CoordinationMessagesSerializationTest {
 
     ONodeId nodeId = newNodeId();
     ONodeStateNetwork net =
-        new ONodeStateNetwork(Optional.empty(), OTopologyState.BOOT, new HashSet<>(), 0);
+        new ONodeStateNetwork(Optional.empty(), OTopologyState.BOOT, new HashSet<>(), 0, 0);
     ONodeFirstConnect succ = new ONodeFirstConnect(nodeId, net);
 
     ONodeFirstConnect read = (ONodeFirstConnect) writeRead(succ);
@@ -227,7 +229,7 @@ public class CoordinationMessagesSerializationTest {
     assertTrue(read.getState().getMembers().isEmpty());
     Set<ONodeId> nodes = Set.of(newNodeId(), newNodeId());
     var groupId = newGroupId();
-    net = new ONodeStateNetwork(Optional.of(groupId), OTopologyState.ESTABLISHED, nodes, 10);
+    net = new ONodeStateNetwork(Optional.of(groupId), OTopologyState.ESTABLISHED, nodes, 2, 10);
     succ = new ONodeFirstConnect(nodeId, net);
 
     read = (ONodeFirstConnect) writeRead(succ);

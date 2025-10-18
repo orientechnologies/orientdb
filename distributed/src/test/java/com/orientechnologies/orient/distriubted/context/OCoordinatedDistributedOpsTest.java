@@ -334,7 +334,7 @@ public class OCoordinatedDistributedOpsTest {
     var gid = newRandomGroupId();
     node1.load(
         new ONodeStateStore(
-            Optional.of(gid), OTopologyState.ESTABLISHED, Set.of(nodeId1, nodeId2), 2));
+            Optional.of(gid), OTopologyState.ESTABLISHED, Set.of(nodeId1, nodeId2), 2, 2));
     node1.discoverNode(nodeId1);
     assertEquals(node1.getMembers().size(), 2);
 
@@ -345,6 +345,7 @@ public class OCoordinatedDistributedOpsTest {
                 Optional.of(gid),
                 OTopologyState.ESTABLISHED,
                 Set.of(nodeId1, nodeId2, nodeId3),
+                2,
                 3));
     assertTrue(action instanceof ODiscoverAction.ONoneAction);
 
@@ -365,7 +366,7 @@ public class OCoordinatedDistributedOpsTest {
     var gid = newRandomGroupId();
     node1.load(
         new ONodeStateStore(
-            Optional.of(gid), OTopologyState.ESTABLISHED, Set.of(nodeId1, nodeId2, nodeId3), 3));
+            Optional.of(gid), OTopologyState.ESTABLISHED, Set.of(nodeId1, nodeId2, nodeId3), 2, 3));
     node1.discoverNode(nodeId1);
     assertEquals(node1.getMembers().size(), 3);
 
@@ -373,7 +374,7 @@ public class OCoordinatedDistributedOpsTest {
         node1.nodeJoinStart(
             nodeId2,
             new ONodeStateNetwork(
-                Optional.of(gid), OTopologyState.ESTABLISHED, Set.of(nodeId1, nodeId2), 2));
+                Optional.of(gid), OTopologyState.ESTABLISHED, Set.of(nodeId1, nodeId2), 2, 2));
     assertTrue(action instanceof ODiscoverAction.ONoneAction);
 
     assertEquals(node1.getMembers().size(), 3);
@@ -388,7 +389,7 @@ public class OCoordinatedDistributedOpsTest {
     var gid = newRandomGroupId();
     node1.load(
         new ONodeStateStore(
-            Optional.of(gid), OTopologyState.ESTABLISHED, Set.of(nodeId1, nodeId2), 3));
+            Optional.of(gid), OTopologyState.ESTABLISHED, Set.of(nodeId1, nodeId2), 2, 3));
     node1.discoverNode(nodeId1);
     assertEquals(node1.getMembers().size(), 2);
 
@@ -405,7 +406,7 @@ public class OCoordinatedDistributedOpsTest {
     ONodeId nodeId2 = newRandomNodeId();
     ONodeId nodeId3 = newRandomNodeId();
     var gid = newRandomGroupId();
-    node1.load(new ONodeStateStore(Optional.empty(), OTopologyState.BOOT, new HashSet<>(), 0));
+    node1.load(new ONodeStateStore(Optional.empty(), OTopologyState.BOOT, new HashSet<>(), 0, 0));
     node1.discoverNode(nodeId1);
     assertEquals(node1.getMembers().size(), 0);
 
@@ -413,7 +414,7 @@ public class OCoordinatedDistributedOpsTest {
         node1.nodeJoinStart(
             nodeId2,
             new ONodeStateNetwork(
-                Optional.of(gid), OTopologyState.ESTABLISHED, Set.of(nodeId2, nodeId3), 2));
+                Optional.of(gid), OTopologyState.ESTABLISHED, Set.of(nodeId2, nodeId3), 2, 2));
     assertTrue(action instanceof ODiscoverAction.ONoneAction);
 
     assertEquals(node1.getMembers().size(), 0);
@@ -425,7 +426,7 @@ public class OCoordinatedDistributedOpsTest {
     OCoordinatedDistributedOps node1 = new OCoordinatedDistributedOpsImpl(nodeId1, 2);
     ONodeId nodeId2 = newRandomNodeId();
     var gid = newRandomGroupId();
-    node1.load(new ONodeStateStore(Optional.empty(), OTopologyState.BOOT, new HashSet<>(), 0));
+    node1.load(new ONodeStateStore(Optional.empty(), OTopologyState.BOOT, new HashSet<>(), 0, 0));
     node1.discoverNode(nodeId1);
     assertEquals(node1.getMembers().size(), 0);
 
@@ -433,7 +434,7 @@ public class OCoordinatedDistributedOpsTest {
         node1.nodeJoinStart(
             nodeId2,
             new ONodeStateNetwork(
-                Optional.of(gid), OTopologyState.ESTABLISHED, Set.of(nodeId1, nodeId2), 2));
+                Optional.of(gid), OTopologyState.ESTABLISHED, Set.of(nodeId1, nodeId2), 2, 2));
     assertTrue(action instanceof ODiscoverAction.ONoneAction);
 
     assertEquals(node1.getMembers().size(), 2);

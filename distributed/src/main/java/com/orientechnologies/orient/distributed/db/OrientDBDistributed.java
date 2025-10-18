@@ -491,7 +491,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   private void declareDatabaseFlow(String name) {
     Set<ONodeId> currentMembers = nodeState.getNetworkState().getMembers();
-    distributedOperation(new ODeclareDbMessage(name, new ODatabaseId(name), currentMembers));
+    distributedOperation(new ODeclareDbMessage(name, new ODatabaseId(name), currentMembers, 0));
   }
 
   private void setDatabaseStatus(String name, ONodeId node, ODatabaseState state) {
@@ -708,13 +708,19 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
       OTransactionIdPromise promise,
       ODatabaseId databaseId,
       String database,
-      Set<ONodeId> partecipants) {
-    return getNodeState().promiseDeclare(promise, databaseId, database, partecipants);
+      Set<ONodeId> partecipants,
+      int minimumQuorum) {
+    return getNodeState()
+        .promiseDeclare(promise, databaseId, database, partecipants, minimumQuorum);
   }
 
   public void declareDatabase(
-      OTransactionIdPromise promise, ODatabaseId dbId, String database, Set<ONodeId> partecipants) {
-    getNodeState().declareDatabase(promise, dbId, database, partecipants);
+      OTransactionIdPromise promise,
+      ODatabaseId dbId,
+      String database,
+      Set<ONodeId> partecipants,
+      int minimumQuorum) {
+    getNodeState().declareDatabase(promise, dbId, database, partecipants, minimumQuorum);
   }
 
   public void cancelDeclare(OTransactionIdPromise promise, ODatabaseId dbId, String database) {

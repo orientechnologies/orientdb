@@ -201,16 +201,22 @@ public class ONodeState {
       OTransactionIdPromise promise,
       ODatabaseId databaseId,
       String database,
-      Set<ONodeId> partecipants) {
+      Set<ONodeId> partecipants,
+      int minimumQuorum) {
     if (!partecipants.contains(nodeId)) {
       return Optional.of(new OMissingNode());
     }
-    return this.databaseTopology.promiseDeclare(promise, databaseId, database, partecipants);
+    return this.databaseTopology.promiseDeclare(
+        promise, databaseId, database, partecipants, minimumQuorum);
   }
 
   public void declareDatabase(
-      OTransactionIdPromise promise, ODatabaseId dbId, String database, Set<ONodeId> partecipants) {
-    this.databaseTopology.declareDatabase(promise, dbId, database, partecipants);
+      OTransactionIdPromise promise,
+      ODatabaseId dbId,
+      String database,
+      Set<ONodeId> partecipants,
+      int minimumQuorum) {
+    this.databaseTopology.declareDatabase(promise, dbId, database, partecipants, minimumQuorum);
   }
 
   public void cancelDatabase(OTransactionIdPromise promise, ODatabaseId dbId, String database) {
