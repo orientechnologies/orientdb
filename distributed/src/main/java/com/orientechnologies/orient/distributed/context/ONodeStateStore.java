@@ -16,13 +16,19 @@ public class ONodeStateStore {
   private final OTopologyState state;
   private final Set<ONodeId> members;
   private final long version;
+  private final int quorum;
 
   public ONodeStateStore(
-      Optional<OGroupId> groupId, OTopologyState state, Set<ONodeId> members, long version) {
+      Optional<OGroupId> groupId,
+      OTopologyState state,
+      Set<ONodeId> members,
+      int quorum,
+      long version) {
     super();
     this.groupId = groupId;
     this.state = state;
     this.members = members;
+    this.quorum = quorum;
     this.version = version;
   }
 
@@ -42,6 +48,10 @@ public class ONodeStateStore {
     return version;
   }
 
+  public int getQuorum() {
+    return quorum;
+  }
+
   public static ONodeStateStore fromResult(OResult d) {
     assert (int) d.getProperty("serializationVersion") == 1;
     OTopologyState state = OTopologyState.valueOf(d.getProperty("state"));
@@ -50,13 +60,15 @@ public class ONodeStateStore {
         ((Collection<OResult>) d.getProperty("members"))
             .stream().map((e) -> ONodeId.readResult(e)).collect(Collectors.toSet());
     long version = d.getProperty("version");
-    return new ONodeStateStore(networkId, state, members, version);
+    int quorum = d.getProperty("quorum");
+    return new ONodeStateStore(networkId, state, members, quorum, version);
   }
 
   public void toElement(OElement el) {
     el.setProperty("serializationVersion", 1);
     el.setProperty("state", state.name());
     el.setProperty("groupId", groupId.orElse(null));
+    el.setProperty("quorum", quorum);
     el.setProperty(
         "members", this.members.stream().map((x) -> x.toDocument()).collect(Collectors.toSet()));
     el.setProperty("version", version);

@@ -29,4 +29,8 @@ public class ONodeDatabaseState {
   public ONodeRole getRole() {
     return role;
   }
+
+  public boolean isOnline() {
+    return ODatabaseState.Online.equals(id);
+  }
 }

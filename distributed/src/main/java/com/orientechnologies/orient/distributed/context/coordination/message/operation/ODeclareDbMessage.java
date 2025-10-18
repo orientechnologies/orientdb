@@ -18,21 +18,24 @@ public class ODeclareDbMessage implements OOperationMessage {
   private String name;
   private ODatabaseId id;
   private Set<ONodeId> partecipants;
+  private int minimumQuorum;
 
-  public ODeclareDbMessage(String name, ODatabaseId id, Set<ONodeId> partecipants) {
+  public ODeclareDbMessage(
+      String name, ODatabaseId id, Set<ONodeId> partecipants, int minimumQuorum) {
     this.name = name;
     this.id = id;
     this.partecipants = partecipants;
+    this.minimumQuorum = minimumQuorum;
   }
 
   @Override
   public Optional<OAcceptResult> validate(OrientDBDistributed ctx, OTransactionIdPromise promise) {
-    return ctx.promiseDeclare(promise, id, name, partecipants);
+    return ctx.promiseDeclare(promise, id, name, partecipants, this.minimumQuorum);
   }
 
   @Override
   public void apply(OrientDBDistributed ctx, OTransactionIdPromise promise) {
-    ctx.declareDatabase(promise, id, name, partecipants);
+    ctx.declareDatabase(promise, id, name, partecipants, minimumQuorum);
   }
 
   @Override
@@ -44,6 +47,7 @@ public class ODeclareDbMessage implements OOperationMessage {
   public void serialize(DataOutput out) throws IOException {
     out.writeUTF(name);
     id.writeNetwork(out);
+    out.writeInt(minimumQuorum);
     out.writeInt(partecipants.size());
     for (ONodeId node : partecipants) {
       node.writeNetwork(out);
@@ -58,12 +62,13 @@ public class ODeclareDbMessage implements OOperationMessage {
   public static ODeclareDbMessage readNetwork(DataInput input) throws IOException {
     String database = input.readUTF();
     ODatabaseId id = ODatabaseId.readNetwork(input);
+    int minimumQuorum = input.readInt();
     int size = input.readInt();
     Set<ONodeId> part = new HashSet<>(size);
     while (size-- > 0) {
       part.add(ONodeId.readNetwork(input));
     }
-    return new ODeclareDbMessage(database, id, part);
+    return new ODeclareDbMessage(database, id, part, minimumQuorum);
   }
 
   public ODatabaseId getId() {
@@ -76,5 +81,9 @@ public class ODeclareDbMessage implements OOperationMessage {
 
   public Set<ONodeId> getPartecipants() {
     return partecipants;
+  }
+
+  public int getMinimumQuorum() {
+    return minimumQuorum;
   }
 }

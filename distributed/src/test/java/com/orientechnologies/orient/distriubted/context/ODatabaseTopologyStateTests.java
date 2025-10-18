@@ -39,10 +39,11 @@ public class ODatabaseTopologyStateTests {
     Set<ONodeId> partecipants = Set.of(promiseId.getCoordinator());
     var dbId = newDbId();
     String name = "dbName";
-    var res = state.promiseDeclare(promiseId, dbId, name, partecipants);
+    int quorum = 2;
+    var res = state.promiseDeclare(promiseId, dbId, name, partecipants, quorum);
     assertTrue(res.isEmpty());
 
-    state.declareDatabase(promiseId, dbId, name, partecipants);
+    state.declareDatabase(promiseId, dbId, name, partecipants, quorum);
     assertTrue(state.listDatabaseIds().contains(dbId));
   }
 
@@ -55,18 +56,19 @@ public class ODatabaseTopologyStateTests {
     Set<ONodeId> partecipants = Set.of(promiseId.getCoordinator());
     var dbId = newDbId();
     String name = "dbName";
-    var res = state.promiseDeclare(promiseId, dbId, name, partecipants);
+    int quorum = 2;
+    var res = state.promiseDeclare(promiseId, dbId, name, partecipants, quorum);
     assertTrue(res.isEmpty());
 
     var promiseId1 = newPromiseId();
 
-    res = state.promiseDeclare(promiseId1, dbId, name, partecipants);
+    res = state.promiseDeclare(promiseId1, dbId, name, partecipants, quorum);
     assertTrue(res.isPresent());
     assertTrue(res.get() instanceof OAlreadyPromised);
 
     var promiseId2 = newPromiseId();
     var dbId1 = newDbId();
-    res = state.promiseDeclare(promiseId2, dbId1, name, partecipants);
+    res = state.promiseDeclare(promiseId2, dbId1, name, partecipants, quorum);
     assertTrue(res.isPresent());
     assertTrue(res.get() instanceof OAlreadyPromised);
   }
@@ -80,18 +82,19 @@ public class ODatabaseTopologyStateTests {
     Set<ONodeId> partecipants = Set.of(promiseId.getCoordinator());
     var dbId = newDbId();
     String name = "dbName";
-    var res = state.promiseDeclare(promiseId, dbId, name, partecipants);
+    int quorum = 2;
+    var res = state.promiseDeclare(promiseId, dbId, name, partecipants, quorum);
     assertTrue(res.isEmpty());
 
     var promiseId1 = newPromiseId();
 
-    res = state.promiseDeclare(promiseId1, dbId, name, partecipants);
+    res = state.promiseDeclare(promiseId1, dbId, name, partecipants, quorum);
     assertTrue(res.isPresent());
     assertTrue(res.get() instanceof OAlreadyPromised);
 
     state.cancelPomise(promiseId, dbId, name);
 
-    res = state.promiseDeclare(promiseId1, dbId, name, partecipants);
+    res = state.promiseDeclare(promiseId1, dbId, name, partecipants, quorum);
     assertTrue(res.isEmpty());
   }
 
@@ -105,10 +108,11 @@ public class ODatabaseTopologyStateTests {
     Set<ONodeId> partecipants = Set.of(nodeId);
     var dbId = newDbId();
     String name = "dbName";
-    var res = state.promiseDeclare(promiseId, dbId, name, partecipants);
+    int quorum = 2;
+    var res = state.promiseDeclare(promiseId, dbId, name, partecipants, quorum);
     assertTrue(res.isEmpty());
 
-    state.declareDatabase(promiseId, dbId, name, partecipants);
+    state.declareDatabase(promiseId, dbId, name, partecipants, quorum);
 
     ODatabaseState ns = state.getNodeState(dbId, nodeId);
     assertEquals(ns, ODatabaseState.Offline);
@@ -131,10 +135,11 @@ public class ODatabaseTopologyStateTests {
     Set<ONodeId> partecipants = Set.of(nodeId);
     var dbId = newDbId();
     String name = "dbName";
-    var res = state.promiseDeclare(promiseId, dbId, name, partecipants);
+    int quorum = 2;
+    var res = state.promiseDeclare(promiseId, dbId, name, partecipants, quorum);
     assertTrue(res.isEmpty());
 
-    state.declareDatabase(promiseId, dbId, name, partecipants);
+    state.declareDatabase(promiseId, dbId, name, partecipants, quorum);
 
     ODatabaseState ns = state.getNodeState(dbId, nodeId);
     assertEquals(ns, ODatabaseState.Offline);
@@ -163,10 +168,11 @@ public class ODatabaseTopologyStateTests {
     Set<ONodeId> partecipants = Set.of(nodeId);
     var dbId = newDbId();
     String name = "dbName";
-    var res = state.promiseDeclare(promiseId, dbId, name, partecipants);
+    int quorum = 2;
+    var res = state.promiseDeclare(promiseId, dbId, name, partecipants, quorum);
     assertTrue(res.isEmpty());
 
-    state.declareDatabase(promiseId, dbId, name, partecipants);
+    state.declareDatabase(promiseId, dbId, name, partecipants, quorum);
 
     ODatabaseState ns = state.getNodeState(dbId, nodeId);
     assertEquals(ns, ODatabaseState.Offline);
@@ -195,10 +201,11 @@ public class ODatabaseTopologyStateTests {
     Set<ONodeId> partecipants = Set.of(nodeId);
     var dbId = newDbId();
     String name = "dbName";
-    var res = state.promiseDeclare(promiseId, dbId, name, partecipants);
+    int quorum = 2;
+    var res = state.promiseDeclare(promiseId, dbId, name, partecipants, quorum);
     assertTrue(res.isEmpty());
 
-    state.declareDatabase(promiseId, dbId, name, partecipants);
+    state.declareDatabase(promiseId, dbId, name, partecipants, quorum);
 
     ODatabaseState ns = state.getNodeState(dbId, nodeId);
     assertEquals(ns, ODatabaseState.Offline);
