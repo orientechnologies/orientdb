@@ -267,7 +267,7 @@ public class OrientDBRemote implements OrientDBInternal {
   }
 
   public ODocument getClusterStatus(String username, String password) {
-    ODistributedStatusRequest request = new ODistributedStatusRequest();
+    ODistributedStatusRequest request = new ODistributedStatusRequest("status");
     ODistributedStatusResponse response = connectAndSend(null, username, password, request);
 
     OLogManager.instance()
