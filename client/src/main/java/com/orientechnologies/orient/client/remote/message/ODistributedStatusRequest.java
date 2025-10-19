@@ -23,8 +23,10 @@ import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.ORemoteClientSession;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
@@ -33,16 +35,26 @@ import java.io.IOException;
 public class ODistributedStatusRequest implements OBinaryRequest<ODistributedStatusResponse> {
   private ODocument status;
 
-  public ODistributedStatusRequest() {}
+  public ODistributedStatusRequest() {
+    status = new ODocument();
+  }
+
+  public ODistributedStatusRequest(String operation) {
+    status = new ODocument();
+    status.setProperty("operation", operation);
+  }
 
   @Override
   public void write(OChannelDataOutput network, ORemoteClientSession session) throws IOException {
-    network.writeBytes(new ODocument().field("operation", "status").toStream());
+    byte[] bytes = ORecordSerializerNetworkV37.INSTANCE.toStream(status);
+    network.writeBytes(bytes);
   }
 
   public void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer)
       throws IOException {
-    status = new ODocument(channel.readBytes());
+    status = new ODocument();
+    ORecordInternal.setRecordSerializer(status, serializer);
+    status.fromStream(channel.readBytes());
   }
 
   public ODocument getStatus() {
