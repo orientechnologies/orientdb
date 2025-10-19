@@ -29,8 +29,22 @@ This document contains the last changes of OrientDB Community Edition.
 
 
 -----------------------------------------------------------------------------------------------------------------------------------
+version 3.2.45 - (October, 22 2025)
+- release notes: https://github.com/orientechnologies/orientdb/wiki/orientdb-3.2-release-notes#3245---22-October-2025
+
+# Core
+- Changed static thread local allocation after failure due to jdk update
+- Correct records size after update and delete
+- Fix scheduling of task in past
+
+# Remote
+- Correct the use of serializer in network message, issue #10585
+
+
+
+-----------------------------------------------------------------------------------------------------------------------------------
 version 3.2.44 - (September, 3 2025)
-- release notes: https://github.com/orientechnologies/orientdb/wiki/orientdb-3.2-release-notes#3243---3-September-2025
+- release notes: https://github.com/orientechnologies/orientdb/wiki/orientdb-3.2-release-notes#3245---3-September-2025
 
 # Core
 - Updated commons-lang 2.6 dependency which is obsolete and unsupported
