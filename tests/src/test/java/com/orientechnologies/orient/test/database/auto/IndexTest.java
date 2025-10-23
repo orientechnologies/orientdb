@@ -35,8 +35,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
-import com.orientechnologies.orient.core.storage.cache.OWriteCache;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.test.database.base.OrientTest;
 import com.orientechnologies.orient.test.domain.business.Account;
 import com.orientechnologies.orient.test.domain.whiz.Profile;
@@ -1553,39 +1551,6 @@ public class IndexTest extends ObjectDBBaseTest {
             .getIndexes()
             .contains("TestCreateIndexAbstractClass.value"));
     explainResult.close();
-  }
-
-  @Test(enabled = false)
-  public void testValuesContainerIsRemovedIfIndexIsRemoved() {
-    if (database.getURL().startsWith("remote:")) return;
-    ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) this.database.getUnderlying();
-    final OSchema schema = database.getMetadata().getSchema();
-    OClass clazz =
-        schema.createClass("ValuesContainerIsRemovedIfIndexIsRemovedClass", 1, (OClass[]) null);
-    clazz.createProperty("val", OType.STRING);
-
-    database
-        .command(
-            "create index ValuesContainerIsRemovedIfIndexIsRemovedIndex on"
-                + " ValuesContainerIsRemovedIfIndexIsRemovedClass (val) notunique")
-        .close();
-
-    for (int i = 0; i < 10; i++) {
-      for (int j = 0; j < 100; j++) {
-        ODocument document = new ODocument("ValuesContainerIsRemovedIfIndexIsRemovedClass");
-        document.field("val", "value" + i);
-        db.save(document);
-      }
-    }
-
-    final OAbstractPaginatedStorage storageLocalAbstract =
-        (OAbstractPaginatedStorage)
-            ((ODatabaseDocumentInternal) database.getUnderlying()).getStorage();
-
-    final OWriteCache writeCache = storageLocalAbstract.getWriteCache();
-    Assert.assertTrue(writeCache.exists("ValuesContainerIsRemovedIfIndexIsRemovedIndex.irs"));
-    database.command("drop index ValuesContainerIsRemovedIfIndexIsRemovedIndex").close();
-    Assert.assertFalse(writeCache.exists("ValuesContainerIsRemovedIfIndexIsRemovedIndex.irs"));
   }
 
   public void testPreservingIdentityInIndexTx() {
