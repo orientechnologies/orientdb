@@ -37,13 +37,11 @@ public class MetadataOnlyTest {
         new byte[] {
           1, 2, 3, 4, 5, 6,
         };
-    ((OAbstractPaginatedStorage) ((ODatabaseDocumentInternal) db).getStorage()).metadataOnly(blob);
+    ((ODatabaseDocumentInternal) db).getStorage().metadataOnly(blob);
     db.close();
     OrientDBInternal.extract(orientDb).forceDatabaseClose("testMetadataOnly");
     db = orientDb.open("testMetadataOnly", "admin", "admin");
-    Optional<byte[]> loaded =
-        ((OAbstractPaginatedStorage) ((ODatabaseDocumentInternal) db).getStorage())
-            .getLastMetadata();
+    Optional<byte[]> loaded = ((ODatabaseDocumentInternal) db).getStorage().getLastMetadata();
     assertTrue(loaded.isPresent());
     assertArrayEquals(loaded.get(), blob);
     db.close();

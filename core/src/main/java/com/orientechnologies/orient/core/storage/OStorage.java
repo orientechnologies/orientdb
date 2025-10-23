@@ -394,4 +394,6 @@ public interface OStorage extends OBackupable, OStorageInfo {
   void incrementalSync(OutputStream dest, Runnable started);
 
   Optional<Path> getPath();
+
+  UUID getUuid();
 }

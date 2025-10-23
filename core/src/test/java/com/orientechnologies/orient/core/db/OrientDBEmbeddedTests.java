@@ -16,7 +16,6 @@ import com.orientechnologies.orient.core.exception.OStorageDoesNotExistException
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import java.util.List;
 import java.util.TimerTask;
 import java.util.UUID;
@@ -640,9 +639,7 @@ public class OrientDBEmbeddedTests {
             "testUUID", "embedded:", OCreateDatabaseUtil.TYPE_MEMORY)) {
       final ODatabaseSession session =
           orientDb.open("testUUID", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
-      assertNotNull(
-          ((OAbstractPaginatedStorage) ((ODatabaseDocumentInternal) session).getStorage())
-              .getUuid());
+      assertNotNull(((ODatabaseDocumentInternal) session).getStorage().getUuid());
       session.close();
     }
   }
@@ -654,8 +651,7 @@ public class OrientDBEmbeddedTests {
             "testPersistentUUID", "embedded:./target/", OCreateDatabaseUtil.TYPE_PLOCAL);
     final ODatabaseSession session =
         orientDb.open("testPersistentUUID", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
-    UUID uuid =
-        ((OAbstractPaginatedStorage) ((ODatabaseDocumentInternal) session).getStorage()).getUuid();
+    UUID uuid = ((ODatabaseDocumentInternal) session).getStorage().getUuid();
     assertNotNull(uuid);
     session.close();
     orientDb.close();
@@ -668,10 +664,7 @@ public class OrientDBEmbeddedTests {
                 .build());
     ODatabaseSession session1 =
         orientDb1.open("testPersistentUUID", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
-    assertEquals(
-        uuid,
-        ((OAbstractPaginatedStorage) ((ODatabaseDocumentInternal) session1).getStorage())
-            .getUuid());
+    assertEquals(uuid, ((ODatabaseDocumentInternal) session1).getStorage().getUuid());
     session1.close();
     orientDb1.drop("testPersistentUUID");
     orientDb1.close();

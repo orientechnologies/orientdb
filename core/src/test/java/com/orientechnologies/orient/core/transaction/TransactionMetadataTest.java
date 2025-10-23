@@ -10,7 +10,6 @@ import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.record.OVertex;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import com.orientechnologies.orient.core.tx.OTxMetadataHolder;
@@ -57,9 +56,7 @@ public class TransactionMetadataTest {
                 .build());
     db = orientDB.open(DB_NAME, "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
 
-    Optional<byte[]> fromStorage =
-        ((OAbstractPaginatedStorage) ((ODatabaseDocumentInternal) db).getStorage())
-            .getLastMetadata();
+    Optional<byte[]> fromStorage = ((ODatabaseDocumentInternal) db).getStorage().getLastMetadata();
     assertTrue(fromStorage.isPresent());
     assertArrayEquals(fromStorage.get(), metadata);
   }
@@ -94,9 +91,7 @@ public class TransactionMetadataTest {
     db1.close();
     db1 = orientDB.open(DB_NAME + "_re", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
 
-    Optional<byte[]> fromStorage =
-        ((OAbstractPaginatedStorage) ((ODatabaseDocumentInternal) db1).getStorage())
-            .getLastMetadata();
+    Optional<byte[]> fromStorage = ((ODatabaseDocumentInternal) db1).getStorage().getLastMetadata();
     assertTrue(fromStorage.isPresent());
     assertArrayEquals(fromStorage.get(), metadata);
   }
