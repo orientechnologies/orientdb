@@ -4820,7 +4820,9 @@ public abstract class OAbstractPaginatedStorage
     wal.addCutTillLimit(lsn);
 
     try {
-      started.run();
+      if (started != null) {
+        started.run();
+      }
       fullIncrementalBackup(dest);
     } finally {
       wal.removeCutTillLimit(lsn);

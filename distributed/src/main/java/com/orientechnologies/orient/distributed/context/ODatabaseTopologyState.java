@@ -5,6 +5,7 @@ import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAlreadyPromised;
 import com.orientechnologies.orient.distributed.context.coordination.result.OInvalidSequential;
+import com.orientechnologies.orient.distributed.db.OSyncMode;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -12,6 +13,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
+import java.util.stream.Collectors;
 
 public class ODatabaseTopologyState {
   private final ODatabaseId id;
@@ -21,6 +24,7 @@ public class ODatabaseTopologyState {
   private boolean promised = false;
   private int quorum;
   private List<OActionNotification> notifications = new ArrayList<>();
+  private Map<UUID, OSyncSession> syncSessions = new HashMap<>();
 
   public ODatabaseTopologyState(
       ODatabaseId db, String name, Set<ONodeId> partecipants, int quorum) {
@@ -118,11 +122,11 @@ public class ODatabaseTopologyState {
     boolean match();
   }
 
-  private interface Action {
-    void execute();
+  public synchronized void executeOnOneOnline(OStateAction execute) {
+    executeOn(this::isOneOnline, execute);
   }
 
-  private record OActionNotification(WaitCond cond, Action execute) {}
+  private record OActionNotification(WaitCond cond, OStateAction execute) {}
 
   private boolean waitFor(Optional<Long> timeout, WaitCond cond) throws InterruptedException {
     if (timeout.isPresent()) {
@@ -142,7 +146,7 @@ public class ODatabaseTopologyState {
     }
   }
 
-  private void executeOn(WaitCond cond, Action execute) throws InterruptedException {
+  private void executeOn(WaitCond cond, OStateAction execute) {
     this.notifications.add(new OActionNotification(cond, execute));
   }
 
@@ -156,5 +160,30 @@ public class ODatabaseTopologyState {
       }
     }
     this.notifyAll();
+  }
+
+  public synchronized Set<ONodeId> getOnlineNodes() {
+    return nodeStatus.values().stream()
+        .filter((x) -> x.isOnline())
+        .map((x) -> x.getId())
+        .collect(Collectors.toSet());
+  }
+
+  public synchronized OSyncInfo newSync() {
+    Set<ONodeId> onlineNodes = getOnlineNodes();
+    OSyncSession session = new OSyncSession(getId(), onlineNodes);
+    this.syncSessions.put(session.getSyncId(), session);
+    return new OSyncInfo(session.getSyncId(), onlineNodes);
+  }
+
+  public synchronized Optional<OSyncState> canSync(
+      ONodeId from, ONodeId to, UUID syncId, boolean canSync, OSyncMode mode) {
+    return this.syncSessions.get(syncId).canSync(from, to, syncId, canSync, mode);
+  }
+
+  public OSyncState startSend(ONodeId from, ONodeId to, UUID syncId, OSyncMode mode) {
+    OSyncSession session = new OSyncSession(getId(), syncId, from, to, mode);
+    this.syncSessions.put(syncId, session);
+    return session.getState();
   }
 }

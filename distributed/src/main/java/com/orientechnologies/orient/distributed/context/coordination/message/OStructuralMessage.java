@@ -1,5 +1,10 @@
 package com.orientechnologies.orient.distributed.context.coordination.message;
 
+import com.orientechnologies.orient.distributed.db.OCanSync;
+import com.orientechnologies.orient.distributed.db.ONextBuffer;
+import com.orientechnologies.orient.distributed.db.OStartSync;
+import com.orientechnologies.orient.distributed.db.OSyncData;
+import com.orientechnologies.orient.distributed.db.OSyncRequest;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import java.io.DataInput;
@@ -20,6 +25,11 @@ public interface OStructuralMessage {
       case 4 -> OConfirmOp.fromNetwork(input);
       case 5 -> OFailOp.fromNetwork(input);
       case 6 -> ONodeFirstConnect.fromNetwork(input);
+      case 7 -> OSyncRequest.fromNetwork(input);
+      case 8 -> OCanSync.fromNetwork(input);
+      case 9 -> OStartSync.fromNetwork(input);
+      case 10 -> OSyncData.fromNetwork(input);
+      case 11 -> ONextBuffer.fromNetwork(input);
       default -> throw new ODistributedException("wrong structural message type from network");
     };
   }
