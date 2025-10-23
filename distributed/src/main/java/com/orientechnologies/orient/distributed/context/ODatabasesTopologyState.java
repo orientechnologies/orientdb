@@ -8,10 +8,13 @@ import com.orientechnologies.orient.distributed.context.coordination.result.OAcc
 import com.orientechnologies.orient.distributed.context.coordination.result.OAlreadyPromised;
 import com.orientechnologies.orient.distributed.context.coordination.result.ODatabaseMissing;
 import com.orientechnologies.orient.distributed.context.coordination.result.ODatabaseNameUsed;
+import com.orientechnologies.orient.distributed.db.OSyncMode;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 
 public class ODatabasesTopologyState {
 
@@ -165,5 +168,48 @@ public class ODatabasesTopologyState {
       return db.waitOnlineOne();
     }
     return false;
+  }
+
+  public synchronized boolean executeOnOneOnline(ODatabaseId dbId, OStateAction execute) {
+    ODatabaseTopologyState db = this.databases.get(dbId);
+    if (db != null) {
+      db.executeOnOneOnline(execute);
+      return true;
+    }
+    return false;
+  }
+
+  public synchronized Set<ONodeId> getOnlineNodes(ODatabaseId dbId) {
+    ODatabaseTopologyState db = this.databases.get(dbId);
+    if (db != null) {
+      return db.getOnlineNodes();
+    }
+    return Collections.emptySet();
+  }
+
+  public synchronized OSyncInfo newSync(ODatabaseId dbId) {
+    ODatabaseTopologyState db = this.databases.get(dbId);
+    if (db == null) {
+      throw new NullPointerException("missing database definition");
+    }
+    return db.newSync();
+  }
+
+  public synchronized Optional<OSyncState> canSync(
+      ONodeId from, ONodeId to, ODatabaseId dbId, UUID syncId, boolean canSync, OSyncMode mode) {
+    ODatabaseTopologyState db = this.databases.get(dbId);
+    if (db == null) {
+      throw new NullPointerException("missing database definition");
+    }
+    return db.canSync(from, to, syncId, canSync, mode);
+  }
+
+  public OSyncState startSend(
+      ONodeId to, ONodeId from, ODatabaseId dbId, UUID syncId, OSyncMode mode) {
+    ODatabaseTopologyState db = this.databases.get(dbId);
+    if (db == null) {
+      throw new NullPointerException("missing database definition");
+    }
+    return db.startSend(from, to, syncId, mode);
   }
 }

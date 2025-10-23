@@ -29,6 +29,8 @@ import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.distributed.context.ODatabaseState;
 import com.orientechnologies.orient.distributed.context.ONodeState;
+import com.orientechnologies.orient.distributed.context.OSyncInfo;
+import com.orientechnologies.orient.distributed.context.OSyncState;
 import com.orientechnologies.orient.distributed.context.coordination.message.ONodeFirstConnect;
 import com.orientechnologies.orient.distributed.context.coordination.message.ONodeStateNetwork;
 import com.orientechnologies.orient.distributed.context.coordination.message.OProposeOp;
@@ -56,8 +58,11 @@ import com.orientechnologies.orient.server.distributed.impl.ODistributedPlugin;
 import com.orientechnologies.orient.server.distributed.impl.ONewDeltaSyncImporter;
 import com.orientechnologies.orient.server.distributed.impl.ORemoteServerManager;
 import com.orientechnologies.orient.server.distributed.impl.metadata.OSharedContextDistributed;
+import java.io.BufferedOutputStream;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -66,6 +71,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 
@@ -81,6 +87,8 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   private final ODistributedMessageServiceImpl messageService;
   // TODO: this require the node name to be instantiate.
   private ONodeState nodeState = null;
+  private final ConcurrentHashMap<UUID, OSyncState> activeSync =
+      new ConcurrentHashMap<UUID, OSyncState>();
 
   public OrientDBDistributed(String directoryPath, OrientDBConfig config, Orient instance) {
     super(directoryPath, config, instance);
@@ -160,7 +168,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
       embedded = new ODatabaseDocumentDistributed(storage, plugin);
       OSharedContext sharedContext = getOrCreateSharedContext(storage);
       embedded.internalCreate(config, sharedContext);
-      //      getOrInitDistributedConfiguration(storage.getName());
+      // getOrInitDistributedConfiguration(storage.getName());
     }
     return embedded;
   }
@@ -174,7 +182,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     } else {
       embedded = new ODatabaseDocumentDistributedPooled(pool, storage, plugin);
       embedded.init(pool.getConfig(), getOrCreateSharedContext(storage));
-      //      getOrInitDistributedConfiguration(storage.getName());
+      // getOrInitDistributedConfiguration(storage.getName());
     }
     return embedded;
   }
@@ -293,7 +301,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
             plugin.dropOnAllServers(name);
             return null;
           });
-      //      dropFlow(name);
+      // dropFlow(name);
       plugin.dropConfig(name);
     } else {
       super.drop(name, user, password);
@@ -315,6 +323,19 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
         if (rem != null) {
           rem.sendMessage(message);
         }
+      }
+    }
+  }
+
+  public void sendMessage(ONodeId node, OStructuralMessage op) {
+    ONetworkMessageStructural message = new ONetworkMessageStructural(this, op);
+    ORemoteServerManager remote = getPlugin().getRemoteServerManager();
+    if (node.equals(getNodeState().getNodeId())) {
+      this.receiveMessage(op);
+    } else {
+      ORemoteServerController rem = remote.getRemoteServer(node.getNode());
+      if (rem != null) {
+        rem.sendMessage(message);
       }
     }
   }
@@ -489,13 +510,31 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     }
   }
 
-  private void declareDatabaseFlow(String name) {
-    Set<ONodeId> currentMembers = nodeState.getNetworkState().getMembers();
-    distributedOperation(new ODeclareDbMessage(name, new ODatabaseId(name), currentMembers, 0));
+  private void createDatabaseFlow(
+      String name,
+      String user,
+      String password,
+      ODatabaseType type,
+      OrientDBConfig config,
+      ODatabaseTask<Void> createOps) {
+    ODatabaseId dbId = new ODatabaseId(name);
+    declareDatabaseFlow(name, dbId);
+    super.create(name, user, password, type, config, createOps);
+    setDatabaseStatus(name, dbId, getNodeState().getNodeId(), ODatabaseState.Online);
+    try {
+      getNodeState().getDatabaseTopology().waitOnlineQuorum(dbId, Optional.empty());
+    } catch (InterruptedException e) {
+      throw OException.wrapException(new OInterruptedException("wait for online interrupted"), e);
+    }
   }
 
-  private void setDatabaseStatus(String name, ONodeId node, ODatabaseState state) {
-    ODatabaseId dbId = new ODatabaseId(name);
+  private void declareDatabaseFlow(String name, ODatabaseId dbId) {
+    Set<ONodeId> currentMembers = nodeState.getNetworkState().getMembers();
+    distributedOperation(new ODeclareDbMessage(name, dbId, currentMembers, 0));
+  }
+
+  private void setDatabaseStatus(
+      String name, ODatabaseId dbId, ONodeId node, ODatabaseState state) {
     long version = this.getNodeState().getDatabaseTopology().getDatabaseVersion(dbId);
     distributedOperation(new OSetDatabaseState(dbId, node, state, version + 1));
   }
@@ -721,9 +760,133 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
       Set<ONodeId> partecipants,
       int minimumQuorum) {
     getNodeState().declareDatabase(promise, dbId, database, partecipants, minimumQuorum);
+    getNodeState()
+        .getDatabaseTopology()
+        .executeOnOneOnline(
+            dbId,
+            () -> {
+              execute(() -> sync(dbId));
+            });
+  }
+
+  private void sync(ODatabaseId dbId) {
+    OSyncInfo sync = getNodeState().getDatabaseTopology().newSync(dbId);
+    sendMessage(
+        sync.targets(),
+        new OSyncRequest(
+            getNodeState().getNodeId(), dbId, sync.syncId(), OSyncMode.IncrementalBackup));
   }
 
   public void cancelDeclare(OTransactionIdPromise promise, ODatabaseId dbId, String database) {
     getNodeState().cancelDatabase(promise, dbId, database);
+  }
+
+  public void acceptSync(ONodeId from, ODatabaseId dbId, UUID syncId, OSyncMode mode) {
+    // TODO: check if already syncinging with someone do not accept
+    if (this.existsDb(dbId)) {
+      sendMessage(from, new OCanSync(getNodeState().getNodeId(), dbId, syncId, mode, true));
+    } else {
+      sendMessage(from, new OCanSync(getNodeState().getNodeId(), dbId, syncId, mode, false));
+    }
+  }
+
+  private boolean existsDb(ODatabaseId dbId) {
+    // TODO Auto-generated method stub
+    return false;
+  }
+
+  public void canSync(
+      ONodeId from, ODatabaseId dbId, UUID syncId, boolean canSync, OSyncMode mode) {
+    Optional<OSyncState> state =
+        getNodeState()
+            .getDatabaseTopology()
+            .canSync(from, getNodeState().getNodeId(), dbId, syncId, canSync, mode);
+
+    if (state.isPresent()) {
+
+      OSyncState st = state.get();
+      this.activeSync.put(st.getSyncId(), st);
+      sendMessage(from, new OStartSync(getNodeState().getNodeId(), dbId, syncId, mode));
+      String dbName = getDbName(dbId);
+      OReceiverImputStream input = new OReceiverImputStream(this, st);
+      st.setReceiver(input);
+      Thread thread =
+          new Thread(
+              () -> {
+                fullSync(dbName, input, getConfigurations());
+              });
+      thread.start();
+    }
+  }
+
+  public void sendDatabase(ONodeId to, ODatabaseId dbId, UUID syncId, OSyncMode mode) {
+    OSyncState state =
+        getNodeState()
+            .getDatabaseTopology()
+            .startSend(to, getNodeState().getNodeId(), dbId, syncId, mode);
+    this.activeSync.put(state.getSyncId(), state);
+    OutputStream out = new BufferedOutputStream(new OutputStreamMessages(this, state), 8096);
+    Thread thread =
+        new Thread(
+            () -> {
+              syncBackup(state, out);
+            });
+    thread.start();
+  }
+
+  public void syncBackup(OSyncState state, OutputStream out) {
+    String dbNam = getDbName(state.getDbId());
+
+    ODatabaseDocumentEmbedded db = openNoAuthorization(dbNam);
+    OStorage storage = db.getStorage();
+    if (storage.supportIncremental() && state.isIncremental()) {
+      storage.incrementalSync(out, null);
+    } else {
+      int compression =
+          getConfigurations()
+              .getConfigurations()
+              .getValueAsInteger(OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION);
+      try {
+        storage.backup(out, null, null, null, compression, 0);
+      } catch (IOException e) {
+        try {
+          out.close();
+        } catch (IOException e1) {
+        }
+      }
+    }
+  }
+
+  private String getDbName(ODatabaseId dbId) {
+    return null;
+  }
+
+  public void sendBuffer(OSyncState state, byte[] data) {
+    sendMessage(state.getTo(), new OSyncData(state.getSyncId(), data));
+    state.transaferd(data.length);
+    try {
+      state.waitForNext();
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
+  }
+
+  public void finishSync(OSyncState state) {
+    // TODO Auto-generated method stub
+
+  }
+
+  public void receiveSyncData(UUID syncId, byte[] data) {
+    var state = this.activeSync.get(syncId);
+    state.receiveData(data);
+  }
+
+  public void requestNext(OSyncState state) {
+    sendMessage(state.getFrom(), new ONextBuffer(state.getSyncId()));
+  }
+
+  public void nextBuffer(UUID syncId) {
+    var state = this.activeSync.get(syncId);
+    state.requestNext();
   }
 }
