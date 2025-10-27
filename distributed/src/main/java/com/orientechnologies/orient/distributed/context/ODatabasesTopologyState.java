@@ -14,7 +14,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.UUID;
 
 public class ODatabasesTopologyState {
 
@@ -23,6 +22,7 @@ public class ODatabasesTopologyState {
   private final Map<ODatabaseId, ORawPair<OTransactionIdPromise, ODatabaseTopologyState>> promised =
       new HashMap<>();
   private final Map<String, ODatabaseTopologyState> promisedByName = new HashMap<>();
+  private final Map<OSyncId, OSyncState> activerSyncs = new HashMap<>();
 
   public ODatabasesTopologyState() {}
 
@@ -196,20 +196,28 @@ public class ODatabasesTopologyState {
   }
 
   public synchronized Optional<OSyncState> canSync(
-      ONodeId from, ONodeId to, ODatabaseId dbId, UUID syncId, boolean canSync, OSyncMode mode) {
+      ONodeId from, ONodeId to, ODatabaseId dbId, OSyncId syncId, boolean canSync, OSyncMode mode) {
     ODatabaseTopologyState db = this.databases.get(dbId);
     if (db == null) {
       throw new NullPointerException("missing database definition");
     }
-    return db.canSync(from, to, syncId, canSync, mode);
+    var state = db.canSync(from, to, syncId, canSync, mode);
+    if (state.isPresent()) {
+      this.activerSyncs.put(state.get().getSyncId(), state.get());
+    }
+    return state;
   }
 
   public OSyncState startSend(
-      ONodeId to, ONodeId from, ODatabaseId dbId, UUID syncId, OSyncMode mode) {
+      ONodeId to, ONodeId from, ODatabaseId dbId, OSyncId syncId, OSyncMode mode) {
     ODatabaseTopologyState db = this.databases.get(dbId);
     if (db == null) {
       throw new NullPointerException("missing database definition");
     }
     return db.startSend(from, to, syncId, mode);
+  }
+
+  public OSyncState getSyncState(OSyncId syncId) {
+    return this.activerSyncs.get(syncId);
   }
 }

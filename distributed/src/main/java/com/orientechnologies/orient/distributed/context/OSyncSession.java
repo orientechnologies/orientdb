@@ -5,32 +5,31 @@ import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.distributed.db.OSyncMode;
 import java.util.Optional;
 import java.util.Set;
-import java.util.UUID;
 
 public class OSyncSession {
-  private final UUID syncId;
+  private final OSyncId syncId;
   private final ODatabaseId dbId;
   private Set<ONodeId> nodes;
   private OSyncState state;
 
   public OSyncSession(ODatabaseId dbId, Set<ONodeId> nodes) {
     this.dbId = dbId;
-    this.syncId = UUID.randomUUID();
+    this.syncId = new OSyncId();
     this.nodes = nodes;
   }
 
-  public OSyncSession(ODatabaseId dbId, UUID syncId, ONodeId from, ONodeId to, OSyncMode mode) {
+  public OSyncSession(ODatabaseId dbId, OSyncId syncId, ONodeId from, ONodeId to, OSyncMode mode) {
     this.syncId = syncId;
     this.dbId = dbId;
     this.state = new OSyncState(dbId, syncId, from, to, mode);
   }
 
-  public UUID getSyncId() {
+  public OSyncId getSyncId() {
     return syncId;
   }
 
   public Optional<OSyncState> canSync(
-      ONodeId from, ONodeId to, UUID syncId, boolean canSync, OSyncMode mode) {
+      ONodeId from, ONodeId to, OSyncId syncId, boolean canSync, OSyncMode mode) {
     assert this.syncId.equals(syncId);
     if (canSync) {
       this.state = new OSyncState(dbId, syncId, from, to, mode);

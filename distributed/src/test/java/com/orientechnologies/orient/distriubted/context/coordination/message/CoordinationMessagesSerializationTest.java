@@ -9,6 +9,7 @@ import com.orientechnologies.orient.core.transaction.OGroupId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
+import com.orientechnologies.orient.distributed.context.OSyncId;
 import com.orientechnologies.orient.distributed.context.coordination.message.OCanSync;
 import com.orientechnologies.orient.distributed.context.coordination.message.OConfirmOp;
 import com.orientechnologies.orient.distributed.context.coordination.message.OFailOp;
@@ -147,7 +148,7 @@ public class CoordinationMessagesSerializationTest {
   public void syncRequestTest() throws IOException {
     ONodeId nodeId = newNodeId();
     ODatabaseId dbId = newDatabaseId();
-    UUID syncId = UUID.randomUUID();
+    OSyncId syncId = new OSyncId();
     OSyncRequest syncReq = new OSyncRequest(nodeId, dbId, syncId, OSyncMode.StandardBackup);
 
     OSyncRequest read = writeRead(syncReq);
@@ -162,7 +163,7 @@ public class CoordinationMessagesSerializationTest {
   public void canSyncTest() throws IOException {
     ONodeId nodeId = newNodeId();
     ODatabaseId dbId = newDatabaseId();
-    UUID syncId = UUID.randomUUID();
+    OSyncId syncId = new OSyncId();
     OCanSync syncReq = new OCanSync(nodeId, dbId, syncId, OSyncMode.StandardBackup, true);
 
     OCanSync read = writeRead(syncReq);
@@ -178,7 +179,7 @@ public class CoordinationMessagesSerializationTest {
   public void startSyncTest() throws IOException {
     ONodeId nodeId = newNodeId();
     ODatabaseId dbId = newDatabaseId();
-    UUID syncId = UUID.randomUUID();
+    OSyncId syncId = new OSyncId();
     OStartSync syncReq = new OStartSync(nodeId, dbId, syncId, OSyncMode.StandardBackup);
 
     OStartSync read = writeRead(syncReq);
@@ -191,7 +192,7 @@ public class CoordinationMessagesSerializationTest {
 
   @Test
   public void syncDataTest() throws IOException {
-    UUID syncId = UUID.randomUUID();
+    OSyncId syncId = new OSyncId();
     var data = new byte[] {0, 1, 2};
     OSyncData syncReq = new OSyncData(syncId, data);
 
@@ -203,7 +204,7 @@ public class CoordinationMessagesSerializationTest {
 
   @Test
   public void nextBufferTest() throws IOException {
-    UUID syncId = UUID.randomUUID();
+    OSyncId syncId = new OSyncId();
     ONextBuffer syncReq = new ONextBuffer(syncId);
 
     ONextBuffer read = writeRead(syncReq);

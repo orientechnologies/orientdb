@@ -2,21 +2,21 @@ package com.orientechnologies.orient.distributed.context.coordination.message;
 
 import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
+import com.orientechnologies.orient.distributed.context.OSyncId;
 import com.orientechnologies.orient.distributed.db.OSyncMode;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.UUID;
 
 public class OStartSync implements OStructuralMessage {
 
   private ONodeId from;
   private ODatabaseId dbId;
-  private UUID syncId;
+  private OSyncId syncId;
   private OSyncMode mode;
 
-  public OStartSync(ONodeId from, ODatabaseId dbId, UUID syncId, OSyncMode mode) {
+  public OStartSync(ONodeId from, ODatabaseId dbId, OSyncId syncId, OSyncMode mode) {
     this.from = from;
     this.dbId = dbId;
     this.syncId = syncId;
@@ -33,7 +33,7 @@ public class OStartSync implements OStructuralMessage {
     this.from.writeNetwork(out);
     this.dbId.writeNetwork(out);
     this.mode.writeNetwork(out);
-    out.writeUTF(syncId.toString());
+    this.syncId.writeNetwork(out);
   }
 
   @Override
@@ -45,7 +45,7 @@ public class OStartSync implements OStructuralMessage {
     ONodeId nodeId = ONodeId.readNetwork(input);
     ODatabaseId dbId = ODatabaseId.readNetwork(input);
     OSyncMode mode = OSyncMode.fromNetwork(input);
-    UUID syncId = UUID.fromString(input.readUTF());
+    OSyncId syncId = OSyncId.readNetwork(input);
     return new OStartSync(nodeId, dbId, syncId, mode);
   }
 
@@ -61,7 +61,7 @@ public class OStartSync implements OStructuralMessage {
     return mode;
   }
 
-  public UUID getSyncId() {
+  public OSyncId getSyncId() {
     return syncId;
   }
 }

@@ -2,21 +2,21 @@ package com.orientechnologies.orient.distributed.context.coordination.message;
 
 import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
+import com.orientechnologies.orient.distributed.context.OSyncId;
 import com.orientechnologies.orient.distributed.db.OSyncMode;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.UUID;
 
 public class OCanSync implements OStructuralMessage {
   private ONodeId from;
   private ODatabaseId dbId;
-  private UUID syncId;
+  private OSyncId syncId;
   private OSyncMode mode;
   private boolean canSync;
 
-  public OCanSync(ONodeId from, ODatabaseId dbId, UUID syncId, OSyncMode mode, boolean canSync) {
+  public OCanSync(ONodeId from, ODatabaseId dbId, OSyncId syncId, OSyncMode mode, boolean canSync) {
     this.from = from;
     this.dbId = dbId;
     this.syncId = syncId;
@@ -33,7 +33,7 @@ public class OCanSync implements OStructuralMessage {
   public void serialize(DataOutput out) throws IOException {
     this.from.writeNetwork(out);
     this.dbId.writeNetwork(out);
-    out.writeUTF(syncId.toString());
+    this.syncId.writeNetwork(out);
     this.mode.writeNetwork(out);
     out.writeBoolean(canSync);
   }
@@ -46,7 +46,7 @@ public class OCanSync implements OStructuralMessage {
   public static OCanSync fromNetwork(DataInput input) throws IOException {
     ONodeId from = ONodeId.readNetwork(input);
     ODatabaseId dbId = ODatabaseId.readNetwork(input);
-    UUID syncId = UUID.fromString(input.readUTF());
+    OSyncId syncId = OSyncId.readNetwork(input);
     OSyncMode mode = OSyncMode.fromNetwork(input);
     boolean canSync = input.readBoolean();
     return new OCanSync(from, dbId, syncId, mode, canSync);
@@ -64,7 +64,7 @@ public class OCanSync implements OStructuralMessage {
     return mode;
   }
 
-  public UUID getSyncId() {
+  public OSyncId getSyncId() {
     return syncId;
   }
 

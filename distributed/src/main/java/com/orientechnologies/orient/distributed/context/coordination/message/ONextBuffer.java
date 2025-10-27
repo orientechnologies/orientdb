@@ -1,16 +1,16 @@
 package com.orientechnologies.orient.distributed.context.coordination.message;
 
+import com.orientechnologies.orient.distributed.context.OSyncId;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.UUID;
 
 public class ONextBuffer implements OStructuralMessage {
 
-  private UUID syncId;
+  private OSyncId syncId;
 
-  public ONextBuffer(UUID syncId) {
+  public ONextBuffer(OSyncId syncId) {
     this.syncId = syncId;
   }
 
@@ -21,7 +21,7 @@ public class ONextBuffer implements OStructuralMessage {
 
   @Override
   public void serialize(DataOutput out) throws IOException {
-    out.writeUTF(syncId.toString());
+    this.syncId.writeNetwork(out);
   }
 
   @Override
@@ -30,11 +30,11 @@ public class ONextBuffer implements OStructuralMessage {
   }
 
   public static ONextBuffer fromNetwork(DataInput input) throws IOException {
-    UUID syncId = UUID.fromString(input.readUTF());
+    OSyncId syncId = OSyncId.readNetwork(input);
     return new ONextBuffer(syncId);
   }
 
-  public UUID getSyncId() {
+  public OSyncId getSyncId() {
     return syncId;
   }
 }
