@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.distributed.context.ODatabaseState;
 import com.orientechnologies.orient.distributed.context.ONodeState;
+import com.orientechnologies.orient.distributed.context.OSyncId;
 import com.orientechnologies.orient.distributed.context.OSyncInfo;
 import com.orientechnologies.orient.distributed.context.OSyncState;
 import com.orientechnologies.orient.distributed.context.coordination.message.OCanSync;
@@ -77,7 +78,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 
@@ -93,8 +93,6 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   private final ODistributedMessageServiceImpl messageService;
   // TODO: this require the node name to be instantiate.
   private ONodeState nodeState = null;
-  private final ConcurrentHashMap<UUID, OSyncState> activeSync =
-      new ConcurrentHashMap<UUID, OSyncState>();
 
   public OrientDBDistributed(String directoryPath, OrientDBConfig config, Orient instance) {
     super(directoryPath, config, instance);
@@ -787,7 +785,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     getNodeState().cancelDatabase(promise, dbId, database);
   }
 
-  public void acceptSync(ONodeId from, ODatabaseId dbId, UUID syncId, OSyncMode mode) {
+  public void acceptSync(ONodeId from, ODatabaseId dbId, OSyncId syncId, OSyncMode mode) {
     // TODO: check if already syncinging with someone do not accept
     if (this.existsDb(dbId)) {
       sendMessage(from, new OCanSync(getNodeState().getNodeId(), dbId, syncId, mode, true));
@@ -802,7 +800,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   }
 
   public void canSync(
-      ONodeId from, ODatabaseId dbId, UUID syncId, boolean canSync, OSyncMode mode) {
+      ONodeId from, ODatabaseId dbId, OSyncId syncId, boolean canSync, OSyncMode mode) {
     Optional<OSyncState> state =
         getNodeState()
             .getDatabaseTopology()
@@ -811,7 +809,6 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     if (state.isPresent()) {
 
       OSyncState st = state.get();
-      this.activeSync.put(st.getSyncId(), st);
       sendMessage(from, new OStartSync(getNodeState().getNodeId(), dbId, syncId, mode));
       String dbName = getDbName(dbId);
       OReceiverImputStream input = new OReceiverImputStream(this, st);
@@ -825,12 +822,11 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     }
   }
 
-  public void sendDatabase(ONodeId to, ODatabaseId dbId, UUID syncId, OSyncMode mode) {
+  public void sendDatabase(ONodeId to, ODatabaseId dbId, OSyncId syncId, OSyncMode mode) {
     OSyncState state =
         getNodeState()
             .getDatabaseTopology()
             .startSend(to, getNodeState().getNodeId(), dbId, syncId, mode);
-    this.activeSync.put(state.getSyncId(), state);
     OutputStream out = new BufferedOutputStream(new OutputStreamMessages(this, state), 8096);
     Thread thread =
         new Thread(
@@ -882,8 +878,8 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   }
 
-  public void receiveSyncData(UUID syncId, byte[] data) {
-    var state = this.activeSync.get(syncId);
+  public void receiveSyncData(OSyncId syncId, byte[] data) {
+    var state = this.getNodeState().getDatabaseTopology().getSyncState(syncId);
     state.receiveData(data);
   }
 
@@ -891,8 +887,8 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     sendMessage(state.getFrom(), new ONextBuffer(state.getSyncId()));
   }
 
-  public void nextBuffer(UUID syncId) {
-    var state = this.activeSync.get(syncId);
+  public void nextBuffer(OSyncId syncId) {
+    var state = this.getNodeState().getDatabaseTopology().getSyncState(syncId);
     state.requestNext();
   }
 }

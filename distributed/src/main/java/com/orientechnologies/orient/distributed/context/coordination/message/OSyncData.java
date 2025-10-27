@@ -1,22 +1,22 @@
 package com.orientechnologies.orient.distributed.context.coordination.message;
 
+import com.orientechnologies.orient.distributed.context.OSyncId;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.UUID;
 
 public class OSyncData implements OStructuralMessage {
 
   public final byte[] data;
-  private UUID syncId;
+  private OSyncId syncId;
 
   /**
    * The data need to be immutable, copy it if can mutate before passing
    *
    * @param data
    */
-  public OSyncData(UUID syncId, byte[] data) {
+  public OSyncData(OSyncId syncId, byte[] data) {
     this.syncId = syncId;
     this.data = data;
   }
@@ -28,9 +28,9 @@ public class OSyncData implements OStructuralMessage {
 
   @Override
   public void serialize(DataOutput out) throws IOException {
-    out.writeUTF(this.syncId.toString());
-    out.writeInt(data.length);
-    out.write(data);
+    this.syncId.writeNetwork(out);
+    out.writeInt(this.data.length);
+    out.write(this.data);
   }
 
   @Override
@@ -39,7 +39,7 @@ public class OSyncData implements OStructuralMessage {
   }
 
   public static OSyncData fromNetwork(DataInput input) throws IOException {
-    UUID syncId = UUID.fromString(input.readUTF());
+    OSyncId syncId = OSyncId.readNetwork(input);
     int size = input.readInt();
     byte[] data = new byte[size];
     input.readFully(data);
@@ -50,7 +50,7 @@ public class OSyncData implements OStructuralMessage {
     return data;
   }
 
-  public UUID getSyncId() {
+  public OSyncId getSyncId() {
     return syncId;
   }
 }

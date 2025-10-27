@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 public class ODatabaseTopologyState {
@@ -24,7 +23,7 @@ public class ODatabaseTopologyState {
   private boolean promised = false;
   private int quorum;
   private List<OActionNotification> notifications = new ArrayList<>();
-  private Map<UUID, OSyncSession> syncSessions = new HashMap<>();
+  private Map<OSyncId, OSyncSession> syncSessions = new HashMap<>();
 
   public ODatabaseTopologyState(
       ODatabaseId db, String name, Set<ONodeId> partecipants, int quorum) {
@@ -177,11 +176,11 @@ public class ODatabaseTopologyState {
   }
 
   public synchronized Optional<OSyncState> canSync(
-      ONodeId from, ONodeId to, UUID syncId, boolean canSync, OSyncMode mode) {
+      ONodeId from, ONodeId to, OSyncId syncId, boolean canSync, OSyncMode mode) {
     return this.syncSessions.get(syncId).canSync(from, to, syncId, canSync, mode);
   }
 
-  public OSyncState startSend(ONodeId from, ONodeId to, UUID syncId, OSyncMode mode) {
+  public OSyncState startSend(ONodeId from, ONodeId to, OSyncId syncId, OSyncMode mode) {
     OSyncSession session = new OSyncSession(getId(), syncId, from, to, mode);
     this.syncSessions.put(syncId, session);
     return session.getState();

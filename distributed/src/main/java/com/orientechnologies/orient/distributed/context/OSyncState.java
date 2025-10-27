@@ -4,12 +4,11 @@ import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.distributed.db.OReceiverImputStream;
 import com.orientechnologies.orient.distributed.db.OSyncMode;
-import java.util.UUID;
 
 public class OSyncState {
 
   private final ODatabaseId dbId;
-  private final UUID syncId;
+  private final OSyncId syncId;
   private final ONodeId from;
   private final ONodeId to;
   private final OSyncMode mode;
@@ -18,7 +17,7 @@ public class OSyncState {
   private volatile OReceiverImputStream receiver;
   private boolean canNext = false;
 
-  public OSyncState(ODatabaseId dbId, UUID syncId, ONodeId from, ONodeId to, OSyncMode mode) {
+  public OSyncState(ODatabaseId dbId, OSyncId syncId, ONodeId from, ONodeId to, OSyncMode mode) {
     this.dbId = dbId;
     this.syncId = syncId;
     this.from = from;
@@ -55,7 +54,7 @@ public class OSyncState {
     return mode;
   }
 
-  public UUID getSyncId() {
+  public OSyncId getSyncId() {
     return syncId;
   }
 
