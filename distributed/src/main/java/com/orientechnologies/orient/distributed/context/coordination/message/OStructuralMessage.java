@@ -1,10 +1,5 @@
 package com.orientechnologies.orient.distributed.context.coordination.message;
 
-import com.orientechnologies.orient.distributed.db.OCanSync;
-import com.orientechnologies.orient.distributed.db.ONextBuffer;
-import com.orientechnologies.orient.distributed.db.OStartSync;
-import com.orientechnologies.orient.distributed.db.OSyncData;
-import com.orientechnologies.orient.distributed.db.OSyncRequest;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import java.io.DataInput;

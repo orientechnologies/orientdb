@@ -1,6 +1,6 @@
-package com.orientechnologies.orient.distributed.db;
+package com.orientechnologies.orient.distributed.context.coordination.message;
 
-import com.orientechnologies.orient.distributed.context.coordination.message.OStructuralMessage;
+import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -28,6 +28,7 @@ public class OSyncData implements OStructuralMessage {
 
   @Override
   public void serialize(DataOutput out) throws IOException {
+    out.writeUTF(this.syncId.toString());
     out.writeInt(data.length);
     out.write(data);
   }
@@ -43,5 +44,13 @@ public class OSyncData implements OStructuralMessage {
     byte[] data = new byte[size];
     input.readFully(data);
     return new OSyncData(syncId, data);
+  }
+
+  public byte[] getData() {
+    return data;
+  }
+
+  public UUID getSyncId() {
+    return syncId;
   }
 }

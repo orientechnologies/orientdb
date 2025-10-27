@@ -1,6 +1,6 @@
-package com.orientechnologies.orient.distributed.db;
+package com.orientechnologies.orient.distributed.context.coordination.message;
 
-import com.orientechnologies.orient.distributed.context.coordination.message.OStructuralMessage;
+import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -32,5 +32,9 @@ public class ONextBuffer implements OStructuralMessage {
   public static ONextBuffer fromNetwork(DataInput input) throws IOException {
     UUID syncId = UUID.fromString(input.readUTF());
     return new ONextBuffer(syncId);
+  }
+
+  public UUID getSyncId() {
+    return syncId;
   }
 }

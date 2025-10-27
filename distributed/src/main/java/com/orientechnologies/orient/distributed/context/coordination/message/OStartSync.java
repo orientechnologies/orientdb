@@ -1,8 +1,9 @@
-package com.orientechnologies.orient.distributed.db;
+package com.orientechnologies.orient.distributed.context.coordination.message;
 
 import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
-import com.orientechnologies.orient.distributed.context.coordination.message.OStructuralMessage;
+import com.orientechnologies.orient.distributed.db.OSyncMode;
+import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -43,8 +44,24 @@ public class OStartSync implements OStructuralMessage {
   public static OStartSync fromNetwork(DataInput input) throws IOException {
     ONodeId nodeId = ONodeId.readNetwork(input);
     ODatabaseId dbId = ODatabaseId.readNetwork(input);
-    UUID syncId = UUID.fromString(input.readUTF());
     OSyncMode mode = OSyncMode.fromNetwork(input);
+    UUID syncId = UUID.fromString(input.readUTF());
     return new OStartSync(nodeId, dbId, syncId, mode);
+  }
+
+  public ODatabaseId getDbId() {
+    return dbId;
+  }
+
+  public ONodeId getFrom() {
+    return from;
+  }
+
+  public OSyncMode getMode() {
+    return mode;
+  }
+
+  public UUID getSyncId() {
+    return syncId;
   }
 }
