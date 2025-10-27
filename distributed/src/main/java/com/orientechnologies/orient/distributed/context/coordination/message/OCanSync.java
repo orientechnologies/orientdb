@@ -1,8 +1,9 @@
-package com.orientechnologies.orient.distributed.db;
+package com.orientechnologies.orient.distributed.context.coordination.message;
 
 import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
-import com.orientechnologies.orient.distributed.context.coordination.message.OStructuralMessage;
+import com.orientechnologies.orient.distributed.db.OSyncMode;
+import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -19,6 +20,7 @@ public class OCanSync implements OStructuralMessage {
     this.from = from;
     this.dbId = dbId;
     this.syncId = syncId;
+    this.mode = mode;
     this.canSync = canSync;
   }
 
@@ -48,5 +50,25 @@ public class OCanSync implements OStructuralMessage {
     OSyncMode mode = OSyncMode.fromNetwork(input);
     boolean canSync = input.readBoolean();
     return new OCanSync(from, dbId, syncId, mode, canSync);
+  }
+
+  public ONodeId getFrom() {
+    return from;
+  }
+
+  public ODatabaseId getDbId() {
+    return dbId;
+  }
+
+  public OSyncMode getMode() {
+    return mode;
+  }
+
+  public UUID getSyncId() {
+    return syncId;
+  }
+
+  public boolean isCanSync() {
+    return canSync;
   }
 }

@@ -1,12 +1,8 @@
-package com.orientechnologies.orient.distributed.db;
+package com.orientechnologies.orient.distributed.context.coordination.message.operation;
 
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
-import com.orientechnologies.orient.distributed.context.coordination.message.operation.OAddTopologyMember;
-import com.orientechnologies.orient.distributed.context.coordination.message.operation.ODeclareDbMessage;
-import com.orientechnologies.orient.distributed.context.coordination.message.operation.ODropDbMessage;
-import com.orientechnologies.orient.distributed.context.coordination.message.operation.OEnstablishTopology;
-import com.orientechnologies.orient.distributed.context.coordination.message.operation.OSetDatabaseState;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
+import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import java.io.DataInput;
 import java.io.DataOutput;

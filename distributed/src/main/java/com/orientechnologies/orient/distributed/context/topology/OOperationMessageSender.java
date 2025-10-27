@@ -1,7 +1,7 @@
 package com.orientechnologies.orient.distributed.context.topology;
 
 import com.orientechnologies.orient.core.transaction.ONodeId;
-import com.orientechnologies.orient.distributed.db.OOperationMessage;
+import com.orientechnologies.orient.distributed.context.coordination.message.operation.OOperationMessage;
 import java.util.Set;
 
 public interface OOperationMessageSender {
