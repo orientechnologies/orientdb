@@ -6,10 +6,14 @@ import java.io.OutputStream;
 
 public class OutputStreamMessages extends OutputStream {
 
-  private OSyncState state;
-  private OrientDBDistributed ctx;
+  public interface MessageSender {
+    void sendBuffer(OSyncState state, byte[] data, boolean finished);
+  }
 
-  public OutputStreamMessages(OrientDBDistributed ctx, OSyncState state) {
+  private OSyncState state;
+  private MessageSender ctx;
+
+  public OutputStreamMessages(MessageSender ctx, OSyncState state) {
     this.state = state;
     this.ctx = ctx;
   }
@@ -23,11 +27,11 @@ public class OutputStreamMessages extends OutputStream {
   public void write(byte[] b, int off, int len) throws IOException {
     byte[] data = new byte[len];
     System.arraycopy(b, off, data, 0, len);
-    this.ctx.sendBuffer(state, data);
+    this.ctx.sendBuffer(state, data, false);
   }
 
   @Override
   public void close() throws IOException {
-    this.ctx.finishSync(state);
+    this.ctx.sendBuffer(state, new byte[] {}, true);
   }
 }

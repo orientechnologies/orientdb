@@ -194,20 +194,22 @@ public class CoordinationMessagesSerializationTest {
   public void syncDataTest() throws IOException {
     OSyncId syncId = new OSyncId();
     var data = new byte[] {0, 1, 2};
-    OSyncData syncReq = new OSyncData(syncId, data);
+    OSyncData syncReq = new OSyncData(syncId, data, true);
 
     OSyncData read = writeRead(syncReq);
 
     assertEquals(read.getSyncId(), syncId);
     assertArrayEquals(read.getData(), data);
+    assertTrue(syncReq.isFinished());
   }
 
   @Test
   public void nextBufferTest() throws IOException {
     OSyncId syncId = new OSyncId();
-    ONextBuffer syncReq = new ONextBuffer(syncId);
+    ONextBuffer syncReq = new ONextBuffer(syncId, true);
 
     ONextBuffer read = writeRead(syncReq);
     assertEquals(read.getSyncId(), syncId);
+    assertTrue(read.isClose());
   }
 }

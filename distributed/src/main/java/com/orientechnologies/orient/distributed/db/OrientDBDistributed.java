@@ -811,14 +811,22 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
       OSyncState st = state.get();
       sendMessage(from, new OStartSync(getNodeState().getNodeId(), dbId, syncId, mode));
       String dbName = getDbName(dbId);
-      OReceiverImputStream input = new OReceiverImputStream(this, st);
+      OReceiverInputStream input = new OReceiverInputStream(this::requestNext, st);
       st.setReceiver(input);
       Thread thread =
           new Thread(
               () -> {
-                fullSync(dbName, input, getConfigurations());
+                receiveSync(dbName, st, input, getConfigurations());
               });
       thread.start();
+    }
+  }
+
+  public void receiveSync(String dbName, OSyncState state, InputStream input, OrientDBConfig conf) {
+    if (state.isIncremental()) {
+      fullSync(dbName, input, conf);
+    } else {
+      restore(dbName, input, null, null, null);
     }
   }
 
@@ -827,19 +835,19 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
         getNodeState()
             .getDatabaseTopology()
             .startSend(to, getNodeState().getNodeId(), dbId, syncId, mode);
-    OutputStream out = new BufferedOutputStream(new OutputStreamMessages(this, state), 8096);
+    String name = getDbName(state.getDbId());
+    OutputStream out =
+        new BufferedOutputStream(new OutputStreamMessages(this::sendBuffer, state), 8096);
     Thread thread =
         new Thread(
             () -> {
-              syncBackup(state, out);
+              syncBackup(name, state, out);
             });
     thread.start();
   }
 
-  public void syncBackup(OSyncState state, OutputStream out) {
-    String dbNam = getDbName(state.getDbId());
-
-    ODatabaseDocumentEmbedded db = openNoAuthorization(dbNam);
+  public void syncBackup(String name, OSyncState state, OutputStream out) {
+    ODatabaseDocumentEmbedded db = openNoAuthorization(name);
     OStorage storage = db.getStorage();
     if (storage.supportIncremental() && state.isIncremental()) {
       storage.incrementalSync(out, null);
@@ -860,35 +868,36 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   }
 
   private String getDbName(ODatabaseId dbId) {
-    return null;
+    return this.getNodeState().getDatabaseTopology().getDatabaseName(dbId);
   }
 
-  public void sendBuffer(OSyncState state, byte[] data) {
-    sendMessage(state.getTo(), new OSyncData(state.getSyncId(), data));
+  public void sendBuffer(OSyncState state, byte[] data, boolean finished) {
+    if (state.isClose()) {
+      // receiver  sent close, drop the data.
+      return;
+    }
+    sendMessage(state.getTo(), new OSyncData(state.getSyncId(), data, finished));
     state.transaferd(data.length);
-    try {
-      state.waitForNext();
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
+    if (!finished) {
+      try {
+        state.waitForNext();
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+      }
     }
   }
 
-  public void finishSync(OSyncState state) {
-    // TODO Auto-generated method stub
-
-  }
-
-  public void receiveSyncData(OSyncId syncId, byte[] data) {
+  public void receiveSyncData(OSyncId syncId, byte[] data, boolean finished) {
     var state = this.getNodeState().getDatabaseTopology().getSyncState(syncId);
-    state.receiveData(data);
+    state.receiveData(data, finished);
   }
 
-  public void requestNext(OSyncState state) {
-    sendMessage(state.getFrom(), new ONextBuffer(state.getSyncId()));
+  public void requestNext(OSyncState state, boolean close) {
+    sendMessage(state.getFrom(), new ONextBuffer(state.getSyncId(), close));
   }
 
-  public void nextBuffer(OSyncId syncId) {
+  public void nextBuffer(OSyncId syncId, boolean close) {
     var state = this.getNodeState().getDatabaseTopology().getSyncState(syncId);
-    state.requestNext();
+    state.requestNext(close);
   }
 }
