@@ -291,29 +291,21 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
         }
 
         startupMetadata.setTxMetadata(getLastMetadata().orElse(null));
-        try {
-          final OutputStream bo = bufferSize > 0 ? new BufferedOutputStream(out, bufferSize) : out;
-          try {
-            try (final ZipOutputStream zos = new ZipOutputStream(bo)) {
-              zos.setComment("OrientDB Backup executed on " + new Date());
-              zos.setLevel(compressionLevel);
+        final OutputStream bo = bufferSize > 0 ? new BufferedOutputStream(out, bufferSize) : out;
+        try (final ZipOutputStream zos = new ZipOutputStream(bo)) {
+          zos.setComment("OrientDB Backup executed on " + new Date());
+          zos.setLevel(compressionLevel);
 
-              final List<String> names =
-                  OZIPCompressionUtil.compressDirectory(
-                      storagePath.toString(),
-                      zos,
-                      new String[] {".fl", ".lock", DoubleWriteLogGL.EXTENSION},
-                      iOutput);
-              startupMetadata.addFileToArchive(zos, "dirty.fl");
-              names.add("dirty.fl");
-              return names;
-            }
-          } finally {
-            if (bufferSize > 0) {
-              bo.flush();
-              bo.close();
-            }
-          }
+          final List<String> names =
+              OZIPCompressionUtil.compressDirectory(
+                  storagePath.toString(),
+                  zos,
+                  new String[] {".fl", ".lock", DoubleWriteLogGL.EXTENSION},
+                  iOutput);
+          startupMetadata.addFileToArchive(zos, "dirty.fl");
+          names.add("dirty.fl");
+          return names;
+
         } finally {
           if (freezeLSN != null) {
             writeAheadLog.removeCutTillLimit(freezeLSN);

@@ -220,4 +220,12 @@ public class ODatabasesTopologyState {
   public OSyncState getSyncState(OSyncId syncId) {
     return this.activerSyncs.get(syncId);
   }
+
+  public String getDatabaseName(ODatabaseId dbId) {
+    ODatabaseTopologyState db = this.databases.get(dbId);
+    if (db != null) {
+      return db.getName();
+    }
+    return null;
+  }
 }

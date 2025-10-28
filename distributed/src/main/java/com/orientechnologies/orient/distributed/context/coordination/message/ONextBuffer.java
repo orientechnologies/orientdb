@@ -8,20 +8,23 @@ import java.io.IOException;
 
 public class ONextBuffer implements OStructuralMessage {
 
-  private OSyncId syncId;
+  private final OSyncId syncId;
+  private final boolean close;
 
-  public ONextBuffer(OSyncId syncId) {
+  public ONextBuffer(OSyncId syncId, boolean close) {
     this.syncId = syncId;
+    this.close = close;
   }
 
   @Override
   public void execute(OrientDBDistributed ctx) {
-    ctx.nextBuffer(syncId);
+    ctx.nextBuffer(this.syncId, this.close);
   }
 
   @Override
   public void serialize(DataOutput out) throws IOException {
     this.syncId.writeNetwork(out);
+    out.writeBoolean(close);
   }
 
   @Override
@@ -31,7 +34,12 @@ public class ONextBuffer implements OStructuralMessage {
 
   public static ONextBuffer fromNetwork(DataInput input) throws IOException {
     OSyncId syncId = OSyncId.readNetwork(input);
-    return new ONextBuffer(syncId);
+    boolean close = input.readBoolean();
+    return new ONextBuffer(syncId, close);
+  }
+
+  public boolean isClose() {
+    return close;
   }
 
   public OSyncId getSyncId() {

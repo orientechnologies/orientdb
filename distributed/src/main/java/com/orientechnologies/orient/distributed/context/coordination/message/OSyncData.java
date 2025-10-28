@@ -9,21 +9,23 @@ import java.io.IOException;
 public class OSyncData implements OStructuralMessage {
 
   public final byte[] data;
-  private OSyncId syncId;
+  private final OSyncId syncId;
+  private final boolean finished;
 
   /**
    * The data need to be immutable, copy it if can mutate before passing
    *
    * @param data
    */
-  public OSyncData(OSyncId syncId, byte[] data) {
+  public OSyncData(OSyncId syncId, byte[] data, boolean finished) {
     this.syncId = syncId;
     this.data = data;
+    this.finished = finished;
   }
 
   @Override
   public void execute(OrientDBDistributed ctx) {
-    ctx.receiveSyncData(this.syncId, this.data);
+    ctx.receiveSyncData(this.syncId, this.data, this.finished);
   }
 
   @Override
@@ -31,6 +33,7 @@ public class OSyncData implements OStructuralMessage {
     this.syncId.writeNetwork(out);
     out.writeInt(this.data.length);
     out.write(this.data);
+    out.writeBoolean(this.finished);
   }
 
   @Override
@@ -43,7 +46,8 @@ public class OSyncData implements OStructuralMessage {
     int size = input.readInt();
     byte[] data = new byte[size];
     input.readFully(data);
-    return new OSyncData(syncId, data);
+    boolean finished = input.readBoolean();
+    return new OSyncData(syncId, data, finished);
   }
 
   public byte[] getData() {
@@ -52,5 +56,9 @@ public class OSyncData implements OStructuralMessage {
 
   public OSyncId getSyncId() {
     return syncId;
+  }
+
+  public boolean isFinished() {
+    return finished;
   }
 }
