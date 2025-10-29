@@ -22,7 +22,9 @@ package com.orientechnologies.orient.core.tx;
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.storage.OStorageTransactionIndexChange;
+import com.orientechnologies.orient.core.storage.OStorageTransactionIndexKeyChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -39,11 +41,12 @@ import java.util.Set;
  * @author Luca Garulli (l.garulli--at--orientechnologies.com) - initial contribution
  * @author Sergey Sitnikov - index key changes interpretation support
  */
-public class OTransactionIndexChangesPerKey {
+public class OTransactionIndexChangesPerKey implements OStorageTransactionIndexKeyChanges {
   /* internal */ static final int SET_ADD_THRESHOLD = 8;
 
   public final Object key;
   private final OTxIndexChangesList entries;
+  private OIndexInternal associatedIndex;
 
   public boolean clientTrackOnly;
 
@@ -506,5 +509,19 @@ public class OTransactionIndexChangesPerKey {
   protected OTransactionIndexEntry createEntryInternal(
       final OIdentifiable iValue, final OPERATION iOperation) {
     return new OTransactionIndexEntry(iValue, iOperation);
+  }
+
+  public void setIndex(OIndexInternal associatedIndex) {
+    this.associatedIndex = associatedIndex;
+  }
+
+  @Override
+  public Iterable<OStorageTransactionIndexChange> getOps() {
+    return associatedIndex.interpretTxKeyChanges(this);
+  }
+
+  @Override
+  public Object getKey() {
+    return key;
   }
 }

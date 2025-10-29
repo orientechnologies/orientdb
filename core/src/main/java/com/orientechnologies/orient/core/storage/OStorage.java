@@ -28,6 +28,8 @@ import com.orientechnologies.orient.core.config.OStorageConfigurationUpdateListe
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.db.record.OCurrentStorageComponentsFactory;
+import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
+import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -41,7 +43,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OIndexEngineCallback
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.transaction.OTransactionId;
-import com.orientechnologies.orient.core.util.OBackupable;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Path;
@@ -52,6 +54,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.UUID;
+import java.util.concurrent.Callable;
 import java.util.stream.Stream;
 
 /**
@@ -61,7 +64,7 @@ import java.util.stream.Stream;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  * @see com.orientechnologies.orient.core.storage.memory.ODirectMemoryStorage
  */
-public interface OStorage extends OBackupable, OStorageInfo {
+public interface OStorage extends OStorageInfo {
   public String CLUSTER_DEFAULT_NAME = "default";
 
   public enum STATUS {
@@ -396,4 +399,49 @@ public interface OStorage extends OBackupable, OStorageInfo {
   Optional<Path> getPath();
 
   UUID getUuid();
+
+  /**
+   * Executes a backup of the database. During the backup the database will be frozen in read-only
+   * mode.
+   *
+   * @param out OutputStream used to write the backup content. Use a FileOutputStream to make the
+   *     backup persistent on disk
+   * @param options Backup options as Map<String, Object> object
+   * @param callable Callback to execute when the database is locked
+   * @param iListener Listener called for backup messages
+   * @param compressionLevel ZIP Compression level between 1 (the minimum) and 9 (maximum). The
+   *     bigger is the compression, the smaller will be the final backup content, but will consume
+   *     more CPU and time to execute
+   * @param bufferSize Buffer size in bytes, the bigger is the buffer, the more efficient will be
+   *     the compression
+   * @throws IOException
+   * @see ODatabaseExport
+   */
+  List<String> backup(
+      OutputStream out,
+      Map<String, Object> options,
+      Callable<Object> callable,
+      OCommandOutputListener iListener,
+      int compressionLevel,
+      int bufferSize)
+      throws IOException;
+
+  /**
+   * Executes a restore of a database backup. During the restore the database will be frozen in
+   * read-only mode.
+   *
+   * @param in InputStream used to read the backup content. Use a FileInputStream to read a backup
+   *     on a disk
+   * @param options Backup options as Map<String, Object> object
+   * @param callable Callback to execute when the database is locked
+   * @param iListener Listener called for backup messages
+   * @throws IOException
+   * @see ODatabaseImport
+   */
+  void restore(
+      InputStream in,
+      Map<String, Object> options,
+      Callable<Object> callable,
+      OCommandOutputListener iListener)
+      throws IOException;
 }

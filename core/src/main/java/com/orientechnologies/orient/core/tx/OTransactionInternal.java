@@ -110,7 +110,7 @@ public interface OTransactionInternal
 
   void setMetadataHolder(Optional<OTxMetadataHolder> metadata);
 
-  default void storageTransaction() {}
+  default void startedStorageTransaction() {}
 
   void prepareSerializedOperations() throws IOException;
 

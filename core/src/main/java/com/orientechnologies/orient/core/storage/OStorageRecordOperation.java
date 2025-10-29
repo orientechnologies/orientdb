@@ -11,9 +11,7 @@ public interface OStorageRecordOperation {
 
   ORID getRID();
 
-  ORID getRecordIdentity();
-
-  void setResultData(Object result);
+  void setResultData(Integer result);
 
   ORecord getRecord();
 

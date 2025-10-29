@@ -40,7 +40,7 @@ public class ORecordOperation implements Comparable, OStorageRecordOperation {
   public byte type;
   public OIdentifiable record;
 
-  private Object resultData;
+  private Integer resultData;
   private ORecordSerializer serializer;
 
   public ORecordOperation() {}
@@ -137,13 +137,8 @@ public class ORecordOperation implements Comparable, OStorageRecordOperation {
     return resultData;
   }
 
-  public void setResultData(Object resultData) {
+  public void setResultData(Integer resultData) {
     this.resultData = resultData;
-  }
-
-  @Override
-  public ORID getRecordIdentity() {
-    return getRecord().getIdentity();
   }
 
   @Override

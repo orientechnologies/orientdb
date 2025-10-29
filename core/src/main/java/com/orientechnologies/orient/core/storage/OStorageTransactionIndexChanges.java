@@ -5,8 +5,6 @@ import java.util.SortedMap;
 
 public interface OStorageTransactionIndexChanges {
 
-  OIndexInternal resolveAssociatedIndex();
-
   OIndexInternal getAssociatedIndex();
 
   boolean isClearIndex();

@@ -261,7 +261,7 @@ public abstract class OAbstractPaginatedStorage
   private static final int WAL_RESTORE_REPORT_INTERVAL = 30 * 1000; // milliseconds
 
   private static final Comparator<OStorageRecordOperation> COMMIT_RECORD_OPERATION_COMPARATOR =
-      Comparator.comparing(o -> o.getRecordIdentity());
+      Comparator.comparing(o -> o.getRID());
   public static final ThreadGroup storageThreadGroup;
 
   protected static final ScheduledExecutorService fuzzyCheckpointExecutor;
@@ -2068,7 +2068,7 @@ public abstract class OAbstractPaginatedStorage
 
         if (recordOperation.getType() == ORecordOperation.UPDATED
             || recordOperation.getType() == ORecordOperation.DELETED) {
-          final int clusterId = recordOperation.getRecordIdentity().getClusterId();
+          final int clusterId = recordOperation.getRID().getClusterId();
           clustersToLock.put(clusterId, doGetAndCheckCluster(clusterId));
         } else if (recordOperation.getType() == ORecordOperation.CREATED) {
           newRecords.add(recordOperation);
@@ -3982,7 +3982,7 @@ public abstract class OAbstractPaginatedStorage
       if (clientTx.getMetadata().isPresent()) {
         this.lastMetadata = clientTx.getMetadata().get();
       }
-      clientTx.storageTransaction();
+      clientTx.startedStorageTransaction();
       Iterator<byte[]> ops = clientTx.getSerializedOperations();
       while (ops.hasNext()) {
         byte[] next = ops.next();
@@ -5824,7 +5824,7 @@ public abstract class OAbstractPaginatedStorage
 
     for (final Map.Entry<String, OStorageTransactionIndexChanges> entry : indexes.entrySet()) {
       final String indexName = entry.getKey();
-      final OIndexInternal index = entry.getValue().resolveAssociatedIndex();
+      final OIndexInternal index = entry.getValue().getAssociatedIndex();
       if (index != null) {
         try {
           OBaseIndexEngine engine = getIndexEngine(index.getIndexId());

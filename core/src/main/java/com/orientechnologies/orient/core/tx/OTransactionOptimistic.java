@@ -20,7 +20,6 @@
 
 package com.orientechnologies.orient.core.tx;
 
-import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
@@ -39,7 +38,6 @@ import com.orientechnologies.orient.core.index.OClassIndexManager;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
-import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
@@ -55,9 +53,7 @@ import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.schedule.OScheduledEvent;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.storage.OStorageRecordOperation;
-import com.orientechnologies.orient.core.storage.OStorageTransactionIndexChange;
 import com.orientechnologies.orient.core.storage.OStorageTransactionIndexChanges;
-import com.orientechnologies.orient.core.storage.OStorageTransactionIndexKeyChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTransactionIndexEntry;
 import java.io.ByteArrayOutputStream;
@@ -1237,7 +1233,7 @@ public class OTransactionOptimistic extends OTransactionAbstract implements OTra
   }
 
   @Override
-  public void storageTransaction() {
+  public void startedStorageTransaction() {
     if (metadata.isPresent()) {
       metadata.get().notifyMetadataRead();
     }
@@ -1322,85 +1318,8 @@ public class OTransactionOptimistic extends OTransactionAbstract implements OTra
     for (Map.Entry<String, OTransactionIndexChanges> change : this.indexEntries.entrySet()) {
       String index = change.getKey();
       OTransactionIndexChanges ops = change.getValue();
-      map.put(
-          index,
-          new OStorageTransactionIndexChanges() {
-
-            @Override
-            public OIndexInternal resolveAssociatedIndex() {
-              return ops.resolveAssociatedIndex(index, database);
-            }
-
-            @Override
-            public boolean isClearIndex() {
-              return ops.cleared;
-            }
-
-            @Override
-            public OStorageTransactionIndexKeyChanges getNullChanges() {
-              return new OStorageTransactionIndexKeyChanges() {
-                @Override
-                public boolean isEmpty() {
-                  return ops.nullKeyChanges.isEmpty();
-                }
-
-                @Override
-                public Iterable<OStorageTransactionIndexChange> getOps() {
-                  OIndexInternal indexInstance =
-                      database
-                          .getMetadata()
-                          .getIndexManagerInternal()
-                          .getIndex(database, index)
-                          .getInternal();
-                  return indexInstance.interpretTxKeyChanges(ops.nullKeyChanges);
-                }
-
-                @Override
-                public Object getKey() {
-                  return null;
-                }
-              };
-            }
-
-            @Override
-            public SortedMap<Object, OStorageTransactionIndexKeyChanges> getChanges() {
-              TreeMap<Object, OStorageTransactionIndexKeyChanges> map =
-                  new TreeMap<>(ODefaultComparator.INSTANCE);
-              for (Map.Entry<Object, OTransactionIndexChangesPerKey> keyChanges :
-                  ops.changesPerKey.entrySet()) {
-                map.put(
-                    keyChanges.getKey(),
-                    new OStorageTransactionIndexKeyChanges() {
-                      @Override
-                      public boolean isEmpty() {
-                        return keyChanges.getValue().isEmpty();
-                      }
-
-                      @Override
-                      public Iterable<OStorageTransactionIndexChange> getOps() {
-                        OIndexInternal indexInstance =
-                            database
-                                .getMetadata()
-                                .getIndexManagerInternal()
-                                .getIndex(database, index)
-                                .getInternal();
-                        return indexInstance.interpretTxKeyChanges(keyChanges.getValue());
-                      }
-
-                      @Override
-                      public Object getKey() {
-                        return keyChanges.getKey();
-                      }
-                    });
-              }
-              return map;
-            }
-
-            @Override
-            public OIndexInternal getAssociatedIndex() {
-              return ops.getAssociatedIndex();
-            }
-          });
+      ops.resolveAssociatedIndex(index, database);
+      map.put(index, ops);
     }
     return map;
   }

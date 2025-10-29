@@ -17,7 +17,7 @@ public interface OStorageTransaction {
 
   Iterator<byte[]> getSerializedOperations();
 
-  void storageTransaction();
+  void startedStorageTransaction();
 
   Collection<OStorageRecordOperation> getRecordChanges();
 

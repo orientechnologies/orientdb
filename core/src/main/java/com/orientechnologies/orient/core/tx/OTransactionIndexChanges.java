@@ -23,7 +23,11 @@ import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexInternal;
+import com.orientechnologies.orient.core.storage.OStorageTransactionIndexChanges;
+import com.orientechnologies.orient.core.storage.OStorageTransactionIndexKeyChanges;
+import java.util.Map;
 import java.util.NavigableMap;
+import java.util.SortedMap;
 import java.util.TreeMap;
 
 /**
@@ -31,7 +35,7 @@ import java.util.TreeMap;
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-public class OTransactionIndexChanges {
+public class OTransactionIndexChanges implements OStorageTransactionIndexChanges {
 
   public enum OPERATION {
     PUT,
@@ -116,5 +120,28 @@ public class OTransactionIndexChanges {
 
   public OIndexInternal getAssociatedIndex() {
     return resolvedIndex;
+  }
+
+  @Override
+  public boolean isClearIndex() {
+    return cleared;
+  }
+
+  @Override
+  public OStorageTransactionIndexKeyChanges getNullChanges() {
+    nullKeyChanges.setIndex(getAssociatedIndex());
+    return nullKeyChanges;
+  }
+
+  @Override
+  public SortedMap<Object, OStorageTransactionIndexKeyChanges> getChanges() {
+    TreeMap<Object, OStorageTransactionIndexKeyChanges> map =
+        new TreeMap<>(ODefaultComparator.INSTANCE);
+    for (Map.Entry<Object, OTransactionIndexChangesPerKey> keyChanges : changesPerKey.entrySet()) {
+      OTransactionIndexChangesPerKey changes = keyChanges.getValue();
+      changes.setIndex(getAssociatedIndex());
+      map.put(keyChanges.getKey(), changes);
+    }
+    return map;
   }
 }
