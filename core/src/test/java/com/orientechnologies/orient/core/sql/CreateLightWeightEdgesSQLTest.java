@@ -34,11 +34,13 @@ public class CreateLightWeightEdgesSQLTest {
             "admin",
             OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
 
-    session.command("ALTER DATABASE CUSTOM useLightweightEdges = true");
-    session.command("create vertex v set name='a' ");
-    session.command("create vertex v set name='b' ");
-    session.command(
-        "create edge e from (select from v where name='a') to (select from v where name='a') ");
+    session.command("ALTER DATABASE CUSTOM useLightweightEdges = true").close();
+    session.command("create vertex v set name='a' ").close();
+    session.command("create vertex v set name='b' ").close();
+    session
+        .command(
+            "create edge e from (select from v where name='a') to (select from v where name='a') ")
+        .close();
     try (OResultSet res = session.query("select expand(out()) from v where name='a' ")) {
       assertEquals(res.stream().count(), 1);
     }
@@ -57,9 +59,9 @@ public class CreateLightWeightEdgesSQLTest {
 
     ODatabaseSession session = pool.acquire();
 
-    session.command("ALTER DATABASE CUSTOM useLightweightEdges = true");
-    session.command("create vertex v set id = 1 ");
-    session.command("create vertex v set id = 2 ");
+    session.command("ALTER DATABASE CUSTOM useLightweightEdges = true").close();
+    session.command("create vertex v set id = 1 ").close();
+    session.command("create vertex v set id = 2 ").close();
 
     session.close();
 
@@ -76,9 +78,11 @@ public class CreateLightWeightEdgesSQLTest {
                           for (int j = 0; j < 100; j++) {
 
                             try {
-                              session1.command(
-                                  "create edge e from (select from v where id=1) to (select from v"
-                                      + " where id=2) ");
+                              session1
+                                  .command(
+                                      "create edge e from (select from v where id=1) to (select"
+                                          + " from v where id=2) ")
+                                  .close();
                             } catch (OConcurrentModificationException e) {
 
                             }
