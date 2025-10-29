@@ -8,6 +8,7 @@ import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.OSharedContext;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.metadata.OMetadata;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -80,8 +81,7 @@ public class OStorageTestIT {
     long fileId = wowCache.fileIdByName("pagebreak.pcl");
     String nativeFileName = wowCache.nativeFileNameById(fileId);
 
-    storage.shutdown();
-    ctx.close();
+    OrientDBInternal.extract(orientDB).forceDatabaseClose(session.getName());
 
     int position = 3 * 1024;
 
@@ -144,8 +144,7 @@ public class OStorageTestIT {
     long fileId = wowCache.fileIdByName("pagebreak.pcl");
     String nativeFileName = wowCache.nativeFileNameById(fileId);
 
-    storage.shutdown();
-    ctx.close();
+    OrientDBInternal.extract(orientDB).forceDatabaseClose(session.getName());
 
     int position = OFile.HEADER_SIZE + ODurablePage.MAGIC_NUMBER_OFFSET;
 
@@ -204,8 +203,7 @@ public class OStorageTestIT {
     long fileId = wowCache.fileIdByName("pagebreak.pcl");
     String nativeFileName = wowCache.nativeFileNameById(fileId);
 
-    storage.shutdown();
-    ctx.close();
+    OrientDBInternal.extract(orientDB).forceDatabaseClose(session.getName());
 
     int position = OFile.HEADER_SIZE + ODurablePage.MAGIC_NUMBER_OFFSET;
 
@@ -266,8 +264,7 @@ public class OStorageTestIT {
     long fileId = wowCache.fileIdByName("pagebreak.pcl");
     String nativeFileName = wowCache.nativeFileNameById(fileId);
 
-    storage.shutdown();
-    ctx.close();
+    OrientDBInternal.extract(orientDB).forceDatabaseClose(session.getName());
 
     int position = 3 * 1024;
 

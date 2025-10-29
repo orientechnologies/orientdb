@@ -9,6 +9,7 @@ import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.serialization.serializer.binary.OBinarySerializerFactory;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
@@ -227,7 +228,7 @@ public class OLocalHashTableV3WALTestIT extends OLocalHashTableV3Base {
 
     databaseDocumentTx.activateOnCurrentThread();
     databaseDocumentTx.close();
-    actualStorage.shutdown();
+    OrientDBInternal.extract(orientDB).forceDatabaseClose(databaseDocumentTx.getName());
 
     System.out.println("Start data restore");
     restoreDataFromWAL();
@@ -250,7 +251,7 @@ public class OLocalHashTableV3WALTestIT extends OLocalHashTableV3Base {
 
     expectedDatabaseDocumentTx.activateOnCurrentThread();
     expectedDatabaseDocumentTx.close();
-    expectedStorage.shutdown();
+    OrientDBInternal.extract(orientDB).forceDatabaseClose(expectedDatabaseDocumentTx.getName());
 
     System.out.println("Start data comparison");
 
