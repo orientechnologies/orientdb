@@ -64,15 +64,14 @@ public class SyncOpsTest {
     }
   }
 
-  @Test
-  public void testRawSync() {
+  private void testRawSync(OSyncMode mode) {
     var syncId = new OSyncId();
     var dbId = new ODatabaseId("test");
     var nodeFrom = new ONodeId("node1");
     var nodeTo = new ONodeId("node2");
 
-    var sender = new OSyncState(dbId, syncId, nodeFrom, nodeTo, OSyncMode.StandardBackup);
-    var receiver = new OSyncState(dbId, syncId, nodeFrom, nodeTo, OSyncMode.StandardBackup);
+    var sender = new OSyncState(dbId, syncId, nodeFrom, nodeTo, mode);
+    var receiver = new OSyncState(dbId, syncId, nodeFrom, nodeTo, mode);
     var pass = new PassTrough(sender, receiver);
 
     OutputStream out = new BufferedOutputStream(new OutputStreamMessages(pass, sender), 8096);
@@ -82,7 +81,11 @@ public class SyncOpsTest {
     OrientDBDistributed ctx = (OrientDBDistributed) OrientDBInternal.extract(context);
     new Thread(
             () -> {
-              ctx.syncBackup("test", sender, out);
+              try {
+                ctx.syncBackup("test", sender, out);
+              } catch (Exception e) {
+                e.printStackTrace();
+              }
             })
         .start();
 
@@ -92,6 +95,16 @@ public class SyncOpsTest {
       // if it can open is good, it restored the right password
       assertTrue(true);
     }
+  }
+
+  @Test
+  public void testRawSyncBackup() {
+    testRawSync(OSyncMode.StandardBackup);
+  }
+
+  @Test
+  public void testRawSyncIncremental() {
+    testRawSync(OSyncMode.IncrementalBackup);
   }
 
   @After

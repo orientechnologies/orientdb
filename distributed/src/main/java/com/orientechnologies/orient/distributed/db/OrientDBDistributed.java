@@ -195,6 +195,55 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     this.plugin = plugin;
   }
 
+  public void incrementalsSync(String dbName, InputStream backupStream, OrientDBConfig config) {
+    OStorage storage = null;
+    ODatabaseDocumentEmbedded embedded;
+    synchronized (this) {
+      if (!isOpen()) {
+        return;
+      }
+      try {
+        storage = storages.get(dbName);
+
+        if (storage != null) {
+          // The underlying storage instance will be closed so no need to closed it
+          ODatabaseDocumentEmbedded deleteInstance = newSessionInstance(storage, config);
+          OSharedContext context = sharedContexts.remove(dbName);
+          dbCount.decrementAndGet();
+          context.close();
+          dropStorageFiles(storage);
+
+          storage.delete();
+          storages.remove(dbName);
+          ODatabaseRecordThreadLocal.instance().remove();
+        }
+        storage =
+            getDefaultEngine()
+                .restoreStream(
+                    this,
+                    dbName,
+                    config.getConfigurations(),
+                    backupStream,
+                    OBackupType.FULL_INCREMENTAL);
+        embedded = newSessionInstance(storage, config);
+        storages.put(dbName, storage);
+      } catch (OModificationOperationProhibitedException e) {
+        throw e;
+      } catch (Exception e) {
+        if (storage != null) {
+          storage.delete();
+        }
+
+        throw OException.wrapException(
+            new ODatabaseException("Cannot restore database '" + dbName + "'"), e);
+      }
+    }
+
+    embedded.getSharedContext().reInit(storage, embedded);
+    ODatabaseRecordThreadLocal.instance().remove();
+    return;
+  }
+
   public void fullSync(String dbName, InputStream backupStream, OrientDBConfig config) {
     OStorage storage = null;
     ODatabaseDocumentEmbedded embedded;
@@ -824,7 +873,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   public void receiveSync(String dbName, OSyncState state, InputStream input, OrientDBConfig conf) {
     if (state.isIncremental()) {
-      fullSync(dbName, input, conf);
+      incrementalsSync(dbName, input, conf);
     } else {
       restore(dbName, input, null, null, null);
     }
@@ -851,6 +900,12 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     OStorage storage = db.getStorage();
     if (storage.supportIncremental() && state.isIncremental()) {
       storage.incrementalSync(out, null);
+      try {
+        out.close();
+      } catch (IOException e) {
+        // TODO Auto-generated catch block
+        e.printStackTrace();
+      }
     } else {
       int compression =
           getConfigurations()
