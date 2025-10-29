@@ -677,7 +677,9 @@ public class WOWCacheTestIT {
     final ByteBuffer buffer = cachePointer.getBuffer();
     assert buffer != null;
 
-    buffer.put(ODurablePage.NEXT_FREE_POSITION, new byte[buffer.remaining()]);
+    buffer.put(
+        ODurablePage.NEXT_FREE_POSITION,
+        new byte[buffer.remaining() - ODurablePage.NEXT_FREE_POSITION]);
     cachePointer.releaseExclusiveLock();
 
     wowCache.store(fileId, 0, cachePointer);
@@ -716,7 +718,9 @@ public class WOWCacheTestIT {
     final ByteBuffer buffer = cachePointer.getBuffer();
     assert buffer != null;
 
-    buffer.put(ODurablePage.NEXT_FREE_POSITION, new byte[buffer.remaining()]);
+    buffer.put(
+        ODurablePage.NEXT_FREE_POSITION,
+        new byte[buffer.remaining() - ODurablePage.NEXT_FREE_POSITION]);
     cachePointer.releaseExclusiveLock();
 
     wowCache.store(fileId, 0, cachePointer);
@@ -753,7 +757,9 @@ public class WOWCacheTestIT {
     final ByteBuffer buffer = cachePointer.getBuffer();
     assert buffer != null;
 
-    buffer.put(ODurablePage.NEXT_FREE_POSITION, new byte[buffer.remaining()]);
+    buffer.put(
+        ODurablePage.NEXT_FREE_POSITION,
+        new byte[buffer.remaining() - ODurablePage.NEXT_FREE_POSITION]);
     cachePointer.releaseExclusiveLock();
 
     wowCache.store(fileId, 0, cachePointer);
@@ -787,7 +793,9 @@ public class WOWCacheTestIT {
     final ByteBuffer buffer = cachePointer.getBuffer();
     assert buffer != null;
 
-    buffer.put(ODurablePage.NEXT_FREE_POSITION, new byte[buffer.remaining()]);
+    buffer.put(
+        ODurablePage.NEXT_FREE_POSITION,
+        new byte[buffer.remaining() - ODurablePage.NEXT_FREE_POSITION]);
     cachePointer.releaseExclusiveLock();
 
     wowCache.store(fileId, 0, cachePointer);
@@ -821,7 +829,9 @@ public class WOWCacheTestIT {
     final ByteBuffer buffer = cachePointer.getBuffer();
     assert buffer != null;
 
-    buffer.put(ODurablePage.NEXT_FREE_POSITION, new byte[buffer.remaining()]);
+    buffer.put(
+        ODurablePage.NEXT_FREE_POSITION,
+        new byte[buffer.remaining() - ODurablePage.NEXT_FREE_POSITION]);
     cachePointer.releaseExclusiveLock();
 
     wowCache.store(fileId, 0, cachePointer);
@@ -855,7 +865,9 @@ public class WOWCacheTestIT {
     final ByteBuffer buffer = cachePointer.getBuffer();
     assert buffer != null;
 
-    buffer.put(ODurablePage.NEXT_FREE_POSITION, new byte[buffer.remaining()]);
+    buffer.put(
+        ODurablePage.NEXT_FREE_POSITION,
+        new byte[buffer.remaining() - ODurablePage.NEXT_FREE_POSITION]);
     cachePointer.releaseExclusiveLock();
 
     wowCache.store(fileId, 0, cachePointer);
