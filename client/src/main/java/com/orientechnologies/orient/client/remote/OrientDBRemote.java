@@ -82,6 +82,7 @@ import com.orientechnologies.orient.core.security.OSecuritySystem;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37Client;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -737,6 +738,7 @@ public class OrientDBRemote implements OrientDBInternal {
       String user,
       String password,
       ODatabaseType type,
+      ODatabaseId id,
       OrientDBConfig config,
       ODatabaseTask<Void> createOps) {
     throw new UnsupportedOperationException();

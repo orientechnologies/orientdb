@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.storage;
 
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
+import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import java.io.InputStream;
 import java.nio.file.Path;
 
@@ -12,9 +13,11 @@ public interface OStorageEngine {
     FULL_INCREMENTAL
   }
 
-  OStorage createLocal(OrientDBInternal context, String name, OContextConfiguration config);
+  OStorage createLocal(
+      OrientDBInternal context, ODatabaseId id, String name, OContextConfiguration config);
 
-  OStorage createMemory(OrientDBInternal context, String name, OContextConfiguration config);
+  OStorage createMemory(
+      OrientDBInternal context, ODatabaseId id, String name, OContextConfiguration config);
 
   OStorage openLocal(OrientDBInternal context, String name, OContextConfiguration config);
 
