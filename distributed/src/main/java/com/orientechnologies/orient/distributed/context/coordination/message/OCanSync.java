@@ -10,14 +10,15 @@ import java.io.DataOutput;
 import java.io.IOException;
 
 public class OCanSync implements OStructuralMessage {
-  private ONodeId from;
+  private ONodeId sender;
   private ODatabaseId dbId;
   private OSyncId syncId;
   private OSyncMode mode;
   private boolean canSync;
 
-  public OCanSync(ONodeId from, ODatabaseId dbId, OSyncId syncId, OSyncMode mode, boolean canSync) {
-    this.from = from;
+  public OCanSync(
+      ONodeId sender, ODatabaseId dbId, OSyncId syncId, OSyncMode mode, boolean canSync) {
+    this.sender = sender;
     this.dbId = dbId;
     this.syncId = syncId;
     this.mode = mode;
@@ -26,12 +27,12 @@ public class OCanSync implements OStructuralMessage {
 
   @Override
   public void execute(OrientDBDistributed ctx) {
-    ctx.canSync(from, dbId, syncId, canSync, mode);
+    ctx.canSync(sender, dbId, syncId, canSync, mode);
   }
 
   @Override
   public void serialize(DataOutput out) throws IOException {
-    this.from.writeNetwork(out);
+    this.sender.writeNetwork(out);
     this.dbId.writeNetwork(out);
     this.syncId.writeNetwork(out);
     this.mode.writeNetwork(out);
@@ -52,8 +53,8 @@ public class OCanSync implements OStructuralMessage {
     return new OCanSync(from, dbId, syncId, mode, canSync);
   }
 
-  public ONodeId getFrom() {
-    return from;
+  public ONodeId getSender() {
+    return sender;
   }
 
   public ODatabaseId getDbId() {

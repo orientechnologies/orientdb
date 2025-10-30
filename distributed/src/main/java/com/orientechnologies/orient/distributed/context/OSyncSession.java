@@ -29,13 +29,13 @@ public class OSyncSession {
   }
 
   public Optional<OSyncState> canSync(
-      ONodeId from, ONodeId to, OSyncId syncId, boolean canSync, OSyncMode mode) {
+      ONodeId sender, ONodeId receiver, OSyncId syncId, boolean canSync, OSyncMode mode) {
     assert this.syncId.equals(syncId);
     if (canSync) {
-      this.state = new OSyncState(dbId, syncId, from, to, mode);
+      this.state = new OSyncState(dbId, syncId, sender, receiver, mode);
       return Optional.of(this.state);
     } else {
-      nodes.remove(from);
+      nodes.remove(sender);
       // TODO: if reach 0 terminate
       return Optional.empty();
     }

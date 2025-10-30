@@ -176,8 +176,8 @@ public class ODatabaseTopologyState {
   }
 
   public synchronized Optional<OSyncState> canSync(
-      ONodeId from, ONodeId to, OSyncId syncId, boolean canSync, OSyncMode mode) {
-    return this.syncSessions.get(syncId).canSync(from, to, syncId, canSync, mode);
+      ONodeId sender, ONodeId receiver, OSyncId syncId, boolean canSync, OSyncMode mode) {
+    return this.syncSessions.get(syncId).canSync(sender, receiver, syncId, canSync, mode);
   }
 
   public synchronized OSyncState startSend(
@@ -187,8 +187,8 @@ public class ODatabaseTopologyState {
     return session.getState();
   }
 
-  public synchronized boolean acceptSync(ONodeId to, ONodeId from, OSyncId syncId) {
+  public synchronized boolean acceptSync(ONodeId sender, ONodeId receiver, OSyncId syncId) {
     // TODO: check if already syncinging with someone do not accept
-    return this.nodeStatus.get(from).isOnline();
+    return this.nodeStatus.get(sender).isOnline();
   }
 }

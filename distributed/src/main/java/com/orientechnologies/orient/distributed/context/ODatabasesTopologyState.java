@@ -196,12 +196,17 @@ public class ODatabasesTopologyState {
   }
 
   public synchronized Optional<OSyncState> canSync(
-      ONodeId from, ONodeId to, ODatabaseId dbId, OSyncId syncId, boolean canSync, OSyncMode mode) {
+      ONodeId sender,
+      ONodeId receiver,
+      ODatabaseId dbId,
+      OSyncId syncId,
+      boolean canSync,
+      OSyncMode mode) {
     ODatabaseTopologyState db = this.databases.get(dbId);
     if (db == null) {
       throw new NullPointerException("missing database definition");
     }
-    var state = db.canSync(from, to, syncId, canSync, mode);
+    var state = db.canSync(sender, receiver, syncId, canSync, mode);
     if (state.isPresent()) {
       this.activerSyncs.put(state.get().getSyncId(), state.get());
     }
@@ -232,10 +237,10 @@ public class ODatabasesTopologyState {
   }
 
   public synchronized boolean acceptSync(
-      ONodeId to, ONodeId from, ODatabaseId dbId, OSyncId syncId) {
+      ONodeId sender, ONodeId receiver, ODatabaseId dbId, OSyncId syncId) {
     ODatabaseTopologyState db = this.databases.get(dbId);
     if (db != null) {
-      return db.acceptSync(to, from, syncId);
+      return db.acceptSync(sender, receiver, syncId);
     }
     return false;
   }

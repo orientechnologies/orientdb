@@ -835,26 +835,26 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     getNodeState().cancelDatabase(promise, dbId, database);
   }
 
-  public void acceptSync(ONodeId from, ODatabaseId dbId, OSyncId syncId, OSyncMode mode) {
+  public void acceptSync(ONodeId receiver, ODatabaseId dbId, OSyncId syncId, OSyncMode mode) {
     // TODO check syncMode Accept
     boolean accepted =
         getNodeState()
             .getDatabaseTopology()
-            .acceptSync(from, getNodeState().getNodeId(), dbId, syncId);
-    sendMessage(from, new OCanSync(getNodeState().getNodeId(), dbId, syncId, mode, accepted));
+            .acceptSync(getNodeState().getNodeId(), receiver, dbId, syncId);
+    sendMessage(receiver, new OCanSync(getNodeState().getNodeId(), dbId, syncId, mode, accepted));
   }
 
   public void canSync(
-      ONodeId from, ODatabaseId dbId, OSyncId syncId, boolean canSync, OSyncMode mode) {
+      ONodeId sender, ODatabaseId dbId, OSyncId syncId, boolean canSync, OSyncMode mode) {
     Optional<OSyncState> state =
         getNodeState()
             .getDatabaseTopology()
-            .canSync(from, getNodeState().getNodeId(), dbId, syncId, canSync, mode);
+            .canSync(sender, getNodeState().getNodeId(), dbId, syncId, canSync, mode);
 
     if (state.isPresent()) {
 
       OSyncState st = state.get();
-      sendMessage(from, new OStartSync(getNodeState().getNodeId(), dbId, syncId, mode));
+      sendMessage(sender, new OStartSync(getNodeState().getNodeId(), dbId, syncId, mode));
       String dbName = getDbName(dbId);
       OReceiverInputStream input = new OReceiverInputStream(this::requestNext, st);
       st.setReceiver(input);
@@ -875,11 +875,11 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     }
   }
 
-  public void sendDatabase(ONodeId to, ODatabaseId dbId, OSyncId syncId, OSyncMode mode) {
+  public void sendDatabase(ONodeId receiver, ODatabaseId dbId, OSyncId syncId, OSyncMode mode) {
     OSyncState state =
         getNodeState()
             .getDatabaseTopology()
-            .startSend(to, getNodeState().getNodeId(), dbId, syncId, mode);
+            .startSend(receiver, getNodeState().getNodeId(), dbId, syncId, mode);
     String name = getDbName(state.getDbId());
     OutputStream out =
         new BufferedOutputStream(new OutputStreamMessages(this::sendBuffer, state), 8096);
@@ -927,7 +927,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
       // receiver  sent close, drop the data.
       return;
     }
-    sendMessage(state.getTo(), new OSyncData(state.getSyncId(), data, finished));
+    sendMessage(state.getReceiver(), new OSyncData(state.getSyncId(), data, finished));
     state.transaferd(data.length);
     if (!finished) {
       try {
@@ -944,7 +944,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   }
 
   public void requestNext(OSyncState state, boolean close) {
-    sendMessage(state.getFrom(), new ONextBuffer(state.getSyncId(), close));
+    sendMessage(state.getSender(), new ONextBuffer(state.getSyncId(), close));
   }
 
   public void nextBuffer(OSyncId syncId, boolean close) {
