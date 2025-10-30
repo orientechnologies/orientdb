@@ -836,17 +836,12 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   }
 
   public void acceptSync(ONodeId from, ODatabaseId dbId, OSyncId syncId, OSyncMode mode) {
-    // TODO: check if already syncinging with someone do not accept
-    if (this.existsDb(dbId)) {
-      sendMessage(from, new OCanSync(getNodeState().getNodeId(), dbId, syncId, mode, true));
-    } else {
-      sendMessage(from, new OCanSync(getNodeState().getNodeId(), dbId, syncId, mode, false));
-    }
-  }
-
-  private boolean existsDb(ODatabaseId dbId) {
-    // TODO Auto-generated method stub
-    return false;
+    // TODO check syncMode Accept
+    boolean accepted =
+        getNodeState()
+            .getDatabaseTopology()
+            .acceptSync(from, getNodeState().getNodeId(), dbId, syncId);
+    sendMessage(from, new OCanSync(getNodeState().getNodeId(), dbId, syncId, mode, accepted));
   }
 
   public void canSync(

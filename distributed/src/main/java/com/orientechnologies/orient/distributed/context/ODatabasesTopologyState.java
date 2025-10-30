@@ -208,24 +208,35 @@ public class ODatabasesTopologyState {
     return state;
   }
 
-  public OSyncState startSend(
+  public synchronized OSyncState startSend(
       ONodeId to, ONodeId from, ODatabaseId dbId, OSyncId syncId, OSyncMode mode) {
     ODatabaseTopologyState db = this.databases.get(dbId);
     if (db == null) {
       throw new NullPointerException("missing database definition");
     }
-    return db.startSend(from, to, syncId, mode);
+    OSyncState state = db.startSend(from, to, syncId, mode);
+    this.activerSyncs.put(syncId, state);
+    return state;
   }
 
-  public OSyncState getSyncState(OSyncId syncId) {
+  public synchronized OSyncState getSyncState(OSyncId syncId) {
     return this.activerSyncs.get(syncId);
   }
 
-  public String getDatabaseName(ODatabaseId dbId) {
+  public synchronized String getDatabaseName(ODatabaseId dbId) {
     ODatabaseTopologyState db = this.databases.get(dbId);
     if (db != null) {
       return db.getName();
     }
     return null;
+  }
+
+  public synchronized boolean acceptSync(
+      ONodeId to, ONodeId from, ODatabaseId dbId, OSyncId syncId) {
+    ODatabaseTopologyState db = this.databases.get(dbId);
+    if (db != null) {
+      return db.acceptSync(to, from, syncId);
+    }
+    return false;
   }
 }
