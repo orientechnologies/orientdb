@@ -5,10 +5,15 @@ import com.orientechnologies.orient.core.sql.executor.OResult;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.UUID;
 
 public class ODatabaseId {
 
   private final String id;
+
+  public ODatabaseId() {
+    this.id = UUID.randomUUID().toString();
+  }
 
   public ODatabaseId(String id) {
     this.id = id;

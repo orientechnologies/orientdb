@@ -42,6 +42,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OBackgroundNewDelta;
 import com.orientechnologies.orient.core.storage.impl.local.OIndexEngineCallback;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
+import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.OTransactionId;
 import java.io.IOException;
 import java.io.InputStream;
@@ -91,7 +92,7 @@ public interface OStorage extends OStorageInfo {
     KEEP_EXCLUSIVE_LOCK
   }
 
-  void create(OContextConfiguration contextConfiguration);
+  void create(OContextConfiguration contextConfiguration, ODatabaseId id);
 
   boolean exists();
 
@@ -396,7 +397,7 @@ public interface OStorage extends OStorageInfo {
 
   Optional<Path> getPath();
 
-  UUID getUuid();
+  ODatabaseId getDatbaseId();
 
   int getIndexApiVersion(int indexId);
 

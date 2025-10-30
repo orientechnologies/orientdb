@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.metadata.security.auth.OAuthenticationI
 import com.orientechnologies.orient.core.security.OSecuritySystem;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -383,6 +384,7 @@ public interface OrientDBInternal extends AutoCloseable, OSchedulerInternal {
       String user,
       String password,
       ODatabaseType type,
+      ODatabaseId id,
       OrientDBConfig config,
       ODatabaseTask<Void> createOps);
 

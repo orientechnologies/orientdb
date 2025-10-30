@@ -167,6 +167,7 @@ import com.orientechnologies.orient.core.storage.ridbag.sbtree.OIndexRIDContaine
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManagerShared;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeRidBag;
+import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTransactionData;
@@ -330,7 +331,7 @@ public abstract class OAbstractPaginatedStorage
   private final AtomicOperationIdGen idGen = new AtomicOperationIdGen();
 
   private boolean wereDataRestoredAfterOpen;
-  private UUID uuid;
+  private ODatabaseId databaseId;
   private volatile byte[] lastMetadata = null;
 
   private final OModifiableLong recordCreated = new OModifiableLong();
@@ -589,7 +590,7 @@ public abstract class OAbstractPaginatedStorage
                   uuid = UUID.randomUUID().toString();
                   configuration.setUuid(atomicOperation, uuid);
                 }
-                this.uuid = UUID.fromString(uuid);
+                this.databaseId = new ODatabaseId(uuid);
               });
 
           checkPageSizeAndRelatedParameters();
@@ -802,12 +803,12 @@ public abstract class OAbstractPaginatedStorage
   }
 
   @Override
-  public void create(final OContextConfiguration contextConfiguration) {
+  public void create(final OContextConfiguration contextConfiguration, ODatabaseId id) {
 
     try {
       stateLock.writeLock().lock();
       try {
-        doCreate(contextConfiguration);
+        doCreate(contextConfiguration, id);
       } catch (final InterruptedException e) {
         throw OException.wrapException(
             new OStorageException("Storage creation was interrupted"), e);
@@ -834,7 +835,7 @@ public abstract class OAbstractPaginatedStorage
         getURL(), OConstants.getVersion());
   }
 
-  protected void doCreate(OContextConfiguration contextConfiguration)
+  protected void doCreate(OContextConfiguration contextConfiguration, ODatabaseId id)
       throws IOException, InterruptedException {
     checkPageSizeAndRelatedParametersInGlobalConfiguration();
 
@@ -865,7 +866,7 @@ public abstract class OAbstractPaginatedStorage
           "Cannot create new storage '" + getURL() + "' because it already exists");
     }
 
-    uuid = UUID.randomUUID();
+    databaseId = id;
     initLockingStrategy(contextConfiguration);
     initIv();
 
@@ -888,7 +889,7 @@ public abstract class OAbstractPaginatedStorage
           configuration = new OClusterBasedStorageConfiguration(this);
           ((OClusterBasedStorageConfiguration) configuration)
               .create(atomicOperation, contextConfiguration);
-          configuration.setUuid(atomicOperation, uuid.toString());
+          configuration.setUuid(atomicOperation, databaseId.getId());
 
           componentsFactory = new OCurrentStorageComponentsFactory(configuration);
 
@@ -1376,8 +1377,8 @@ public abstract class OAbstractPaginatedStorage
     return id;
   }
 
-  public UUID getUuid() {
-    return uuid;
+  public ODatabaseId getDatbaseId() {
+    return databaseId;
   }
 
   private boolean setClusterStatus(

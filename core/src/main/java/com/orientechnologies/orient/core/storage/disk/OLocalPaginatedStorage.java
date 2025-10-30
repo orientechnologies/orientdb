@@ -64,6 +64,7 @@ import com.orientechnologies.orient.core.storage.index.engine.OSBTreeIndexEngine
 import com.orientechnologies.orient.core.storage.index.versionmap.OVersionPositionMap;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OIndexRIDContainer;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManagerShared;
+import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -187,13 +188,12 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
             storagePath.resolve("dirty.fl"), storagePath.resolve("dirty.flb"));
   }
 
-  @SuppressWarnings("CanBeFinal")
   @Override
-  public void create(final OContextConfiguration contextConfiguration) {
+  public void create(final OContextConfiguration contextConfiguration, ODatabaseId id) {
     try {
       stateLock.writeLock().lock();
       try {
-        doCreate(contextConfiguration);
+        doCreate(contextConfiguration, id);
       } finally {
         stateLock.writeLock().unlock();
       }
@@ -206,14 +206,14 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
     }
   }
 
-  protected void doCreate(OContextConfiguration contextConfiguration)
+  protected void doCreate(OContextConfiguration contextConfiguration, ODatabaseId id)
       throws IOException, InterruptedException {
     final Path storageFolder = storagePath;
     if (!Files.exists(storageFolder)) {
       Files.createDirectories(storageFolder);
     }
 
-    super.doCreate(contextConfiguration);
+    super.doCreate(contextConfiguration, id);
   }
 
   @Override

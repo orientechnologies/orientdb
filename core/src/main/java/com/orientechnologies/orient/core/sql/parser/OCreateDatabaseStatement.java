@@ -5,10 +5,15 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OServerCommandContext;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.*;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseType;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.OrientDBConfigBuilder;
+import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.stream.OExecutionStream;
+import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -77,6 +82,7 @@ public class OCreateDatabaseStatement extends OSimpleExecServerStatement {
             null,
             null,
             dbType,
+            new ODatabaseId(),
             configBuilder.build(),
             (session) -> {
               if (!users.isEmpty()) {

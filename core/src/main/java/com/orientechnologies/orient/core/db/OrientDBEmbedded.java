@@ -49,11 +49,11 @@ import com.orientechnologies.orient.core.storage.OStorageEngine;
 import com.orientechnologies.orient.core.storage.OStorageEngine.OBackupType;
 import com.orientechnologies.orient.core.storage.OStorageEngine.RegisterResult;
 import com.orientechnologies.orient.core.storage.config.OClusterBasedStorageConfiguration;
+import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import java.io.File;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -62,6 +62,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.Timer;
@@ -473,7 +474,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
   @Override
   public void create(
       String name, String user, String password, ODatabaseType type, OrientDBConfig config) {
-    create(name, user, password, type, config, null);
+    create(name, user, password, type, new ODatabaseId(), config, null);
   }
 
   @Override
@@ -482,6 +483,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
       String user,
       String password,
       ODatabaseType type,
+      ODatabaseId id,
       OrientDBConfig config,
       ODatabaseTask<Void> createOps) {
     checkDatabaseName(name);
@@ -492,9 +494,9 @@ public class OrientDBEmbedded implements OrientDBInternal {
           config = solveConfig(config);
           OStorage storage;
           if (type == ODatabaseType.MEMORY) {
-            storage = getDefaultEngine().createMemory(this, name, config.getConfigurations());
+            storage = getDefaultEngine().createMemory(this, id, name, config.getConfigurations());
           } else {
-            storage = getDefaultEngine().createLocal(this, name, config.getConfigurations());
+            storage = getDefaultEngine().createLocal(this, id, name, config.getConfigurations());
           }
           storages.put(name, storage);
           embedded = internalCreate(config, storage);
@@ -560,7 +562,9 @@ public class OrientDBEmbedded implements OrientDBInternal {
     synchronized (this) {
       if (!exists(name, null, null)) {
         try {
-          storage = getDefaultEngine().createLocal(this, name, config.getConfigurations());
+          storage =
+              getDefaultEngine()
+                  .createLocal(this, new ODatabaseId(), name, config.getConfigurations());
           embedded = internalCreate(config, storage);
           storages.put(name, storage);
         } catch (Exception e) {

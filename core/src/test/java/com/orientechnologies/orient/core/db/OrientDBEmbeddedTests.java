@@ -16,9 +16,9 @@ import com.orientechnologies.orient.core.exception.OStorageDoesNotExistException
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import java.util.List;
 import java.util.TimerTask;
-import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
@@ -639,7 +639,7 @@ public class OrientDBEmbeddedTests {
             "testUUID", "embedded:", OCreateDatabaseUtil.TYPE_MEMORY)) {
       final ODatabaseSession session =
           orientDb.open("testUUID", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
-      assertNotNull(((ODatabaseDocumentInternal) session).getStorage().getUuid());
+      assertNotNull(((ODatabaseDocumentInternal) session).getStorage().getDatbaseId());
       session.close();
     }
   }
@@ -651,7 +651,7 @@ public class OrientDBEmbeddedTests {
             "testPersistentUUID", "embedded:./target/", OCreateDatabaseUtil.TYPE_PLOCAL);
     final ODatabaseSession session =
         orientDb.open("testPersistentUUID", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
-    UUID uuid = ((ODatabaseDocumentInternal) session).getStorage().getUuid();
+    ODatabaseId uuid = ((ODatabaseDocumentInternal) session).getStorage().getDatbaseId();
     assertNotNull(uuid);
     session.close();
     orientDb.close();
@@ -664,7 +664,7 @@ public class OrientDBEmbeddedTests {
                 .build());
     ODatabaseSession session1 =
         orientDb1.open("testPersistentUUID", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
-    assertEquals(uuid, ((ODatabaseDocumentInternal) session1).getStorage().getUuid());
+    assertEquals(uuid, ((ODatabaseDocumentInternal) session1).getStorage().getDatbaseId());
     session1.close();
     orientDb1.drop("testPersistentUUID");
     orientDb1.close();

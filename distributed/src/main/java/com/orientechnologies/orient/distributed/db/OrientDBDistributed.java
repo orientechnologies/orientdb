@@ -548,9 +548,10 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
       String user,
       String password,
       ODatabaseType type,
+      ODatabaseId id,
       OrientDBConfig config,
       ODatabaseTask<Void> createOps) {
-    super.create(name, user, password, type, config, createOps);
+    super.create(name, user, password, type, id, config, createOps);
     if (!isDistributedDisabled(name)) {
       Set<String> nodes = plugin.getActiveServers();
       for (String node : nodes) {
@@ -568,11 +569,11 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
       String user,
       String password,
       ODatabaseType type,
+      ODatabaseId dbId,
       OrientDBConfig config,
       ODatabaseTask<Void> createOps) {
-    ODatabaseId dbId = new ODatabaseId(name);
     declareDatabaseFlow(name, dbId);
-    super.create(name, user, password, type, config, createOps);
+    super.create(name, user, password, type, dbId, config, createOps);
     setDatabaseStatus(name, dbId, getNodeState().getNodeId(), ODatabaseState.Online);
     try {
       getNodeState().getDatabaseTopology().waitOnlineQuorum(dbId, Optional.empty());

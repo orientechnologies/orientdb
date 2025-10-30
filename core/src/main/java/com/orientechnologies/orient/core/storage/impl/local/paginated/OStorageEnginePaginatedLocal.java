@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.storage.cache.chm.AsyncReadCache;
 import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.fs.OFile;
 import com.orientechnologies.orient.core.storage.memory.ODirectMemoryStorage;
+import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -152,12 +153,12 @@ public class OStorageEnginePaginatedLocal implements OStorageEngine {
 
   @Override
   public OLocalPaginatedStorage createLocal(
-      OrientDBInternal context, String name, OContextConfiguration config) {
+      OrientDBInternal context, ODatabaseId id, String name, OContextConfiguration config) {
 
     try {
       Path path = buildPath(name);
       OLocalPaginatedStorage storage = newLocalInstance(context, name, path);
-      storage.create(config);
+      storage.create(config, id);
       return storage;
     } catch (Exception e) {
       final String message =
@@ -179,7 +180,7 @@ public class OStorageEnginePaginatedLocal implements OStorageEngine {
       storage.open(config);
       return new RegisterResult(storage, false);
     } else {
-      storage.create(config);
+      storage.create(config, new ODatabaseId());
       return new RegisterResult(storage, true);
     }
   }
@@ -321,11 +322,11 @@ public class OStorageEnginePaginatedLocal implements OStorageEngine {
 
   @Override
   public OStorage createMemory(
-      OrientDBInternal context, String name, OContextConfiguration config) {
+      OrientDBInternal context, ODatabaseId id, String name, OContextConfiguration config) {
     try {
       ODirectMemoryStorage storage =
           new ODirectMemoryStorage(name, name, generateStorageId(), context);
-      storage.create(config);
+      storage.create(config, id);
       return storage;
     } catch (Exception e) {
       logger.error("Error on opening in memory storage: %s", e, name);
@@ -388,7 +389,7 @@ public class OStorageEnginePaginatedLocal implements OStorageEngine {
   @Override
   public OStorage restoreFile(
       OrientDBInternal context, String name, OContextConfiguration config, Path path) {
-    OLocalPaginatedStorage storage = createLocal(context, name, config);
+    OLocalPaginatedStorage storage = createLocal(context, new ODatabaseId("mock"), name, config);
     try {
       storage.restore(new FileInputStream(path.toFile()), null, null, null);
     } catch (FileNotFoundException e) {
@@ -409,7 +410,7 @@ public class OStorageEnginePaginatedLocal implements OStorageEngine {
       OBackupType type) {
 
     try {
-      OLocalPaginatedStorage storage = createLocal(context, name, config);
+      OLocalPaginatedStorage storage = createLocal(context, new ODatabaseId("mock"), name, config);
       switch (type) {
         case FOLDER_ZIP -> {
           storage.restore(stream, null, null, null);
