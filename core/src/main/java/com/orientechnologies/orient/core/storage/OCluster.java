@@ -26,7 +26,7 @@ import com.orientechnologies.orient.core.storage.impl.local.OClusterBrowsePage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import java.io.IOException;
 
-public interface OCluster {
+public interface OCluster extends OClusterInfo {
 
   enum ATTRIBUTES {
     NAME,
@@ -141,6 +141,10 @@ public interface OCluster {
   OPhysicalPosition[] lowerPositions(OPhysicalPosition position) throws IOException;
 
   OPhysicalPosition[] floorPositions(OPhysicalPosition position) throws IOException;
+
+  default String getRecordConflictStrategyName() {
+    return getRecordConflictStrategy() == null ? null : getRecordConflictStrategy().getName();
+  }
 
   ORecordConflictStrategy getRecordConflictStrategy();
 

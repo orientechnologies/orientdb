@@ -9,7 +9,7 @@ import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.sql.executor.stream.OExecutionStream;
-import com.orientechnologies.orient.core.storage.OCluster;
+import com.orientechnologies.orient.core.storage.OClusterInfo;
 import com.orientechnologies.orient.core.storage.OStorage;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -86,20 +86,16 @@ public class FetchFromStorageMetadataStep extends AbstractExecutionStep {
     return result;
   }
 
-  private List<OResult> toResult(Collection<? extends OCluster> clusterInstances) {
+  private List<OResult> toResult(Collection<? extends OClusterInfo> clusterInstances) {
     List<OResult> result = new ArrayList<>();
     if (clusterInstances != null) {
-      for (OCluster cluster : clusterInstances) {
+      for (OClusterInfo cluster : clusterInstances) {
         OResultInternal item = new OResultInternal();
         item.setProperty("name", cluster.getName());
         item.setProperty("fileName", cluster.getFileName());
         item.setProperty("id", cluster.getId());
         item.setProperty("entries", cluster.getEntries());
-        item.setProperty(
-            "conflictStrategy",
-            cluster.getRecordConflictStrategy() == null
-                ? null
-                : cluster.getRecordConflictStrategy().getName());
+        item.setProperty("conflictStrategy", cluster.getRecordConflictStrategyName());
         try {
           item.setProperty("encryption", cluster.encryption());
         } catch (Exception e) {

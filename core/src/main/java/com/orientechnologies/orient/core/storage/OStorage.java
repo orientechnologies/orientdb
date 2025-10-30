@@ -119,7 +119,7 @@ public interface OStorage extends OStorageInfo {
 
   Set<String> getClusterNames();
 
-  Collection<? extends OCluster> getClusterInstances();
+  Collection<? extends OClusterInfo> getClusterInstances();
 
   /**
    * Add a new cluster into the storage.
@@ -285,8 +285,6 @@ public interface OStorage extends OStorageInfo {
   Optional<byte[]> getLastMetadata();
 
   void open(OContextConfiguration configurations);
-
-  int getId();
 
   void setStorageConfigurationUpdateListener(
       final OStorageConfigurationUpdateListener storageConfigurationUpdateListener);
