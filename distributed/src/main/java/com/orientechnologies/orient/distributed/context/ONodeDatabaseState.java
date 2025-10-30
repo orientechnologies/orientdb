@@ -31,6 +31,6 @@ public class ONodeDatabaseState {
   }
 
   public boolean isOnline() {
-    return ODatabaseState.Online.equals(id);
+    return ODatabaseState.Online.equals(state);
   }
 }

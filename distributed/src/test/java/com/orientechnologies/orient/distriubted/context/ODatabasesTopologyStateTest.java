@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.distriubted.context;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
 import com.orientechnologies.orient.core.transaction.ODatabaseId;
@@ -9,15 +10,18 @@ import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.distributed.context.ODatabaseState;
 import com.orientechnologies.orient.distributed.context.ODatabasesTopologyState;
+import com.orientechnologies.orient.distributed.context.OSyncInfo;
+import com.orientechnologies.orient.distributed.context.OSyncState;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAlreadyPromised;
 import com.orientechnologies.orient.distributed.context.coordination.result.OInvalidSequential;
+import com.orientechnologies.orient.distributed.db.OSyncMode;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import org.junit.Test;
 
-public class ODatabaseTopologyStateTests {
+public class ODatabasesTopologyStateTest {
 
   private ONodeId newNodeId() {
     return new ONodeId(UUID.randomUUID().toString());
@@ -222,5 +226,66 @@ public class ODatabaseTopologyStateTests {
 
     ns = state.getNodeState(dbId, nodeId);
     assertEquals(ns, ODatabaseState.Online);
+  }
+
+  @Test
+  public void testRequestSync() {
+
+    ODatabasesTopologyState state = new ODatabasesTopologyState();
+    ODatabasesTopologyState state1 = new ODatabasesTopologyState();
+
+    var promiseId = newPromiseId();
+    ONodeId nodeId = promiseId.getCoordinator();
+    ONodeId node1 = newNodeId();
+    ONodeId node2 = newNodeId();
+
+    Set<ONodeId> partecipants = Set.of(nodeId, node1, node2);
+    var dbId = newDbId();
+    String name = "dbName";
+    int quorum = 2;
+    var res = state.promiseDeclare(promiseId, dbId, name, partecipants, quorum);
+    assertTrue(res.isEmpty());
+    var res1 = state1.promiseDeclare(promiseId, dbId, name, partecipants, quorum);
+    assertTrue(res1.isEmpty());
+
+    state.declareDatabase(promiseId, dbId, name, partecipants, quorum);
+    state1.declareDatabase(promiseId, dbId, name, partecipants, quorum);
+
+    ODatabaseState ns = state.getNodeState(dbId, nodeId);
+    assertEquals(ns, ODatabaseState.Offline);
+
+    Optional<OAcceptResult> prom = state.promiseState(dbId, newNodeId(), ODatabaseState.Online, 1L);
+
+    assertTrue(prom.isEmpty());
+    Optional<OAcceptResult> prom1 =
+        state1.promiseState(dbId, newNodeId(), ODatabaseState.Online, 1L);
+    assertTrue(prom1.isEmpty());
+
+    state.setState(dbId, nodeId, ODatabaseState.Online, 1L);
+    state1.setState(dbId, nodeId, ODatabaseState.Online, 1L);
+
+    OSyncInfo syncInfo = state1.newSync(dbId);
+    assertTrue(syncInfo.targets().contains(nodeId));
+    boolean canSync = state.acceptSync(node1, nodeId, dbId, syncInfo.syncId());
+    assertTrue(canSync);
+    Optional<OSyncState> receiverStateOp =
+        state1.canSync(nodeId, node1, dbId, syncInfo.syncId(), canSync, OSyncMode.StandardBackup);
+    assertTrue(receiverStateOp.isPresent());
+    OSyncState receiverState = receiverStateOp.get();
+
+    OSyncState senderState =
+        state.startSend(node1, nodeId, dbId, syncInfo.syncId(), OSyncMode.StandardBackup);
+
+    assertEquals(receiverState.getFrom(), senderState.getFrom());
+    assertEquals(receiverState.getTo(), senderState.getTo());
+    assertEquals(receiverState.getSyncId(), senderState.getSyncId());
+    assertEquals(receiverState.getDbId(), senderState.getDbId());
+    assertEquals(receiverState.getMode(), senderState.getMode());
+
+    OSyncState ss = state.getSyncState(senderState.getSyncId());
+    assertSame(senderState, ss);
+
+    OSyncState rs = state1.getSyncState(receiverState.getSyncId());
+    assertSame(receiverState, rs);
   }
 }
