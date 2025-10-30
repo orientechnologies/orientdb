@@ -266,7 +266,7 @@ public class ODatabasesTopologyStateTest {
 
     OSyncInfo syncInfo = state1.newSync(dbId);
     assertTrue(syncInfo.targets().contains(nodeId));
-    boolean canSync = state.acceptSync(node1, nodeId, dbId, syncInfo.syncId());
+    boolean canSync = state.acceptSync(nodeId, node1, dbId, syncInfo.syncId());
     assertTrue(canSync);
     Optional<OSyncState> receiverStateOp =
         state1.canSync(nodeId, node1, dbId, syncInfo.syncId(), canSync, OSyncMode.StandardBackup);
@@ -276,8 +276,8 @@ public class ODatabasesTopologyStateTest {
     OSyncState senderState =
         state.startSend(node1, nodeId, dbId, syncInfo.syncId(), OSyncMode.StandardBackup);
 
-    assertEquals(receiverState.getFrom(), senderState.getFrom());
-    assertEquals(receiverState.getTo(), senderState.getTo());
+    assertEquals(receiverState.getSender(), senderState.getSender());
+    assertEquals(receiverState.getReceiver(), senderState.getReceiver());
     assertEquals(receiverState.getSyncId(), senderState.getSyncId());
     assertEquals(receiverState.getDbId(), senderState.getDbId());
     assertEquals(receiverState.getMode(), senderState.getMode());

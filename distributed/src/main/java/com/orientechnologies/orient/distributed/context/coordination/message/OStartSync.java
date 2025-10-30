@@ -11,13 +11,13 @@ import java.io.IOException;
 
 public class OStartSync implements OStructuralMessage {
 
-  private ONodeId from;
+  private ONodeId receiver;
   private ODatabaseId dbId;
   private OSyncId syncId;
   private OSyncMode mode;
 
-  public OStartSync(ONodeId from, ODatabaseId dbId, OSyncId syncId, OSyncMode mode) {
-    this.from = from;
+  public OStartSync(ONodeId receiver, ODatabaseId dbId, OSyncId syncId, OSyncMode mode) {
+    this.receiver = receiver;
     this.dbId = dbId;
     this.syncId = syncId;
     this.mode = mode;
@@ -25,12 +25,12 @@ public class OStartSync implements OStructuralMessage {
 
   @Override
   public void execute(OrientDBDistributed ctx) {
-    ctx.sendDatabase(this.from, dbId, syncId, mode);
+    ctx.sendDatabase(this.receiver, dbId, syncId, mode);
   }
 
   @Override
   public void serialize(DataOutput out) throws IOException {
-    this.from.writeNetwork(out);
+    this.receiver.writeNetwork(out);
     this.dbId.writeNetwork(out);
     this.mode.writeNetwork(out);
     this.syncId.writeNetwork(out);
@@ -53,8 +53,8 @@ public class OStartSync implements OStructuralMessage {
     return dbId;
   }
 
-  public ONodeId getFrom() {
-    return from;
+  public ONodeId getReceiver() {
+    return receiver;
   }
 
   public OSyncMode getMode() {

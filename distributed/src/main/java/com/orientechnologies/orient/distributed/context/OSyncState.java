@@ -9,20 +9,21 @@ public class OSyncState {
 
   private final ODatabaseId dbId;
   private final OSyncId syncId;
-  private final ONodeId from;
-  private final ONodeId to;
+  private final ONodeId sender;
+  private final ONodeId receiver;
   private final OSyncMode mode;
   private volatile int messageCount = 0;
   private volatile long totalsize = 0;
-  private volatile OReceiverInputStream receiver;
+  private volatile OReceiverInputStream receiverStream;
   private volatile boolean canNext = false;
   private volatile boolean close = false;
 
-  public OSyncState(ODatabaseId dbId, OSyncId syncId, ONodeId from, ONodeId to, OSyncMode mode) {
+  public OSyncState(
+      ODatabaseId dbId, OSyncId syncId, ONodeId sender, ONodeId receiver, OSyncMode mode) {
     this.dbId = dbId;
     this.syncId = syncId;
-    this.from = from;
-    this.to = to;
+    this.sender = sender;
+    this.receiver = receiver;
     this.mode = mode;
   }
 
@@ -43,12 +44,12 @@ public class OSyncState {
     return dbId;
   }
 
-  public ONodeId getFrom() {
-    return from;
+  public ONodeId getSender() {
+    return sender;
   }
 
-  public ONodeId getTo() {
-    return to;
+  public ONodeId getReceiver() {
+    return receiver;
   }
 
   public OSyncMode getMode() {
@@ -64,11 +65,11 @@ public class OSyncState {
   }
 
   public synchronized void receiveData(byte[] data, boolean finished) {
-    receiver.receive(data, finished);
+    receiverStream.receive(data, finished);
   }
 
   public synchronized void setReceiver(OReceiverInputStream receiver) {
-    this.receiver = receiver;
+    this.receiverStream = receiver;
   }
 
   public boolean isClose() {

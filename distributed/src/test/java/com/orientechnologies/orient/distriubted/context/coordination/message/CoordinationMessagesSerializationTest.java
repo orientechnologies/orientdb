@@ -167,7 +167,7 @@ public class CoordinationMessagesSerializationTest {
     OCanSync syncReq = new OCanSync(nodeId, dbId, syncId, OSyncMode.StandardBackup, true);
 
     OCanSync read = writeRead(syncReq);
-    assertEquals(read.getFrom(), nodeId);
+    assertEquals(read.getSender(), nodeId);
     assertEquals(read.getDbId(), dbId);
 
     assertEquals(read.getSyncId(), syncId);
@@ -183,7 +183,7 @@ public class CoordinationMessagesSerializationTest {
     OStartSync syncReq = new OStartSync(nodeId, dbId, syncId, OSyncMode.StandardBackup);
 
     OStartSync read = writeRead(syncReq);
-    assertEquals(read.getFrom(), nodeId);
+    assertEquals(read.getReceiver(), nodeId);
     assertEquals(read.getDbId(), dbId);
 
     assertEquals(read.getSyncId(), syncId);
