@@ -873,6 +873,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     } else {
       restore(dbName, input, null, null, null);
     }
+    setDatabaseStatus(dbName, state.getDbId(), state.getReceiver(), ODatabaseState.Online);
   }
 
   public void sendDatabase(ONodeId receiver, ODatabaseId dbId, OSyncId syncId, OSyncMode mode) {

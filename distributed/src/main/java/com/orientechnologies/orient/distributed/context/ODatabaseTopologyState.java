@@ -188,7 +188,11 @@ public class ODatabaseTopologyState {
   }
 
   public synchronized boolean acceptSync(ONodeId sender, ONodeId receiver, OSyncId syncId) {
-    // TODO: check if already syncinging with someone do not accept
+    for (OSyncSession session : this.syncSessions.values()) {
+      if (session.isTransferingData()) {
+        return false;
+      }
+    }
     return this.nodeStatus.get(sender).isOnline();
   }
 }

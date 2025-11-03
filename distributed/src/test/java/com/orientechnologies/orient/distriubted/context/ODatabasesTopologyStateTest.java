@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.distriubted.context;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
@@ -254,11 +255,10 @@ public class ODatabasesTopologyStateTest {
     ODatabaseState ns = state.getNodeState(dbId, nodeId);
     assertEquals(ns, ODatabaseState.Offline);
 
-    Optional<OAcceptResult> prom = state.promiseState(dbId, newNodeId(), ODatabaseState.Online, 1L);
+    Optional<OAcceptResult> prom = state.promiseState(dbId, nodeId, ODatabaseState.Online, 1L);
 
     assertTrue(prom.isEmpty());
-    Optional<OAcceptResult> prom1 =
-        state1.promiseState(dbId, newNodeId(), ODatabaseState.Online, 1L);
+    Optional<OAcceptResult> prom1 = state1.promiseState(dbId, nodeId, ODatabaseState.Online, 1L);
     assertTrue(prom1.isEmpty());
 
     state.setState(dbId, nodeId, ODatabaseState.Online, 1L);
@@ -287,5 +287,77 @@ public class ODatabasesTopologyStateTest {
 
     OSyncState rs = state1.getSyncState(receiverState.getSyncId());
     assertSame(receiverState, rs);
+  }
+
+  @Test
+  public void testRequestSyncFailAlreadySendings() {
+
+    ODatabasesTopologyState state = new ODatabasesTopologyState();
+    ODatabasesTopologyState state1 = new ODatabasesTopologyState();
+    ODatabasesTopologyState state2 = new ODatabasesTopologyState();
+
+    var promiseId = newPromiseId();
+    ONodeId nodeId = promiseId.getCoordinator();
+    ONodeId node1 = newNodeId();
+    ONodeId node2 = newNodeId();
+
+    Set<ONodeId> partecipants = Set.of(nodeId, node1, node2);
+    var dbId = newDbId();
+    String name = "dbName";
+    int quorum = 2;
+    var res = state.promiseDeclare(promiseId, dbId, name, partecipants, quorum);
+    assertTrue(res.isEmpty());
+    var res1 = state1.promiseDeclare(promiseId, dbId, name, partecipants, quorum);
+    assertTrue(res1.isEmpty());
+    var res2 = state2.promiseDeclare(promiseId, dbId, name, partecipants, quorum);
+    assertTrue(res2.isEmpty());
+
+    state.declareDatabase(promiseId, dbId, name, partecipants, quorum);
+    state1.declareDatabase(promiseId, dbId, name, partecipants, quorum);
+    state2.declareDatabase(promiseId, dbId, name, partecipants, quorum);
+
+    ODatabaseState ns = state.getNodeState(dbId, nodeId);
+    assertEquals(ns, ODatabaseState.Offline);
+
+    Optional<OAcceptResult> prom = state.promiseState(dbId, nodeId, ODatabaseState.Online, 1L);
+
+    assertTrue(prom.isEmpty());
+    Optional<OAcceptResult> prom1 = state1.promiseState(dbId, nodeId, ODatabaseState.Online, 1L);
+    assertTrue(prom1.isEmpty());
+    Optional<OAcceptResult> prom2 = state2.promiseState(dbId, nodeId, ODatabaseState.Online, 1L);
+    assertTrue(prom2.isEmpty());
+
+    state.setState(dbId, nodeId, ODatabaseState.Online, 1L);
+    state1.setState(dbId, nodeId, ODatabaseState.Online, 1L);
+    state2.setState(dbId, nodeId, ODatabaseState.Online, 1L);
+
+    OSyncInfo syncInfo = state1.newSync(dbId);
+    assertTrue(syncInfo.targets().contains(nodeId));
+    boolean canSync = state.acceptSync(nodeId, node1, dbId, syncInfo.syncId());
+    assertTrue(canSync);
+    Optional<OSyncState> receiverStateOp =
+        state1.canSync(nodeId, node1, dbId, syncInfo.syncId(), canSync, OSyncMode.StandardBackup);
+    assertTrue(receiverStateOp.isPresent());
+    OSyncState receiverState = receiverStateOp.get();
+
+    OSyncState senderState =
+        state.startSend(node1, nodeId, dbId, syncInfo.syncId(), OSyncMode.StandardBackup);
+
+    assertEquals(receiverState.getSender(), senderState.getSender());
+    assertEquals(receiverState.getReceiver(), senderState.getReceiver());
+    assertEquals(receiverState.getSyncId(), senderState.getSyncId());
+    assertEquals(receiverState.getDbId(), senderState.getDbId());
+    assertEquals(receiverState.getMode(), senderState.getMode());
+
+    OSyncState ss = state.getSyncState(senderState.getSyncId());
+    assertSame(senderState, ss);
+
+    OSyncState rs = state1.getSyncState(receiverState.getSyncId());
+    assertSame(receiverState, rs);
+
+    OSyncInfo syncInfo2 = state2.newSync(dbId);
+    assertTrue(syncInfo2.targets().contains(nodeId));
+    boolean canSync2 = state.acceptSync(nodeId, node2, dbId, syncInfo.syncId());
+    assertFalse(canSync2);
   }
 }
