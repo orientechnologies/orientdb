@@ -59,9 +59,9 @@ public class ODatabaseId {
     return doc;
   }
 
-  public static ONodeId readResult(OResult e) {
+  public static ODatabaseId readResult(OResult e) {
     assert (int) e.getProperty("serializationVersion") == 1;
     String node = e.getProperty("id");
-    return new ONodeId(node);
+    return new ODatabaseId(node);
   }
 }

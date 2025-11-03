@@ -35,7 +35,6 @@ import com.orientechnologies.orient.core.db.OSystemDatabase;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OSyncSource;
-import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
@@ -137,8 +136,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
             .getValueAsInteger(DISTRIBUTED_TRANSACTION_SEQUENCE_SET_SIZE);
     recordPromiseManager = new OTxPromiseManager<>();
     indexKeyPromiseManager = new OTxPromiseManager<>();
-    sequenceManager =
-        new ODistributedSynchronizedSequence(new ONodeId(localNodeName), sequenceSize);
+    sequenceManager = new ODistributedSynchronizedSequence(context.getNodeId(), sequenceSize);
   }
 
   public void initProfilerHooks() {

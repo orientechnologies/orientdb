@@ -22,6 +22,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.OSharedContext;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
@@ -659,7 +660,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         } catch (RuntimeException | Error e) {
           txContext.destroy();
           localDistributedDatabase.popTxContext(transactionId);
-          this.sharedContext.getOrientDB().execute(this::forceRsync);
+          getContext().execute(this::forceRsync);
           throw e;
         } finally {
           if (manager != null) {
@@ -721,7 +722,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           } catch (RuntimeException | Error e) {
             txContext.destroy();
             localDistributedDatabase.popTxContext(transactionId);
-            this.sharedContext.getOrientDB().execute(this::forceRsync);
+            getContext().execute(this::forceRsync);
 
             throw e;
           } finally {
@@ -731,8 +732,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         } else {
           txContext.destroy();
           localDistributedDatabase.popTxContext(transactionId);
-          this.sharedContext
-              .getOrientDB()
+          getContext()
               .execute(
                   () -> {
                     logger.warn(
@@ -1280,7 +1280,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           OTransactionOptimistic tx = new OTransactionOptimistic(this);
           data.fill(tx, this);
           ODistributedDatabaseImpl ddb = (ODistributedDatabaseImpl) getDistributedShared();
-          ONodeId nodeId = new ONodeId(getLocalNodeName());
+          ONodeId nodeId = getLocalNodeId();
           OTransactionIdPromise primise =
               new OTransactionIdPromise(nodeId, data.getTransactionId());
           ONewDistributedTxContextImpl txContext =
@@ -1309,8 +1309,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     } else if (first == ValidationResult.MISSING_PREVIOUS
         || second == ValidationResult.MISSING_PREVIOUS) {
       ddlContext.setStatus(TIMEDOUT);
-      this.sharedContext
-          .getOrientDB()
+      getContext()
           .execute(
               () -> {
                 logger.warnNode(
@@ -1389,14 +1388,13 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
                   return null;
                 });
           } catch (RuntimeException | Error e) {
-            this.sharedContext.getOrientDB().execute(this::forceRsync);
+            getContext().execute(this::forceRsync);
 
             throw e;
           }
         } else {
           ODistributedRequestId id = context.getReqId();
-          this.sharedContext
-              .getOrientDB()
+          getContext()
               .execute(
                   () -> {
                     logger.warn(
@@ -1409,5 +1407,13 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       localDistributedDatabase.rollback(context.getPreChangePromise());
       localDistributedDatabase.rollback(context.getAfterChangePromise());
     }
+  }
+
+  private OrientDBInternal getContext() {
+    return this.sharedContext.getOrientDB();
+  }
+
+  private ONodeId getLocalNodeId() {
+    return ((OrientDBDistributed) getContext()).getNodeId();
   }
 }
