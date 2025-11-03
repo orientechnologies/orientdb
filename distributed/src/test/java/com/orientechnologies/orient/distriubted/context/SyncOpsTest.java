@@ -4,6 +4,7 @@ import static org.junit.Assert.assertTrue;
 
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.db.OrientDBConfigBuilder;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
@@ -28,12 +29,13 @@ public class SyncOpsTest {
 
   @Before
   public void before() {
-    context =
-        OrientDBInternal.distributed("./target/sync", OrientDBConfig.defaultConfig()).newOrientDB();
+    OrientDBConfigBuilder config1 = OrientDBConfig.builder();
+    config1.getNodeConfigurationBuilder().setNodeName("node1");
+    context = OrientDBInternal.distributed("./target/sync", config1.build()).newOrientDB();
     context.execute("create database test plocal users(admin identified by 'adminpwd' role admin)");
-    context1 =
-        OrientDBInternal.distributed("./target/sync_receive", OrientDBConfig.defaultConfig())
-            .newOrientDB();
+    OrientDBConfigBuilder config2 = OrientDBConfig.builder();
+    config2.getNodeConfigurationBuilder().setNodeName("node2");
+    context1 = OrientDBInternal.distributed("./target/sync_receive", config2.build()).newOrientDB();
   }
 
   private class PassTrough implements RequestNext, MessageSender {

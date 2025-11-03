@@ -93,6 +93,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   private final ODistributedMessageServiceImpl messageService;
   // TODO: this require the node name to be instantiate.
   private ONodeState nodeState = null;
+  private String nodeName;
 
   public OrientDBDistributed(String directoryPath, OrientDBConfig config, Orient instance) {
     super(directoryPath, config, instance);
@@ -502,8 +503,14 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     }
   }
 
-  public String getNodeName() {
-    return plugin.getLocalNodeName();
+  public synchronized String getNodeName() {
+    if (plugin != null) {
+      return plugin.getLocalNodeName();
+    }
+    if (this.nodeName == null) {
+      this.nodeName = getConfigurations().getNodeConfiguration().getNodeName();
+    }
+    return this.nodeName;
   }
 
   private void offlineOnShutdown() {
@@ -758,7 +765,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   public synchronized ONodeState getNodeState() {
     if (nodeState == null) {
       // TODO: provide minimum quorum;
-      ONodeId nodeId = new ONodeId(getPlugin().getLocalNodeName());
+      ONodeId nodeId = new ONodeId(getNodeName());
       OSystemStateStore store = new OSystemStateStore(getSystemDatabase());
       nodeState = new ONodeState(nodeId, 0, store);
       nodeState.initFromStore();
@@ -862,6 +869,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
           new Thread(
               () -> {
                 receiveSync(dbName, st, input, getConfigurations());
+                setDatabaseStatus(dbName, st.getDbId(), st.getReceiver(), ODatabaseState.Online);
               });
       thread.start();
     }
@@ -873,7 +881,6 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     } else {
       restore(dbName, input, null, null, null);
     }
-    setDatabaseStatus(dbName, state.getDbId(), state.getReceiver(), ODatabaseState.Online);
   }
 
   public void sendDatabase(ONodeId receiver, ODatabaseId dbId, OSyncId syncId, OSyncMode mode) {
@@ -951,5 +958,9 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   public void nextBuffer(OSyncId syncId, boolean close) {
     var state = this.getNodeState().getDatabaseTopology().getSyncState(syncId);
     state.requestNext(close);
+  }
+
+  public ONodeId getNodeId() {
+    return getNodeState().getNodeId();
   }
 }
