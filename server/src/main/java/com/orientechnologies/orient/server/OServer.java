@@ -434,13 +434,17 @@ public class OServer {
         // REGISTER/CREATE SOCKET FACTORIES
         if (configuration.network.sockets != null) {
           for (OServerSocketFactoryConfiguration f : configuration.network.sockets) {
-            Class<? extends OServerSocketFactory> fClass =
-                (Class<? extends OServerSocketFactory>) loadClass(f.implementation);
-            OServerSocketFactory factory = fClass.newInstance();
             try {
+              Class<? extends OServerSocketFactory> fClass =
+                  (Class<? extends OServerSocketFactory>) loadClass(f.implementation);
+              OServerSocketFactory factory = fClass.getConstructor().newInstance();
               factory.config(f.name, f.parameters);
               networkSocketFactories.put(f.name, factory);
             } catch (OConfigurationException e) {
+              logger.error("Error creating socket factory", e);
+            } catch (InvocationTargetException e) {
+              logger.error("Error creating socket factory", e);
+            } catch (NoSuchMethodException e) {
               logger.error("Error creating socket factory", e);
             }
           }
@@ -646,57 +650,6 @@ public class OServer {
     if (!getContextConfiguration()
         .getValueAsBoolean(OGlobalConfiguration.SERVER_OPEN_ALL_DATABASES_AT_STARTUP)) return;
     getDatabases().loadAllDatabases();
-  }
-
-  private boolean askForEncryptionKey(final String iDatabaseName) {
-    try {
-      Thread.sleep(500);
-    } catch (InterruptedException e) {
-    }
-
-    System.out.println();
-    System.out.println();
-    System.out.println(
-        OAnsiCode.format(
-            "$ANSI{yellow"
-                + " +--------------------------------------------------------------------------+}"));
-    System.out.println(
-        OAnsiCode.format(
-            String.format(
-                "$ANSI{yellow | INSERT THE KEY FOR THE ENCRYPTED DATABASE %-31s|}",
-                "'" + iDatabaseName + "'")));
-    System.out.println(
-        OAnsiCode.format(
-            "$ANSI{yellow"
-                + " +--------------------------------------------------------------------------+}"));
-    System.out.println(
-        OAnsiCode.format(
-            "$ANSI{yellow | To avoid this message set the environment variable or JVM setting      "
-                + "  |}"));
-    System.out.println(
-        OAnsiCode.format(
-            "$ANSI{yellow | 'storage.encryptionKey' to the key to use.                             "
-                + "  |}"));
-    System.out.println(
-        OAnsiCode.format(
-            "$ANSI{yellow"
-                + " +--------------------------------------------------------------------------+}"));
-    System.out.print(
-        OAnsiCode.format("\n$ANSI{yellow Database encryption key [BLANK=to skip opening]: }"));
-
-    final OConsoleReader reader = new ODefaultConsoleReader();
-    try {
-      String key = reader.readPassword();
-      if (key != null) {
-        key = key.trim();
-        if (!key.isEmpty()) {
-          OGlobalConfiguration.STORAGE_ENCRYPTION_KEY.setValue(key);
-          return true;
-        }
-      }
-    } catch (IOException e) {
-    }
-    return false;
   }
 
   public String getDatabaseDirectory() {
@@ -1108,20 +1061,27 @@ public class OServer {
             // SKIP IT
             continue;
         }
+        try {
+          final OServerPlugin plugin =
+              (OServerPlugin) loadClass(h.clazz).getConstructor().newInstance();
 
-        final OServerPlugin plugin = (OServerPlugin) loadClass(h.clazz).newInstance();
+          if (plugin instanceof ODistributedServerManager)
+            distributedManager = (ODistributedServerManager) plugin;
 
-        if (plugin instanceof ODistributedServerManager)
-          distributedManager = (ODistributedServerManager) plugin;
+          pluginManager.registerPlugin(
+              new OServerPluginInfo(plugin.getName(), null, null, null, plugin, null, 0, null));
 
-        pluginManager.registerPlugin(
-            new OServerPluginInfo(plugin.getName(), null, null, null, plugin, null, 0, null));
+          pluginManager.callListenerBeforeConfig(plugin, h.parameters);
+          plugin.config(this, h.parameters);
+          pluginManager.callListenerAfterConfig(plugin, h.parameters);
 
-        pluginManager.callListenerBeforeConfig(plugin, h.parameters);
-        plugin.config(this, h.parameters);
-        pluginManager.callListenerAfterConfig(plugin, h.parameters);
-
-        plugins.add(plugin);
+          plugins.add(plugin);
+        } catch (IllegalArgumentException
+            | SecurityException
+            | InvocationTargetException
+            | NoSuchMethodException e) {
+          logger.error("Failed instantiating plugin with class %s", e, h.clazz);
+        }
       }
 
       // START ALL THE CONFIGURED PLUGINS
