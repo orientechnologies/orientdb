@@ -55,6 +55,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.DB_STATUS;
 import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
 import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
+import com.orientechnologies.orient.server.distributed.ORemoteServerAvailabilityCheck;
 import com.orientechnologies.orient.server.distributed.ORemoteServerController;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributedPooled;
@@ -94,6 +95,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   // TODO: this require the node name to be instantiate.
   private ONodeState nodeState = null;
   private String nodeName;
+  private ORemoteServerManager remoteServerManager;
 
   public OrientDBDistributed(String directoryPath, OrientDBConfig config, Orient instance) {
     super(directoryPath, config, instance);
@@ -104,6 +106,14 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   public void init(OServer server) {
     // Cannot get the plugin from here, is too early, doing it lazy
     this.server = server;
+  }
+
+  public void initDistributed(String nodeName, ORemoteServerAvailabilityCheck check) {
+    ONodeId nodeId = new ONodeId(nodeName);
+    OSystemStateStore store = new OSystemStateStore(getSystemDatabase());
+    this.nodeState = new ONodeState(nodeId, 0, store);
+    this.nodeState.initFromStore();
+    this.remoteServerManager = new ORemoteServerManager(nodeName, check);
   }
 
   public void loadAllDatabases() {
@@ -368,7 +378,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   public void sendMessage(Set<ONodeId> set, OStructuralMessage op) {
     ONetworkMessageStructural message = new ONetworkMessageStructural(this, op);
-    ORemoteServerManager remote = getPlugin().getRemoteServerManager();
+    ORemoteServerManager remote = remoteServerManager;
     for (ONodeId node : set) {
       if (node.equals(getNodeState().getNodeId())) {
         this.receiveMessage(op);
@@ -383,7 +393,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   public void sendMessage(ONodeId node, OStructuralMessage op) {
     ONetworkMessageStructural message = new ONetworkMessageStructural(this, op);
-    ORemoteServerManager remote = getPlugin().getRemoteServerManager();
+    ORemoteServerManager remote = remoteServerManager;
     if (node.equals(getNodeState().getNodeId())) {
       this.receiveMessage(op);
     } else {
@@ -504,9 +514,6 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   }
 
   public synchronized String getNodeName() {
-    if (plugin != null) {
-      return plugin.getLocalNodeName();
-    }
     if (this.nodeName == null) {
       this.nodeName = getConfigurations().getNodeConfiguration().getNodeName();
     }
@@ -590,7 +597,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   }
 
   private void declareDatabaseFlow(String name, ODatabaseId dbId) {
-    Set<ONodeId> currentMembers = nodeState.getNetworkState().getMembers();
+    Set<ONodeId> currentMembers = getNodeState().getNetworkState().getMembers();
     distributedOperation(new ODeclareDbMessage(name, dbId, currentMembers, 0));
   }
 
@@ -735,6 +742,9 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     if (!isOpen()) return;
     offlineOnShutdown();
     this.messageService.shutdown();
+    if (this.remoteServerManager != null) {
+      this.remoteServerManager.closeAll();
+    }
     super.close();
   }
 
@@ -763,13 +773,6 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   }
 
   public synchronized ONodeState getNodeState() {
-    if (nodeState == null) {
-      // TODO: provide minimum quorum;
-      ONodeId nodeId = new ONodeId(getNodeName());
-      OSystemStateStore store = new OSystemStateStore(getSystemDatabase());
-      nodeState = new ONodeState(nodeId, 0, store);
-      nodeState.initFromStore();
-    }
     return this.nodeState;
   }
 
@@ -962,5 +965,26 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   public ONodeId getNodeId() {
     return getNodeState().getNodeId();
+  }
+
+  public void closeRemoteServer(String node) {
+    if (remoteServerManager != null) {
+      remoteServerManager.closeRemoteServer(node);
+    }
+  }
+
+  public ORemoteServerController getRemoteServer(String rNodeName) {
+    if (remoteServerManager != null) {
+      return remoteServerManager.getRemoteServer(rNodeName);
+    }
+    return null;
+  }
+
+  public ORemoteServerController connectRemoteServer(
+      String rNodeName, String url, String replicatorUser, String userPassword) throws IOException {
+    if (remoteServerManager != null) {
+      return remoteServerManager.connectRemoteServer(rNodeName, url, replicatorUser, userPassword);
+    }
+    return null;
   }
 }
