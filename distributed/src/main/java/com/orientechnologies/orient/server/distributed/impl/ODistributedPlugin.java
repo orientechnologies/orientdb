@@ -148,7 +148,6 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
   private String nodeName = null;
   protected File defaultDatabaseConfigFile;
   protected List<ODistributedLifecycleListener> listeners = new ArrayList<>();
-  protected ORemoteServerManager remoteServerManager;
 
   // LOCAL MSG COUNTER
   protected AtomicLong localMessageIdCounter = new AtomicLong();
@@ -206,8 +205,9 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
       }
     }
 
-    this.remoteServerManager =
-        new ORemoteServerManager(
+    if (nodeName == null) assignNodeName();
+    ((OrientDBDistributed) serverInstance.getDatabases())
+        .initDistributed(
             nodeName,
             new ORemoteServerAvailabilityCheck() {
               @Override
@@ -220,12 +220,7 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
                 ODistributedPlugin.this.removeServer(node, true);
               }
             });
-    if (nodeName == null) assignNodeName();
     clusterManager.configHazelcastPlugin(oServer, iParams, nodeName);
-  }
-
-  public ORemoteServerManager getRemoteServerManager() {
-    return remoteServerManager;
   }
 
   public File getDefaultDatabaseConfigFile() {
@@ -267,9 +262,6 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
 
     // REGISTER TEMPORARY USER FOR REPLICATION PURPOSE
     serverInstance.addTemporaryUser(REPLICATOR_USER, "" + new SecureRandom().nextLong(), "*");
-
-    // CLOSE ALL CONNECTIONS TO THE SERVERS
-    remoteServerManager.closeAll();
 
     try {
       clusterManager.startupHazelcastPlugin();
@@ -348,9 +340,6 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
     try {
       if (healthCheckerTask != null) healthCheckerTask.cancel();
       if (haStatsTask != null) haStatsTask.cancel();
-
-      // CLOSE ALL CONNECTIONS TO THE SERVERS
-      remoteServerManager.closeAll();
 
       setNodeStatus(NODE_STATUS.OFFLINE);
 
@@ -1819,7 +1808,7 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
   }
 
   public void closeRemoteServer(final String node) {
-    remoteServerManager.closeRemoteServer(node);
+    ((OrientDBDistributed) this.serverInstance.getDatabases()).closeRemoteServer(node);
   }
 
   /** Avoids to dump the same configuration twice if it's unchanged since the last time. */
@@ -1973,7 +1962,8 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
   public ORemoteServerController getRemoteServer(final String rNodeName) throws IOException {
     if (rNodeName == null) throw new IllegalArgumentException("Server name is NULL");
 
-    ORemoteServerController remoteServer = remoteServerManager.getRemoteServer(rNodeName);
+    OrientDBDistributed ctx = (OrientDBDistributed) serverInstance.getDatabases();
+    ORemoteServerController remoteServer = ctx.getRemoteServer(rNodeName);
     if (remoteServer == null) {
       Member member = clusterManager.getClusterMemberByName(rNodeName);
 
@@ -2003,9 +1993,7 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
         final String userPassword = cfg.getReplicator();
 
         if (userPassword != null) {
-          remoteServer =
-              remoteServerManager.connectRemoteServer(
-                  rNodeName, url, REPLICATOR_USER, userPassword);
+          remoteServer = ctx.connectRemoteServer(rNodeName, url, REPLICATOR_USER, userPassword);
           break;
         }
 
