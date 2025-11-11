@@ -109,11 +109,13 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   }
 
   public void initDistributed(String nodeName, ORemoteServerAvailabilityCheck check) {
+    this.nodeName = nodeName;
     ONodeId nodeId = new ONodeId(nodeName);
     OSystemStateStore store = new OSystemStateStore(getSystemDatabase());
-    this.nodeState = new ONodeState(nodeId, 0, store);
-    this.nodeState.initFromStore();
+    this.nodeState = new ONodeState(nodeId, 1, store);
     this.remoteServerManager = new ORemoteServerManager(nodeName, check);
+    ODiscoverAction action = this.nodeState.initFromStore();
+    action.execute(this);
   }
 
   public void loadAllDatabases() {
@@ -167,7 +169,10 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   }
 
   protected boolean isDistributedDisabled(String storage) {
-    return OSystemDatabase.SYSTEM_DB_NAME.equals(storage) || plugin == null || !plugin.isEnabled();
+    return OSystemDatabase.SYSTEM_DB_NAME.equals(storage)
+        || plugin == null
+        || !plugin.isEnabled()
+        || nodeState == null;
   }
 
   @Override
@@ -513,9 +518,13 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     }
   }
 
-  public synchronized String getNodeName() {
+  public String getNodeName() {
     if (this.nodeName == null) {
-      this.nodeName = getConfigurations().getNodeConfiguration().getNodeName();
+      synchronized (this) {
+        if (this.nodeName == null) {
+          this.nodeName = getConfigurations().getNodeConfiguration().getNodeName();
+        }
+      }
     }
     return this.nodeName;
   }
@@ -829,7 +838,10 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
         .executeOnOneOnline(
             dbId,
             () -> {
-              execute(() -> sync(dbId));
+              if (!ODatabaseState.Online.equals(
+                  getNodeState().getDatabaseTopology().getNodeState(dbId, getNodeId()))) {
+                execute(() -> sync(dbId));
+              }
             });
   }
 

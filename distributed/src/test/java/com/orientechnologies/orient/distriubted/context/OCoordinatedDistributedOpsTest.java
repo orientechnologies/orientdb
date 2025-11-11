@@ -76,9 +76,9 @@ public class OCoordinatedDistributedOpsTest {
     TestAction action = new TestAction();
     ONodeId nodeId = newRandomNodeId();
     OCoordinatedDistributedOps ops = new OCoordinatedDistributedOpsImpl(nodeId, 2);
-    ops.registerNode(nodeId, 0);
     ONodeId nodeIdtwo = newRandomNodeId();
-    ops.registerNode(nodeIdtwo, 0);
+    OGroupId groupId = new OGroupId("group");
+    ops.enstablish(groupId, Set.of(nodeId, nodeIdtwo));
 
     OTransactionId txId = new OTransactionId(0, 1);
     OTransactionIdPromise promise = new OTransactionIdPromise(nodeId, txId);
@@ -95,13 +95,11 @@ public class OCoordinatedDistributedOpsTest {
     TestAction action = new TestAction();
     ONodeId nodeId = newRandomNodeId();
     OCoordinatedDistributedOps ops = new OCoordinatedDistributedOpsImpl(nodeId, 2);
-    ops.registerNode(nodeId, 0);
     ONodeId nodeIdtwo = newRandomNodeId();
-    ops.registerNode(nodeIdtwo, 0);
     ONodeId nodeIdthree = newRandomNodeId();
-    ops.registerNode(nodeIdthree, 0);
     ONodeId nodeIdFour = newRandomNodeId();
-    ops.registerNode(nodeIdFour, 0);
+    OGroupId groupId = new OGroupId("group");
+    ops.enstablish(groupId, Set.of(nodeId, nodeIdtwo, nodeIdthree, nodeIdFour));
 
     OTransactionId txId = new OTransactionId(0, 1);
     OTransactionIdPromise promise = new OTransactionIdPromise(nodeId, txId);
@@ -147,9 +145,9 @@ public class OCoordinatedDistributedOpsTest {
     TestAction action = new TestAction();
     ONodeId nodeId = newRandomNodeId();
     OCoordinatedDistributedOps ops = new OCoordinatedDistributedOpsImpl(nodeId, 2);
-    ops.registerNode(nodeId, 0);
     ONodeId nodeIdtwo = newRandomNodeId();
-    ops.registerNode(nodeIdtwo, 0);
+    OGroupId groupId = new OGroupId("group");
+    ops.enstablish(groupId, Set.of(nodeId, nodeIdtwo));
 
     OTransactionId txId = new OTransactionId(0, 1);
     OTransactionIdPromise promise = new OTransactionIdPromise(nodeId, txId);
@@ -167,13 +165,11 @@ public class OCoordinatedDistributedOpsTest {
     TestAction action = new TestAction();
     ONodeId nodeId = newRandomNodeId();
     OCoordinatedDistributedOps ops = new OCoordinatedDistributedOpsImpl(nodeId, 2);
-    ops.registerNode(nodeId, 0);
     ONodeId nodeIdtwo = newRandomNodeId();
-    ops.registerNode(nodeIdtwo, 0);
     ONodeId nodeIdthree = newRandomNodeId();
-    ops.registerNode(nodeIdthree, 0);
     ONodeId nodeIdFour = newRandomNodeId();
-    ops.registerNode(nodeIdFour, 0);
+    OGroupId groupId = new OGroupId("group");
+    ops.enstablish(groupId, Set.of(nodeId, nodeIdtwo, nodeIdthree, nodeIdFour));
 
     OTransactionId txId = new OTransactionId(0, 1);
     OTransactionIdPromise promise = new OTransactionIdPromise(nodeId, txId);
@@ -212,6 +208,7 @@ public class OCoordinatedDistributedOpsTest {
         ((ODiscoverAction.OEstablishAction) action).candidates());
 
     assertEquals(ops.getMembers().size(), 2);
+    assertEquals(ops.getNetworkState().getQuorum(), 2);
   }
 
   @Test
@@ -369,6 +366,7 @@ public class OCoordinatedDistributedOpsTest {
             Optional.of(gid), OTopologyState.ESTABLISHED, Set.of(nodeId1, nodeId2, nodeId3), 2, 3));
     node1.discoverNode(nodeId1);
     assertEquals(node1.getMembers().size(), 3);
+    assertEquals(node1.getNetworkState().getQuorum(), 2);
 
     ODiscoverAction action =
         node1.nodeJoinStart(

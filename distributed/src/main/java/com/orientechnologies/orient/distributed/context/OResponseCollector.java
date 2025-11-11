@@ -31,6 +31,7 @@ public class OResponseCollector {
 
   public OResponseCollector(
       OCompleteAction action, OTransactionIdPromise promise, int quorum, Set<ONodeId> activeNodes) {
+    assert quorum > 0;
     this.action = action;
     this.promise = promise;
     this.quorum = quorum;
