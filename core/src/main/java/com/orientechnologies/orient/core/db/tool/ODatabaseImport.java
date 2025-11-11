@@ -1041,7 +1041,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         // CREATE IT
         if (!preserveClusterIDs) createdClusterId = database.addCluster(name);
         else if (getDatabase().getClusterNameById(clusterIdFromJson) == null) {
-          createdClusterId = database.addCluster(name, clusterIdFromJson, null);
+          createdClusterId = database.addCluster(name, clusterIdFromJson);
           assert createdClusterId == clusterIdFromJson;
         } else {
           createdClusterId = database.addCluster(name);
@@ -1055,7 +1055,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
           if (database.countClusterElements(createdClusterId - 1) == 0) {
             listener.onMessage("Found previous version: migrating old clusters...");
             database.dropCluster(name);
-            database.addCluster("temp_" + createdClusterId, null);
+            database.addCluster("temp_" + createdClusterId);
             createdClusterId = database.addCluster(name);
           } else
             throw new OConfigurationException(
@@ -1078,7 +1078,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
             ((OClassEmbedded) clazz).removeClusterId(createdClusterId, true);
 
           database.dropCluster(createdClusterId);
-          createdClusterId = database.addCluster(name, clusterIdFromJson, null);
+          createdClusterId = database.addCluster(name, clusterIdFromJson);
         }
       }
       clusterToClusterMapping.put(clusterIdFromJson, createdClusterId);
