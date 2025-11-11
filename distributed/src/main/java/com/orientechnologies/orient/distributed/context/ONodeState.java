@@ -38,20 +38,18 @@ public class ONodeState {
     nodeId = current;
     this.store = store;
     this.databaseTopology = new ODatabasesTopologyState();
-    initFromStore();
   }
 
-  public void initFromStore() {
+  public ODiscoverAction initFromStore() {
     Optional<ONodeStateStore> load = store.loadState();
     if (load.isPresent()) {
       coordinated.load(load.get());
     }
-    // TODO: see action here ...
-    ODiscoverAction action = coordinated.discoverNode(nodeId);
     Optional<byte[]> seq = store.loadSequence();
     if (seq.isPresent()) {
       sequenceManager.fill(OTxMetadataHolderImpl.read(seq.get()).getStatus());
     }
+    return coordinated.discoverNode(nodeId);
   }
 
   public OOperationStart start(OCompleteAction action) {

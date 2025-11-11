@@ -109,15 +109,19 @@ public class OTopologyManager implements OTopologyEvents {
     this.version = version;
   }
 
-  public int getQuorum() {
-    return quorum;
+  public synchronized int getQuorum() {
+    if (this.state == OTopologyState.ESTABLISHED) {
+      return quorum;
+    } else {
+      return getMinimumQuorum();
+    }
   }
 
-  public int getMinimumQuorum() {
+  public synchronized int getMinimumQuorum() {
     return minimumQuorum;
   }
 
-  public Set<ONodeId> getMembers() {
+  public synchronized Set<ONodeId> getMembers() {
     return members;
   }
 
@@ -125,6 +129,7 @@ public class OTopologyManager implements OTopologyEvents {
     this.state = OTopologyState.ESTABLISHED;
     this.groupId = Optional.of(groupId);
     setMember(candidates);
+    this.quorum = (members.size() / 2) + 1;
     this.candidates = new HashSet<>();
     this.version = 0;
     this.promise = false;
