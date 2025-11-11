@@ -8,6 +8,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.id.ORID;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.ORecord;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -141,6 +142,73 @@ public class ODatabaseImportTest {
 
     final String importDbUrl =
         "embedded:target/import_" + ODatabaseImportTest.class.getSimpleName() + "_preserveRids";
+    OCreateDatabaseUtil.createDatabase(databaseName, importDbUrl, OCreateDatabaseUtil.TYPE_PLOCAL);
+
+    try (final ODatabaseSession db =
+        orientDB.open(databaseName, "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD)) {
+      final ODatabaseImport importer =
+          new ODatabaseImport(
+              (ODatabaseDocumentInternal) db,
+              new ByteArrayInputStream(output.toByteArray()),
+              new OCommandOutputListener() {
+                @Override
+                public void onMessage(String iText) {}
+              });
+      importer.setPreserveRids(true);
+      importer.importDatabase();
+      ORecord read = db.load(toCheck);
+      assertNotNull(read);
+      Assert.assertEquals(read.getIdentity(), toCheck);
+    }
+    orientDB.drop(databaseName);
+    orientDB.close();
+  }
+
+  @Test
+  public void importPreserveClusterIdWithRids() throws IOException {
+    final String databaseName = "testClusters";
+    final String exportDbUrl =
+        "embedded:target/export_"
+            + ODatabaseImportTest.class.getSimpleName()
+            + "_preserveRidsClusters";
+    final OrientDB orientDB =
+        OCreateDatabaseUtil.createDatabase(
+            databaseName, exportDbUrl, OCreateDatabaseUtil.TYPE_PLOCAL);
+    ORID toCheck;
+    final ByteArrayOutputStream output = new ByteArrayOutputStream();
+    try (final ODatabaseSession db =
+        orientDB.open(databaseName, "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD)) {
+      OClass cl = db.createClass("SimpleClass");
+      // Create gaps in the id of the clusters to make sure that it not pass just by chance
+      int[] prev = cl.getClusterIds();
+      int id = db.addCluster("simpleNewCluster");
+      int id1 = db.addCluster("simpleNewCluster1");
+      cl.addClusterId(id);
+      cl.addClusterId(id1);
+      for (int pid : prev) {
+        cl.removeClusterId(pid);
+        db.dropCluster(pid);
+      }
+      db.save(db.newElement("SimpleClass"));
+      ORID toDelete = db.save(db.newElement("SimpleClass")).getIdentity();
+      toCheck = db.save(db.newElement("SimpleClass")).getIdentity();
+      db.delete(toDelete);
+
+      final ODatabaseExport export =
+          new ODatabaseExport(
+              (ODatabaseDocumentInternal) db,
+              output,
+              new OCommandOutputListener() {
+                @Override
+                public void onMessage(String iText) {}
+              });
+      export.exportDatabase();
+    }
+
+    final String importDbUrl =
+        "embedded:target/import_"
+            + ODatabaseImportTest.class.getSimpleName()
+            + "_preserveRidsClusters";
     OCreateDatabaseUtil.createDatabase(databaseName, importDbUrl, OCreateDatabaseUtil.TYPE_PLOCAL);
 
     try (final ODatabaseSession db =
