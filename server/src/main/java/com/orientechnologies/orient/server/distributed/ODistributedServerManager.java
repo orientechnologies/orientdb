@@ -189,7 +189,7 @@ public interface ODistributedServerManager {
       String iDatabaseName,
       Collection<String> iTargetNodeNames,
       ORemoteTask iTask,
-      long messageId,
+      ODistributedRequestId messageId,
       Object localResult,
       ODistributedResponseManagerFactory responseManagerFactory);
 
@@ -253,4 +253,6 @@ public interface ODistributedServerManager {
   Set<String> getDatabases();
 
   boolean isSyncronizing(String databaseName);
+
+  ODistributedRequestId nextRequestId();
 }

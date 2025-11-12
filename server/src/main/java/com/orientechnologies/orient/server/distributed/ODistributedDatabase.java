@@ -55,8 +55,7 @@ public interface ODistributedDatabase {
   void waitForOnline();
 
   void reEnqueue(
-      final int senderNodeId,
-      final long msgSequence,
+      ODistributedRequestId requestId,
       final String databaseName,
       final ORemoteTask payload,
       int retryCount,

@@ -47,12 +47,11 @@ public class ODistributedRequest {
 
   public ODistributedRequest(
       final ODistributedServerManager manager,
-      final int senderNodeId,
-      final long msgSequence,
+      final ODistributedRequestId requestId,
       final String databaseName,
       final ORemoteTask payload) {
     this.manager = manager;
-    this.id = new ODistributedRequestId(senderNodeId, msgSequence);
+    this.id = requestId;
     this.databaseName = databaseName;
     this.senderThreadId = Thread.currentThread().getId();
     this.task = payload;

@@ -1020,10 +1020,9 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           new OSQLCommandTaskFirstPhase(command, ids.get().getFirst(), ids.get().getSecond());
       ODistributedServerManager dManager = getDistributedManager();
       Set<String> nodes = dManager.getAvailableNodeNames(getName());
-      long next = dManager.getNextMessageIdCounter();
 
-      ODistributedRequestId reqId = new ODistributedRequestId(dManager.getLocalNodeId(), next);
-      ODistributedTxResponseManagerImpl responseManager = sendTask(nodes, task, null, next);
+      ODistributedRequestId reqId = dManager.nextRequestId();
+      ODistributedTxResponseManagerImpl responseManager = sendTask(nodes, task, null, reqId);
 
       if (responseManager.isQuorumReached()) {
         Optional<OTransactionResultPayload> results =
@@ -1101,7 +1100,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   }
 
   private ODistributedTxResponseManagerImpl sendTask(
-      Collection<String> nodes, ORemoteTask task, Object localResult, long next) {
+      Collection<String> nodes, ORemoteTask task, Object localResult, ODistributedRequestId next) {
     ODistributedServerManager dManager = getDistributedManager();
     final class HoldResponseManager {
       ODistributedTxResponseManagerImpl responseManager;

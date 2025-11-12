@@ -450,31 +450,25 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
   @Override
   public ODistributedResponse sendRequest(
       final String iDatabaseName, final Collection<String> iTargetNodes, final ORemoteTask iTask) {
-    return sendRequest(iDatabaseName, iTargetNodes, iTask, getNextMessageIdCounter(), null, null);
+    return sendRequest(iDatabaseName, iTargetNodes, iTask, nextRequestId(), null, null);
   }
 
   @Override
   public ODistributedResponse sendSingleRequest(
       String databaseName, String node, ORemoteTask iTask) {
     return sendRequest(
-        databaseName,
-        Collections.singletonList(node),
-        iTask,
-        getNextMessageIdCounter(),
-        null,
-        null);
+        databaseName, Collections.singletonList(node), iTask, nextRequestId(), null, null);
   }
 
   public ODistributedResponse sendRequest(
       final String iDatabaseName,
       final Collection<String> iTargetNodes,
       final ORemoteTask iTask,
-      final long reqId,
+      final ODistributedRequestId reqId,
       final Object localResult,
       ODistributedResponseManagerFactory responseManagerFactory) {
     final ODistributedRequest.EXECUTION_MODE iExecutionMode = EXECUTION_MODE.RESPONSE;
-    final ODistributedRequest req =
-        new ODistributedRequest(this, getLocalNodeId(), reqId, iDatabaseName, iTask);
+    final ODistributedRequest req = new ODistributedRequest(this, reqId, iDatabaseName, iTask);
 
     if (iTargetNodes == null || iTargetNodes.isEmpty()) {
       logger.errorOut(
@@ -1781,14 +1775,17 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
     }
   }
 
+  public ODistributedRequestId nextRequestId() {
+    return new ODistributedRequestId(getLocalNodeId(), getNextMessageIdCounter());
+  }
+
   public void stopNode(final String iNode) throws IOException {
     logger.warnNode(nodeName, "Sending request of stopping node '%s'...", iNode);
 
     final ODistributedRequest request =
         new ODistributedRequest(
             this,
-            getLocalNodeId(),
-            getNextMessageIdCounter(),
+            nextRequestId(),
             null,
             getTaskFactoryManager()
                 .getFactoryByServerName(iNode)
@@ -1803,8 +1800,7 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
     final ODistributedRequest request =
         new ODistributedRequest(
             this,
-            getLocalNodeId(),
-            getNextMessageIdCounter(),
+            nextRequestId(),
             null,
             getTaskFactoryManager()
                 .getFactoryByServerName(iNode)

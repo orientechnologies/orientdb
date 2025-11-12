@@ -262,8 +262,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   public void reEnqueue(
-      final int senderNodeId,
-      final long msgSequence,
+      ODistributedRequestId requestId,
       final String databaseName,
       final ORemoteTask payload,
       int retryCount,
@@ -274,9 +273,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
           @Override
           public void run() {
             processRequest(
-                new ODistributedRequest(
-                    getManager(), senderNodeId, msgSequence, databaseName, payload),
-                false);
+                new ODistributedRequest(getManager(), requestId, databaseName, payload), false);
           }
         },
         autoRetryDelay * retryCount);
@@ -517,8 +514,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
     final OUnreachableServerLocalTask task = new OUnreachableServerLocalTask(nodeName);
     final ODistributedRequest rollbackRequest =
-        new ODistributedRequest(
-            null, manager.getLocalNodeId(), manager.getNextMessageIdCounter(), null, task);
+        new ODistributedRequest(null, manager.nextRequestId(), null, task);
     processRequest(rollbackRequest, false);
   }
 

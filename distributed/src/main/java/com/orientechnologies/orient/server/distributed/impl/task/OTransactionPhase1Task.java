@@ -178,13 +178,7 @@ public class OTransactionPhase1Task extends OAbstractRemoteTask implements OLock
       retryCount++;
       ((ODatabaseDocumentDistributed) database)
           .getDistributedShared()
-          .reEnqueue(
-              requestId.getNodeId(),
-              requestId.getMessageId(),
-              database.getName(),
-              this,
-              retryCount,
-              autoRetryDelay);
+          .reEnqueue(requestId, database.getName(), this, retryCount, autoRetryDelay);
       hasResponse = false;
       return null;
     }

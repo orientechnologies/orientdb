@@ -99,8 +99,7 @@ public class ODistributedTxCoordinator {
       Set<String> clusters) {
     int count = 0;
     do {
-      final ODistributedRequestId requestId =
-          new ODistributedRequestId(nodeId, dManager.getNextMessageIdCounter());
+      final ODistributedRequestId requestId = dManager.nextRequestId();
       localDistributedDatabase.startOperation();
       try {
         Optional<OTransactionIdPromise> genId = localDistributedDatabase.nextId();
@@ -248,7 +247,7 @@ public class ODistributedTxCoordinator {
         storage.getName(),
         nodes,
         txTask,
-        requestId.getMessageId(),
+        requestId,
         localResult,
         ((iRequest,
             iNodes,

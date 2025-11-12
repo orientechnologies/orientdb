@@ -145,13 +145,7 @@ public class OTransactionPhase2Task extends OAbstractRemoteTask implements OLock
               firstPhaseId);
           ((ODatabaseDocumentDistributed) database)
               .getDistributedShared()
-              .reEnqueue(
-                  requestId.getNodeId(),
-                  requestId.getMessageId(),
-                  database.getName(),
-                  this,
-                  retryCount,
-                  autoRetryDelay);
+              .reEnqueue(requestId, database.getName(), this, retryCount, autoRetryDelay);
           hasResponse = false;
         } else {
           database
@@ -182,13 +176,7 @@ public class OTransactionPhase2Task extends OAbstractRemoteTask implements OLock
           logger.info("Received second phase but not yet first phase, re-enqueue second phase");
           ((ODatabaseDocumentDistributed) database)
               .getDistributedShared()
-              .reEnqueue(
-                  requestId.getNodeId(),
-                  requestId.getMessageId(),
-                  database.getName(),
-                  this,
-                  retryCount,
-                  autoRetryDelay);
+              .reEnqueue(requestId, database.getName(), this, retryCount, autoRetryDelay);
           hasResponse = false;
         } else {
           // ABORT THE OPERATION IF THERE IS A NOT VALID TRANSACTION ACTIVE WILL BE ROLLBACK ON

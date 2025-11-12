@@ -273,7 +273,7 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
               null,
               OMultiValue.getSingletonList(id),
               new OEnterpriseStatsTask(),
-              manager.getNextMessageIdCounter(),
+              manager.nextRequestId(),
               ODistributedRequest.EXECUTION_MODE.RESPONSE,
               null);
       final Object payload = dResponse.getPayload();
@@ -308,7 +308,7 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
             databases.iterator().next(),
             servers,
             new OEnterpriseStatsTask(),
-            manager.getNextMessageIdCounter(),
+            manager.nextRequestId(),
             ODistributedRequest.EXECUTION_MODE.RESPONSE,
             null);
     final Object payload = dResponse.getPayload();
@@ -374,7 +374,7 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
               null,
               servers,
               new OEnterpriseStatsTask(),
-              manager.getNextMessageIdCounter(),
+              manager.nextRequestId(),
               ODistributedRequest.EXECUTION_MODE.RESPONSE,
               null);
       final Object payload = dResponse.getPayload();
