@@ -189,4 +189,9 @@ public class OSharedContextDistributed extends OSharedContextEmbedded {
   public ODistributedDatabaseImpl getDistributedContext() {
     return distributedContext;
   }
+
+  @Override
+  public OrientDBDistributed getOrientDB() {
+    return (OrientDBDistributed) super.getOrientDB();
+  }
 }

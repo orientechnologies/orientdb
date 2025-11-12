@@ -82,6 +82,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.atomic.AtomicLong;
 
 /** Created by tglman on 08/08/17. */
 public class OrientDBDistributed extends OrientDBEmbedded implements OServerAware {
@@ -97,6 +98,8 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   private ONodeState nodeState = null;
   private String nodeName;
   private ORemoteServerManager remoteServerManager;
+  // LOCAL MSG COUNTER FOR LEGACY IMPLEMENTATIONS WILL BE REMOVED IN FUTURE
+  protected AtomicLong localMessageIdCounter = new AtomicLong();
 
   public OrientDBDistributed(String directoryPath, OrientDBConfig config, Orient instance) {
     super(directoryPath, config, instance);
@@ -996,5 +999,21 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
       return remoteServerManager.connectRemoteServer(rNodeName, url, replicatorUser, userPassword);
     }
     return null;
+  }
+
+  public void setDatabaseStatus(ONodeId nodeId, String dbName, DB_STATUS status) {
+    plugin.setDatabaseStatus(nodeId.getNode(), dbName, status);
+  }
+
+  public DB_STATUS getDatabaseStatus(ONodeId nodeId, String dbName) {
+    return plugin.getDatabaseStatus(nodeId.getNode(), dbName);
+  }
+
+  public OServer getServer() {
+    return server;
+  }
+
+  public long getNextMessageIdCounter() {
+    return localMessageIdCounter.getAndIncrement();
   }
 }

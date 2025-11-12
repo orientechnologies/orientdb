@@ -127,7 +127,6 @@ import java.util.TimerTask;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import sun.misc.Signal;
 
@@ -148,9 +147,6 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
   private String nodeName = null;
   protected File defaultDatabaseConfigFile;
   protected List<ODistributedLifecycleListener> listeners = new ArrayList<>();
-
-  // LOCAL MSG COUNTER
-  protected AtomicLong localMessageIdCounter = new AtomicLong();
 
   protected static final int DEPLOY_DB_MAX_RETRIES = 10;
   protected Set<String> installingDatabases =
@@ -1799,7 +1795,7 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
   }
 
   public long getNextMessageIdCounter() {
-    return localMessageIdCounter.getAndIncrement();
+    return ((OrientDBDistributed) serverInstance.getDatabases()).getNextMessageIdCounter();
   }
 
   @Override

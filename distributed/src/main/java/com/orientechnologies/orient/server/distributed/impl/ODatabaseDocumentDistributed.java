@@ -22,7 +22,6 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.OSharedContext;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
-import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
@@ -129,7 +128,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
    * @return the name of local node in the cluster
    */
   public String getLocalNodeName() {
-    return distributedManager.getLocalNodeName();
+    return getContext().getNodeName();
   }
 
   /**
@@ -408,7 +407,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
               dManager,
               localDistributedDatabase,
               dManager.getMessageService(),
-              dManager.getLocalNodeId(),
               dManager.getLocalNodeName(),
               nretry,
               delay);
@@ -581,8 +579,9 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       register(requestId, localDistributedDatabase, txContext);
       throw ex;
     } catch (OLowDiskSpaceException ex) {
-      distributedManager.setDatabaseStatus(
-          getLocalNodeName(), getName(), ODistributedServerManager.DB_STATUS.OFFLINE);
+      getContext()
+          .setDatabaseStatus(
+              getLocalNodeId(), getName(), ODistributedServerManager.DB_STATUS.OFFLINE);
       throw ex;
     } catch (OModificationOperationProhibitedException e) {
       txContext.setStatus(FAILED);
@@ -593,7 +592,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   }
 
   public ODistributedDatabase getDistributedShared() {
-    return getDistributedManager().getDatabase(getName());
+    return getContext().getDatabase(getName());
   }
 
   public void register(
@@ -771,8 +770,9 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       tx.setDatabase(this);
       this.getStorage().commitPreAllocated(tx);
     } catch (OLowDiskSpaceException ex) {
-      distributedManager.setDatabaseStatus(
-          getLocalNodeName(), getName(), ODistributedServerManager.DB_STATUS.OFFLINE);
+      getContext()
+          .setDatabaseStatus(
+              getLocalNodeId(), getName(), ODistributedServerManager.DB_STATUS.OFFLINE);
       throw ex;
     } finally {
       this.currentTx = pre;
@@ -959,7 +959,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   }
 
   public OEnterpriseEndpoint getEnterpriseEndpoint() {
-    OServer server = distributedManager.getServerInstance();
+    OServer server = getContext().getServer();
     return server.getPlugins().stream()
         .map(OServerPluginInfo::getInstance)
         .filter(OEnterpriseEndpoint.class::isInstance)
@@ -973,8 +973,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   }
 
   public ODistributedConfiguration getDistributedConfiguration() {
-    return ((OrientDBDistributed) getSharedContext().getOrientDB())
-        .getDistributedConfiguration(this);
+    return getContext().getDistributedConfiguration(this);
   }
 
   public void sendDDLCommand(String command, boolean excludeLocal) {
@@ -1213,14 +1212,14 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       int compressionLevel,
       int bufferSize)
       throws IOException {
-    final String localNode = distributedManager.getLocalNodeName();
 
     final ODistributedServerManager.DB_STATUS prevStatus =
-        distributedManager.getDatabaseStatus(localNode, getName());
+        getContext().getDatabaseStatus(getLocalNodeId(), getName());
     if (prevStatus == ODistributedServerManager.DB_STATUS.ONLINE)
       // SET STATUS = BACKUP
-      distributedManager.setDatabaseStatus(
-          localNode, getName(), ODistributedServerManager.DB_STATUS.BACKUP);
+      getContext()
+          .setDatabaseStatus(
+              getLocalNodeId(), getName(), ODistributedServerManager.DB_STATUS.BACKUP);
 
     try {
 
@@ -1229,7 +1228,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     } catch (IOException e) {
       throw OException.wrapException(new OIOException("Error on executing backup"), e);
     } finally {
-      distributedManager.setDatabaseStatus(localNode, getName(), prevStatus);
+      getContext().setDatabaseStatus(getLocalNodeId(), getName(), prevStatus);
     }
   }
 
@@ -1260,7 +1259,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
   @Override
   public String getStorageId() {
-    return getDistributedManager().getLocalNodeName() + "." + getName();
+    return getLocalNodeName() + "." + getName();
   }
 
   protected Set<String> getInvolvedClusters(final Iterable<ORecordOperation> uResult) {
@@ -1409,11 +1408,16 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     }
   }
 
-  private OrientDBInternal getContext() {
-    return this.sharedContext.getOrientDB();
+  public OrientDBDistributed getContext() {
+    return this.getSharedContext().getOrientDB();
   }
 
-  private ONodeId getLocalNodeId() {
-    return ((OrientDBDistributed) getContext()).getNodeId();
+  public ONodeId getLocalNodeId() {
+    return getContext().getNodeId();
+  }
+
+  @Override
+  public OSharedContextDistributed getSharedContext() {
+    return (OSharedContextDistributed) super.getSharedContext();
   }
 }
