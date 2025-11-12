@@ -33,6 +33,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 public class OrientDBConfigBuilder {
@@ -41,7 +42,7 @@ public class OrientDBConfigBuilder {
   private Map<ATTRIBUTES, Object> attributes = new HashMap<>();
   private Set<ODatabaseListener> listeners = new HashSet<>();
   private ClassLoader classLoader;
-  private ONodeConfigurationBuilder nodeConfigurationBuilder = ONodeConfiguration.builder();
+  private Optional<ONodeConfigurationBuilder> nodeConfigurationBuilder = Optional.empty();
   private OSecurityConfig securityConfig;
   private List<OGlobalUser> users = new ArrayList<OGlobalUser>();
 
@@ -81,7 +82,10 @@ public class OrientDBConfigBuilder {
   }
 
   public ONodeConfigurationBuilder getNodeConfigurationBuilder() {
-    return nodeConfigurationBuilder;
+    if (nodeConfigurationBuilder.isEmpty()) {
+      this.nodeConfigurationBuilder = Optional.of(ONodeConfiguration.builder());
+    }
+    return nodeConfigurationBuilder.get();
   }
 
   public OrientDBConfigBuilder setSecurityConfig(OSecurityConfig securityConfig) {
@@ -95,7 +99,7 @@ public class OrientDBConfigBuilder {
         attributes,
         listeners,
         classLoader,
-        nodeConfigurationBuilder.build(),
+        nodeConfigurationBuilder.map((x) -> x.build()),
         securityConfig,
         users);
   }
