@@ -1,0 +1,329 @@
+version = 1
+SPDX-PackageName = "OrientDB"
+SPDX-PackageSupplier = "orientdb_enquiries@sap.com"
+SPDX-PackageDownloadLocation = "https://github.com/orientechnologies/orientdb"
+SPDX-PackageComment = "The code in this project may include calls to APIs (\"API Calls\") of\n SAP or third-party products or services developed outside of this project\n (\"External Products\").\n \"APIs\" means application programming interfaces, as well as their respective\n specifications and implementing code that allows software to communicate with\n other software.\n API Calls to External Products are not licensed under the open source license\n that governs this project. The use of such API Calls and related External\n Products are subject to applicable additional agreements with the relevant\n provider of the External Products. In no event shall the open source license\n that governs this project grant any rights in or to any External Products,or\n alter, expand or supersede any terms of the applicable additional agreements.\n If you have a valid license agreement with SAP for the use of a particular SAP\n External Product, then you may make use of any API Calls included in this\n project's code for that SAP External Product, subject to the terms of such\n license agreement. If you do not have a valid license agreement for the use of\n a particular SAP External Product, then you may only make use of any API Calls\n in this project for that SAP External Product for your internal, non-productive\n and non-commercial test and evaluation of such API Calls. Nothing herein grants\n you any rights to use or access any SAP External Product, or provide any third\n parties the right to use of access any SAP External Product, through API Calls."
+
+[[annotations]]
+path = "**/.gitignore"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "**/pom.xml"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "**/src/**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "**/script/**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "**/config/**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "**/META-INF/MANIFEST.MF"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "**/plugins/**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "distribution/docker/**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "lucene/README.md"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "**/.mvn/jvm.config"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "CONTRIBUTING.md"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "README.md"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = ".gitignore"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "_base/**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "pom.xml"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "Jenkinsfile"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "Jenkinsfile-crash.groovy"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "license.txt"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "history.txt"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "readme.txt"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = ".gitattributes"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "OrientDB_logo.svg"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = ".github/**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "mvnw"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "Apache Software Foundation"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "mvnw.cmd"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "Apache Software Foundation"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = ".mvn/**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "Apache Software Foundation"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "studio/assembly/archive.xml"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "studio/build.sh"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "studio/helpers.js"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "studio/**.conf.js"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "studio/**.json"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "studio/yarn.lock"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "studio/webpack.config.js"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "studio/test/**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "studio/.jshintrc"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "studio/.editorconfig"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "studio/README.md"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "studio/CHANGELOG.md"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "gremlin/driver/src/**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "gremlin/driver/pom.xml"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "gremlin/distribution/src/**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "gremlin/distribution/config/**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "gremlin/distribution/docker/**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "gremlin/distribution/pom.xml"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "gremlin/server/src/**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "gremlin/server/pom.xml"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "gremlin/server/.gitignore"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "gremlin/pom.xml"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "gremlin/README.md"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "gremlin/.gitignore"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "gremlin/tests-scala/src/**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "gremlin/tests-scala/config/**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "gremlin/tests-scala/project/**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = "gremlin/tests-scala/build.sbt"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2022 SAP SE or an SAP affiliate company and OrientDB enteprise agent contributors"
+SPDX-License-Identifier = "Apache-2.0"
