@@ -20,6 +20,7 @@ import com.orientechnologies.orient.core.db.OSharedContextEmbedded;
 import com.orientechnologies.orient.core.db.OSystemDatabase;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.OrientDBEmbedded;
+import com.orientechnologies.orient.core.db.config.ONodeConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -100,6 +101,10 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   public OrientDBDistributed(String directoryPath, OrientDBConfig config, Orient instance) {
     super(directoryPath, config, instance);
     messageService = new ODistributedMessageServiceImpl(this);
+    Optional<ONodeConfiguration> nodeConfig = config.getNodeConfiguration();
+    if (nodeConfig.isPresent()) {
+      this.nodeName = nodeConfig.get().getNodeName();
+    }
   }
 
   @Override
@@ -519,13 +524,6 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   }
 
   public String getNodeName() {
-    if (this.nodeName == null) {
-      synchronized (this) {
-        if (this.nodeName == null) {
-          this.nodeName = getConfigurations().getNodeConfiguration().getNodeName();
-        }
-      }
-    }
     return this.nodeName;
   }
 

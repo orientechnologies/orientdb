@@ -31,6 +31,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 
 /** Created by tglman on 27/06/16. */
@@ -44,7 +45,7 @@ public class OrientDBConfig {
   private Map<ATTRIBUTES, Object> attributes;
   private Set<ODatabaseListener> listeners;
   private ClassLoader classLoader;
-  private ONodeConfiguration nodeConfiguration;
+  private Optional<ONodeConfiguration> nodeConfiguration;
   private OSecurityConfig securityConfig;
   private List<OGlobalUser> users;
 
@@ -63,7 +64,7 @@ public class OrientDBConfig {
       Map<ATTRIBUTES, Object> attributes,
       Set<ODatabaseListener> listeners,
       ClassLoader classLoader,
-      ONodeConfiguration nodeConfiguration,
+      Optional<ONodeConfiguration> nodeConfiguration,
       OSecurityConfig securityConfig,
       List<OGlobalUser> users) {
     this.configurations = configurations;
@@ -99,7 +100,7 @@ public class OrientDBConfig {
     return attributes;
   }
 
-  public ONodeConfiguration getNodeConfiguration() {
+  public Optional<ONodeConfiguration> getNodeConfiguration() {
     return nodeConfiguration;
   }
 
