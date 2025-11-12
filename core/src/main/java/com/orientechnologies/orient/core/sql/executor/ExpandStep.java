@@ -52,7 +52,7 @@ public class ExpandStep extends AbstractExecutionStep {
       }
       OResultInternal res = new OResultInternal(rec);
 
-      return OExecutionStream.singleton((OResult) res);
+      return OExecutionStream.singleton(res);
     } else if (projValue instanceof OResult) {
       return OExecutionStream.singleton((OResult) projValue);
     } else if (projValue instanceof Iterator) {

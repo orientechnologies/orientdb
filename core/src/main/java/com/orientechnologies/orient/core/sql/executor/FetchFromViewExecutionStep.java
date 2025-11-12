@@ -56,7 +56,7 @@ public class FetchFromViewExecutionStep extends FetchFromClassExecutionStep {
     }
     builder.append("\n");
     for (int i = 0; i < getSubSteps().size(); i++) {
-      OExecutionStepInternal step = (OExecutionStepInternal) getSubSteps().get(i);
+      OExecutionStepInternal step = getSubSteps().get(i);
       ctx.incDepth();
       builder.append(step.prettyPrint(ctx));
       ctx.decDepth();

@@ -23,7 +23,7 @@ public class OExactIndexStream implements OIndexStream {
     this.asc = asc;
   }
 
-  private static Collection toIndexKey(OIndexDefinition definition, Object rightValue) {
+  private static Collection<Object> toIndexKey(OIndexDefinition definition, Object rightValue) {
     if (definition.getFields().size() == 1 && rightValue instanceof Collection) {
       rightValue = ((Collection) rightValue).iterator().next();
     }
@@ -35,7 +35,7 @@ public class OExactIndexStream implements OIndexStream {
     if (!(rightValue instanceof Collection)) {
       rightValue = Collections.singleton(rightValue);
     }
-    return (Collection) rightValue;
+    return (Collection<Object>) rightValue;
   }
 
   public Stream<ORawPair<Object, ORID>> start(OCommandContext ctx) {

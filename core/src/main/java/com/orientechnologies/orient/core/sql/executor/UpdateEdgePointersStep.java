@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -87,20 +88,21 @@ public class UpdateEdgePointersStep extends AbstractExecutionStep {
       OIdentifiable currentVertex,
       String direction,
       OCommandContext ctx) {
+    ODatabaseSession database = ctx.getDatabase();
     if (prevVertex != null && !prevVertex.equals(currentVertex)) {
       String edgeClassName = edge.getClassName();
       if (edgeClassName.equalsIgnoreCase("E")) {
         edgeClassName = "";
       }
       String vertexFieldName = direction + "_" + edgeClassName;
-      ODocument prevOutDoc = ((OIdentifiable) prevVertex).getRecord();
+      ODocument prevOutDoc = database.load(prevVertex.getIdentity());
       ORidBag prevBag = prevOutDoc.field(vertexFieldName);
       if (prevBag != null) {
         prevBag.remove(edge);
-        ctx.getDatabase().save(prevOutDoc);
+        database.save(prevOutDoc);
       }
 
-      ODocument currentVertexDoc = ((OIdentifiable) currentVertex).getRecord();
+      ODocument currentVertexDoc = database.load(currentVertex.getIdentity());
       ORidBag currentBag = currentVertexDoc.field(vertexFieldName);
       if (currentBag == null) {
         currentBag = new ORidBag();

@@ -40,13 +40,10 @@ public class UpdateContentStep extends AbstractExecutionStep {
 
   private OResult mapResult(OResult result, OCommandContext ctx) {
     if (result instanceof OResultInternal) {
-      if (!(result.getElement().get() instanceof OElement)) {
-        ((OResultInternal) result).setElement(result.getElement().get().getRecord());
-      }
-      if (!(result.getElement().get() instanceof OElement)) {
+      if (!result.isElement()) {
         return result;
       }
-      handleContent((OElement) result.getElement().get(), ctx);
+      handleContent(result.getElement().get(), ctx);
     }
     return result;
   }

@@ -124,9 +124,8 @@ public class OSelectExecutionPlan implements OInternalExecutionPlan {
   protected void copyOn(OSelectExecutionPlan copy, OCommandContext ctx) {
     OExecutionStepInternal lastStep = null;
     for (OExecutionStepInternal step : this.steps) {
-      OExecutionStepInternal newStep =
-          (OExecutionStepInternal) ((OExecutionStepInternal) step).copy(ctx);
-      newStep.setPrevious((OExecutionStepInternal) lastStep);
+      OExecutionStepInternal newStep = step.copy(ctx);
+      newStep.setPrevious(lastStep);
       lastStep = newStep;
       copy.getSteps().add(newStep);
     }

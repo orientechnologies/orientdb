@@ -234,7 +234,7 @@ public class OSelectExecutionPlanner {
         // everything is executed on local server
         OSelectExecutionPlan localSteps = info.distributedFetchExecutionPlans.get(currentNode);
         for (OExecutionStepInternal step : localSteps.getSteps()) {
-          result.chain((OExecutionStepInternal) step);
+          result.chain(step);
         }
       } else {
         // everything is executed on a single remote node
@@ -259,7 +259,7 @@ public class OSelectExecutionPlanner {
           subPlans.add(subPlan);
         }
       }
-      result.chain(new ParallelExecStep((List) subPlans));
+      result.chain(new ParallelExecStep(subPlans));
     }
     info.distributedPlanCreated = true;
   }
@@ -430,7 +430,7 @@ public class OSelectExecutionPlanner {
    */
   private Set<String> calculateTargetClusters(QueryPlanningInfo info, OCommandContext ctx) {
     if (info.target == null) {
-      return Collections.EMPTY_SET;
+      return Collections.emptySet();
     }
 
     Set<String> result = new HashSet<>();
@@ -643,8 +643,7 @@ public class OSelectExecutionPlanner {
     if (clazz.isRestricted()) {
       return true;
     }
-    return security.isReadRestrictedBySecurityPolicy(
-        (ODatabaseSession) db, "database.class." + clazz.getName());
+    return security.isReadRestrictedBySecurityPolicy(db, "database.class." + clazz.getName());
   }
 
   private boolean handleHardwiredCountOnClassUsingIndex(
@@ -964,7 +963,7 @@ public class OSelectExecutionPlanner {
       Set<String> allAliases, OOrderBy orderBy) {
     List<OProjectionItem> result = new ArrayList<>();
     int nextAliasCount = 0;
-    if (orderBy != null && orderBy.getItems() != null || !orderBy.getItems().isEmpty()) {
+    if (orderBy != null && orderBy.getItems() != null && !orderBy.getItems().isEmpty()) {
       for (OOrderByItem item : orderBy.getItems()) {
         if (!allAliases.contains(item.getAlias())) {
           OProjectionItem newProj = new OProjectionItem(-1);
@@ -2267,7 +2266,7 @@ public class OSelectExecutionPlanner {
       }
     }
 
-    if (tryByIndex) {
+    if (tryByIndex && candidateClass != null) {
       OIdentifier clazz = new OIdentifier(candidateClass.getName());
       if (handleClassAsTargetWithIndexedFunction(plan, clusterNames, clazz, info, ctx)) {
         return;
@@ -2298,7 +2297,7 @@ public class OSelectExecutionPlanner {
       if (clusterId == null) {
         clusterId = db.getClusterIdByName(cluster.getClusterName());
       }
-      if (clusterId == null) {
+      if (clusterId == -1) {
         throw new OCommandExecutionException("Cluster " + cluster + " does not exist");
       }
       FetchFromClusterExecutionStep step = new FetchFromClusterExecutionStep(clusterId);
@@ -2316,7 +2315,7 @@ public class OSelectExecutionPlanner {
         if (clusterId == null) {
           clusterId = db.getClusterIdByName(cluster.getClusterName());
         }
-        if (clusterId == null) {
+        if (clusterId == -1) {
           throw new OCommandExecutionException("Cluster " + cluster + " does not exist");
         }
         clusterIds[i] = clusterId;

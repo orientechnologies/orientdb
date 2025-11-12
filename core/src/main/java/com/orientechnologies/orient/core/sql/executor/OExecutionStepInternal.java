@@ -85,7 +85,7 @@ public interface OExecutionStepInternal {
     if (step.getSubSteps() != null && step.getSubSteps().size() > 0) {
       List<OResult> serializedSubsteps = new ArrayList<>();
       for (OExecutionStepInternal substep : step.getSubSteps()) {
-        serializedSubsteps.add(((OExecutionStepInternal) substep).serialize());
+        serializedSubsteps.add(substep.serialize());
       }
       result.setProperty("subSteps", serializedSubsteps);
     }
@@ -93,7 +93,7 @@ public interface OExecutionStepInternal {
     if (step.getSubExecutionPlans() != null && step.getSubExecutionPlans().size() > 0) {
       List<OResult> serializedSubPlans = new ArrayList<>();
       for (OInternalExecutionPlan substep : step.getSubExecutionPlans()) {
-        serializedSubPlans.add(((OInternalExecutionPlan) substep).serialize());
+        serializedSubPlans.add(substep.serialize());
       }
       result.setProperty("subExecutionPlans", serializedSubPlans);
     }

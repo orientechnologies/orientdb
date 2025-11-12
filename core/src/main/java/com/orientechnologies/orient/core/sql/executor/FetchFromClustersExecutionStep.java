@@ -82,7 +82,7 @@ public class FetchFromClustersExecutionStep extends AbstractExecutionStep {
     }
     builder.append("\n");
     for (int i = 0; i < subSteps.size(); i++) {
-      OExecutionStepInternal step = (OExecutionStepInternal) subSteps.get(i);
+      OExecutionStepInternal step = subSteps.get(i);
       builder.append(step.prettyPrint(ctx));
       if (i < subSteps.size() - 1) {
         builder.append("\n");

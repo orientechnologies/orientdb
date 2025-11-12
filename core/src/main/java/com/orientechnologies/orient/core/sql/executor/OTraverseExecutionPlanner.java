@@ -280,7 +280,7 @@ public class OTraverseExecutionPlanner {
       if (clusterId == null) {
         clusterId = db.getClusterIdByName(cluster.getClusterName());
       }
-      if (clusterId == null) {
+      if (clusterId == -1) {
         throw new OCommandExecutionException("Cluster " + cluster + " does not exist");
       }
       FetchFromClusterExecutionStep step = new FetchFromClusterExecutionStep(clusterId);
@@ -298,7 +298,7 @@ public class OTraverseExecutionPlanner {
         if (clusterId == null) {
           clusterId = db.getClusterIdByName(cluster.getClusterName());
         }
-        if (clusterId == null) {
+        if (clusterId == -1) {
           throw new OCommandExecutionException("Cluster " + cluster + " does not exist");
         }
         clusterIds[i] = clusterId;
