@@ -46,7 +46,7 @@ public class ODistributedTxCoordinatorTest {
 
     ODistributedTxCoordinator coordinator =
         new ODistributedTxCoordinator(
-            storage, serverManager, distributedDatabase, messageService, 0, localNode, 5, 100);
+            storage, serverManager, distributedDatabase, messageService, localNode, 5, 100);
     coordinator.setResponseManager(responseManager);
 
     when(storage.getName()).thenReturn(dbName);

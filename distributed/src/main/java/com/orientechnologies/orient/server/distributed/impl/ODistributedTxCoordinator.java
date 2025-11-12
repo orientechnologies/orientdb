@@ -70,7 +70,6 @@ public class ODistributedTxCoordinator {
   private final ODistributedDatabaseImpl localDistributedDatabase;
   private ODistributedTxResponseManager responseManager;
   // ID and name of the node where this tx coordinator is running
-  private final int nodeId;
   private final String nodeName;
   private final int maxRetries;
   private final int retryDelay;
@@ -80,14 +79,12 @@ public class ODistributedTxCoordinator {
       final ODistributedServerManager manager,
       final ODistributedDatabase iDDatabase,
       ODistributedMessageService messageService,
-      int nodeId,
       String nodeName,
       int maxRetries,
       int retryDelay) {
     this.dManager = manager;
     this.storage = storage;
     this.localDistributedDatabase = (ODistributedDatabaseImpl) iDDatabase;
-    this.nodeId = nodeId;
     this.nodeName = nodeName;
     this.maxRetries = maxRetries;
     this.retryDelay = retryDelay;
