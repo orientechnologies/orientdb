@@ -407,7 +407,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
         databaseName);
 
     // SET THE NODE.DB AS ONLINE
-    manager.setDatabaseStatus(localNodeName, databaseName, DB_STATUS.ONLINE);
+    context.setDatabaseStatus(databaseName, DB_STATUS.ONLINE);
     resume();
   }
 
@@ -435,7 +435,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
         } catch (Exception | Error t) {
           // IGNORE IT
           logger.errorNode(
-              manager.getLocalNodeName(),
+              localNodeName,
               "Distributed transaction: error on rolling back transaction (req=%s)",
               pReq.getReqId());
         }
@@ -571,13 +571,11 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
     } finally {
 
-      final DB_STATUS serverStatus =
-          manager.getDatabaseStatus(manager.getLocalNodeName(), databaseName);
+      final DB_STATUS serverStatus = context.getDatabaseStatus(databaseName);
 
       if (serverStatus == DB_STATUS.ONLINE || serverStatus == DB_STATUS.SYNCHRONIZING) {
         try {
-          manager.setDatabaseStatus(
-              manager.getLocalNodeName(), databaseName, DB_STATUS.NOT_AVAILABLE);
+          context.setDatabaseStatus(databaseName, DB_STATUS.NOT_AVAILABLE);
         } catch (Exception e) {
           // IGNORE IT
         }
@@ -609,7 +607,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
           "Publishing ONLINE status for database %s.%s...",
           localNodeName,
           databaseName);
-      manager.setDatabaseStatus(localNodeName, databaseName, DB_STATUS.ONLINE);
+      context.setDatabaseStatus(databaseName, DB_STATUS.ONLINE);
     }
     resume();
   }
@@ -641,9 +639,9 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
               "OrientDB DistributedWorker node=%s db=%s", getLocalNodeName(), databaseName);
       ExecutorService exec =
           OThreadPoolExecutors.newScalingThreadPool(name, 0, totalWorkers, 0, 1, TimeUnit.HOURS);
-      if (manager
-          .getServerInstance()
-          .getContextConfiguration()
+      if (context
+          .getConfigurations()
+          .getConfigurations()
           .getValueAsBoolean(OGlobalConfiguration.EXECUTOR_DEBUG_TRACE_SOURCE)) {
         exec = new OSourceTraceExecutorService(exec);
       }
@@ -775,8 +773,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   public String dump() {
     final StringBuilder buffer = new StringBuilder(1024);
 
-    buffer.append(
-        "\n\nDATABASE '" + databaseName + "' ON SERVER '" + manager.getLocalNodeName() + "'");
+    buffer.append("\n\nDATABASE '" + databaseName + "' ON SERVER '" + localNodeName + "'");
 
     buffer.append("\n- MESSAGES IN QUEUES");
     buffer.append(" (" + getPoolSize(requestExecutor) + " WORKERS):");
@@ -866,17 +863,15 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   public synchronized void freezeStatus() {
-    final String localNode = manager.getLocalNodeName();
-    freezePrevStatus = manager.getDatabaseStatus(localNode, databaseName);
+    freezePrevStatus = context.getDatabaseStatus(databaseName);
     if (freezePrevStatus == DB_STATUS.ONLINE)
       // SET STATUS = BACKUP
-      manager.setDatabaseStatus(localNode, databaseName, DB_STATUS.BACKUP);
+      context.setDatabaseStatus(databaseName, DB_STATUS.BACKUP);
   }
 
   public synchronized void releaseStatus() {
     if (freezePrevStatus != null) {
-      final String localNode = manager.getLocalNodeName();
-      manager.setDatabaseStatus(localNode, databaseName, freezePrevStatus);
+      context.setDatabaseStatus(databaseName, freezePrevStatus);
     }
   }
 
@@ -886,5 +881,9 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
   public Set<String> getAvailableNodesButLocal(ODatabaseSession database) {
     return context.getDistributedManager().getAvailableNodeNotLocalNames(databaseName);
+  }
+
+  public OrientDBDistributed getContext() {
+    return context;
   }
 }

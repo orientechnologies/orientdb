@@ -28,12 +28,10 @@ import com.orientechnologies.orient.core.exception.OConcurrentModificationExcept
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
-import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
-import com.orientechnologies.orient.server.distributed.ODistributedMessageService;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ODistributedTxContext;
@@ -66,24 +64,23 @@ public class ODistributedTxCoordinator {
   public static final String LOCAL_RESULT_SUCCESS = "OK";
 
   private final ODistributedServerManager dManager;
-  private final OStorage storage;
   private final ODistributedDatabaseImpl localDistributedDatabase;
   private ODistributedTxResponseManager responseManager;
   // ID and name of the node where this tx coordinator is running
   private final String nodeName;
   private final int maxRetries;
   private final int retryDelay;
+  private final String dbName;
 
   public ODistributedTxCoordinator(
-      final OStorage storage,
+      final String dbName,
       final ODistributedServerManager manager,
       final ODistributedDatabase iDDatabase,
-      ODistributedMessageService messageService,
       String nodeName,
       int maxRetries,
       int retryDelay) {
     this.dManager = manager;
-    this.storage = storage;
+    this.dbName = dbName;
     this.localDistributedDatabase = (ODistributedDatabaseImpl) iDDatabase;
     this.nodeName = nodeName;
     this.maxRetries = maxRetries;
@@ -179,7 +176,7 @@ public class ODistributedTxCoordinator {
           nodeName, ((OTxKeyLockTimeout) localResult).getKey());
     }
 
-    Set<String> nodes = localDistributedDatabase.getAvailableNodesButLocal(database);
+    Set<String> nodes = dManager.getAvailableNodeNotLocalNames(dbName);
     if (nodes.isEmpty()) {
       switch (localResult.getResponseType()) {
         case OTxSuccess.ID:
@@ -241,7 +238,7 @@ public class ODistributedTxCoordinator {
     iTx.setStatus(OTransaction.TXSTATUS.COMMITTING);
     // SYNCHRONOUS CALL: REPLICATE IT
     dManager.sendRequest(
-        storage.getName(),
+        dbName,
         nodes,
         txTask,
         requestId,
@@ -457,7 +454,7 @@ public class ODistributedTxCoordinator {
   }
 
   private void sendPhase2Task(Set<String> nodes, OTransactionPhase2Task task) {
-    dManager.sendRequest(storage.getName(), nodes, task);
+    dManager.sendRequest(dbName, nodes, task);
   }
 
   protected OTransactionPhase1Task createTxPhase1Task(

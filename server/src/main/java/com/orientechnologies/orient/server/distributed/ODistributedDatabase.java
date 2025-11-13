@@ -21,6 +21,7 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
@@ -97,4 +98,10 @@ public interface ODistributedDatabase {
   void checkReverseSync(OTransactionSequenceStatus lastState);
 
   void fillStatus();
+
+  void startOperation();
+
+  void endOperation();
+
+  public OrientDBInternal getContext();
 }

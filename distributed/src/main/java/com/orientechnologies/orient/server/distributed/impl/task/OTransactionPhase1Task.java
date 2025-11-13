@@ -420,8 +420,7 @@ public class OTransactionPhase1Task extends OAbstractRemoteTask implements OLock
   @Override
   public void received(ODistributedRequest request, ODistributedDatabase distributedDatabase) {
     if (notYetFinishedTask == null) {
-      OrientDBInternal databases =
-          distributedDatabase.getManager().getServerInstance().getDatabases();
+      OrientDBInternal databases = distributedDatabase.getContext();
       notYetFinishedTask =
           new TimerTask() {
             @Override
