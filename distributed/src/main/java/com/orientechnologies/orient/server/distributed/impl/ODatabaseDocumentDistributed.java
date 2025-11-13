@@ -403,13 +403,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
               .getValueAsInteger(OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_AUTORETRY_DELAY);
       ODistributedTxCoordinator txManager =
           new ODistributedTxCoordinator(
-              getStorage(),
-              dManager,
-              localDistributedDatabase,
-              dManager.getMessageService(),
-              dManager.getLocalNodeName(),
-              nretry,
-              delay);
+              getName(), dManager, localDistributedDatabase, getLocalNodeName(), nretry, delay);
       int quorum = 0;
       Set<String> clusters = getInvolvedClusters(iTx.getRecordOperations());
       for (String clusterName : clusters) {
@@ -579,9 +573,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       register(requestId, localDistributedDatabase, txContext);
       throw ex;
     } catch (OLowDiskSpaceException ex) {
-      getContext()
-          .setDatabaseStatus(
-              getLocalNodeId(), getName(), ODistributedServerManager.DB_STATUS.OFFLINE);
+      getContext().setDatabaseStatus(getName(), ODistributedServerManager.DB_STATUS.OFFLINE);
       throw ex;
     } catch (OModificationOperationProhibitedException e) {
       txContext.setStatus(FAILED);
@@ -770,9 +762,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       tx.setDatabase(this);
       this.getStorage().commitPreAllocated(tx);
     } catch (OLowDiskSpaceException ex) {
-      getContext()
-          .setDatabaseStatus(
-              getLocalNodeId(), getName(), ODistributedServerManager.DB_STATUS.OFFLINE);
+      getContext().setDatabaseStatus(getName(), ODistributedServerManager.DB_STATUS.OFFLINE);
       throw ex;
     } finally {
       this.currentTx = pre;
@@ -1214,12 +1204,10 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       throws IOException {
 
     final ODistributedServerManager.DB_STATUS prevStatus =
-        getContext().getDatabaseStatus(getLocalNodeId(), getName());
+        getContext().getDatabaseStatus(getName());
     if (prevStatus == ODistributedServerManager.DB_STATUS.ONLINE)
       // SET STATUS = BACKUP
-      getContext()
-          .setDatabaseStatus(
-              getLocalNodeId(), getName(), ODistributedServerManager.DB_STATUS.BACKUP);
+      getContext().setDatabaseStatus(getName(), ODistributedServerManager.DB_STATUS.BACKUP);
 
     try {
 
@@ -1228,7 +1216,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     } catch (IOException e) {
       throw OException.wrapException(new OIOException("Error on executing backup"), e);
     } finally {
-      getContext().setDatabaseStatus(getLocalNodeId(), getName(), prevStatus);
+      getContext().setDatabaseStatus(getName(), prevStatus);
     }
   }
 

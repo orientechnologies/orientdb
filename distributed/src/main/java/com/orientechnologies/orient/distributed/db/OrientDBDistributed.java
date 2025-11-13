@@ -535,7 +535,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     for (String dbName : listLodadedDatabases()) {
 
       try {
-        plugin.setDatabaseStatus(getNodeName(), dbName, DB_STATUS.NOT_AVAILABLE);
+        setDatabaseStatus(dbName, DB_STATUS.NOT_AVAILABLE);
       } catch (Exception t) {
         // IGNORE IT
       }
@@ -553,7 +553,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   public ODistributedDatabaseImpl unregisterDatabase(final String iDatabaseName) {
     try {
-      plugin.setDatabaseStatus(getNodeName(), iDatabaseName, DB_STATUS.OFFLINE);
+      setDatabaseStatus(iDatabaseName, DB_STATUS.OFFLINE);
     } catch (Exception t) {
       logger.warnNode(getNodeName(), "error un-registering database", t);
       // IGNORE IT
@@ -1005,8 +1005,16 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     plugin.setDatabaseStatus(nodeId.getNode(), dbName, status);
   }
 
+  public void setDatabaseStatus(String dbName, DB_STATUS status) {
+    plugin.setDatabaseStatus(getNodeId().getNode(), dbName, status);
+  }
+
   public DB_STATUS getDatabaseStatus(ONodeId nodeId, String dbName) {
     return plugin.getDatabaseStatus(nodeId.getNode(), dbName);
+  }
+
+  public DB_STATUS getDatabaseStatus(String dbName) {
+    return plugin.getDatabaseStatus(getNodeId().getNode(), dbName);
   }
 
   public OServer getServer() {

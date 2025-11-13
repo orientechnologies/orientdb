@@ -1,14 +1,26 @@
 package com.orientechnologies.orient.server.distributed.impl;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.ArgumentMatchers.anyInt;
+import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.inOrder;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
-import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
-import com.orientechnologies.orient.server.distributed.*;
+import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
+import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxSuccess;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 import org.apache.commons.collections4.CollectionUtils;
 import org.junit.Before;
 import org.junit.Test;
@@ -16,19 +28,15 @@ import org.mockito.InOrder;
 
 public class ODistributedTxCoordinatorTest {
 
-  private OStorage storage;
   private ODistributedServerManager serverManager;
   private ODistributedDatabaseImpl distributedDatabase;
   private ODatabaseDocumentDistributed databaseDocument;
-  private ODistributedMessageService messageService;
 
   @Before
   public void setup() {
-    storage = mock(OStorage.class);
     serverManager = mock(ODistributedServerManager.class);
     distributedDatabase = mock(ODistributedDatabaseImpl.class);
     databaseDocument = mock(ODatabaseDocumentDistributed.class);
-    messageService = mock(ODistributedMessageService.class);
   }
 
   @Test
@@ -46,10 +54,9 @@ public class ODistributedTxCoordinatorTest {
 
     ODistributedTxCoordinator coordinator =
         new ODistributedTxCoordinator(
-            storage, serverManager, distributedDatabase, messageService, localNode, 5, 100);
+            dbName, serverManager, distributedDatabase, localNode, 5, 100);
     coordinator.setResponseManager(responseManager);
 
-    when(storage.getName()).thenReturn(dbName);
     when(databaseDocument.getName()).thenReturn(dbName);
     when(tx.getIndexOperations()).thenReturn(new HashMap<>());
     when(distributedDatabase.nextId()).thenReturn(seq.next());
@@ -58,8 +65,7 @@ public class ODistributedTxCoordinatorTest {
     when(responseManager.isQuorumReached()).thenReturn(true);
     when(databaseDocument.beginDistributedTx(any(), any(), eq(tx), eq(true), anyInt()))
         .thenReturn(true);
-    when(distributedDatabase.getAvailableNodesButLocal(any()))
-        .thenReturn(new HashSet<>(remoteNodes));
+    when(serverManager.getAvailableNodeNotLocalNames(any())).thenReturn(new HashSet<>(remoteNodes));
     when(responseManager.getDistributedTxFinalResponse()).thenReturn(Optional.of(new OTxSuccess()));
 
     coordinator.commit(databaseDocument, tx, clusters);
