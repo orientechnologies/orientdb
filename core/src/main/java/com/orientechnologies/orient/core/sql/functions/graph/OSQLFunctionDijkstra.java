@@ -40,8 +40,6 @@ import java.util.Map;
 public class OSQLFunctionDijkstra extends OSQLFunctionPathFinder {
   public static final String NAME = "dijkstra";
 
-  private String paramWeightFieldName;
-
   public OSQLFunctionDijkstra() {
     super(NAME, 3, 4);
   }
@@ -68,10 +66,6 @@ public class OSQLFunctionDijkstra extends OSQLFunctionPathFinder {
     }
     result[3] = options;
     return result;
-  }
-
-  private LinkedList<OVertex> internalExecute(final OCommandContext iContext) {
-    return super.execute(iContext);
   }
 
   public String getSyntax() {

@@ -11,7 +11,6 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 public class ODeleteEdgeStatement extends OStatement {
-  private static final Object unset = new Object();
 
   protected OIdentifier className;
   protected OIdentifier targetClusterName;

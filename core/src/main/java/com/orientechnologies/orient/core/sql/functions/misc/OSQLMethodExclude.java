@@ -136,7 +136,7 @@ public class OSQLMethodExclude extends OAbstractSQLMethod {
   }
 
   private Object copy(final Map map, final Object[] iFieldNames) {
-    final ODocument doc = new ODocument().fields(map);
+    final ODocument doc = new ODocument(map);
     for (Object iFieldName : iFieldNames) {
       if (iFieldName != null) {
         final String fieldName = iFieldName.toString();

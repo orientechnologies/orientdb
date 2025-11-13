@@ -93,9 +93,7 @@ public class OMatchStatement extends OStatement {
     }
 
     public ODocument toDoc() {
-      ODocument doc = new ODocument();
-      doc.fromMap((Map) matched);
-      return doc;
+      return new ODocument((Map) matched);
     }
   }
 

@@ -52,13 +52,16 @@ public abstract class OSimpleExecServerStatement extends OServerStatement {
   }
 
   public OResultSet execute(
-      OrientDBInternal db, Map params, OServerCommandContext parentContext, boolean usePlanCache) {
+      OrientDBInternal db,
+      Map<String, Object> params,
+      OServerCommandContext parentContext,
+      boolean usePlanCache) {
     OBasicServerCommandContext ctx = new OBasicServerCommandContext();
     if (parentContext != null) {
       ctx.setParentWithoutOverridingChild(parentContext);
     }
     ctx.setServer(db);
-    ctx.setInputParameters(params);
+    ctx.setInputParameters((Map) params);
     OSingleOpServerExecutionPlan executionPlan =
         (OSingleOpServerExecutionPlan) createExecutionPlan(ctx, false);
     return new OServerResultSet(executionPlan.executeInternal(ctx), ctx, executionPlan);

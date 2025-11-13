@@ -33,7 +33,7 @@ public class OCreateSecurityPolicyStatement extends OSimpleExecStatement {
 
   @Override
   public OExecutionStream executeSimple(OCommandContext ctx) {
-    ODatabaseSession db = (ODatabaseSession) ctx.getDatabase();
+    ODatabaseSession db = ctx.getDatabase();
     OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
     OSecurityPolicyImpl policy = security.createSecurityPolicy(db, name.getStringValue());
     policy.setActive(true);

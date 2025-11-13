@@ -61,9 +61,6 @@ public class ORidSet implements Set<ORID> {
       throw new IllegalArgumentException();
     }
     ORID identifiable = ((ORID) o);
-    if (identifiable == null) {
-      throw new IllegalArgumentException();
-    }
     int cluster = identifiable.getClusterId();
     long position = identifiable.getClusterPosition();
     if (cluster < 0 || position < 0) {
@@ -197,9 +194,6 @@ public class ORidSet implements Set<ORID> {
       throw new IllegalArgumentException();
     }
     ORID identifiable = ((ORID) o);
-    if (identifiable == null) {
-      throw new IllegalArgumentException();
-    }
     int cluster = identifiable.getClusterId();
     long position = identifiable.getClusterPosition();
     if (cluster < 0 || position < 0) {

@@ -151,7 +151,7 @@ public class OContainsValueCondition extends OBooleanExpression {
   @Override
   protected List<Object> getExternalCalculationConditions() {
     if (condition == null) {
-      return Collections.EMPTY_LIST;
+      return Collections.emptyList();
     }
     return condition.getExternalCalculationConditions();
   }

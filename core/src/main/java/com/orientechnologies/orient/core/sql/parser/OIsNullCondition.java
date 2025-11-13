@@ -92,9 +92,9 @@ public class OIsNullCondition extends OBooleanExpression {
   @Override
   protected List<Object> getExternalCalculationConditions() {
     if (expression.supportsBasicCalculation()) {
-      return Collections.EMPTY_LIST;
+      return Collections.emptyList();
     }
-    return (List) Collections.singletonList(expression);
+    return Collections.singletonList(expression);
   }
 
   @Override

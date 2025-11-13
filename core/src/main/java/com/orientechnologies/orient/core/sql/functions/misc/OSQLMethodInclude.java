@@ -119,7 +119,7 @@ public class OSQLMethodInclude extends OAbstractSQLMethod {
     for (int i = 0; i < iFieldNames.length; ++i) {
       if (iFieldNames[i] != null) {
 
-        final String fieldName = (String) iFieldNames[i].toString();
+        final String fieldName = iFieldNames[i].toString();
 
         if (fieldName.endsWith("*")) {
           final String fieldPart = fieldName.substring(0, fieldName.length() - 1);

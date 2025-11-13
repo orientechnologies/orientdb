@@ -144,8 +144,7 @@ public abstract class OSQLFunctionPathFinder extends OSQLFunctionMathAbstract {
     final Set<OVertex> neighbors = new HashSet<OVertex>();
     if (node != null) {
       for (OVertex v : node.getVertices(paramDirection)) {
-        final OVertex ov = (OVertex) v;
-        if (ov != null && isNotSettled(ov)) neighbors.add(ov);
+        if (v != null && isNotSettled(v)) neighbors.add(v);
       }
     }
     return neighbors;

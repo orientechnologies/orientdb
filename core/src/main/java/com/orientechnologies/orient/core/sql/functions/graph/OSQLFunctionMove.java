@@ -107,7 +107,7 @@ public abstract class OSQLFunctionMove extends OSQLFunctionConfigurableAbstract 
       final String[] iLabels) {
     if (iRecord != null && iRecord.isEdge()) {
       if (iDirection == ODirection.BOTH) {
-        List results = new ArrayList();
+        List<OIdentifiable> results = new ArrayList<>();
         results.add(iRecord.getEdge().get().getVertex(ODirection.OUT));
         results.add(iRecord.getEdge().get().getVertex(ODirection.IN));
         return results;

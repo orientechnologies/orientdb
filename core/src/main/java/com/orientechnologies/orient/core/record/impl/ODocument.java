@@ -282,7 +282,7 @@ public class ODocument extends ORecordAbstract
     setup(ODatabaseRecordThreadLocal.instance().getIfDefined());
     if (iFieldMap != null && !iFieldMap.isEmpty())
       for (Entry<?, Object> entry : iFieldMap.entrySet()) {
-        field(entry.getKey().toString(), entry.getValue());
+        setProperty(entry.getKey().toString(), entry.getValue());
       }
   }
 

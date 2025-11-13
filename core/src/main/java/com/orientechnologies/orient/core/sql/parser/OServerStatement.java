@@ -53,12 +53,15 @@ public class OServerStatement extends SimpleNode {
     throw new UnsupportedOperationException();
   }
 
-  public OResultSet execute(OrientDBInternal db, Map args, boolean usePlanCache) {
+  public OResultSet execute(OrientDBInternal db, Map<String, Object> args, boolean usePlanCache) {
     return execute(db, args, null, usePlanCache);
   }
 
   public OResultSet execute(
-      OrientDBInternal db, Map args, OServerCommandContext parentContext, boolean usePlanCache) {
+      OrientDBInternal db,
+      Map<String, Object> args,
+      OServerCommandContext parentContext,
+      boolean usePlanCache) {
     throw new UnsupportedOperationException();
   }
 

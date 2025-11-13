@@ -320,7 +320,7 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
           neighbors = ctx.current.getVertices(ctx.directionLeft, ctx.edgeTypeParam);
         }
         for (OVertex neighbor : neighbors) {
-          final OVertex v = (OVertex) neighbor;
+          final OVertex v = neighbor;
           final ORID neighborIdentity = v.getIdentity();
 
           if (ctx.rightVisited.contains(neighborIdentity)) {
@@ -383,8 +383,7 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
         } else {
           neighbors = ctx.currentRight.getVertices(ctx.directionRight, ctx.edgeTypeParam);
         }
-        for (OVertex neighbor : neighbors) {
-          final OVertex v = (OVertex) neighbor;
+        for (OVertex v : neighbors) {
           final ORID neighborIdentity = v.getIdentity();
 
           if (ctx.leftVisited.contains(neighborIdentity)) {

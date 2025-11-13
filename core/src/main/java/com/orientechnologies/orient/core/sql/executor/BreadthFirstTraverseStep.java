@@ -143,10 +143,10 @@ public class BreadthFirstTraverseStep extends AbstractTraverseStep {
     newPath.add(res.getIdentity().get());
     res.setMetadata("$path", newPath);
 
-    List reverseStack = new ArrayList();
+    List<OIdentifiable> reverseStack = new ArrayList<>();
     reverseStack.addAll(newPath);
     Collections.reverse(reverseStack);
-    List newStack = new ArrayList();
+    List<OIdentifiable> newStack = new ArrayList<>();
     newStack.addAll(reverseStack);
     res.setMetadata("$stack", newStack);
 
@@ -175,10 +175,10 @@ public class BreadthFirstTraverseStep extends AbstractTraverseStep {
       newPath.add(((OTraverseResult) nextStep).getIdentity().get());
       ((OTraverseResult) nextStep).setMetadata("$path", newPath);
 
-      List reverseStack = new ArrayList();
+      List<OIdentifiable> reverseStack = new ArrayList<>();
       reverseStack.addAll(newPath);
       Collections.reverse(reverseStack);
-      List newStack = new ArrayList();
+      List<OIdentifiable> newStack = new ArrayList<>();
       newStack.addAll(reverseStack);
       ((OTraverseResult) nextStep).setMetadata("$stack", newStack);
 
@@ -193,10 +193,10 @@ public class BreadthFirstTraverseStep extends AbstractTraverseStep {
       newPath.add(((OTraverseResult) nextStep).getIdentity().get());
       ((OTraverseResult) nextStep).setMetadata("$path", newPath);
 
-      List reverseStack = new ArrayList();
+      List<OIdentifiable> reverseStack = new ArrayList<>();
       reverseStack.addAll(newPath);
       Collections.reverse(reverseStack);
-      ArrayDeque newStack = new ArrayDeque();
+      ArrayDeque<OIdentifiable> newStack = new ArrayDeque<>();
       newStack.addAll(reverseStack);
       ((OTraverseResult) nextStep).setMetadata("$stack", newStack);
 

@@ -184,14 +184,13 @@ public class OInsertExecutionPlanner {
         && body.getContentInputParam() != null
         && body.getContentInputParam().size() > 0) {
       tot = body.getContentInputParam().size();
-      if (body != null && body.getContent() != null && body.getContent().size() > 0) {
+      if (body.getContent() != null && body.getContent().size() > 0) {
         tot += body.getContent().size();
       }
-    } else {
-      if (body != null && body.getContent() != null && body.getContent().size() > 0) {
-        tot = body.getContent().size();
-      }
+    } else if (body != null && body.getContent() != null && body.getContent().size() > 0) {
+      tot = body.getContent().size();
     }
+
     Optional<String> cl = resolveTargetClass(ctx.getDatabase());
     result.chain(new CreateRecordStep(tot, cl));
   }

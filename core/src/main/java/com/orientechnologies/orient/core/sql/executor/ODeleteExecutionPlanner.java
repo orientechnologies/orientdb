@@ -7,7 +7,6 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.sql.executor.metadata.OIndexCandidate;
 import com.orientechnologies.orient.core.sql.executor.metadata.OIndexCandidateOne;
 import com.orientechnologies.orient.core.sql.executor.metadata.OSpecificIndexFinder;
-import com.orientechnologies.orient.core.sql.parser.OAndBlock;
 import com.orientechnologies.orient.core.sql.parser.OBooleanExpression;
 import com.orientechnologies.orient.core.sql.parser.ODeleteStatement;
 import com.orientechnologies.orient.core.sql.parser.OFromClause;
@@ -157,31 +156,5 @@ public class ODeleteExecutionPlanner {
     sourceStatement.setWhereClause(whereClause);
     OSelectExecutionPlanner planner = new OSelectExecutionPlanner(sourceStatement);
     result.chain(new SubQueryStep(planner.createExecutionPlan(ctx, false), ctx, ctx));
-  }
-
-  private OBooleanExpression getKeyCondition(OAndBlock andBlock) {
-    for (OBooleanExpression exp : andBlock.getSubBlocks()) {
-      String str = exp.toString();
-      if (str.length() < 5) {
-        continue;
-      }
-      if (str.substring(0, 4).equalsIgnoreCase("key ")) {
-        return exp;
-      }
-    }
-    return null;
-  }
-
-  private OBooleanExpression getRidCondition(OAndBlock andBlock) {
-    for (OBooleanExpression exp : andBlock.getSubBlocks()) {
-      String str = exp.toString();
-      if (str.length() < 5) {
-        continue;
-      }
-      if (str.substring(0, 4).equalsIgnoreCase("rid ")) {
-        return exp;
-      }
-    }
-    return null;
   }
 }

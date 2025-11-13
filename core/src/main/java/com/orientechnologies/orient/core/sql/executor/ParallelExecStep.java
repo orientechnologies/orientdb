@@ -131,14 +131,6 @@ public class ParallelExecStep extends AbstractExecutionStep {
     return result.toString();
   }
 
-  private String spaces(int num) {
-    StringBuilder result = new StringBuilder();
-    for (int i = 0; i < num; i++) {
-      result.append(" ");
-    }
-    return result.toString();
-  }
-
   private String appendPipe(String p) {
     return "| " + p;
   }

@@ -75,7 +75,7 @@ public class OSQLMethodField extends OAbstractSQLMethod {
           ioResult = null;
         }
       } else if (ioResult instanceof ORecord) {
-        ioResult = (ORecord) ioResult;
+        // Do nothing
       } else if (ioResult instanceof OIdentifiable) {
         ioResult = iContext.getDatabase().load(((OIdentifiable) ioResult).getIdentity());
       } else if (ioResult instanceof Collection<?>

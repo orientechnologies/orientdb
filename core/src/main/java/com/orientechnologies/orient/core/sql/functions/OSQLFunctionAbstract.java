@@ -114,7 +114,6 @@ public abstract class OSQLFunctionAbstract implements OSQLFunction {
    *     the single element in it. If source is a multi value with more than 1 element null is
    *     returned, indicating an error
    */
-  @SuppressWarnings("OptionalGetWithoutIsPresent")
   protected Object getSingleItem(Object source) {
     if (OMultiValue.isMultiValue(source)) {
       if (OMultiValue.getSize(source) > 1) {

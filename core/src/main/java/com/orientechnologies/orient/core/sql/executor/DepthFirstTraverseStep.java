@@ -34,7 +34,7 @@ public class DepthFirstTraverseStep extends AbstractTraverseStep {
       }
       ((OResultInternal) item).setMetadata("$depth", 0);
 
-      List stack = new ArrayList();
+      List<ORID> stack = new ArrayList<ORID>();
       item.getIdentity().ifPresent(x -> stack.add(x));
       ((OResultInternal) item).setMetadata("$stack", stack);
 
@@ -86,7 +86,7 @@ public class DepthFirstTraverseStep extends AbstractTraverseStep {
 
   public Object convert(Object value) {
     if (value instanceof ORidBag) {
-      List result = new ArrayList();
+      List<OIdentifiable> result = new ArrayList<OIdentifiable>();
       ((ORidBag) value).forEach(x -> result.add(x));
       return result;
     }
@@ -170,7 +170,7 @@ public class DepthFirstTraverseStep extends AbstractTraverseStep {
     newPath.add(res.getIdentity().get());
     res.setMetadata("$path", newPath);
 
-    List newStack = new ArrayList();
+    List<OIdentifiable> newStack = new ArrayList<>();
     newStack.add(res.getIdentity().get());
     newStack.addAll(stack);
     //    for (int i = 0; i < newPath.size(); i++) {
@@ -203,10 +203,10 @@ public class DepthFirstTraverseStep extends AbstractTraverseStep {
       nextStep.getIdentity().ifPresent(x -> newPath.add(x.getIdentity()));
       ((OTraverseResult) nextStep).setMetadata("$path", newPath);
 
-      List reverseStack = new ArrayList();
+      List<OIdentifiable> reverseStack = new ArrayList<>();
       reverseStack.addAll(newPath);
       Collections.reverse(reverseStack);
-      List newStack = new ArrayList();
+      List<OIdentifiable> newStack = new ArrayList<>();
       newStack.addAll(reverseStack);
       ((OTraverseResult) nextStep).setMetadata("$stack", newStack);
 
@@ -220,10 +220,10 @@ public class DepthFirstTraverseStep extends AbstractTraverseStep {
       nextStep.getIdentity().ifPresent(x -> newPath.add(x.getIdentity()));
       ((OTraverseResult) nextStep).setMetadata("$path", newPath);
 
-      List reverseStack = new ArrayList();
+      List<OIdentifiable> reverseStack = new ArrayList<>();
       reverseStack.addAll(newPath);
       Collections.reverse(reverseStack);
-      List newStack = new ArrayList();
+      List<OIdentifiable> newStack = new ArrayList<>();
       newStack.addAll(reverseStack);
       ((OTraverseResult) nextStep).setMetadata("$stack", newStack);
 

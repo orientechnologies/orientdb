@@ -76,7 +76,7 @@ public class OSQLMethodToJSON extends OAbstractSQLMethod {
 
     } else if (iThis instanceof Map) {
 
-      final ODocument doc = new ODocument().fromMap((Map<String, Object>) iThis);
+      final ODocument doc = new ODocument((Map<String, Object>) iThis);
       return doc.toJSON(format);
 
     } else if (OMultiValue.isMultiValue(iThis)) {

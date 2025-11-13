@@ -227,7 +227,7 @@ public class OBinaryCondition extends OBooleanExpression {
   public OBinaryCondition copy() {
     OBinaryCondition result = new OBinaryCondition(-1);
     result.left = left.copy();
-    result.operator = (OBinaryCompareOperator) operator.copy();
+    result.operator = operator.copy();
     result.right = right.copy();
     return result;
   }

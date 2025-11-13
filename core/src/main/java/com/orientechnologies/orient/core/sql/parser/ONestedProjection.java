@@ -254,7 +254,7 @@ public class ONestedProjection extends SimpleNode {
 
   private Object convert(Object value) {
     if (value instanceof ORidBag) {
-      List result = new ArrayList();
+      List<OIdentifiable> result = new ArrayList<>();
       ((ORidBag) value).forEach(x -> result.add(x));
       return result;
     }

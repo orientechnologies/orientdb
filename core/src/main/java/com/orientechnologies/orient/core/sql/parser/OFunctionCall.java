@@ -109,29 +109,17 @@ public class OFunctionCall extends SimpleNode {
 
     Object record = null;
 
-    if (record == null) {
-      if (targetObjects != null) {
-        record = ((OResult) targetObjects).toElement();
-      }
+    if (targetObjects != null) {
+      record = targetObjects.toElement();
     }
     if (record == null) {
       OResult current = ctx == null ? null : ctx.getCurrent();
       if (current != null) {
-        record = ((OResult) current).toElement();
+        record = current.toElement();
       }
     }
     for (OExpression expr : this.params) {
-      if (targetObjects instanceof OResult) {
-        paramValues.add(expr.execute((OResult) targetObjects, ctx));
-      } else if (record instanceof OIdentifiable) {
-        paramValues.add(expr.execute(new OResultInternal((OIdentifiable) record), ctx));
-      } else if (record instanceof OResult) {
-        paramValues.add(expr.execute((OResult) record, ctx));
-      } else if (record == null) {
-        paramValues.add(expr.execute((OResult) record, ctx));
-      } else {
-        throw new OCommandExecutionException("Invalid value for $current: " + record);
-      }
+      paramValues.add(expr.execute(targetObjects, ctx));
     }
     OSQLFunction function = OSQLEngine.getInstance().getFunction(name);
     if (function != null) {

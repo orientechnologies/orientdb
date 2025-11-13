@@ -164,11 +164,7 @@ public class OMethodCall extends SimpleNode {
       OResult current = ctx.getCurrent();
       if (current != null) {
         return graphFunction.execute(
-            targetObjects,
-            ((OResult) current).getElement().orElse(null),
-            null,
-            paramValues.toArray(),
-            ctx);
+            targetObjects, current.getElement().orElse(null), null, paramValues.toArray(), ctx);
       } else {
         return graphFunction.execute(targetObjects, null, null, paramValues.toArray(), ctx);
       }

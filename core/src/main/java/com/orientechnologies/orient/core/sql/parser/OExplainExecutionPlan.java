@@ -80,10 +80,7 @@ public class OExplainExecutionPlan implements OInternalExecutionPlan {
     result.setProperty("statement", Arrays.asList(toProfile.toResult(ctx)));
     List<OExecutionStepInternal> steps = toProfile.getSteps();
     if (steps != null) {
-      var resultSteps =
-          steps.stream()
-              .map(x -> ((OExecutionStepInternal) x).toResult(ctx))
-              .collect(Collectors.toList());
+      var resultSteps = steps.stream().map(x -> x.toResult(ctx)).collect(Collectors.toList());
       result.setProperty("steps", resultSteps);
     } else {
       result.setProperty("steps", null);
