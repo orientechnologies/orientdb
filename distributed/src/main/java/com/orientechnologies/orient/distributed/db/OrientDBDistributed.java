@@ -1024,4 +1024,9 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   public long getNextMessageIdCounter() {
     return localMessageIdCounter.getAndIncrement();
   }
+
+  public boolean installDatabase(
+      boolean iStartup, String databaseName, boolean forceDeployment, boolean tryWithDeltaFirst) {
+    return plugin.installDatabase(iStartup, databaseName, forceDeployment, tryWithDeltaFirst);
+  }
 }

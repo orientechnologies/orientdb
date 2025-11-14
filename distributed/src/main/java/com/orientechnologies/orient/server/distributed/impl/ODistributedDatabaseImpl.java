@@ -430,7 +430,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       if (pReq != null && pReq.getReqId().getNodeId() == nodeLeftId) {
 
         try {
-          pReq.rollback(database);
           pReq.destroy();
         } catch (Exception | Error t) {
           // IGNORE IT
@@ -686,11 +685,11 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
             if (database != null) database.activateOnCurrentThread();
 
             try {
-              ctx.cancel(manager, database);
+              ctx.cancel();
 
               if (ctx.getReqId().getNodeId() == manager.getLocalNodeId())
                 // REQUEST WAS ORIGINATED FROM CURRENT SERVER
-                manager.getMessageService().timeoutRequest(ctx.getReqId().getMessageId());
+                context.getMessageService().timeoutRequest(ctx.getReqId().getMessageId());
 
             } catch (Exception t) {
               logger.infoNode(
@@ -804,7 +803,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   private void runReverseSync() {
-    manager.installDatabase(false, databaseName, true, true);
+    context.installDatabase(false, databaseName, true, true);
   }
 
   @Override

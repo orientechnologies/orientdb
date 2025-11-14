@@ -2,15 +2,12 @@ package com.orientechnologies.orient.server.distributed.impl;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ODistributedTxContext;
-import java.util.Set;
 
 public class ODDLContextImpl implements ODistributedTxContext {
 
@@ -45,18 +42,10 @@ public class ODDLContextImpl implements ODistributedTxContext {
   public void commit(ODatabaseDocumentInternal database) {}
 
   @Override
-  public Set<ORecordId> rollback(ODatabaseDocumentInternal database) {
-    return null;
-  }
-
-  @Override
   public void destroy() {
     shared.rollback(this.preChangeId);
     shared.rollback(this.afterChangeId);
   }
-
-  @Override
-  public void clearUndo() {}
 
   @Override
   public long getStartedOn() {
@@ -64,10 +53,8 @@ public class ODDLContextImpl implements ODistributedTxContext {
   }
 
   @Override
-  public Set<ORecordId> cancel(
-      ODistributedServerManager current, ODatabaseDocumentInternal database) {
+  public void cancel() {
     destroy();
-    return null;
   }
 
   @Override
