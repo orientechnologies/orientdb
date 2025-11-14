@@ -3,7 +3,6 @@ package com.orientechnologies.orient.server.distributed.impl;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
@@ -11,7 +10,6 @@ import com.orientechnologies.orient.core.tx.OTxMetadataHolder;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ODistributedTxContext;
 import com.orientechnologies.orient.server.distributed.exception.OTxPromiseException;
 import com.orientechnologies.orient.server.distributed.impl.lock.OTxPromise;
@@ -102,18 +100,8 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
   }
 
   @Override
-  public Set<ORecordId> rollback(ODatabaseDocumentInternal database) {
-    return new HashSet<>();
-  }
-
-  @Override
   public void destroy() {
     releasePromises();
-  }
-
-  @Override
-  public void clearUndo() {
-    throw new UnsupportedOperationException();
   }
 
   @Override
@@ -135,10 +123,8 @@ public class ONewDistributedTxContextImpl implements ODistributedTxContext {
   }
 
   @Override
-  public Set<ORecordId> cancel(
-      ODistributedServerManager current, ODatabaseDocumentInternal database) {
+  public void cancel() {
     destroy();
-    return null;
   }
 
   @Override

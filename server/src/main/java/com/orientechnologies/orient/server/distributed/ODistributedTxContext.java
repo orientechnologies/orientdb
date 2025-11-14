@@ -21,10 +21,8 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
-import java.util.Set;
 
 /**
  * Represent a distributed transaction context.
@@ -43,15 +41,11 @@ public interface ODistributedTxContext {
 
   void commit(ODatabaseDocumentInternal database);
 
-  Set<ORecordId> rollback(ODatabaseDocumentInternal database);
-
   void destroy();
-
-  void clearUndo();
 
   long getStartedOn();
 
-  Set<ORecordId> cancel(ODistributedServerManager current, ODatabaseDocumentInternal database);
+  void cancel();
 
   OTransactionInternal getTransaction();
 
