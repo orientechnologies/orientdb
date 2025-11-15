@@ -23,6 +23,8 @@ import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.sql.executor.ORidSet;
+import org.apache.commons.io.input.UnsynchronizedBufferedReader;
+
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
@@ -51,7 +53,7 @@ public class OJSONReader {
   public static final char[] BEGIN_COLLECTION = new char[] {'['};
   public static final char[] END_COLLECTION = new char[] {']'};
 
-  private BufferedReader in;
+  private UnsynchronizedBufferedReader in;
   private int cursor = 0;
   private int lineNumber = 0;
   private int columnNumber = 0;
@@ -62,7 +64,7 @@ public class OJSONReader {
   private Character missedChar;
 
   public OJSONReader(Reader iIn) {
-    this.in = new BufferedReader(iIn);
+    this.in = new UnsynchronizedBufferedReader(iIn);
   }
 
   public int getCursor() {
