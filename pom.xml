@@ -276,7 +276,7 @@
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-gpg-plugin</artifactId>
-                    <version>3.2.5</version>
+                    <version>3.2.8</version>
                     <configuration>
                         <gpgArguments>
                             <arg>--pinentry-mode</arg>
@@ -340,7 +340,7 @@
                 <plugin>
                     <groupId>com.mycila</groupId>
                     <artifactId>license-maven-plugin</artifactId>
-                    <version>4.6</version>
+                    <version>5.0.0</version>
                     <inherited>true</inherited>
                     <configuration>
                         <header>${license.location}</header>
@@ -467,7 +467,7 @@
             <plugin>
                 <groupId>com.diffplug.spotless</groupId>
                 <artifactId>spotless-maven-plugin</artifactId>
-                <version>2.46.1</version>
+                <version>3.0.0</version>
                 <configuration>
                     <java>
                         <googleJavaFormat>
