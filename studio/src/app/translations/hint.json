@@ -33,7 +33,7 @@
   "agent.notConnected": "The current instance is not connected to the OrientDB Cloud. To start monitoring OrientDB instances with the Cloud Console create an account <a href='{{eecloud}}' target='_blank'>here</a>.",
   "agent.Connected": "Connected to the OrientDB Cloud. To start monitoring this instance with the Cloud Console click <a href='{{eeCloudProject}}' target='_blank'>here</a>.",
   "agent.moved": "The following features have been moved to the Cloud Dashboard:",
-  "agent.moved1": "To susbscribe to OrientDB Enterprise Edition click <a href='https://orientdb.com/orientdb-enterprise' target='_blank'>here</a>.",
+  "agent.moved1": "To susbscribe to OrientDB Enterprise Edition click <a href='https://orientdb.dev/orientdb-enterprise' target='_blank'>here</a>.",
   "agent.pluginsNotFound": "No plugins installed.",
   "sec.authentication.allowDefault": "When checked, indicates if a database's default authentication should be allowed in addition to the external authenticators",
   "sec.kerberos.configFile": "Specifies the location of the krb5.conf file",

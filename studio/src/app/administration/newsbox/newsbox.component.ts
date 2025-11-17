@@ -36,8 +36,8 @@ class NewsBoxComponent implements OnInit {
     // inferring orientDB version
     this.dbService.getServerVersion().then((data) => {
       this.orientdbVersion = data;
-      this.ceNewsUrl = "https://orientdb.com/studio-news.php?version=" + this.orientdbVersion + "&edition=c";
-      this.eeNewsUrl = "https://orientdb.com/studio-news.php?version=" + this.orientdbVersion + "&edition=e";
+      this.ceNewsUrl = "https://orientdb.dev/studio-news/";
+      this.eeNewsUrl = "https://orientdb.dev/studio-news/";
       this.makeRequestAccordingVersionAndEdition();
     });
 
