@@ -27,6 +27,13 @@
 This document contains the last changes of OrientDB Community Edition.
 
 
+-----------------------------------------------------------------------------------------------------------------------------------
+version 3.2.46 - (November, 18 2025)
+- release notes: https://github.com/orientechnologies/orientdb/wiki/orientdb-3.2-release-notes#3245---18-November-2025
+
+# Tools
+
+- Corrected preserving cluster ids when running import using preserve rids option
 
 -----------------------------------------------------------------------------------------------------------------------------------
 version 3.2.45 - (October, 22 2025)
