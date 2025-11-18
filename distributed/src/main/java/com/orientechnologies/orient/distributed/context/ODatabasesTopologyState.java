@@ -244,4 +244,13 @@ public class ODatabasesTopologyState {
     }
     return false;
   }
+
+  public synchronized Optional<ODatabaseId> getDatabaseId(String databaseName) {
+    ODatabaseTopologyState stat = this.databasesByName.get(databaseName);
+    if (stat != null) {
+      return Optional.of(stat.getId());
+    } else {
+      return Optional.empty();
+    }
+  }
 }

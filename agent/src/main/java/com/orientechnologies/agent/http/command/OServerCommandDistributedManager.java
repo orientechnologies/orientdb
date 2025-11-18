@@ -24,6 +24,7 @@ import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.enterprise.server.OEnterpriseServer;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -177,7 +178,9 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
     if (parts.length < 3)
       throw new IllegalArgumentException("Cannot sync database: missing database name");
 
-    if (server.getDistributedManager() == null)
+    OrientDBInternal context = server.getDatabases();
+
+    if (context instanceof OrientDBDistributed)
       throw new OConfigurationException("Cannot sync database: local server is not distributed");
 
     final String database = parts[2];
@@ -186,7 +189,8 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
     if (dManager == null || !dManager.isEnabled())
       throw new OCommandExecutionException("OrientDB is not started in distributed mode");
 
-    boolean installDatabase = dManager.installDatabase(true, database, false, true);
+    boolean installDatabase =
+        ((OrientDBDistributed) context).installDatabase(true, database, false, true);
 
     ODocument document = new ODocument().field("result", installDatabase);
     iResponse.send(
