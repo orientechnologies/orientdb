@@ -923,8 +923,8 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
 
       logger.infoNode(
           nodeName, "Reassigning ownership of clusters for database %s...", iDatabase.getName());
-
-      final Set<String> availableNodes = getAvailableNodeNames(iDatabase.getName());
+      OrientDBDistributed ctx = (OrientDBDistributed) serverInstance.getDatabases();
+      final Set<String> availableNodes = ctx.getAvailableNodeNames(iDatabase.getName());
 
       // FILTER OUT NON MASTER SERVER
       for (Iterator<String> it = availableNodes.iterator(); it.hasNext(); ) {

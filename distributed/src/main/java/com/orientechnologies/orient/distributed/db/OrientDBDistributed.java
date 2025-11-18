@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.distributed.context.ODatabaseState;
+import com.orientechnologies.orient.distributed.context.ODatabasesTopologyState;
 import com.orientechnologies.orient.distributed.context.ONodeState;
 import com.orientechnologies.orient.distributed.context.OSyncId;
 import com.orientechnologies.orient.distributed.context.OSyncInfo;
@@ -598,7 +599,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
       ODatabaseTask<Void> createOps) {
     declareDatabaseFlow(name, dbId);
     super.create(name, user, password, type, dbId, config, createOps);
-    setDatabaseStatus(name, dbId, getNodeState().getNodeId(), ODatabaseState.Online);
+    setDatabaseStatus(dbId, getNodeState().getNodeId(), ODatabaseState.Online);
     try {
       getNodeState().getDatabaseTopology().waitOnlineQuorum(dbId, Optional.empty());
     } catch (InterruptedException e) {
@@ -611,10 +612,13 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     distributedOperation(new ODeclareDbMessage(name, dbId, currentMembers, 0));
   }
 
-  private void setDatabaseStatus(
-      String name, ODatabaseId dbId, ONodeId node, ODatabaseState state) {
+  private void setDatabaseStatus(ODatabaseId dbId, ONodeId node, ODatabaseState state) {
     long version = this.getNodeState().getDatabaseTopology().getDatabaseVersion(dbId);
     distributedOperation(new OSetDatabaseState(dbId, node, state, version + 1));
+  }
+
+  private ODatabaseState getDatabaseStatus(ODatabaseId dbId, ONodeId node) {
+    return this.getNodeState().getDatabaseTopology().getNodeState(dbId, node);
   }
 
   public void distributedSetOnline(String database) {
@@ -885,7 +889,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
           new Thread(
               () -> {
                 receiveSync(dbName, st, input, getConfigurations());
-                setDatabaseStatus(dbName, st.getDbId(), st.getReceiver(), ODatabaseState.Online);
+                setDatabaseStatus(st.getDbId(), st.getReceiver(), ODatabaseState.Online);
               });
       thread.start();
     }
@@ -948,7 +952,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   public void sendBuffer(OSyncState state, byte[] data, boolean finished) {
     if (state.isClose()) {
-      // receiver  sent close, drop the data.
+      // receiver sent close, drop the data.
       return;
     }
     sendMessage(state.getReceiver(), new OSyncData(state.getSyncId(), data, finished));
@@ -1027,6 +1031,32 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
 
   public boolean installDatabase(
       boolean iStartup, String databaseName, boolean forceDeployment, boolean tryWithDeltaFirst) {
+    //    Optional<ODatabaseId> id =
+    // getNodeState().getDatabaseTopology().getDatabaseId(databaseName);
+    //    if (id.isPresent()) {
+    //      sync(id.get());
+    //      return true;
+    //    } else {
+    //      return false;
+    //    }
     return plugin.installDatabase(iStartup, databaseName, forceDeployment, tryWithDeltaFirst);
+  }
+
+  public Set<String> getAvailableNodeNames(String name) {
+    //    Optional<ODatabaseId> id = getNodeState().getDatabaseTopology().getDatabaseId(name);
+    //    return getNodeState().getDatabaseTopology().getOnlineNodes(id.get()).stream()
+    //        .map((x) -> x.getNode())
+    //        .collect(Collectors.toSet());
+    return plugin.getAvailableNodeNames(name);
+  }
+
+  public int getOnlineMasters(String databaseName) {
+    ODatabasesTopologyState databaseTopology = getNodeState().getDatabaseTopology();
+    Optional<ODatabaseId> id = databaseTopology.getDatabaseId(databaseName);
+
+    return (int)
+        databaseTopology.getOnlineNodes(id.get()).stream()
+            .filter((x) -> databaseTopology.isMain(id.get(), x))
+            .count();
   }
 }

@@ -253,4 +253,12 @@ public class ODatabasesTopologyState {
       return Optional.empty();
     }
   }
+
+  public synchronized boolean isMain(ODatabaseId dbId, ONodeId nodeId) {
+    ODatabaseTopologyState stat = this.databases.get(dbId);
+    if (stat != null) {
+      return stat.isMain(nodeId);
+    }
+    return false;
+  }
 }
