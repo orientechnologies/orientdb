@@ -199,7 +199,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
     final String databaseName = getName();
 
-    return distributedManager.installDatabase(true, databaseName, forceDeployment, tryWithDelta);
+    return getContext().installDatabase(true, databaseName, forceDeployment, tryWithDelta);
   }
 
   @Override
@@ -739,7 +739,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   }
 
   public void forceRsync() {
-    distributedManager.installDatabase(false, this.getName(), true, true);
+    getContext().installDatabase(false, this.getName(), true, true);
   }
 
   public boolean rollback2pc(ODistributedRequestId transactionId) {

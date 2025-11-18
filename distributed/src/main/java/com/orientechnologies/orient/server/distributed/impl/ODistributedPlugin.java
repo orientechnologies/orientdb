@@ -1913,7 +1913,8 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
         setDatabaseStatus(nodeName, databaseName, DB_STATUS.NOT_AVAILABLE);
 
       try {
-        if (!installDatabase(true, databaseName, false, true)) {
+        OrientDBDistributed context = (OrientDBDistributed) serverInstance.getDatabases();
+        if (!context.installDatabase(true, databaseName, false, true)) {
           setDatabaseStatus(getLocalNodeName(), databaseName, DB_STATUS.NOT_AVAILABLE);
         }
       } catch (Exception e) {
@@ -2131,7 +2132,8 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
     if (s == DB_STATUS.NOT_AVAILABLE) {
       // INSTALL THE DATABASE
       try {
-        installDatabase(false, databaseName, false, true);
+        OrientDBDistributed context = (OrientDBDistributed) serverInstance.getDatabases();
+        context.installDatabase(false, databaseName, false, true);
       } catch (ODistributedLockException lock) {
         setDatabaseStatus(getLocalNodeName(), databaseName, DB_STATUS.NOT_AVAILABLE);
         logger.warn(

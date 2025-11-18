@@ -10,6 +10,7 @@ import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.setup.LocalTestSetup;
 import com.orientechnologies.orient.setup.SetupConfig;
@@ -77,8 +78,7 @@ public class ReinstallDatabaseTestIT {
     new Thread(
             () -> {
               try {
-                server2Instance
-                    .getDistributedManager()
+                ((OrientDBDistributed) server2Instance.getDatabases())
                     .installDatabase(false, DATABASE_NAME, true, true);
               } catch (RuntimeException e) {
                 logger.error(" error on install database", e);
