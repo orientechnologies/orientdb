@@ -188,7 +188,7 @@ public class OSchemaDistributed extends OSchemaEmbedded {
 
       Set<String> nodes =
           ((ODatabaseDocumentDistributed) database)
-              .getDistributedManager()
+              .getContext()
               .getAvailableNodeNames(database.getName());
 
       nodes.removeIf(

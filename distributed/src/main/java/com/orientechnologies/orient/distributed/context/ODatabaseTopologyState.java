@@ -195,4 +195,12 @@ public class ODatabaseTopologyState {
     }
     return this.nodeStatus.get(sender).isOnline();
   }
+
+  public boolean isMain(ONodeId nodeId) {
+    ONodeDatabaseState stat = this.nodeStatus.get(nodeId);
+    if (stat != null) {
+      return stat.isMain();
+    }
+    return false;
+  }
 }

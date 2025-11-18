@@ -33,4 +33,8 @@ public class ONodeDatabaseState {
   public boolean isOnline() {
     return ODatabaseState.Online.equals(state);
   }
+
+  public boolean isMain() {
+    return this.role == ONodeRole.Main;
+  }
 }

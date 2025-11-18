@@ -414,7 +414,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       final int availableNodes = dManager.getAvailableNodes(getName());
 
       if (quorum > availableNodes) {
-        Set<String> online = dManager.getAvailableNodeNames(getName());
+        Set<String> online = getContext().getAvailableNodeNames(getName());
         throw new ODistributedException(
             String.format(
                 "Not enough nodes online to execute the operation. Available nodes:%s, quorum:%s",
@@ -1008,7 +1008,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       OSQLCommandTaskFirstPhase task =
           new OSQLCommandTaskFirstPhase(command, ids.get().getFirst(), ids.get().getSecond());
       ODistributedServerManager dManager = getDistributedManager();
-      Set<String> nodes = dManager.getAvailableNodeNames(getName());
+      Set<String> nodes = getContext().getAvailableNodeNames(getName());
 
       ODistributedRequestId reqId = dManager.nextRequestId();
       ODistributedTxResponseManagerImpl responseManager = sendTask(nodes, task, null, reqId);

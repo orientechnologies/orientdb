@@ -522,7 +522,7 @@ public class OClassDistributed extends OClassEmbedded {
     ODistributedServerManager manager = db.getDistributedManager();
     if (bestClusterIds == null) {
       if (this.allocation == null) {
-        final Set<String> availableNodes = manager.getAvailableNodeNames(db.getName());
+        final Set<String> availableNodes = db.getContext().getAvailableNodeNames(db.getName());
         ODistributedConfiguration cfg = db.getDistributedConfiguration();
         availableNodes.removeIf(
             (node) -> cfg.getServerRole(node) != ODistributedConfiguration.ROLES.MASTER);
