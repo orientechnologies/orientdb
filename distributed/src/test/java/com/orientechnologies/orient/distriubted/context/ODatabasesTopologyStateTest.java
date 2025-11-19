@@ -10,6 +10,7 @@ import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.distributed.context.ODatabaseState;
+import com.orientechnologies.orient.distributed.context.ODatabaseStateChangeListener;
 import com.orientechnologies.orient.distributed.context.ODatabasesTopologyState;
 import com.orientechnologies.orient.distributed.context.OSyncInfo;
 import com.orientechnologies.orient.distributed.context.OSyncState;
@@ -22,7 +23,7 @@ import java.util.Set;
 import java.util.UUID;
 import org.junit.Test;
 
-public class ODatabasesTopologyStateTest {
+public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener {
 
   private ONodeId newNodeId() {
     return new ONodeId(UUID.randomUUID().toString());
@@ -36,10 +37,13 @@ public class ODatabasesTopologyStateTest {
     return new OTransactionIdPromise(newNodeId(), new OTransactionId(10, 20));
   }
 
+  @Override
+  public void onStateChange(ODatabaseId dbId, ONodeId nodeId, ODatabaseState state) {}
+
   @Test
   public void testFirstDeclare() {
 
-    ODatabasesTopologyState state = new ODatabasesTopologyState();
+    ODatabasesTopologyState state = new ODatabasesTopologyState(this);
     var promiseId = newPromiseId();
     Set<ONodeId> partecipants = Set.of(promiseId.getCoordinator());
     var dbId = newDbId();
@@ -55,7 +59,7 @@ public class ODatabasesTopologyStateTest {
   @Test
   public void testFailDoublePromise() {
 
-    ODatabasesTopologyState state = new ODatabasesTopologyState();
+    ODatabasesTopologyState state = new ODatabasesTopologyState(this);
 
     var promiseId = newPromiseId();
     Set<ONodeId> partecipants = Set.of(promiseId.getCoordinator());
@@ -81,7 +85,7 @@ public class ODatabasesTopologyStateTest {
   @Test
   public void testOkAfterCancelPromise() {
 
-    ODatabasesTopologyState state = new ODatabasesTopologyState();
+    ODatabasesTopologyState state = new ODatabasesTopologyState(this);
 
     var promiseId = newPromiseId();
     Set<ONodeId> partecipants = Set.of(promiseId.getCoordinator());
@@ -106,7 +110,7 @@ public class ODatabasesTopologyStateTest {
   @Test
   public void testSetStateBase() {
 
-    ODatabasesTopologyState state = new ODatabasesTopologyState();
+    ODatabasesTopologyState state = new ODatabasesTopologyState(this);
 
     var promiseId = newPromiseId();
     ONodeId nodeId = promiseId.getCoordinator();
@@ -133,7 +137,7 @@ public class ODatabasesTopologyStateTest {
   @Test
   public void testSetStateDoublePromise() {
 
-    ODatabasesTopologyState state = new ODatabasesTopologyState();
+    ODatabasesTopologyState state = new ODatabasesTopologyState(this);
 
     var promiseId = newPromiseId();
     ONodeId nodeId = promiseId.getCoordinator();
@@ -166,7 +170,7 @@ public class ODatabasesTopologyStateTest {
   @Test
   public void testSetStateWrongVersion() {
 
-    ODatabasesTopologyState state = new ODatabasesTopologyState();
+    ODatabasesTopologyState state = new ODatabasesTopologyState(this);
 
     var promiseId = newPromiseId();
     ONodeId nodeId = promiseId.getCoordinator();
@@ -199,7 +203,7 @@ public class ODatabasesTopologyStateTest {
   @Test
   public void testSetStateCancelPromise() {
 
-    ODatabasesTopologyState state = new ODatabasesTopologyState();
+    ODatabasesTopologyState state = new ODatabasesTopologyState(this);
 
     var promiseId = newPromiseId();
     ONodeId nodeId = promiseId.getCoordinator();
@@ -232,8 +236,8 @@ public class ODatabasesTopologyStateTest {
   @Test
   public void testRequestSync() {
 
-    ODatabasesTopologyState state = new ODatabasesTopologyState();
-    ODatabasesTopologyState state1 = new ODatabasesTopologyState();
+    ODatabasesTopologyState state = new ODatabasesTopologyState(this);
+    ODatabasesTopologyState state1 = new ODatabasesTopologyState(this);
 
     var promiseId = newPromiseId();
     ONodeId nodeId = promiseId.getCoordinator();
@@ -264,7 +268,7 @@ public class ODatabasesTopologyStateTest {
     state.setState(dbId, nodeId, ODatabaseState.Online, 1L);
     state1.setState(dbId, nodeId, ODatabaseState.Online, 1L);
 
-    OSyncInfo syncInfo = state1.newSync(dbId);
+    OSyncInfo syncInfo = state1.newSync(dbId).get();
     assertTrue(syncInfo.targets().contains(nodeId));
     boolean canSync = state.acceptSync(nodeId, node1, dbId, syncInfo.syncId());
     assertTrue(canSync);
@@ -292,9 +296,9 @@ public class ODatabasesTopologyStateTest {
   @Test
   public void testRequestSyncFailAlreadySendings() {
 
-    ODatabasesTopologyState state = new ODatabasesTopologyState();
-    ODatabasesTopologyState state1 = new ODatabasesTopologyState();
-    ODatabasesTopologyState state2 = new ODatabasesTopologyState();
+    ODatabasesTopologyState state = new ODatabasesTopologyState(this);
+    ODatabasesTopologyState state1 = new ODatabasesTopologyState(this);
+    ODatabasesTopologyState state2 = new ODatabasesTopologyState(this);
 
     var promiseId = newPromiseId();
     ONodeId nodeId = promiseId.getCoordinator();
@@ -331,7 +335,7 @@ public class ODatabasesTopologyStateTest {
     state1.setState(dbId, nodeId, ODatabaseState.Online, 1L);
     state2.setState(dbId, nodeId, ODatabaseState.Online, 1L);
 
-    OSyncInfo syncInfo = state1.newSync(dbId);
+    OSyncInfo syncInfo = state1.newSync(dbId).get();
     assertTrue(syncInfo.targets().contains(nodeId));
     boolean canSync = state.acceptSync(nodeId, node1, dbId, syncInfo.syncId());
     assertTrue(canSync);
@@ -355,7 +359,7 @@ public class ODatabasesTopologyStateTest {
     OSyncState rs = state1.getSyncState(receiverState.getSyncId());
     assertSame(receiverState, rs);
 
-    OSyncInfo syncInfo2 = state2.newSync(dbId);
+    OSyncInfo syncInfo2 = state2.newSync(dbId).get();
     assertTrue(syncInfo2.targets().contains(nodeId));
     boolean canSync2 = state.acceptSync(nodeId, node2, dbId, syncInfo.syncId());
     assertFalse(canSync2);
