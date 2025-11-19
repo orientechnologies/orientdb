@@ -3,7 +3,7 @@ package com.orientechnologies.orient.distributed.context.topology;
 import com.orientechnologies.orient.core.transaction.OGroupId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.distributed.context.ONodeStateStore;
-import com.orientechnologies.orient.distributed.context.coordination.message.ONodeStateNetwork;
+import com.orientechnologies.orient.distributed.context.coordination.message.OTopologyStateNetwork;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAlreadyEnstablishedTopologyState;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAlreadyPromised;
@@ -151,7 +151,7 @@ public class OTopologyManager implements OTopologyEvents {
     return Optional.of(new OAlreadyEnstablishedTopologyState());
   }
 
-  public ODiscoverAction nodeJoinStart(ONodeId node, ONodeStateNetwork externState) {
+  public ODiscoverAction nodeJoinStart(ONodeId node, OTopologyStateNetwork externState) {
     if (externState.getState() == OTopologyState.BOOT) {
       return nodeDiscovered(node);
     } else {
@@ -178,8 +178,9 @@ public class OTopologyManager implements OTopologyEvents {
     return new ODiscoverAction.ONoneAction();
   }
 
-  public synchronized ONodeStateNetwork getNetworkState() {
-    return new ONodeStateNetwork(this.groupId, this.state, this.members, this.quorum, this.version);
+  public synchronized OTopologyStateNetwork getNetworkState() {
+    return new OTopologyStateNetwork(
+        this.groupId, this.state, this.members, this.quorum, this.version);
   }
 
   public synchronized void load(ONodeStateStore nodeStateStore) {
@@ -196,5 +197,9 @@ public class OTopologyManager implements OTopologyEvents {
 
   public synchronized void cancelEnstablish() {
     this.promise = false;
+  }
+
+  public Optional<OGroupId> getGroupId() {
+    return groupId;
   }
 }

@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.distributed.context;
 
 import com.orientechnologies.orient.core.transaction.ONodeId;
+import com.orientechnologies.orient.distributed.context.coordination.message.ODatabaseMemberNetwork;
 
 public class ONodeDatabaseState {
 
@@ -30,11 +31,19 @@ public class ONodeDatabaseState {
     return role;
   }
 
+  public void setRole(ONodeRole role) {
+    this.role = role;
+  }
+
   public boolean isOnline() {
     return ODatabaseState.Online.equals(state);
   }
 
   public boolean isMain() {
     return this.role == ONodeRole.Main;
+  }
+
+  public ODatabaseMemberNetwork getNetworkState() {
+    return new ODatabaseMemberNetwork(getId(), getRole(), getState());
   }
 }

@@ -29,7 +29,11 @@ public class ONodeState {
   private final OStateStore store;
   private final ODatabasesTopologyState databaseTopology;
 
-  public ONodeState(ONodeId current, int minimumQuorum, OStateStore store) {
+  public ONodeState(
+      ONodeId current,
+      int minimumQuorum,
+      OStateStore store,
+      ODatabaseStateChangeListener listener) {
     sequenceManager = new OTransactionSequenceManager(current, 3);
     state = new OAppliedState(3);
     log = new ODistributedMessageLogMemory();
@@ -37,7 +41,7 @@ public class ONodeState {
     coordinated = new OCoordinatedDistributedOpsImpl(current, minimumQuorum);
     nodeId = current;
     this.store = store;
-    this.databaseTopology = new ODatabasesTopologyState();
+    this.databaseTopology = new ODatabasesTopologyState(listener);
   }
 
   public ODiscoverAction initFromStore() {
@@ -180,11 +184,12 @@ public class ONodeState {
   }
 
   public ODiscoverAction nodeJoinStart(ONodeId node, ONodeStateNetwork state) {
-    return this.coordinated.nodeJoinStart(node, state);
+    return this.coordinated.nodeJoinStart(node, state.getTopology());
   }
 
   public ONodeStateNetwork getNetworkState() {
-    return this.coordinated.getNetworkState();
+    return new ONodeStateNetwork(
+        this.coordinated.getNetworkState(), this.databaseTopology.getNetworkState());
   }
 
   public void cancelRegisterPromise() {
@@ -223,5 +228,9 @@ public class ONodeState {
 
   public ODatabasesTopologyState getDatabaseTopology() {
     return databaseTopology;
+  }
+
+  public Set<ONodeId> getNetworkMemebers() {
+    return coordinated.getMembers();
   }
 }

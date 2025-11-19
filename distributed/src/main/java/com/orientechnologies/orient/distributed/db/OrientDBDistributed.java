@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.distributed.context.ODatabaseState;
+import com.orientechnologies.orient.distributed.context.ODatabaseStateChangeListener;
 import com.orientechnologies.orient.distributed.context.ODatabasesTopologyState;
 import com.orientechnologies.orient.distributed.context.ONodeState;
 import com.orientechnologies.orient.distributed.context.OSyncId;
@@ -86,7 +87,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicLong;
 
 /** Created by tglman on 08/08/17. */
-public class OrientDBDistributed extends OrientDBEmbedded implements OServerAware {
+public class OrientDBDistributed extends OrientDBEmbedded
+    implements OServerAware, ODatabaseStateChangeListener {
   private static final OLoggerDistributed logger =
       OLoggerDistributed.logger(OrientDBDistributed.class);
   private volatile OServer server;
@@ -121,10 +123,22 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     this.nodeName = nodeName;
     ONodeId nodeId = new ONodeId(nodeName);
     OSystemStateStore store = new OSystemStateStore(getSystemDatabase());
-    this.nodeState = new ONodeState(nodeId, 1, store);
+    this.nodeState = new ONodeState(nodeId, 1, store, this);
     this.remoteServerManager = new ORemoteServerManager(nodeName, check);
     ODiscoverAction action = this.nodeState.initFromStore();
     action.execute(this);
+  }
+
+  @Override
+  public void onStateChange(ODatabaseId dbId, ONodeId nodeId, ODatabaseState state) {
+    execute(() -> syncIfNeeded(dbId));
+  }
+
+  private void syncIfNeeded(ODatabaseId dbId) {
+    if (!ODatabaseState.Online.equals(
+        getNodeState().getDatabaseTopology().getNodeState(dbId, getNodeId()))) {
+      sync(dbId);
+    }
   }
 
   public void loadAllDatabases() {
@@ -608,7 +622,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   }
 
   private void declareDatabaseFlow(String name, ODatabaseId dbId) {
-    Set<ONodeId> currentMembers = getNodeState().getNetworkState().getMembers();
+    Set<ONodeId> currentMembers = getNodeState().getNetworkMemebers();
     distributedOperation(new ODeclareDbMessage(name, dbId, currentMembers, 0));
   }
 
@@ -851,11 +865,12 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
   }
 
   private void sync(ODatabaseId dbId) {
-    OSyncInfo sync = getNodeState().getDatabaseTopology().newSync(dbId);
-    sendMessage(
-        sync.targets(),
-        new OSyncRequest(
-            getNodeState().getNodeId(), dbId, sync.syncId(), OSyncMode.IncrementalBackup));
+    Optional<OSyncInfo> sync = getNodeState().getDatabaseTopology().newSync(dbId);
+    if (sync.isPresent()) {
+      var req =
+          new OSyncRequest(getNodeId(), dbId, sync.get().syncId(), OSyncMode.IncrementalBackup);
+      sendMessage(sync.get().targets(), req);
+    }
   }
 
   public void cancelDeclare(OTransactionIdPromise promise, ODatabaseId dbId, String database) {

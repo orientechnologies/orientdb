@@ -4,7 +4,7 @@ import com.orientechnologies.orient.core.transaction.OGroupId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
-import com.orientechnologies.orient.distributed.context.coordination.message.ONodeStateNetwork;
+import com.orientechnologies.orient.distributed.context.coordination.message.OTopologyStateNetwork;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import com.orientechnologies.orient.distributed.context.topology.ODiscoverAction;
 import java.util.Optional;
@@ -26,7 +26,7 @@ public interface OCoordinatedDistributedOps {
 
   ODiscoverAction discoverNode(ONodeId node);
 
-  ODiscoverAction nodeJoinStart(ONodeId node, ONodeStateNetwork state);
+  ODiscoverAction nodeJoinStart(ONodeId node, OTopologyStateNetwork state);
 
   boolean promiseRegister(ONodeId node, long version);
 
@@ -44,7 +44,7 @@ public interface OCoordinatedDistributedOps {
 
   Set<ONodeId> getMembers();
 
-  ONodeStateNetwork getNetworkState();
+  OTopologyStateNetwork getNetworkState();
 
   void load(ONodeStateStore nodeStateStore);
 

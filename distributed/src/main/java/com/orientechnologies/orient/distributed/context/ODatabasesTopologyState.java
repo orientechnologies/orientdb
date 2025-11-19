@@ -4,13 +4,16 @@ import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
+import com.orientechnologies.orient.distributed.context.coordination.message.ODatabaseStateNetwork;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAlreadyPromised;
 import com.orientechnologies.orient.distributed.context.coordination.result.ODatabaseMissing;
 import com.orientechnologies.orient.distributed.context.coordination.result.ODatabaseNameUsed;
 import com.orientechnologies.orient.distributed.db.OSyncMode;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -23,8 +26,11 @@ public class ODatabasesTopologyState {
       new HashMap<>();
   private final Map<String, ODatabaseTopologyState> promisedByName = new HashMap<>();
   private final Map<OSyncId, OSyncState> activerSyncs = new HashMap<>();
+  private ODatabaseStateChangeListener listener;
 
-  public ODatabasesTopologyState() {}
+  public ODatabasesTopologyState(ODatabaseStateChangeListener listener) {
+    this.listener = listener;
+  }
 
   public synchronized Optional<OAcceptResult> promiseDeclare(
       OTransactionIdPromise promise,
@@ -58,7 +64,7 @@ public class ODatabasesTopologyState {
         if (promisedByName.containsKey(name)) {
           return Optional.of(new OAlreadyPromised());
         }
-        var declared = new ODatabaseTopologyState(db, name, partecipants, minimumQuorum);
+        var declared = new ODatabaseTopologyState(db, name, partecipants, minimumQuorum, listener);
         this.promised.put(
             db, new ORawPair<OTransactionIdPromise, ODatabaseTopologyState>(promise, declared));
         this.promisedByName.put(name, declared);
@@ -91,7 +97,7 @@ public class ODatabasesTopologyState {
       this.databases.put(db, inst);
       this.databasesByName.put(inst.getName(), inst);
     } else {
-      var declared = new ODatabaseTopologyState(db, name, partecipants, minimumQuorum);
+      var declared = new ODatabaseTopologyState(db, name, partecipants, minimumQuorum, listener);
       this.databases.put(db, declared);
       this.databasesByName.put(declared.getName(), declared);
     }
@@ -103,7 +109,7 @@ public class ODatabasesTopologyState {
         databases.computeIfAbsent(
             db,
             (dbKey) -> {
-              return new ODatabaseTopologyState(db, name, Set.of(node), 0);
+              return new ODatabaseTopologyState(db, name, Set.of(node), 0, listener);
             });
 
     // First declare, version 0
@@ -187,10 +193,10 @@ public class ODatabasesTopologyState {
     return Collections.emptySet();
   }
 
-  public synchronized OSyncInfo newSync(ODatabaseId dbId) {
+  public synchronized Optional<OSyncInfo> newSync(ODatabaseId dbId) {
     ODatabaseTopologyState db = this.databases.get(dbId);
     if (db == null) {
-      throw new NullPointerException("missing database definition");
+      return Optional.empty();
     }
     return db.newSync();
   }
@@ -204,7 +210,7 @@ public class ODatabasesTopologyState {
       OSyncMode mode) {
     ODatabaseTopologyState db = this.databases.get(dbId);
     if (db == null) {
-      throw new NullPointerException("missing database definition");
+      return Optional.empty();
     }
     var state = db.canSync(sender, receiver, syncId, canSync, mode);
     if (state.isPresent()) {
@@ -260,5 +266,25 @@ public class ODatabasesTopologyState {
       return stat.isMain(nodeId);
     }
     return false;
+  }
+
+  public synchronized void receiverNetworkState(List<ODatabaseStateNetwork> network) {
+    for (ODatabaseStateNetwork state : network) {
+      ODatabaseTopologyState db = this.databases.get(state.getId());
+      if (db != null) {
+        db.receiveState(state);
+      } else {
+        db = new ODatabaseTopologyState(state, listener);
+        this.databases.put(state.getId(), db);
+      }
+    }
+  }
+
+  public synchronized List<ODatabaseStateNetwork> getNetworkState() {
+    List<ODatabaseStateNetwork> databases = new ArrayList<>();
+    for (ODatabaseTopologyState state : this.databases.values()) {
+      databases.add(state.getNetworkState());
+    }
+    return databases;
   }
 }

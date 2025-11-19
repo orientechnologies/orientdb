@@ -2,6 +2,8 @@ package com.orientechnologies.orient.distributed.context;
 
 import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
+import com.orientechnologies.orient.distributed.context.coordination.message.ODatabaseMemberNetwork;
+import com.orientechnologies.orient.distributed.context.coordination.message.ODatabaseStateNetwork;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAlreadyPromised;
 import com.orientechnologies.orient.distributed.context.coordination.result.OInvalidSequential;
@@ -24,15 +26,29 @@ public class ODatabaseTopologyState {
   private int quorum;
   private List<OActionNotification> notifications = new ArrayList<>();
   private Map<OSyncId, OSyncSession> syncSessions = new HashMap<>();
+  private ODatabaseStateChangeListener stateListener;
 
   public ODatabaseTopologyState(
-      ODatabaseId db, String name, Set<ONodeId> partecipants, int quorum) {
+      ODatabaseId db,
+      String name,
+      Set<ONodeId> partecipants,
+      int quorum,
+      ODatabaseStateChangeListener stateListener) {
     this.id = db;
     this.name = name;
     for (ONodeId p : partecipants) {
       nodeStatus.put(p, new ONodeDatabaseState(p, ONodeRole.Main, ODatabaseState.Offline));
     }
     this.quorum = quorum;
+    this.stateListener = stateListener;
+  }
+
+  public ODatabaseTopologyState(
+      ODatabaseStateNetwork state, ODatabaseStateChangeListener stateListener) {
+    this.id = state.getId();
+    this.name = state.getName();
+    this.stateListener = stateListener;
+    this.receiveState(state);
   }
 
   public synchronized void defineNode(
@@ -43,7 +59,7 @@ public class ODatabaseTopologyState {
           return new ONodeDatabaseState(n, role, state);
         });
     this.version = version;
-    this.notifyChange();
+    this.notifyChange(node, state);
   }
 
   public synchronized void setState(ONodeId node, ODatabaseState state, long version) {
@@ -53,7 +69,7 @@ public class ODatabaseTopologyState {
     }
     this.version = version;
     this.promised = false;
-    this.notifyChange();
+    this.notifyChange(node, state);
   }
 
   public synchronized ODatabaseId getId() {
@@ -116,7 +132,7 @@ public class ODatabaseTopologyState {
 
   private interface WaitCond {
     /*
-     *  Return false to wait true to execute
+     * Return false to wait true to execute
      */
     boolean match();
   }
@@ -149,7 +165,7 @@ public class ODatabaseTopologyState {
     this.notifications.add(new OActionNotification(cond, execute));
   }
 
-  private void notifyChange() {
+  private void notifyChange(ONodeId node, ODatabaseState state) {
     Iterator<OActionNotification> iter = this.notifications.iterator();
     while (iter.hasNext()) {
       OActionNotification act = iter.next();
@@ -158,6 +174,7 @@ public class ODatabaseTopologyState {
         iter.remove();
       }
     }
+    this.stateListener.onStateChange(id, node, state);
     this.notifyAll();
   }
 
@@ -168,11 +185,14 @@ public class ODatabaseTopologyState {
         .collect(Collectors.toSet());
   }
 
-  public synchronized OSyncInfo newSync() {
+  public synchronized Optional<OSyncInfo> newSync() {
+    if (!syncSessions.isEmpty()) {
+      return Optional.empty();
+    }
     Set<ONodeId> onlineNodes = getOnlineNodes();
     OSyncSession session = new OSyncSession(getId(), onlineNodes);
     this.syncSessions.put(session.getSyncId(), session);
-    return new OSyncInfo(session.getSyncId(), onlineNodes);
+    return Optional.of(new OSyncInfo(session.getSyncId(), onlineNodes));
   }
 
   public synchronized Optional<OSyncState> canSync(
@@ -202,5 +222,34 @@ public class ODatabaseTopologyState {
       return stat.isMain();
     }
     return false;
+  }
+
+  public ODatabaseStateNetwork getNetworkState() {
+    List<ODatabaseMemberNetwork> members = new ArrayList<>();
+    for (ONodeDatabaseState state : this.nodeStatus.values()) {
+      members.add(state.getNetworkState());
+    }
+    return new ODatabaseStateNetwork(id, name, quorum, version, members);
+  }
+
+  public void receiveState(ODatabaseStateNetwork state) {
+    // TODO: verify promised case ....
+    if (this.version < state.getVersion()) {
+      this.quorum = state.getQuorum();
+      for (ODatabaseMemberNetwork member : state.getMembers()) {
+        ONodeDatabaseState status = this.nodeStatus.get(member.getNode());
+        if (status != null) {
+          if (status.getState() != member.getState()) {
+            status.setState(member.getState());
+            this.stateListener.onStateChange(id, member.getNode(), member.getState());
+          }
+          status.setRole(member.getRole());
+        } else {
+          var m = new ONodeDatabaseState(member.getNode(), member.getRole(), member.getState());
+          this.nodeStatus.put(member.getNode(), m);
+          this.stateListener.onStateChange(id, member.getNode(), member.getState());
+        }
+      }
+    }
   }
 }

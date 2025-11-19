@@ -5,7 +5,7 @@ import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.distributed.context.OResponseCollector.CompleteInfo;
-import com.orientechnologies.orient.distributed.context.coordination.message.ONodeStateNetwork;
+import com.orientechnologies.orient.distributed.context.coordination.message.OTopologyStateNetwork;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import com.orientechnologies.orient.distributed.context.topology.ODiscoverAction;
 import com.orientechnologies.orient.distributed.context.topology.OTopologyManager;
@@ -155,12 +155,12 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   }
 
   @Override
-  public ODiscoverAction nodeJoinStart(ONodeId node, ONodeStateNetwork state) {
+  public ODiscoverAction nodeJoinStart(ONodeId node, OTopologyStateNetwork state) {
     return this.topology.nodeJoinStart(node, state);
   }
 
   @Override
-  public ONodeStateNetwork getNetworkState() {
+  public OTopologyStateNetwork getNetworkState() {
     return this.topology.getNetworkState();
   }
 
