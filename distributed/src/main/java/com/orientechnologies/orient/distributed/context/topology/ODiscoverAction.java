@@ -13,7 +13,15 @@ import java.util.Set;
 public sealed interface ODiscoverAction
     permits ODiscoverAction.OEstablishAction,
         ODiscoverAction.OAddNodeAction,
-        ODiscoverAction.ONoneAction {
+        ODiscoverAction.ONoneAction,
+        ODiscoverAction.ONotifySelf {
+
+  public record ONotifySelf(Set<ONodeId> nodes) implements ODiscoverAction {
+    @Override
+    public void execute(OrientDBDistributed context) {
+      context.sendFirstConnects(nodes);
+    }
+  }
 
   void execute(OrientDBDistributed context);
 

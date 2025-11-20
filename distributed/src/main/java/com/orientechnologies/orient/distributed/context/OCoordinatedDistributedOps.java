@@ -40,7 +40,7 @@ public interface OCoordinatedDistributedOps {
 
   Optional<OAcceptResult> validateEnstablish(OGroupId networkId, Set<ONodeId> candidates);
 
-  void enstablish(OGroupId networkId, Set<ONodeId> candidates);
+  Set<ONodeId> enstablish(OGroupId networkId, Set<ONodeId> candidates);
 
   Set<ONodeId> getMembers();
 

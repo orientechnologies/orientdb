@@ -202,9 +202,11 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
     }
 
     if (nodeName == null) assignNodeName();
+    // TODO: get the group name from some configuration
     ((OrientDBDistributed) serverInstance.getDatabases())
         .initDistributed(
             nodeName,
+            "OrientDB",
             new ORemoteServerAvailabilityCheck() {
               @Override
               public boolean isNodeAvailable(String node) {
@@ -2156,14 +2158,15 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
     }
   }
 
-  public boolean onNodeJoining(final String joinedNodeName) {
+  public boolean onNodeJoining(final String joinedNodeName, String url, String userPassword) {
     // NOTIFY NODE IS GOING TO BE ADDED. IS EVERYBODY OK?
     for (ODistributedLifecycleListener l : listeners) {
       if (!l.onNodeJoining(joinedNodeName)) {
         return false;
       }
     }
-    ((OrientDBDistributed) serverInstance.getDatabases()).connected(new ONodeId(joinedNodeName));
+    ((OrientDBDistributed) serverInstance.getDatabases())
+        .connected(new ONodeId(joinedNodeName), url, REPLICATOR_USER, userPassword);
     return true;
   }
 

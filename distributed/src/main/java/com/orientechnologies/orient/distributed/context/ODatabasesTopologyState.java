@@ -11,8 +11,10 @@ import com.orientechnologies.orient.distributed.context.coordination.result.ODat
 import com.orientechnologies.orient.distributed.context.coordination.result.ODatabaseNameUsed;
 import com.orientechnologies.orient.distributed.db.OSyncMode;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -286,5 +288,27 @@ public class ODatabasesTopologyState {
       databases.add(state.getNetworkState());
     }
     return databases;
+  }
+
+  public synchronized Collection<ODatabaseId> getDatabases() {
+    return new HashSet<>(this.databases.keySet());
+  }
+
+  public synchronized ODatabaseState getDatabaseStatus(ONodeId nodeID, ODatabaseId dbId) {
+    ODatabaseTopologyState db = this.databases.get(dbId);
+    if (db != null) {
+      return db.getState(nodeID);
+    } else {
+      return ODatabaseState.NotAvailable;
+    }
+  }
+
+  public synchronized ONodeRole getNodeRole(ONodeId nodeId, ODatabaseId dbId) {
+    ODatabaseTopologyState db = this.databases.get(dbId);
+    if (db != null) {
+      return db.getRole(nodeId);
+    } else {
+      return null;
+    }
   }
 }
