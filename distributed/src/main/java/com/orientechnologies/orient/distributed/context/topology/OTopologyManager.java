@@ -14,7 +14,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
-import java.util.UUID;
 
 public class OTopologyManager implements OTopologyEvents {
 
@@ -28,8 +27,9 @@ public class OTopologyManager implements OTopologyEvents {
   private volatile int quorum = 0;
   private volatile boolean promise = false;
 
-  public OTopologyManager(ONodeId current, int minimumQuorum) {
+  public OTopologyManager(ONodeId current, OGroupId groupId, int minimumQuorum) {
     this.current = current;
+    this.groupId = Optional.of(groupId);
     this.minimumQuorum = minimumQuorum;
   }
 
@@ -38,8 +38,7 @@ public class OTopologyManager implements OTopologyEvents {
     if (state == OTopologyState.BOOT) {
       addToCandidates(node);
       if (canEstablish()) {
-        return new OEstablishAction(
-            new OGroupId(UUID.randomUUID().toString()), new HashSet<>(candidates));
+        return new OEstablishAction(groupId.get(), new HashSet<>(candidates));
       }
     } else if (!hasMember(node)) {
       return new OAddNodeAction(node, version + 1);
@@ -125,14 +124,17 @@ public class OTopologyManager implements OTopologyEvents {
     return members;
   }
 
-  public synchronized void finalizeEnstablish(OGroupId groupId, Set<ONodeId> candidates) {
+  public synchronized Set<ONodeId> finalizeEnstablish(OGroupId groupId, Set<ONodeId> candidates) {
     this.state = OTopologyState.ESTABLISHED;
     this.groupId = Optional.of(groupId);
     setMember(candidates);
     this.quorum = (members.size() / 2) + 1;
+    Set<ONodeId> allNodes = new HashSet<>(candidates);
+    allNodes.addAll(this.candidates);
     this.candidates = new HashSet<>();
-    this.version = 0;
+    this.version = 1;
     this.promise = false;
+    return allNodes;
   }
 
   private void setMember(Set<ONodeId> members) {
@@ -163,12 +165,16 @@ public class OTopologyManager implements OTopologyEvents {
           this.version = externState.getVersion();
           this.groupId = externState.getGroupId();
         } else if (this.groupId.equals(externState.getGroupId())) {
-          if (externState.getVersion() > version) {
-            this.setMember(externState.getMembers());
-            this.version = externState.getVersion();
-          } else if (externState.getVersion() != version) {
-            // TODO: send local version to the sender because is outdated, it may as well happen
-            // with a heartbeat
+          if (externState.getMembers().contains(current)) {
+            if (externState.getVersion() > version) {
+              this.setMember(externState.getMembers());
+              this.version = externState.getVersion();
+            } else if (externState.getVersion() != version) {
+              // TODO: send local version to the sender because is outdated, it may as well happen
+              // with a heartbeat
+            }
+          } else {
+            return new ODiscoverAction.ONotifySelf(externState.getMembers());
           }
         } else {
           // TODO: failure crashed different networks ...

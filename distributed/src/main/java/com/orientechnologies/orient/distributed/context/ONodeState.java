@@ -31,6 +31,7 @@ public class ONodeState {
 
   public ONodeState(
       ONodeId current,
+      OGroupId groupId,
       int minimumQuorum,
       OStateStore store,
       ODatabaseStateChangeListener listener) {
@@ -38,7 +39,7 @@ public class ONodeState {
     state = new OAppliedState(3);
     log = new ODistributedMessageLogMemory();
     promised = new OPromisedDistributedOpsImpl();
-    coordinated = new OCoordinatedDistributedOpsImpl(current, minimumQuorum);
+    coordinated = new OCoordinatedDistributedOpsImpl(current, groupId, minimumQuorum);
     nodeId = current;
     this.store = store;
     this.databaseTopology = new ODatabasesTopologyState(listener);
@@ -169,8 +170,8 @@ public class ONodeState {
     return this.coordinated.promiseRegister(node, version);
   }
 
-  public void enstablish(OGroupId groupId, Set<ONodeId> candidates) {
-    this.coordinated.enstablish(groupId, candidates);
+  public Set<ONodeId> enstablish(OGroupId groupId, Set<ONodeId> candidates) {
+    return this.coordinated.enstablish(groupId, candidates);
   }
 
   public Optional<OAcceptResult> validateEnstablish(OGroupId groupId, Set<ONodeId> candidates) {
@@ -184,7 +185,9 @@ public class ONodeState {
   }
 
   public ODiscoverAction nodeJoinStart(ONodeId node, ONodeStateNetwork state) {
-    return this.coordinated.nodeJoinStart(node, state.getTopology());
+    ODiscoverAction action = this.coordinated.nodeJoinStart(node, state.getTopology());
+    this.databaseTopology.receiverNetworkState(state.getDatabases());
+    return action;
   }
 
   public ONodeStateNetwork getNetworkState() {

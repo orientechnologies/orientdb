@@ -30,7 +30,7 @@ public class OTopologyStateNetwork {
       int quorum,
       long version) {
     super();
-    assert (state == OTopologyState.BOOT && groupId.isEmpty() && members.isEmpty() && version == 0)
+    assert (state == OTopologyState.BOOT && members.isEmpty() && version == 0)
         || (state == OTopologyState.ESTABLISHED && groupId.isPresent());
     this.groupId = groupId;
     this.state = state;

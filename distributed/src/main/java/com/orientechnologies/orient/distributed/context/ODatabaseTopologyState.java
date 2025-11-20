@@ -252,4 +252,12 @@ public class ODatabaseTopologyState {
       }
     }
   }
+
+  public ONodeRole getRole(ONodeId nodeId) {
+    ONodeDatabaseState stat = this.nodeStatus.get(nodeId);
+    if (stat != null) {
+      return stat.getRole();
+    }
+    return null;
+  }
 }

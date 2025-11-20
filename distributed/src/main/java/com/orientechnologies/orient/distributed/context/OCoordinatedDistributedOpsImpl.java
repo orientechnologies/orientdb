@@ -27,8 +27,8 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   private final Map<OTransactionId, CompletableFuture<Optional<OAcceptResult>>> completion =
       new HashMap<>();
 
-  public OCoordinatedDistributedOpsImpl(ONodeId current, int quorum) {
-    topology = new OTopologyManager(current, quorum);
+  public OCoordinatedDistributedOpsImpl(ONodeId current, OGroupId groupId, int quorum) {
+    topology = new OTopologyManager(current, groupId, quorum);
   }
 
   @Override
@@ -138,8 +138,8 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   }
 
   @Override
-  public void enstablish(OGroupId groupId, Set<ONodeId> candidates) {
-    this.topology.finalizeEnstablish(groupId, candidates);
+  public Set<ONodeId> enstablish(OGroupId groupId, Set<ONodeId> candidates) {
+    return this.topology.finalizeEnstablish(groupId, candidates);
   }
 
   @Override

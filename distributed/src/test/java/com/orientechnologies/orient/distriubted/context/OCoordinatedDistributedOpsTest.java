@@ -56,7 +56,8 @@ public class OCoordinatedDistributedOpsTest {
   public void baseSuccess() {
     TestAction action = new TestAction();
     ONodeId nodeId = newRandomNodeId();
-    OCoordinatedDistributedOps ops = new OCoordinatedDistributedOpsImpl(nodeId, 2);
+    OGroupId groupId = newRandomGroupId();
+    OCoordinatedDistributedOps ops = new OCoordinatedDistributedOpsImpl(nodeId, groupId, 2);
     ops.registerNode(nodeId, 0);
     ONodeId nodeIdtwo = newRandomNodeId();
     ops.registerNode(nodeIdtwo, 0);
@@ -75,9 +76,9 @@ public class OCoordinatedDistributedOpsTest {
   public void baseFail() {
     TestAction action = new TestAction();
     ONodeId nodeId = newRandomNodeId();
-    OCoordinatedDistributedOps ops = new OCoordinatedDistributedOpsImpl(nodeId, 2);
+    OGroupId groupId = newRandomGroupId();
+    OCoordinatedDistributedOps ops = new OCoordinatedDistributedOpsImpl(nodeId, groupId, 2);
     ONodeId nodeIdtwo = newRandomNodeId();
-    OGroupId groupId = new OGroupId("group");
     ops.enstablish(groupId, Set.of(nodeId, nodeIdtwo));
 
     OTransactionId txId = new OTransactionId(0, 1);
@@ -94,11 +95,11 @@ public class OCoordinatedDistributedOpsTest {
   public void baseSuccessMoreNodes() {
     TestAction action = new TestAction();
     ONodeId nodeId = newRandomNodeId();
-    OCoordinatedDistributedOps ops = new OCoordinatedDistributedOpsImpl(nodeId, 2);
+    OGroupId groupId = new OGroupId("group");
+    OCoordinatedDistributedOps ops = new OCoordinatedDistributedOpsImpl(nodeId, groupId, 2);
     ONodeId nodeIdtwo = newRandomNodeId();
     ONodeId nodeIdthree = newRandomNodeId();
     ONodeId nodeIdFour = newRandomNodeId();
-    OGroupId groupId = new OGroupId("group");
     ops.enstablish(groupId, Set.of(nodeId, nodeIdtwo, nodeIdthree, nodeIdFour));
 
     OTransactionId txId = new OTransactionId(0, 1);
@@ -119,7 +120,8 @@ public class OCoordinatedDistributedOpsTest {
   public void baseSuccessMoreNodesUregistered() {
     TestAction action = new TestAction();
     ONodeId nodeId = newRandomNodeId();
-    OCoordinatedDistributedOps ops = new OCoordinatedDistributedOpsImpl(nodeId, 2);
+    OGroupId groupId = newRandomGroupId();
+    OCoordinatedDistributedOps ops = new OCoordinatedDistributedOpsImpl(nodeId, groupId, 2);
     ops.registerNode(nodeId, 0);
     ONodeId nodeIdtwo = newRandomNodeId();
     ops.registerNode(nodeIdtwo, 0);
@@ -144,9 +146,9 @@ public class OCoordinatedDistributedOpsTest {
   public void baseFailureeNodesUregistered() throws InterruptedException, ExecutionException {
     TestAction action = new TestAction();
     ONodeId nodeId = newRandomNodeId();
-    OCoordinatedDistributedOps ops = new OCoordinatedDistributedOpsImpl(nodeId, 2);
-    ONodeId nodeIdtwo = newRandomNodeId();
     OGroupId groupId = new OGroupId("group");
+    OCoordinatedDistributedOps ops = new OCoordinatedDistributedOpsImpl(nodeId, groupId, 2);
+    ONodeId nodeIdtwo = newRandomNodeId();
     ops.enstablish(groupId, Set.of(nodeId, nodeIdtwo));
 
     OTransactionId txId = new OTransactionId(0, 1);
@@ -164,11 +166,11 @@ public class OCoordinatedDistributedOpsTest {
       throws InterruptedException, ExecutionException {
     TestAction action = new TestAction();
     ONodeId nodeId = newRandomNodeId();
-    OCoordinatedDistributedOps ops = new OCoordinatedDistributedOpsImpl(nodeId, 2);
+    OGroupId groupId = new OGroupId("group");
+    OCoordinatedDistributedOps ops = new OCoordinatedDistributedOpsImpl(nodeId, groupId, 2);
     ONodeId nodeIdtwo = newRandomNodeId();
     ONodeId nodeIdthree = newRandomNodeId();
     ONodeId nodeIdFour = newRandomNodeId();
-    OGroupId groupId = new OGroupId("group");
     ops.enstablish(groupId, Set.of(nodeId, nodeIdtwo, nodeIdthree, nodeIdFour));
 
     OTransactionId txId = new OTransactionId(0, 1);
@@ -186,7 +188,8 @@ public class OCoordinatedDistributedOpsTest {
   @Test
   public void baseNodeDiscoverEmpty() {
     ONodeId nodeId = newRandomNodeId();
-    OCoordinatedDistributedOps ops = new OCoordinatedDistributedOpsImpl(nodeId, 2);
+    OGroupId groupId = newRandomGroupId();
+    OCoordinatedDistributedOps ops = new OCoordinatedDistributedOpsImpl(nodeId, groupId, 2);
     ODiscoverAction action = ops.nodeJoinStart(nodeId, OTopologyStateNetwork.boot());
     assertTrue(action instanceof ODiscoverAction.ONoneAction);
     assertTrue(ops.getMembers().isEmpty());
@@ -195,7 +198,8 @@ public class OCoordinatedDistributedOpsTest {
   @Test
   public void baseNodeDiscoverReachQuorum() {
     ONodeId nodeId = newRandomNodeId();
-    OCoordinatedDistributedOps ops = new OCoordinatedDistributedOpsImpl(nodeId, 2);
+    OGroupId groupId = newRandomGroupId();
+    OCoordinatedDistributedOps ops = new OCoordinatedDistributedOpsImpl(nodeId, groupId, 2);
     ODiscoverAction action = ops.nodeJoinStart(nodeId, OTopologyStateNetwork.boot());
     assertTrue(action instanceof ODiscoverAction.ONoneAction);
 
@@ -214,7 +218,8 @@ public class OCoordinatedDistributedOpsTest {
   @Test
   public void nodeDiscoverAddNode() {
     ONodeId nodeId = newRandomNodeId();
-    OCoordinatedDistributedOps ops = new OCoordinatedDistributedOpsImpl(nodeId, 2);
+    OGroupId groupId = newRandomGroupId();
+    OCoordinatedDistributedOps ops = new OCoordinatedDistributedOpsImpl(nodeId, groupId, 2);
     ODiscoverAction action = ops.nodeJoinStart(nodeId, OTopologyStateNetwork.boot());
 
     assertTrue(action instanceof ODiscoverAction.ONoneAction);
@@ -239,10 +244,11 @@ public class OCoordinatedDistributedOpsTest {
 
   @Test
   public void threeNodesJoinCoordinationDefine() {
+    OGroupId groupId = newRandomGroupId();
     ONodeId nodeId1 = newRandomNodeId();
-    OCoordinatedDistributedOps node1 = new OCoordinatedDistributedOpsImpl(nodeId1, 2);
+    OCoordinatedDistributedOps node1 = new OCoordinatedDistributedOpsImpl(nodeId1, groupId, 2);
     ONodeId nodeId2 = newRandomNodeId();
-    OCoordinatedDistributedOps node2 = new OCoordinatedDistributedOpsImpl(nodeId2, 2);
+    OCoordinatedDistributedOps node2 = new OCoordinatedDistributedOpsImpl(nodeId2, groupId, 2);
     ONodeId nodeId3 = newRandomNodeId();
 
     ODiscoverAction action = node1.nodeJoinStart(nodeId1, OTopologyStateNetwork.boot());
@@ -279,10 +285,11 @@ public class OCoordinatedDistributedOpsTest {
 
   @Test
   public void threeNodesJoinCoordinationFail() {
+    OGroupId groupId = newRandomGroupId();
     ONodeId nodeId1 = newRandomNodeId();
-    OCoordinatedDistributedOps node1 = new OCoordinatedDistributedOpsImpl(nodeId1, 2);
+    OCoordinatedDistributedOps node1 = new OCoordinatedDistributedOpsImpl(nodeId1, groupId, 2);
     ONodeId nodeId2 = newRandomNodeId();
-    OCoordinatedDistributedOps node2 = new OCoordinatedDistributedOpsImpl(nodeId2, 2);
+    OCoordinatedDistributedOps node2 = new OCoordinatedDistributedOpsImpl(nodeId2, groupId, 2);
     ONodeId nodeId3 = newRandomNodeId();
 
     ODiscoverAction action = node1.nodeJoinStart(nodeId1, OTopologyStateNetwork.boot());
@@ -325,7 +332,8 @@ public class OCoordinatedDistributedOpsTest {
   @Test
   public void nodesJoinAlreadyDefinedMoreRecent() {
     ONodeId nodeId1 = newRandomNodeId();
-    OCoordinatedDistributedOps node1 = new OCoordinatedDistributedOpsImpl(nodeId1, 2);
+    OGroupId groupId = newRandomGroupId();
+    OCoordinatedDistributedOps node1 = new OCoordinatedDistributedOpsImpl(nodeId1, groupId, 2);
     ONodeId nodeId2 = newRandomNodeId();
     ONodeId nodeId3 = newRandomNodeId();
     var gid = newRandomGroupId();
@@ -357,7 +365,8 @@ public class OCoordinatedDistributedOpsTest {
   @Test
   public void nodesJoinAlreadyDefinedOutdated() {
     ONodeId nodeId1 = newRandomNodeId();
-    OCoordinatedDistributedOps node1 = new OCoordinatedDistributedOpsImpl(nodeId1, 2);
+    OGroupId groupId = newRandomGroupId();
+    OCoordinatedDistributedOps node1 = new OCoordinatedDistributedOpsImpl(nodeId1, groupId, 2);
     ONodeId nodeId2 = newRandomNodeId();
     ONodeId nodeId3 = newRandomNodeId();
     var gid = newRandomGroupId();
@@ -381,7 +390,8 @@ public class OCoordinatedDistributedOpsTest {
   @Test
   public void nodesJoinAlreadyDefinedNewNode() {
     ONodeId nodeId1 = newRandomNodeId();
-    OCoordinatedDistributedOps node1 = new OCoordinatedDistributedOpsImpl(nodeId1, 2);
+    OGroupId groupId = newRandomGroupId();
+    OCoordinatedDistributedOps node1 = new OCoordinatedDistributedOpsImpl(nodeId1, groupId, 2);
     ONodeId nodeId2 = newRandomNodeId();
     ONodeId nodeId3 = newRandomNodeId();
     var gid = newRandomGroupId();
@@ -400,7 +410,8 @@ public class OCoordinatedDistributedOpsTest {
   @Test
   public void nodesNotDefineInoreTopology() {
     ONodeId nodeId1 = newRandomNodeId();
-    OCoordinatedDistributedOps node1 = new OCoordinatedDistributedOpsImpl(nodeId1, 2);
+    OGroupId groupId = newRandomGroupId();
+    OCoordinatedDistributedOps node1 = new OCoordinatedDistributedOpsImpl(nodeId1, groupId, 2);
     ONodeId nodeId2 = newRandomNodeId();
     ONodeId nodeId3 = newRandomNodeId();
     var gid = newRandomGroupId();
@@ -421,7 +432,8 @@ public class OCoordinatedDistributedOpsTest {
   @Test
   public void nodesBootGetDefinedTopology() {
     ONodeId nodeId1 = newRandomNodeId();
-    OCoordinatedDistributedOps node1 = new OCoordinatedDistributedOpsImpl(nodeId1, 2);
+    OGroupId groupId = newRandomGroupId();
+    OCoordinatedDistributedOps node1 = new OCoordinatedDistributedOpsImpl(nodeId1, groupId, 2);
     ONodeId nodeId2 = newRandomNodeId();
     var gid = newRandomGroupId();
     node1.load(new ONodeStateStore(Optional.empty(), OTopologyState.BOOT, new HashSet<>(), 0, 0));

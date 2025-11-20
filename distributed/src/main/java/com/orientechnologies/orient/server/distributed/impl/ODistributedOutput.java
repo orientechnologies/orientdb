@@ -27,8 +27,11 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.transaction.ODatabaseId;
+import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.distributed.ONodeConfig;
 import com.orientechnologies.orient.distributed.ONodeListenerConfig;
+import com.orientechnologies.orient.distributed.context.ODatabasesTopologyState;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
@@ -129,6 +132,64 @@ public class ODistributedOutput {
             buffer.append(manager.getDatabaseStatus(serverName, dbName));
             buffer.append(" (");
             buffer.append(dbCfg.getServerRole(serverName));
+            buffer.append(")");
+
+            if (serverNum++ == 0)
+              // ADD THE 1ST DB IT IN THE SERVER ROW
+              serverRow.field("Databases", buffer.toString());
+            else
+              // ADD IN A SEPARATE ROW
+              rows.add(new ODocument().field("Databases", buffer.toString()));
+          }
+        }
+      }
+
+    final StringBuilder buffer = new StringBuilder();
+    final OTableFormatter table =
+        new OTableFormatter(
+            new OTableFormatter.OTableOutput() {
+              @Override
+              public void onMessage(final String text, final Object... args) {
+                buffer.append(String.format(text, args));
+              }
+            });
+    table.setColumnHidden("#");
+    table.writeRecords(rows, -1);
+    buffer.append("\n");
+    return buffer.toString();
+  }
+
+  public static String formatServerStatus(final OrientDBDistributed distr) {
+    final List<OIdentifiable> rows = new ArrayList<OIdentifiable>();
+
+    final Collection<ONodeId> members = distr.getNodeState().getNetworkMemebers();
+
+    if (members != null)
+      for (ONodeId m : members) {
+        if (m == null) continue;
+
+        final ODocument serverRow = new ODocument();
+
+        final String serverName = m.getNode();
+
+        String serverLabel = serverName;
+        if (distr.getNodeName().equals(serverName)) serverLabel += "(*)";
+
+        serverRow.field("Name", serverLabel);
+        serverRow.field("Databases", (String) null);
+        rows.add(serverRow);
+        ODatabasesTopologyState databaseTopology = distr.getNodeState().getDatabaseTopology();
+        final Collection<ODatabaseId> databases = databaseTopology.getDatabases();
+        if (databases != null) {
+          int serverNum = 0;
+          for (ODatabaseId dbId : databases) {
+            final StringBuilder buffer = new StringBuilder();
+
+            buffer.append(databaseTopology.getDatabaseName(dbId));
+            buffer.append("=");
+            buffer.append(databaseTopology.getDatabaseStatus(m, dbId));
+            buffer.append(" (");
+            buffer.append(databaseTopology.getNodeRole(m, dbId));
             buffer.append(")");
 
             if (serverNum++ == 0)

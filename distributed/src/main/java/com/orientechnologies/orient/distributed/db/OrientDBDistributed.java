@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEngine.OBackupType;
 import com.orientechnologies.orient.core.transaction.ODatabaseId;
+import com.orientechnologies.orient.core.transaction.OGroupId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.distributed.context.ODatabaseState;
@@ -65,6 +66,7 @@ import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDis
 import com.orientechnologies.orient.server.distributed.impl.ODistributedConfigurationManager;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseImpl;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedMessageServiceImpl;
+import com.orientechnologies.orient.server.distributed.impl.ODistributedOutput;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedPlugin;
 import com.orientechnologies.orient.server.distributed.impl.ONewDeltaSyncImporter;
 import com.orientechnologies.orient.server.distributed.impl.ORemoteServerManager;
@@ -119,11 +121,15 @@ public class OrientDBDistributed extends OrientDBEmbedded
     this.server = server;
   }
 
-  public void initDistributed(String nodeName, ORemoteServerAvailabilityCheck check) {
+  public void initDistributed(
+      String nodeName, String groupIdPar, ORemoteServerAvailabilityCheck check) {
     this.nodeName = nodeName;
+    // TODO: resolve groupId and minimum quorum;
+    int miminumQuorum = 2;
     ONodeId nodeId = new ONodeId(nodeName);
+    OGroupId groupId = new OGroupId(groupIdPar);
     OSystemStateStore store = new OSystemStateStore(getSystemDatabase());
-    this.nodeState = new ONodeState(nodeId, 1, store, this);
+    this.nodeState = new ONodeState(nodeId, groupId, miminumQuorum, store, this);
     this.remoteServerManager = new ORemoteServerManager(nodeName, check);
     ODiscoverAction action = this.nodeState.initFromStore();
     action.execute(this);
@@ -131,7 +137,14 @@ public class OrientDBDistributed extends OrientDBEmbedded
 
   @Override
   public void onStateChange(ODatabaseId dbId, ONodeId nodeId, ODatabaseState state) {
-    execute(() -> syncIfNeeded(dbId));
+    if (ODatabaseState.Online.equals(state) && !getNodeId().equals(nodeId)) {
+      execute(() -> syncIfNeeded(dbId));
+    }
+    dumpNodeInfo();
+  }
+
+  private void dumpNodeInfo() {
+    logger.info("current status:\n%s", ODistributedOutput.formatServerStatus(this));
   }
 
   private void syncIfNeeded(ODatabaseId dbId) {
@@ -401,7 +414,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   private void dropFlow(String name) {
-    distributedOperation(new ODropDbMessage(name));
+    resultOperation(new ODropDbMessage(name));
   }
 
   public void sendMessage(Set<ONodeId> set, OStructuralMessage op) {
@@ -414,6 +427,8 @@ public class OrientDBDistributed extends OrientDBEmbedded
         ORemoteServerController rem = remote.getRemoteServer(node.getNode());
         if (rem != null) {
           rem.sendMessage(message);
+        } else {
+          logger.warn("Node %s offline could not send message", node);
         }
       }
     }
@@ -623,12 +638,12 @@ public class OrientDBDistributed extends OrientDBEmbedded
 
   private void declareDatabaseFlow(String name, ODatabaseId dbId) {
     Set<ONodeId> currentMembers = getNodeState().getNetworkMemebers();
-    distributedOperation(new ODeclareDbMessage(name, dbId, currentMembers, 0));
+    resultOperation(new ODeclareDbMessage(name, dbId, currentMembers, 0));
   }
 
   private void setDatabaseStatus(ODatabaseId dbId, ONodeId node, ODatabaseState state) {
     long version = this.getNodeState().getDatabaseTopology().getDatabaseVersion(dbId);
-    distributedOperation(new OSetDatabaseState(dbId, node, state, version + 1));
+    resultOperation(new OSetDatabaseState(dbId, node, state, version + 1));
   }
 
   private ODatabaseState getDatabaseStatus(ODatabaseId dbId, ONodeId node) {
@@ -784,7 +799,13 @@ public class OrientDBDistributed extends OrientDBEmbedded
     return messageService;
   }
 
-  public Optional<OAcceptResult> distributedOperation(OOperationMessage operation) {
+  public void distributedOperation(OOperationMessage operation) {
+    var start = getNodeState().start(new OStandardCompleteAction(this));
+    OProposeOp propose = new OProposeOp(start.promise(), operation);
+    sendMessage(start.nodes(), propose);
+  }
+
+  public Optional<OAcceptResult> resultOperation(OOperationMessage operation) {
     var start = getNodeState().start(new OStandardCompleteAction(this));
     OProposeOp propose = new OProposeOp(start.promise(), operation);
     sendMessage(start.nodes(), propose);
@@ -812,17 +833,24 @@ public class OrientDBDistributed extends OrientDBEmbedded
   public void firstConnect(ONodeId nodeId, ONodeStateNetwork state) {
     ONodeState localState = getNodeState();
     ODiscoverAction action = localState.nodeJoinStart(nodeId, state);
-    action.execute(this);
+    execute(
+        () -> {
+          action.execute(this);
+        });
+    dumpNodeInfo();
   }
 
-  public void connected(ONodeId node) {
-    sendFirstConnect(node);
+  public void connected(ONodeId node, String url, String user, String password) {
+    try {
+      connectRemoteServer(node.getNode(), url, user, password);
+      sendFirstConnect(node);
+    } catch (IOException e) {
+      logger.warn("failing to connect to remote node %s", node.getNode(), e);
+    }
   }
 
   private void sendFirstConnect(ONodeId nodeId) {
-    ONodeStateNetwork st = getNodeState().getNetworkState();
-    this.sendMessage(
-        Collections.singleton(nodeId), new ONodeFirstConnect(getNodeState().getNodeId(), st));
+    sendFirstConnects(Collections.singleton(nodeId));
   }
 
   public void registerNode(ONodeId node, long version) {
@@ -1068,10 +1096,26 @@ public class OrientDBDistributed extends OrientDBEmbedded
   public int getOnlineMasters(String databaseName) {
     ODatabasesTopologyState databaseTopology = getNodeState().getDatabaseTopology();
     Optional<ODatabaseId> id = databaseTopology.getDatabaseId(databaseName);
+    if (id.isPresent()) {
+      return (int)
+          databaseTopology.getOnlineNodes(id.get()).stream()
+              .filter((x) -> databaseTopology.isMain(id.get(), x))
+              .count();
+    } else {
+      return 0;
+    }
+  }
 
-    return (int)
-        databaseTopology.getOnlineNodes(id.get()).stream()
-            .filter((x) -> databaseTopology.isMain(id.get(), x))
-            .count();
+  public void enstablish(OGroupId groupId, Set<ONodeId> candidates) {
+    Set<ONodeId> allNodes = getNodeState().enstablish(groupId, candidates);
+    for (ONodeId node : allNodes) {
+      sendFirstConnect(node);
+    }
+    dumpNodeInfo();
+  }
+
+  public void sendFirstConnects(Set<ONodeId> nodes) {
+    ONodeStateNetwork st = getNodeState().getNetworkState();
+    this.sendMessage(nodes, new ONodeFirstConnect(getNodeState().getNodeId(), st));
   }
 }

@@ -17,6 +17,8 @@ import com.hazelcast.core.MemberAttributeEvent;
 import com.hazelcast.core.MembershipEvent;
 import com.hazelcast.core.MembershipListener;
 import com.hazelcast.spi.exception.RetryableHazelcastException;
+import com.orientechnologies.common.concur.lock.OInterruptedException;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.util.OCallable;
@@ -1102,7 +1104,43 @@ public class OHazelcastClusterMetadataManager
       return;
 
     if (activeNodes.putIfAbsent(joinedNodeName, member) == null) {
-      if (!distributedPlugin.onNodeJoining(joinedNodeName)) {
+      String url = null;
+      String userPassword = null;
+      for (int retry = 0; retry < 20; ++retry) {
+        ONodeConfig cfg = getNodeConfigurationByUuid(member.getUuid(), false);
+        if (cfg == null || cfg.getListeners() == null) {
+          try {
+            Thread.sleep(100);
+            continue;
+
+          } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw OException.wrapException(
+                new ODistributedException("Cannot find node '" + joinedNodeName + "'"), e);
+          }
+        }
+
+        url = ODistributedPlugin.getListeningBinaryAddress(cfg);
+        userPassword = cfg.getReplicator();
+
+        if (url != null && userPassword != null) {
+          break;
+        }
+
+        // RETRY TO GET USR+PASSWORD IN A WHILE
+        try {
+          Thread.sleep(100);
+        } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
+          throw OException.wrapException(
+              new OInterruptedException("Cannot connect to remote server " + joinedNodeName), e);
+        }
+      }
+      if (url == null || userPassword == null) {
+        return;
+      }
+
+      if (!distributedPlugin.onNodeJoining(joinedNodeName, url, userPassword)) {
         // DENY JOIN
         logger.infoIn(
             nodeName,

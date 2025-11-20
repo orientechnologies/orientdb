@@ -24,7 +24,7 @@ public class OEnstablishTopology implements OOperationMessage {
 
   @Override
   public void apply(OrientDBDistributed ctx, OTransactionIdPromise promise) {
-    ctx.getNodeState().enstablish(groupId, candidates);
+    ctx.enstablish(groupId, candidates);
   }
 
   @Override
