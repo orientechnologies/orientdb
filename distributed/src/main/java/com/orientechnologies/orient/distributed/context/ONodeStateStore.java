@@ -6,24 +6,19 @@ import com.orientechnologies.orient.core.transaction.OGroupId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.distributed.context.topology.OTopologyState;
 import java.util.Collection;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
 public class ONodeStateStore {
 
-  private final Optional<OGroupId> groupId;
+  private final OGroupId groupId;
   private final OTopologyState state;
   private final Set<ONodeId> members;
   private final long version;
   private final int quorum;
 
   public ONodeStateStore(
-      Optional<OGroupId> groupId,
-      OTopologyState state,
-      Set<ONodeId> members,
-      int quorum,
-      long version) {
+      OGroupId groupId, OTopologyState state, Set<ONodeId> members, int quorum, long version) {
     super();
     this.groupId = groupId;
     this.state = state;
@@ -32,7 +27,7 @@ public class ONodeStateStore {
     this.version = version;
   }
 
-  public Optional<OGroupId> getGroupId() {
+  public OGroupId getGroupId() {
     return groupId;
   }
 
@@ -55,7 +50,7 @@ public class ONodeStateStore {
   public static ONodeStateStore fromResult(OResult d) {
     assert (int) d.getProperty("serializationVersion") == 1;
     OTopologyState state = OTopologyState.valueOf(d.getProperty("state"));
-    Optional<OGroupId> networkId = Optional.of(OGroupId.readResult(d.getProperty("groupId")));
+    OGroupId networkId = OGroupId.readResult(d.getProperty("groupId"));
     Set<ONodeId> members =
         ((Collection<OResult>) d.getProperty("members"))
             .stream().map((e) -> ONodeId.readResult(e)).collect(Collectors.toSet());
@@ -67,7 +62,7 @@ public class ONodeStateStore {
   public void toElement(OElement el) {
     el.setProperty("serializationVersion", 1);
     el.setProperty("state", state.name());
-    el.setProperty("groupId", groupId.orElse(null));
+    el.setProperty("groupId", groupId.toDocument());
     el.setProperty("quorum", quorum);
     el.setProperty(
         "members", this.members.stream().map((x) -> x.toDocument()).collect(Collectors.toSet()));

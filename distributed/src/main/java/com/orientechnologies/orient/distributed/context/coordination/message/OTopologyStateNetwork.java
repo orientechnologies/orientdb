@@ -8,7 +8,6 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Optional;
 import java.util.Set;
 
 public class OTopologyStateNetwork {
@@ -16,22 +15,17 @@ public class OTopologyStateNetwork {
   private final long version;
   private final OTopologyState state;
   private final Set<ONodeId> members;
-  private Optional<OGroupId> groupId;
+  private OGroupId groupId;
 
-  public static OTopologyStateNetwork boot() {
-    return new OTopologyStateNetwork(
-        Optional.empty(), OTopologyState.BOOT, Collections.emptySet(), 0, 0);
+  public static OTopologyStateNetwork boot(OGroupId groupId) {
+    return new OTopologyStateNetwork(groupId, OTopologyState.BOOT, Collections.emptySet(), 0, 0);
   }
 
   public OTopologyStateNetwork(
-      Optional<OGroupId> groupId,
-      OTopologyState state,
-      Set<ONodeId> members,
-      int quorum,
-      long version) {
+      OGroupId groupId, OTopologyState state, Set<ONodeId> members, int quorum, long version) {
     super();
     assert (state == OTopologyState.BOOT && members.isEmpty() && version == 0)
-        || (state == OTopologyState.ESTABLISHED && groupId.isPresent());
+        || (state == OTopologyState.ESTABLISHED);
     this.groupId = groupId;
     this.state = state;
     this.members = members;
@@ -43,10 +37,11 @@ public class OTopologyStateNetwork {
     switch (state) {
       case BOOT -> {
         output.writeByte(1);
+        this.groupId.writeNetwork(output);
       }
       case ESTABLISHED -> {
         output.writeByte(2);
-        this.groupId.get().writeNetwork(output);
+        this.groupId.writeNetwork(output);
         output.writeLong(version);
         output.writeInt(quorum);
         output.writeInt(members.size());
@@ -62,8 +57,8 @@ public class OTopologyStateNetwork {
     switch (state) {
       case 1:
         {
-          return new OTopologyStateNetwork(
-              Optional.empty(), OTopologyState.BOOT, new HashSet<>(), 0, 0);
+          OGroupId networkId = OGroupId.readNetwork(input);
+          return new OTopologyStateNetwork(networkId, OTopologyState.BOOT, new HashSet<>(), 0, 0);
         }
       case 2:
         {
@@ -77,7 +72,7 @@ public class OTopologyStateNetwork {
             members.add(node);
           }
           return new OTopologyStateNetwork(
-              Optional.of(networkId), OTopologyState.ESTABLISHED, members, quorum, version);
+              networkId, OTopologyState.ESTABLISHED, members, quorum, version);
         }
       default:
         {
@@ -98,7 +93,7 @@ public class OTopologyStateNetwork {
     return version;
   }
 
-  public Optional<OGroupId> getGroupId() {
+  public OGroupId getGroupId() {
     return groupId;
   }
 

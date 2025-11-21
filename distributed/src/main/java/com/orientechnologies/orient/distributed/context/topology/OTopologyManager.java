@@ -18,7 +18,7 @@ import java.util.Set;
 public class OTopologyManager implements OTopologyEvents {
 
   private final ONodeId current;
-  private Optional<OGroupId> groupId = Optional.empty();
+  private OGroupId groupId;
   private OTopologyState state = OTopologyState.BOOT;
   private Set<ONodeId> members = Collections.unmodifiableSet(new HashSet<>());
   private Set<ONodeId> candidates = new HashSet<>();
@@ -29,7 +29,7 @@ public class OTopologyManager implements OTopologyEvents {
 
   public OTopologyManager(ONodeId current, OGroupId groupId, int minimumQuorum) {
     this.current = current;
-    this.groupId = Optional.of(groupId);
+    this.groupId = groupId;
     this.minimumQuorum = minimumQuorum;
   }
 
@@ -38,7 +38,7 @@ public class OTopologyManager implements OTopologyEvents {
     if (state == OTopologyState.BOOT) {
       addToCandidates(node);
       if (canEstablish()) {
-        return new OEstablishAction(groupId.get(), new HashSet<>(candidates));
+        return new OEstablishAction(groupId, new HashSet<>(candidates));
       }
     } else if (!hasMember(node)) {
       return new OAddNodeAction(node, version + 1);
@@ -125,8 +125,8 @@ public class OTopologyManager implements OTopologyEvents {
   }
 
   public synchronized Set<ONodeId> finalizeEnstablish(OGroupId groupId, Set<ONodeId> candidates) {
+    assert this.groupId.equals(groupId);
     this.state = OTopologyState.ESTABLISHED;
-    this.groupId = Optional.of(groupId);
     setMember(candidates);
     this.quorum = (members.size() / 2) + 1;
     Set<ONodeId> allNodes = new HashSet<>(candidates);
@@ -163,7 +163,6 @@ public class OTopologyManager implements OTopologyEvents {
           this.state = externState.getState();
           this.setMember(externState.getMembers());
           this.version = externState.getVersion();
-          this.groupId = externState.getGroupId();
         } else if (this.groupId.equals(externState.getGroupId())) {
           if (externState.getMembers().contains(current)) {
             if (externState.getVersion() > version) {
@@ -205,7 +204,7 @@ public class OTopologyManager implements OTopologyEvents {
     this.promise = false;
   }
 
-  public Optional<OGroupId> getGroupId() {
+  public OGroupId getGroupId() {
     return groupId;
   }
 }
