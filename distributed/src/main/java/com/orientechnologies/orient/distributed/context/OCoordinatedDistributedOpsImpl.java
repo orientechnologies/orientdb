@@ -55,7 +55,7 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
     }
     if (action.isPresent()) {
       CompleteInfo info = action.get();
-      info.action().failure(info.promise(), info.nodes());
+      info.action().failure(info.promise(), info.nodes(), info.result());
       completeWithResult(info.promise().getId(), info.result());
     }
   }
@@ -109,7 +109,7 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
     }
     if (action.isPresent()) {
       CompleteInfo info = action.get();
-      info.action().failure(promise, this.topology.getMembers());
+      info.action().failure(promise, this.topology.getMembers(), info.result());
       completeWithResult(promise.getId(), info.result());
     }
   }

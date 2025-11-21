@@ -39,7 +39,8 @@ public class OCoordinatedDistributedOpsTest {
     }
 
     @Override
-    public void failure(OTransactionIdPromise promise, Set<ONodeId> expected) {
+    public void failure(
+        OTransactionIdPromise promise, Set<ONodeId> expected, Optional<OAcceptResult> optional) {
       failure = true;
     }
   }
