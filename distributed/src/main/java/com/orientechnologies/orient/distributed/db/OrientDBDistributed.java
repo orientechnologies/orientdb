@@ -83,9 +83,11 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 
 /** Created by tglman on 08/08/17. */
@@ -800,17 +802,34 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   public void distributedOperation(OOperationMessage operation) {
-    var start = getNodeState().start(new OStandardCompleteAction(this));
+    sendOperation(operation, 10, 0);
+  }
+
+  private Future<Optional<OAcceptResult>> sendOperation(
+      OOperationMessage operation, int retryCountDown, int delay) {
+    var start =
+        getNodeState().start(new OStandardCompleteAction(this, operation, retryCountDown, delay));
     OProposeOp propose = new OProposeOp(start.promise(), operation);
     sendMessage(start.nodes(), propose);
+    return start.result();
+  }
+
+  public void retryOperation(OOperationMessage operation, int retryCountDown, int delay) {
+    if (retryCountDown > 0) {
+      int nextRetry = retryCountDown - 1;
+      int nexDelay = delay + new Random().nextInt(delay);
+      delayExecute(
+          () -> {
+            sendOperation(operation, nextRetry, nexDelay);
+          },
+          delay);
+    }
   }
 
   public Optional<OAcceptResult> resultOperation(OOperationMessage operation) {
-    var start = getNodeState().start(new OStandardCompleteAction(this));
-    OProposeOp propose = new OProposeOp(start.promise(), operation);
-    sendMessage(start.nodes(), propose);
+    Future<Optional<OAcceptResult>> result = sendOperation(operation, 10, 0);
     try {
-      return start.result().get();
+      return result.get();
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       throw OException.wrapException(

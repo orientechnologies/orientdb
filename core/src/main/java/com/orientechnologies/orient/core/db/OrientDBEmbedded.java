@@ -925,6 +925,22 @@ public class OrientDBEmbedded implements OrientDBInternal {
     timer.schedule(task, delay);
   }
 
+  /** Execute a task on executor after a delay
+   *
+   * @param toExecuted
+   * @param delay
+   */
+  public void delayExecute(Runnable toExecuted, long delay) {
+    TimerTask tt =
+        new TimerTask() {
+          @Override
+          public void run() {
+            execute(toExecuted);
+          }
+        };
+    timer.schedule(tt, delay);
+  }
+
   @Override
   public <X> Future<X> execute(String database, String user, ODatabaseTask<X> task) {
     return executor.submit(

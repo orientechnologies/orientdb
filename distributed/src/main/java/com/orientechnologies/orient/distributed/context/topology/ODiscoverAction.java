@@ -29,11 +29,12 @@ public sealed interface ODiscoverAction
 
     @Override
     public void execute(OrientDBDistributed context) {
+      OEnstablishTopology operation = new OEnstablishTopology(groupId(), candidates());
       OTransactionIdPromise promise =
           context
               .getNodeState()
-              .startEnstablish(this.candidates(), new OStandardCompleteAction(context));
-      OEnstablishTopology operation = new OEnstablishTopology(groupId(), candidates());
+              .startEnstablish(
+                  this.candidates(), new OStandardCompleteAction(context, operation, 0, 0));
       context.sendMessage(candidates(), new OProposeOp(promise, operation));
     }
   }
