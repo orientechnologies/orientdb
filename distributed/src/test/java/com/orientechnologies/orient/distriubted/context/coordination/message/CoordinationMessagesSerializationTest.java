@@ -35,7 +35,6 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import org.junit.Test;
@@ -120,9 +119,10 @@ public class CoordinationMessagesSerializationTest {
   @Test
   public void firstConnectTest() throws IOException {
 
+    var groupId = newGroupId();
     ONodeId nodeId = newNodeId();
     OTopologyStateNetwork net =
-        new OTopologyStateNetwork(Optional.empty(), OTopologyState.BOOT, new HashSet<>(), 0, 0);
+        new OTopologyStateNetwork(groupId, OTopologyState.BOOT, new HashSet<>(), 0, 0);
 
     ONodeStateNetwork network = new ONodeStateNetwork(net, Collections.emptyList());
     ONodeFirstConnect succ = new ONodeFirstConnect(nodeId, network);
@@ -133,11 +133,9 @@ public class CoordinationMessagesSerializationTest {
     OTopologyStateNetwork topology = read.getState().getTopology();
     assertEquals(topology.getState(), OTopologyState.BOOT);
     assertEquals(topology.getVersion(), 0);
-    assertTrue(topology.getGroupId().isEmpty());
     assertTrue(topology.getMembers().isEmpty());
     Set<ONodeId> nodes = Set.of(newNodeId(), newNodeId());
-    var groupId = newGroupId();
-    net = new OTopologyStateNetwork(Optional.of(groupId), OTopologyState.ESTABLISHED, nodes, 2, 10);
+    net = new OTopologyStateNetwork(groupId, OTopologyState.ESTABLISHED, nodes, 2, 10);
     network = new ONodeStateNetwork(net, Collections.emptyList());
     succ = new ONodeFirstConnect(nodeId, network);
 
@@ -148,7 +146,7 @@ public class CoordinationMessagesSerializationTest {
     assertEquals(topology2.getState(), OTopologyState.ESTABLISHED);
     assertEquals(topology2.getVersion(), 10);
     assertEquals(topology2.getMembers(), nodes);
-    assertEquals(topology2.getGroupId().get(), groupId);
+    assertEquals(topology2.getGroupId(), groupId);
   }
 
   @Test
