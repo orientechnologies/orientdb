@@ -11,4 +11,6 @@ public interface OCompleteAction {
   void success(OTransactionIdPromise promise, Set<ONodeId> all);
 
   void failure(OTransactionIdPromise promise, Set<ONodeId> all, Optional<OAcceptResult> optional);
+
+  void complete(OTransactionIdPromise promise, Set<ONodeId> nodes, Optional<OAcceptResult> result);
 }
