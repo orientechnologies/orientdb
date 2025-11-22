@@ -807,11 +807,12 @@ public class OrientDBDistributed extends OrientDBEmbedded
 
   private Future<Optional<OAcceptResult>> sendOperation(
       OOperationMessage operation, int retryCountDown, int delay) {
-    var start =
-        getNodeState().start(new OStandardCompleteAction(this, operation, retryCountDown, delay));
+    OStandardCompleteAction action =
+        new OStandardCompleteAction(this, operation, retryCountDown, delay);
+    var start = getNodeState().start(action);
     OProposeOp propose = new OProposeOp(start.promise(), operation);
     sendMessage(start.nodes(), propose);
-    return start.result();
+    return action.getResult();
   }
 
   public void retryOperation(OOperationMessage operation, int retryCountDown, int delay) {

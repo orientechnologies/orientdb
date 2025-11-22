@@ -2,7 +2,6 @@ package com.orientechnologies.orient.distributed.context;
 
 import com.orientechnologies.orient.core.transaction.OGroupId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
-import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.distributed.context.OResponseCollector.CompleteInfo;
 import com.orientechnologies.orient.distributed.context.coordination.message.OTopologyStateNetwork;
@@ -17,15 +16,12 @@ import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 
 public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOps {
 
   private OTopologyManager topology;
 
   private final Map<OTransactionIdPromise, OResponseCollector> coordination = new HashMap<>();
-  private final Map<OTransactionId, CompletableFuture<Optional<OAcceptResult>>> completion =
-      new HashMap<>();
 
   public OCoordinatedDistributedOpsImpl(ONodeId current, OGroupId groupId, int quorum) {
     topology = new OTopologyManager(current, groupId, quorum);
@@ -48,7 +44,7 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
       while (iterator.hasNext()) {
         OResponseCollector coll = iterator.next();
         action = coll.disconnected(node);
-        if (coll.isFinished()) {
+        if (coll.isTotallyFinished()) {
           iterator.remove();
         }
       }
@@ -56,7 +52,6 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
     if (action.isPresent()) {
       CompleteInfo info = action.get();
       info.action().failure(info.promise(), info.nodes(), info.result());
-      completeWithResult(info.promise().getId(), info.result());
     }
   }
 
@@ -70,9 +65,7 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
     }
     Set<ONodeId> nodes = Collections.unmodifiableSet(new HashSet<>(topology.getMembers()));
     coordination.put(promise, new OResponseCollector(action, promise, topology.getQuorum(), nodes));
-    CompletableFuture<Optional<OAcceptResult>> future = new CompletableFuture<>();
-    completion.put(promise.getId(), future);
-    return new OOperationStart(promise, nodes, future);
+    return new OOperationStart(promise, nodes);
   }
 
   @Override
@@ -82,7 +75,7 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
       OResponseCollector coll = coordination.get(promise);
       if (coll != null) {
         action = coll.receive(node);
-        if (coll.isFinished()) {
+        if (coll.isTotallyFinished()) {
           coordination.remove(promise);
         }
       }
@@ -102,7 +95,7 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
       OResponseCollector coll = coordination.get(promise);
       if (coll != null) {
         action = coll.fail(node, acceptResult);
-        if (coll.isFinished()) {
+        if (coll.isTotallyFinished()) {
           coordination.remove(promise);
         }
       }
@@ -110,21 +103,24 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
     if (action.isPresent()) {
       CompleteInfo info = action.get();
       info.action().failure(promise, this.topology.getMembers(), info.result());
-      completeWithResult(promise.getId(), info.result());
     }
   }
 
-  private synchronized void completeWithResult(
-      OTransactionId complete, Optional<OAcceptResult> result) {
-    CompletableFuture<Optional<OAcceptResult>> future = this.completion.remove(complete);
-    if (future != null) {
-      // if called twice is not there, is already complete
-      future.complete(result);
+  public void completeExecution(OTransactionIdPromise promise) {
+    Optional<CompleteInfo> action = Optional.empty();
+    synchronized (this) {
+      OResponseCollector coll = coordination.get(promise);
+      if (coll != null) {
+        action = coll.applied();
+        if (coll.isTotallyFinished()) {
+          coordination.remove(promise);
+        }
+      }
     }
-  }
-
-  public void completeExecution(OTransactionId complete) {
-    completeWithResult(complete, Optional.empty());
+    if (action.isPresent()) {
+      CompleteInfo info = action.get();
+      info.action().complete(info.promise(), info.nodes(), info.result());
+    }
   }
 
   @Override

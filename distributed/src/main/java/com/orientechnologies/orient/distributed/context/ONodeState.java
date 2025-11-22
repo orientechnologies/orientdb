@@ -142,7 +142,7 @@ public class ONodeState {
 
   public void complete(OTransactionIdPromise promise) {
     finalize(promise);
-    this.coordinated.completeExecution(promise.getId());
+    this.coordinated.completeExecution(promise);
     this.state.complete(promise.getId());
   }
 

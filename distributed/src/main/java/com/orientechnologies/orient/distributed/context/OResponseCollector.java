@@ -28,6 +28,7 @@ public class OResponseCollector {
   private final Set<ONodeId> lost = new HashSet<>();
   private final Set<ONodeId> failure = new HashSet<>();
   private final Map<OAcceptResult, Integer> results = new HashMap<>();
+  private boolean applied = false;
 
   public OResponseCollector(
       OCompleteAction action, OTransactionIdPromise promise, int quorum, Set<ONodeId> activeNodes) {
@@ -59,6 +60,14 @@ public class OResponseCollector {
 
   public boolean isFinished() {
     return expected.size() == success.size() + lost.size() + failure.size();
+  }
+
+  public boolean isTotallyFinished() {
+    if (hasSuccessQuorum()) {
+      return isFinished() && applied;
+    } else {
+      return isFinished();
+    }
   }
 
   public boolean isFinishedNotQuorum() {
@@ -115,5 +124,11 @@ public class OResponseCollector {
       }
     }
     return new OQuorumNotReached(this.results.keySet());
+  }
+
+  public Optional<CompleteInfo> applied() {
+    applied = true;
+    OAcceptResult result = computeResult();
+    return Optional.of(new CompleteInfo(action, promise, expected, Optional.of(result)));
   }
 }

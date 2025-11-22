@@ -2,7 +2,6 @@ package com.orientechnologies.orient.distributed.context;
 
 import com.orientechnologies.orient.core.transaction.OGroupId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
-import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.distributed.context.coordination.message.OTopologyStateNetwork;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
@@ -20,7 +19,7 @@ public interface OCoordinatedDistributedOps {
 
   void failure(ONodeId node, OTransactionIdPromise promise, OAcceptResult acceptResult);
 
-  void completeExecution(OTransactionId complete);
+  void completeExecution(OTransactionIdPromise promise);
 
   // Methods for coordinations of operations to add and remove nodes
 
