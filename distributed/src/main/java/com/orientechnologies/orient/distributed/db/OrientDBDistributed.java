@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.OGroupId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
+import com.orientechnologies.orient.distributed.context.OCompleteAction;
 import com.orientechnologies.orient.distributed.context.ODatabaseState;
 import com.orientechnologies.orient.distributed.context.ODatabaseStateChangeListener;
 import com.orientechnologies.orient.distributed.context.ODatabasesTopologyState;
@@ -83,11 +84,9 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
-import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 
 /** Created by tglman on 08/08/17. */
@@ -802,35 +801,41 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   public void distributedOperation(OOperationMessage operation) {
-    sendOperation(operation, 10, 0);
+    OStandardCompleteAction action = newCompleteAction(operation);
+    sendOperation(operation, action);
   }
 
-  private Future<Optional<OAcceptResult>> sendOperation(
-      OOperationMessage operation, int retryCountDown, int delay) {
-    OStandardCompleteAction action =
-        new OStandardCompleteAction(this, operation, retryCountDown, delay);
+  public OStandardCompleteAction newCompleteAction(OOperationMessage operation) {
+    int retryCountDown =
+        getConfigurations()
+            .getConfigurations()
+            .getValueAsInteger(OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY);
+    int delay =
+        getConfigurations()
+            .getConfigurations()
+            .getValueAsInteger(OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_AUTORETRY_DELAY);
+    return new OStandardCompleteAction(this, operation, retryCountDown, delay);
+  }
+
+  private void sendOperation(OOperationMessage operation, OCompleteAction action) {
     var start = getNodeState().start(action);
     OProposeOp propose = new OProposeOp(start.promise(), operation);
     sendMessage(start.nodes(), propose);
-    return action.getResult();
   }
 
-  public void retryOperation(OOperationMessage operation, int retryCountDown, int delay) {
-    if (retryCountDown > 0) {
-      int nextRetry = retryCountDown - 1;
-      int nexDelay = delay + new Random().nextInt(delay);
-      delayExecute(
-          () -> {
-            sendOperation(operation, nextRetry, nexDelay);
-          },
-          delay);
-    }
+  public void retryOperation(OOperationMessage operation, OCompleteAction action, int delay) {
+    delayExecute(
+        () -> {
+          sendOperation(operation, action);
+        },
+        delay);
   }
 
   public Optional<OAcceptResult> resultOperation(OOperationMessage operation) {
-    Future<Optional<OAcceptResult>> result = sendOperation(operation, 10, 0);
+    OStandardCompleteAction action = newCompleteAction(operation);
+    sendOperation(operation, action);
     try {
-      return result.get();
+      return action.getResult().get();
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       throw OException.wrapException(
