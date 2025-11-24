@@ -4417,7 +4417,7 @@ public abstract class OAbstractPaginatedStorage
               cluster,
               OStorageClusterConfiguration.STATUS.valueOf(stringValue.toUpperCase()));
         }
-        //noinspection deprecation
+      //noinspection deprecation
       case ENCRYPTION:
         throw new UnsupportedOperationException(
             "Encryption should be configured on storage level.");
@@ -4629,12 +4629,12 @@ public abstract class OAbstractPaginatedStorage
     final int v = version.get();
 
     switch (v) {
-        // DOCUMENT UPDATE, NO VERSION CONTROL
+      // DOCUMENT UPDATE, NO VERSION CONTROL
       case -1:
         iDatabaseVersion.incrementAndGet();
         break;
 
-        // DOCUMENT UPDATE, NO VERSION CONTROL, NO VERSION UPDATE
+      // DOCUMENT UPDATE, NO VERSION CONTROL, NO VERSION UPDATE
       case -2:
         break;
 

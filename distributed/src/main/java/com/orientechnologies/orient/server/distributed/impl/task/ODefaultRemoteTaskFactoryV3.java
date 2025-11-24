@@ -72,7 +72,7 @@ public class ODefaultRemoteTaskFactoryV3 implements ORemoteTaskFactory {
       case OEnterpriseStatsTask.FACTORYID: // 29
         return new OEnterpriseStatsTask();
 
-        // --- here starts V2 ----
+      // --- here starts V2 ----
 
       case ORunQueryExecutionPlanTask.FACTORYID: // 40
         return new ORunQueryExecutionPlanTask();
