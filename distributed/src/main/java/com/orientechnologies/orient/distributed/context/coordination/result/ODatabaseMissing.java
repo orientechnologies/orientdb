@@ -7,11 +7,6 @@ import java.io.IOException;
 public class ODatabaseMissing implements OAcceptResult {
 
   @Override
-  public boolean canRetry() {
-    return false;
-  }
-
-  @Override
   public void serialize(DataOutput out) throws IOException {}
 
   @Override

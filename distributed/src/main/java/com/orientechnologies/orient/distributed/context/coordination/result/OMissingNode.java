@@ -7,7 +7,7 @@ import java.io.IOException;
 public class OMissingNode implements OAcceptResult {
 
   @Override
-  public boolean canRetry() {
+  public boolean executeRetry() {
     return true;
   }
 

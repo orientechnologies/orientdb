@@ -7,7 +7,7 @@ import java.io.IOException;
 public class OInvalidSequential implements OAcceptResult {
 
   @Override
-  public boolean canRetry() {
+  public boolean consensusRetry() {
     return true;
   }
 
