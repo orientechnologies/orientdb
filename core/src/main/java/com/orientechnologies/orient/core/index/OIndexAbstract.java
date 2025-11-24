@@ -45,7 +45,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageTransactionIndexChange;
-import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges.OPERATION;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import java.lang.reflect.InvocationTargetException;
@@ -220,7 +219,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
       }
       indexMetadata.setVersion(im.getVersion());
       indexId = storage.addIndexEngine(indexMetadata, engineProperties);
-      apiVersion = OAbstractPaginatedStorage.extractEngineAPIVersion(indexId);
+      apiVersion = storage.getIndexApiVersion(indexId);
 
       assert indexId >= 0;
       assert apiVersion >= 0;
@@ -244,7 +243,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
 
   protected void doReloadIndexEngine() {
     indexId = storage.loadIndexEngine(im);
-    apiVersion = OAbstractPaginatedStorage.extractEngineAPIVersion(indexId);
+    apiVersion = storage.getIndexApiVersion(indexId);
 
     if (indexId < 0) {
       throw new IllegalStateException("Index " + im.getName() + " can not be loaded");
@@ -260,7 +259,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
 
       try {
         indexId = storage.loadIndexEngine(im);
-        apiVersion = OAbstractPaginatedStorage.extractEngineAPIVersion(indexId);
+        apiVersion = storage.getIndexApiVersion(indexId);
         if (indexId == -1) {
           return false;
         }
@@ -451,7 +450,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
         engineProperties.put("partitions", Integer.toString(im.getClustersToIndex().size()));
       }
       indexId = storage.addIndexEngine(indexMetadata, engineProperties);
-      apiVersion = OAbstractPaginatedStorage.extractEngineAPIVersion(indexId);
+      apiVersion = storage.getIndexApiVersion(indexId);
 
     } catch (Exception e) {
       try {

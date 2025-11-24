@@ -398,6 +398,8 @@ public interface OStorage extends OStorageInfo {
 
   UUID getUuid();
 
+  int getIndexApiVersion(int indexId);
+
   /**
    * Executes a backup of the database. During the backup the database will be frozen in read-only
    * mode.

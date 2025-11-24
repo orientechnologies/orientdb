@@ -6373,4 +6373,9 @@ public abstract class OAbstractPaginatedStorage
       throw OException.wrapException(new ODatabaseException("Error during ridbag creation"), e);
     }
   }
+
+  @Override
+  public int getIndexApiVersion(int indexId) {
+    return extractEngineAPIVersion(indexId);
+  }
 }
