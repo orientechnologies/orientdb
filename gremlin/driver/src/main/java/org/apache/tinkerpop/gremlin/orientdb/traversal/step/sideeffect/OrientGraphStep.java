@@ -38,7 +38,7 @@ import org.apache.tinkerpop.gremlin.util.function.TriFunction;
 import org.apache.tinkerpop.gremlin.util.iterator.IteratorUtils;
 
 public class OrientGraphStep<S, E extends Element> extends GraphStep<S, E>
-    implements HasContainerHolder {
+    implements HasContainerHolder<S, E> {
   private static final OLogger logger = OLogManager.instance().logger(OrientGraphStep.class);
 
   private static final long serialVersionUID = 8141248670294067626L;

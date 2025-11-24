@@ -34,7 +34,7 @@ public final class OrientGraphStepStrategy
 
       Step<?, ?> currentStep = orientGraphStep.getNextStep();
       while (currentStep instanceof HasContainerHolder) {
-        ((HasContainerHolder) currentStep)
+        ((HasContainerHolder<?, ?>) currentStep)
             .getHasContainers()
             .forEach(orientGraphStep::addHasContainer);
         currentStep.getLabels().forEach(orientGraphStep::addLabel);
