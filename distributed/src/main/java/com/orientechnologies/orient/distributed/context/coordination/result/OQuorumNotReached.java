@@ -15,7 +15,7 @@ public class OQuorumNotReached implements OAcceptResult {
   }
 
   @Override
-  public boolean canRetry() {
+  public boolean executeRetry() {
     return true;
   }
 

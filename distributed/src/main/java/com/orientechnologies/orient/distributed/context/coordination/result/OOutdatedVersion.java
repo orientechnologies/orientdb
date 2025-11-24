@@ -4,10 +4,11 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-public class OAlreadyEnstablishedTopologyState implements OAcceptResult {
+public class OOutdatedVersion implements OAcceptResult {
 
-  public static OAlreadyEnstablishedTopologyState fromNetwork(DataInput input) throws IOException {
-    return new OAlreadyEnstablishedTopologyState();
+  @Override
+  public boolean executeRetry() {
+    return true;
   }
 
   @Override
@@ -15,6 +16,10 @@ public class OAlreadyEnstablishedTopologyState implements OAcceptResult {
 
   @Override
   public short getType() {
-    return 3;
+    return 8;
+  }
+
+  public static OOutdatedVersion fromNetwork(DataInput input) throws IOException {
+    return new OOutdatedVersion();
   }
 }

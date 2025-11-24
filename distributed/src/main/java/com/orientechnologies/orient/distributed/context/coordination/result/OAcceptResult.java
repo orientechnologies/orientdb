@@ -7,7 +7,13 @@ import java.io.IOException;
 
 public interface OAcceptResult {
 
-  boolean canRetry();
+  default boolean executeRetry() {
+    return false;
+  }
+
+  default boolean consensusRetry() {
+    return false;
+  }
 
   static OAcceptResult readNetwork(DataInput input) throws IOException {
     return switch (input.readShort()) {
@@ -18,6 +24,7 @@ public interface OAcceptResult {
       case 5 -> OMissingNode.fromNetwork(input);
       case 6 -> OAlreadyPromised.fromNetwork(input);
       case 7 -> ODatabaseMissing.fromNetwork(input);
+      case 8 -> OOutdatedVersion.fromNetwork(input);
       default -> throw new ODistributedException("wrong accept result message type from network");
     };
   }

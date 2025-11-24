@@ -34,6 +34,9 @@ import com.orientechnologies.orient.distributed.context.ODatabaseState;
 import com.orientechnologies.orient.distributed.context.ODatabaseStateChangeListener;
 import com.orientechnologies.orient.distributed.context.ODatabasesTopologyState;
 import com.orientechnologies.orient.distributed.context.ONodeState;
+import com.orientechnologies.orient.distributed.context.ORetryInfo;
+import com.orientechnologies.orient.distributed.context.ORetryOperation;
+import com.orientechnologies.orient.distributed.context.OStandardCompleteAction;
 import com.orientechnologies.orient.distributed.context.OSyncId;
 import com.orientechnologies.orient.distributed.context.OSyncInfo;
 import com.orientechnologies.orient.distributed.context.OSyncState;
@@ -133,7 +136,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
     this.nodeState = new ONodeState(nodeId, groupId, miminumQuorum, store, this);
     this.remoteServerManager = new ORemoteServerManager(nodeName, check);
     ODiscoverAction action = this.nodeState.initFromStore();
-    action.execute(this);
+    action.execute(this, newRetryInfo());
   }
 
   @Override
@@ -415,7 +418,10 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   private void dropFlow(String name) {
-    resultOperation(new ODropDbMessage(name));
+    retryOperation(
+        (ctx, retry) -> {
+          return resultOperation(new ODropDbMessage(name), retry);
+        });
   }
 
   public void sendMessage(Set<ONodeId> set, OStructuralMessage op) {
@@ -639,12 +645,37 @@ public class OrientDBDistributed extends OrientDBEmbedded
 
   private void declareDatabaseFlow(String name, ODatabaseId dbId) {
     Set<ONodeId> currentMembers = getNodeState().getNetworkMemebers();
-    resultOperation(new ODeclareDbMessage(name, dbId, currentMembers, 0));
+    retryOperation(
+        (ctx, retry) -> {
+          return resultOperation(new ODeclareDbMessage(name, dbId, currentMembers, 0), retry);
+        });
+  }
+
+  public void retryOperation(ORetryOperation operation) {
+    ORetryInfo retryInfo = newRetryInfo();
+    execute(() -> retryExecution(operation, retryInfo));
+  }
+
+  private void retryExecution(ORetryOperation operation, ORetryInfo retryInfo) {
+    Optional<OAcceptResult> result = operation.execute(this, retryInfo);
+    if (result.isPresent() && result.get().executeRetry()) {
+      var retry = retryInfo.nextRetry();
+      if (retry.isPresent()) {
+        delayExecute(
+            () -> {
+              retryExecution(operation, retryInfo);
+            },
+            retry.get());
+      }
+    }
   }
 
   private void setDatabaseStatus(ODatabaseId dbId, ONodeId node, ODatabaseState state) {
-    long version = this.getNodeState().getDatabaseTopology().getDatabaseVersion(dbId);
-    resultOperation(new OSetDatabaseState(dbId, node, state, version + 1));
+    retryOperation(
+        (ctx, retry) -> {
+          long version = this.getNodeState().getDatabaseTopology().getDatabaseVersion(dbId);
+          return resultOperation(new OSetDatabaseState(dbId, node, state, version + 1), retry);
+        });
   }
 
   private ODatabaseState getDatabaseStatus(ODatabaseId dbId, ONodeId node) {
@@ -800,12 +831,16 @@ public class OrientDBDistributed extends OrientDBEmbedded
     return messageService;
   }
 
-  public void distributedOperation(OOperationMessage operation) {
-    OStandardCompleteAction action = newCompleteAction(operation);
+  public void distributedOperation(OOperationMessage operation, ORetryInfo retry) {
+    OStandardCompleteAction action = newCompleteAction(operation, retry);
     sendOperation(operation, action);
   }
 
-  public OStandardCompleteAction newCompleteAction(OOperationMessage operation) {
+  public OStandardCompleteAction newCompleteAction(OOperationMessage operation, ORetryInfo retry) {
+    return new OStandardCompleteAction(this, operation, retry);
+  }
+
+  public ORetryInfo newRetryInfo() {
     int retryCountDown =
         getConfigurations()
             .getConfigurations()
@@ -814,7 +849,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
         getConfigurations()
             .getConfigurations()
             .getValueAsInteger(OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_AUTORETRY_DELAY);
-    return new OStandardCompleteAction(this, operation, retryCountDown, delay);
+    return new ORetryInfo(retryCountDown, delay);
   }
 
   private void sendOperation(OOperationMessage operation, OCompleteAction action) {
@@ -831,8 +866,8 @@ public class OrientDBDistributed extends OrientDBEmbedded
         delay);
   }
 
-  public Optional<OAcceptResult> resultOperation(OOperationMessage operation) {
-    OStandardCompleteAction action = newCompleteAction(operation);
+  public Optional<OAcceptResult> resultOperation(OOperationMessage operation, ORetryInfo retry) {
+    OStandardCompleteAction action = newCompleteAction(operation, retry);
     sendOperation(operation, action);
     try {
       return action.getResult().get();
@@ -858,10 +893,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
   public void firstConnect(ONodeId nodeId, ONodeStateNetwork state) {
     ONodeState localState = getNodeState();
     ODiscoverAction action = localState.nodeJoinStart(nodeId, state);
-    execute(
-        () -> {
-          action.execute(this);
-        });
+    retryOperation(action);
     dumpNodeInfo();
   }
 

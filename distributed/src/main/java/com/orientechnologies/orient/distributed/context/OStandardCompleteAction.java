@@ -1,14 +1,13 @@
-package com.orientechnologies.orient.distributed.db;
+package com.orientechnologies.orient.distributed.context;
 
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
-import com.orientechnologies.orient.distributed.context.OCompleteAction;
 import com.orientechnologies.orient.distributed.context.coordination.message.OConfirmOp;
 import com.orientechnologies.orient.distributed.context.coordination.message.OFailOp;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OOperationMessage;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
+import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import java.util.Optional;
-import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
@@ -16,17 +15,14 @@ import java.util.concurrent.Future;
 public final class OStandardCompleteAction implements OCompleteAction {
   private final OrientDBDistributed context;
   private OOperationMessage operation;
-  private int retryCountDown;
-  private int delay;
   private CompletableFuture<Optional<OAcceptResult>> result;
-  private Random random = new Random();
+  private ORetryInfo retry;
 
   public OStandardCompleteAction(
-      OrientDBDistributed context, OOperationMessage operation, int retryCountDown, int delay) {
+      OrientDBDistributed context, OOperationMessage operation, ORetryInfo retry) {
     this.context = context;
     this.operation = operation;
-    this.retryCountDown = retryCountDown;
-    this.delay = delay;
+    this.retry = retry;
     this.result = new CompletableFuture<Optional<OAcceptResult>>();
   }
 
@@ -39,12 +35,13 @@ public final class OStandardCompleteAction implements OCompleteAction {
   public void failure(
       OTransactionIdPromise promise, Set<ONodeId> all, Optional<OAcceptResult> result) {
     this.context.sendMessage(all, new OFailOp(promise));
-    if (result.isPresent() && result.get().canRetry() && retryCountDown > 0) {
-      retryCountDown--;
-      int delay = this.delay;
-      // Next retry will have longer dalay
-      this.delay = this.delay + random.nextInt(this.delay);
-      this.context.retryOperation(operation, this, delay);
+    if (result.isPresent() && result.get().executeRetry()) {
+      var delay = retry.nextRetry();
+      if (delay.isPresent()) {
+        this.context.retryOperation(operation, this, delay.get());
+      } else {
+        this.result.complete(result);
+      }
     } else {
       this.result.complete(result);
     }
