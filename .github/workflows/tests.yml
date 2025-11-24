@@ -24,7 +24,7 @@ jobs:
       matrix:
         java-version: ['19', '21', '22']
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
     - name: Set up JDK ${{matrix.java-version}} PR
       uses: actions/setup-java@v5
       with:
@@ -49,7 +49,7 @@ jobs:
       matrix:
         java-version: ['17']
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
     - name: Set up JDK ${{matrix.java-version}} PR
       if: github.event_name == 'pull_request'
       uses: actions/setup-java@v5
