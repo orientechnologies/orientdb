@@ -6,24 +6,22 @@ import com.orientechnologies.orient.distributed.context.coordination.message.OCo
 import com.orientechnologies.orient.distributed.context.coordination.message.OFailOp;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OOperationMessage;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
+import com.orientechnologies.orient.distributed.db.OCompleteExecution;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Future;
 
 public final class OStandardCompleteAction implements OCompleteAction {
   private final OrientDBDistributed context;
   private OOperationMessage operation;
-  private CompletableFuture<Optional<OAcceptResult>> result;
-  private ORetryInfo retry;
+
+  private OCompleteExecution execution;
 
   public OStandardCompleteAction(
-      OrientDBDistributed context, OOperationMessage operation, ORetryInfo retry) {
+      OrientDBDistributed context, OOperationMessage operation, OCompleteExecution execution) {
     this.context = context;
     this.operation = operation;
-    this.retry = retry;
-    this.result = new CompletableFuture<Optional<OAcceptResult>>();
+    this.execution = execution;
   }
 
   @Override
@@ -35,25 +33,21 @@ public final class OStandardCompleteAction implements OCompleteAction {
   public void failure(
       OTransactionIdPromise promise, Set<ONodeId> all, Optional<OAcceptResult> result) {
     this.context.sendMessage(all, new OFailOp(promise));
-    if (result.isPresent() && result.get().executeRetry()) {
-      var delay = retry.nextRetry();
+    if (result.isPresent() && result.get().consensusRetry()) {
+      var delay = execution.getRetryInfo().nextRetry();
       if (delay.isPresent()) {
         this.context.retryOperation(operation, this, delay.get());
       } else {
-        this.result.complete(result);
+        this.execution.complete(result);
       }
     } else {
-      this.result.complete(result);
+      this.execution.complete(result);
     }
   }
 
   @Override
   public void complete(
       OTransactionIdPromise promise, Set<ONodeId> nodes, Optional<OAcceptResult> result) {
-    this.result.complete(result);
-  }
-
-  public Future<Optional<OAcceptResult>> getResult() {
-    return result;
+    this.execution.complete(result);
   }
 }

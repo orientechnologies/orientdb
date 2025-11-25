@@ -89,7 +89,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicLong;
 
 /** Created by tglman on 08/08/17. */
@@ -136,7 +135,17 @@ public class OrientDBDistributed extends OrientDBEmbedded
     this.nodeState = new ONodeState(nodeId, groupId, miminumQuorum, store, this);
     this.remoteServerManager = new ORemoteServerManager(nodeName, check);
     ODiscoverAction action = this.nodeState.initFromStore();
-    action.execute(this, newRetryInfo());
+    action.execute(
+        this,
+        newExectution(
+            (ctx, complete) -> {
+              // no Retry;
+            }));
+  }
+
+  private OCompleteExecution newExectution(ORetryOperation operation) {
+    ORetryInfo retryInfo = newRetryInfo();
+    return new OStandardCompleteExecution(this, operation, retryInfo);
   }
 
   @Override
@@ -419,8 +428,8 @@ public class OrientDBDistributed extends OrientDBEmbedded
 
   private void dropFlow(String name) {
     retryOperation(
-        (ctx, retry) -> {
-          return resultOperation(new ODropDbMessage(name), retry);
+        (ctx, complete) -> {
+          coordinatedOperation(new ODropDbMessage(name), complete);
         });
   }
 
@@ -644,37 +653,34 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   private void declareDatabaseFlow(String name, ODatabaseId dbId) {
-    Set<ONodeId> currentMembers = getNodeState().getNetworkMemebers();
     retryOperation(
-        (ctx, retry) -> {
-          return resultOperation(new ODeclareDbMessage(name, dbId, currentMembers, 0), retry);
+        (ctx, cmplete) -> {
+          Set<ONodeId> currentMembers = getNodeState().getNetworkMemebers();
+          coordinatedOperation(new ODeclareDbMessage(name, dbId, currentMembers, 0), cmplete);
         });
   }
 
   public void retryOperation(ORetryOperation operation) {
-    ORetryInfo retryInfo = newRetryInfo();
-    execute(() -> retryExecution(operation, retryInfo));
+    OCompleteExecution exec = newExectution(operation);
+    execute(
+        () -> {
+          operation.execute(this, exec);
+        });
   }
 
-  private void retryExecution(ORetryOperation operation, ORetryInfo retryInfo) {
-    Optional<OAcceptResult> result = operation.execute(this, retryInfo);
-    if (result.isPresent() && result.get().executeRetry()) {
-      var retry = retryInfo.nextRetry();
-      if (retry.isPresent()) {
-        delayExecute(
-            () -> {
-              retryExecution(operation, retryInfo);
-            },
-            retry.get());
-      }
-    }
+  public void retryExecution(ORetryOperation operation, OCompleteExecution exec, int delay) {
+    delayExecute(
+        () -> {
+          operation.execute(this, exec);
+        },
+        delay);
   }
 
   private void setDatabaseStatus(ODatabaseId dbId, ONodeId node, ODatabaseState state) {
     retryOperation(
-        (ctx, retry) -> {
+        (ctx, complete) -> {
           long version = this.getNodeState().getDatabaseTopology().getDatabaseVersion(dbId);
-          return resultOperation(new OSetDatabaseState(dbId, node, state, version + 1), retry);
+          coordinatedOperation(new OSetDatabaseState(dbId, node, state, version + 1), complete);
         });
   }
 
@@ -831,13 +837,14 @@ public class OrientDBDistributed extends OrientDBEmbedded
     return messageService;
   }
 
-  public void distributedOperation(OOperationMessage operation, ORetryInfo retry) {
+  public void distributedOperation(OOperationMessage operation, OCompleteExecution retry) {
     OStandardCompleteAction action = newCompleteAction(operation, retry);
     sendOperation(operation, action);
   }
 
-  public OStandardCompleteAction newCompleteAction(OOperationMessage operation, ORetryInfo retry) {
-    return new OStandardCompleteAction(this, operation, retry);
+  public OStandardCompleteAction newCompleteAction(
+      OOperationMessage operation, OCompleteExecution execution) {
+    return new OStandardCompleteAction(this, operation, execution);
   }
 
   public ORetryInfo newRetryInfo() {
@@ -866,19 +873,9 @@ public class OrientDBDistributed extends OrientDBEmbedded
         delay);
   }
 
-  public Optional<OAcceptResult> resultOperation(OOperationMessage operation, ORetryInfo retry) {
-    OStandardCompleteAction action = newCompleteAction(operation, retry);
+  public void coordinatedOperation(OOperationMessage operation, OCompleteExecution execution) {
+    OCompleteAction action = newCompleteAction(operation, execution);
     sendOperation(operation, action);
-    try {
-      return action.getResult().get();
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-      throw OException.wrapException(
-          new OInterruptedException("Interrupted distributed future"), e);
-    } catch (ExecutionException e) {
-      throw OException.wrapException(
-          new OInterruptedException("Execution exception distributed future"), e);
-    }
   }
 
   public synchronized ONodeState getNodeState() {
@@ -892,8 +889,11 @@ public class OrientDBDistributed extends OrientDBEmbedded
 
   public void firstConnect(ONodeId nodeId, ONodeStateNetwork state) {
     ONodeState localState = getNodeState();
-    ODiscoverAction action = localState.nodeJoinStart(nodeId, state);
-    retryOperation(action);
+    retryOperation(
+        (ctx, complete) -> {
+          ODiscoverAction action = localState.nodeJoinStart(nodeId, state);
+          action.execute(this, complete);
+        });
     dumpNodeInfo();
   }
 
