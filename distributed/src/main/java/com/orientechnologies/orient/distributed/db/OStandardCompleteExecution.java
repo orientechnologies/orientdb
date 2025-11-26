@@ -3,16 +3,20 @@ package com.orientechnologies.orient.distributed.db;
 import com.orientechnologies.orient.distributed.context.ORetryInfo;
 import com.orientechnologies.orient.distributed.context.ORetryOperation;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
+import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 
 public class OStandardCompleteExecution implements OCompleteExecution {
 
-  private ORetryOperation operation;
-  private ORetryInfo retryInfo;
-  private OrientDBDistributed context;
-  private CompletableFuture<Optional<OAcceptResult>> result;
+  private static final OLoggerDistributed logger =
+      OLoggerDistributed.logger(OStandardCompleteExecution.class);
+
+  private final ORetryOperation operation;
+  private final ORetryInfo retryInfo;
+  private final OrientDBDistributed context;
+  private final CompletableFuture<Optional<OAcceptResult>> result;
 
   public OStandardCompleteExecution(
       OrientDBDistributed ctx, ORetryOperation operation, ORetryInfo retryInfo) {
@@ -31,11 +35,14 @@ public class OStandardCompleteExecution implements OCompleteExecution {
     if (result.isPresent() && result.get().executeRetry()) {
       var delay = getRetryInfo().nextRetry();
       if (delay.isPresent()) {
+        logger.debug("retry whole operation for result %s delay %d", result, delay.get());
         this.context.retryExecution(operation, this, delay.get());
       } else {
+        logger.debug("complete operation with %s", result);
         this.result.complete(result);
       }
     } else {
+      logger.debug("complete operation with %s", result);
       this.result.complete(result);
     }
   }

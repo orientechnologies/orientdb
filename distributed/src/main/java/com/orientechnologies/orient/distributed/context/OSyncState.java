@@ -4,8 +4,11 @@ import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.distributed.db.OReceiverInputStream;
 import com.orientechnologies.orient.distributed.db.OSyncMode;
+import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
 
 public class OSyncState {
+  private static final OLoggerDistributed logger =
+      OLoggerDistributed.logger(OSyncState.class);
 
   private final ODatabaseId dbId;
   private final OSyncId syncId;
@@ -65,6 +68,7 @@ public class OSyncState {
   }
 
   public synchronized void receiveData(byte[] data, boolean finished) {
+    logger.debug("receving buffer size %d finished %b", data.length, finished);
     receiverStream.receive(data, finished);
   }
 
@@ -85,6 +89,7 @@ public class OSyncState {
   }
 
   public synchronized void requestNext(boolean close) {
+    logger.debug("requesting next buffer");
     canNext = true;
     this.close = close;
     this.notifyAll();

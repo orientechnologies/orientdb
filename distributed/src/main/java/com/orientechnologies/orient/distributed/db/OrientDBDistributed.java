@@ -907,9 +907,10 @@ public class OrientDBDistributed extends OrientDBEmbedded
     retryOperation(
         (ctx, complete) -> {
           ODiscoverAction action = localState.nodeJoinStart(nodeId, state);
+          logger.debug("executing node join action %s", action);
           action.execute(this, complete);
+          dumpNodeInfo();
         });
-    dumpNodeInfo();
   }
 
   public void connected(ONodeId node, String url, String user, String password) {
@@ -967,9 +968,13 @@ public class OrientDBDistributed extends OrientDBEmbedded
   private void sync(ODatabaseId dbId) {
     Optional<OSyncInfo> sync = getNodeState().getDatabaseTopology().newSync(dbId);
     if (sync.isPresent()) {
+      logger.debug(
+          "Reqeusting sync %s syncId %s receiver %s", dbId, sync.get().syncId(), getNodeId());
       var req =
           new OSyncRequest(getNodeId(), dbId, sync.get().syncId(), OSyncMode.IncrementalBackup);
       sendMessage(sync.get().targets(), req);
+    } else {
+      logger.warn("cannot sync missing or already synching db  %s", dbId);
     }
   }
 
@@ -983,6 +988,10 @@ public class OrientDBDistributed extends OrientDBEmbedded
         getNodeState()
             .getDatabaseTopology()
             .acceptSync(getNodeState().getNodeId(), receiver, dbId, syncId);
+    if (accepted) {
+      logger.debug(
+          "Accepted sync %s syncI: %s sender %s receiver %s", dbId, syncId, getNodeId(), receiver);
+    }
     sendMessage(receiver, new OCanSync(getNodeState().getNodeId(), dbId, syncId, mode, accepted));
   }
 
@@ -994,7 +1003,8 @@ public class OrientDBDistributed extends OrientDBEmbedded
             .canSync(sender, getNodeState().getNodeId(), dbId, syncId, canSync, mode);
 
     if (state.isPresent()) {
-
+      logger.debug(
+          "Receiving sync %s syncId %s sender %s receiver %s", dbId, syncId, sender, getNodeId());
       OSyncState st = state.get();
       sendMessage(sender, new OStartSync(getNodeState().getNodeId(), dbId, syncId, mode));
       String dbName = getDbName(dbId);
@@ -1019,6 +1029,8 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   public void sendDatabase(ONodeId receiver, ODatabaseId dbId, OSyncId syncId, OSyncMode mode) {
+    logger.debug(
+        "Sending sync %s syncId %s sender %s receiver %s", dbId, syncId, getNodeId(), receiver);
     OSyncState state =
         getNodeState()
             .getDatabaseTopology()
@@ -1066,6 +1078,10 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   public void sendBuffer(OSyncState state, byte[] data, boolean finished) {
+    logger.debug(
+        "Sending buffer %s syncId %s sender %s receiver %s",
+        state.getDbId(), state.getSyncId(), state.getSender(), state.getReceiver());
+
     if (state.isClose()) {
       // receiver sent close, drop the data.
       return;
@@ -1083,6 +1099,9 @@ public class OrientDBDistributed extends OrientDBEmbedded
 
   public void receiveSyncData(OSyncId syncId, byte[] data, boolean finished) {
     var state = this.getNodeState().getDatabaseTopology().getSyncState(syncId);
+    logger.debug(
+        "Receiving buffer %s syncId %s sender %s receiver %s",
+        state.getDbId(), state.getSyncId(), state.getSender(), state.getReceiver());
     state.receiveData(data, finished);
   }
 
