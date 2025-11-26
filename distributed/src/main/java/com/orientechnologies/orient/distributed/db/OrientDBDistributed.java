@@ -89,6 +89,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 
 /** Created by tglman on 08/08/17. */
@@ -143,7 +144,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
             }));
   }
 
-  private OCompleteExecution newExectution(ORetryOperation operation) {
+  private OStandardCompleteExecution newExectution(ORetryOperation operation) {
     ORetryInfo retryInfo = newRetryInfo();
     return new OStandardCompleteExecution(this, operation, retryInfo);
   }
@@ -660,12 +661,13 @@ public class OrientDBDistributed extends OrientDBEmbedded
         });
   }
 
-  public void retryOperation(ORetryOperation operation) {
-    OCompleteExecution exec = newExectution(operation);
+  public Future<Optional<OAcceptResult>> retryOperation(ORetryOperation operation) {
+    OStandardCompleteExecution exec = newExectution(operation);
     execute(
         () -> {
           operation.execute(this, exec);
         });
+    return exec.getResult();
   }
 
   public void retryExecution(ORetryOperation operation, OCompleteExecution exec, int delay) {

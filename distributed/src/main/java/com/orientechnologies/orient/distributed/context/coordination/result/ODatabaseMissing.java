@@ -17,4 +17,9 @@ public class ODatabaseMissing implements OAcceptResult {
   public static ODatabaseMissing fromNetwork(DataInput input) {
     return new ODatabaseMissing();
   }
+
+  @Override
+  public String toString() {
+    return "Database Missing";
+  }
 }

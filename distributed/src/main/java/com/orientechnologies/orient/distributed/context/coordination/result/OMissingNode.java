@@ -22,4 +22,9 @@ public class OMissingNode implements OAcceptResult {
   public short getType() {
     return 5;
   }
+
+  @Override
+  public String toString() {
+    return "Missing Node";
+  }
 }

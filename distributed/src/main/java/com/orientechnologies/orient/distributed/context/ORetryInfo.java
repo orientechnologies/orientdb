@@ -17,9 +17,9 @@ public class ORetryInfo {
   public Optional<Integer> nextRetry() {
     if (this.retryCountDown > 0) {
       this.retryCountDown--;
-      int delay = this.delay;
+      int delay = random.nextInt(this.delay);
       // Next retry will have longer dalay
-      this.delay = this.delay + random.nextInt(this.delay);
+      this.delay = this.delay + delay;
       return Optional.of(delay);
     } else {
       return Optional.empty();

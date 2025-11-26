@@ -5,6 +5,7 @@ import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.Optional;
 
 public class OFailOp implements OStructuralMessage {
 
@@ -16,7 +17,10 @@ public class OFailOp implements OStructuralMessage {
 
   @Override
   public void execute(OrientDBDistributed ctx) {
-    ctx.getNodeState().receiveFailure(promise);
+    Optional<ODistributedMessage> operation = ctx.getNodeState().receiveFailure(promise);
+    if (operation.isPresent()) {
+      operation.get().cancel(ctx);
+    }
   }
 
   @Override

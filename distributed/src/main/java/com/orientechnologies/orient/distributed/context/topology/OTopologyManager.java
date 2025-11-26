@@ -7,6 +7,7 @@ import com.orientechnologies.orient.distributed.context.coordination.message.OTo
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAlreadyEnstablishedTopologyState;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAlreadyPromised;
+import com.orientechnologies.orient.distributed.context.coordination.result.OInvalidSequential;
 import com.orientechnologies.orient.distributed.context.topology.ODiscoverAction.OAddNodeAction;
 import com.orientechnologies.orient.distributed.context.topology.ODiscoverAction.OEstablishAction;
 import com.orientechnologies.orient.distributed.context.topology.ODiscoverAction.ONoneAction;
@@ -62,17 +63,16 @@ public class OTopologyManager implements OTopologyEvents {
     return version;
   }
 
-  public synchronized boolean promiseRegister(ONodeId toAdd, long version) {
+  public synchronized Optional<OAcceptResult> promiseRegister(ONodeId toAdd, long version) {
     if (this.promise) {
-      //      return Optional.of(new OAlreadyPromised());
-      return false;
+      return Optional.of(new OAlreadyPromised());
     }
     if (this.version + 1 == version) {
       // TODO: maybe keep the version of promise
       this.promise = true;
-      return true;
+      return Optional.empty();
     } else {
-      return false;
+      return Optional.of(new OInvalidSequential(this.version + 1, version));
     }
   }
 
@@ -163,11 +163,13 @@ public class OTopologyManager implements OTopologyEvents {
           this.state = externState.getState();
           this.setMember(externState.getMembers());
           this.version = externState.getVersion();
+          this.quorum = externState.getQuorum();
         } else if (this.groupId.equals(externState.getGroupId())) {
           if (externState.getMembers().contains(current)) {
             if (externState.getVersion() > version) {
               this.setMember(externState.getMembers());
               this.version = externState.getVersion();
+              this.quorum = externState.getQuorum();
             } else if (externState.getVersion() != version) {
               // TODO: send local version to the sender because is outdated, it may as well happen
               // with a heartbeat

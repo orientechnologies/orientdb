@@ -90,7 +90,7 @@ public class ODatabaseTopologyState {
         return Optional.empty();
       }
     } else {
-      return Optional.of(new OInvalidSequential());
+      return Optional.of(new OInvalidSequential(this.version + 1, version));
     }
   }
 

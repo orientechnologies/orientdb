@@ -17,4 +17,9 @@ public class OAlreadyEnstablishedTopologyState implements OAcceptResult {
   public short getType() {
     return 3;
   }
+
+  @Override
+  public String toString() {
+    return "Already Enstablished Topology State";
+  }
 }

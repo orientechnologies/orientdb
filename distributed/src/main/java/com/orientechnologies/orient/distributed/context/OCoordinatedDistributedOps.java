@@ -27,7 +27,7 @@ public interface OCoordinatedDistributedOps {
 
   ODiscoverAction nodeJoinStart(ONodeId node, OTopologyStateNetwork state);
 
-  boolean promiseRegister(ONodeId node, long version);
+  Optional<OAcceptResult> promiseRegister(ONodeId node, long version);
 
   void registerNode(ONodeId node, long version);
 
