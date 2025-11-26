@@ -85,7 +85,7 @@ public class CoordinationMessagesSerializationTest {
 
     ONodeId reply = newNodeId();
     OTransactionIdPromise id = newPromiseId();
-    OFailPropose succ = new OFailPropose(reply, id, new OInvalidSequential());
+    OFailPropose succ = new OFailPropose(reply, id, new OInvalidSequential(0, 0));
 
     OFailPropose read = writeRead(succ);
 

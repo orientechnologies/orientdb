@@ -3,7 +3,6 @@ package com.orientechnologies.orient.distributed.context.coordination.message.op
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
-import com.orientechnologies.orient.distributed.context.coordination.result.OInvalidSequential;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -22,11 +21,7 @@ public class OAddTopologyMember implements OOperationMessage {
 
   @Override
   public Optional<OAcceptResult> validate(OrientDBDistributed ctx, OTransactionIdPromise promise) {
-    if (ctx.getNodeState().promiseRegister(node, version)) {
-      return Optional.empty();
-    } else {
-      return Optional.of(new OInvalidSequential());
-    }
+    return ctx.getNodeState().promiseRegister(node, version);
   }
 
   @Override

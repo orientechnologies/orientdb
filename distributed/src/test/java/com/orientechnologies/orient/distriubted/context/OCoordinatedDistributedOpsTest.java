@@ -118,7 +118,7 @@ public class OCoordinatedDistributedOpsTest {
     OTransactionIdPromise promise = new OTransactionIdPromise(nodeId, txId);
     ops.start(promise, action);
     ops.success(nodeId, promise);
-    ops.failure(nodeIdtwo, promise, new OInvalidSequential());
+    ops.failure(nodeIdtwo, promise, new OInvalidSequential(0, 0));
 
     assertFalse(action.success);
     assertTrue(action.failure);
@@ -216,7 +216,7 @@ public class OCoordinatedDistributedOpsTest {
     ops.success(nodeId, promise);
     ops.success(nodeIdtwo, promise);
     ops.unregisterNode(nodeIdthree, 0);
-    ops.failure(nodeIdFour, promise, new OInvalidSequential());
+    ops.failure(nodeIdFour, promise, new OInvalidSequential(0, 0));
     assertTrue(action.failure);
     assertFalse(action.success);
     assertTrue(action.result.get() instanceof OQuorumNotReached);
@@ -310,9 +310,9 @@ public class OCoordinatedDistributedOpsTest {
     var addVersion = ((ODiscoverAction.OAddNodeAction) action).version();
     assertTrue(addVersion > 0);
     var res = node1.promiseRegister(addNode, addVersion);
-    assertTrue(res);
+    assertTrue(res.isEmpty());
     res = node2.promiseRegister(addNode, addVersion);
-    assertTrue(res);
+    assertTrue(res.isEmpty());
     node1.registerNode(addNode, addVersion);
     node2.registerNode(addNode, addVersion);
 
@@ -353,9 +353,9 @@ public class OCoordinatedDistributedOpsTest {
     var addVersion = ((ODiscoverAction.OAddNodeAction) action).version() - 1;
 
     var res = node1.promiseRegister(addNode, addVersion);
-    assertFalse(res);
+    assertFalse(res.isEmpty());
     res = node2.promiseRegister(addNode, addVersion);
-    assertFalse(res);
+    assertFalse(res.isEmpty());
 
     assertEquals(node1.getMembers().size(), 2);
     assertEquals(node2.getMembers().size(), 2);

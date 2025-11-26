@@ -40,4 +40,9 @@ public class OQuorumNotReached implements OAcceptResult {
     }
     return new OQuorumNotReached(reasons);
   }
+
+  @Override
+  public String toString() {
+    return "Quorum Not Reached [reasons=" + reasons + "]";
+  }
 }

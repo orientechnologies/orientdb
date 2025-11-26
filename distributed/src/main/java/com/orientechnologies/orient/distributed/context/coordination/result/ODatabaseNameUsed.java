@@ -17,4 +17,9 @@ public class ODatabaseNameUsed implements OAcceptResult {
   public static ODatabaseNameUsed fromNetwork(DataInput input) {
     return new ODatabaseNameUsed();
   }
+
+  @Override
+  public String toString() {
+    return "Database Name Used";
+  }
 }

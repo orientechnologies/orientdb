@@ -22,4 +22,9 @@ public class OOutdatedVersion implements OAcceptResult {
   public static OOutdatedVersion fromNetwork(DataInput input) throws IOException {
     return new OOutdatedVersion();
   }
+
+  @Override
+  public String toString() {
+    return "Outdated Version";
+  }
 }

@@ -22,4 +22,9 @@ public class OAlreadyPromised implements OAcceptResult {
   public static OAlreadyPromised fromNetwork(DataInput input) {
     return new OAlreadyPromised();
   }
+
+  @Override
+  public String toString() {
+    return "Already Promised";
+  }
 }

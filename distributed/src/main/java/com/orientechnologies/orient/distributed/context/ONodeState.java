@@ -166,7 +166,7 @@ public class ONodeState {
     }
   }
 
-  public boolean promiseRegister(ONodeId node, long version) {
+  public Optional<OAcceptResult> promiseRegister(ONodeId node, long version) {
     return this.coordinated.promiseRegister(node, version);
   }
 

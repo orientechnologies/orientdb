@@ -129,7 +129,7 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   }
 
   @Override
-  public boolean promiseRegister(ONodeId node, long version) {
+  public Optional<OAcceptResult> promiseRegister(ONodeId node, long version) {
     return topology.promiseRegister(node, version);
   }
 

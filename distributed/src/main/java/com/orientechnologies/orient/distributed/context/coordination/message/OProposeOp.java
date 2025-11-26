@@ -39,7 +39,7 @@ public class OProposeOp implements OStructuralMessage, ODistributedMessage {
     } else {
       ctx.sendMessage(
           Collections.singleton(promise.getCoordinator()),
-          new OFailPropose(nodeState.getNodeId(), promise, new OInvalidSequential()));
+          new OFailPropose(nodeState.getNodeId(), promise, new OInvalidSequential(0, 0)));
     }
   }
 
