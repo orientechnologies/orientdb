@@ -110,11 +110,13 @@ public abstract class OChannelBinaryClientAbstract extends OChannelBinary {
 
         srvProtocolVersion = readShort();
       } catch (IOException e) {
-        throw new ONetworkProtocolException(
-            "Cannot read protocol version from remote server "
-                + socket.getRemoteSocketAddress()
-                + ": "
-                + e);
+        throw OException.wrapException(
+            new ONetworkProtocolException(
+                "Cannot read protocol version from remote server "
+                    + socket.getRemoteSocketAddress()
+                    + ": "
+                    + e.getMessage()),
+            e);
       }
 
       if (srvProtocolVersion != protocolVersion) {
