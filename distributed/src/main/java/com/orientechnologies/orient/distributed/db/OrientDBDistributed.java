@@ -283,16 +283,6 @@ public class OrientDBDistributed extends OrientDBEmbedded
           storages.remove(dbName);
           ODatabaseRecordThreadLocal.instance().remove();
         }
-        storage =
-            getDefaultEngine()
-                .restoreStream(
-                    this,
-                    dbName,
-                    config.getConfigurations(),
-                    backupStream,
-                    OBackupType.FULL_INCREMENTAL);
-        embedded = newSessionInstance(storage, config);
-        storages.put(dbName, storage);
       } catch (OModificationOperationProhibitedException e) {
         throw e;
       } catch (Exception e) {
@@ -303,6 +293,29 @@ public class OrientDBDistributed extends OrientDBEmbedded
         throw OException.wrapException(
             new ODatabaseException("Cannot restore database '" + dbName + "'"), e);
       }
+    }
+    try {
+      storage =
+          getDefaultEngine()
+              .restoreStream(
+                  this,
+                  dbName,
+                  config.getConfigurations(),
+                  backupStream,
+                  OBackupType.FULL_INCREMENTAL);
+      synchronized (this) {
+        embedded = newSessionInstance(storage, config);
+        storages.put(dbName, storage);
+      }
+    } catch (OModificationOperationProhibitedException e) {
+      throw e;
+    } catch (Exception e) {
+      if (storage != null) {
+        storage.delete();
+      }
+
+      throw OException.wrapException(
+          new ODatabaseException("Cannot restore database '" + dbName + "'"), e);
     }
 
     embedded.getSharedContext().reInit(storage, embedded);
@@ -880,7 +893,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
     sendOperation(operation, action);
   }
 
-  public synchronized ONodeState getNodeState() {
+  public ONodeState getNodeState() {
     return this.nodeState;
   }
 

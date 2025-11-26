@@ -43,6 +43,11 @@ public class ODatabaseId {
     return id;
   }
 
+  @Override
+  public String toString() {
+    return "ODatabaseId [id=" + id + "]";
+  }
+
   public static ODatabaseId readNetwork(DataInput input) throws IOException {
     String node = input.readUTF();
     return new ODatabaseId(node);

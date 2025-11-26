@@ -32,6 +32,11 @@ public class OSyncId {
   }
 
   @Override
+  public String toString() {
+    return "OSyncId [id=" + id + "]";
+  }
+
+  @Override
   public int hashCode() {
     final int prime = 31;
     int result = 1;
