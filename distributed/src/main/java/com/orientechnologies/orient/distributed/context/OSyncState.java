@@ -7,8 +7,7 @@ import com.orientechnologies.orient.distributed.db.OSyncMode;
 import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
 
 public class OSyncState {
-  private static final OLoggerDistributed logger =
-      OLoggerDistributed.logger(OSyncState.class);
+  private static final OLoggerDistributed logger = OLoggerDistributed.logger(OSyncState.class);
 
   private final ODatabaseId dbId;
   private final OSyncId syncId;

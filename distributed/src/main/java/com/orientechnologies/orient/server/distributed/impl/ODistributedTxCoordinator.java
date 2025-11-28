@@ -175,8 +175,7 @@ public class ODistributedTxCoordinator {
       throw new ODistributedKeyLockedException(
           nodeName, ((OTxKeyLockTimeout) localResult).getKey());
     }
-
-    Set<String> nodes = dManager.getAvailableNodeNotLocalNames(dbName);
+    Set<String> nodes = database.getContext().getAvailableNodeNotLocalNames(dbName);
     if (nodes.isEmpty()) {
       switch (localResult.getResponseType()) {
         case OTxSuccess.ID:

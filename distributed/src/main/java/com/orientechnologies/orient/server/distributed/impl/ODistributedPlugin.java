@@ -497,6 +497,7 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
       final ODistributedRequest.EXECUTION_MODE iExecutionMode,
       final Object localResult,
       ODistributedResponseManagerFactory responseManagerFactory) {
+    OrientDBDistributed ctx = (OrientDBDistributed) serverInstance.getDatabases();
     try {
       checkForServerOnline(iRequest);
 
@@ -529,7 +530,7 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
 
         if (checkNodesAreOnline) {
           availableNodes =
-              getNodesWithStatus(
+              ctx.getNodesWithStatus(
                   iNodes,
                   databaseName,
                   ODistributedServerManager.DB_STATUS.ONLINE,
@@ -538,6 +539,7 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
         }
 
         // all online masters
+        //        onlineMasters = ctx.getOnlineMasters(databaseName);
         onlineMasters =
             getOnlineNodes(databaseName).stream()
                 .filter(f -> cfg.getServerRole(f) == ODistributedConfiguration.ROLES.MASTER)
@@ -629,7 +631,7 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
                     + " nodes: %s",
                 e,
                 iRequest,
-                getAvailableNodeNames(databaseName));
+                ctx.getAvailableNodeNames(databaseName));
           else
             logger.errorOut(
                 this.nodeName,
@@ -637,7 +639,7 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
                 "Error on sending distributed request %s (err=%s). Active nodes: %s",
                 iRequest,
                 reason,
-                getAvailableNodeNames(databaseName));
+                ctx.getAvailableNodeNames(databaseName));
         }
       }
 
@@ -1900,9 +1902,9 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
 
     final List<String> dbs = new ArrayList<>(clusterManager.getDatabases());
     Collections.sort(dbs);
-
+    OrientDBDistributed context = (OrientDBDistributed) serverInstance.getDatabases();
     for (String databaseName : dbs) {
-      final Set<String> availableServers = getAvailableNodeNames(databaseName);
+      final Set<String> availableServers = context.getAvailableNodeNames(databaseName);
       if (availableServers.isEmpty())
         // NO NODE HAS THIS DATABASE AVAILABLE
         continue;
@@ -1915,7 +1917,7 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
         setDatabaseStatus(nodeName, databaseName, DB_STATUS.NOT_AVAILABLE);
 
       try {
-        OrientDBDistributed context = (OrientDBDistributed) serverInstance.getDatabases();
+
         if (!context.installDatabase(true, databaseName, false, true)) {
           setDatabaseStatus(getLocalNodeName(), databaseName, DB_STATUS.NOT_AVAILABLE);
         }
@@ -2081,7 +2083,12 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
         }
 
       // UNLOCK ANY PENDING LOCKS
-      for (String dbName : getDatabases()) getDatabase(dbName).handleUnreachableNode(nodeLeftName);
+      for (String dbName : getDatabases()) {
+        ODistributedDatabaseImpl db = getDatabase(dbName);
+        if (db != null) {
+          db.handleUnreachableNode(nodeLeftName);
+        }
+      }
 
       clusterManager.removeServerFromCluster(member, nodeLeftName, removeOnlyDynamicServers);
 
