@@ -879,7 +879,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   public Set<String> getAvailableNodesButLocal(ODatabaseSession database) {
-    return context.getDistributedManager().getAvailableNodeNotLocalNames(databaseName);
+    return context.getAvailableNodeNotLocalNames(databaseName);
   }
 
   public OrientDBDistributed getContext() {

@@ -411,7 +411,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         final int writeQuorum = dbCfg.getWriteQuorum(clusterServers.size(), localNodeName);
         quorum = Math.max(quorum, writeQuorum);
       }
-      final int availableNodes = dManager.getAvailableNodes(getName());
+      final int availableNodes = getContext().getOnlineMasters(getName());
 
       if (quorum > availableNodes) {
         Set<String> online = getContext().getAvailableNodeNames(getName());

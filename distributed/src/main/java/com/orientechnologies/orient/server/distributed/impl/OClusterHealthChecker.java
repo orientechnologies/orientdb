@@ -105,10 +105,10 @@ public class OClusterHealthChecker implements Runnable {
       if (cfg == null) {
         continue;
       }
-      final Set<String> confServers = manager.getAvailableNodeNames(databaseName);
+      final Set<String> confServers = context.getAvailableNodeNames(databaseName);
       for (String s : manager.getActiveServers()) {
         if (manager.isNodeAvailable(s, databaseName) && !confServers.contains(s)) {
-          final Set<String> nodes = manager.getAvailableNodeNames(databaseName);
+          final Set<String> nodes = context.getAvailableNodeNames(databaseName);
 
           // THE SERVERS HAS THE DATABASE ONLINE BUT IT IS NOT IN THE CFG. DETERMINE THE MOST UPD
           // CFG
@@ -215,7 +215,7 @@ public class OClusterHealthChecker implements Runnable {
         // ONLY NOT_AVAILABLE NODE/DB CAN BE RECOVERED
         continue;
 
-      final Set<String> servers = manager.getAvailableNodeNames(dbName);
+      final Set<String> servers = context.getAvailableNodeNames(dbName);
       servers.remove(manager.getLocalNodeName());
 
       if (servers.isEmpty()) {
@@ -258,6 +258,8 @@ public class OClusterHealthChecker implements Runnable {
     if (manager.getNodeStatus() != NODE_STATUS.ONLINE)
       // ONLY ONLINE NODE CAN CHECK FOR OTHERS
       return;
+    OServer serveri = manager.getServerInstance();
+    OrientDBDistributed context = (OrientDBDistributed) serveri.getDatabases();
 
     for (String dbName : manager.getDatabases()) {
       if (manager.isSyncronizing(dbName)) {
@@ -269,7 +271,7 @@ public class OClusterHealthChecker implements Runnable {
         // ONLY ONLINE NODE/DB CAN CHECK FOR OTHERS
         continue;
 
-      final Set<String> servers = manager.getAvailableNodeNotLocalNames(dbName);
+      final Set<String> servers = context.getAvailableNodeNotLocalNames(dbName);
 
       if (servers.isEmpty()) continue;
 
@@ -303,7 +305,9 @@ public class OClusterHealthChecker implements Runnable {
       // ONLY ONLINE NODE CAN TRY TO RECOVER FOR SINGLE DB STATUS
       return;
 
-    if (!manager.getServerInstance().isActive()) return;
+    OServer server = manager.getServerInstance();
+    if (!server.isActive()) return;
+    OrientDBDistributed context = (OrientDBDistributed) server.getDatabases();
 
     for (String dbName : manager.getDatabases()) {
       if (manager.isSyncronizing(dbName)) {
@@ -315,7 +319,7 @@ public class OClusterHealthChecker implements Runnable {
         // ONLY NOT_AVAILABLE NODE/DB CAN BE RECOVERED
         continue;
 
-      final List<String> servers = manager.getOnlineNodesNotLocal(dbName);
+      final List<String> servers = context.getOnlineNodesNotLocal(dbName);
 
       if (servers.isEmpty()) continue;
 
