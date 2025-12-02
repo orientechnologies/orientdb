@@ -63,6 +63,7 @@ import com.orientechnologies.orient.core.tx.OTxMetadataHolderImpl;
 import com.orientechnologies.orient.distributed.ONodeConfig;
 import com.orientechnologies.orient.distributed.ONodeListenerConfig;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
+import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolException;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
 import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
@@ -1980,8 +1981,12 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
         final String userPassword = cfg.getReplicator();
 
         if (userPassword != null) {
-          remoteServer = ctx.connectRemoteServer(rNodeName, url, REPLICATOR_USER, userPassword);
-          break;
+          try {
+            remoteServer = ctx.connectRemoteServer(rNodeName, url, REPLICATOR_USER, userPassword);
+            break;
+          } catch (ONetworkProtocolException | IOException e) {
+            logger.warn("failing to connect to remote node %s", rNodeName, e);
+          }
         }
 
         // RETRY TO GET USR+PASSWORD IN A WHILE
@@ -2036,8 +2041,9 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
 
     // FORCE THE ALIGNMENT FOR ALL THE ONLINE DATABASES AFTER THE JOIN ONLY IF AUTO-DEPLOY IS SET
     for (String db : getDatabases()) {
-      if (getDatabaseConfiguration(db).isAutoDeploy()
-          && getDatabaseStatus(joinedNodeName, db) == DB_STATUS.ONLINE) {
+      ODistributedConfiguration cfg = getDatabaseConfiguration(db);
+      if (cfg == null
+          || cfg.isAutoDeploy() && getDatabaseStatus(joinedNodeName, db) == DB_STATUS.ONLINE) {
         setDatabaseStatus(joinedNodeName, db, DB_STATUS.NOT_AVAILABLE);
       }
     }

@@ -955,9 +955,11 @@ public class OHazelcastClusterMetadataManager
       final boolean removeOnlyDynamicServers,
       final boolean statusOffline) {
     OrientDBDistributed ctx = (OrientDBDistributed) serverInstance.getDatabases();
-
-    final OModifiableDistributedConfiguration cfg =
-        ctx.getDistributedConfiguration(databaseName).modify();
+    ODistributedConfiguration cfgr = ctx.getDistributedConfiguration(databaseName);
+    if (cfgr == null) {
+      return false;
+    }
+    final OModifiableDistributedConfiguration cfg = cfgr.modify();
 
     if (removeOnlyDynamicServers) {
       // CHECK THE SERVER IS NOT REGISTERED STATICALLY
