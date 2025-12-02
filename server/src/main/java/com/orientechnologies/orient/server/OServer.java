@@ -40,6 +40,7 @@ import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.OrientDBConfigBuilder;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
+import com.orientechnologies.orient.core.db.config.ONodeConfigurationBuilder;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OStorageException;
@@ -58,6 +59,7 @@ import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.config.OServerSocketFactoryConfiguration;
 import com.orientechnologies.orient.server.config.OServerStorageConfiguration;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
+import com.orientechnologies.orient.server.config.distributed.OServerDistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.config.ODistributedConfig;
 import com.orientechnologies.orient.server.handler.OConfigurableHooksManager;
@@ -358,6 +360,17 @@ public class OServer {
     OrientDBConfigBuilder builder = OrientDBConfig.builder();
     for (OServerUserConfiguration user : serverCfg.getUsers()) {
       builder.addGlobalUser(user.getName(), user.getPassword(), user.getResources());
+    }
+    OServerDistributedConfiguration distributedConfig = serverCfg.getConfiguration().distributed;
+    if (distributedConfig != null) {
+      if (distributedConfig.enabled) {
+        ONodeConfigurationBuilder ncb = builder.getNodeConfigurationBuilder();
+        ncb.setQuorum(distributedConfig.quorum);
+        if (distributedConfig.group != null) {
+          ncb.setGroupName(distributedConfig.group.name);
+        }
+        ncb.setNodeName(distributedConfig.nodeName);
+      }
     }
     OrientDBConfig config =
         builder

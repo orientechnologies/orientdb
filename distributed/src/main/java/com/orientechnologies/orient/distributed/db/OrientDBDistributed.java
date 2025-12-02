@@ -114,7 +114,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
     messageService = new ODistributedMessageServiceImpl(this);
     Optional<ONodeConfiguration> nodeConfig = config.getNodeConfiguration();
     if (nodeConfig.isPresent()) {
-      this.nodeName = nodeConfig.get().getNodeName();
+      initDistributed(nodeConfig.get());
     }
   }
 
@@ -124,11 +124,27 @@ public class OrientDBDistributed extends OrientDBEmbedded
     this.server = server;
   }
 
+  public void initDistributed(ONodeConfiguration config) {
+    initDistributed(
+        config.getNodeName(),
+        config.getGroupName(),
+        config.getQuorum(),
+        new ORemoteServerAvailabilityCheck() {
+
+          @Override
+          public void nodeDisconnected(String node) {}
+
+          @Override
+          public boolean isNodeAvailable(String node) {
+            return false;
+          }
+        });
+  }
+
   public void initDistributed(
-      String nodeName, String groupIdPar, ORemoteServerAvailabilityCheck check) {
+      String nodeName, String groupIdPar, int miminumQuorum, ORemoteServerAvailabilityCheck check) {
     this.nodeName = nodeName;
     // TODO: resolve groupId and minimum quorum;
-    int miminumQuorum = 2;
     ONodeId nodeId = new ONodeId(nodeName);
     OGroupId groupId = new OGroupId(groupIdPar);
     OSystemStateStore store = new OSystemStateStore(getSystemDatabase());

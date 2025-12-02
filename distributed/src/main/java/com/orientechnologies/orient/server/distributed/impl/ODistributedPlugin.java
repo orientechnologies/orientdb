@@ -207,6 +207,7 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
         .initDistributed(
             nodeName,
             "OrientDB",
+            1,
             new ORemoteServerAvailabilityCheck() {
               @Override
               public boolean isNodeAvailable(String node) {
