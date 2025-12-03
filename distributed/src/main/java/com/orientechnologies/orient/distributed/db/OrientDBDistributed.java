@@ -89,6 +89,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -461,10 +462,15 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   private void dropFlow(String name) {
-    retryOperation(
-        (ctx, complete) -> {
-          coordinatedOperation(new ODropDbMessage(name), complete);
-        });
+    Future<Optional<OAcceptResult>> droped =
+        retryOperation(
+            (ctx, complete) -> {
+              coordinatedOperation(new ODropDbMessage(name), complete);
+            });
+    try {
+      droped.get();
+    } catch (InterruptedException | ExecutionException e) {
+    }
   }
 
   public void sendMessage(Set<ONodeId> set, OStructuralMessage op) {
