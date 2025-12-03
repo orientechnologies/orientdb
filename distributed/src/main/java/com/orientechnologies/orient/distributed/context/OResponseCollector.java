@@ -128,7 +128,6 @@ public class OResponseCollector {
 
   public Optional<CompleteInfo> applied() {
     applied = true;
-    OAcceptResult result = computeResult();
-    return Optional.of(new CompleteInfo(action, promise, expected, Optional.of(result)));
+    return Optional.of(new CompleteInfo(action, promise, expected, Optional.empty()));
   }
 }
