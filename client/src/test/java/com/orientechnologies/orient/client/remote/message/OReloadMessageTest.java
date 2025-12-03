@@ -4,12 +4,15 @@ import static org.junit.Assert.assertEquals;
 
 import com.orientechnologies.orient.client.remote.message.push.OStorageConfigurationPayload;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
+import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -44,11 +47,15 @@ public class OReloadMessageTest {
     responseRead.read(channel, null);
     OStorageConfigurationPayload payload = responseRead.getPayload();
     assertEquals(configuration.getProperties().size(), payload.getProperties().size());
-    for (int i = 0; i < configuration.getProperties().size(); i++) {
-      assertEquals(configuration.getProperties().get(i).name, payload.getProperties().get(i).name);
-      assertEquals(
-          configuration.getProperties().get(i).value, payload.getProperties().get(i).value);
+    Map<String, String> expectedProps = new HashMap<>();
+    for (OStorageEntryConfiguration entry : configuration.getProperties()) {
+      expectedProps.put(entry.name, entry.value);
     }
+    Map<String, String> actualProps = new HashMap<>();
+    for (OStorageEntryConfiguration entry : payload.getProperties()) {
+      actualProps.put(entry.name, entry.value);
+    }
+    assertEquals(expectedProps, actualProps);
     assertEquals(configuration.getDateFormat(), payload.getDateFormat());
     assertEquals(configuration.getDateTimeFormat(), payload.getDateTimeFormat());
     assertEquals(configuration.getName(), payload.getName());
