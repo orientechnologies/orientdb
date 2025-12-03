@@ -53,6 +53,7 @@ import com.orientechnologies.orient.distributed.context.coordination.message.ope
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OOperationMessage;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OSetDatabaseState;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
+import com.orientechnologies.orient.distributed.context.coordination.result.ONoTransactionSequencialAvailable;
 import com.orientechnologies.orient.distributed.context.topology.ODiscoverAction;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerAware;
@@ -900,9 +901,14 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   private void sendOperation(OOperationMessage operation, OCompleteAction action) {
-    var start = getNodeState().start(action);
-    OProposeOp propose = new OProposeOp(start.promise(), operation);
-    sendMessage(start.nodes(), propose);
+    var startOp = getNodeState().start(action);
+    if (startOp.isPresent()) {
+      var start = startOp.get();
+      OProposeOp propose = new OProposeOp(start.promise(), operation);
+      sendMessage(start.nodes(), propose);
+    } else {
+      action.complete(null, null, Optional.of(new ONoTransactionSequencialAvailable()));
+    }
   }
 
   public void retryOperation(OOperationMessage operation, OCompleteAction action, int delay) {

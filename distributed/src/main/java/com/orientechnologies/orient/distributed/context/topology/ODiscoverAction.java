@@ -6,8 +6,10 @@ import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.distributed.context.coordination.message.OProposeOp;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OAddTopologyMember;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OEnstablishTopology;
+import com.orientechnologies.orient.distributed.context.coordination.result.ONoTransactionSequencialAvailable;
 import com.orientechnologies.orient.distributed.db.OCompleteExecution;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
+import java.util.Optional;
 import java.util.Set;
 
 public sealed interface ODiscoverAction
@@ -36,11 +38,15 @@ public sealed interface ODiscoverAction
     @Override
     public void execute(OrientDBDistributed context, OCompleteExecution execution) {
       OEnstablishTopology operation = new OEnstablishTopology(groupId(), candidates());
-      OTransactionIdPromise promise =
+      Optional<OTransactionIdPromise> promise =
           context
               .getNodeState()
               .startEnstablish(this.candidates(), context.newCompleteAction(operation, execution));
-      context.sendMessage(candidates(), new OProposeOp(promise, operation));
+      if (promise.isPresent()) {
+        context.sendMessage(candidates(), new OProposeOp(promise.get(), operation));
+      } else {
+        execution.complete(Optional.of(new ONoTransactionSequencialAvailable()));
+      }
     }
   }
 

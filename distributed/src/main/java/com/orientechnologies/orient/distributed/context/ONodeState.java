@@ -57,9 +57,13 @@ public class ONodeState {
     return coordinated.discoverNode(nodeId);
   }
 
-  public OOperationStart start(OCompleteAction action) {
+  public Optional<OOperationStart> start(OCompleteAction action) {
     Optional<OTransactionIdPromise> prom = this.sequenceManager.next();
-    return this.coordinated.start(prom.get(), action);
+    if (prom.isPresent()) {
+      return Optional.of(this.coordinated.start(prom.get(), action));
+    } else {
+      return Optional.empty();
+    }
   }
 
   public void success(ONodeId node, OTransactionIdPromise promise) {
@@ -178,10 +182,13 @@ public class ONodeState {
     return this.coordinated.validateEnstablish(groupId, candidates);
   }
 
-  public OTransactionIdPromise startEnstablish(Set<ONodeId> nodes, OCompleteAction action) {
+  public Optional<OTransactionIdPromise> startEnstablish(
+      Set<ONodeId> nodes, OCompleteAction action) {
     Optional<OTransactionIdPromise> prom = this.sequenceManager.next();
-    this.coordinated.startEstablish(prom.get(), nodes, action);
-    return prom.get();
+    if (prom.isPresent()) {
+      this.coordinated.startEstablish(prom.get(), nodes, action);
+    }
+    return prom;
   }
 
   public ODiscoverAction nodeJoinStart(ONodeId node, ONodeStateNetwork state) {

@@ -25,6 +25,7 @@ public interface OAcceptResult {
       case 6 -> OAlreadyPromised.fromNetwork(input);
       case 7 -> ODatabaseMissing.fromNetwork(input);
       case 8 -> OOutdatedVersion.fromNetwork(input);
+      case 9 -> ONoTransactionSequencialAvailable.fromNetwork(input);
       default -> throw new ODistributedException("wrong accept result message type from network");
     };
   }

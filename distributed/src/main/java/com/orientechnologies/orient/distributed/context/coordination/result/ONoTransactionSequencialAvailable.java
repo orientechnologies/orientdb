@@ -1,0 +1,25 @@
+package com.orientechnologies.orient.distributed.context.coordination.result;
+
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+
+public class ONoTransactionSequencialAvailable implements OAcceptResult {
+
+  @Override
+  public boolean executeRetry() {
+    return true;
+  }
+
+  static ONoTransactionSequencialAvailable fromNetwork(DataInput input) {
+    return new ONoTransactionSequencialAvailable();
+  }
+
+  @Override
+  public void serialize(DataOutput out) throws IOException {}
+
+  @Override
+  public short getType() {
+    return 9;
+  }
+}
