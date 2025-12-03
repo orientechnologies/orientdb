@@ -112,6 +112,8 @@ public class SyncOpsTest {
   @After
   public void after() {
     context.drop("test");
+    context.close();
     context1.drop("test");
+    context1.close();
   }
 }
