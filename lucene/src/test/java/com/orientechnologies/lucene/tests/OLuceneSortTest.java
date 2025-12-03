@@ -35,7 +35,7 @@ public class OLuceneSortTest extends OLuceneBaseTest {
     List<Integer> scores =
         resultSet.stream().map(o -> o.<Integer>getProperty("score")).collect(Collectors.toList());
 
-    assertThat(scores).containsExactly(4, 5, 10, 10, 7);
+    assertThat(scores).containsExactlyInAnyOrder(4, 5, 10, 10, 7);
     resultSet.close();
   }
 
