@@ -154,31 +154,34 @@ public class OTopologyManager implements OTopologyEvents {
   }
 
   public ODiscoverAction nodeJoinStart(ONodeId node, OTopologyStateNetwork externState) {
+    if (!this.groupId.equals(externState.getGroupId())) {
+      // Different network ... for now ignore .. maybe crash, for sure warn;
+      return new ODiscoverAction.ONoneAction();
+    }
     if (externState.getState() == OTopologyState.BOOT) {
       return nodeDiscovered(node);
     } else {
       synchronized (this) {
         // TODO: before applying check if any promise or running a coordination
-        if (state == OTopologyState.BOOT && externState.getMembers().contains(current)) {
-          this.state = externState.getState();
-          this.setMember(externState.getMembers());
-          this.version = externState.getVersion();
-          this.quorum = externState.getQuorum();
-        } else if (this.groupId.equals(externState.getGroupId())) {
-          if (externState.getMembers().contains(current)) {
-            if (externState.getVersion() > version) {
-              this.setMember(externState.getMembers());
-              this.version = externState.getVersion();
-              this.quorum = externState.getQuorum();
-            } else if (externState.getVersion() != version) {
-              // TODO: send local version to the sender because is outdated, it may as well happen
-              // with a heartbeat
-            }
-          } else {
-            return new ODiscoverAction.ONotifySelf(externState.getMembers());
+        if (externState.getMembers().contains(current)) {
+          if (state == OTopologyState.BOOT) {
+            this.state = externState.getState();
+            this.setMember(externState.getMembers());
+            this.version = externState.getVersion();
+            this.quorum = externState.getQuorum();
+          } else if (externState.getVersion() > version) {
+            this.setMember(externState.getMembers());
+            this.version = externState.getVersion();
+            this.quorum = externState.getQuorum();
+          } else if (externState.getVersion() != version) {
+            // Other outdated just notify self state
+            return new ODiscoverAction.ONotifySelf(Set.of(node));
           }
+        } else if (this.quorum == 1) {
+          /// Try to merge the state if possible
+          return new ODiscoverAction.OMergeAction(externState.getMembers());
         } else {
-          // TODO: failure crashed different networks ...
+          return new ODiscoverAction.ONotifySelf(externState.getMembers());
         }
       }
     }

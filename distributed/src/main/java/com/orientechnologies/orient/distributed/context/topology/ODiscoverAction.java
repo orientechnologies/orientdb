@@ -14,7 +14,13 @@ public sealed interface ODiscoverAction
     permits ODiscoverAction.OEstablishAction,
         ODiscoverAction.OAddNodeAction,
         ODiscoverAction.ONoneAction,
-        ODiscoverAction.ONotifySelf {
+        ODiscoverAction.ONotifySelf,
+        ODiscoverAction.OMergeAction {
+
+  public record OMergeAction(Set<ONodeId> members) implements ODiscoverAction {
+    @Override
+    public void execute(OrientDBDistributed context, OCompleteExecution execution) {}
+  }
 
   public void execute(OrientDBDistributed context, OCompleteExecution execution);
 
