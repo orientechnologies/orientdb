@@ -1197,6 +1197,10 @@ public class OrientDBDistributed extends OrientDBEmbedded
     return plugin.getDatabaseStatus(nodeId.getNode(), dbName);
   }
 
+  public DB_STATUS getDatabaseStatus(String node, String dbName) {
+    return getDatabaseStatus(new ONodeId(node), dbName);
+  }
+
   public DB_STATUS getDatabaseStatus(String dbName) {
     //    Optional<ODatabaseId> dbID = getNodeState().getDatabaseTopology().getDatabaseId(dbName);
     //    if (dbID.isPresent()) {
@@ -1314,5 +1318,15 @@ public class OrientDBDistributed extends OrientDBEmbedded
     //    return iNodes.size();
 
     return plugin.getNodesWithStatus(iNodes, databaseName, statuses);
+  }
+
+  public boolean isNodeOnline(String targetNode, String databaseName) {
+    return DB_STATUS.ONLINE.equals(getDatabaseStatus(nodeName, databaseName));
+  }
+
+  public boolean isNodeAvailable(String targetNode, String databaseName) {
+    final ODistributedServerManager.DB_STATUS s = getDatabaseStatus(targetNode, databaseName);
+    return s != ODistributedServerManager.DB_STATUS.OFFLINE
+        && s != ODistributedServerManager.DB_STATUS.NOT_AVAILABLE;
   }
 }

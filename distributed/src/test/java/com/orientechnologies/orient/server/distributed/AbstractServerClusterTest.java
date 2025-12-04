@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.distributed.config.OClusterConfiguration;
 import com.orientechnologies.orient.setup.ServerRun;
 import java.util.ArrayList;
@@ -402,10 +403,7 @@ public abstract class AbstractServerClusterTest {
   protected void waitForDatabaseIsOffline(
       final String serverName, final String dbName, final long timeout) {
     final long startTime = System.currentTimeMillis();
-    while (serverInstance
-        .get(0)
-        .getServerInstance()
-        .getDistributedManager()
+    while (((OrientDBDistributed) serverInstance.get(0).getServerInstance().getDatabases())
         .isNodeOnline(serverName, dbName)) {
 
       if (timeout > 0 && System.currentTimeMillis() - startTime > timeout) {
@@ -424,10 +422,7 @@ public abstract class AbstractServerClusterTest {
   protected void waitForDatabaseIsOnline(
       final int fromServerId, final String serverName, final String dbName, final long timeout) {
     final long startTime = System.currentTimeMillis();
-    while (!serverInstance
-        .get(fromServerId)
-        .getServerInstance()
-        .getDistributedManager()
+    while (!((OrientDBDistributed) serverInstance.get(0).getServerInstance().getDatabases())
         .isNodeOnline(serverName, dbName)) {
 
       if (timeout > 0 && System.currentTimeMillis() - startTime > timeout) {

@@ -175,8 +175,8 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
 
   public void waitUntilNodeOnline(final String nodeName, final String databaseName)
       throws InterruptedException {
-    while (getDatabase(databaseName) == null || !isNodeOnline(nodeName, databaseName))
-      Thread.sleep(100);
+    OrientDBDistributed context = (OrientDBDistributed) serverInstance.getDatabases();
+    while (!context.isNodeOnline(nodeName, databaseName)) Thread.sleep(100);
   }
 
   @Override
@@ -1225,15 +1225,14 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
         databaseName);
 
     boolean databaseInstalledCorrectly = false;
-
+    OrientDBDistributed databases = (OrientDBDistributed) serverInstance.getDatabases();
     for (String targetNode : nodes) {
 
-      if (!isNodeOnline(targetNode, databaseName)) {
+      if (!databases.isNodeOnline(targetNode, databaseName)) {
         continue;
       }
       OTxMetadataHolder metadata;
-      try (ODatabaseDocumentInternal inst =
-          serverInstance.getDatabases().openNoAuthorization(databaseName)) {
+      try (ODatabaseDocumentInternal inst = databases.openNoAuthorization(databaseName)) {
         Optional<byte[]> read = inst.getStorage().getLastMetadata();
         if (read.isPresent()) {
           metadata = OTxMetadataHolderImpl.read(read.get());
