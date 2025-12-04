@@ -183,7 +183,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
       int ioSize = excutorMaxSize(OGlobalConfiguration.EXECUTOR_POOL_IO_MAX_SIZE);
       ExecutorService exec =
           OThreadPoolExecutors.newScalingThreadPool(
-              "OrientDB-IO", 1, excutorBaseSize(ioSize), ioSize, 30, TimeUnit.MINUTES);
+              "OrientDB-IO", excutorBaseSize(ioSize), ioSize, ioSize, 30, TimeUnit.MINUTES);
       if (getBoolConfig(OGlobalConfiguration.EXECUTOR_DEBUG_TRACE_SOURCE)) {
         exec = new OSourceTraceExecutorService(exec);
       }
@@ -197,7 +197,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
     int size = excutorMaxSize(OGlobalConfiguration.EXECUTOR_POOL_MAX_SIZE);
     ExecutorService exec =
         OThreadPoolExecutors.newScalingThreadPool(
-            "OrientDBEmbedded", 1, excutorBaseSize(size), size, 30, TimeUnit.MINUTES);
+            "OrientDBEmbedded", excutorBaseSize(size), size, size, 30, TimeUnit.MINUTES);
     if (getBoolConfig(OGlobalConfiguration.EXECUTOR_DEBUG_TRACE_SOURCE)) {
       exec = new OSourceTraceExecutorService(exec);
     }
