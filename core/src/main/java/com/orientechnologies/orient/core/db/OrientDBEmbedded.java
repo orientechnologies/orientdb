@@ -74,7 +74,6 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Collectors;
 
 /** Created by tglman on 08/04/16. */
 public class OrientDBEmbedded implements OrientDBInternal {
@@ -875,7 +874,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
   }
 
   public synchronized Collection<OStorage> getStorages() {
-    return storages.values().stream().map((x) -> (OStorage) x).collect(Collectors.toSet());
+    return storages.values();
   }
 
   public synchronized void forceDatabaseClose(String iDatabaseName) {
