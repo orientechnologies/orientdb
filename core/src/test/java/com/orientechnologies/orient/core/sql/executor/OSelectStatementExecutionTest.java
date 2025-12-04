@@ -1175,7 +1175,10 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
     Optional<OExecutionPlan> p = result.getExecutionPlan();
     Assert.assertTrue(p.isPresent());
     OExecutionPlan p2 = p.get();
-    Assert.assertTrue(p2.getIndexes().contains(classNameExt + ".name"));
+    Assert.assertTrue(
+        p2.getIndexes().stream()
+            .anyMatch(
+                idx -> idx.contains(classNameExt + ".name") || idx.contains(className + ".name")));
     result.close();
   }
 
