@@ -2,6 +2,7 @@ package com.orientechnologies.orient.distributed.context;
 
 import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
+import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import com.orientechnologies.orient.distributed.db.OSyncMode;
 import java.util.Optional;
 import java.util.Set;
@@ -18,10 +19,16 @@ public class OSyncSession {
     this.nodes = nodes;
   }
 
-  public OSyncSession(ODatabaseId dbId, OSyncId syncId, ONodeId from, ONodeId to, OSyncMode mode) {
+  public OSyncSession(
+      ODatabaseId dbId,
+      OSyncId syncId,
+      ONodeId from,
+      ONodeId to,
+      OSyncMode mode,
+      Optional<OTransactionSequenceStatus> sequenceStatus) {
     this.syncId = syncId;
     this.dbId = dbId;
-    this.state = new OSyncState(dbId, syncId, from, to, mode);
+    this.state = new OSyncState(dbId, syncId, from, to, mode, sequenceStatus);
   }
 
   public OSyncId getSyncId() {
@@ -29,10 +36,15 @@ public class OSyncSession {
   }
 
   public Optional<OSyncState> canSync(
-      ONodeId sender, ONodeId receiver, OSyncId syncId, boolean canSync, OSyncMode mode) {
+      ONodeId sender,
+      ONodeId receiver,
+      OSyncId syncId,
+      boolean canSync,
+      OSyncMode mode,
+      Optional<OTransactionSequenceStatus> sequenceStatus) {
     assert this.syncId.equals(syncId);
     if (canSync) {
-      this.state = new OSyncState(dbId, syncId, sender, receiver, mode);
+      this.state = new OSyncState(dbId, syncId, sender, receiver, mode, sequenceStatus);
       return Optional.of(this.state);
     } else {
       nodes.remove(sender);

@@ -4,6 +4,7 @@ import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
+import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import com.orientechnologies.orient.distributed.context.coordination.message.ODatabaseStateNetwork;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAlreadyPromised;
@@ -209,12 +210,13 @@ public class ODatabasesTopologyState {
       ODatabaseId dbId,
       OSyncId syncId,
       boolean canSync,
-      OSyncMode mode) {
+      OSyncMode mode,
+      Optional<OTransactionSequenceStatus> sequenceStatus) {
     ODatabaseTopologyState db = this.databases.get(dbId);
     if (db == null) {
       return Optional.empty();
     }
-    var state = db.canSync(sender, receiver, syncId, canSync, mode);
+    var state = db.canSync(sender, receiver, syncId, canSync, mode, sequenceStatus);
     if (state.isPresent()) {
       this.activerSyncs.put(state.get().getSyncId(), state.get());
     }
@@ -222,12 +224,17 @@ public class ODatabasesTopologyState {
   }
 
   public synchronized OSyncState startSend(
-      ONodeId to, ONodeId from, ODatabaseId dbId, OSyncId syncId, OSyncMode mode) {
+      ONodeId to,
+      ONodeId from,
+      ODatabaseId dbId,
+      OSyncId syncId,
+      OSyncMode mode,
+      Optional<OTransactionSequenceStatus> sequenceStatus) {
     ODatabaseTopologyState db = this.databases.get(dbId);
     if (db == null) {
       throw new NullPointerException("missing database definition");
     }
-    OSyncState state = db.startSend(from, to, syncId, mode);
+    OSyncState state = db.startSend(from, to, syncId, mode, sequenceStatus);
     this.activerSyncs.put(syncId, state);
     return state;
   }

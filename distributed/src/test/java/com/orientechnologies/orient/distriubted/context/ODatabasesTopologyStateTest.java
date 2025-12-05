@@ -273,12 +273,20 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
     boolean canSync = state.acceptSync(nodeId, node1, dbId, syncInfo.syncId());
     assertTrue(canSync);
     Optional<OSyncState> receiverStateOp =
-        state1.canSync(nodeId, node1, dbId, syncInfo.syncId(), canSync, OSyncMode.StandardBackup);
+        state1.canSync(
+            nodeId,
+            node1,
+            dbId,
+            syncInfo.syncId(),
+            canSync,
+            OSyncMode.StandardBackup,
+            Optional.empty());
     assertTrue(receiverStateOp.isPresent());
     OSyncState receiverState = receiverStateOp.get();
 
     OSyncState senderState =
-        state.startSend(node1, nodeId, dbId, syncInfo.syncId(), OSyncMode.StandardBackup);
+        state.startSend(
+            node1, nodeId, dbId, syncInfo.syncId(), OSyncMode.StandardBackup, Optional.empty());
 
     assertEquals(receiverState.getSender(), senderState.getSender());
     assertEquals(receiverState.getReceiver(), senderState.getReceiver());
@@ -340,12 +348,20 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
     boolean canSync = state.acceptSync(nodeId, node1, dbId, syncInfo.syncId());
     assertTrue(canSync);
     Optional<OSyncState> receiverStateOp =
-        state1.canSync(nodeId, node1, dbId, syncInfo.syncId(), canSync, OSyncMode.StandardBackup);
+        state1.canSync(
+            nodeId,
+            node1,
+            dbId,
+            syncInfo.syncId(),
+            canSync,
+            OSyncMode.StandardBackup,
+            Optional.empty());
     assertTrue(receiverStateOp.isPresent());
     OSyncState receiverState = receiverStateOp.get();
 
     OSyncState senderState =
-        state.startSend(node1, nodeId, dbId, syncInfo.syncId(), OSyncMode.StandardBackup);
+        state.startSend(
+            node1, nodeId, dbId, syncInfo.syncId(), OSyncMode.StandardBackup, Optional.empty());
 
     assertEquals(receiverState.getSender(), senderState.getSender());
     assertEquals(receiverState.getReceiver(), senderState.getReceiver());

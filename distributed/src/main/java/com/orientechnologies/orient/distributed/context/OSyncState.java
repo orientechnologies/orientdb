@@ -2,9 +2,11 @@ package com.orientechnologies.orient.distributed.context;
 
 import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
+import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import com.orientechnologies.orient.distributed.db.OReceiverInputStream;
 import com.orientechnologies.orient.distributed.db.OSyncMode;
 import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
+import java.util.Optional;
 
 public class OSyncState {
   private static final OLoggerDistributed logger = OLoggerDistributed.logger(OSyncState.class);
@@ -14,6 +16,7 @@ public class OSyncState {
   private final ONodeId sender;
   private final ONodeId receiver;
   private final OSyncMode mode;
+  private final Optional<OTransactionSequenceStatus> sequenceStatus;
   private volatile int messageCount = 0;
   private volatile long totalsize = 0;
   private volatile OReceiverInputStream receiverStream;
@@ -21,12 +24,18 @@ public class OSyncState {
   private volatile boolean close = false;
 
   public OSyncState(
-      ODatabaseId dbId, OSyncId syncId, ONodeId sender, ONodeId receiver, OSyncMode mode) {
+      ODatabaseId dbId,
+      OSyncId syncId,
+      ONodeId sender,
+      ONodeId receiver,
+      OSyncMode mode,
+      Optional<OTransactionSequenceStatus> sequenceStatus) {
     this.dbId = dbId;
     this.syncId = syncId;
     this.sender = sender;
     this.receiver = receiver;
     this.mode = mode;
+    this.sequenceStatus = sequenceStatus;
   }
 
   public synchronized void transaferd(long size) {
@@ -92,5 +101,9 @@ public class OSyncState {
     canNext = true;
     this.close = close;
     this.notifyAll();
+  }
+
+  public Optional<OTransactionSequenceStatus> getSequenceStatus() {
+    return sequenceStatus;
   }
 }

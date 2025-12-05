@@ -2,6 +2,7 @@ package com.orientechnologies.orient.distributed.context;
 
 import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
+import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import com.orientechnologies.orient.distributed.context.coordination.message.ODatabaseMemberNetwork;
 import com.orientechnologies.orient.distributed.context.coordination.message.ODatabaseStateNetwork;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
@@ -196,13 +197,24 @@ public class ODatabaseTopologyState {
   }
 
   public synchronized Optional<OSyncState> canSync(
-      ONodeId sender, ONodeId receiver, OSyncId syncId, boolean canSync, OSyncMode mode) {
-    return this.syncSessions.get(syncId).canSync(sender, receiver, syncId, canSync, mode);
+      ONodeId sender,
+      ONodeId receiver,
+      OSyncId syncId,
+      boolean canSync,
+      OSyncMode mode,
+      Optional<OTransactionSequenceStatus> sequenceStatus) {
+    return this.syncSessions
+        .get(syncId)
+        .canSync(sender, receiver, syncId, canSync, mode, sequenceStatus);
   }
 
   public synchronized OSyncState startSend(
-      ONodeId from, ONodeId to, OSyncId syncId, OSyncMode mode) {
-    OSyncSession session = new OSyncSession(getId(), syncId, from, to, mode);
+      ONodeId from,
+      ONodeId to,
+      OSyncId syncId,
+      OSyncMode mode,
+      Optional<OTransactionSequenceStatus> sequenceStatus) {
+    OSyncSession session = new OSyncSession(getId(), syncId, from, to, mode, sequenceStatus);
     this.syncSessions.put(syncId, session);
     return session.getState();
   }

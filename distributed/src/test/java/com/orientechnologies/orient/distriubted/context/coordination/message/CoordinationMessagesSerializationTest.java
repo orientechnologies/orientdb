@@ -35,6 +35,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import org.junit.Test;
@@ -154,7 +155,8 @@ public class CoordinationMessagesSerializationTest {
     ONodeId nodeId = newNodeId();
     ODatabaseId dbId = newDatabaseId();
     OSyncId syncId = new OSyncId();
-    OSyncRequest syncReq = new OSyncRequest(nodeId, dbId, syncId, OSyncMode.StandardBackup);
+    OSyncRequest syncReq =
+        new OSyncRequest(nodeId, dbId, syncId, OSyncMode.StandardBackup, Optional.empty());
 
     OSyncRequest read = writeRead(syncReq);
     assertEquals(read.getFrom(), nodeId);
@@ -162,6 +164,7 @@ public class CoordinationMessagesSerializationTest {
 
     assertEquals(read.getSyncId(), syncId);
     assertEquals(read.getMode(), OSyncMode.StandardBackup);
+    assertTrue(read.getSequenceStatus().isEmpty());
   }
 
   @Test
@@ -169,7 +172,8 @@ public class CoordinationMessagesSerializationTest {
     ONodeId nodeId = newNodeId();
     ODatabaseId dbId = newDatabaseId();
     OSyncId syncId = new OSyncId();
-    OCanSync syncReq = new OCanSync(nodeId, dbId, syncId, OSyncMode.StandardBackup, true);
+    OCanSync syncReq =
+        new OCanSync(nodeId, dbId, syncId, OSyncMode.StandardBackup, Optional.empty(), true);
 
     OCanSync read = writeRead(syncReq);
     assertEquals(read.getSender(), nodeId);
@@ -178,6 +182,7 @@ public class CoordinationMessagesSerializationTest {
     assertEquals(read.getSyncId(), syncId);
     assertEquals(read.getMode(), OSyncMode.StandardBackup);
     assertTrue(read.isCanSync());
+    assertTrue(read.getSequenceStatus().isEmpty());
   }
 
   @Test
@@ -185,7 +190,8 @@ public class CoordinationMessagesSerializationTest {
     ONodeId nodeId = newNodeId();
     ODatabaseId dbId = newDatabaseId();
     OSyncId syncId = new OSyncId();
-    OStartSync syncReq = new OStartSync(nodeId, dbId, syncId, OSyncMode.StandardBackup);
+    OStartSync syncReq =
+        new OStartSync(nodeId, dbId, syncId, OSyncMode.StandardBackup, Optional.empty());
 
     OStartSync read = writeRead(syncReq);
     assertEquals(read.getReceiver(), nodeId);
@@ -193,6 +199,7 @@ public class CoordinationMessagesSerializationTest {
 
     assertEquals(read.getSyncId(), syncId);
     assertEquals(read.getMode(), OSyncMode.StandardBackup);
+    assertTrue(read.getSequenceStatus().isEmpty());
   }
 
   @Test

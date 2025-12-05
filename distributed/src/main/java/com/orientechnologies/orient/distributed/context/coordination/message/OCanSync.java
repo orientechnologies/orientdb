@@ -2,32 +2,41 @@ package com.orientechnologies.orient.distributed.context.coordination.message;
 
 import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
+import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import com.orientechnologies.orient.distributed.context.OSyncId;
 import com.orientechnologies.orient.distributed.db.OSyncMode;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.Optional;
 
 public class OCanSync implements OStructuralMessage {
-  private ONodeId sender;
-  private ODatabaseId dbId;
-  private OSyncId syncId;
-  private OSyncMode mode;
-  private boolean canSync;
+  private final ONodeId sender;
+  private final ODatabaseId dbId;
+  private final OSyncId syncId;
+  private final OSyncMode mode;
+  private final Optional<OTransactionSequenceStatus> sequenceStatus;
+  private final boolean canSync;
 
   public OCanSync(
-      ONodeId sender, ODatabaseId dbId, OSyncId syncId, OSyncMode mode, boolean canSync) {
+      ONodeId sender,
+      ODatabaseId dbId,
+      OSyncId syncId,
+      OSyncMode mode,
+      Optional<OTransactionSequenceStatus> sequenceStatus,
+      boolean canSync) {
     this.sender = sender;
     this.dbId = dbId;
     this.syncId = syncId;
     this.mode = mode;
+    this.sequenceStatus = sequenceStatus;
     this.canSync = canSync;
   }
 
   @Override
   public void execute(OrientDBDistributed ctx) {
-    ctx.canSync(sender, dbId, syncId, canSync, mode);
+    ctx.canSync(sender, dbId, syncId, canSync, mode, sequenceStatus);
   }
 
   @Override
@@ -36,6 +45,13 @@ public class OCanSync implements OStructuralMessage {
     this.dbId.writeNetwork(out);
     this.syncId.writeNetwork(out);
     this.mode.writeNetwork(out);
+    if (this.sequenceStatus.isPresent()) {
+      out.writeBoolean(true);
+      this.sequenceStatus.get().writeNetwork(out);
+    } else {
+      out.writeBoolean(false);
+    }
+
     out.writeBoolean(canSync);
   }
 
@@ -49,8 +65,15 @@ public class OCanSync implements OStructuralMessage {
     ODatabaseId dbId = ODatabaseId.readNetwork(input);
     OSyncId syncId = OSyncId.readNetwork(input);
     OSyncMode mode = OSyncMode.fromNetwork(input);
+    boolean sequence = input.readBoolean();
+    Optional<OTransactionSequenceStatus> sequenceStatus;
+    if (sequence) {
+      sequenceStatus = Optional.of(OTransactionSequenceStatus.readNetwork(input));
+    } else {
+      sequenceStatus = Optional.empty();
+    }
     boolean canSync = input.readBoolean();
-    return new OCanSync(from, dbId, syncId, mode, canSync);
+    return new OCanSync(from, dbId, syncId, mode, sequenceStatus, canSync);
   }
 
   public ONodeId getSender() {
@@ -71,5 +94,9 @@ public class OCanSync implements OStructuralMessage {
 
   public boolean isCanSync() {
     return canSync;
+  }
+
+  public Optional<OTransactionSequenceStatus> getSequenceStatus() {
+    return sequenceStatus;
   }
 }

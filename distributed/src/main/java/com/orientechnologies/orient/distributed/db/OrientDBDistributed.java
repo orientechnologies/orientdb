@@ -28,10 +28,13 @@ import com.orientechnologies.orient.core.storage.OStorageEngine.OBackupType;
 import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.OGroupId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
+import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
+import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import com.orientechnologies.orient.distributed.context.OCompleteAction;
 import com.orientechnologies.orient.distributed.context.ODatabaseState;
 import com.orientechnologies.orient.distributed.context.ODatabaseStateChangeListener;
+import com.orientechnologies.orient.distributed.context.ODatabasesTopologyState;
 import com.orientechnologies.orient.distributed.context.ONodeState;
 import com.orientechnologies.orient.distributed.context.ORetryInfo;
 import com.orientechnologies.orient.distributed.context.ORetryOperation;
@@ -181,7 +184,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
   private void syncIfNeeded(ODatabaseId dbId) {
     if (!ODatabaseState.Online.equals(
         getNodeState().getDatabaseTopology().getNodeState(dbId, getNodeId()))) {
-      sync(dbId);
+      sync(dbId, Optional.empty());
     }
   }
 
@@ -997,18 +1000,23 @@ public class OrientDBDistributed extends OrientDBEmbedded
             () -> {
               if (!ODatabaseState.Online.equals(
                   getNodeState().getDatabaseTopology().getNodeState(dbId, getNodeId()))) {
-                execute(() -> sync(dbId));
+                execute(() -> sync(dbId, Optional.empty()));
               }
             });
   }
 
-  private void sync(ODatabaseId dbId) {
+  private void sync(ODatabaseId dbId, Optional<OTransactionSequenceStatus> tx) {
     Optional<OSyncInfo> sync = getNodeState().getDatabaseTopology().newSync(dbId);
     if (sync.isPresent()) {
       logger.debug(
           "Requesting sync %s syncId %s receiver %s", dbId, sync.get().syncId(), getNodeId());
-      var req =
-          new OSyncRequest(getNodeId(), dbId, sync.get().syncId(), OSyncMode.IncrementalBackup);
+      OSyncMode mode;
+      if (tx.isPresent()) {
+        mode = OSyncMode.Delta;
+      } else {
+        mode = OSyncMode.IncrementalBackup;
+      }
+      var req = new OSyncRequest(getNodeId(), dbId, sync.get().syncId(), mode, tx);
       sendMessage(sync.get().targets(), req);
     } else {
       logger.warn("cannot sync missing or already synching db  %s", dbId);
@@ -1019,31 +1027,45 @@ public class OrientDBDistributed extends OrientDBEmbedded
     getNodeState().cancelDatabase(promise, dbId, database);
   }
 
-  public void acceptSync(ONodeId receiver, ODatabaseId dbId, OSyncId syncId, OSyncMode mode) {
+  public void acceptSync(
+      ONodeId receiver,
+      ODatabaseId dbId,
+      OSyncId syncId,
+      OSyncMode mode,
+      Optional<OTransactionSequenceStatus> sequenceStatus) {
     // TODO check syncMode Accept
-    boolean accepted =
-        getNodeState()
-            .getDatabaseTopology()
-            .acceptSync(getNodeState().getNodeId(), receiver, dbId, syncId);
+    ODatabasesTopologyState topology = getNodeState().getDatabaseTopology();
+    boolean accepted = topology.acceptSync(getNodeState().getNodeId(), receiver, dbId, syncId);
     if (accepted) {
       logger.debug(
           "Accepted sync %s syncI: %s sender %s receiver %s", dbId, syncId, getNodeId(), receiver);
     }
-    sendMessage(receiver, new OCanSync(getNodeState().getNodeId(), dbId, syncId, mode, accepted));
+    if (OSyncMode.Delta.equals(mode) && sequenceStatus.isPresent()) {
+      String dbName = topology.getDatabaseName(dbId);
+      List<OTransactionId> missing = getDatabase(dbName).missingTransactions(sequenceStatus.get());
+      if (missing.isEmpty()) {
+        accepted = false;
+      }
+    }
+    sendMessage(receiver, new OCanSync(getNodeId(), dbId, syncId, mode, sequenceStatus, accepted));
   }
 
   public void canSync(
-      ONodeId sender, ODatabaseId dbId, OSyncId syncId, boolean canSync, OSyncMode mode) {
+      ONodeId sender,
+      ODatabaseId dbId,
+      OSyncId syncId,
+      boolean canSync,
+      OSyncMode mode,
+      Optional<OTransactionSequenceStatus> sequenceStatus) {
+    ODatabasesTopologyState topology = getNodeState().getDatabaseTopology();
     Optional<OSyncState> state =
-        getNodeState()
-            .getDatabaseTopology()
-            .canSync(sender, getNodeState().getNodeId(), dbId, syncId, canSync, mode);
+        topology.canSync(sender, getNodeId(), dbId, syncId, canSync, mode, sequenceStatus);
 
     if (state.isPresent()) {
       logger.debug(
           "Receiving sync %s syncId %s sender %s receiver %s", dbId, syncId, sender, getNodeId());
       OSyncState st = state.get();
-      sendMessage(sender, new OStartSync(getNodeState().getNodeId(), dbId, syncId, mode));
+      sendMessage(sender, new OStartSync(getNodeId(), dbId, syncId, mode, sequenceStatus));
       String dbName = getDbName(dbId);
       OReceiverInputStream input = new OReceiverInputStream(this::requestNext, st);
       st.setReceiver(input);
@@ -1069,13 +1091,18 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
   ;
 
-  public void sendDatabase(ONodeId receiver, ODatabaseId dbId, OSyncId syncId, OSyncMode mode) {
+  public void sendDatabase(
+      ONodeId receiver,
+      ODatabaseId dbId,
+      OSyncId syncId,
+      OSyncMode mode,
+      Optional<OTransactionSequenceStatus> sequenceStatus) {
     logger.debug(
         "Sending sync %s syncId %s sender %s receiver %s", dbId, syncId, getNodeId(), receiver);
     OSyncState state =
         getNodeState()
             .getDatabaseTopology()
-            .startSend(receiver, getNodeState().getNodeId(), dbId, syncId, mode);
+            .startSend(receiver, getNodeState().getNodeId(), dbId, syncId, mode, sequenceStatus);
     String name = getDbName(state.getDbId());
 
     Thread thread =
@@ -1102,8 +1129,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
           storage.backup(out, null, null, null, compression, 0);
         }
         case Delta -> {
-          // TODO: OTransactionSequenceStatus should be received from before
-          var transactions = getDatabase(name).missingTransactions(null);
+          var transactions = getDatabase(name).missingTransactions(state.getSequenceStatus().get());
           db.deltaBackup(out, transactions);
         }
       }
