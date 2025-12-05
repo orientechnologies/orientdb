@@ -385,6 +385,8 @@ public interface OStorage extends OStorageInfo {
   Optional<OBackgroundNewDelta> extractTransactionsFromWal(
       List<OTransactionId> transactionsMetadata);
 
+  void backupTransactions(OutputStream output, List<OTransactionId> transactionsMetadata);
+
   boolean check(final boolean verbose, final OCommandOutputListener listener);
 
   OBinarySerializer<?> resolveObjectSerializer(final byte serializerId);

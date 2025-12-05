@@ -604,7 +604,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
 
   @Override
   public boolean deltaSync(String dbName, InputStream backupStream, OrientDBConfig config) {
-    if (new ONewDeltaSyncImporter().importDelta(this, dbName, backupStream, getNodeName())) {
+    if (ONewDeltaSyncImporter.importDelta(this, dbName, backupStream, getNodeName())) {
       getDatabase(dbName).setOnline();
       return true;
     } else {
@@ -1006,7 +1006,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
     Optional<OSyncInfo> sync = getNodeState().getDatabaseTopology().newSync(dbId);
     if (sync.isPresent()) {
       logger.debug(
-          "Reqeusting sync %s syncId %s receiver %s", dbId, sync.get().syncId(), getNodeId());
+          "Requesting sync %s syncId %s receiver %s", dbId, sync.get().syncId(), getNodeId());
       var req =
           new OSyncRequest(getNodeId(), dbId, sync.get().syncId(), OSyncMode.IncrementalBackup);
       sendMessage(sync.get().targets(), req);
@@ -1058,12 +1058,16 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   public void receiveSync(String dbName, OSyncState state, InputStream input, OrientDBConfig conf) {
-    if (state.isIncremental()) {
-      incrementalsSync(dbName, input, conf);
-    } else {
-      restore(dbName, input, null, null, null);
+
+    switch (state.getMode()) {
+      case IncrementalBackup -> incrementalsSync(dbName, input, conf);
+
+      case StandardBackup -> restore(dbName, input, null, null, null);
+
+      case Delta -> deltaSync(dbName, input, conf);
     }
   }
+  ;
 
   public void sendDatabase(ONodeId receiver, ODatabaseId dbId, OSyncId syncId, OSyncMode mode) {
     logger.debug(
@@ -1073,40 +1077,38 @@ public class OrientDBDistributed extends OrientDBEmbedded
             .getDatabaseTopology()
             .startSend(receiver, getNodeState().getNodeId(), dbId, syncId, mode);
     String name = getDbName(state.getDbId());
-    OutputStream out =
-        new BufferedOutputStream(new OutputStreamMessages(this::sendBuffer, state), 8096);
+
     Thread thread =
         new Thread(
             () -> {
-              syncBackup(name, state, out);
+              syncBackup(name, state, new OutputStreamMessages(this::sendBuffer, state));
             });
     thread.start();
   }
 
-  public void syncBackup(String name, OSyncState state, OutputStream out) {
+  public void syncBackup(String name, OSyncState state, OutputStream output) {
     ODatabaseDocumentEmbedded db = openNoAuthorization(name);
     OStorage storage = db.getStorage();
-    if (storage.supportIncremental() && state.isIncremental()) {
-      storage.incrementalSync(out, null);
-      try {
-        out.close();
-      } catch (IOException e) {
-        // TODO Auto-generated catch block
-        e.printStackTrace();
-      }
-    } else {
-      int compression =
-          getConfigurations()
-              .getConfigurations()
-              .getValueAsInteger(OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION);
-      try {
-        storage.backup(out, null, null, null, compression, 0);
-      } catch (IOException e) {
-        try {
-          out.close();
-        } catch (IOException e1) {
+
+    try (OutputStream out = new BufferedOutputStream(output, 8096)) {
+
+      switch (state.getMode()) {
+        case IncrementalBackup -> storage.incrementalSync(out, null);
+        case StandardBackup -> {
+          int compression =
+              getConfigurations()
+                  .getConfigurations()
+                  .getValueAsInteger(OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION);
+          storage.backup(out, null, null, null, compression, 0);
+        }
+        case Delta -> {
+          // TODO: OTransactionSequenceStatus should be received from before
+          var transactions = getDatabase(name).missingTransactions(null);
+          db.deltaBackup(out, transactions);
         }
       }
+    } catch (IOException e) {
+      logger.info("exception while sending backup data", e);
     }
   }
 

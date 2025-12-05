@@ -16,7 +16,6 @@ import com.orientechnologies.orient.distributed.db.OSyncMode;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.distributed.db.OutputStreamMessages;
 import com.orientechnologies.orient.distributed.db.OutputStreamMessages.MessageSender;
-import java.io.BufferedOutputStream;
 import java.io.OutputStream;
 import org.junit.After;
 import org.junit.Before;
@@ -76,7 +75,7 @@ public class SyncOpsTest {
     var receiver = new OSyncState(dbId, syncId, nodeFrom, nodeTo, mode);
     var pass = new PassTrough(sender, receiver);
 
-    OutputStream out = new BufferedOutputStream(new OutputStreamMessages(pass, sender), 8096);
+    OutputStream out = new OutputStreamMessages(pass, sender);
     OReceiverInputStream input = new OReceiverInputStream(pass, receiver);
     receiver.setReceiver(input);
 

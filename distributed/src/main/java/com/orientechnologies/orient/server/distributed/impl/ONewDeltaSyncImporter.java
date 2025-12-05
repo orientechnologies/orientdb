@@ -15,7 +15,7 @@ public class ONewDeltaSyncImporter {
   private static final OLoggerDistributed logger =
       OLoggerDistributed.logger(ONewDeltaSyncImporter.class);
 
-  public boolean importDelta(
+  public static boolean importDelta(
       OrientDBDistributed context, String databaseName, InputStream in, String targetNode) {
     final String nodeName = context.getDistributedManager().getLocalNodeName();
     try {

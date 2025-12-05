@@ -175,6 +175,7 @@ import com.orientechnologies.orient.core.tx.OTxMetadataHolder;
 import com.orientechnologies.orient.core.tx.OTxMetadataHolderImpl;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.DataOutput;
 import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -1513,7 +1514,7 @@ public abstract class OAbstractPaginatedStorage
     error.set(e);
   }
 
-  public Optional<OBackgroundNewDelta> extractTransactionsFromWal(
+  public Optional<List<OTransactionData>> readTransactionsFromWal(
       List<OTransactionId> transactionsMetadata) {
     Map<OTransactionId, OTransactionData> finished = new HashMap<>();
     List<OTransactionId> started = new ArrayList<>();
@@ -1578,7 +1579,7 @@ public abstract class OAbstractPaginatedStorage
                   transactions.add(data);
                 }
               }
-              return Optional.of(new OBackgroundNewDelta(transactions));
+              return Optional.of(transactions);
             }
           }
           records = writeAheadLog.next(records.get(records.size() - 1).getLsn(), 1_000);
@@ -1594,7 +1595,7 @@ public abstract class OAbstractPaginatedStorage
             transactions.add(data);
           }
         }
-        return Optional.of(new OBackgroundNewDelta(transactions));
+        return Optional.of(transactions);
       } else {
         return Optional.empty();
       }
@@ -1604,6 +1605,39 @@ public abstract class OAbstractPaginatedStorage
     } finally {
       stateLock.readLock().unlock();
     }
+  }
+
+  @Override
+  public void backupTransactions(
+      OutputStream outputStream, List<OTransactionId> transactionsMetadata) {
+    Optional<List<OTransactionData>> txData = readTransactionsFromWal(transactionsMetadata);
+    if (txData.isPresent()) {
+      try {
+        DataOutput output = new DataOutputStream(outputStream);
+        for (OTransactionData transaction : txData.get()) {
+          output.writeBoolean(true);
+          transaction.write(output);
+        }
+        output.writeBoolean(false);
+      } catch (IOException e) {
+        throw OException.wrapException(
+            new ODatabaseException("Error sending delta transactions"), e);
+      }
+    }
+  }
+
+  public Optional<OBackgroundNewDelta> extractTransactionsFromWal(
+      List<OTransactionId> transactionsMetadata) {
+    return readTransactionsFromWal(transactionsMetadata)
+        .map(
+            (x) -> {
+              try {
+                return new OBackgroundNewDelta(x);
+              } catch (final IOException e) {
+                throw OException.wrapException(
+                    new OStorageException("Error of reading of records from  WAL"), e);
+              }
+            });
   }
 
   @Override
