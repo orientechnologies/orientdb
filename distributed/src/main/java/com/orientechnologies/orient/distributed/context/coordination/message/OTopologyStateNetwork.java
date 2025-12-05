@@ -16,6 +16,7 @@ public class OTopologyStateNetwork {
   private final OTopologyState state;
   private final Set<ONodeId> members;
   private OGroupId groupId;
+  private boolean merge;
 
   public static OTopologyStateNetwork boot(OGroupId groupId) {
     return new OTopologyStateNetwork(groupId, OTopologyState.BOOT, Collections.emptySet(), 0, 0);
@@ -44,6 +45,7 @@ public class OTopologyStateNetwork {
         this.groupId.writeNetwork(output);
         output.writeLong(version);
         output.writeInt(quorum);
+        output.writeBoolean(merge);
         output.writeInt(members.size());
         for (ONodeId node : members) {
           node.writeNetwork(output);
@@ -65,14 +67,18 @@ public class OTopologyStateNetwork {
           OGroupId networkId = OGroupId.readNetwork(input);
           long version = input.readLong();
           int quorum = input.readInt();
+          boolean merge = input.readBoolean();
           int size = input.readInt();
           Set<ONodeId> members = new HashSet<ONodeId>(size);
           while (size-- > 0) {
             ONodeId node = ONodeId.readNetwork(input);
             members.add(node);
           }
-          return new OTopologyStateNetwork(
-              networkId, OTopologyState.ESTABLISHED, members, quorum, version);
+          var topology =
+              new OTopologyStateNetwork(
+                  networkId, OTopologyState.ESTABLISHED, members, quorum, version);
+          topology.setMerge(merge);
+          return topology;
         }
       default:
         {
@@ -99,5 +105,13 @@ public class OTopologyStateNetwork {
 
   public int getQuorum() {
     return quorum;
+  }
+
+  public void setMerge(boolean merge) {
+    this.merge = merge;
+  }
+
+  public boolean isMerge() {
+    return merge;
   }
 }

@@ -1329,4 +1329,14 @@ public class OrientDBDistributed extends OrientDBEmbedded
     return s != ODistributedServerManager.DB_STATUS.OFFLINE
         && s != ODistributedServerManager.DB_STATUS.NOT_AVAILABLE;
   }
+
+  public void sendMergeOperation(Set<ONodeId> members, OCompleteExecution execution) {
+    if (nodeState.getDatabaseTopology().getDatabases().isEmpty()) {
+      ONodeStateNetwork st = getNodeState().getNetworkState();
+      st.getTopology().setMerge(true);
+      this.sendMessage(members, new ONodeFirstConnect(getNodeState().getNodeId(), st));
+    } else {
+      logger.warn("found joinable network, but can't merge into it with databases");
+    }
+  }
 }

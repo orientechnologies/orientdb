@@ -19,6 +19,7 @@ import com.orientechnologies.orient.distributed.context.coordination.result.OAcc
 import com.orientechnologies.orient.distributed.context.coordination.result.OInvalidSequential;
 import com.orientechnologies.orient.distributed.context.coordination.result.OQuorumNotReached;
 import com.orientechnologies.orient.distributed.context.topology.ODiscoverAction;
+import com.orientechnologies.orient.distributed.context.topology.ODiscoverAction.OAddNodeAction;
 import com.orientechnologies.orient.distributed.context.topology.OTopologyState;
 import java.util.HashSet;
 import java.util.Optional;
@@ -517,5 +518,16 @@ public class OCoordinatedDistributedOpsTest {
     OTopologyStateNetwork state = ops2.getNetworkState();
     ODiscoverAction exectedMerge = ops1.nodeJoinStart(nodeId2, state);
     assertTrue(exectedMerge instanceof ODiscoverAction.OMergeAction);
+
+    OTopologyStateNetwork mergeState = ops1.getNetworkState();
+    mergeState.setMerge(true);
+    ODiscoverAction addNode = ops2.nodeJoinStart(nodeId1, mergeState);
+    assertTrue(addNode instanceof ODiscoverAction.OAddNodeAction);
+    ODiscoverAction.OAddNodeAction add = (OAddNodeAction) addNode;
+    ops2.promiseRegister(add.node(), add.version());
+    ops2.registerNode(add.node(), add.version());
+    assertEquals(ops2.getMembers().size(), 2);
+    ops1.nodeJoinStart(nodeId2, ops2.getNetworkState());
+    assertEquals(ops1.getMembers().size(), 2);
   }
 }

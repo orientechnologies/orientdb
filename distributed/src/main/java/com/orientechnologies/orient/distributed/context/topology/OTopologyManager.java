@@ -177,6 +177,8 @@ public class OTopologyManager implements OTopologyEvents {
             // Other outdated just notify self state
             return new ODiscoverAction.ONotifySelf(Set.of(node));
           }
+        } else if (externState.isMerge() && !members.contains(node)) {
+          return new OAddNodeAction(node, version + 1);
         } else if (this.quorum == 1) {
           /// Try to merge the state if possible
           return new ODiscoverAction.OMergeAction(externState.getMembers());

@@ -21,7 +21,9 @@ public sealed interface ODiscoverAction
 
   public record OMergeAction(Set<ONodeId> members) implements ODiscoverAction {
     @Override
-    public void execute(OrientDBDistributed context, OCompleteExecution execution) {}
+    public void execute(OrientDBDistributed context, OCompleteExecution execution) {
+      context.sendMergeOperation(members, execution);
+    }
   }
 
   public void execute(OrientDBDistributed context, OCompleteExecution execution);
