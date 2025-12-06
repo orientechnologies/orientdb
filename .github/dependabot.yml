@@ -18,3 +18,11 @@ updates:
     ignore:
       - dependency-name: "*"
         update-types: ["version-update:semver-major"]
+  - package-ecosystem: "maven"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    target-branch: "3.2.x"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-patch"]
