@@ -44,6 +44,7 @@ public class OStorageEnginePaginatedLocal implements OStorageEngine {
   private static final OLogger logger =
       OLogManager.instance().logger(OStorageEnginePaginatedLocal.class);
 
+  private OByteBufferPool memoryPool;
   protected volatile OReadCache readCache;
 
   protected OClosableLinkedContainer<Long, OFile> files;
@@ -90,6 +91,7 @@ public class OStorageEnginePaginatedLocal implements OStorageEngine {
 
   public void init(Path basePath, OContextConfiguration configurations) {
     this.basePath = basePath;
+    memoryPool = OByteBufferPool.instance(configurations);
     files = new OClosableLinkedContainer<>(getOpenFilesLimit());
     final String userName = System.getProperty("user.name", "unknown");
     logger.infoNoDb("System is started under an effective user : `%s`", userName);
@@ -111,21 +113,20 @@ public class OStorageEnginePaginatedLocal implements OStorageEngine {
       final int pageCount = (int) (diskCacheSize / pageSize);
       logger.info("Allocation of %d pages.", pageCount);
 
-      final OByteBufferPool bufferPool = OByteBufferPool.instance(null);
       final List<OPointer> pages = new ArrayList<>(pageCount);
 
       for (int i = 0; i < pageCount; i++) {
-        pages.add(bufferPool.acquireDirect(true, MemTrace.PAGE_PRE_ALLOCATION));
+        pages.add(memoryPool.acquireDirect(true, MemTrace.PAGE_PRE_ALLOCATION));
       }
 
       for (final OPointer pointer : pages) {
-        bufferPool.release(pointer);
+        memoryPool.release(pointer);
       }
 
       pages.clear();
     }
 
-    readCache = new AsyncReadCache(OByteBufferPool.instance(null), diskCacheSize, pageSize, false);
+    readCache = new AsyncReadCache(memoryPool, diskCacheSize, pageSize, false);
 
     if (basePath == null) {
       maxWALSegmentSize = -1;
@@ -157,7 +158,7 @@ public class OStorageEnginePaginatedLocal implements OStorageEngine {
 
     try {
       Path path = buildPath(name);
-      OLocalPaginatedStorage storage = newLocalInstance(context, name, path);
+      OLocalPaginatedStorage storage = newLocalInstance(context, name, path, memoryPool);
       storage.create(config, id);
       return storage;
     } catch (Exception e) {
@@ -175,7 +176,7 @@ public class OStorageEnginePaginatedLocal implements OStorageEngine {
   @Override
   public RegisterResult registerLocal(
       OrientDBInternal context, String name, Path path, OContextConfiguration config) {
-    OLocalPaginatedStorage storage = newLocalInstance(context, name, path);
+    OLocalPaginatedStorage storage = newLocalInstance(context, name, path, memoryPool);
     if (OLocalPaginatedStorage.exists(path)) {
       storage.open(config);
       return new RegisterResult(storage, false);
@@ -325,7 +326,7 @@ public class OStorageEnginePaginatedLocal implements OStorageEngine {
       OrientDBInternal context, ODatabaseId id, String name, OContextConfiguration config) {
     try {
       ODirectMemoryStorage storage =
-          new ODirectMemoryStorage(name, name, generateStorageId(), context);
+          new ODirectMemoryStorage(name, name, generateStorageId(), context, memoryPool);
       storage.create(config, id);
       return storage;
     } catch (Exception e) {
@@ -358,7 +359,7 @@ public class OStorageEnginePaginatedLocal implements OStorageEngine {
     try {
       Path path = buildPath(name);
 
-      OLocalPaginatedStorage storage = newLocalInstance(context, name, path);
+      OLocalPaginatedStorage storage = newLocalInstance(context, name, path, memoryPool);
       storage.open(config);
       return storage;
     } catch (Exception e) {
@@ -374,7 +375,7 @@ public class OStorageEnginePaginatedLocal implements OStorageEngine {
   }
 
   protected OLocalPaginatedStorage newLocalInstance(
-      OrientDBInternal context, String name, Path path) {
+      OrientDBInternal context, String name, Path path, OByteBufferPool pool) {
     return new OLocalPaginatedStorage(
         name,
         path.toString(),
@@ -383,7 +384,8 @@ public class OStorageEnginePaginatedLocal implements OStorageEngine {
         files,
         maxWALSegmentSize,
         doubleWriteLogMaxSegSize,
-        context);
+        context,
+        pool);
   }
 
   @Override

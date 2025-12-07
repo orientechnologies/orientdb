@@ -20,6 +20,7 @@
 
 package com.orientechnologies.orient.core.storage.memory;
 
+import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.types.OModifiableBoolean;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
@@ -59,8 +60,10 @@ public final class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache
 
   private final int pageSize;
   private final int id;
+  private final OByteBufferPool bufferPool;
 
-  ODirectMemoryOnlyDiskCache(final int pageSize, final int id) {
+  ODirectMemoryOnlyDiskCache(final int pageSize, final int id, OByteBufferPool bufferPool) {
+    this.bufferPool = bufferPool;
     this.pageSize = pageSize;
     this.id = id;
   }
@@ -233,7 +236,7 @@ public final class ODirectMemoryOnlyDiskCache extends OAbstractWriteCache
     final int intId = extractFileId(fileId);
 
     final MemoryFile memoryFile = getFile(intId);
-    final OCacheEntry cacheEntry = memoryFile.addNewPage(this);
+    final OCacheEntry cacheEntry = memoryFile.addNewPage(this, bufferPool);
 
     //noinspection SynchronizationOnLocalVariableOrMethodParameter
     synchronized (cacheEntry) {

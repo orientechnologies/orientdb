@@ -77,6 +77,11 @@ public final class OByteBufferPool implements OByteBufferPoolMXBean {
     return INSTANCE_HOLDER.get();
   }
 
+  /** @return Singleton instance */
+  public static OByteBufferPool getInstanceIfExists() {
+    return INSTANCE_HOLDER.get();
+  }
+
   /** Size of single page in bytes. */
   private final int pageSize;
 

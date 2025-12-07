@@ -20,6 +20,7 @@
 
 package com.orientechnologies.orient.core.storage.memory;
 
+import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -48,8 +49,12 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
   private static final int ONE_KB = 1024;
 
   public ODirectMemoryStorage(
-      final String name, final String filePath, final int id, OrientDBInternal context) {
-    super(name, filePath, id, context);
+      final String name,
+      final String filePath,
+      final int id,
+      OrientDBInternal context,
+      OByteBufferPool pool) {
+    super(name, filePath, id, context, pool);
   }
 
   @Override
@@ -62,7 +67,8 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
         new ODirectMemoryOnlyDiskCache(
             contextConfiguration.getValueAsInteger(OGlobalConfiguration.DISK_CACHE_PAGE_SIZE)
                 * ONE_KB,
-            1);
+            1,
+            memoryPool);
 
     if (readCache == null) {
       readCache = diskCache;

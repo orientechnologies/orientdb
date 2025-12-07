@@ -166,8 +166,9 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
       final OClosableLinkedContainer<Long, OFile> files,
       final long walMaxSegSize,
       long doubleWriteLogMaxSegSize,
-      OrientDBInternal context) {
-    super(name, filePath, id, context);
+      OrientDBInternal context,
+      OByteBufferPool pool) {
+    super(name, filePath, id, context, pool);
 
     this.walMaxSegSize = walMaxSegSize;
     this.files = files;
@@ -813,7 +814,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
     final OWOWCache wowCache =
         new OWOWCache(
             pageSize,
-            OByteBufferPool.instance(null),
+            memoryPool,
             writeAheadLog,
             doubleWriteLog,
             contextConfiguration.getValueAsInteger(

@@ -20,6 +20,7 @@ package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
 import com.orientechnologies.agent.Utils;
 import com.orientechnologies.common.collection.closabledictionary.OClosableLinkedContainer;
+import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -93,8 +94,9 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
       OClosableLinkedContainer<Long, OFile> files,
       long walMaxSize,
       long doubleWriteLogMaxSize,
-      OrientDBInternal context) {
-    super(name, filePath, id, readCache, files, walMaxSize, doubleWriteLogMaxSize, context);
+      OrientDBInternal context,
+      OByteBufferPool pool) {
+    super(name, filePath, id, readCache, files, walMaxSize, doubleWriteLogMaxSize, context, pool);
     logger.info("Enterprise storage installed correctly.");
   }
 

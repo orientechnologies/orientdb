@@ -34,7 +34,7 @@ public final class MemoryFile {
     }
   }
 
-  public OCacheEntry addNewPage(OReadCache readCache) {
+  public OCacheEntry addNewPage(OReadCache readCache, OByteBufferPool bufferPool) {
     clearLock.readLock().lock();
     try {
       OCacheEntry cacheEntry;
@@ -48,7 +48,6 @@ public final class MemoryFile {
           index = lastIndex + 1;
         }
 
-        final OByteBufferPool bufferPool = OByteBufferPool.instance(null);
         final OPointer pointer =
             bufferPool.acquireDirect(true, MemTrace.ADD_NEW_PAGE_IN_MEMORY_STORAGE);
 

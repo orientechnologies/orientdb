@@ -45,10 +45,12 @@ public class ODatabaseImportTest {
     }
     final String importDbUrl =
         "embedded:target/import_" + ODatabaseImportTest.class.getSimpleName();
-    OCreateDatabaseUtil.createDatabase(databaseName, importDbUrl, OCreateDatabaseUtil.TYPE_PLOCAL);
+    OrientDB ctx1 =
+        OCreateDatabaseUtil.createDatabase(
+            databaseName, importDbUrl, OCreateDatabaseUtil.TYPE_PLOCAL);
 
     try (final ODatabaseSession db =
-        orientDB.open(databaseName, "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD)) {
+        ctx1.open(databaseName, "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD)) {
       final ODatabaseImport importer =
           new ODatabaseImport(
               (ODatabaseDocumentInternal) db,
@@ -60,6 +62,8 @@ public class ODatabaseImportTest {
       importer.importDatabase();
       Assert.assertTrue(db.getMetadata().getSchema().existsClass("SimpleClass"));
     }
+    ctx1.drop(databaseName);
+    ctx1.close();
     orientDB.drop(databaseName);
     orientDB.close();
   }
@@ -92,10 +96,12 @@ public class ODatabaseImportTest {
 
     final String importDbUrl =
         "embedded:target/import_" + ODatabaseImportTest.class.getSimpleName() + "_excludeclusters";
-    OCreateDatabaseUtil.createDatabase(databaseName, importDbUrl, OCreateDatabaseUtil.TYPE_PLOCAL);
+    OrientDB ctx1 =
+        OCreateDatabaseUtil.createDatabase(
+            databaseName, importDbUrl, OCreateDatabaseUtil.TYPE_PLOCAL);
 
     try (final ODatabaseSession db =
-        orientDB.open(databaseName, "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD)) {
+        ctx1.open(databaseName, "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD)) {
       final ODatabaseImport importer =
           new ODatabaseImport(
               (ODatabaseDocumentInternal) db,
@@ -107,6 +113,8 @@ public class ODatabaseImportTest {
       importer.importDatabase();
       Assert.assertTrue(db.getMetadata().getSchema().existsClass("SimpleClass"));
     }
+    ctx1.drop(databaseName);
+    ctx1.close();
     orientDB.drop(databaseName);
     orientDB.close();
   }
@@ -142,10 +150,12 @@ public class ODatabaseImportTest {
 
     final String importDbUrl =
         "embedded:target/import_" + ODatabaseImportTest.class.getSimpleName() + "_preserveRids";
-    OCreateDatabaseUtil.createDatabase(databaseName, importDbUrl, OCreateDatabaseUtil.TYPE_PLOCAL);
+    OrientDB ctx1 =
+        OCreateDatabaseUtil.createDatabase(
+            databaseName, importDbUrl, OCreateDatabaseUtil.TYPE_PLOCAL);
 
     try (final ODatabaseSession db =
-        orientDB.open(databaseName, "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD)) {
+        ctx1.open(databaseName, "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD)) {
       final ODatabaseImport importer =
           new ODatabaseImport(
               (ODatabaseDocumentInternal) db,
@@ -160,6 +170,8 @@ public class ODatabaseImportTest {
       assertNotNull(read);
       Assert.assertEquals(read.getIdentity(), toCheck);
     }
+    ctx1.drop(databaseName);
+    ctx1.close();
     orientDB.drop(databaseName);
     orientDB.close();
   }

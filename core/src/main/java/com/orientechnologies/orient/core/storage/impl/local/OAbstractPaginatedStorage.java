@@ -27,6 +27,7 @@ import com.orientechnologies.common.concur.lock.OModificationOperationProhibited
 import com.orientechnologies.common.concur.lock.ONotThreadRWLockManager;
 import com.orientechnologies.common.concur.lock.OPartitionedLockManager;
 import com.orientechnologies.common.concur.lock.OSimpleRWLockManager;
+import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.exception.OErrorCode;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.exception.OHighLevelException;
@@ -359,6 +360,7 @@ public abstract class OAbstractPaginatedStorage
   private final AtomicLong version = new AtomicLong();
 
   protected volatile STATUS status = STATUS.CLOSED;
+  protected final OByteBufferPool memoryPool;
 
   protected AtomicReference<Throwable> error = new AtomicReference<Throwable>(null);
   protected OrientDBInternal context;
@@ -368,8 +370,13 @@ public abstract class OAbstractPaginatedStorage
   private volatile int ddlRunning = 0;
 
   public OAbstractPaginatedStorage(
-      final String name, final String filePath, final int id, OrientDBInternal context) {
+      final String name,
+      final String filePath,
+      final int id,
+      OrientDBInternal context,
+      OByteBufferPool pool) {
     this.context = context;
+    this.memoryPool = pool;
     this.name = checkName(name);
 
     url = filePath;

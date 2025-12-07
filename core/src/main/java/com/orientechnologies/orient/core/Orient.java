@@ -310,9 +310,11 @@ public class Orient extends OListenerManger<OOrientListener> {
       shutdownHandlers.clear();
 
       logger.info("Clearing byte buffer pool");
-      OByteBufferPool.instance(null).clear();
-
-      OByteBufferPool.instance(null).checkMemoryLeaks();
+      OByteBufferPool pool = OByteBufferPool.getInstanceIfExists();
+      if (pool != null) {
+        pool.clear();
+        pool.checkMemoryLeaks();
+      }
       ODirectMemoryAllocator.instance().checkMemoryLeaks();
 
       logger.info("OrientDB Engine shutdown complete");
