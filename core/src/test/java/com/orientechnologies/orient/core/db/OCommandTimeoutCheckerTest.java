@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.db;
 
 import static org.junit.Assert.assertTrue;
 
+import java.util.Date;
 import java.util.Optional;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -20,6 +21,21 @@ public class OCommandTimeoutCheckerTest implements OSchedulerInternal {
 
   @Override
   public void scheduleOnce(TimerTask task, long delay) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public OCancellableTimer delayExecute(Runnable toExecuted, long delay) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public OCancellableTimer periodicExecute(Runnable toExecuted, long periodic) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public OCancellableTimer scheduleExecuteFrom(Runnable task, Date firstTime, long period) {
     throw new UnsupportedOperationException();
   }
 

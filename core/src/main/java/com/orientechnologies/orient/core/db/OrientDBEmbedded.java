@@ -57,6 +57,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -93,7 +94,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
   private final ExecutorService executor;
   private final ExecutorService ioExecutor;
   private final Timer timer;
-  private TimerTask autoCloseTimer = null;
+  private OCancellableTimer autoCloseTimer = null;
   private final OScriptManager scriptManager;
   private final OSystemDatabase systemDatabase;
   private final ODefaultSecuritySystem securitySystem;
@@ -265,14 +266,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
 
   public void initAutoClose(long delay) {
     final long scheduleTime = delay / 3;
-    autoCloseTimer =
-        new TimerTask() {
-          @Override
-          public void run() {
-            OrientDBEmbedded.this.execute(() -> checkAndCloseStorages(delay));
-          }
-        };
-    schedule(autoCloseTimer, scheduleTime, scheduleTime);
+    autoCloseTimer = periodicExecute(() -> checkAndCloseStorages(delay), scheduleTime);
   }
 
   private synchronized void checkAndCloseStorages(long delay) {
@@ -924,12 +918,8 @@ public class OrientDBEmbedded implements OrientDBInternal {
     timer.schedule(task, delay);
   }
 
-  /** Execute a task on executor after a delay
-   *
-   * @param toExecuted
-   * @param delay
-   */
-  public void delayExecute(Runnable toExecuted, long delay) {
+  @Override
+  public OCancellableTimer delayExecute(Runnable toExecuted, long delay) {
     TimerTask tt =
         new TimerTask() {
           @Override
@@ -938,6 +928,35 @@ public class OrientDBEmbedded implements OrientDBInternal {
           }
         };
     timer.schedule(tt, delay);
+    return new OCancellableTimerTask(tt);
+  }
+
+  @Override
+  public OCancellableTimer periodicExecute(Runnable toExecuted, long periodic) {
+    TimerTask tt =
+        new TimerTask() {
+          @Override
+          public void run() {
+            execute(toExecuted);
+          }
+        };
+    timer.schedule(tt, periodic, periodic);
+    return new OCancellableTimerTask(tt);
+  }
+
+  @Override
+  public OCancellableTimerTask scheduleExecuteFrom(
+      Runnable toExecuted, Date firstTime, long period) {
+    long first = Math.max(0, firstTime.getTime() - System.currentTimeMillis());
+    TimerTask tt =
+        new TimerTask() {
+          @Override
+          public void run() {
+            execute(toExecuted);
+          }
+        };
+    timer.schedule(tt, first, period);
+    return new OCancellableTimerTask(tt);
   }
 
   @Override

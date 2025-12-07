@@ -29,6 +29,7 @@ import com.orientechnologies.common.thread.OThreadPoolExecutors;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.OCancellableTimer;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.OSystemDatabase;
@@ -97,7 +98,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       new ConcurrentHashMap<>(64);
   private AtomicLong totalSentRequests = new AtomicLong();
   private AtomicLong totalReceivedRequests = new AtomicLong();
-  private TimerTask txTimeoutTask = null;
+  private OCancellableTimer txTimeoutTask = null;
   private volatile boolean running = true;
   private volatile boolean parsing = false;
   private AtomicLong operationsRunnig = new AtomicLong(0);
@@ -650,15 +651,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   private void startTxTimeoutTimerTask() {
-    txTimeoutTask =
-        new TimerTask() {
-          @Override
-          public void run() {
-            context.execute(() -> checkTxTimeout());
-          }
-        };
     final long timeout = OGlobalConfiguration.DISTRIBUTED_TX_EXPIRE_TIMEOUT.getValueAsLong();
-    context.schedule(txTimeoutTask, timeout / 3, timeout / 3);
+    txTimeoutTask = context.periodicExecute(() -> checkTxTimeout(), timeout / 3);
   }
 
   public void checkTxTimeout() {

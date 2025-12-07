@@ -28,9 +28,9 @@ import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.parser.OVariableParser;
 import com.orientechnologies.common.parser.OVariableParserListener;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -55,7 +55,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -159,111 +158,100 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
               + " targetDirectory=%s",
           delay, firstTime, targetDirectory);
 
-      final Runnable timerTask =
-          new Runnable() {
-            @Override
-            public void run() {
-              logger.info("Scanning databases to backup...");
-
-              int ok = 0;
-              int errors = 0;
-
-              final Map<String, String> databases = serverInstance.getAvailableStorageNames();
-              for (final Entry<String, String> database : databases.entrySet()) {
-                final String dbName = database.getKey();
-                final String dbURL = database.getValue();
-
-                boolean include;
-
-                if (includeDatabases.size() > 0) include = includeDatabases.contains(dbName);
-                else include = true;
-
-                if (excludeDatabases.contains(dbName)) include = false;
-
-                if (include) {
-                  ODatabaseDocumentInternal db = null;
-                  try {
-                    db = serverInstance.getDatabases().openNoAuthorization(dbName);
-
-                    final long begin = System.currentTimeMillis();
-
-                    switch (mode) {
-                      case FULL_BACKUP:
-                        fullBackupDatabase(dbURL, targetDirectory + getFileName(database), db);
-
-                        logger.info(
-                            "Full Backup of database '%s' completed in %d ms",
-                            dbURL, (System.currentTimeMillis() - begin));
-
-                        break;
-
-                      case INCREMENTAL_BACKUP:
-                        incrementalBackupDatabase(dbURL, targetDirectory, db);
-
-                        logger.info(
-                            "Incremental Backup of database '%s' completed in %d ms",
-                            dbURL, (System.currentTimeMillis() - begin));
-                        break;
-
-                      case EXPORT:
-                        exportDatabase(dbURL, targetDirectory + getFileName(database), db);
-
-                        logger.info(
-                            "Export of database '%s' completed in %d ms",
-                            dbURL, (System.currentTimeMillis() - begin));
-                        break;
-                    }
-
-                    try {
-
-                      for (OAutomaticBackupListener listener : listeners) {
-                        listener.onBackupCompleted(dbName);
-                      }
-                    } catch (Exception e) {
-                      logger.error("Error on listener for database '%s'", e, dbURL);
-                    }
-                    ok++;
-
-                  } catch (Exception e) {
-
-                    logger.error(
-                        "Error on backup of database '%s' to directory: %s",
-                        e, dbURL, targetDirectory);
-
-                    try {
-                      for (OAutomaticBackupListener listener : listeners) {
-                        listener.onBackupError(dbName, e);
-                      }
-                    } catch (Exception l) {
-                      logger.error("Error on listener for database '%s'", l, dbURL);
-                    }
-                    errors++;
-
-                  } finally {
-                    if (db != null) db.close();
-                  }
-                }
-              }
-              logger.info("Automatic Backup finished: %d ok, %d errors", ok, errors);
-            }
-          };
-
-      TimerTask task =
-          new TimerTask() {
-
-            @Override
-            public void run() {
-              serverInstance.getDatabases().execute(timerTask);
-            }
-          };
+      OrientDBInternal ctx = serverInstance.getDatabases();
       if (firstTime == null) {
-        serverInstance.getDatabases().schedule(task, delay, delay);
+        ctx.periodicExecute(this::executeBackup, delay);
       } else {
-        Orient.instance().scheduleTask(task, firstTime, delay);
+        ctx.scheduleExecuteFrom(this::executeBackup, firstTime, delay);
       }
     } else {
       logger.info("Automatic Backup plugin is disabled");
     }
+  }
+
+  private void executeBackup() {
+    logger.info("Scanning databases to backup...");
+
+    int ok = 0;
+    int errors = 0;
+
+    final Map<String, String> databases = serverInstance.getAvailableStorageNames();
+    for (final Entry<String, String> database : databases.entrySet()) {
+      final String dbName = database.getKey();
+      final String dbURL = database.getValue();
+
+      boolean include;
+
+      if (includeDatabases.size() > 0) include = includeDatabases.contains(dbName);
+      else include = true;
+
+      if (excludeDatabases.contains(dbName)) include = false;
+
+      if (include) {
+        ODatabaseDocumentInternal db = null;
+        try {
+          OrientDBInternal ctx = serverInstance.getDatabases();
+          db = ctx.openNoAuthorization(dbName);
+
+          final long begin = System.currentTimeMillis();
+
+          switch (mode) {
+            case FULL_BACKUP:
+              fullBackupDatabase(dbURL, targetDirectory + getFileName(database), db);
+
+              logger.info(
+                  "Full Backup of database '%s' completed in %d ms",
+                  dbURL, (System.currentTimeMillis() - begin));
+
+              break;
+
+            case INCREMENTAL_BACKUP:
+              incrementalBackupDatabase(dbURL, targetDirectory, db);
+
+              logger.info(
+                  "Incremental Backup of database '%s' completed in %d ms",
+                  dbURL, (System.currentTimeMillis() - begin));
+              break;
+
+            case EXPORT:
+              exportDatabase(dbURL, targetDirectory + getFileName(database), db);
+
+              logger.info(
+                  "Export of database '%s' completed in %d ms",
+                  dbURL, (System.currentTimeMillis() - begin));
+              break;
+          }
+
+          try {
+
+            for (OAutomaticBackupListener listener : listeners) {
+              listener.onBackupCompleted(dbName);
+            }
+          } catch (Exception e) {
+            logger.error("Error on listener for database '%s'", e, dbURL);
+          }
+          ok++;
+
+        } catch (Exception e) {
+
+          logger.error(
+              "Error on backup of database '%s' to directory: %s", e, dbURL, targetDirectory);
+
+          try {
+            for (OAutomaticBackupListener listener : listeners) {
+              listener.onBackupError(dbName, e);
+            }
+          } catch (Exception l) {
+            logger.error("Error on listener for database '%s'", l, dbURL);
+          }
+          errors++;
+
+        } finally {
+          if (db != null) db.close();
+        }
+      }
+    }
+    logger.info("Automatic Backup finished: %d ok, %d errors", ok, errors);
   }
 
   private void configure() {

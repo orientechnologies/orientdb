@@ -25,6 +25,7 @@ import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OCallableNoParamNoReturn;
 import com.orientechnologies.common.util.OCallableUtils;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.OCancellableTimer;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentAbstract;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -54,7 +55,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.TimerTask;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -87,7 +87,7 @@ public class OHazelcastClusterMetadataManager
   protected final ConcurrentMap<String, Integer> registeredNodeByName = new ConcurrentHashMap<>();
   protected ConcurrentMap<String, Long> autoRemovalOfServers = new ConcurrentHashMap<>();
 
-  protected TimerTask publishLocalNodeConfigurationTask = null;
+  protected OCancellableTimer publishLocalNodeConfigurationTask = null;
 
   protected volatile NODE_STATUS status = NODE_STATUS.OFFLINE;
 
@@ -227,16 +227,7 @@ public class OHazelcastClusterMetadataManager
     final long delay = OGlobalConfiguration.DISTRIBUTED_PUBLISH_NODE_STATUS_EVERY.getValueAsLong();
     if (delay > 0) {
       publishLocalNodeConfigurationTask =
-          new TimerTask() {
-
-            @Override
-            public void run() {
-              serverInstance
-                  .getDatabases()
-                  .execute(OHazelcastClusterMetadataManager.this::publishLocalNodeConfiguration);
-            }
-          };
-      serverInstance.getDatabases().schedule(publishLocalNodeConfigurationTask, delay, delay);
+          ctx.periodicExecute(this::publishLocalNodeConfiguration, delay);
     }
   }
 
@@ -1038,32 +1029,24 @@ public class OHazelcastClusterMetadataManager
     else if (autoRemoveOffLineServer > 0) {
       // SCHEDULE AUTO REMOVAL IN A WHILE
       autoRemovalOfServers.put(nodeLeftName, System.currentTimeMillis());
-      TimerTask task =
-          new TimerTask() {
+      serverInstance
+          .getDatabases()
+          .delayExecute(
+              () -> {
+                try {
+                  final Long lastTimeNodeLeft = autoRemovalOfServers.get(nodeLeftName);
+                  if (lastTimeNodeLeft == null)
+                    // NODE WAS BACK ONLINE
+                    return;
 
-            @Override
-            public void run() {
-              serverInstance
-                  .getDatabases()
-                  .execute(
-                      () -> {
-                        try {
-                          final Long lastTimeNodeLeft = autoRemovalOfServers.get(nodeLeftName);
-                          if (lastTimeNodeLeft == null)
-                            // NODE WAS BACK ONLINE
-                            return;
-
-                          if (System.currentTimeMillis() - lastTimeNodeLeft
-                              >= autoRemoveOffLineServer) {
-                            removeNodeFromConfiguration(nodeLeftName, removeOnlyDynamicServers);
-                          }
-                        } catch (Exception e) {
-                          // IGNORE IT
-                        }
-                      });
-            }
-          };
-      serverInstance.getDatabases().scheduleOnce(task, autoRemoveOffLineServer);
+                  if (System.currentTimeMillis() - lastTimeNodeLeft >= autoRemoveOffLineServer) {
+                    removeNodeFromConfiguration(nodeLeftName, removeOnlyDynamicServers);
+                  }
+                } catch (Exception e) {
+                  // IGNORE IT
+                }
+              },
+              autoRemoveOffLineServer);
     }
 
     for (String databaseName : distributedPlugin.getManagedDatabases()) {

@@ -7,6 +7,7 @@ import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationReq
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.OCancellableTimer;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
@@ -63,7 +64,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.SortedSet;
-import java.util.TimerTask;
 import java.util.TreeSet;
 
 /** @author luigi dell'aquila (l.dellaquila - at - orientdb.com) */
@@ -78,7 +78,7 @@ public class OTransactionPhase1Task extends OAbstractRemoteTask implements OLock
   private SortedSet<OTransactionUniqueKey> uniqueIndexKeys;
   private transient int retryCount = 0;
   private volatile boolean finished;
-  private TimerTask notYetFinishedTask;
+  private OCancellableTimer notYetFinishedTask;
   private OTransactionIdPromise promise;
 
   public OTransactionPhase1Task() {
@@ -422,23 +422,17 @@ public class OTransactionPhase1Task extends OAbstractRemoteTask implements OLock
     if (notYetFinishedTask == null) {
       OrientDBInternal databases = distributedDatabase.getContext();
       notYetFinishedTask =
-          new TimerTask() {
-            @Override
-            public void run() {
-
-              databases.execute(
-                  () -> {
-                    if (!finished) {
-                      ODistributedDatabaseImpl.sendResponseBack(
-                          this,
-                          distributedDatabase.getManager(),
-                          request.getId(),
-                          new OTransactionPhase1TaskResult(new OTxStillRunning()));
-                    }
-                  });
-            }
-          };
-      databases.schedule(notYetFinishedTask, getDistributedTimeout(), getDistributedTimeout());
+          databases.periodicExecute(
+              () -> {
+                if (!finished) {
+                  ODistributedDatabaseImpl.sendResponseBack(
+                      this,
+                      distributedDatabase.getManager(),
+                      request.getId(),
+                      new OTransactionPhase1TaskResult(new OTxStillRunning()));
+                }
+              },
+              getDistributedTimeout());
     }
     if (distributedDatabase instanceof ODistributedDatabaseImpl) {
       ((ODistributedDatabaseImpl) distributedDatabase).trackTransactions(promise.getId());

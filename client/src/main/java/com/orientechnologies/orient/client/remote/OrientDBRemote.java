@@ -64,6 +64,8 @@ import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.OCachedDatabasePoolFactory;
 import com.orientechnologies.orient.core.db.OCachedDatabasePoolFactoryImpl;
+import com.orientechnologies.orient.core.db.OCancellableTimer;
+import com.orientechnologies.orient.core.db.OCancellableTimerTask;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabasePoolImpl;
 import com.orientechnologies.orient.core.db.ODatabasePoolInternal;
@@ -87,6 +89,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -503,6 +506,47 @@ public class OrientDBRemote implements OrientDBInternal {
 
   public void scheduleOnce(TimerTask task, long delay) {
     timer.schedule(task, delay);
+  }
+
+  @Override
+  public OCancellableTimer delayExecute(Runnable toExecuted, long delay) {
+    TimerTask tt =
+        new TimerTask() {
+          @Override
+          public void run() {
+            execute(toExecuted);
+          }
+        };
+    timer.schedule(tt, delay);
+    return new OCancellableTimerTask(tt);
+  }
+
+  @Override
+  public OCancellableTimer periodicExecute(Runnable toExecuted, long periodic) {
+    TimerTask tt =
+        new TimerTask() {
+          @Override
+          public void run() {
+            execute(toExecuted);
+          }
+        };
+    timer.schedule(tt, periodic, periodic);
+    return new OCancellableTimerTask(tt);
+  }
+
+  @Override
+  public OCancellableTimerTask scheduleExecuteFrom(
+      Runnable toExecuted, Date firstTime, long period) {
+    long first = Math.max(0, firstTime.getTime() - System.currentTimeMillis());
+    TimerTask tt =
+        new TimerTask() {
+          @Override
+          public void run() {
+            execute(toExecuted);
+          }
+        };
+    timer.schedule(tt, first, period);
+    return new OCancellableTimerTask(tt);
   }
 
   @Override

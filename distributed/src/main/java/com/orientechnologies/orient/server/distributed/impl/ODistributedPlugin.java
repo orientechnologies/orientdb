@@ -42,6 +42,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.OCancellableTimer;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -123,7 +124,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
-import java.util.TimerTask;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
@@ -159,8 +159,8 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
   private volatile String lastServerDump = "";
   protected CountDownLatch serverStarted = new CountDownLatch(1);
 
-  private TimerTask haStatsTask = null;
-  private TimerTask healthCheckerTask = null;
+  private OCancellableTimer haStatsTask = null;
+  private OCancellableTimer healthCheckerTask = null;
   protected OSignalHandler.OSignalListener signalListener;
 
   private final OHazelcastClusterMetadataManager clusterManager;
@@ -256,8 +256,8 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
   @Override
   public void startup() {
     if (!enabled) return;
-    if (serverInstance.getDatabases() instanceof OrientDBDistributed)
-      ((OrientDBDistributed) serverInstance.getDatabases()).setPlugin(this);
+    OrientDBInternal databases = serverInstance.getDatabases();
+    if (databases instanceof OrientDBDistributed) ((OrientDBDistributed) databases).setPlugin(this);
 
     // REGISTER TEMPORARY USER FOR REPLICATION PURPOSE
     serverInstance.addTemporaryUser(REPLICATOR_USER, "" + new SecureRandom().nextLong(), "*");
@@ -268,28 +268,14 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
       OContextConfiguration ctx = serverInstance.getContextConfiguration();
       final long statsDelay = ctx.getValueAsLong(OGlobalConfiguration.DISTRIBUTED_DUMP_STATS_EVERY);
       if (statsDelay > 0) {
-        haStatsTask =
-            new TimerTask() {
-              @Override
-              public void run() {
-                ODistributedPlugin.this.dumpStats();
-              }
-            };
-        serverInstance.getDatabases().schedule(haStatsTask, statsDelay, statsDelay);
+        haStatsTask = databases.periodicExecute(this::dumpStats, statsDelay);
       }
 
       final long healthChecker =
           ctx.getValueAsLong(OGlobalConfiguration.DISTRIBUTED_CHECK_HEALTH_EVERY);
       if (healthChecker > 0) {
         OClusterHealthChecker checkTask = new OClusterHealthChecker(this, healthChecker);
-        healthCheckerTask =
-            new TimerTask() {
-              @Override
-              public void run() {
-                serverInstance.getDatabases().execute(checkTask);
-              }
-            };
-        serverInstance.getDatabases().schedule(healthCheckerTask, healthChecker, healthChecker);
+        healthCheckerTask = databases.periodicExecute(checkTask, healthChecker);
       }
 
       signalListener =

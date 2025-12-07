@@ -24,17 +24,17 @@ import com.orientechnologies.agent.services.backup.strategy.OBackupStrategy;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.enterprise.server.OEnterpriseServer;
-import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.OCancellableTimer;
+import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.io.IOException;
 import java.util.Date;
-import java.util.TimerTask;
 
 /** Created by Enrico Risa on 25/03/16. */
 public class OBackupTask implements OBackupListener {
   private static final OLogger logger = OLogManager.instance().logger(OBackupTask.class);
   private OBackupStrategy strategy;
-  private TimerTask task;
+  private OCancellableTimer task;
   private OBackupListener listener;
   private OEnterpriseServer server;
 
@@ -47,25 +47,21 @@ public class OBackupTask implements OBackupListener {
   private void schedule() {
     if (strategy.isEnabled()) {
       final Date nextExecution = strategy.scheduleNextExecution(this);
+
+      OrientDBInternal ctx = server.getDatabases();
+
       task =
-          Orient.instance()
-              .scheduleTask(
-                  () -> {
-                    server
-                        .getDatabases()
-                        .execute(
-                            () -> {
-                              try {
-                                final long start = tickStart();
-                                strategy.doBackup(OBackupTask.this);
-                                tickEnd(start);
-                              } catch (final IOException e) {
-                                logger.error("Error %s", e, e.getMessage());
-                              }
-                            });
-                  },
-                  nextExecution,
-                  0);
+          ctx.delayExecute(
+              () -> {
+                try {
+                  final long start = tickStart();
+                  strategy.doBackup(OBackupTask.this);
+                  tickEnd(start);
+                } catch (final IOException e) {
+                  logger.error("Error %s", e, e.getMessage());
+                }
+              },
+              nextExecution);
       logger.info(
           "Scheduled [%s] task :%s. Next execution will be %s ",
           strategy.getMode(), strategy.getUUID(), nextExecution);
