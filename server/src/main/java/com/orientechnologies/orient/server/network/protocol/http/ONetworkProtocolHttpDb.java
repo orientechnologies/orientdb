@@ -55,11 +55,16 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
             + iSocket.getRemoteSocketAddress());
 
     super.config(iListener, server, iSocket, iConfiguration);
-    cmdManager.registerCommand(new OServerCommandPostImportDatabase());
-    cmdManager.registerCommand(new OServerCommandPostUploadSingleFile());
 
     connection.getData().serverInfo =
         iConfiguration.getValueAsString(OGlobalConfiguration.NETWORK_HTTP_SERVER_INFO);
+  }
+
+  @Override
+  protected void registerStatelessCommands(OServerNetworkListener iListener) {
+    super.registerStatelessCommands(iListener);
+    cmdManager.registerCommand(new OServerCommandPostImportDatabase());
+    cmdManager.registerCommand(new OServerCommandPostUploadSingleFile());
   }
 
   @Override
