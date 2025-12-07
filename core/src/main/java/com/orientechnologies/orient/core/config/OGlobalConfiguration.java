@@ -118,7 +118,7 @@ public enum OGlobalConfiguration { // ENVIRONMENT
       "Limit of the pages cached inside of direct memory pool to avoid frequent reallocation of"
           + " memory in OS",
       Integer.class,
-      Integer.MAX_VALUE),
+      16384 /*this means 1GB in 64KB pages*/),
 
   DIRECT_MEMORY_PREALLOCATE(
       "memory.directMemory.preallocate",
