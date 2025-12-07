@@ -34,7 +34,6 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
   /** Stands for "double write log" */
   public static final String EXTENSION = ".dwl";
 
-  private static final ODirectMemoryAllocator ALLOCATOR = ODirectMemoryAllocator.instance();
   static final int DEFAULT_BLOCK_SIZE = 4 * 1024;
 
   private static final byte DATA_RECORD = 0;
@@ -94,6 +93,7 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
   private long segmentPosition;
 
   private Map<ORawPair<Integer, Integer>, ORawPair<Long, Long>> pageMap;
+  private final ODirectMemoryAllocator allocator;
 
   static {
     final LZ4Factory factory = LZ4Factory.fastestInstance();
@@ -104,10 +104,12 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
   private final Object mutex = new Object();
 
   public DoubleWriteLogGL(final long maxSegSize) {
+    this.allocator = ODirectMemoryAllocator.instance();
     this.maxSegSize = maxSegSize;
   }
 
   public DoubleWriteLogGL(final long maxSegSize, int blockSize) {
+    this.allocator = ODirectMemoryAllocator.instance();
     this.maxSegSize = maxSegSize;
     this.blockSize = blockSize;
   }
@@ -208,7 +210,7 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
       sizeToAllocate += buffers.length * RECORD_METADATA_SIZE;
       sizeToAllocate = (sizeToAllocate + blockMask) & ~blockMask;
       final OPointer pageContainer =
-          ALLOCATOR.allocate(sizeToAllocate, false, MemTrace.DWL_ALLOCATE_CHUNK);
+          allocator.allocate(sizeToAllocate, false, MemTrace.DWL_ALLOCATE_CHUNK);
 
       try {
         final ByteBuffer containerBuffer;
@@ -222,7 +224,7 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
 
           final int maxCompressedLength = LZ_4_COMPRESSOR.maxCompressedLength(buffer.limit());
           final OPointer compressedPointer =
-              ALLOCATOR.allocate(
+              allocator.allocate(
                   maxCompressedLength, false, MemTrace.DWL_ALLOCATE_COMPRESSED_CHUNK);
           try {
             final ByteBuffer compressedBuffer = compressedPointer.getNativeByteBuffer();
@@ -250,7 +252,7 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
                     containerBuffer.position() - xxHashPosition - XX_HASH_LEN,
                     XX_HASH_SEED));
           } finally {
-            ALLOCATOR.deallocate(compressedPointer);
+            allocator.deallocate(compressedPointer);
           }
         }
 
@@ -281,7 +283,7 @@ public class DoubleWriteLogGL implements DoubleWriteLog {
         segmentPosition += written;
         assert currentFile.size() == segmentPosition;
       } finally {
-        ALLOCATOR.deallocate(pageContainer);
+        allocator.deallocate(pageContainer);
       }
 
       // we can not truncate log in restore mode because we remove all restore information

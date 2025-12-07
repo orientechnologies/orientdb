@@ -139,7 +139,7 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
   private final Path walLocation;
   private final String storageName;
 
-  private final ODirectMemoryAllocator allocator = ODirectMemoryAllocator.instance();
+  private final ODirectMemoryAllocator allocator;
 
   private final int pageSize;
   private final int maxRecordSize;
@@ -241,7 +241,7 @@ public final class CASDiskWriteAheadLog implements OWriteAheadLog {
     if (aesKey != null && iv == null) {
       throw new OInvalidStorageEncryptionKeyException("IV can not be null");
     }
-
+    this.allocator = ODirectMemoryAllocator.instance();
     this.keepSingleWALSegment = keepSingleWALSegment;
     this.aesKey = aesKey;
     this.iv = iv;

@@ -446,6 +446,8 @@ public final class OWOWCache extends OAbstractWriteCache
    */
   private final DoubleWriteLog doubleWriteLog;
 
+  private final ODirectMemoryAllocator allocator;
+
   private boolean closed;
   private final ExecutorService executor;
 
@@ -476,7 +478,7 @@ public final class OWOWCache extends OAbstractWriteCache
     if (aesKey != null && iv == null) {
       throw new OInvalidStorageEncryptionKeyException("IV can not be null");
     }
-
+    this.allocator = ODirectMemoryAllocator.instance();
     this.shutdownTimeout = shutdownTimeout;
     this.pagesFlushInterval = pagesFlushInterval;
     this.iv = iv;
@@ -2896,9 +2898,8 @@ public final class OWOWCache extends OAbstractWriteCache
         flushedPages += chunk.size();
 
         final OPointer containerPointer =
-            ODirectMemoryAllocator.instance()
-                .allocate(
-                    chunk.size() * pageSize, false, MemTrace.ALLOCATE_CHUNK_TO_WRITE_DATA_IN_BATCH);
+            allocator.allocate(
+                chunk.size() * pageSize, false, MemTrace.ALLOCATE_CHUNK_TO_WRITE_DATA_IN_BATCH);
         final ByteBuffer containerBuffer = containerPointer.getNativeByteBuffer();
 
         containerPointers[i] = containerPointer;
@@ -2999,7 +3000,7 @@ public final class OWOWCache extends OAbstractWriteCache
     } finally {
       for (final OPointer containerPointer : containerPointers) {
         if (containerPointer != null) {
-          ODirectMemoryAllocator.instance().deallocate(containerPointer);
+          allocator.deallocate(containerPointer);
         }
       }
     }
