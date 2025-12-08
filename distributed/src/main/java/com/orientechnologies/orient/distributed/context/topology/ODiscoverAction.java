@@ -3,6 +3,7 @@ package com.orientechnologies.orient.distributed.context.topology;
 import com.orientechnologies.orient.core.transaction.OGroupId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
+import com.orientechnologies.orient.distributed.context.coordination.message.ONodeStateNetwork;
 import com.orientechnologies.orient.distributed.context.coordination.message.OProposeOp;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OAddTopologyMember;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OEnstablishTopology;
@@ -21,16 +22,19 @@ public sealed interface ODiscoverAction
 
   public record OMergeAction(Set<ONodeId> members) implements ODiscoverAction {
     @Override
-    public void execute(OrientDBDistributed context, OCompleteExecution execution) {
-      context.sendMergeOperation(members, execution);
+    public void execute(
+        OrientDBDistributed context, OCompleteExecution execution, ONodeStateNetwork otherState) {
+      context.sendMergeOperation(members, execution, otherState);
     }
   }
 
-  public void execute(OrientDBDistributed context, OCompleteExecution execution);
+  public void execute(
+      OrientDBDistributed context, OCompleteExecution execution, ONodeStateNetwork otherState);
 
   public record ONotifySelf(Set<ONodeId> nodes) implements ODiscoverAction {
     @Override
-    public void execute(OrientDBDistributed context, OCompleteExecution execution) {
+    public void execute(
+        OrientDBDistributed context, OCompleteExecution execution, ONodeStateNetwork otherState) {
       context.sendFirstConnects(nodes);
     }
   }
@@ -38,7 +42,8 @@ public sealed interface ODiscoverAction
   record OEstablishAction(OGroupId groupId, Set<ONodeId> candidates) implements ODiscoverAction {
 
     @Override
-    public void execute(OrientDBDistributed context, OCompleteExecution execution) {
+    public void execute(
+        OrientDBDistributed context, OCompleteExecution execution, ONodeStateNetwork otherState) {
       OEnstablishTopology operation = new OEnstablishTopology(groupId(), candidates());
       Optional<OTransactionIdPromise> promise =
           context
@@ -55,7 +60,8 @@ public sealed interface ODiscoverAction
   record OAddNodeAction(ONodeId node, long version) implements ODiscoverAction {
 
     @Override
-    public void execute(OrientDBDistributed context, OCompleteExecution exection) {
+    public void execute(
+        OrientDBDistributed context, OCompleteExecution exection, ONodeStateNetwork otherState) {
       context.coordinatedOperation(new OAddTopologyMember(version(), node()), exection);
     }
   }
@@ -63,7 +69,8 @@ public sealed interface ODiscoverAction
   record ONoneAction() implements ODiscoverAction {
 
     @Override
-    public void execute(OrientDBDistributed context, OCompleteExecution execution) {
+    public void execute(
+        OrientDBDistributed context, OCompleteExecution execution, ONodeStateNetwork otherState) {
       // Noting to do
     }
   }

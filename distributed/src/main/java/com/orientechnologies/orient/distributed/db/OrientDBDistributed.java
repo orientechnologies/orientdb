@@ -87,6 +87,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
@@ -161,7 +162,8 @@ public class OrientDBDistributed extends OrientDBEmbedded
         newExectution(
             (ctx, complete) -> {
               // no Retry;
-            }));
+            }),
+        null);
   }
 
   private OStandardCompleteExecution newExectution(ORetryOperation operation) {
@@ -948,7 +950,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
         (ctx, complete) -> {
           ODiscoverAction action = localState.nodeJoinStart(nodeId, state);
           logger.debug("executing node join action %s", action);
-          action.execute(this, complete);
+          action.execute(this, complete, state);
           dumpNodeInfo();
         });
   }
@@ -1358,8 +1360,13 @@ public class OrientDBDistributed extends OrientDBEmbedded
         && s != ODistributedServerManager.DB_STATUS.NOT_AVAILABLE;
   }
 
-  public void sendMergeOperation(Set<ONodeId> members, OCompleteExecution execution) {
-    if (nodeState.getDatabaseTopology().getDatabases().isEmpty()) {
+  public void sendMergeOperation(
+      Set<ONodeId> members, OCompleteExecution execution, ONodeStateNetwork otherState) {
+    Set<ODatabaseId> dbs = new HashSet<ODatabaseId>(nodeState.getDatabaseTopology().getDatabases());
+    if (otherState != null) {
+      dbs.removeAll(otherState.getDatabases().stream().map((x) -> x.getId()).toList());
+    }
+    if (dbs.isEmpty()) {
       ONodeStateNetwork st = getNodeState().getNetworkState();
       st.getTopology().setMerge(true);
       this.sendMessage(members, new ONodeFirstConnect(getNodeState().getNodeId(), st));
