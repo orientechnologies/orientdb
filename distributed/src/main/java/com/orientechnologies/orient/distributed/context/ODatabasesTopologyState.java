@@ -285,6 +285,7 @@ public class ODatabasesTopologyState {
       } else {
         db = new ODatabaseTopologyState(state, listener);
         this.databases.put(state.getId(), db);
+        this.databasesByName.put(state.getName(), db);
       }
     }
   }

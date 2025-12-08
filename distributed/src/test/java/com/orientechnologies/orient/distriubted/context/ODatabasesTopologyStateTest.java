@@ -57,6 +57,27 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
   }
 
   @Test
+  public void testDeclareAndPassState() {
+
+    ODatabasesTopologyState state = new ODatabasesTopologyState(this);
+    var promiseId = newPromiseId();
+    Set<ONodeId> partecipants = Set.of(promiseId.getCoordinator());
+    var dbId = newDbId();
+    String name = "dbName";
+    int quorum = 2;
+    var res = state.promiseDeclare(promiseId, dbId, name, partecipants, quorum);
+    assertTrue(res.isEmpty());
+
+    state.declareDatabase(promiseId, dbId, name, partecipants, quorum);
+    assertTrue(state.listDatabaseIds().contains(dbId));
+
+    ODatabasesTopologyState state1 = new ODatabasesTopologyState(this);
+    state1.receiverNetworkState(state.getNetworkState());
+    assertEquals(dbId, state1.getDatabaseId("dbName").get());
+    assertEquals("dbName", state1.getDatabaseName(dbId));
+  }
+
+  @Test
   public void testFailDoublePromise() {
 
     ODatabasesTopologyState state = new ODatabasesTopologyState(this);
