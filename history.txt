@@ -27,9 +27,21 @@
 This document contains the last changes of OrientDB Community Edition.
 
 
+
+-----------------------------------------------------------------------------------------------------------------------------------
+version 3.2.47 - (December, 10 2025)
+- release notes: https://github.com/orientechnologies/orientdb/wiki/orientdb-3.2-release-notes#3247---10-December-2025
+
+# Core
+- Initialize OrientDB context executor with the right max size
+- Replace lz4-java with community-maintained fork 
+- Limited default memory pool retained pages to 1GB
+- Updated build dependencies
+
+
 -----------------------------------------------------------------------------------------------------------------------------------
 version 3.2.46 - (November, 18 2025)
-- release notes: https://github.com/orientechnologies/orientdb/wiki/orientdb-3.2-release-notes#3245---18-November-2025
+- release notes: https://github.com/orientechnologies/orientdb/wiki/orientdb-3.2-release-notes#3246---18-November-2025
 
 # Tools
 
