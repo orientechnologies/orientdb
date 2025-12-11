@@ -319,4 +319,42 @@ public class ODatabasesTopologyState {
       return null;
     }
   }
+
+  public synchronized void mergeNetworkState(List<ODatabaseStateNetwork> network) {
+    for (ODatabaseStateNetwork state : network) {
+      ODatabaseTopologyState db = this.databases.get(state.getId());
+      if (db != null) {
+        db.mergeState(state);
+      } else {
+        db = new ODatabaseTopologyState(state, listener);
+        this.databases.put(state.getId(), db);
+        this.databasesByName.put(state.getName(), db);
+      }
+    }
+  }
+
+  public synchronized Optional<OAcceptResult> promiseAddMember(
+      ODatabaseId dbId, ONodeId node, long version) {
+    ODatabaseTopologyState db = this.databases.get(dbId);
+    if (db != null) {
+      return db.promiseMember(node, version);
+    } else {
+      return Optional.of(new ODatabaseMissing());
+    }
+  }
+
+  public synchronized void addDatabaseMember(
+      ODatabaseId dbId, ONodeId node, ONodeRole role, long version) {
+    ODatabaseTopologyState db = this.databases.get(dbId);
+    if (db != null) {
+      db.addMember(node, version, role);
+    }
+  }
+
+  public synchronized void cancelAddDatabaseMember(ODatabaseId dbId, ONodeId node) {
+    ODatabaseTopologyState db = this.databases.get(dbId);
+    if (db != null) {
+      db.cancelAddMemer(node);
+    }
+  }
 }

@@ -169,10 +169,12 @@ public class OTopologyManager implements OTopologyEvents {
             this.setMember(externState.getMembers());
             this.version = externState.getVersion();
             this.quorum = externState.getQuorum();
+            return new ODiscoverAction.OApplyStateAction();
           } else if (externState.getVersion() > version) {
             this.setMember(externState.getMembers());
             this.version = externState.getVersion();
             this.quorum = externState.getQuorum();
+            return new ODiscoverAction.OApplyStateAction();
           } else if (externState.getVersion() != version) {
             // Other outdated just notify self state
             return new ODiscoverAction.ONotifySelf(Set.of(node));

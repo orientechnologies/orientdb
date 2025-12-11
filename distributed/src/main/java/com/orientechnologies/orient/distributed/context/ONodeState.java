@@ -193,7 +193,13 @@ public class ONodeState {
 
   public ODiscoverAction nodeJoinStart(ONodeId node, ONodeStateNetwork state) {
     ODiscoverAction action = this.coordinated.nodeJoinStart(node, state.getTopology());
-    this.databaseTopology.receiverNetworkState(state.getDatabases());
+    if (action.applyDatabaseState()) {
+      if (state.getTopology().isMerge()) {
+        this.databaseTopology.mergeNetworkState(state.getDatabases());
+      } else {
+        this.databaseTopology.receiverNetworkState(state.getDatabases());
+      }
+    }
     return action;
   }
 
@@ -242,5 +248,19 @@ public class ONodeState {
 
   public Set<ONodeId> getNetworkMemebers() {
     return coordinated.getMembers();
+  }
+
+  public Optional<OAcceptResult> promiseAddDatabaseMember(
+      ODatabaseId dbId, ONodeId node, long version) {
+    return this.databaseTopology.promiseAddMember(dbId, node, version);
+  }
+
+  public void addDatabaseMember(ODatabaseId dbId, ONodeId node, ONodeRole role, long version) {
+    this.databaseTopology.addDatabaseMember(dbId, node, role, version);
+  }
+
+  public void cancelAddDatabaseMember(ODatabaseId dbId, ONodeId node) {
+    // TODO Auto-generated method stub
+
   }
 }

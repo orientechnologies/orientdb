@@ -2,6 +2,7 @@ package com.orientechnologies.orient.distriubted.context;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
@@ -12,11 +13,13 @@ import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.distributed.context.ODatabaseState;
 import com.orientechnologies.orient.distributed.context.ODatabaseStateChangeListener;
 import com.orientechnologies.orient.distributed.context.ODatabasesTopologyState;
+import com.orientechnologies.orient.distributed.context.ONodeRole;
 import com.orientechnologies.orient.distributed.context.OSyncInfo;
 import com.orientechnologies.orient.distributed.context.OSyncState;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAlreadyPromised;
 import com.orientechnologies.orient.distributed.context.coordination.result.OInvalidSequential;
+import com.orientechnologies.orient.distributed.context.coordination.result.ONodeAlreadyPresent;
 import com.orientechnologies.orient.distributed.db.OSyncMode;
 import java.util.Optional;
 import java.util.Set;
@@ -400,5 +403,61 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
     assertTrue(syncInfo2.targets().contains(nodeId));
     boolean canSync2 = state.acceptSync(nodeId, node2, dbId, syncInfo.syncId());
     assertFalse(canSync2);
+  }
+
+  @Test
+  public void testSetAddMember() {
+
+    ODatabasesTopologyState state = new ODatabasesTopologyState(this);
+
+    var promiseId = newPromiseId();
+    ONodeId nodeId = promiseId.getCoordinator();
+    ONodeId nodeId1 = newNodeId();
+    Set<ONodeId> partecipants = Set.of(nodeId);
+    var dbId = newDbId();
+    String name = "dbName";
+    int quorum = 2;
+    var res = state.promiseDeclare(promiseId, dbId, name, partecipants, quorum);
+    assertTrue(res.isEmpty());
+
+    state.declareDatabase(promiseId, dbId, name, partecipants, quorum);
+
+    long version = state.getDatabaseVersion(dbId) + 1;
+
+    Optional<OAcceptResult> accept = state.promiseAddMember(dbId, nodeId1, version);
+    assertTrue(accept.isEmpty());
+    state.addDatabaseMember(dbId, nodeId1, ONodeRole.Main, version);
+    assertEquals(state.getNodeState(dbId, nodeId1), ODatabaseState.Offline);
+
+    Optional<OAcceptResult> acceptAfter = state.promiseAddMember(dbId, nodeId1, version);
+    assertTrue(acceptAfter.get() instanceof ONodeAlreadyPresent);
+  }
+
+  @Test
+  public void testSetAddMemberCancel() {
+
+    ODatabasesTopologyState state = new ODatabasesTopologyState(this);
+
+    var promiseId = newPromiseId();
+    ONodeId nodeId = promiseId.getCoordinator();
+    ONodeId nodeId1 = newNodeId();
+    Set<ONodeId> partecipants = Set.of(nodeId);
+    var dbId = newDbId();
+    String name = "dbName";
+    int quorum = 2;
+    var res = state.promiseDeclare(promiseId, dbId, name, partecipants, quorum);
+    assertTrue(res.isEmpty());
+
+    state.declareDatabase(promiseId, dbId, name, partecipants, quorum);
+
+    long version = state.getDatabaseVersion(dbId) + 1;
+
+    Optional<OAcceptResult> accept = state.promiseAddMember(dbId, nodeId1, version);
+    assertTrue(accept.isEmpty());
+    state.cancelAddDatabaseMember(dbId, nodeId1);
+    assertNull(state.getNodeState(dbId, nodeId1));
+
+    Optional<OAcceptResult> acceptAfter = state.promiseAddMember(dbId, nodeId1, version);
+    assertTrue(acceptAfter.isEmpty());
   }
 }

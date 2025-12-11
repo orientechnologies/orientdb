@@ -9,8 +9,10 @@ import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.distributed.context.ODatabaseState;
+import com.orientechnologies.orient.distributed.context.ONodeRole;
 import com.orientechnologies.orient.distributed.context.coordination.message.OProposeOp;
 import com.orientechnologies.orient.distributed.context.coordination.message.OStructuralMessage;
+import com.orientechnologies.orient.distributed.context.coordination.message.operation.OAddDatabaseMember;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OAddTopologyMember;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.ODeclareDbMessage;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.ODropDbMessage;
@@ -132,5 +134,20 @@ public class OOperationMessageTest {
 
     assertEquals(operation.getVersion(), 1);
     assertEquals(operation.getNode(), node1);
+  }
+
+  @Test
+  public void proposeAddMember() throws IOException {
+
+    var node1 = newNodeId();
+    var dbId = newDatabaseId();
+    OAddDatabaseMember toTest = new OAddDatabaseMember(1, node1, dbId, ONodeRole.Main);
+
+    OAddDatabaseMember operation = writeRead(toTest);
+
+    assertEquals(operation.getVersion(), 1);
+    assertEquals(operation.getNode(), node1);
+    assertEquals(operation.getDbId(), dbId);
+    assertEquals(operation.getRole(), ONodeRole.Main);
   }
 }

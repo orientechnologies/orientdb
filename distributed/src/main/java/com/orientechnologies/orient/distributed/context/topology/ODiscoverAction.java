@@ -18,7 +18,15 @@ public sealed interface ODiscoverAction
         ODiscoverAction.OAddNodeAction,
         ODiscoverAction.ONoneAction,
         ODiscoverAction.ONotifySelf,
-        ODiscoverAction.OMergeAction {
+        ODiscoverAction.OMergeAction,
+        ODiscoverAction.OApplyStateAction {
+
+  public void execute(
+      OrientDBDistributed context, OCompleteExecution execution, ONodeStateNetwork otherState);
+
+  default boolean applyDatabaseState() {
+    return false;
+  }
 
   public record OMergeAction(Set<ONodeId> members) implements ODiscoverAction {
     @Override
@@ -27,9 +35,6 @@ public sealed interface ODiscoverAction
       context.sendMergeOperation(members, execution, otherState);
     }
   }
-
-  public void execute(
-      OrientDBDistributed context, OCompleteExecution execution, ONodeStateNetwork otherState);
 
   public record ONotifySelf(Set<ONodeId> nodes) implements ODiscoverAction {
     @Override
@@ -72,6 +77,20 @@ public sealed interface ODiscoverAction
     public void execute(
         OrientDBDistributed context, OCompleteExecution execution, ONodeStateNetwork otherState) {
       // Noting to do
+    }
+  }
+
+  record OApplyStateAction() implements ODiscoverAction {
+
+    @Override
+    public void execute(
+        OrientDBDistributed context, OCompleteExecution execution, ONodeStateNetwork otherState) {
+      // Noting to do
+    }
+
+    @Override
+    public boolean applyDatabaseState() {
+      return true;
     }
   }
 }

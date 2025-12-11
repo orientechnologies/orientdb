@@ -8,6 +8,7 @@ import com.orientechnologies.orient.distributed.context.coordination.message.ODa
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAlreadyPromised;
 import com.orientechnologies.orient.distributed.context.coordination.result.OInvalidSequential;
+import com.orientechnologies.orient.distributed.context.coordination.result.ONodeAlreadyPresent;
 import com.orientechnologies.orient.distributed.db.OSyncMode;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -236,7 +237,7 @@ public class ODatabaseTopologyState {
     return false;
   }
 
-  public ODatabaseStateNetwork getNetworkState() {
+  public synchronized ODatabaseStateNetwork getNetworkState() {
     List<ODatabaseMemberNetwork> members = new ArrayList<>();
     for (ONodeDatabaseState state : this.nodeStatus.values()) {
       members.add(state.getNetworkState());
@@ -244,7 +245,7 @@ public class ODatabaseTopologyState {
     return new ODatabaseStateNetwork(id, name, quorum, version, members);
   }
 
-  public void receiveState(ODatabaseStateNetwork state) {
+  public synchronized void receiveState(ODatabaseStateNetwork state) {
     // TODO: verify promised case ....
     if (this.version < state.getVersion()) {
       this.quorum = state.getQuorum();
@@ -265,11 +266,55 @@ public class ODatabaseTopologyState {
     }
   }
 
-  public ONodeRole getRole(ONodeId nodeId) {
+  public synchronized void mergeState(ODatabaseStateNetwork state) {
+    if (state.getQuorum() > this.quorum) {
+      this.quorum = state.getQuorum();
+    }
+    for (ODatabaseMemberNetwork member : state.getMembers()) {
+      ONodeDatabaseState status = this.nodeStatus.get(member.getNode());
+      if (status != null) {
+        if (status.getState() != member.getState()) {
+          status.setState(member.getState());
+          this.stateListener.onStateChange(id, member.getNode(), member.getState());
+        }
+        status.setRole(member.getRole());
+      } else {
+        var m = new ONodeDatabaseState(member.getNode(), member.getRole(), member.getState());
+        this.nodeStatus.put(member.getNode(), m);
+        this.stateListener.onStateChange(id, member.getNode(), member.getState());
+      }
+    }
+  }
+
+  public synchronized ONodeRole getRole(ONodeId nodeId) {
     ONodeDatabaseState stat = this.nodeStatus.get(nodeId);
     if (stat != null) {
       return stat.getRole();
     }
     return null;
+  }
+
+  public synchronized Optional<OAcceptResult> promiseMember(ONodeId node, long version) {
+    if (this.nodeStatus.containsKey(node)) {
+      return Optional.of(new ONodeAlreadyPresent());
+    }
+    if (this.version + 1 == version) {
+      if (promised) {
+        return Optional.of(new OAlreadyPromised());
+      } else {
+        promised = true;
+        return Optional.empty();
+      }
+    } else {
+      return Optional.of(new OInvalidSequential(this.version + 1, version));
+    }
+  }
+
+  public synchronized void addMember(ONodeId node, long version, ONodeRole role) {
+    this.nodeStatus.put(node, new ONodeDatabaseState(node, role, ODatabaseState.Offline));
+  }
+
+  public synchronized void cancelAddMemer(ONodeId node) {
+    this.promised = false;
   }
 }
