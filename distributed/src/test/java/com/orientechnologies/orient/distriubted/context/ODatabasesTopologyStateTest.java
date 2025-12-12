@@ -16,11 +16,13 @@ import com.orientechnologies.orient.distributed.context.ODatabasesTopologyState;
 import com.orientechnologies.orient.distributed.context.ONodeRole;
 import com.orientechnologies.orient.distributed.context.OSyncInfo;
 import com.orientechnologies.orient.distributed.context.OSyncState;
+import com.orientechnologies.orient.distributed.context.coordination.message.operation.OAddNodeInfo;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAlreadyPromised;
 import com.orientechnologies.orient.distributed.context.coordination.result.OInvalidSequential;
 import com.orientechnologies.orient.distributed.context.coordination.result.ONodeAlreadyPresent;
 import com.orientechnologies.orient.distributed.db.OSyncMode;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -423,13 +425,13 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
     state.declareDatabase(promiseId, dbId, name, partecipants, quorum);
 
     long version = state.getDatabaseVersion(dbId) + 1;
-
-    Optional<OAcceptResult> accept = state.promiseAddMember(dbId, nodeId1, version);
+    var nodes = List.of(new OAddNodeInfo(nodeId1, ONodeRole.Main));
+    Optional<OAcceptResult> accept = state.promiseAddMember(dbId, nodes, version);
     assertTrue(accept.isEmpty());
-    state.addDatabaseMember(dbId, nodeId1, ONodeRole.Main, version);
+    state.addDatabaseMember(dbId, nodes, version);
     assertEquals(state.getNodeState(dbId, nodeId1), ODatabaseState.Offline);
 
-    Optional<OAcceptResult> acceptAfter = state.promiseAddMember(dbId, nodeId1, version);
+    Optional<OAcceptResult> acceptAfter = state.promiseAddMember(dbId, nodes, version);
     assertTrue(acceptAfter.get() instanceof ONodeAlreadyPresent);
   }
 
@@ -451,13 +453,13 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
     state.declareDatabase(promiseId, dbId, name, partecipants, quorum);
 
     long version = state.getDatabaseVersion(dbId) + 1;
-
-    Optional<OAcceptResult> accept = state.promiseAddMember(dbId, nodeId1, version);
+    var nodes = List.of(new OAddNodeInfo(nodeId1, ONodeRole.Main));
+    Optional<OAcceptResult> accept = state.promiseAddMember(dbId, nodes, version);
     assertTrue(accept.isEmpty());
-    state.cancelAddDatabaseMember(dbId, nodeId1);
+    state.cancelAddDatabaseMember(dbId, nodes);
     assertNull(state.getNodeState(dbId, nodeId1));
 
-    Optional<OAcceptResult> acceptAfter = state.promiseAddMember(dbId, nodeId1, version);
+    Optional<OAcceptResult> acceptAfter = state.promiseAddMember(dbId, nodes, version);
     assertTrue(acceptAfter.isEmpty());
   }
 }

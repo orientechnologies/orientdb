@@ -35,6 +35,7 @@ import com.orientechnologies.orient.distributed.context.OCompleteAction;
 import com.orientechnologies.orient.distributed.context.ODatabaseState;
 import com.orientechnologies.orient.distributed.context.ODatabaseStateChangeListener;
 import com.orientechnologies.orient.distributed.context.ODatabasesTopologyState;
+import com.orientechnologies.orient.distributed.context.ONodeRole;
 import com.orientechnologies.orient.distributed.context.ONodeState;
 import com.orientechnologies.orient.distributed.context.ORetryInfo;
 import com.orientechnologies.orient.distributed.context.ORetryOperation;
@@ -51,6 +52,8 @@ import com.orientechnologies.orient.distributed.context.coordination.message.OSt
 import com.orientechnologies.orient.distributed.context.coordination.message.OStructuralMessage;
 import com.orientechnologies.orient.distributed.context.coordination.message.OSyncData;
 import com.orientechnologies.orient.distributed.context.coordination.message.OSyncRequest;
+import com.orientechnologies.orient.distributed.context.coordination.message.operation.OAddDatabaseMember;
+import com.orientechnologies.orient.distributed.context.coordination.message.operation.OAddNodeInfo;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.ODeclareDbMessage;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.ODropDbMessage;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OOperationMessage;
@@ -1372,6 +1375,29 @@ public class OrientDBDistributed extends OrientDBEmbedded
       this.sendMessage(members, new ONodeFirstConnect(getNodeState().getNodeId(), st));
     } else {
       logger.warn("found joinable network, but can't merge into it with databases");
+    }
+  }
+
+  public void autoDeployIfNeed() {
+    Set<ONodeId> members = getNodeState().getNetworkMemebers();
+    ODatabasesTopologyState databaseTopology = getNodeState().getDatabaseTopology();
+    Collection<ODatabaseId> dbs = databaseTopology.getDatabases();
+    for (ODatabaseId id : dbs) {
+      // TODO: check autodeploy setting
+      List<OAddNodeInfo> nodes = new ArrayList<OAddNodeInfo>();
+      for (ONodeId node : members) {
+        ODatabaseState state = databaseTopology.getDatabaseStatus(node, id);
+        if (state == null) {
+          nodes.add(new OAddNodeInfo(node, ONodeRole.Main));
+        }
+      }
+      if (!nodes.isEmpty()) {
+        retryOperation(
+            (ctx, op) -> {
+              coordinatedOperation(
+                  new OAddDatabaseMember(databaseTopology.getDatabaseVersion(id), id, nodes), op);
+            });
+      }
     }
   }
 }

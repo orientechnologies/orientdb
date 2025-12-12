@@ -5,6 +5,7 @@ import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import com.orientechnologies.orient.distributed.context.coordination.message.ODatabaseMemberNetwork;
 import com.orientechnologies.orient.distributed.context.coordination.message.ODatabaseStateNetwork;
+import com.orientechnologies.orient.distributed.context.coordination.message.operation.OAddNodeInfo;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAlreadyPromised;
 import com.orientechnologies.orient.distributed.context.coordination.result.OInvalidSequential;
@@ -101,7 +102,12 @@ public class ODatabaseTopologyState {
   }
 
   public synchronized ODatabaseState getState(ONodeId nodeId) {
-    return this.nodeStatus.get(nodeId).getState();
+    var node = this.nodeStatus.get(nodeId);
+    if (node != null) {
+      return node.getState();
+    } else {
+      return null;
+    }
   }
 
   public synchronized void cancelSetState(ONodeId nodeId, long version) {
@@ -294,9 +300,12 @@ public class ODatabaseTopologyState {
     return null;
   }
 
-  public synchronized Optional<OAcceptResult> promiseMember(ONodeId node, long version) {
-    if (this.nodeStatus.containsKey(node)) {
-      return Optional.of(new ONodeAlreadyPresent());
+  public synchronized Optional<OAcceptResult> promiseMember(
+      List<OAddNodeInfo> nodes, long version) {
+    for (var node : nodes) {
+      if (this.nodeStatus.containsKey(node.node())) {
+        return Optional.of(new ONodeAlreadyPresent());
+      }
     }
     if (this.version + 1 == version) {
       if (promised) {
@@ -310,11 +319,14 @@ public class ODatabaseTopologyState {
     }
   }
 
-  public synchronized void addMember(ONodeId node, long version, ONodeRole role) {
-    this.nodeStatus.put(node, new ONodeDatabaseState(node, role, ODatabaseState.Offline));
+  public synchronized void addMember(List<OAddNodeInfo> nodes, long version) {
+    for (var node : nodes) {
+      this.nodeStatus.put(
+          node.node(), new ONodeDatabaseState(node.node(), node.role(), ODatabaseState.Offline));
+    }
   }
 
-  public synchronized void cancelAddMemer(ONodeId node) {
+  public synchronized void cancelAddMemer(List<OAddNodeInfo> nodes) {
     this.promised = false;
   }
 }

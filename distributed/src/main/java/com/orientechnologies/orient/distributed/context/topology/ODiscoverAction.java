@@ -85,7 +85,7 @@ public sealed interface ODiscoverAction
     @Override
     public void execute(
         OrientDBDistributed context, OCompleteExecution execution, ONodeStateNetwork otherState) {
-      // Noting to do
+      context.autoDeployIfNeed();
     }
 
     @Override

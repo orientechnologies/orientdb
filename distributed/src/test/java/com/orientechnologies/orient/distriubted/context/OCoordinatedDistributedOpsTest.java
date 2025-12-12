@@ -385,7 +385,7 @@ public class OCoordinatedDistributedOpsTest {
             nodeId2,
             new OTopologyStateNetwork(
                 gid, OTopologyState.ESTABLISHED, Set.of(nodeId1, nodeId2, nodeId3), 2, 3));
-    assertTrue(action instanceof ODiscoverAction.ONoneAction);
+    assertTrue(action instanceof ODiscoverAction.OApplyStateAction);
 
     assertEquals(node1.getMembers().size(), 3);
     try {
@@ -474,7 +474,7 @@ public class OCoordinatedDistributedOpsTest {
             nodeId2,
             new OTopologyStateNetwork(
                 groupId, OTopologyState.ESTABLISHED, Set.of(nodeId1, nodeId2), 2, 2));
-    assertTrue(action instanceof ODiscoverAction.ONoneAction);
+    assertTrue(action instanceof ODiscoverAction.OApplyStateAction);
 
     assertEquals(node1.getMembers().size(), 2);
     try {

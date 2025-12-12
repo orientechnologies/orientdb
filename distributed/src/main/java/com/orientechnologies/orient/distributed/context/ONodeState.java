@@ -10,6 +10,7 @@ import com.orientechnologies.orient.core.tx.OTxMetadataHolderImpl;
 import com.orientechnologies.orient.core.tx.ValidationResult;
 import com.orientechnologies.orient.distributed.context.coordination.message.ODistributedMessage;
 import com.orientechnologies.orient.distributed.context.coordination.message.ONodeStateNetwork;
+import com.orientechnologies.orient.distributed.context.coordination.message.operation.OAddNodeInfo;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import com.orientechnologies.orient.distributed.context.coordination.result.OMissingNode;
 import com.orientechnologies.orient.distributed.context.topology.ODiscoverAction;
@@ -251,16 +252,15 @@ public class ONodeState {
   }
 
   public Optional<OAcceptResult> promiseAddDatabaseMember(
-      ODatabaseId dbId, ONodeId node, long version) {
-    return this.databaseTopology.promiseAddMember(dbId, node, version);
+      ODatabaseId dbId, List<OAddNodeInfo> nodes, long version) {
+    return this.databaseTopology.promiseAddMember(dbId, nodes, version);
   }
 
-  public void addDatabaseMember(ODatabaseId dbId, ONodeId node, ONodeRole role, long version) {
-    this.databaseTopology.addDatabaseMember(dbId, node, role, version);
+  public void addDatabaseMember(ODatabaseId dbId, List<OAddNodeInfo> nodes, long version) {
+    this.databaseTopology.addDatabaseMember(dbId, nodes, version);
   }
 
-  public void cancelAddDatabaseMember(ODatabaseId dbId, ONodeId node) {
-    // TODO Auto-generated method stub
-
+  public void cancelAddDatabaseMember(ODatabaseId dbId, List<OAddNodeInfo> nodes) {
+    this.databaseTopology.cancelAddDatabaseMember(dbId, nodes);
   }
 }

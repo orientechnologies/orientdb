@@ -13,6 +13,7 @@ import com.orientechnologies.orient.distributed.context.ONodeRole;
 import com.orientechnologies.orient.distributed.context.coordination.message.OProposeOp;
 import com.orientechnologies.orient.distributed.context.coordination.message.OStructuralMessage;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OAddDatabaseMember;
+import com.orientechnologies.orient.distributed.context.coordination.message.operation.OAddNodeInfo;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OAddTopologyMember;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.ODeclareDbMessage;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.ODropDbMessage;
@@ -27,6 +28,7 @@ import java.io.DataOutput;
 import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import org.junit.Test;
@@ -141,13 +143,14 @@ public class OOperationMessageTest {
 
     var node1 = newNodeId();
     var dbId = newDatabaseId();
-    OAddDatabaseMember toTest = new OAddDatabaseMember(1, node1, dbId, ONodeRole.Main);
+    var nodes = List.of(new OAddNodeInfo(node1, ONodeRole.Main));
+    OAddDatabaseMember toTest = new OAddDatabaseMember(1, dbId, nodes);
 
     OAddDatabaseMember operation = writeRead(toTest);
 
     assertEquals(operation.getVersion(), 1);
-    assertEquals(operation.getNode(), node1);
     assertEquals(operation.getDbId(), dbId);
-    assertEquals(operation.getRole(), ONodeRole.Main);
+    assertEquals(operation.getNodes().get(0).node(), node1);
+    assertEquals(operation.getNodes().get(0).role(), ONodeRole.Main);
   }
 }

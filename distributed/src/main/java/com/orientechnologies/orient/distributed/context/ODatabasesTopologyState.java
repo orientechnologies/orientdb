@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import com.orientechnologies.orient.distributed.context.coordination.message.ODatabaseStateNetwork;
+import com.orientechnologies.orient.distributed.context.coordination.message.operation.OAddNodeInfo;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAlreadyPromised;
 import com.orientechnologies.orient.distributed.context.coordination.result.ODatabaseMissing;
@@ -334,27 +335,27 @@ public class ODatabasesTopologyState {
   }
 
   public synchronized Optional<OAcceptResult> promiseAddMember(
-      ODatabaseId dbId, ONodeId node, long version) {
+      ODatabaseId dbId, List<OAddNodeInfo> nodes, long version) {
     ODatabaseTopologyState db = this.databases.get(dbId);
     if (db != null) {
-      return db.promiseMember(node, version);
+      return db.promiseMember(nodes, version);
     } else {
       return Optional.of(new ODatabaseMissing());
     }
   }
 
   public synchronized void addDatabaseMember(
-      ODatabaseId dbId, ONodeId node, ONodeRole role, long version) {
+      ODatabaseId dbId, List<OAddNodeInfo> nodes, long version) {
     ODatabaseTopologyState db = this.databases.get(dbId);
     if (db != null) {
-      db.addMember(node, version, role);
+      db.addMember(nodes, version);
     }
   }
 
-  public synchronized void cancelAddDatabaseMember(ODatabaseId dbId, ONodeId node) {
+  public synchronized void cancelAddDatabaseMember(ODatabaseId dbId, List<OAddNodeInfo> nodes) {
     ODatabaseTopologyState db = this.databases.get(dbId);
     if (db != null) {
-      db.cancelAddMemer(node);
+      db.cancelAddMemer(nodes);
     }
   }
 }
