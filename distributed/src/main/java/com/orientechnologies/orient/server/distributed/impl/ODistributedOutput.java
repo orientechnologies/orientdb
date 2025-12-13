@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.distributed.ONodeConfig;
 import com.orientechnologies.orient.distributed.ONodeListenerConfig;
+import com.orientechnologies.orient.distributed.context.ODatabaseState;
 import com.orientechnologies.orient.distributed.context.ODatabasesTopologyState;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
@@ -185,12 +186,15 @@ public class ODistributedOutput {
           for (ODatabaseId dbId : databases) {
             final StringBuilder buffer = new StringBuilder();
 
-            buffer.append(databaseTopology.getDatabaseName(dbId));
-            buffer.append("=");
-            buffer.append(databaseTopology.getDatabaseStatus(m, dbId));
-            buffer.append(" (");
-            buffer.append(databaseTopology.getNodeRole(m, dbId));
-            buffer.append(")");
+            ODatabaseState databaseStatus = databaseTopology.getDatabaseStatus(m, dbId);
+            if (databaseStatus != null) {
+              buffer.append(databaseTopology.getDatabaseName(dbId));
+              buffer.append("=");
+              buffer.append(databaseStatus);
+              buffer.append(" (");
+              buffer.append(databaseTopology.getNodeRole(m, dbId));
+              buffer.append(")");
+            }
 
             if (serverNum++ == 0)
               // ADD THE 1ST DB IT IN THE SERVER ROW

@@ -492,7 +492,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
         if (rem != null) {
           rem.sendMessage(message);
         } else {
-          logger.warn("Node %s offline could not send message", node);
+          logger.warn("Node %s offline could not send message %s ", node, op);
         }
       }
     }
@@ -507,6 +507,8 @@ public class OrientDBDistributed extends OrientDBEmbedded
       ORemoteServerController rem = remote.getRemoteServer(node.getNode());
       if (rem != null) {
         rem.sendMessage(message);
+      } else {
+        logger.warn("Node %s offline could not send message %s ", node, op);
       }
     }
   }
@@ -1205,6 +1207,8 @@ public class OrientDBDistributed extends OrientDBEmbedded
       String rNodeName, String url, String replicatorUser, String userPassword) throws IOException {
     if (remoteServerManager != null) {
       return remoteServerManager.connectRemoteServer(rNodeName, url, replicatorUser, userPassword);
+    } else {
+      logger.warn("failed to connect server manager not initied");
     }
     return null;
   }

@@ -40,14 +40,19 @@ public final class OStandardCompleteAction implements OCompleteAction {
     if (result.isPresent() && result.get().consensusRetry()) {
       var delay = execution.getRetryInfo().nextRetry();
       if (delay.isPresent()) {
-        logger.debug("retry coordination for result %s, delay %d", result, delay.get());
+        logger.info(
+            "retry coordination of %s for result %s, delay %d", operation, result, delay.get());
         this.context.retryOperation(operation, this, delay.get());
       } else {
-        logger.debug("complete coordination with %s", result);
+        logger.info("failed coordination of %s with %s", operation, result);
         this.execution.complete(result);
       }
     } else {
-      logger.debug("complete coordination with %s", result);
+      if (result.isPresent()) {
+        logger.info("failed coordination of %s with %s", operation, result);
+      } else {
+        logger.debug("complete coordination of %s with %s", operation, result);
+      }
       this.execution.complete(result);
     }
   }
