@@ -1395,7 +1395,8 @@ public class OrientDBDistributed extends OrientDBEmbedded
         retryOperation(
             (ctx, op) -> {
               coordinatedOperation(
-                  new OAddDatabaseMember(databaseTopology.getDatabaseVersion(id), id, nodes), op);
+                  new OAddDatabaseMember(databaseTopology.getDatabaseVersion(id) + 1, id, nodes),
+                  op);
             });
       }
     }

@@ -177,4 +177,8 @@ public class OTransactionSequenceManager {
   public synchronized OTransactionSequenceStatus currentStatus() {
     return new OTransactionSequenceStatus(Arrays.copyOf(this.sequentials, this.sequentials.length));
   }
+
+  public synchronized long debugGetSequence(int position) {
+    return this.sequentials[position];
+  }
 }

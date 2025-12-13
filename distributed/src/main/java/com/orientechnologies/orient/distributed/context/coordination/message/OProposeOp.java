@@ -4,7 +4,6 @@ import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.distributed.context.ONodeState;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OOperationMessage;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
-import com.orientechnologies.orient.distributed.context.coordination.result.OInvalidSequential;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -24,8 +23,8 @@ public class OProposeOp implements OStructuralMessage, ODistributedMessage {
   @Override
   public void execute(OrientDBDistributed ctx) {
     ONodeState nodeState = ctx.getNodeState();
-    boolean result = nodeState.receive(this);
-    if (result) {
+    Optional<OAcceptResult> result = nodeState.receive(this);
+    if (result.isEmpty()) {
       Optional<OAcceptResult> res = op.validate(ctx, promise);
       if (res.isPresent()) {
         ctx.sendMessage(
@@ -39,7 +38,7 @@ public class OProposeOp implements OStructuralMessage, ODistributedMessage {
     } else {
       ctx.sendMessage(
           Collections.singleton(promise.getCoordinator()),
-          new OFailPropose(nodeState.getNodeId(), promise, new OInvalidSequential(0, 0)));
+          new OFailPropose(nodeState.getNodeId(), promise, result.get()));
     }
   }
 

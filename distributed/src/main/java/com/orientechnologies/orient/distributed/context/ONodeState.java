@@ -12,6 +12,8 @@ import com.orientechnologies.orient.distributed.context.coordination.message.ODi
 import com.orientechnologies.orient.distributed.context.coordination.message.ONodeStateNetwork;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OAddNodeInfo;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
+import com.orientechnologies.orient.distributed.context.coordination.result.OAlreadyPromised;
+import com.orientechnologies.orient.distributed.context.coordination.result.OInvalidSequential;
 import com.orientechnologies.orient.distributed.context.coordination.result.OMissingNode;
 import com.orientechnologies.orient.distributed.context.topology.ODiscoverAction;
 import java.util.List;
@@ -83,30 +85,38 @@ public class ONodeState {
     this.coordinated.unregisterNode(node, version);
   }
 
-  public boolean receive(ODistributedMessage message) {
+  public Optional<OAcceptResult> receive(ODistributedMessage message) {
     ValidationResult result = sequenceManager.validate(message.getPromiseId());
     switch (result) {
       case VALID -> {
         this.log.log(message);
         this.promised.addPromised(message);
-        return true;
+        return Optional.empty();
       }
       case ALREADY_PRESENT -> {
         // Already present ... maybe do nothing, already done
-        return false;
+        long current =
+            sequenceManager.debugGetSequence(message.getPromiseId().getId().getPosition());
+        return Optional.of(
+            new OInvalidSequential(current, message.getPromiseId().getId().getSequence()));
       }
       case ALREADY_PROMISED -> {
         // Fail for promised to someone else this track it anyway in case of minority in quorum
         this.promised.addNotPromised(message);
-        return false;
+        return Optional.of(new OAlreadyPromised());
       }
       case MISSING_PREVIOUS -> {
         // wait for previous one, track it anyway
         this.promised.addNotPromised(message);
-        return false;
+        long current =
+            sequenceManager.debugGetSequence(message.getPromiseId().getId().getPosition());
+        return Optional.of(
+            new OInvalidSequential(current, message.getPromiseId().getId().getSequence()));
       }
     }
-    return false;
+    long current = sequenceManager.debugGetSequence(message.getPromiseId().getId().getPosition());
+    return Optional.of(
+        new OInvalidSequential(current, message.getPromiseId().getId().getSequence()));
   }
 
   public Optional<ODistributedMessage> receiveFailure(OTransactionIdPromise promise) {
