@@ -215,8 +215,11 @@ public class ONodeState {
   }
 
   public ONodeStateNetwork getNetworkState() {
+    var sequenceStatus = this.sequenceManager.currentStatus();
     return new ONodeStateNetwork(
-        this.coordinated.getNetworkState(), this.databaseTopology.getNetworkState());
+        this.coordinated.getNetworkState(),
+        this.databaseTopology.getNetworkState(),
+        sequenceStatus);
   }
 
   public void cancelRegisterPromise() {

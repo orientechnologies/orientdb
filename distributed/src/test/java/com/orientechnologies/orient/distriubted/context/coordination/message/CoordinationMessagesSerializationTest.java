@@ -9,6 +9,7 @@ import com.orientechnologies.orient.core.transaction.OGroupId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
+import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import com.orientechnologies.orient.distributed.context.OSyncId;
 import com.orientechnologies.orient.distributed.context.coordination.message.OCanSync;
 import com.orientechnologies.orient.distributed.context.coordination.message.OConfirmOp;
@@ -124,8 +125,9 @@ public class CoordinationMessagesSerializationTest {
     ONodeId nodeId = newNodeId();
     OTopologyStateNetwork net =
         new OTopologyStateNetwork(groupId, OTopologyState.BOOT, new HashSet<>(), 0, 0);
+    var sequenceStatus = new OTransactionSequenceStatus(new long[] {10, 20, 30});
 
-    ONodeStateNetwork network = new ONodeStateNetwork(net, Collections.emptyList());
+    ONodeStateNetwork network = new ONodeStateNetwork(net, Collections.emptyList(), sequenceStatus);
     ONodeFirstConnect succ = new ONodeFirstConnect(nodeId, network);
 
     ONodeFirstConnect read = writeRead(succ);
@@ -137,7 +139,7 @@ public class CoordinationMessagesSerializationTest {
     assertTrue(topology.getMembers().isEmpty());
     Set<ONodeId> nodes = Set.of(newNodeId(), newNodeId());
     net = new OTopologyStateNetwork(groupId, OTopologyState.ESTABLISHED, nodes, 2, 10);
-    network = new ONodeStateNetwork(net, Collections.emptyList());
+    network = new ONodeStateNetwork(net, Collections.emptyList(), sequenceStatus);
     succ = new ONodeFirstConnect(nodeId, network);
 
     read = writeRead(succ);
