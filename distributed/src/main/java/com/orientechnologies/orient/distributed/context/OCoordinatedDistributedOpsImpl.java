@@ -224,7 +224,7 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   }
 
   @Override
-  public Optional<OAcceptResult> promiseRegister(ONodeId node, long version) {
+  public Optional<OAcceptResult> validateRegisterNode(ONodeId node, long version) {
     return topology.promiseRegister(node, version);
   }
 
@@ -281,7 +281,7 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   }
 
   @Override
-  public void cancelRegisterPromise() {
+  public void cancelRegisterNode() {
     this.topology.cancelRegisterPromise();
   }
 
@@ -290,17 +290,7 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
     this.topology.cancelEnstablish();
   }
 
-  @Override
-  public OTransactionSequenceStatus getSequenceStatus() {
-    return sequenceManager.currentStatus();
-  }
-
-  @Override
-  public void loadSequence(OTransactionSequenceStatus status) {
-    this.sequenceManager.fill(status);
-  }
-
-  public Optional<OAcceptResult> promiseDeclare(
+  public Optional<OAcceptResult> validateDeclareDatabase(
       OTransactionIdPromise promise,
       ODatabaseId databaseId,
       String database,
@@ -322,7 +312,8 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
     this.databaseTopology.declareDatabase(promise, dbId, database, partecipants, minimumQuorum);
   }
 
-  public void cancelDatabase(OTransactionIdPromise promise, ODatabaseId dbId, String database) {
+  public void cancelDeclareDatabase(
+      OTransactionIdPromise promise, ODatabaseId dbId, String database) {
     this.databaseTopology.cancelPomise(promise, dbId, database);
   }
 
@@ -330,7 +321,7 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
     return databaseTopology;
   }
 
-  public Optional<OAcceptResult> promiseAddDatabaseMember(
+  public Optional<OAcceptResult> validateAddDatabaseMember(
       ODatabaseId dbId, List<OAddNodeInfo> nodes, long version) {
     return this.databaseTopology.promiseAddMember(dbId, nodes, version);
   }
@@ -341,5 +332,21 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
 
   public void cancelAddDatabaseMember(ODatabaseId dbId, List<OAddNodeInfo> nodes) {
     this.databaseTopology.cancelAddDatabaseMember(dbId, nodes);
+  }
+
+  @Override
+  public Optional<OAcceptResult> validateSetState(
+      ODatabaseId dbId, ONodeId nodeId, ODatabaseState state, long version) {
+    return this.databaseTopology.validateSetState(dbId, nodeId, state, version);
+  }
+
+  @Override
+  public void setState(ODatabaseId db, ONodeId node, ODatabaseState state, long version) {
+    this.databaseTopology.setState(db, node, state, version);
+  }
+
+  @Override
+  public void cancelSetState(ODatabaseId dbId, ONodeId nodeId, long version) {
+    this.databaseTopology.cancelSetState(dbId, nodeId, version);
   }
 }

@@ -132,7 +132,7 @@ public class ODatabasesTopologyState {
     return this.databases.keySet();
   }
 
-  public synchronized Optional<OAcceptResult> promiseState(
+  public synchronized Optional<OAcceptResult> validateSetState(
       ODatabaseId dbId, ONodeId nodeId, ODatabaseState state, long version) {
     ODatabaseTopologyState dbTopology = this.databases.get(dbId);
     if (dbTopology != null) {
@@ -155,7 +155,7 @@ public class ODatabasesTopologyState {
     return this.databases.get(dbId).getState(nodeId);
   }
 
-  public synchronized void cancelPomiseSetState(ODatabaseId dbId, ONodeId nodeId, long version) {
+  public synchronized void cancelSetState(ODatabaseId dbId, ONodeId nodeId, long version) {
     this.databases.get(dbId).cancelSetState(nodeId, version);
   }
 

@@ -980,7 +980,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   public void cancelRegisterPromise() {
-    getNodeState().getOps().cancelRegisterPromise();
+    getNodeState().getOps().cancelRegisterNode();
   }
 
   public Optional<OAcceptResult> promiseDeclare(
@@ -991,7 +991,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
       int minimumQuorum) {
     return getNodeState()
         .getOps()
-        .promiseDeclare(promise, databaseId, database, partecipants, minimumQuorum);
+        .validateDeclareDatabase(promise, databaseId, database, partecipants, minimumQuorum);
   }
 
   public void declareDatabase(
@@ -1032,7 +1032,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   public void cancelDeclare(OTransactionIdPromise promise, ODatabaseId dbId, String database) {
-    getNodeState().getOps().cancelDatabase(promise, dbId, database);
+    getNodeState().getOps().cancelDeclareDatabase(promise, dbId, database);
   }
 
   public void acceptSync(

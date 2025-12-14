@@ -38,11 +38,13 @@ public interface OCoordinatedDistributedOps {
 
   ODiscoverAction nodeJoinStart(ONodeId node, ONodeStateNetwork state);
 
-  Optional<OAcceptResult> promiseRegister(ONodeId node, long version);
+  Optional<OAcceptResult> validateRegisterNode(ONodeId node, long version);
 
   void registerNode(ONodeId node, long version);
 
   void unregisterNode(ONodeId node, long version);
+
+  void cancelRegisterNode();
 
   // Methods for coordinations of  operations to add establish the first network of nodes
 
@@ -52,22 +54,11 @@ public interface OCoordinatedDistributedOps {
 
   Set<ONodeId> enstablish(OGroupId networkId, Set<ONodeId> candidates);
 
-  Set<ONodeId> getMembers();
-
-  ONodeStateNetwork getNetworkState();
-
-  void load(Optional<ONodeStateStore> nodeStateStore, Optional<OTransactionSequenceStatus> status);
-
-  void cancelRegisterPromise();
-
   void cancelEnstablish();
 
-  OTransactionSequenceStatus getSequenceStatus();
-
-  void loadSequence(OTransactionSequenceStatus status);
-
   // Methods for manage databases and node in the databases
-  Optional<OAcceptResult> promiseDeclare(
+
+  Optional<OAcceptResult> validateDeclareDatabase(
       OTransactionIdPromise promise,
       ODatabaseId databaseId,
       String database,
@@ -81,14 +72,31 @@ public interface OCoordinatedDistributedOps {
       Set<ONodeId> partecipants,
       int minimumQuorum);
 
-  void cancelDatabase(OTransactionIdPromise promise, ODatabaseId dbId, String database);
+  void cancelDeclareDatabase(OTransactionIdPromise promise, ODatabaseId dbId, String database);
 
-  Optional<OAcceptResult> promiseAddDatabaseMember(
+  // Methods for manage the add of nodes to database
+
+  Optional<OAcceptResult> validateAddDatabaseMember(
       ODatabaseId dbId, List<OAddNodeInfo> nodes, long version);
 
   void addDatabaseMember(ODatabaseId dbId, List<OAddNodeInfo> nodes, long version);
 
   public void cancelAddDatabaseMember(ODatabaseId dbId, List<OAddNodeInfo> nodes);
 
+  // Methods to manage the change state of a database on a specific node
+
+  Optional<OAcceptResult> validateSetState(
+      ODatabaseId dbId, ONodeId nodeId, ODatabaseState state, long version);
+
+  void setState(ODatabaseId db, ONodeId node, ODatabaseState state, long version);
+
+  void cancelSetState(ODatabaseId dbId, ONodeId nodeId, long version);
+
   ODatabasesTopologyState getDatabaseTopology();
+
+  Set<ONodeId> getMembers();
+
+  ONodeStateNetwork getNetworkState();
+
+  void load(Optional<ONodeStateStore> nodeStateStore, Optional<OTransactionSequenceStatus> status);
 }

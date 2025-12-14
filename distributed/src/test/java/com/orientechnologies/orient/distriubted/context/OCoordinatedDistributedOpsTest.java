@@ -330,9 +330,9 @@ public class OCoordinatedDistributedOpsTest implements ODatabaseStateChangeListe
     var addNode = ((ODiscoverAction.OAddNodeAction) action).node();
     var addVersion = ((ODiscoverAction.OAddNodeAction) action).version();
     assertTrue(addVersion > 0);
-    var res = node1.promiseRegister(addNode, addVersion);
+    var res = node1.validateRegisterNode(addNode, addVersion);
     assertTrue(res.isEmpty());
-    res = node2.promiseRegister(addNode, addVersion);
+    res = node2.validateRegisterNode(addNode, addVersion);
     assertTrue(res.isEmpty());
     node1.registerNode(addNode, addVersion);
     node2.registerNode(addNode, addVersion);
@@ -375,9 +375,9 @@ public class OCoordinatedDistributedOpsTest implements ODatabaseStateChangeListe
     var addNode = ((ODiscoverAction.OAddNodeAction) action).node();
     var addVersion = ((ODiscoverAction.OAddNodeAction) action).version() - 1;
 
-    var res = node1.promiseRegister(addNode, addVersion);
+    var res = node1.validateRegisterNode(addNode, addVersion);
     assertFalse(res.isEmpty());
-    res = node2.promiseRegister(addNode, addVersion);
+    res = node2.validateRegisterNode(addNode, addVersion);
     assertFalse(res.isEmpty());
 
     assertEquals(node1.getMembers().size(), 2);
@@ -550,7 +550,7 @@ public class OCoordinatedDistributedOpsTest implements ODatabaseStateChangeListe
     ODiscoverAction addNode = ops2.nodeJoinStart(nodeId1, mergeState);
     assertTrue(addNode instanceof ODiscoverAction.OAddNodeAction);
     ODiscoverAction.OAddNodeAction add = (OAddNodeAction) addNode;
-    ops2.promiseRegister(add.node(), add.version());
+    ops2.validateRegisterNode(add.node(), add.version());
     ops2.registerNode(add.node(), add.version());
     assertEquals(ops2.getMembers().size(), 2);
     ops1.nodeJoinStart(nodeId2, ops2.getNetworkState());
