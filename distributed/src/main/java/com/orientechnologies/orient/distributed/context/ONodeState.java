@@ -101,7 +101,7 @@ public class ONodeState {
     return this.coordinated.getNetworkState();
   }
 
-  public ODatabasesTopologyState getDatabaseTopology() {
+  public ODatabasesTopology getDatabaseTopology() {
     return coordinated.getDatabaseTopology();
   }
 

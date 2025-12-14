@@ -149,14 +149,14 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
 
     state.declareDatabase(promiseId, dbId, name, partecipants, quorum);
 
-    ODatabaseState ns = state.getNodeState(dbId, nodeId);
+    ODatabaseState ns = state.getState(dbId, nodeId);
     assertEquals(ns, ODatabaseState.Offline);
 
     state.validateSetState(dbId, nodeId, ODatabaseState.Online, 1L);
 
     state.setState(dbId, nodeId, ODatabaseState.Online, 1L);
 
-    ns = state.getNodeState(dbId, nodeId);
+    ns = state.getState(dbId, nodeId);
     assertEquals(ns, ODatabaseState.Online);
   }
 
@@ -176,7 +176,7 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
 
     state.declareDatabase(promiseId, dbId, name, partecipants, quorum);
 
-    ODatabaseState ns = state.getNodeState(dbId, nodeId);
+    ODatabaseState ns = state.getState(dbId, nodeId);
     assertEquals(ns, ODatabaseState.Offline);
 
     Optional<OAcceptResult> prom = state.validateSetState(dbId, nodeId, ODatabaseState.Online, 1L);
@@ -189,7 +189,7 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
 
     state.setState(dbId, nodeId, ODatabaseState.Online, 1L);
 
-    ns = state.getNodeState(dbId, nodeId);
+    ns = state.getState(dbId, nodeId);
     assertEquals(ns, ODatabaseState.Online);
   }
 
@@ -209,7 +209,7 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
 
     state.declareDatabase(promiseId, dbId, name, partecipants, quorum);
 
-    ODatabaseState ns = state.getNodeState(dbId, nodeId);
+    ODatabaseState ns = state.getState(dbId, nodeId);
     assertEquals(ns, ODatabaseState.Offline);
 
     Optional<OAcceptResult> prom = state.validateSetState(dbId, nodeId, ODatabaseState.Online, 1L);
@@ -217,7 +217,7 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
 
     state.setState(dbId, nodeId, ODatabaseState.Online, 1L);
 
-    ns = state.getNodeState(dbId, nodeId);
+    ns = state.getState(dbId, nodeId);
     assertEquals(ns, ODatabaseState.Online);
 
     Optional<OAcceptResult> prom1 =
@@ -242,7 +242,7 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
 
     state.declareDatabase(promiseId, dbId, name, partecipants, quorum);
 
-    ODatabaseState ns = state.getNodeState(dbId, nodeId);
+    ODatabaseState ns = state.getState(dbId, nodeId);
     assertEquals(ns, ODatabaseState.Offline);
 
     Optional<OAcceptResult> prom = state.validateSetState(dbId, nodeId, ODatabaseState.Online, 1L);
@@ -255,7 +255,7 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
 
     state.setState(dbId, nodeId, ODatabaseState.Online, 1L);
 
-    ns = state.getNodeState(dbId, nodeId);
+    ns = state.getState(dbId, nodeId);
     assertEquals(ns, ODatabaseState.Online);
   }
 
@@ -282,7 +282,7 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
     state.declareDatabase(promiseId, dbId, name, partecipants, quorum);
     state1.declareDatabase(promiseId, dbId, name, partecipants, quorum);
 
-    ODatabaseState ns = state.getNodeState(dbId, nodeId);
+    ODatabaseState ns = state.getState(dbId, nodeId);
     assertEquals(ns, ODatabaseState.Offline);
 
     Optional<OAcceptResult> prom = state.validateSetState(dbId, nodeId, ODatabaseState.Online, 1L);
@@ -355,7 +355,7 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
     state1.declareDatabase(promiseId, dbId, name, partecipants, quorum);
     state2.declareDatabase(promiseId, dbId, name, partecipants, quorum);
 
-    ODatabaseState ns = state.getNodeState(dbId, nodeId);
+    ODatabaseState ns = state.getState(dbId, nodeId);
     assertEquals(ns, ODatabaseState.Offline);
 
     Optional<OAcceptResult> prom = state.validateSetState(dbId, nodeId, ODatabaseState.Online, 1L);
@@ -432,7 +432,7 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
     Optional<OAcceptResult> accept = state.promiseAddMember(dbId, nodes, version);
     assertTrue(accept.isEmpty());
     state.addDatabaseMember(dbId, nodes, version);
-    assertEquals(state.getNodeState(dbId, nodeId1), ODatabaseState.Offline);
+    assertEquals(state.getState(dbId, nodeId1), ODatabaseState.Offline);
 
     Optional<OAcceptResult> acceptAfter = state.promiseAddMember(dbId, nodes, version);
     assertTrue(acceptAfter.get() instanceof ONodeAlreadyPresent);
@@ -460,7 +460,7 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
     Optional<OAcceptResult> accept = state.promiseAddMember(dbId, nodes, version);
     assertTrue(accept.isEmpty());
     state.cancelAddDatabaseMember(dbId, nodes);
-    assertNull(state.getNodeState(dbId, nodeId1));
+    assertNull(state.getState(dbId, nodeId1));
 
     Optional<OAcceptResult> acceptAfter = state.promiseAddMember(dbId, nodes, version);
     assertTrue(acceptAfter.isEmpty());

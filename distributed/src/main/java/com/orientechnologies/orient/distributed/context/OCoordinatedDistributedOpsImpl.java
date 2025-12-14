@@ -17,6 +17,7 @@ import com.orientechnologies.orient.distributed.context.coordination.result.OInv
 import com.orientechnologies.orient.distributed.context.coordination.result.OMissingNode;
 import com.orientechnologies.orient.distributed.context.topology.ODiscoverAction;
 import com.orientechnologies.orient.distributed.context.topology.OTopologyManager;
+import com.orientechnologies.orient.distributed.db.OSyncMode;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import java.util.Collections;
 import java.util.HashMap;
@@ -348,5 +349,54 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   @Override
   public void cancelSetState(ODatabaseId dbId, ONodeId nodeId, long version) {
     this.databaseTopology.cancelSetState(dbId, nodeId, version);
+  }
+
+  @Override
+  public Optional<OSyncInfo> newSync(ODatabaseId dbId) {
+    return this.databaseTopology.newSync(dbId);
+  }
+
+  @Override
+  public boolean acceptSync(ONodeId sender, ONodeId receiver, ODatabaseId dbId, OSyncId syncId) {
+    return this.databaseTopology.acceptSync(sender, receiver, dbId, syncId);
+  }
+
+  @Override
+  public Optional<OSyncState> canSync(
+      ONodeId sender,
+      ONodeId receiver,
+      ODatabaseId dbId,
+      OSyncId syncId,
+      boolean canSync,
+      OSyncMode mode,
+      Optional<OTransactionSequenceStatus> sequenceStatus) {
+    return this.databaseTopology.canSync(
+        sender, receiver, dbId, syncId, canSync, mode, sequenceStatus);
+  }
+
+  @Override
+  public OSyncState startSend(
+      ONodeId to,
+      ONodeId from,
+      ODatabaseId dbId,
+      OSyncId syncId,
+      OSyncMode mode,
+      Optional<OTransactionSequenceStatus> sequenceStatus) {
+    return this.databaseTopology.startSend(to, from, dbId, syncId, mode, sequenceStatus);
+  }
+
+  @Override
+  public OSyncState getSyncState(OSyncId syncId) {
+    return this.databaseTopology.getSyncState(syncId);
+  }
+
+  public boolean executeOnOneOnline(ODatabaseId dbId, OStateAction execute) {
+    return this.databaseTopology.executeOnOneOnline(dbId, execute);
+  }
+
+  @Override
+  public boolean waitOnlineQuorum(ODatabaseId dbId, Optional<Long> timeout)
+      throws InterruptedException {
+    return this.databaseTopology.waitOnlineQuorum(dbId, timeout);
   }
 }

@@ -32,9 +32,10 @@ import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import com.orientechnologies.orient.distributed.context.OCompleteAction;
+import com.orientechnologies.orient.distributed.context.OCoordinatedDistributedOps;
 import com.orientechnologies.orient.distributed.context.ODatabaseState;
 import com.orientechnologies.orient.distributed.context.ODatabaseStateChangeListener;
-import com.orientechnologies.orient.distributed.context.ODatabasesTopologyState;
+import com.orientechnologies.orient.distributed.context.ODatabasesTopology;
 import com.orientechnologies.orient.distributed.context.ONodeRole;
 import com.orientechnologies.orient.distributed.context.ONodeState;
 import com.orientechnologies.orient.distributed.context.ORetryInfo;
@@ -188,7 +189,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
 
   private void syncIfNeeded(ODatabaseId dbId) {
     if (!ODatabaseState.Online.equals(
-        getNodeState().getDatabaseTopology().getNodeState(dbId, getNodeId()))) {
+        getNodeState().getDatabaseTopology().getState(dbId, getNodeId()))) {
       sync(dbId, Optional.empty());
     }
   }
@@ -702,7 +703,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
     super.create(name, user, password, type, dbId, config, createOps);
     setDatabaseStatus(dbId, getNodeState().getNodeId(), ODatabaseState.Online);
     try {
-      getNodeState().getDatabaseTopology().waitOnlineQuorum(dbId, Optional.empty());
+      getNodeState().getOps().waitOnlineQuorum(dbId, Optional.empty());
     } catch (InterruptedException e) {
       throw OException.wrapException(new OInterruptedException("wait for online interrupted"), e);
     }
@@ -742,7 +743,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   private ODatabaseState getDatabaseStatus(ODatabaseId dbId, ONodeId node) {
-    return this.getNodeState().getDatabaseTopology().getNodeState(dbId, node);
+    return this.getNodeState().getDatabaseTopology().getState(dbId, node);
   }
 
   public void distributedSetOnline(String database) {
@@ -1002,19 +1003,19 @@ public class OrientDBDistributed extends OrientDBEmbedded
       int minimumQuorum) {
     getNodeState().getOps().declareDatabase(promise, dbId, database, partecipants, minimumQuorum);
     getNodeState()
-        .getDatabaseTopology()
+        .getOps()
         .executeOnOneOnline(
             dbId,
             () -> {
               if (!ODatabaseState.Online.equals(
-                  getNodeState().getDatabaseTopology().getNodeState(dbId, getNodeId()))) {
+                  getNodeState().getDatabaseTopology().getState(dbId, getNodeId()))) {
                 execute(() -> sync(dbId, Optional.empty()));
               }
             });
   }
 
   private void sync(ODatabaseId dbId, Optional<OTransactionSequenceStatus> tx) {
-    Optional<OSyncInfo> sync = getNodeState().getDatabaseTopology().newSync(dbId);
+    Optional<OSyncInfo> sync = getNodeState().getOps().newSync(dbId);
     if (sync.isPresent()) {
       logger.debug(
           "Requesting sync %s syncId %s receiver %s", dbId, sync.get().syncId(), getNodeId());
@@ -1042,14 +1043,14 @@ public class OrientDBDistributed extends OrientDBEmbedded
       OSyncMode mode,
       Optional<OTransactionSequenceStatus> sequenceStatus) {
     // TODO check syncMode Accept
-    ODatabasesTopologyState topology = getNodeState().getDatabaseTopology();
-    boolean accepted = topology.acceptSync(getNodeState().getNodeId(), receiver, dbId, syncId);
+    OCoordinatedDistributedOps ops = getNodeState().getOps();
+    boolean accepted = ops.acceptSync(getNodeState().getNodeId(), receiver, dbId, syncId);
     if (accepted) {
       logger.debug(
           "Accepted sync %s syncI: %s sender %s receiver %s", dbId, syncId, getNodeId(), receiver);
     }
     if (OSyncMode.Delta.equals(mode) && sequenceStatus.isPresent()) {
-      String dbName = topology.getDatabaseName(dbId);
+      String dbName = ops.getDatabaseTopology().getDatabaseName(dbId);
       List<OTransactionId> missing = getDatabase(dbName).missingTransactions(sequenceStatus.get());
       if (missing.isEmpty()) {
         accepted = false;
@@ -1065,9 +1066,9 @@ public class OrientDBDistributed extends OrientDBEmbedded
       boolean canSync,
       OSyncMode mode,
       Optional<OTransactionSequenceStatus> sequenceStatus) {
-    ODatabasesTopologyState topology = getNodeState().getDatabaseTopology();
+    OCoordinatedDistributedOps ops = getNodeState().getOps();
     Optional<OSyncState> state =
-        topology.canSync(sender, getNodeId(), dbId, syncId, canSync, mode, sequenceStatus);
+        ops.canSync(sender, getNodeId(), dbId, syncId, canSync, mode, sequenceStatus);
 
     if (state.isPresent()) {
       logger.debug(
@@ -1109,7 +1110,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
         "Sending sync %s syncId %s sender %s receiver %s", dbId, syncId, getNodeId(), receiver);
     OSyncState state =
         getNodeState()
-            .getDatabaseTopology()
+            .getOps()
             .startSend(receiver, getNodeState().getNodeId(), dbId, syncId, mode, sequenceStatus);
     String name = getDbName(state.getDbId());
 
@@ -1171,7 +1172,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   public void receiveSyncData(OSyncId syncId, byte[] data, boolean finished) {
-    var state = this.getNodeState().getDatabaseTopology().getSyncState(syncId);
+    var state = this.getNodeState().getOps().getSyncState(syncId);
     logger.debug(
         "Receiving buffer %s syncId %s sender %s receiver %s",
         state.getDbId(), state.getSyncId(), state.getSender(), state.getReceiver());
@@ -1183,7 +1184,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   public void nextBuffer(OSyncId syncId, boolean close) {
-    var state = this.getNodeState().getDatabaseTopology().getSyncState(syncId);
+    var state = this.getNodeState().getOps().getSyncState(syncId);
     state.requestNext(close);
   }
 
@@ -1385,14 +1386,14 @@ public class OrientDBDistributed extends OrientDBEmbedded
 
   public void autoDeployIfNeed() {
     Set<ONodeId> members = getNodeState().getNetworkMembers();
-    ODatabasesTopologyState databaseTopology = getNodeState().getDatabaseTopology();
+    ODatabasesTopology databaseTopology = getNodeState().getDatabaseTopology();
     Collection<ODatabaseId> dbs = databaseTopology.getDatabases();
     for (ODatabaseId id : dbs) {
       // TODO: check autodeploy setting
       List<OAddNodeInfo> nodes = new ArrayList<OAddNodeInfo>();
       for (ONodeId node : members) {
-        ODatabaseState state = databaseTopology.getDatabaseStatus(node, id);
-        if (state == null) {
+        ODatabaseState state = databaseTopology.getState(id, node);
+        if (ODatabaseState.NotAvailable.equals(state)) {
           nodes.add(new OAddNodeInfo(node, ONodeRole.Main));
         }
       }

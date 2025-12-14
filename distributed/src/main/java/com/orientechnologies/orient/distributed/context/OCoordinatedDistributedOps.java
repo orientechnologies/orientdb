@@ -10,6 +10,7 @@ import com.orientechnologies.orient.distributed.context.coordination.message.ONo
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OAddNodeInfo;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import com.orientechnologies.orient.distributed.context.topology.ODiscoverAction;
+import com.orientechnologies.orient.distributed.db.OSyncMode;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -92,11 +93,40 @@ public interface OCoordinatedDistributedOps {
 
   void cancelSetState(ODatabaseId dbId, ONodeId nodeId, long version);
 
-  ODatabasesTopologyState getDatabaseTopology();
+  // Methods for manage the sync flow
+
+  Optional<OSyncInfo> newSync(ODatabaseId dbId);
+
+  boolean acceptSync(ONodeId sender, ONodeId receiver, ODatabaseId dbId, OSyncId syncId);
+
+  Optional<OSyncState> canSync(
+      ONodeId sender,
+      ONodeId receiver,
+      ODatabaseId dbId,
+      OSyncId syncId,
+      boolean canSync,
+      OSyncMode mode,
+      Optional<OTransactionSequenceStatus> sequenceStatus);
+
+  OSyncState startSend(
+      ONodeId to,
+      ONodeId from,
+      ODatabaseId dbId,
+      OSyncId syncId,
+      OSyncMode mode,
+      Optional<OTransactionSequenceStatus> sequenceStatus);
+
+  OSyncState getSyncState(OSyncId syncId);
+
+  ODatabasesTopology getDatabaseTopology();
 
   Set<ONodeId> getMembers();
 
   ONodeStateNetwork getNetworkState();
 
   void load(Optional<ONodeStateStore> nodeStateStore, Optional<OTransactionSequenceStatus> status);
+
+  boolean executeOnOneOnline(ODatabaseId dbId, OStateAction execute);
+
+  boolean waitOnlineQuorum(ODatabaseId dbId, Optional<Long> timeout) throws InterruptedException;
 }

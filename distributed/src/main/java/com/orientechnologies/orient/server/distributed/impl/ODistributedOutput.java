@@ -32,7 +32,7 @@ import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.distributed.ONodeConfig;
 import com.orientechnologies.orient.distributed.ONodeListenerConfig;
 import com.orientechnologies.orient.distributed.context.ODatabaseState;
-import com.orientechnologies.orient.distributed.context.ODatabasesTopologyState;
+import com.orientechnologies.orient.distributed.context.ODatabasesTopology;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
@@ -179,22 +179,20 @@ public class ODistributedOutput {
         serverRow.field("Name", serverLabel);
         serverRow.field("Databases", (String) null);
         rows.add(serverRow);
-        ODatabasesTopologyState databaseTopology = distr.getNodeState().getDatabaseTopology();
+        ODatabasesTopology databaseTopology = distr.getNodeState().getDatabaseTopology();
         final Collection<ODatabaseId> databases = databaseTopology.getDatabases();
         if (databases != null) {
           int serverNum = 0;
           for (ODatabaseId dbId : databases) {
             final StringBuilder buffer = new StringBuilder();
 
-            ODatabaseState databaseStatus = databaseTopology.getDatabaseStatus(m, dbId);
-            if (databaseStatus != null) {
-              buffer.append(databaseTopology.getDatabaseName(dbId));
-              buffer.append("=");
-              buffer.append(databaseStatus);
-              buffer.append(" (");
-              buffer.append(databaseTopology.getNodeRole(m, dbId));
-              buffer.append(")");
-            }
+            ODatabaseState databaseStatus = databaseTopology.getState(dbId, m);
+            buffer.append(databaseTopology.getDatabaseName(dbId));
+            buffer.append("=");
+            buffer.append(databaseStatus);
+            buffer.append(" (");
+            buffer.append(databaseTopology.getRole(dbId, m));
+            buffer.append(")");
 
             if (serverNum++ == 0)
               // ADD THE 1ST DB IT IN THE SERVER ROW

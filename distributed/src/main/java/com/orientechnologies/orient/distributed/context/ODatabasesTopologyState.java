@@ -22,7 +22,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-public class ODatabasesTopologyState {
+public class ODatabasesTopologyState implements ODatabasesTopology {
 
   private final Map<ODatabaseId, ODatabaseTopologyState> databases = new HashMap<>();
   private final Map<String, ODatabaseTopologyState> databasesByName = new HashMap<>();
@@ -149,10 +149,6 @@ public class ODatabasesTopologyState {
     } else {
       return 0;
     }
-  }
-
-  public synchronized ODatabaseState getNodeState(ODatabaseId dbId, ONodeId nodeId) {
-    return this.databases.get(dbId).getState(nodeId);
   }
 
   public synchronized void cancelSetState(ODatabaseId dbId, ONodeId nodeId, long version) {
@@ -303,7 +299,7 @@ public class ODatabasesTopologyState {
     return new HashSet<>(this.databases.keySet());
   }
 
-  public synchronized ODatabaseState getDatabaseStatus(ONodeId nodeID, ODatabaseId dbId) {
+  public synchronized ODatabaseState getState(ODatabaseId dbId, ONodeId nodeID) {
     ODatabaseTopologyState db = this.databases.get(dbId);
     if (db != null) {
       return db.getState(nodeID);
@@ -312,7 +308,7 @@ public class ODatabasesTopologyState {
     }
   }
 
-  public synchronized ONodeRole getNodeRole(ONodeId nodeId, ODatabaseId dbId) {
+  public synchronized ONodeRole getRole(ODatabaseId dbId, ONodeId nodeId) {
     ODatabaseTopologyState db = this.databases.get(dbId);
     if (db != null) {
       return db.getRole(nodeId);
