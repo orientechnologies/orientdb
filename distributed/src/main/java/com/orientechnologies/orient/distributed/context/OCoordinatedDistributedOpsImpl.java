@@ -3,9 +3,15 @@ package com.orientechnologies.orient.distributed.context;
 import com.orientechnologies.orient.core.transaction.OGroupId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
+import com.orientechnologies.orient.core.transaction.OTransactionSequenceManager;
+import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
+import com.orientechnologies.orient.core.tx.ValidationResult;
 import com.orientechnologies.orient.distributed.context.OResponseCollector.CompleteInfo;
+import com.orientechnologies.orient.distributed.context.coordination.message.ODistributedMessage;
 import com.orientechnologies.orient.distributed.context.coordination.message.OTopologyStateNetwork;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
+import com.orientechnologies.orient.distributed.context.coordination.result.OAlreadyPromised;
+import com.orientechnologies.orient.distributed.context.coordination.result.OInvalidSequential;
 import com.orientechnologies.orient.distributed.context.topology.ODiscoverAction;
 import com.orientechnologies.orient.distributed.context.topology.OTopologyManager;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
@@ -19,12 +25,16 @@ import java.util.Set;
 
 public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOps {
 
-  private OTopologyManager topology;
-
-  private final Map<OTransactionIdPromise, OResponseCollector> coordination = new HashMap<>();
+  private final OTopologyManager topology;
+  private final OTransactionSequenceManager sequenceManager;
+  private final OPromisedDistributedOps promised;
+  private final Map<OTransactionIdPromise, OResponseCollector> coordination;
 
   public OCoordinatedDistributedOpsImpl(ONodeId current, OGroupId groupId, int quorum) {
     topology = new OTopologyManager(current, groupId, quorum);
+    sequenceManager = new OTransactionSequenceManager(current, 3);
+    promised = new OPromisedDistributedOpsImpl();
+    coordination = new HashMap<>();
   }
 
   @Override
@@ -56,20 +66,97 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   }
 
   @Override
-  public synchronized OOperationStart start(OTransactionIdPromise promise, OCompleteAction action) {
+  public synchronized Optional<OOperationStart> start(OCompleteAction action) {
     if (this.topology.enoughNodes()) {
       throw new ODistributedException(
           String.format(
               "No enough nodes to coordinate an opertion with quorum: %d know nodes:%s",
               this.topology.getMinimumQuorum(), this.getMembers().toString()));
     }
-    Set<ONodeId> nodes = Collections.unmodifiableSet(new HashSet<>(topology.getMembers()));
-    coordination.put(promise, new OResponseCollector(action, promise, topology.getQuorum(), nodes));
-    return new OOperationStart(promise, nodes);
+
+    Optional<OTransactionIdPromise> prom = this.sequenceManager.next();
+    if (prom.isPresent()) {
+      var promise = prom.get();
+      Set<ONodeId> nodes = Collections.unmodifiableSet(new HashSet<>(topology.getMembers()));
+      coordination.put(
+          promise, new OResponseCollector(action, promise, topology.getQuorum(), nodes));
+      return Optional.of(new OOperationStart(promise, nodes));
+    } else {
+      return Optional.empty();
+    }
+  }
+
+  public Optional<OAcceptResult> receive(ODistributedMessage message) {
+    ValidationResult result = sequenceManager.validate(message.getPromiseId());
+    switch (result) {
+      case VALID -> {
+        this.promised.addPromised(message);
+        return Optional.empty();
+      }
+      case ALREADY_PRESENT -> {
+        // Already present ... maybe do nothing, already done
+        long current =
+            sequenceManager.debugGetSequence(message.getPromiseId().getId().getPosition());
+        return Optional.of(
+            new OInvalidSequential(current, message.getPromiseId().getId().getSequence()));
+      }
+      case ALREADY_PROMISED -> {
+        // Fail for promised to someone else this track it anyway in case of minority in quorum
+        this.promised.addNotPromised(message);
+        return Optional.of(new OAlreadyPromised());
+      }
+      case MISSING_PREVIOUS -> {
+        // wait for previous one, track it anyway
+        this.promised.addNotPromised(message);
+        long current =
+            sequenceManager.debugGetSequence(message.getPromiseId().getId().getPosition());
+        return Optional.of(
+            new OInvalidSequential(current, message.getPromiseId().getId().getSequence()));
+      }
+    }
+    long current = sequenceManager.debugGetSequence(message.getPromiseId().getId().getPosition());
+    return Optional.of(
+        new OInvalidSequential(current, message.getPromiseId().getId().getSequence()));
+  }
+
+  public Optional<ODistributedMessage> consensusFailure(OTransactionIdPromise promise) {
+    boolean promised = sequenceManager.notifyFailure(promise);
+    if (promised) {
+      return this.promised.removePromised(promise);
+    }
+    return Optional.empty();
+  }
+
+  public Optional<ODistributedMessage> consensusSuccess(OTransactionIdPromise promise) {
+    // TODO: if received the confirmation for not promised message have to cancel eventual
+    // promised message and try to promised and apply currently confirmed message.
+    ValidationResult result = sequenceManager.notifySuccess(promise);
+    switch (result) {
+      case VALID -> {
+        ODistributedMessage message = this.promised.getPromised(promise);
+        return Optional.ofNullable(message);
+      }
+      case ALREADY_PRESENT -> {
+        // Already present ... maybe do nothing, already done
+        finalize(promise);
+      }
+      case ALREADY_PROMISED -> {
+        // Fail for promised to someone else
+      }
+      case MISSING_PREVIOUS -> {
+        // wait for previous one
+      }
+    }
+
+    return Optional.empty();
+  }
+
+  private void finalize(OTransactionIdPromise promise) {
+    this.promised.removePromised(promise);
   }
 
   @Override
-  public void success(ONodeId node, OTransactionIdPromise promise) {
+  public void nodeSuccess(ONodeId node, OTransactionIdPromise promise) {
     Optional<CompleteInfo> action = Optional.empty();
     synchronized (this) {
       OResponseCollector coll = coordination.get(promise);
@@ -89,7 +176,7 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   }
 
   @Override
-  public void failure(ONodeId node, OTransactionIdPromise promise, OAcceptResult acceptResult) {
+  public void nodeFailure(ONodeId node, OTransactionIdPromise promise, OAcceptResult acceptResult) {
     Optional<CompleteInfo> action = Optional.empty();
     synchronized (this) {
       OResponseCollector coll = coordination.get(promise);
@@ -107,6 +194,7 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   }
 
   public void completeExecution(OTransactionIdPromise promise) {
+    finalize(promise);
     Optional<CompleteInfo> action = Optional.empty();
     synchronized (this) {
       OResponseCollector coll = coordination.get(promise);
@@ -144,10 +232,14 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   }
 
   @Override
-  public void startEstablish(
-      OTransactionIdPromise idPromise, Set<ONodeId> nodes, OCompleteAction action) {
-    coordination.put(
-        idPromise, new OResponseCollector(action, idPromise, topology.getQuorum(), nodes));
+  public Optional<OTransactionIdPromise> startEstablish(
+      Set<ONodeId> nodes, OCompleteAction action) {
+    Optional<OTransactionIdPromise> prom = this.sequenceManager.next();
+    if (prom.isPresent()) {
+      coordination.put(
+          prom.get(), new OResponseCollector(action, prom.get(), topology.getQuorum(), nodes));
+    }
+    return prom;
   }
 
   @Override
@@ -173,5 +265,15 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   @Override
   public void cancelEnstablish() {
     this.topology.cancelEnstablish();
+  }
+
+  @Override
+  public OTransactionSequenceStatus getSequenceStatus() {
+    return sequenceManager.currentStatus();
+  }
+
+  @Override
+  public void loadSequence(OTransactionSequenceStatus status) {
+    this.sequenceManager.fill(status);
   }
 }

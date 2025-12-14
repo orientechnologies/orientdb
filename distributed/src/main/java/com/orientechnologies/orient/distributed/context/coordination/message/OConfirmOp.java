@@ -5,6 +5,7 @@ import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.Optional;
 
 public class OConfirmOp implements OStructuralMessage {
   private OTransactionIdPromise promise;
@@ -15,9 +16,9 @@ public class OConfirmOp implements OStructuralMessage {
 
   @Override
   public void execute(OrientDBDistributed ctx) {
-    ODistributedMessage message = ctx.getNodeState().receiveSuccess(promise);
-    if (message != null) {
-      message.apply(ctx);
+    Optional<ODistributedMessage> message = ctx.getNodeState().receiveSuccess(promise);
+    if (message.isPresent()) {
+      message.get().apply(ctx);
       ctx.getNodeState().complete(promise);
     } else {
       // TODO: maybe here request to sync/resend promised, or just wait for message to arrive

@@ -74,11 +74,10 @@ public class OCoordinatedDistributedOpsTest {
     ONodeId nodeIdtwo = newRandomNodeId();
     ops.registerNode(nodeIdtwo, 0);
 
-    OTransactionId txId = new OTransactionId(0, 1);
-    OTransactionIdPromise promise = new OTransactionIdPromise(nodeId, txId);
-    ops.start(promise, action);
-    ops.success(nodeId, promise);
-    ops.success(nodeIdtwo, promise);
+    var res = ops.start(action);
+    var promise = res.get().promise();
+    ops.nodeSuccess(nodeId, promise);
+    ops.nodeSuccess(nodeIdtwo, promise);
 
     assertTrue(action.success);
     assertFalse(action.failure);
@@ -94,11 +93,10 @@ public class OCoordinatedDistributedOpsTest {
     ONodeId nodeIdtwo = newRandomNodeId();
     ops.registerNode(nodeIdtwo, 0);
 
-    OTransactionId txId = new OTransactionId(0, 1);
-    OTransactionIdPromise promise = new OTransactionIdPromise(nodeId, txId);
-    ops.start(promise, action);
-    ops.success(nodeId, promise);
-    ops.success(nodeIdtwo, promise);
+    var res = ops.start(action);
+    var promise = res.get().promise();
+    ops.nodeSuccess(nodeId, promise);
+    ops.nodeSuccess(nodeIdtwo, promise);
     ops.completeExecution(promise);
 
     assertTrue(action.success);
@@ -115,11 +113,10 @@ public class OCoordinatedDistributedOpsTest {
     ONodeId nodeIdtwo = newRandomNodeId();
     ops.enstablish(groupId, Set.of(nodeId, nodeIdtwo));
 
-    OTransactionId txId = new OTransactionId(0, 1);
-    OTransactionIdPromise promise = new OTransactionIdPromise(nodeId, txId);
-    ops.start(promise, action);
-    ops.success(nodeId, promise);
-    ops.failure(nodeIdtwo, promise, new OInvalidSequential(0, 0));
+    var res = ops.start(action);
+    var promise = res.get().promise();
+    ops.nodeSuccess(nodeId, promise);
+    ops.nodeFailure(nodeIdtwo, promise, new OInvalidSequential(0, 0));
 
     assertFalse(action.success);
     assertTrue(action.failure);
@@ -136,15 +133,14 @@ public class OCoordinatedDistributedOpsTest {
     ONodeId nodeIdFour = newRandomNodeId();
     ops.enstablish(groupId, Set.of(nodeId, nodeIdtwo, nodeIdthree, nodeIdFour));
 
-    OTransactionId txId = new OTransactionId(0, 1);
-    OTransactionIdPromise promise = new OTransactionIdPromise(nodeId, txId);
-    ops.start(promise, action);
-    ops.success(nodeId, promise);
-    ops.success(nodeIdtwo, promise);
+    var res = ops.start(action);
+    var promise = res.get().promise();
+    ops.nodeSuccess(nodeId, promise);
+    ops.nodeSuccess(nodeIdtwo, promise);
     assertFalse(action.success);
-    ops.success(nodeIdthree, promise);
+    ops.nodeSuccess(nodeIdthree, promise);
     assertTrue(action.success);
-    ops.success(nodeIdFour, promise);
+    ops.nodeSuccess(nodeIdFour, promise);
 
     assertTrue(action.success);
     assertFalse(action.failure);
@@ -167,11 +163,9 @@ public class OCoordinatedDistributedOpsTest {
     ops.unregisterNode(nodeIdthree, 0);
     ops.unregisterNode(nodeIdFour, 0);
 
-    OTransactionId txId = new OTransactionId(0, 1);
-    OTransactionIdPromise promise = new OTransactionIdPromise(nodeId, txId);
-    ops.start(promise, action);
-    ops.success(nodeId, promise);
-    ops.success(nodeIdtwo, promise);
+    var res = ops.start(action);
+    ops.nodeSuccess(nodeId, res.get().promise());
+    ops.nodeSuccess(nodeIdtwo, res.get().promise());
     assertTrue(action.success);
     assertFalse(action.failure);
   }
@@ -186,11 +180,9 @@ public class OCoordinatedDistributedOpsTest {
     Set<ONodeId> nodes = Set.of(nodeId, nodeIdtwo);
     ops.enstablish(groupId, nodes);
 
-    OTransactionId txId = new OTransactionId(0, 1);
-    OTransactionIdPromise promise = new OTransactionIdPromise(nodeId, txId);
-    OOperationStart start = ops.start(promise, action);
-    assertTrue(start.nodes().containsAll(nodes));
-    ops.success(nodeId, promise);
+    Optional<OOperationStart> start = ops.start(action);
+    assertTrue(start.get().nodes().containsAll(nodes));
+    ops.nodeSuccess(nodeId, start.get().promise());
     ops.unregisterNode(nodeIdtwo, 0);
     assertTrue(action.failure);
     assertFalse(action.success);
@@ -210,14 +202,13 @@ public class OCoordinatedDistributedOpsTest {
     Set<ONodeId> nodes = Set.of(nodeId, nodeIdtwo, nodeIdthree, nodeIdFour);
     ops.enstablish(groupId, nodes);
 
-    OTransactionId txId = new OTransactionId(0, 1);
-    OTransactionIdPromise promise = new OTransactionIdPromise(nodeId, txId);
-    OOperationStart start = ops.start(promise, action);
-    assertTrue(start.nodes().containsAll(nodes));
-    ops.success(nodeId, promise);
-    ops.success(nodeIdtwo, promise);
+    Optional<OOperationStart> start = ops.start(action);
+    assertTrue(start.get().nodes().containsAll(nodes));
+    OTransactionIdPromise promise = start.get().promise();
+    ops.nodeSuccess(nodeId, promise);
+    ops.nodeSuccess(nodeIdtwo, promise);
     ops.unregisterNode(nodeIdthree, 0);
-    ops.failure(nodeIdFour, promise, new OInvalidSequential(0, 0));
+    ops.nodeFailure(nodeIdFour, promise, new OInvalidSequential(0, 0));
     assertTrue(action.failure);
     assertFalse(action.success);
     assertTrue(action.result.get() instanceof OQuorumNotReached);
@@ -494,8 +485,7 @@ public class OCoordinatedDistributedOpsTest {
     OCoordinatedDistributedOps ops1 = new OCoordinatedDistributedOpsImpl(nodeId1, groupId, 1);
     ODiscoverAction action1 = ops1.nodeJoinStart(nodeId1, OTopologyStateNetwork.boot(groupId));
     assertTrue(action1 instanceof ODiscoverAction.OEstablishAction);
-    OTransactionIdPromise promiseId1 = new OTransactionIdPromise(nodeId1, new OTransactionId(1, 1));
-    ops1.startEstablish(promiseId1, Set.of(nodeId1), new TestAction());
+    ops1.startEstablish(Set.of(nodeId1), new TestAction());
     ops1.validateEnstablish(groupId, Set.of(nodeId1));
     ops1.enstablish(groupId, Set.of(nodeId1));
 
@@ -507,7 +497,7 @@ public class OCoordinatedDistributedOpsTest {
     ODiscoverAction action2 = ops2.nodeJoinStart(nodeId2, OTopologyStateNetwork.boot(groupId));
     assertTrue(action2 instanceof ODiscoverAction.OEstablishAction);
     OTransactionIdPromise promiseId2 = new OTransactionIdPromise(nodeId2, new OTransactionId(1, 1));
-    ops2.startEstablish(promiseId2, Set.of(nodeId2), new TestAction());
+    ops2.startEstablish(Set.of(nodeId2), new TestAction());
     ops2.validateEnstablish(groupId, Set.of(nodeId2));
     ops2.enstablish(groupId, Set.of(nodeId2));
 

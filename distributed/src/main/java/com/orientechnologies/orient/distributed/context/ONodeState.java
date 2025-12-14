@@ -5,15 +5,11 @@ import com.orientechnologies.orient.core.transaction.OGroupId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
-import com.orientechnologies.orient.core.transaction.OTransactionSequenceManager;
 import com.orientechnologies.orient.core.tx.OTxMetadataHolderImpl;
-import com.orientechnologies.orient.core.tx.ValidationResult;
 import com.orientechnologies.orient.distributed.context.coordination.message.ODistributedMessage;
 import com.orientechnologies.orient.distributed.context.coordination.message.ONodeStateNetwork;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OAddNodeInfo;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
-import com.orientechnologies.orient.distributed.context.coordination.result.OAlreadyPromised;
-import com.orientechnologies.orient.distributed.context.coordination.result.OInvalidSequential;
 import com.orientechnologies.orient.distributed.context.coordination.result.OMissingNode;
 import com.orientechnologies.orient.distributed.context.topology.ODiscoverAction;
 import java.util.List;
@@ -23,9 +19,7 @@ import java.util.concurrent.CountDownLatch;
 
 public class ONodeState {
 
-  private final OTransactionSequenceManager sequenceManager;
   private final ODistributedMessageLog log;
-  private final OPromisedDistributedOps promised;
   private final OCoordinatedDistributedOps coordinated;
   private final ONodeId nodeId;
   private final OAppliedState state;
@@ -38,10 +32,8 @@ public class ONodeState {
       int minimumQuorum,
       OStateStore store,
       ODatabaseStateChangeListener listener) {
-    sequenceManager = new OTransactionSequenceManager(current, 3);
     state = new OAppliedState(3);
     log = new ODistributedMessageLogMemory();
-    promised = new OPromisedDistributedOpsImpl();
     coordinated = new OCoordinatedDistributedOpsImpl(current, groupId, minimumQuorum);
     nodeId = current;
     this.store = store;
@@ -55,26 +47,21 @@ public class ONodeState {
     }
     Optional<byte[]> seq = store.loadSequence();
     if (seq.isPresent()) {
-      sequenceManager.fill(OTxMetadataHolderImpl.read(seq.get()).getStatus());
+      coordinated.loadSequence(OTxMetadataHolderImpl.read(seq.get()).getStatus());
     }
     return coordinated.discoverNode(nodeId);
   }
 
   public Optional<OOperationStart> start(OCompleteAction action) {
-    Optional<OTransactionIdPromise> prom = this.sequenceManager.next();
-    if (prom.isPresent()) {
-      return Optional.of(this.coordinated.start(prom.get(), action));
-    } else {
-      return Optional.empty();
-    }
+    return this.coordinated.start(action);
   }
 
   public void success(ONodeId node, OTransactionIdPromise promise) {
-    this.coordinated.success(node, promise);
+    this.coordinated.nodeSuccess(node, promise);
   }
 
   public void failure(ONodeId node, OTransactionIdPromise promise, OAcceptResult acceptResult) {
-    this.coordinated.failure(node, promise, acceptResult);
+    this.coordinated.nodeFailure(node, promise, acceptResult);
   }
 
   public void register(ONodeId node, long version) {
@@ -86,77 +73,22 @@ public class ONodeState {
   }
 
   public Optional<OAcceptResult> receive(ODistributedMessage message) {
-    ValidationResult result = sequenceManager.validate(message.getPromiseId());
-    switch (result) {
-      case VALID -> {
-        this.log.log(message);
-        this.promised.addPromised(message);
-        return Optional.empty();
-      }
-      case ALREADY_PRESENT -> {
-        // Already present ... maybe do nothing, already done
-        long current =
-            sequenceManager.debugGetSequence(message.getPromiseId().getId().getPosition());
-        return Optional.of(
-            new OInvalidSequential(current, message.getPromiseId().getId().getSequence()));
-      }
-      case ALREADY_PROMISED -> {
-        // Fail for promised to someone else this track it anyway in case of minority in quorum
-        this.promised.addNotPromised(message);
-        return Optional.of(new OAlreadyPromised());
-      }
-      case MISSING_PREVIOUS -> {
-        // wait for previous one, track it anyway
-        this.promised.addNotPromised(message);
-        long current =
-            sequenceManager.debugGetSequence(message.getPromiseId().getId().getPosition());
-        return Optional.of(
-            new OInvalidSequential(current, message.getPromiseId().getId().getSequence()));
-      }
+    var result = this.coordinated.receive(message);
+    if (result.isEmpty()) {
+      this.log.log(message);
     }
-    long current = sequenceManager.debugGetSequence(message.getPromiseId().getId().getPosition());
-    return Optional.of(
-        new OInvalidSequential(current, message.getPromiseId().getId().getSequence()));
+    return result;
   }
 
   public Optional<ODistributedMessage> receiveFailure(OTransactionIdPromise promise) {
-    boolean promised = sequenceManager.notifyFailure(promise);
-    if (promised) {
-      return this.promised.removePromised(promise);
-    }
-    return Optional.empty();
+    return this.coordinated.consensusFailure(promise);
   }
 
-  public ODistributedMessage receiveSuccess(OTransactionIdPromise promise) {
-    // TODO: if received the confirmation for not promised message have to cancel eventual
-    // promised message and try to promised and apply currently confirmed message.
-    ValidationResult result = sequenceManager.notifySuccess(promise);
-    switch (result) {
-      case VALID -> {
-        ODistributedMessage message = this.promised.getPromised(promise);
-        return message;
-      }
-      case ALREADY_PRESENT -> {
-        // Already present ... maybe do nothing, already done
-        finalize(promise);
-      }
-      case ALREADY_PROMISED -> {
-        // Fail for promised to someone else
-      }
-      case MISSING_PREVIOUS -> {
-        // wait for previous one
-      }
-    }
-
-    return null;
-  }
-
-  private void finalize(OTransactionIdPromise promise) {
-    this.promised.removePromised(promise);
+  public Optional<ODistributedMessage> receiveSuccess(OTransactionIdPromise promise) {
+    return this.coordinated.consensusSuccess(promise);
   }
 
   public void complete(OTransactionIdPromise promise) {
-    finalize(promise);
     this.coordinated.completeExecution(promise);
     this.state.complete(promise.getId());
   }
@@ -195,11 +127,7 @@ public class ONodeState {
 
   public Optional<OTransactionIdPromise> startEnstablish(
       Set<ONodeId> nodes, OCompleteAction action) {
-    Optional<OTransactionIdPromise> prom = this.sequenceManager.next();
-    if (prom.isPresent()) {
-      this.coordinated.startEstablish(prom.get(), nodes, action);
-    }
-    return prom;
+    return this.coordinated.startEstablish(nodes, action);
   }
 
   public ODiscoverAction nodeJoinStart(ONodeId node, ONodeStateNetwork state) {
@@ -215,11 +143,10 @@ public class ONodeState {
   }
 
   public ONodeStateNetwork getNetworkState() {
-    var sequenceStatus = this.sequenceManager.currentStatus();
     return new ONodeStateNetwork(
         this.coordinated.getNetworkState(),
         this.databaseTopology.getNetworkState(),
-        sequenceStatus);
+        this.coordinated.getSequenceStatus());
   }
 
   public void cancelRegisterPromise() {

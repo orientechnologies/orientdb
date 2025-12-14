@@ -3,6 +3,8 @@ package com.orientechnologies.orient.distributed.context;
 import com.orientechnologies.orient.core.transaction.OGroupId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
+import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
+import com.orientechnologies.orient.distributed.context.coordination.message.ODistributedMessage;
 import com.orientechnologies.orient.distributed.context.coordination.message.OTopologyStateNetwork;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import com.orientechnologies.orient.distributed.context.topology.ODiscoverAction;
@@ -13,11 +15,17 @@ public interface OCoordinatedDistributedOps {
 
   // Methods for coordinations of structural operations not of nodes
 
-  OOperationStart start(OTransactionIdPromise promise, OCompleteAction action);
+  Optional<OOperationStart> start(OCompleteAction action);
 
-  void success(ONodeId node, OTransactionIdPromise promise);
+  Optional<OAcceptResult> receive(ODistributedMessage message);
 
-  void failure(ONodeId node, OTransactionIdPromise promise, OAcceptResult acceptResult);
+  void nodeSuccess(ONodeId node, OTransactionIdPromise promise);
+
+  void nodeFailure(ONodeId node, OTransactionIdPromise promise, OAcceptResult acceptResult);
+
+  Optional<ODistributedMessage> consensusFailure(OTransactionIdPromise promise);
+
+  Optional<ODistributedMessage> consensusSuccess(OTransactionIdPromise promise);
 
   void completeExecution(OTransactionIdPromise promise);
 
@@ -35,7 +43,7 @@ public interface OCoordinatedDistributedOps {
 
   // Methods for coordinations of  operations to add establish the first network of nodes
 
-  void startEstablish(OTransactionIdPromise idPromise, Set<ONodeId> nodes, OCompleteAction action);
+  Optional<OTransactionIdPromise> startEstablish(Set<ONodeId> nodes, OCompleteAction action);
 
   Optional<OAcceptResult> validateEnstablish(OGroupId networkId, Set<ONodeId> candidates);
 
@@ -50,4 +58,8 @@ public interface OCoordinatedDistributedOps {
   void cancelRegisterPromise();
 
   void cancelEnstablish();
+
+  OTransactionSequenceStatus getSequenceStatus();
+
+  void loadSequence(OTransactionSequenceStatus status);
 }
