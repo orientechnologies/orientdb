@@ -216,4 +216,8 @@ public class OTopologyManager implements OTopologyEvents {
   public OGroupId getGroupId() {
     return groupId;
   }
+
+  public ONodeId getNodeId() {
+    return current;
+  }
 }

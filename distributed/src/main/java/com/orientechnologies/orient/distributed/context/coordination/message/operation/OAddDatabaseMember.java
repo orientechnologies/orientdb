@@ -25,17 +25,17 @@ public class OAddDatabaseMember implements OOperationMessage {
 
   @Override
   public Optional<OAcceptResult> validate(OrientDBDistributed ctx, OTransactionIdPromise promise) {
-    return ctx.getNodeState().promiseAddDatabaseMember(dbId, nodes, version);
+    return ctx.getNodeState().getOps().promiseAddDatabaseMember(dbId, nodes, version);
   }
 
   @Override
   public void apply(OrientDBDistributed ctx, OTransactionIdPromise promise) {
-    ctx.getNodeState().addDatabaseMember(dbId, nodes, version);
+    ctx.getNodeState().getOps().addDatabaseMember(dbId, nodes, version);
   }
 
   @Override
   public void cancel(OrientDBDistributed ctx, OTransactionIdPromise promise) {
-    ctx.getNodeState().cancelAddDatabaseMember(dbId, nodes);
+    ctx.getNodeState().getOps().cancelAddDatabaseMember(dbId, nodes);
   }
 
   @Override

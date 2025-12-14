@@ -29,12 +29,12 @@ public class OEnstablishTopology implements OOperationMessage {
 
   @Override
   public Optional<OAcceptResult> validate(OrientDBDistributed ctx, OTransactionIdPromise promise) {
-    return ctx.getNodeState().validateEnstablish(groupId, candidates);
+    return ctx.getNodeState().getOps().validateEnstablish(groupId, candidates);
   }
 
   @Override
   public void cancel(OrientDBDistributed ctx, OTransactionIdPromise promise) {
-    ctx.getNodeState().cancelEnstablish();
+    ctx.getNodeState().getOps().cancelEnstablish();
   }
 
   public static OEnstablishTopology readNetwork(DataInput input) throws IOException {

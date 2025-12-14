@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.distributed.context;
 
+import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.OGroupId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
@@ -8,10 +9,12 @@ import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import com.orientechnologies.orient.core.tx.ValidationResult;
 import com.orientechnologies.orient.distributed.context.OResponseCollector.CompleteInfo;
 import com.orientechnologies.orient.distributed.context.coordination.message.ODistributedMessage;
-import com.orientechnologies.orient.distributed.context.coordination.message.OTopologyStateNetwork;
+import com.orientechnologies.orient.distributed.context.coordination.message.ONodeStateNetwork;
+import com.orientechnologies.orient.distributed.context.coordination.message.operation.OAddNodeInfo;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAlreadyPromised;
 import com.orientechnologies.orient.distributed.context.coordination.result.OInvalidSequential;
+import com.orientechnologies.orient.distributed.context.coordination.result.OMissingNode;
 import com.orientechnologies.orient.distributed.context.topology.ODiscoverAction;
 import com.orientechnologies.orient.distributed.context.topology.OTopologyManager;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
@@ -19,6 +22,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -29,12 +33,15 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   private final OTransactionSequenceManager sequenceManager;
   private final OPromisedDistributedOps promised;
   private final Map<OTransactionIdPromise, OResponseCollector> coordination;
+  private final ODatabasesTopologyState databaseTopology;
 
-  public OCoordinatedDistributedOpsImpl(ONodeId current, OGroupId groupId, int quorum) {
+  public OCoordinatedDistributedOpsImpl(
+      ONodeId current, OGroupId groupId, int quorum, ODatabaseStateChangeListener listener) {
     topology = new OTopologyManager(current, groupId, quorum);
     sequenceManager = new OTransactionSequenceManager(current, 3);
     promised = new OPromisedDistributedOpsImpl();
     coordination = new HashMap<>();
+    this.databaseTopology = new ODatabasesTopologyState(listener);
   }
 
   @Override
@@ -243,18 +250,34 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   }
 
   @Override
-  public ODiscoverAction nodeJoinStart(ONodeId node, OTopologyStateNetwork state) {
-    return this.topology.nodeJoinStart(node, state);
+  public ODiscoverAction nodeJoinStart(ONodeId node, ONodeStateNetwork state) {
+    var action = this.topology.nodeJoinStart(node, state.getTopology());
+    if (action.applyDatabaseState()) {
+      if (state.getTopology().isMerge()) {
+        this.databaseTopology.mergeNetworkState(state.getDatabases());
+      } else {
+        this.databaseTopology.receiverNetworkState(state.getDatabases());
+      }
+    }
+    return action;
   }
 
   @Override
-  public OTopologyStateNetwork getNetworkState() {
-    return this.topology.getNetworkState();
+  public ONodeStateNetwork getNetworkState() {
+    return new ONodeStateNetwork(
+        this.topology.getNetworkState(),
+        this.databaseTopology.getNetworkState(),
+        this.sequenceManager.currentStatus());
   }
 
-  @Override
-  public void load(ONodeStateStore nodeStateStore) {
-    this.topology.load(nodeStateStore);
+  public void load(
+      Optional<ONodeStateStore> nodeStateStore, Optional<OTransactionSequenceStatus> status) {
+    if (nodeStateStore.isPresent()) {
+      this.topology.load(nodeStateStore.get());
+    }
+    if (status.isPresent()) {
+      this.sequenceManager.fill(status.get());
+    }
   }
 
   @Override
@@ -275,5 +298,48 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   @Override
   public void loadSequence(OTransactionSequenceStatus status) {
     this.sequenceManager.fill(status);
+  }
+
+  public Optional<OAcceptResult> promiseDeclare(
+      OTransactionIdPromise promise,
+      ODatabaseId databaseId,
+      String database,
+      Set<ONodeId> partecipants,
+      int minimumQuorum) {
+    if (!partecipants.contains(topology.getNodeId())) {
+      return Optional.of(new OMissingNode());
+    }
+    return this.databaseTopology.promiseDeclare(
+        promise, databaseId, database, partecipants, minimumQuorum);
+  }
+
+  public void declareDatabase(
+      OTransactionIdPromise promise,
+      ODatabaseId dbId,
+      String database,
+      Set<ONodeId> partecipants,
+      int minimumQuorum) {
+    this.databaseTopology.declareDatabase(promise, dbId, database, partecipants, minimumQuorum);
+  }
+
+  public void cancelDatabase(OTransactionIdPromise promise, ODatabaseId dbId, String database) {
+    this.databaseTopology.cancelPomise(promise, dbId, database);
+  }
+
+  public ODatabasesTopologyState getDatabaseTopology() {
+    return databaseTopology;
+  }
+
+  public Optional<OAcceptResult> promiseAddDatabaseMember(
+      ODatabaseId dbId, List<OAddNodeInfo> nodes, long version) {
+    return this.databaseTopology.promiseAddMember(dbId, nodes, version);
+  }
+
+  public void addDatabaseMember(ODatabaseId dbId, List<OAddNodeInfo> nodes, long version) {
+    this.databaseTopology.addDatabaseMember(dbId, nodes, version);
+  }
+
+  public void cancelAddDatabaseMember(ODatabaseId dbId, List<OAddNodeInfo> nodes) {
+    this.databaseTopology.cancelAddDatabaseMember(dbId, nodes);
   }
 }

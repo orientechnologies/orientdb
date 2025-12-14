@@ -53,7 +53,8 @@ public sealed interface ODiscoverAction
       Optional<OTransactionIdPromise> promise =
           context
               .getNodeState()
-              .startEnstablish(this.candidates(), context.newCompleteAction(operation, execution));
+              .getOps()
+              .startEstablish(this.candidates(), context.newCompleteAction(operation, execution));
       if (promise.isPresent()) {
         context.sendMessage(candidates(), new OProposeOp(promise.get(), operation));
       } else {

@@ -711,7 +711,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
   private void declareDatabaseFlow(String name, ODatabaseId dbId) {
     retryOperation(
         (ctx, cmplete) -> {
-          Set<ONodeId> currentMembers = getNodeState().getNetworkMemebers();
+          Set<ONodeId> currentMembers = getNodeState().getNetworkMembers();
           coordinatedOperation(new ODeclareDbMessage(name, dbId, currentMembers, 0), cmplete);
         });
   }
@@ -953,7 +953,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
     ONodeState localState = getNodeState();
     retryOperation(
         (ctx, complete) -> {
-          ODiscoverAction action = localState.nodeJoinStart(nodeId, state);
+          ODiscoverAction action = localState.getOps().nodeJoinStart(nodeId, state);
           logger.debug("executing node join action %s", action);
           action.execute(this, complete, state);
           dumpNodeInfo();
@@ -974,13 +974,13 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   public void registerNode(ONodeId node, long version) {
-    getNodeState().register(node, version);
+    getNodeState().getOps().registerNode(node, version);
     // This should make aware of the added node of the fact it joined the network
     sendFirstConnect(node);
   }
 
   public void cancelRegisterPromise() {
-    getNodeState().cancelRegisterPromise();
+    getNodeState().getOps().cancelRegisterPromise();
   }
 
   public Optional<OAcceptResult> promiseDeclare(
@@ -990,6 +990,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
       Set<ONodeId> partecipants,
       int minimumQuorum) {
     return getNodeState()
+        .getOps()
         .promiseDeclare(promise, databaseId, database, partecipants, minimumQuorum);
   }
 
@@ -999,7 +1000,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
       String database,
       Set<ONodeId> partecipants,
       int minimumQuorum) {
-    getNodeState().declareDatabase(promise, dbId, database, partecipants, minimumQuorum);
+    getNodeState().getOps().declareDatabase(promise, dbId, database, partecipants, minimumQuorum);
     getNodeState()
         .getDatabaseTopology()
         .executeOnOneOnline(
@@ -1031,7 +1032,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   public void cancelDeclare(OTransactionIdPromise promise, ODatabaseId dbId, String database) {
-    getNodeState().cancelDatabase(promise, dbId, database);
+    getNodeState().getOps().cancelDatabase(promise, dbId, database);
   }
 
   public void acceptSync(
@@ -1305,7 +1306,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   public void enstablish(OGroupId groupId, Set<ONodeId> candidates) {
-    Set<ONodeId> allNodes = getNodeState().enstablish(groupId, candidates);
+    Set<ONodeId> allNodes = getNodeState().getOps().enstablish(groupId, candidates);
     for (ONodeId node : allNodes) {
       sendFirstConnect(node);
     }
@@ -1383,7 +1384,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   public void autoDeployIfNeed() {
-    Set<ONodeId> members = getNodeState().getNetworkMemebers();
+    Set<ONodeId> members = getNodeState().getNetworkMembers();
     ODatabasesTopologyState databaseTopology = getNodeState().getDatabaseTopology();
     Collection<ODatabaseId> dbs = databaseTopology.getDatabases();
     for (ODatabaseId id : dbs) {

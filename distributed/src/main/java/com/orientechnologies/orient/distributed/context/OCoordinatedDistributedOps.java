@@ -1,13 +1,16 @@
 package com.orientechnologies.orient.distributed.context;
 
+import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.OGroupId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import com.orientechnologies.orient.distributed.context.coordination.message.ODistributedMessage;
-import com.orientechnologies.orient.distributed.context.coordination.message.OTopologyStateNetwork;
+import com.orientechnologies.orient.distributed.context.coordination.message.ONodeStateNetwork;
+import com.orientechnologies.orient.distributed.context.coordination.message.operation.OAddNodeInfo;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import com.orientechnologies.orient.distributed.context.topology.ODiscoverAction;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 
@@ -33,7 +36,7 @@ public interface OCoordinatedDistributedOps {
 
   ODiscoverAction discoverNode(ONodeId node);
 
-  ODiscoverAction nodeJoinStart(ONodeId node, OTopologyStateNetwork state);
+  ODiscoverAction nodeJoinStart(ONodeId node, ONodeStateNetwork state);
 
   Optional<OAcceptResult> promiseRegister(ONodeId node, long version);
 
@@ -51,9 +54,9 @@ public interface OCoordinatedDistributedOps {
 
   Set<ONodeId> getMembers();
 
-  OTopologyStateNetwork getNetworkState();
+  ONodeStateNetwork getNetworkState();
 
-  void load(ONodeStateStore nodeStateStore);
+  void load(Optional<ONodeStateStore> nodeStateStore, Optional<OTransactionSequenceStatus> status);
 
   void cancelRegisterPromise();
 
@@ -62,4 +65,30 @@ public interface OCoordinatedDistributedOps {
   OTransactionSequenceStatus getSequenceStatus();
 
   void loadSequence(OTransactionSequenceStatus status);
+
+  // Methods for manage databases and node in the databases
+  Optional<OAcceptResult> promiseDeclare(
+      OTransactionIdPromise promise,
+      ODatabaseId databaseId,
+      String database,
+      Set<ONodeId> partecipants,
+      int minimumQuorum);
+
+  void declareDatabase(
+      OTransactionIdPromise promise,
+      ODatabaseId dbId,
+      String database,
+      Set<ONodeId> partecipants,
+      int minimumQuorum);
+
+  void cancelDatabase(OTransactionIdPromise promise, ODatabaseId dbId, String database);
+
+  Optional<OAcceptResult> promiseAddDatabaseMember(
+      ODatabaseId dbId, List<OAddNodeInfo> nodes, long version);
+
+  void addDatabaseMember(ODatabaseId dbId, List<OAddNodeInfo> nodes, long version);
+
+  public void cancelAddDatabaseMember(ODatabaseId dbId, List<OAddNodeInfo> nodes);
+
+  ODatabasesTopologyState getDatabaseTopology();
 }

@@ -21,7 +21,7 @@ public class OAddTopologyMember implements OOperationMessage {
 
   @Override
   public Optional<OAcceptResult> validate(OrientDBDistributed ctx, OTransactionIdPromise promise) {
-    return ctx.getNodeState().promiseRegister(node, version);
+    return ctx.getNodeState().getOps().promiseRegister(node, version);
   }
 
   @Override

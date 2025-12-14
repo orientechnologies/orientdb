@@ -163,7 +163,7 @@ public class ODistributedOutput {
   public static String formatServerStatus(final OrientDBDistributed distr) {
     final List<OIdentifiable> rows = new ArrayList<OIdentifiable>();
 
-    final Collection<ONodeId> members = distr.getNodeState().getNetworkMemebers();
+    final Collection<ONodeId> members = distr.getNodeState().getNetworkMembers();
 
     if (members != null)
       for (ONodeId m : members) {
