@@ -120,7 +120,7 @@ public interface OCoordinatedDistributedOps {
 
   ODatabasesTopology getDatabaseTopology();
 
-  Set<ONodeId> getMembers();
+  Set<ONodeId> getNetworkMembers();
 
   ONodeStateNetwork getNetworkState();
 

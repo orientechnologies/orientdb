@@ -106,7 +106,7 @@ public class ONodeState {
   }
 
   public Set<ONodeId> getNetworkMembers() {
-    return coordinated.getMembers();
+    return coordinated.getNetworkMembers();
   }
 
   public OCoordinatedDistributedOps getOps() {

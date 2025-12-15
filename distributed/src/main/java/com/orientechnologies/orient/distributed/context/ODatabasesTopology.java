@@ -20,7 +20,7 @@ public interface ODatabasesTopology {
 
   Optional<ODatabaseId> getDatabaseId(String dbName);
 
-  Set<ONodeId> getOnlineNodes(ODatabaseId oDatabaseId);
+  Set<ONodeId> getOnlineNodes(ODatabaseId dbId);
 
   boolean isMain(ODatabaseId dbId, ONodeId node);
 }

@@ -79,7 +79,7 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
       throw new ODistributedException(
           String.format(
               "No enough nodes to coordinate an opertion with quorum: %d know nodes:%s",
-              this.topology.getMinimumQuorum(), this.getMembers().toString()));
+              this.topology.getMinimumQuorum(), this.getNetworkMembers().toString()));
     }
 
     Optional<OTransactionIdPromise> prom = this.sequenceManager.next();
@@ -94,40 +94,38 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
     }
   }
 
-  public Optional<OAcceptResult> receive(ODistributedMessage message) {
+  public synchronized Optional<OAcceptResult> receive(ODistributedMessage message) {
     ValidationResult result = sequenceManager.validate(message.getPromiseId());
-    switch (result) {
+    return switch (result) {
       case VALID -> {
         this.promised.addPromised(message);
-        return Optional.empty();
+        yield Optional.empty();
       }
       case ALREADY_PRESENT -> {
         // Already present ... maybe do nothing, already done
         long current =
             sequenceManager.debugGetSequence(message.getPromiseId().getId().getPosition());
-        return Optional.of(
+        yield Optional.of(
             new OInvalidSequential(current, message.getPromiseId().getId().getSequence()));
       }
       case ALREADY_PROMISED -> {
         // Fail for promised to someone else this track it anyway in case of minority in quorum
         this.promised.addNotPromised(message);
-        return Optional.of(new OAlreadyPromised());
+        yield Optional.of(new OAlreadyPromised());
       }
       case MISSING_PREVIOUS -> {
         // wait for previous one, track it anyway
         this.promised.addNotPromised(message);
         long current =
             sequenceManager.debugGetSequence(message.getPromiseId().getId().getPosition());
-        return Optional.of(
+        yield Optional.of(
             new OInvalidSequential(current, message.getPromiseId().getId().getSequence()));
       }
-    }
-    long current = sequenceManager.debugGetSequence(message.getPromiseId().getId().getPosition());
-    return Optional.of(
-        new OInvalidSequential(current, message.getPromiseId().getId().getSequence()));
+    };
   }
 
-  public Optional<ODistributedMessage> consensusFailure(OTransactionIdPromise promise) {
+  public synchronized Optional<ODistributedMessage> consensusFailure(
+      OTransactionIdPromise promise) {
     boolean promised = sequenceManager.notifyFailure(promise);
     if (promised) {
       return this.promised.removePromised(promise);
@@ -135,28 +133,30 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
     return Optional.empty();
   }
 
-  public Optional<ODistributedMessage> consensusSuccess(OTransactionIdPromise promise) {
+  public synchronized Optional<ODistributedMessage> consensusSuccess(
+      OTransactionIdPromise promise) {
     // TODO: if received the confirmation for not promised message have to cancel eventual
     // promised message and try to promised and apply currently confirmed message.
     ValidationResult result = sequenceManager.notifySuccess(promise);
-    switch (result) {
+    return switch (result) {
       case VALID -> {
         ODistributedMessage message = this.promised.getPromised(promise);
-        return Optional.ofNullable(message);
+        yield Optional.ofNullable(message);
       }
       case ALREADY_PRESENT -> {
         // Already present ... maybe do nothing, already done
         finalize(promise);
+        yield Optional.empty();
       }
       case ALREADY_PROMISED -> {
         // Fail for promised to someone else
+        yield Optional.empty();
       }
       case MISSING_PREVIOUS -> {
         // wait for previous one
+        yield Optional.empty();
       }
-    }
-
-    return Optional.empty();
+    };
   }
 
   private void finalize(OTransactionIdPromise promise) {
@@ -178,8 +178,6 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
     if (action.isPresent()) {
       CompleteInfo info = action.get();
       info.action().success(info.promise(), info.nodes());
-      // This do not call the complete with result, because it will be left to the
-      // post execution call to completeExecution
     }
   }
 
@@ -220,7 +218,7 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   }
 
   @Override
-  public Set<ONodeId> getMembers() {
+  public Set<ONodeId> getNetworkMembers() {
     return topology.getMembers();
   }
 
@@ -240,7 +238,7 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   }
 
   @Override
-  public Optional<OTransactionIdPromise> startEstablish(
+  public synchronized Optional<OTransactionIdPromise> startEstablish(
       Set<ONodeId> nodes, OCompleteAction action) {
     Optional<OTransactionIdPromise> prom = this.sequenceManager.next();
     if (prom.isPresent()) {
@@ -251,7 +249,7 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   }
 
   @Override
-  public ODiscoverAction nodeJoinStart(ONodeId node, ONodeStateNetwork state) {
+  public synchronized ODiscoverAction nodeJoinStart(ONodeId node, ONodeStateNetwork state) {
     var action = this.topology.nodeJoinStart(node, state.getTopology());
     if (action.applyDatabaseState()) {
       if (state.getTopology().isMerge()) {
