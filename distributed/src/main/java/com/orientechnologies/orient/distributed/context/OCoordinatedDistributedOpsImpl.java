@@ -3,6 +3,7 @@ package com.orientechnologies.orient.distributed.context;
 import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.OGroupId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
+import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.core.transaction.OTransactionSequenceManager;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
@@ -258,6 +259,9 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
         this.databaseTopology.receiverNetworkState(state.getDatabases());
       }
     }
+    if (action.applySequenceState()) {
+      this.sequenceManager.fill(state.getSequenceStatus());
+    }
     return action;
   }
 
@@ -396,5 +400,10 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   public boolean waitOnlineQuorum(ODatabaseId dbId, Optional<Long> timeout)
       throws InterruptedException {
     return this.databaseTopology.waitOnlineQuorum(dbId, timeout);
+  }
+
+  @Override
+  public boolean isApplied(OTransactionId txId) {
+    return this.sequenceManager.isApplied(txId);
   }
 }

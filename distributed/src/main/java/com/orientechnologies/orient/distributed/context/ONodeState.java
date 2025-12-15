@@ -28,12 +28,12 @@ public class ONodeState {
       int minimumQuorum,
       OStateStore store,
       ODatabaseStateChangeListener listener) {
-    this.state = new OAppliedState(3);
     this.log = new ODistributedMessageLogMemory();
     this.coordinated =
         new OCoordinatedDistributedOpsImpl(current, groupId, minimumQuorum, listener);
     this.nodeId = current;
     this.store = store;
+    this.state = new OAppliedState(3, (txId) -> this.coordinated.isApplied(txId));
   }
 
   public ODiscoverAction initFromStore() {

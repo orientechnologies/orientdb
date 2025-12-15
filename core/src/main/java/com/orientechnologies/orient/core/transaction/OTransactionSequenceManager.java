@@ -181,4 +181,8 @@ public class OTransactionSequenceManager {
   public synchronized long debugGetSequence(int position) {
     return this.sequentials[position];
   }
+
+  public synchronized boolean isApplied(OTransactionId txId) {
+    return this.sequentials[txId.getPosition()] >= txId.getSequence();
+  }
 }

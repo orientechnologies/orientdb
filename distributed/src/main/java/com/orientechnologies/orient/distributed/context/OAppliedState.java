@@ -10,16 +10,21 @@ import java.util.concurrent.CountDownLatch;
  */
 public class OAppliedState {
 
-  private volatile long[] sequentials;
   private final OWatchPromise[] watches;
+  private OAppliedTransaction applied;
 
-  public OAppliedState(int size) {
-    this.sequentials = new long[size];
+  public interface OAppliedTransaction {
+    boolean isApplied(OTransactionId tx);
+  }
+  ;
+
+  public OAppliedState(int size, OAppliedTransaction applied) {
     this.watches = new OWatchPromise[size];
+    this.applied = applied;
   }
 
   public synchronized Optional<CountDownLatch> watch(OTransactionId id) {
-    if (this.sequentials[id.getPosition()] >= id.getSequence()) {
+    if (this.applied.isApplied(id)) {
       // Already applied, nothing to wait
       return Optional.empty();
     }
@@ -32,12 +37,10 @@ public class OAppliedState {
   }
 
   public synchronized void complete(OTransactionId id) {
-    if (this.sequentials[id.getPosition()] >= id.getSequence()) {
+    if (this.applied.isApplied(id)) {
       // No Op, already applied
       return;
     }
-    assert this.sequentials[id.getPosition()] == id.getSequence() - 1;
-    this.sequentials[id.getPosition()] = id.getSequence();
     OWatchPromise watch = this.watches[id.getPosition()];
     if (watch != null) {
       watch.complete(id.getSequence());

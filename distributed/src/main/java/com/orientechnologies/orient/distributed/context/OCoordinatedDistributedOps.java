@@ -3,6 +3,7 @@ package com.orientechnologies.orient.distributed.context;
 import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.OGroupId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
+import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import com.orientechnologies.orient.distributed.context.coordination.message.ODistributedMessage;
@@ -129,4 +130,6 @@ public interface OCoordinatedDistributedOps {
   boolean executeOnOneOnline(ODatabaseId dbId, OStateAction execute);
 
   boolean waitOnlineQuorum(ODatabaseId dbId, Optional<Long> timeout) throws InterruptedException;
+
+  boolean isApplied(OTransactionId txId);
 }
