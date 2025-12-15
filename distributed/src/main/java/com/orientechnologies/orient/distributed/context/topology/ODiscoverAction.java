@@ -19,12 +19,17 @@ public sealed interface ODiscoverAction
         ODiscoverAction.ONoneAction,
         ODiscoverAction.ONotifySelf,
         ODiscoverAction.OMergeAction,
-        ODiscoverAction.OApplyStateAction {
+        ODiscoverAction.OApplyStateAction,
+        ODiscoverAction.OApplySequenceAction {
 
   public void execute(
       OrientDBDistributed context, OCompleteExecution execution, ONodeStateNetwork otherState);
 
   default boolean applyDatabaseState() {
+    return false;
+  }
+
+  default boolean applySequenceState() {
     return false;
   }
 
@@ -85,12 +90,29 @@ public sealed interface ODiscoverAction
 
     @Override
     public void execute(
+        OrientDBDistributed context, OCompleteExecution execution, ONodeStateNetwork otherState) {}
+
+    @Override
+    public boolean applyDatabaseState() {
+      return true;
+    }
+  }
+
+  record OApplySequenceAction() implements ODiscoverAction {
+
+    @Override
+    public void execute(
         OrientDBDistributed context, OCompleteExecution execution, ONodeStateNetwork otherState) {
       context.autoDeployIfNeed();
     }
 
     @Override
     public boolean applyDatabaseState() {
+      return true;
+    }
+
+    @Override
+    public boolean applySequenceState() {
       return true;
     }
   }
