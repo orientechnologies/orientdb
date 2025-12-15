@@ -2,7 +2,6 @@ package com.orientechnologies.orient.distriubted.context;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
@@ -19,8 +18,8 @@ import com.orientechnologies.orient.distributed.context.OSyncState;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OAddNodeInfo;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAlreadyPromised;
-import com.orientechnologies.orient.distributed.context.coordination.result.OInvalidSequential;
 import com.orientechnologies.orient.distributed.context.coordination.result.ONodeAlreadyPresent;
+import com.orientechnologies.orient.distributed.context.coordination.result.OOutdatedVersion;
 import com.orientechnologies.orient.distributed.db.OSyncMode;
 import java.util.List;
 import java.util.Optional;
@@ -181,9 +180,15 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
 
     Optional<OAcceptResult> prom = state.validateSetState(dbId, nodeId, ODatabaseState.Online, 1L);
     assertTrue(prom.isEmpty());
+    ONodeId newNode = newNodeId();
+    var addInfos = List.of(new OAddNodeInfo(newNode, ONodeRole.Main));
+    var nextVersion = state.getDatabaseVersion(dbId) + 1;
+    state.validateAddMember(dbId, addInfos, nextVersion);
+
+    state.addDatabaseMember(dbId, addInfos, nextVersion);
 
     Optional<OAcceptResult> prom1 =
-        state.validateSetState(dbId, newNodeId(), ODatabaseState.Online, 1L);
+        state.validateSetState(dbId, newNode, ODatabaseState.Online, 1L);
     assertTrue(prom1.isPresent());
     assertTrue(prom1.get() instanceof OAlreadyPromised);
 
@@ -220,10 +225,16 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
     ns = state.getState(dbId, nodeId);
     assertEquals(ns, ODatabaseState.Online);
 
+    ONodeId newNode = newNodeId();
+    var addInfos = List.of(new OAddNodeInfo(newNode, ONodeRole.Main));
+    var nextVersion = state.getDatabaseVersion(dbId) + 1;
+    state.validateAddMember(dbId, addInfos, nextVersion);
+    state.addDatabaseMember(dbId, addInfos, nextVersion);
+
     Optional<OAcceptResult> prom1 =
-        state.validateSetState(dbId, newNodeId(), ODatabaseState.Offline, 1L);
+        state.validateSetState(dbId, newNode, ODatabaseState.Offline, 1L);
     assertTrue(prom1.isPresent());
-    assertTrue(prom1.get() instanceof OInvalidSequential);
+    assertTrue(prom1.get() instanceof OOutdatedVersion);
   }
 
   @Test
@@ -249,8 +260,7 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
     assertTrue(prom.isEmpty());
     state.cancelSetState(dbId, nodeId, 1L);
 
-    Optional<OAcceptResult> prom1 =
-        state.validateSetState(dbId, newNodeId(), ODatabaseState.Online, 1L);
+    Optional<OAcceptResult> prom1 = state.validateSetState(dbId, nodeId, ODatabaseState.Online, 1L);
     assertTrue(prom1.isEmpty());
 
     state.setState(dbId, nodeId, ODatabaseState.Online, 1L);
@@ -429,12 +439,12 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
 
     long version = state.getDatabaseVersion(dbId) + 1;
     var nodes = List.of(new OAddNodeInfo(nodeId1, ONodeRole.Main));
-    Optional<OAcceptResult> accept = state.promiseAddMember(dbId, nodes, version);
+    Optional<OAcceptResult> accept = state.validateAddMember(dbId, nodes, version);
     assertTrue(accept.isEmpty());
     state.addDatabaseMember(dbId, nodes, version);
     assertEquals(state.getState(dbId, nodeId1), ODatabaseState.Offline);
 
-    Optional<OAcceptResult> acceptAfter = state.promiseAddMember(dbId, nodes, version);
+    Optional<OAcceptResult> acceptAfter = state.validateAddMember(dbId, nodes, version);
     assertTrue(acceptAfter.get() instanceof ONodeAlreadyPresent);
   }
 
@@ -457,12 +467,12 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
 
     long version = state.getDatabaseVersion(dbId) + 1;
     var nodes = List.of(new OAddNodeInfo(nodeId1, ONodeRole.Main));
-    Optional<OAcceptResult> accept = state.promiseAddMember(dbId, nodes, version);
+    Optional<OAcceptResult> accept = state.validateAddMember(dbId, nodes, version);
     assertTrue(accept.isEmpty());
     state.cancelAddDatabaseMember(dbId, nodes);
-    assertNull(state.getState(dbId, nodeId1));
+    assertEquals(state.getState(dbId, nodeId1), ODatabaseState.NotAvailable);
 
-    Optional<OAcceptResult> acceptAfter = state.promiseAddMember(dbId, nodes, version);
+    Optional<OAcceptResult> acceptAfter = state.validateAddMember(dbId, nodes, version);
     assertTrue(acceptAfter.isEmpty());
   }
 }

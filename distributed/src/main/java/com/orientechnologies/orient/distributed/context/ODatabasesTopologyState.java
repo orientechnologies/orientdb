@@ -330,7 +330,7 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
     }
   }
 
-  public synchronized Optional<OAcceptResult> promiseAddMember(
+  public synchronized Optional<OAcceptResult> validateAddMember(
       ODatabaseId dbId, List<OAddNodeInfo> nodes, long version) {
     ODatabaseTopologyState db = this.databases.get(dbId);
     if (db != null) {

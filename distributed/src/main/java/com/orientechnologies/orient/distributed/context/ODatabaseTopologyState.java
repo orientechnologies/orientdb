@@ -8,6 +8,7 @@ import com.orientechnologies.orient.distributed.context.coordination.message.ODa
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OAddNodeInfo;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAlreadyPromised;
+import com.orientechnologies.orient.distributed.context.coordination.result.OMissingNode;
 import com.orientechnologies.orient.distributed.context.coordination.result.ONodeAlreadyPresent;
 import com.orientechnologies.orient.distributed.context.coordination.result.OOutdatedVersion;
 import com.orientechnologies.orient.distributed.db.OSyncMode;
@@ -85,6 +86,9 @@ public class ODatabaseTopologyState {
 
   public synchronized Optional<OAcceptResult> promiseState(
       ODatabaseState state, ONodeId nodeId, long version) {
+    if (!this.nodeStatus.containsKey(nodeId)) {
+      return Optional.of(new OMissingNode());
+    }
     if (this.version + 1 == version) {
       if (promised) {
         return Optional.of(new OAlreadyPromised());

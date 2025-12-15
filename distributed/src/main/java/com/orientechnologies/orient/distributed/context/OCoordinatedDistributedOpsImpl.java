@@ -326,7 +326,7 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
 
   public Optional<OAcceptResult> validateAddDatabaseMember(
       ODatabaseId dbId, List<OAddNodeInfo> nodes, long version) {
-    return this.databaseTopology.promiseAddMember(dbId, nodes, version);
+    return this.databaseTopology.validateAddMember(dbId, nodes, version);
   }
 
   public void addDatabaseMember(ODatabaseId dbId, List<OAddNodeInfo> nodes, long version) {
