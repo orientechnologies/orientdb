@@ -6,13 +6,24 @@ import java.io.IOException;
 
 public class OOutdatedVersion implements OAcceptResult {
 
+  private long proposed;
+  private long current;
+
+  public OOutdatedVersion(long current, long proposed) {
+    this.current = current;
+    this.proposed = proposed;
+  }
+
   @Override
   public boolean executeRetry() {
     return true;
   }
 
   @Override
-  public void serialize(DataOutput out) throws IOException {}
+  public void serialize(DataOutput out) throws IOException {
+    out.writeLong(current);
+    out.writeLong(proposed);
+  }
 
   @Override
   public short getType() {
@@ -20,7 +31,9 @@ public class OOutdatedVersion implements OAcceptResult {
   }
 
   public static OOutdatedVersion fromNetwork(DataInput input) throws IOException {
-    return new OOutdatedVersion();
+    long current = input.readLong();
+    long proposed = input.readLong();
+    return new OOutdatedVersion(current, proposed);
   }
 
   @Override

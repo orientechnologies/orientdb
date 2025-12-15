@@ -8,8 +8,8 @@ import com.orientechnologies.orient.distributed.context.coordination.message.ODa
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OAddNodeInfo;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAlreadyPromised;
-import com.orientechnologies.orient.distributed.context.coordination.result.OInvalidSequential;
 import com.orientechnologies.orient.distributed.context.coordination.result.ONodeAlreadyPresent;
+import com.orientechnologies.orient.distributed.context.coordination.result.OOutdatedVersion;
 import com.orientechnologies.orient.distributed.db.OSyncMode;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -93,7 +93,7 @@ public class ODatabaseTopologyState {
         return Optional.empty();
       }
     } else {
-      return Optional.of(new OInvalidSequential(this.version + 1, version));
+      return Optional.of(new OOutdatedVersion(this.version, version));
     }
   }
 
@@ -106,7 +106,7 @@ public class ODatabaseTopologyState {
     if (node != null) {
       return node.getState();
     } else {
-      return null;
+      return ODatabaseState.NotAvailable;
     }
   }
 
@@ -254,6 +254,7 @@ public class ODatabaseTopologyState {
   public synchronized void receiveState(ODatabaseStateNetwork state) {
     // TODO: verify promised case ....
     if (this.version < state.getVersion()) {
+      this.version = state.getVersion();
       this.quorum = state.getQuorum();
       for (ODatabaseMemberNetwork member : state.getMembers()) {
         ONodeDatabaseState status = this.nodeStatus.get(member.getNode());
@@ -315,7 +316,7 @@ public class ODatabaseTopologyState {
         return Optional.empty();
       }
     } else {
-      return Optional.of(new OInvalidSequential(this.version + 1, version));
+      return Optional.of(new OOutdatedVersion(this.version, version));
     }
   }
 
