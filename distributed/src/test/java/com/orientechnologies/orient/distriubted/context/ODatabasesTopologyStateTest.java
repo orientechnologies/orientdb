@@ -178,14 +178,14 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
     ODatabaseState ns = state.getState(dbId, nodeId);
     assertEquals(ns, ODatabaseState.Offline);
 
-    Optional<OAcceptResult> prom = state.validateSetState(dbId, nodeId, ODatabaseState.Online, 1L);
-    assertTrue(prom.isEmpty());
     ONodeId newNode = newNodeId();
     var addInfos = List.of(new OAddNodeInfo(newNode, ONodeRole.Main));
     var nextVersion = state.getDatabaseVersion(dbId) + 1;
     state.validateAddMember(dbId, addInfos, nextVersion);
-
     state.addDatabaseMember(dbId, addInfos, nextVersion);
+
+    Optional<OAcceptResult> prom = state.validateSetState(dbId, nodeId, ODatabaseState.Online, 1L);
+    assertTrue(prom.isEmpty());
 
     Optional<OAcceptResult> prom1 =
         state.validateSetState(dbId, newNode, ODatabaseState.Online, 1L);

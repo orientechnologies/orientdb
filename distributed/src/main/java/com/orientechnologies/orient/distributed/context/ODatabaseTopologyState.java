@@ -328,7 +328,9 @@ public class ODatabaseTopologyState {
     for (var node : nodes) {
       this.nodeStatus.put(
           node.node(), new ONodeDatabaseState(node.node(), node.role(), ODatabaseState.Offline));
+      this.stateListener.onStateChange(id, node.node(), ODatabaseState.Offline);
     }
+    this.promised = false;
   }
 
   public synchronized void cancelAddMemer(List<OAddNodeInfo> nodes) {
