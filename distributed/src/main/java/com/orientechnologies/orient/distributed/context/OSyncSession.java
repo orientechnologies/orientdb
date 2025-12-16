@@ -54,7 +54,11 @@ public class OSyncSession {
   }
 
   public boolean isTransferingData() {
-    return this.state != null;
+    if (this.state != null) {
+      return !this.state.isClose();
+    } else {
+      return false;
+    }
   }
 
   public OSyncState getState() {

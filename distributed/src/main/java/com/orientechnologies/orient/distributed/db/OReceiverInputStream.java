@@ -30,7 +30,7 @@ public class OReceiverInputStream extends InputStream {
   @Override
   public int read() throws IOException {
     // TODO: impl also optimized int read(byte[] b, int off, int len)
-    if (cursor == buffer.length) {
+    while (cursor == buffer.length) {
       if (finished.get()) {
         return -1;
       }

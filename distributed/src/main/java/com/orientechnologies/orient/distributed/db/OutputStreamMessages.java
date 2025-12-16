@@ -33,5 +33,6 @@ public class OutputStreamMessages extends OutputStream {
   @Override
   public void close() throws IOException {
     this.ctx.sendBuffer(state, new byte[] {}, true);
+    state.close();
   }
 }
