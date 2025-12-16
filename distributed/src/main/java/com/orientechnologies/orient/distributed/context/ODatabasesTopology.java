@@ -12,6 +12,10 @@ public interface ODatabasesTopology {
 
   ODatabaseState getState(ODatabaseId dbId, ONodeId node);
 
+  boolean isOnline(ODatabaseId dbId, ONodeId nodeID);
+
+  boolean shouldSink(ODatabaseId dbId, ONodeId nodeID);
+
   long getDatabaseVersion(ODatabaseId dbId);
 
   String getDatabaseName(ODatabaseId dbId);

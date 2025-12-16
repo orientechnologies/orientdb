@@ -27,7 +27,7 @@ public class OPromisedDistributedOpsImpl implements OPromisedDistributedOps {
         this.primisedByNode.computeIfAbsent(
             message.getPromiseId().getCoordinator(),
             (node) -> {
-              return new ConcurrentHashMap();
+              return new ConcurrentHashMap<>();
             });
     perNode.put(message.getPromiseId().getId(), message);
   }

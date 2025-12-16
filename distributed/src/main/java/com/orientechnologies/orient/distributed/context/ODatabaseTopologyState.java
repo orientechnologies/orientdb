@@ -336,4 +336,17 @@ public class ODatabaseTopologyState {
   public synchronized void cancelAddMemer(List<OAddNodeInfo> nodes) {
     this.promised = false;
   }
+
+  public boolean shouldSink(ONodeId nodeID) {
+    if (ODatabaseState.Offline.equals(getState(nodeID))) {
+      for (var state : this.nodeStatus.values()) {
+        if (ODatabaseState.Online.equals(state.getState())) {
+          return true;
+        }
+      }
+      return false;
+    } else {
+      return false;
+    }
+  }
 }

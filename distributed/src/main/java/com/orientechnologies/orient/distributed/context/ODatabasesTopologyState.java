@@ -308,6 +308,19 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
     }
   }
 
+  public boolean isOnline(ODatabaseId dbId, ONodeId nodeID) {
+    return ODatabaseState.Online.equals(getState(dbId, nodeID));
+  }
+
+  public synchronized boolean shouldSink(ODatabaseId dbId, ONodeId nodeID) {
+    ODatabaseTopologyState db = this.databases.get(dbId);
+    if (db != null) {
+      return db.shouldSink(nodeID);
+    } else {
+      return false;
+    }
+  }
+
   public synchronized ONodeRole getRole(ODatabaseId dbId, ONodeId nodeId) {
     ODatabaseTopologyState db = this.databases.get(dbId);
     if (db != null) {

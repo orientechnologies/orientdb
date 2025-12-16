@@ -177,7 +177,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
 
   @Override
   public void onStateChange(ODatabaseId dbId, ONodeId nodeId, ODatabaseState state) {
-    if (ODatabaseState.Online.equals(state) && !getNodeId().equals(nodeId)) {
+    if (getNodeState().getDatabaseTopology().shouldSink(dbId, getNodeId())) {
       execute(() -> syncIfNeeded(dbId));
     }
     dumpNodeInfo();
@@ -188,8 +188,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   private void syncIfNeeded(ODatabaseId dbId) {
-    if (!ODatabaseState.Online.equals(
-        getNodeState().getDatabaseTopology().getState(dbId, getNodeId()))) {
+    if (getNodeState().getDatabaseTopology().shouldSink(dbId, getNodeId())) {
       sync(dbId, Optional.empty());
     }
   }
