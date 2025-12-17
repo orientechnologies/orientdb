@@ -4,7 +4,6 @@ import com.orientechnologies.orient.core.transaction.OGroupId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
-import com.orientechnologies.orient.core.tx.OTxMetadataHolderImpl;
 import com.orientechnologies.orient.distributed.context.coordination.message.ODistributedMessage;
 import com.orientechnologies.orient.distributed.context.coordination.message.ONodeStateNetwork;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
@@ -37,10 +36,8 @@ public class ONodeState {
   }
 
   public ODiscoverAction initFromStore() {
-    Optional<ONodeStateStore> load = store.loadState();
-    Optional<byte[]> seq = store.loadSequence();
-    var status = seq.map((x) -> OTxMetadataHolderImpl.read(seq.get()).getStatus());
-    coordinated.load(load, status);
+    ONodeStateStore load = store.load();
+    coordinated.load(load);
     return coordinated.discoverNode(nodeId);
   }
 

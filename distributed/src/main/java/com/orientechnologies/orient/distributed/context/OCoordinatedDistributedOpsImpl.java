@@ -273,13 +273,15 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
         this.sequenceManager.currentStatus());
   }
 
-  public void load(
-      Optional<ONodeStateStore> nodeStateStore, Optional<OTransactionSequenceStatus> status) {
-    if (nodeStateStore.isPresent()) {
-      this.topology.load(nodeStateStore.get());
+  public void load(ONodeStateStore state) {
+    if (state.network().isPresent()) {
+      this.topology.load(state.network().get());
     }
-    if (status.isPresent()) {
-      this.sequenceManager.fill(status.get());
+    if (state.databases().isPresent()) {
+      databaseTopology.load(state.databases().get());
+    }
+    if (state.sequence().isPresent()) {
+      this.sequenceManager.fill(state.sequence().get());
     }
   }
 
@@ -410,5 +412,12 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   @Override
   public void completeSync(OSyncId syncId) {
     this.databaseTopology.completeSync(syncId);
+  }
+
+  public synchronized ONodeStateStore getStore() {
+    return new ONodeStateStore(
+        Optional.of(sequenceManager.currentStatus()),
+        Optional.of(topology.getStore()),
+        Optional.of(databaseTopology.getStore()));
   }
 }

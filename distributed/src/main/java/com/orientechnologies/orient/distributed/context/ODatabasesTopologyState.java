@@ -377,4 +377,18 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
       }
     }
   }
+
+  public synchronized ODatabasesTopologyStore getStore() {
+    var dbs = this.databases.values().stream().map((x) -> x.getStore()).toList();
+    return new ODatabasesTopologyStore(dbs);
+  }
+
+  public synchronized void load(ODatabasesTopologyStore store) {
+    var dbs =
+        store.getDatabases().stream().map(x -> new ODatabaseTopologyState(listener, x)).toList();
+    for (var db : dbs) {
+      this.databases.put(db.getId(), db);
+      this.databasesByName.put(db.getName(), db);
+    }
+  }
 }

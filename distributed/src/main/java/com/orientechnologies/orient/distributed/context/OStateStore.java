@@ -1,14 +1,8 @@
 package com.orientechnologies.orient.distributed.context;
 
-import java.util.Optional;
-
 public interface OStateStore {
 
-  Optional<ONodeStateStore> loadState();
+  void save(ONodeStateStore store);
 
-  Optional<byte[]> loadSequence();
-
-  void saveSequence(byte[] seq);
-
-  void saveState(ONodeStateStore store);
+  ONodeStateStore load();
 }

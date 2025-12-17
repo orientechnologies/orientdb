@@ -55,6 +55,20 @@ public class ODatabaseTopologyState {
     this.receiveState(state);
   }
 
+  public ODatabaseTopologyState(
+      ODatabaseStateChangeListener listener, ODatabaseTopologyStore store) {
+    this.stateListener = listener;
+    this.id = store.getId();
+    this.name = store.getName();
+    this.quorum = store.getQuorum();
+    this.version = store.getVersion();
+    var nodes = store.getNodes().stream().map((x) -> new ONodeDatabaseState(x)).toList();
+    for (var node : nodes) {
+      this.nodeStatus.put(node.getId(), node);
+    }
+    this.stateListener = listener;
+  }
+
   public synchronized void defineNode(
       ONodeId node, ONodeRole role, ODatabaseState state, long version) {
     this.nodeStatus.computeIfAbsent(
@@ -352,5 +366,10 @@ public class ODatabaseTopologyState {
 
   public synchronized void completeSync(OSyncId syncId) {
     syncSessions.remove(syncId);
+  }
+
+  public ODatabaseTopologyStore getStore() {
+    var nodes = this.nodeStatus.values().stream().map((x) -> x.toStore()).toList();
+    return new ODatabaseTopologyStore(nodes, this.id, this.name, this.version, this.quorum);
   }
 }

@@ -2,7 +2,7 @@ package com.orientechnologies.orient.distributed.context.topology;
 
 import com.orientechnologies.orient.core.transaction.OGroupId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
-import com.orientechnologies.orient.distributed.context.ONodeStateStore;
+import com.orientechnologies.orient.distributed.context.ONetworkTopologyStore;
 import com.orientechnologies.orient.distributed.context.coordination.message.OTopologyStateNetwork;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAlreadyEnstablishedTopologyState;
@@ -202,12 +202,16 @@ public class OTopologyManager implements OTopologyEvents {
         this.groupId, this.state, this.members, this.quorum, this.version);
   }
 
-  public synchronized void load(ONodeStateStore nodeStateStore) {
+  public synchronized void load(ONetworkTopologyStore nodeStateStore) {
     this.groupId = nodeStateStore.getGroupId();
     this.state = nodeStateStore.getState();
     this.version = nodeStateStore.getVersion();
     this.quorum = nodeStateStore.getQuorum();
     this.setMember(nodeStateStore.getMembers());
+  }
+
+  public synchronized ONetworkTopologyStore getStore() {
+    return new ONetworkTopologyStore(groupId, state, this.members, quorum, version);
   }
 
   public synchronized void cancelRegisterPromise() {

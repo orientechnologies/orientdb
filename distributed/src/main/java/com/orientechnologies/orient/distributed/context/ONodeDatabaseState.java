@@ -15,6 +15,12 @@ public class ONodeDatabaseState {
     this.state = state;
   }
 
+  public ONodeDatabaseState(ODatabaseNodeStore store) {
+    this.id = store.getId();
+    this.role = store.getRole();
+    this.state = ODatabaseState.Offline;
+  }
+
   public void setState(ODatabaseState state) {
     this.state = state;
   }
@@ -45,5 +51,9 @@ public class ONodeDatabaseState {
 
   public ODatabaseMemberNetwork getNetworkState() {
     return new ODatabaseMemberNetwork(getId(), getRole(), getState());
+  }
+
+  public ODatabaseNodeStore toStore() {
+    return new ODatabaseNodeStore(id, role);
   }
 }

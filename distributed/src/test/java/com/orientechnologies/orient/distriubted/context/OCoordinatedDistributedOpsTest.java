@@ -17,6 +17,7 @@ import com.orientechnologies.orient.distributed.context.OCoordinatedDistributedO
 import com.orientechnologies.orient.distributed.context.OCoordinatedDistributedOpsImpl;
 import com.orientechnologies.orient.distributed.context.ODatabaseState;
 import com.orientechnologies.orient.distributed.context.ODatabaseStateChangeListener;
+import com.orientechnologies.orient.distributed.context.ONetworkTopologyStore;
 import com.orientechnologies.orient.distributed.context.ONodeStateStore;
 import com.orientechnologies.orient.distributed.context.OOperationStart;
 import com.orientechnologies.orient.distributed.context.coordination.message.ONodeStateNetwork;
@@ -78,8 +79,8 @@ public class OCoordinatedDistributedOpsTest implements ODatabaseStateChangeListe
     return new OGroupId(UUID.randomUUID().toString());
   }
 
-  private ONodeStateStore bootStoreState(OGroupId groupId) {
-    return new ONodeStateStore(groupId, OTopologyState.BOOT, new HashSet<>(), 0, 0);
+  private ONetworkTopologyStore bootStoreState(OGroupId groupId) {
+    return new ONetworkTopologyStore(groupId, OTopologyState.BOOT, new HashSet<>(), 0, 0);
   }
 
   private ONodeStateNetwork networkState(OTopologyStateNetwork topology) {
@@ -398,10 +399,9 @@ public class OCoordinatedDistributedOpsTest implements ODatabaseStateChangeListe
     ONodeId nodeId2 = newRandomNodeId();
     ONodeId nodeId3 = newRandomNodeId();
     var gid = newRandomGroupId();
-    node1.load(
-        Optional.of(
-            new ONodeStateStore(gid, OTopologyState.ESTABLISHED, Set.of(nodeId1, nodeId2), 2, 2)),
-        Optional.empty());
+    ONetworkTopologyStore initial =
+        new ONetworkTopologyStore(gid, OTopologyState.ESTABLISHED, Set.of(nodeId1, nodeId2), 2, 2);
+    node1.load(new ONodeStateStore(Optional.empty(), Optional.of(initial), Optional.empty()));
     node1.discoverNode(nodeId1);
     assertEquals(node1.getNetworkMembers().size(), 2);
     OTopologyStateNetwork enstablish =
@@ -427,10 +427,10 @@ public class OCoordinatedDistributedOpsTest implements ODatabaseStateChangeListe
         new OCoordinatedDistributedOpsImpl(nodeId1, groupId, 2, this);
     ONodeId nodeId2 = newRandomNodeId();
     ONodeId nodeId3 = newRandomNodeId();
-    ONodeStateStore initial =
-        new ONodeStateStore(
+    ONetworkTopologyStore initial =
+        new ONetworkTopologyStore(
             groupId, OTopologyState.ESTABLISHED, Set.of(nodeId1, nodeId2, nodeId3), 2, 3);
-    node1.load(Optional.of(initial), Optional.empty());
+    node1.load(new ONodeStateStore(Optional.empty(), Optional.of(initial), Optional.empty()));
     node1.discoverNode(nodeId1);
     assertEquals(node1.getNetworkMembers().size(), 3);
     assertEquals(node1.getNetworkState().getTopology().getQuorum(), 2);
@@ -452,9 +452,10 @@ public class OCoordinatedDistributedOpsTest implements ODatabaseStateChangeListe
         new OCoordinatedDistributedOpsImpl(nodeId1, groupId, 2, this);
     ONodeId nodeId2 = newRandomNodeId();
     ONodeId nodeId3 = newRandomNodeId();
-    ONodeStateStore initial =
-        new ONodeStateStore(groupId, OTopologyState.ESTABLISHED, Set.of(nodeId1, nodeId2), 2, 3);
-    node1.load(Optional.of(initial), Optional.empty());
+    ONetworkTopologyStore initial =
+        new ONetworkTopologyStore(
+            groupId, OTopologyState.ESTABLISHED, Set.of(nodeId1, nodeId2), 2, 3);
+    node1.load(new ONodeStateStore(Optional.empty(), Optional.of(initial), Optional.empty()));
     node1.discoverNode(nodeId1);
     assertEquals(node1.getNetworkMembers().size(), 2);
 
@@ -473,8 +474,8 @@ public class OCoordinatedDistributedOpsTest implements ODatabaseStateChangeListe
     ONodeId nodeId2 = newRandomNodeId();
     ONodeId nodeId3 = newRandomNodeId();
     var gid = newRandomGroupId();
-    ONodeStateStore initial = bootStoreState(groupId);
-    node1.load(Optional.of(initial), Optional.empty());
+    ONetworkTopologyStore initial = bootStoreState(groupId);
+    node1.load(new ONodeStateStore(Optional.empty(), Optional.of(initial), Optional.empty()));
     node1.discoverNode(nodeId1);
     assertEquals(node1.getNetworkMembers().size(), 0);
 
@@ -493,8 +494,8 @@ public class OCoordinatedDistributedOpsTest implements ODatabaseStateChangeListe
     OCoordinatedDistributedOps node1 =
         new OCoordinatedDistributedOpsImpl(nodeId1, groupId, 2, this);
     ONodeId nodeId2 = newRandomNodeId();
-    ONodeStateStore initial = bootStoreState(groupId);
-    node1.load(Optional.of(initial), Optional.empty());
+    ONetworkTopologyStore initial = bootStoreState(groupId);
+    node1.load(new ONodeStateStore(Optional.empty(), Optional.of(initial), Optional.empty()));
     node1.discoverNode(nodeId1);
     assertEquals(node1.getNetworkMembers().size(), 0);
 

@@ -125,7 +125,7 @@ public interface OCoordinatedDistributedOps {
 
   ONodeStateNetwork getNetworkState();
 
-  void load(Optional<ONodeStateStore> nodeStateStore, Optional<OTransactionSequenceStatus> status);
+  void load(ONodeStateStore storeState);
 
   boolean executeOnOneOnline(ODatabaseId dbId, OStateAction execute);
 
