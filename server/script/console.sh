@@ -36,7 +36,7 @@ if [ -z "$ORIENTDB_OPTS_MEMORY" ] ; then
     ORIENTDB_OPTS_MEMORY="-Xmx1024m "
 fi
 
-ORIENTDB_SETTINGS="-Djna.nosys=true -Djava.util.logging.config.file=\"$ORIENTDB_HOME/config/orientdb-client-log.properties\" -Djava.awt.headless=true"
+ORIENTDB_SETTINGS="-Djna.nosys=true -Djava.awt.headless=true"
 #JAVA_OPTS=-Xmx1024m
 KEYSTORE="$ORIENTDB_HOME/config/cert/orientdb-console.ks"
 KEYSTORE_PASS=password
@@ -47,6 +47,7 @@ SSL_OPTS="-Dclient.ssl.enabled=false "
 exec "$JAVA" -client $JAVA_OPTS $ORIENTDB_OPTS_MEMORY $ORIENTDB_SETTINGS $SSL_OPTS \
     -Dfile.encoding=utf-8 -Dorientdb.build.number="@BUILD@" \
     -cp "$ORIENTDB_HOME/lib/orientdb-tools-@VERSION@.jar:$ORIENTDB_HOME/lib/*:$ORIENTDB_HOME/plugins/*" \
+    -Djava.util.logging.config.file="$ORIENTDB_HOME/config/orientdb-client-log.properties" \
     "-Djavax.net.ssl.keyStore=$KEYSTORE" \
     "-Djavax.net.ssl.keyStorePassword=$KEYSTORE_PASS" \
     "-Djavax.net.ssl.trustStore=$TRUSTSTORE" \
