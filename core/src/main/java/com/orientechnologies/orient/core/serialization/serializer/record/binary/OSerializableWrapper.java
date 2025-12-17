@@ -30,8 +30,11 @@ public class OSerializableWrapper implements OSerializableStream {
       writer.writeObject(serializable);
       writer.close();
     } catch (IOException e) {
+      String typeName = this.serializable.getClass().getName();
       throw OException.wrapException(
-          new ODatabaseException("Error on serialization of Serializable"), e);
+          new ODatabaseException(
+              String.format("Error on serialization of %s using OSerializableWrapper", typeName)),
+          e);
     }
     return output.toByteArray();
   }
