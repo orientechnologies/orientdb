@@ -1081,23 +1081,25 @@ public class OrientDBDistributed extends OrientDBEmbedded
           new Thread(
               () -> {
                 receiveSync(dbName, st, input, getConfigurations());
-                setDatabaseStatus(st.getDbId(), st.getReceiver(), ODatabaseState.Online);
               });
       thread.start();
     }
   }
 
   public void receiveSync(String dbName, OSyncState state, InputStream input, OrientDBConfig conf) {
+    try {
+      switch (state.getMode()) {
+        case IncrementalBackup -> incrementalsSync(dbName, input, conf);
 
-    switch (state.getMode()) {
-      case IncrementalBackup -> incrementalsSync(dbName, input, conf);
+        case StandardBackup -> restore(dbName, input, null, null, null);
 
-      case StandardBackup -> restore(dbName, input, null, null, null);
-
-      case Delta -> deltaSync(dbName, input, conf);
+        case Delta -> deltaSync(dbName, input, conf);
+      }
+      setDatabaseStatus(state.getDbId(), state.getReceiver(), ODatabaseState.Online);
+    } finally {
+      getNodeState().getOps().completeSync(state.getSyncId());
     }
   }
-  ;
 
   public void sendDatabase(
       ONodeId receiver,
@@ -1143,6 +1145,8 @@ public class OrientDBDistributed extends OrientDBEmbedded
       }
     } catch (IOException e) {
       logger.info("exception while sending backup data", e);
+    } finally {
+      getNodeState().getOps().completeSync(state.getSyncId());
     }
   }
 

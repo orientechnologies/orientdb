@@ -367,4 +367,14 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
       db.cancelAddMemer(nodes);
     }
   }
+
+  public synchronized void completeSync(OSyncId syncId) {
+    OSyncState sync = this.activerSyncs.remove(syncId);
+    if (sync != null) {
+      ODatabaseTopologyState db = this.databases.get(sync.getDbId());
+      if (db != null) {
+        db.completeSync(syncId);
+      }
+    }
+  }
 }

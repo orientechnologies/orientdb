@@ -406,4 +406,9 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   public boolean isApplied(OTransactionId txId) {
     return this.sequenceManager.isApplied(txId);
   }
+
+  @Override
+  public void completeSync(OSyncId syncId) {
+    this.databaseTopology.completeSync(syncId);
+  }
 }

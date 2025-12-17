@@ -337,7 +337,7 @@ public class ODatabaseTopologyState {
     this.promised = false;
   }
 
-  public boolean shouldSink(ONodeId nodeID) {
+  public synchronized boolean shouldSink(ONodeId nodeID) {
     if (ODatabaseState.Offline.equals(getState(nodeID))) {
       for (var state : this.nodeStatus.values()) {
         if (ODatabaseState.Online.equals(state.getState())) {
@@ -348,5 +348,9 @@ public class ODatabaseTopologyState {
     } else {
       return false;
     }
+  }
+
+  public synchronized void completeSync(OSyncId syncId) {
+    syncSessions.remove(syncId);
   }
 }

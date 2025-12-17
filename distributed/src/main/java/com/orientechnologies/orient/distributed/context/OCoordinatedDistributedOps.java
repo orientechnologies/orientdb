@@ -132,4 +132,6 @@ public interface OCoordinatedDistributedOps {
   boolean waitOnlineQuorum(ODatabaseId dbId, Optional<Long> timeout) throws InterruptedException;
 
   boolean isApplied(OTransactionId txId);
+
+  void completeSync(OSyncId syncId);
 }
