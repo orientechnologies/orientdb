@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.distributed.context;
 
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.transaction.OGroupId;
@@ -65,7 +66,9 @@ public class ONetworkTopologyStore {
     el.setProperty("groupId", groupId.toDocument());
     el.setProperty("quorum", quorum);
     el.setProperty(
-        "members", this.members.stream().map((x) -> x.toDocument()).collect(Collectors.toSet()));
+        "members",
+        this.members.stream().map((x) -> x.toDocument()).collect(Collectors.toList()),
+        OType.EMBEDDEDLIST);
     el.setProperty("version", version);
   }
 }

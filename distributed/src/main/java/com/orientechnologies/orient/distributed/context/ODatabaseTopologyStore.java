@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.distributed.context;
 
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.transaction.ODatabaseId;
@@ -41,7 +42,9 @@ public class ODatabaseTopologyStore {
     doc.setProperty("id", id.toDocument());
     doc.setProperty("quorum", quorum);
     doc.setProperty(
-        "nodes", this.nodes.stream().map((x) -> x.toDocument()).collect(Collectors.toSet()));
+        "nodes",
+        this.nodes.stream().map((x) -> x.toDocument()).collect(Collectors.toList()),
+        OType.EMBEDDEDLIST);
     doc.setProperty("version", version);
     return doc;
   }

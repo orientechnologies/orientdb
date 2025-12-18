@@ -53,7 +53,7 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
     var dbId = newDbId();
     String name = "dbName";
     int quorum = 2;
-    var res = state.promiseDeclare(promiseId, dbId, name, partecipants, quorum);
+    var res = state.validateDeclare(promiseId, dbId, name, partecipants, quorum);
     assertTrue(res.isEmpty());
 
     state.declareDatabase(promiseId, dbId, name, partecipants, quorum);
@@ -69,7 +69,7 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
     var dbId = newDbId();
     String name = "dbName";
     int quorum = 2;
-    var res = state.promiseDeclare(promiseId, dbId, name, partecipants, quorum);
+    var res = state.validateDeclare(promiseId, dbId, name, partecipants, quorum);
     assertTrue(res.isEmpty());
 
     state.declareDatabase(promiseId, dbId, name, partecipants, quorum);
@@ -91,18 +91,18 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
     var dbId = newDbId();
     String name = "dbName";
     int quorum = 2;
-    var res = state.promiseDeclare(promiseId, dbId, name, partecipants, quorum);
+    var res = state.validateDeclare(promiseId, dbId, name, partecipants, quorum);
     assertTrue(res.isEmpty());
 
     var promiseId1 = newPromiseId();
 
-    res = state.promiseDeclare(promiseId1, dbId, name, partecipants, quorum);
+    res = state.validateDeclare(promiseId1, dbId, name, partecipants, quorum);
     assertTrue(res.isPresent());
     assertTrue(res.get() instanceof OAlreadyPromised);
 
     var promiseId2 = newPromiseId();
     var dbId1 = newDbId();
-    res = state.promiseDeclare(promiseId2, dbId1, name, partecipants, quorum);
+    res = state.validateDeclare(promiseId2, dbId1, name, partecipants, quorum);
     assertTrue(res.isPresent());
     assertTrue(res.get() instanceof OAlreadyPromised);
   }
@@ -117,18 +117,18 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
     var dbId = newDbId();
     String name = "dbName";
     int quorum = 2;
-    var res = state.promiseDeclare(promiseId, dbId, name, partecipants, quorum);
+    var res = state.validateDeclare(promiseId, dbId, name, partecipants, quorum);
     assertTrue(res.isEmpty());
 
     var promiseId1 = newPromiseId();
 
-    res = state.promiseDeclare(promiseId1, dbId, name, partecipants, quorum);
+    res = state.validateDeclare(promiseId1, dbId, name, partecipants, quorum);
     assertTrue(res.isPresent());
     assertTrue(res.get() instanceof OAlreadyPromised);
 
     state.cancelPomise(promiseId, dbId, name);
 
-    res = state.promiseDeclare(promiseId1, dbId, name, partecipants, quorum);
+    res = state.validateDeclare(promiseId1, dbId, name, partecipants, quorum);
     assertTrue(res.isEmpty());
   }
 
@@ -143,7 +143,7 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
     var dbId = newDbId();
     String name = "dbName";
     int quorum = 2;
-    var res = state.promiseDeclare(promiseId, dbId, name, partecipants, quorum);
+    var res = state.validateDeclare(promiseId, dbId, name, partecipants, quorum);
     assertTrue(res.isEmpty());
 
     state.declareDatabase(promiseId, dbId, name, partecipants, quorum);
@@ -170,7 +170,7 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
     var dbId = newDbId();
     String name = "dbName";
     int quorum = 2;
-    var res = state.promiseDeclare(promiseId, dbId, name, partecipants, quorum);
+    var res = state.validateDeclare(promiseId, dbId, name, partecipants, quorum);
     assertTrue(res.isEmpty());
 
     state.declareDatabase(promiseId, dbId, name, partecipants, quorum);
@@ -209,7 +209,7 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
     var dbId = newDbId();
     String name = "dbName";
     int quorum = 2;
-    var res = state.promiseDeclare(promiseId, dbId, name, partecipants, quorum);
+    var res = state.validateDeclare(promiseId, dbId, name, partecipants, quorum);
     assertTrue(res.isEmpty());
 
     state.declareDatabase(promiseId, dbId, name, partecipants, quorum);
@@ -248,7 +248,7 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
     var dbId = newDbId();
     String name = "dbName";
     int quorum = 2;
-    var res = state.promiseDeclare(promiseId, dbId, name, partecipants, quorum);
+    var res = state.validateDeclare(promiseId, dbId, name, partecipants, quorum);
     assertTrue(res.isEmpty());
 
     state.declareDatabase(promiseId, dbId, name, partecipants, quorum);
@@ -284,9 +284,9 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
     var dbId = newDbId();
     String name = "dbName";
     int quorum = 2;
-    var res = state.promiseDeclare(promiseId, dbId, name, partecipants, quorum);
+    var res = state.validateDeclare(promiseId, dbId, name, partecipants, quorum);
     assertTrue(res.isEmpty());
-    var res1 = state1.promiseDeclare(promiseId, dbId, name, partecipants, quorum);
+    var res1 = state1.validateDeclare(promiseId, dbId, name, partecipants, quorum);
     assertTrue(res1.isEmpty());
 
     state.declareDatabase(promiseId, dbId, name, partecipants, quorum);
@@ -354,11 +354,11 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
     var dbId = newDbId();
     String name = "dbName";
     int quorum = 2;
-    var res = state.promiseDeclare(promiseId, dbId, name, partecipants, quorum);
+    var res = state.validateDeclare(promiseId, dbId, name, partecipants, quorum);
     assertTrue(res.isEmpty());
-    var res1 = state1.promiseDeclare(promiseId, dbId, name, partecipants, quorum);
+    var res1 = state1.validateDeclare(promiseId, dbId, name, partecipants, quorum);
     assertTrue(res1.isEmpty());
-    var res2 = state2.promiseDeclare(promiseId, dbId, name, partecipants, quorum);
+    var res2 = state2.validateDeclare(promiseId, dbId, name, partecipants, quorum);
     assertTrue(res2.isEmpty());
 
     state.declareDatabase(promiseId, dbId, name, partecipants, quorum);
@@ -432,7 +432,7 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
     var dbId = newDbId();
     String name = "dbName";
     int quorum = 2;
-    var res = state.promiseDeclare(promiseId, dbId, name, partecipants, quorum);
+    var res = state.validateDeclare(promiseId, dbId, name, partecipants, quorum);
     assertTrue(res.isEmpty());
 
     state.declareDatabase(promiseId, dbId, name, partecipants, quorum);
@@ -460,7 +460,7 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
     var dbId = newDbId();
     String name = "dbName";
     int quorum = 2;
-    var res = state.promiseDeclare(promiseId, dbId, name, partecipants, quorum);
+    var res = state.validateDeclare(promiseId, dbId, name, partecipants, quorum);
     assertTrue(res.isEmpty());
 
     state.declareDatabase(promiseId, dbId, name, partecipants, quorum);

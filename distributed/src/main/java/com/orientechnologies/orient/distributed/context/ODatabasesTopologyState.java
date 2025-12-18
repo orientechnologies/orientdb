@@ -36,7 +36,7 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
     this.listener = listener;
   }
 
-  public synchronized Optional<OAcceptResult> promiseDeclare(
+  public synchronized Optional<OAcceptResult> validateDeclare(
       OTransactionIdPromise promise,
       ODatabaseId db,
       String name,
@@ -152,7 +152,10 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
   }
 
   public synchronized void cancelSetState(ODatabaseId dbId, ONodeId nodeId, long version) {
-    this.databases.get(dbId).cancelSetState(nodeId, version);
+    ODatabaseTopologyState db = this.databases.get(dbId);
+    if (db != null) {
+      db.cancelSetState(nodeId, version);
+    }
   }
 
   public synchronized boolean waitOnline(ODatabaseId dbId, ONodeId nodeId) {

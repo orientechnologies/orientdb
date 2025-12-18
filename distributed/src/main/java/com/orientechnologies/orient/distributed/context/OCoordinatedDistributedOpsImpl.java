@@ -36,14 +36,20 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   private final OPromisedDistributedOps promised;
   private final Map<OTransactionIdPromise, OResponseCollector> coordination;
   private final ODatabasesTopologyState databaseTopology;
+  private ONodeStateUpdated updateLister;
 
   public OCoordinatedDistributedOpsImpl(
-      ONodeId current, OGroupId groupId, int quorum, ODatabaseStateChangeListener listener) {
-    topology = new OTopologyManager(current, groupId, quorum);
-    sequenceManager = new OTransactionSequenceManager(current, 3);
-    promised = new OPromisedDistributedOpsImpl();
-    coordination = new HashMap<>();
+      ONodeId current,
+      OGroupId groupId,
+      int minimumQuorum,
+      ODatabaseStateChangeListener listener,
+      ONodeStateUpdated updateLister) {
+    this.topology = new OTopologyManager(current, groupId, minimumQuorum);
+    this.sequenceManager = new OTransactionSequenceManager(current, 3);
+    this.promised = new OPromisedDistributedOpsImpl();
+    this.coordination = new HashMap<>();
     this.databaseTopology = new ODatabasesTopologyState(listener);
+    this.updateLister = updateLister;
   }
 
   @Override
@@ -53,6 +59,7 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
 
   public synchronized void registerNode(ONodeId node, long version) {
     this.topology.register(node, version);
+    notifyUpdate();
   }
 
   public void unregisterNode(ONodeId node, long version) {
@@ -68,6 +75,7 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
         }
       }
     }
+    notifyUpdate();
     if (action.isPresent()) {
       CompleteInfo info = action.get();
       info.action().failure(info.promise(), info.nodes(), info.result());
@@ -79,7 +87,7 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
     if (this.topology.enoughNodes()) {
       throw new ODistributedException(
           String.format(
-              "No enough nodes to coordinate an opertion with quorum: %d know nodes:%s",
+              "No enough nodes to coordinate an operation with quorum: %d know nodes:%s",
               this.topology.getMinimumQuorum(), this.getNetworkMembers().toString()));
     }
 
@@ -230,7 +238,9 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
 
   @Override
   public Set<ONodeId> enstablish(OGroupId groupId, Set<ONodeId> candidates) {
-    return this.topology.finalizeEnstablish(groupId, candidates);
+    Set<ONodeId> result = this.topology.finalizeEnstablish(groupId, candidates);
+    notifyUpdate();
+    return result;
   }
 
   @Override
@@ -252,15 +262,21 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   @Override
   public synchronized ODiscoverAction nodeJoinStart(ONodeId node, ONodeStateNetwork state) {
     var action = this.topology.nodeJoinStart(node, state.getTopology());
+    boolean notifyUpdate = false;
     if (action.applyDatabaseState()) {
       if (state.getTopology().isMerge()) {
         this.databaseTopology.mergeNetworkState(state.getDatabases());
       } else {
         this.databaseTopology.receiverNetworkState(state.getDatabases());
       }
+      notifyUpdate = true;
     }
     if (action.applySequenceState()) {
       this.sequenceManager.fill(state.getSequenceStatus());
+      notifyUpdate = true;
+    }
+    if (notifyUpdate) {
+      notifyUpdate();
     }
     return action;
   }
@@ -304,7 +320,7 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
     if (!partecipants.contains(topology.getNodeId())) {
       return Optional.of(new OMissingNode());
     }
-    return this.databaseTopology.promiseDeclare(
+    return this.databaseTopology.validateDeclare(
         promise, databaseId, database, partecipants, minimumQuorum);
   }
 
@@ -315,6 +331,7 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
       Set<ONodeId> partecipants,
       int minimumQuorum) {
     this.databaseTopology.declareDatabase(promise, dbId, database, partecipants, minimumQuorum);
+    notifyUpdate();
   }
 
   public void cancelDeclareDatabase(
@@ -333,6 +350,7 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
 
   public void addDatabaseMember(ODatabaseId dbId, List<OAddNodeInfo> nodes, long version) {
     this.databaseTopology.addDatabaseMember(dbId, nodes, version);
+    notifyUpdate();
   }
 
   public void cancelAddDatabaseMember(ODatabaseId dbId, List<OAddNodeInfo> nodes) {
@@ -419,5 +437,9 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
         Optional.of(sequenceManager.currentStatus()),
         Optional.of(topology.getStore()),
         Optional.of(databaseTopology.getStore()));
+  }
+
+  private void notifyUpdate() {
+    this.updateLister.update(getStore());
   }
 }

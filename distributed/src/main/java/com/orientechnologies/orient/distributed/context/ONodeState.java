@@ -28,10 +28,11 @@ public class ONodeState {
       OStateStore store,
       ODatabaseStateChangeListener listener) {
     this.log = new ODistributedMessageLogMemory();
-    this.coordinated =
-        new OCoordinatedDistributedOpsImpl(current, groupId, minimumQuorum, listener);
-    this.nodeId = current;
     this.store = store;
+    this.coordinated =
+        new OCoordinatedDistributedOpsImpl(
+            current, groupId, minimumQuorum, listener, this.store::save);
+    this.nodeId = current;
     this.state = new OAppliedState(3, (txId) -> this.coordinated.isApplied(txId));
   }
 

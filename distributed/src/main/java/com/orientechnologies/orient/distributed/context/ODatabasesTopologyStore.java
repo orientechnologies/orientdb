@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.distributed.context;
 
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import java.util.List;
@@ -26,6 +27,6 @@ public class ODatabasesTopologyStore {
   public void toElement(OElement el) {
     el.setProperty("serializationVersion", 1);
     var dbs = databases.stream().map((x) -> x.toDocument()).toList();
-    el.setProperty("databases", dbs);
+    el.setProperty("databases", dbs, OType.EMBEDDEDLIST);
   }
 }
