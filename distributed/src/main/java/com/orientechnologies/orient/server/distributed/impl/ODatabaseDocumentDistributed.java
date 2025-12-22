@@ -1004,7 +1004,13 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           }
         }
         int persistentVersion = metadata.getVersion();
-        if (changeVersion != persistentVersion) {
+        boolean checkVersion;
+        if (entry.getType() == ORecordOperation.UPDATED) {
+          checkVersion = ORecordInternal.isContentChanged(entry.getRecord());
+        } else {
+          checkVersion = true;
+        }
+        if (changeVersion != persistentVersion && checkVersion) {
           throw new OConcurrentModificationException(
               entry.getRID(), persistentVersion, changeVersion, entry.getType());
         }
