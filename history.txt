@@ -27,6 +27,20 @@
 This document contains the last changes of OrientDB Community Edition.
 
 
+-----------------------------------------------------------------------------------------------------------------------------------
+version 3.2.47 - (December, 24 2025)
+- release notes: https://github.com/orientechnologies/orientdb/wiki/orientdb-3.2-release-notes#3248---24-December-2025
+
+# Core
+- Corrected slow parsing of nested json (tanks @lvca), issue #10328
+- Improved logging of serialization errors issue #10614
+
+# Tools 
+- Corrected load of logging properties for the console
+
+# Distributed
+- Corrected inverted order of apply of transactions with tree ridbags, as described by PR #10549
+
 
 -----------------------------------------------------------------------------------------------------------------------------------
 version 3.2.47 - (December, 10 2025)
