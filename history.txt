@@ -29,7 +29,6 @@ This document contains the last changes of OrientDB Community Edition.
 
 -----------------------------------------------------------------------------------------------------------------------------------
 version 3.2.47 - (December, 24 2025)
-- release notes: https://github.com/orientechnologies/orientdb/wiki/orientdb-3.2-release-notes#3248---24-December-2025
 
 # Core
 - Corrected slow parsing of nested json (tanks @lvca), issue #10328
@@ -44,7 +43,6 @@ version 3.2.47 - (December, 24 2025)
 
 -----------------------------------------------------------------------------------------------------------------------------------
 version 3.2.47 - (December, 10 2025)
-- release notes: https://github.com/orientechnologies/orientdb/wiki/orientdb-3.2-release-notes#3247---10-December-2025
 
 # Core
 - Initialize OrientDB context executor with the right max size
@@ -55,7 +53,6 @@ version 3.2.47 - (December, 10 2025)
 
 -----------------------------------------------------------------------------------------------------------------------------------
 version 3.2.46 - (November, 18 2025)
-- release notes: https://github.com/orientechnologies/orientdb/wiki/orientdb-3.2-release-notes#3246---18-November-2025
 
 # Tools
 
@@ -63,7 +60,6 @@ version 3.2.46 - (November, 18 2025)
 
 -----------------------------------------------------------------------------------------------------------------------------------
 version 3.2.45 - (October, 22 2025)
-- release notes: https://github.com/orientechnologies/orientdb/wiki/orientdb-3.2-release-notes#3245---22-October-2025
 
 # Core
 - Changed static thread local allocation after failure due to jdk update
@@ -77,7 +73,6 @@ version 3.2.45 - (October, 22 2025)
 
 -----------------------------------------------------------------------------------------------------------------------------------
 version 3.2.44 - (September, 3 2025)
-- release notes: https://github.com/orientechnologies/orientdb/wiki/orientdb-3.2-release-notes#3245---3-September-2025
 
 # Core
 - Updated commons-lang 2.6 dependency which is obsolete and unsupported
@@ -89,7 +84,6 @@ version 3.2.44 - (September, 3 2025)
 
 -----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.43 - (August, 7 2025)
-- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3243---7-August-2025
 
 # Core
 
@@ -107,8 +101,6 @@ VERSION 3.2.43 - (August, 7 2025)
 
 -----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.42 - (July, 4 2025)
-- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3242---4-July-2025
-
 
 # Remote
 
@@ -120,8 +112,6 @@ VERSION 3.2.42 - (July, 4 2025)
 
 -----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.41 - (June, 18  2025)
-- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3241---18-June-2025
-
 
 # Core
 - Fix synchronization on register and unregister of legacy listener APIs
@@ -137,7 +127,6 @@ VERSION 3.2.41 - (June, 18  2025)
 
 -----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.40 - (May, 30  2025)
-- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3240---30-May-2025
 
 # Core
 - Fix remove of linked class in schema
@@ -159,7 +148,6 @@ VERSION 3.2.40 - (May, 30  2025)
 
 -----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.39 - (April, 15  2025)
-- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3239---15-April-2025
 
 # Studio
 
@@ -171,7 +159,6 @@ VERSION 3.2.39 - (April, 15  2025)
 
 -----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.38 - (February, 20 2025)
-- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3238---20-February-2025
 
 # Core
 - Re-implemented update remove with condition, issue #10385
@@ -191,7 +178,6 @@ VERSION 3.2.38 - (February, 20 2025)
 
 -----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.37 - (Jennuary, 15 2026)
-- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3237---16-Jennaury-2025
 
 # Core
 - Make sure to interpret sql script line by line
@@ -201,7 +187,6 @@ VERSION 3.2.37 - (Jennuary, 15 2026)
 
 -----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.36 - (November, 28 2024)
-- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3236---28-November-2024
 
 
 # Core
@@ -219,8 +204,6 @@ VERSION 3.2.36 - (November, 28 2024)
 
 -----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.35 - (October, 29 2024)
-- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3235---29-October-2024
-
 
 # Core
 
@@ -235,7 +218,6 @@ VERSION 3.2.35 - (October, 29 2024)
 
 -----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.34 - (October, 1 2024)
-- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3234---01-October-2024
 
 # Core
 
@@ -258,7 +240,6 @@ VERSION 3.2.34 - (October, 1 2024)
 
 -----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.33 - (August, 29 2024)
-- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3233---29-August-2024
 
 # Core
 
@@ -286,7 +267,6 @@ VERSION 3.2.33 - (August, 29 2024)
 
 -----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.32 - (July, 18 2024)
-- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3232---18-July-2024
 
 # Core
 
@@ -306,7 +286,6 @@ VERSION 3.2.32 - (July, 18 2024)
 
 -----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.31 - (June, 19 2024)
-- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3231---19-June-2024
 
 # Core
 
@@ -327,7 +306,6 @@ VERSION 3.2.31 - (June, 19 2024)
 
 -----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.30 - (May, 24 2024)
-- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3230---24-May-2024
 
 # Core
 - Fix disk compatiblity on some specific CPU architectures
@@ -337,7 +315,6 @@ VERSION 3.2.30 - (May, 24 2024)
 
 -----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.29 - (March, 6 2024)
-- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3229---06-March-2024
 
 # Core
 - Fix issue on delegated records on raw access, issue #10171
@@ -350,7 +327,6 @@ VERSION 3.2.29 - (March, 6 2024)
 
 -----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.28 - (February, 21 2024)
-- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3228---21-February-2024
 
 
 # Core
@@ -380,7 +356,6 @@ VERSION 3.2.28 - (February, 21 2024)
 
 -----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.27 - (January, 26 2024)
-- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3227---26-January-2024
 
 # Core
 - Minor correction on value conversion for comparison in queries
@@ -400,8 +375,6 @@ VERSION 3.2.27 - (January, 26 2024)
 
 -----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.26 - (January, 9 2024)
-- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3226---9-January-2024
-
 
 # Core
 
@@ -421,7 +394,6 @@ VERSION 3.2.26 - (January, 9 2024)
 
 -----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.25 - (November, 30 2023)
-- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3225---30-November-2023
 
 # Core
  - Add support of @fieldTypes in the json from new query engine
@@ -433,7 +405,6 @@ VERSION 3.2.25 - (November, 30 2023)
 
 -----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.24 - (October, 26 2023)
-- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3224---26-October-2023
 
 # Core
 
@@ -449,7 +420,6 @@ VERSION 3.2.24 - (October, 26 2023)
 
 -----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.23- (September, 21 2023)
-- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3223---21-September-2023
 
 # Core
  - Optimization to avoid load record from indexes that do not match the target class
@@ -473,7 +443,6 @@ VERSION 3.2.23- (September, 21 2023)
 
 -----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.22 - (August, 17 2023)
-- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3222---17-August-2023
 
 ## Core 
  - Optimizations of escaping in serialization of json strings
@@ -485,7 +454,6 @@ VERSION 3.2.22 - (August, 17 2023)
 
 -----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.21 - (July, 25 2023)
-- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3221---25-July-2023
 
 ## Core
  - Make sure to reload correctly view index informations on context restart
@@ -496,7 +464,6 @@ VERSION 3.2.21 - (July, 25 2023)
 
 -----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.20 - (June, 15 2023)
-- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3220---15-June-2023
 
 ## Core
 
@@ -517,7 +484,6 @@ VERSION 3.2.20 - (June, 15 2023)
 
 -----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.19 - (May, 11 2023)
-- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3219---11-May-2023
 
 # Changes
 
@@ -545,7 +511,6 @@ VERSION 3.2.19 - (May, 11 2023)
 
 -----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.18 - (April, 13 2023)
-- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3218---13-April-2023
 
 # Changes
 
@@ -573,7 +538,6 @@ VERSION 3.2.18 - (April, 13 2023)
 
 -----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.17 - (March, 9 2023)
-- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3217---9-March-2023
 
 # Changes
 
@@ -607,7 +571,6 @@ VERSION 3.2.17 - (March, 9 2023)
 
 -----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.16 - (February, 8 2023)
-- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3216---8-February-2023
 
 # Core
 - removed the need to buffer changes before adding the to the tx
@@ -631,7 +594,6 @@ VERSION 3.2.16 - (February, 8 2023)
 
 -----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.15 - (Jennuary, 17 2023)
-- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3215---17-January-2023
 
 # Core
 - give more clear error when view metadata are not correct on view creation
@@ -652,7 +614,6 @@ VERSION 3.2.15 - (Jennuary, 17 2023)
 
 -----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.14 - (December, 23 2022)
-- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3214---23-December-2022
 
 # Core
 - Optimization on graph delete operations (issue #9821)
@@ -669,7 +630,6 @@ VERSION 3.2.14 - (December, 23 2022)
 
 -----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.13 - (December, 1 2022)
-- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3213---1-December-2022
 
 # Core
 - Make sure to use high level transactions in all index change cases
@@ -691,7 +651,6 @@ VERSION 3.2.13 - (December, 1 2022)
 
 -----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.12 - (November, 10 2022)
-- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3212---10-November-2022
 
 # Core 
 - Add timeout check in next query page fetching
@@ -716,7 +675,6 @@ VERSION 3.2.12 - (November, 10 2022)
 
 -----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.11 - (October, 19 2022)
-- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3211---19-October-2022
 
 # Core 
  - Use correct configuration to run javascript functions on truffle script engine of graal
@@ -732,7 +690,6 @@ VERSION 3.2.11 - (October, 19 2022)
 
 -----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.10 - (September, 15 2022)
-- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#3210---15-September-2022
 
 # Core
  - Make put of index everytime transactional
@@ -764,7 +721,6 @@ VERSION 3.2.10 - (September, 15 2022)
 
 -----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.9 - (August, 11 2022)
-- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#329---11-August-2022
 
 # Core
 - Make sure to drop the database also when drop listeners fail
@@ -789,7 +745,6 @@ VERSION 3.2.9 - (August, 11 2022)
 
 -----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.8 - (June, 26 2022)
-- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#328---26-June-2022
 
 # Core
 - avoid to make the storage read only in case of error in record serialization
@@ -812,7 +767,6 @@ VERSION 3.2.8 - (June, 26 2022)
 
 -----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.7 - (June, 8 2022)
-- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#327---8-June-2022
 
 # Core
 - fixed delete of lucene indexes 
@@ -830,7 +784,6 @@ VERSION 3.2.7 - (June, 8 2022)
 
 -----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.6 - (April, 28 2022)
-- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#326---28-April-2022
 
 # Changes
 
@@ -850,7 +803,6 @@ VERSION 3.2.6 - (April, 28 2022)
 
 -----------------------------------------------------------------------------------------------------------------------------------
 VERSION 3.2.5 - (February, 14 2022)
-- Release Notes: https://github.com/orientechnologies/orientdb/wiki/OrientDB-3.2-Release-Notes#325---14-february-2022
 
 # Changes
 
