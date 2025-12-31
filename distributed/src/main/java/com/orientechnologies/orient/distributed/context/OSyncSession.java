@@ -43,6 +43,9 @@ public class OSyncSession {
       OSyncMode mode,
       Optional<OTransactionSequenceStatus> sequenceStatus) {
     assert this.syncId.equals(syncId);
+    if (isTransferingData()) {
+      return Optional.empty();
+    }
     if (canSync) {
       this.state = new OSyncState(dbId, syncId, sender, receiver, mode, sequenceStatus);
       return Optional.of(this.state);
