@@ -3,15 +3,9 @@ package com.orientechnologies.orient.core.storage;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.transaction.ODatabaseId;
-import java.io.InputStream;
 import java.nio.file.Path;
 
 public interface OStorageEngine {
-
-  public enum OBackupType {
-    FOLDER_ZIP,
-    FULL_INCREMENTAL
-  }
 
   OStorage createLocal(
       OrientDBInternal context, ODatabaseId id, String name, OContextConfiguration config);
@@ -23,15 +17,11 @@ public interface OStorageEngine {
 
   boolean exists(String name);
 
-  OStorage restoreStream(
-      OrientDBInternal context,
-      String name,
-      OContextConfiguration config,
-      InputStream stream,
-      OBackupType type);
+  OStorage createForRestoreLocal(
+      OrientDBInternal context, ODatabaseId id, String name, OContextConfiguration config);
 
-  OStorage restoreFile(
-      OrientDBInternal context, String name, OContextConfiguration config, Path path);
+  OStorage createForRestoreMemory(
+      OrientDBInternal context, ODatabaseId id, String name, OContextConfiguration config);
 
   void init(Path basePath, OContextConfiguration configurations);
 

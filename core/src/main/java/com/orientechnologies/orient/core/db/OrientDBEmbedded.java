@@ -20,6 +20,8 @@
 
 package com.orientechnologies.orient.core.db;
 
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.FILE_DELETE_DELAY;
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.FILE_DELETE_RETRY;
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.WARNING_DEFAULT_USERS;
 
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
@@ -32,6 +34,7 @@ import com.orientechnologies.common.util.OClassLoaderHelper;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.script.OScriptManager;
+import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -46,9 +49,9 @@ import com.orientechnologies.orient.core.sql.parser.OLocalResultSetLifecycleDeco
 import com.orientechnologies.orient.core.sql.parser.OServerStatement;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEngine;
-import com.orientechnologies.orient.core.storage.OStorageEngine.OBackupType;
 import com.orientechnologies.orient.core.storage.OStorageEngine.RegisterResult;
 import com.orientechnologies.orient.core.storage.config.OClusterBasedStorageConfiguration;
+import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import java.io.File;
 import java.io.InputStream;
@@ -516,6 +519,8 @@ public class OrientDBEmbedded implements OrientDBInternal {
   @Override
   public void networkRestore(String name, InputStream in, Callable<Object> callable) {
     checkDatabaseName(name);
+    OStorage storage = null;
+    OContextConfiguration config = getConfigurations().getConfigurations();
     try {
       OSharedContext context;
       synchronized (this) {
@@ -523,21 +528,35 @@ public class OrientDBEmbedded implements OrientDBInternal {
         if (context != null) {
           context.close();
         }
-        OStorage storage = storages.get(name);
+        storage = storages.get(name);
         if (storage != null) {
           dbCount.decrementAndGet();
           storage.close();
         }
+
+        storage =
+            getDefaultEngine().createForRestoreLocal(this, new ODatabaseId("mock"), name, config);
+
+        storages.put(name, storage);
       }
-      OStorage storage =
-          getDefaultEngine()
-              .restoreStream(
-                  this, name, getConfigurations().getConfigurations(), in, OBackupType.FOLDER_ZIP);
-      storages.put(name, storage);
+      storage.restore(in, null, callable, null);
       dbCount.incrementAndGet();
       distributedSetOnline(name);
     } catch (OModificationOperationProhibitedException e) {
       throw e;
+    } catch (Exception e) {
+      synchronized (this) {
+        dbCount.decrementAndGet();
+        if (storage != null) {
+          storage.delete();
+        }
+        OLocalPaginatedStorage.deleteFilesFromDisc(
+            name,
+            config.getValueAsInteger(FILE_DELETE_RETRY),
+            config.getValueAsInteger(FILE_DELETE_DELAY),
+            name);
+        storages.remove(name);
+      }
     }
   }
 
@@ -593,12 +612,30 @@ public class OrientDBEmbedded implements OrientDBInternal {
         storage.close();
       }
     }
-    OStorage storage =
-        getDefaultEngine()
-            .restoreStream(
-                this, name, getConfigurations().getConfigurations(), in, OBackupType.FOLDER_ZIP);
-    storages.put(name, storage);
-    dbCount.incrementAndGet();
+    OContextConfiguration config = getConfigurations().getConfigurations();
+    OStorage storage;
+    synchronized (this) {
+      storage =
+          getDefaultEngine().createForRestoreLocal(this, new ODatabaseId("mock"), name, config);
+      storages.put(name, storage);
+      dbCount.incrementAndGet();
+    }
+    try {
+      storage.restore(in, options, callable, iListener);
+    } catch (Exception e) {
+      synchronized (this) {
+        dbCount.decrementAndGet();
+        storage.delete();
+        OLocalPaginatedStorage.deleteFilesFromDisc(
+            name,
+            config.getValueAsInteger(FILE_DELETE_RETRY),
+            config.getValueAsInteger(FILE_DELETE_DELAY),
+            name);
+        storages.remove(name);
+      }
+      throw OException.wrapException(
+          new ODatabaseException("Cannot create database '" + name + "'"), e);
+    }
   }
 
   protected ODatabaseDocumentEmbedded internalCreate(OrientDBConfig config, OStorage storage) {

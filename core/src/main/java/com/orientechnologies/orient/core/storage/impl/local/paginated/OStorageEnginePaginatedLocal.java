@@ -1,8 +1,5 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.FILE_DELETE_DELAY;
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.FILE_DELETE_RETRY;
-
 import com.orientechnologies.common.collection.closabledictionary.OClosableLinkedContainer;
 import com.orientechnologies.common.directmemory.MemTrace;
 import com.orientechnologies.common.directmemory.OByteBufferPool;
@@ -24,10 +21,7 @@ import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.fs.OFile;
 import com.orientechnologies.orient.core.storage.memory.ODirectMemoryStorage;
 import com.orientechnologies.orient.core.transaction.ODatabaseId;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.FileStore;
 import java.nio.file.Files;
@@ -184,10 +178,6 @@ public class OStorageEnginePaginatedLocal implements OStorageEngine {
       storage.create(config, new ODatabaseId());
       return new RegisterResult(storage, true);
     }
-  }
-
-  private boolean getBoolConfig(OContextConfiguration configurations, OGlobalConfiguration config) {
-    return configurations.getValueAsBoolean(config);
   }
 
   private int getIntConfig(OContextConfiguration configurations, OGlobalConfiguration config) {
@@ -389,48 +379,15 @@ public class OStorageEnginePaginatedLocal implements OStorageEngine {
   }
 
   @Override
-  public OStorage restoreFile(
-      OrientDBInternal context, String name, OContextConfiguration config, Path path) {
-    OLocalPaginatedStorage storage = createLocal(context, new ODatabaseId("mock"), name, config);
-    try {
-      storage.restore(new FileInputStream(path.toFile()), null, null, null);
-    } catch (FileNotFoundException e) {
-      logger.error("Error on resotorig backup : %s", e, path);
-
-      throw OException.wrapException(
-          new ODatabaseException("Error on resotorig backup :" + path), e);
-    }
-    return null;
+  public OStorage createForRestoreLocal(
+      OrientDBInternal context, ODatabaseId id, String name, OContextConfiguration config) {
+    return createLocal(context, new ODatabaseId("mock"), name, config);
   }
 
   @Override
-  public OStorage restoreStream(
-      OrientDBInternal context,
-      String name,
-      OContextConfiguration config,
-      InputStream stream,
-      OBackupType type) {
-
-    try {
-      OLocalPaginatedStorage storage = createLocal(context, new ODatabaseId("mock"), name, config);
-      switch (type) {
-        case FOLDER_ZIP -> {
-          storage.restore(stream, null, null, null);
-        }
-        case FULL_INCREMENTAL -> {
-          storage.restoreFullIncrementalBackup(stream);
-        }
-      }
-      return storage;
-    } catch (Exception e) {
-      OLocalPaginatedStorage.deleteFilesFromDisc(
-          name,
-          config.getValueAsInteger(FILE_DELETE_RETRY),
-          config.getValueAsInteger(FILE_DELETE_DELAY),
-          name);
-      throw OException.wrapException(
-          new ODatabaseException("Cannot create database '" + name + "'"), e);
-    }
+  public OStorage createForRestoreMemory(
+      OrientDBInternal context, ODatabaseId id, String name, OContextConfiguration config) {
+    throw new UnsupportedOperationException("Cannot restore in memory database");
   }
 
   @Override

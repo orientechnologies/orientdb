@@ -24,7 +24,6 @@ import com.orientechnologies.orient.core.db.config.ONodeConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.OStorageEngine.OBackupType;
 import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.OGroupId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
@@ -289,11 +288,12 @@ public class OrientDBDistributed extends OrientDBEmbedded
   public void incrementalsSync(String dbName, InputStream backupStream, OrientDBConfig config) {
     OStorage storage = null;
     ODatabaseDocumentEmbedded embedded;
-    synchronized (this) {
-      if (!isOpen()) {
-        return;
-      }
-      try {
+
+    if (!isOpen()) {
+      return;
+    }
+    try {
+      synchronized (this) {
         storage = storages.get(dbName);
 
         if (storage != null) {
@@ -308,29 +308,17 @@ public class OrientDBDistributed extends OrientDBEmbedded
           storages.remove(dbName);
           ODatabaseRecordThreadLocal.instance().remove();
         }
-      } catch (OModificationOperationProhibitedException e) {
-        throw e;
-      } catch (Exception e) {
-        if (storage != null) {
-          storage.delete();
-        }
 
-        throw OException.wrapException(
-            new ODatabaseException("Cannot restore database '" + dbName + "'"), e);
+        storage =
+            getDefaultEngine()
+                .createForRestoreLocal(
+                    this, new ODatabaseId("mock"), dbName, config.getConfigurations());
+
+        storages.put(dbName, storage);
       }
-    }
-    try {
-      storage =
-          getDefaultEngine()
-              .restoreStream(
-                  this,
-                  dbName,
-                  config.getConfigurations(),
-                  backupStream,
-                  OBackupType.FULL_INCREMENTAL);
+      storage.restoreFullIncrementalBackup(backupStream);
       synchronized (this) {
         embedded = newSessionInstance(storage, config);
-        storages.put(dbName, storage);
       }
     } catch (OModificationOperationProhibitedException e) {
       throw e;
@@ -371,23 +359,25 @@ public class OrientDBDistributed extends OrientDBEmbedded
           storages.remove(dbName);
           ODatabaseRecordThreadLocal.instance().remove();
         }
+
+        storage =
+            getDefaultEngine()
+                .createForRestoreLocal(
+                    this, new ODatabaseId("mock"), dbName, config.getConfigurations());
+
+        storages.put(dbName, storage);
       }
-      storage =
-          getDefaultEngine()
-              .restoreStream(
-                  this,
-                  dbName,
-                  config.getConfigurations(),
-                  backupStream,
-                  OBackupType.FULL_INCREMENTAL);
-      embedded = newSessionInstance(storage, config);
-      storages.put(dbName, storage);
+      storage.restoreFullIncrementalBackup(backupStream);
+      synchronized (this) {
+        embedded = newSessionInstance(storage, config);
+      }
     } catch (OModificationOperationProhibitedException e) {
       throw e;
     } catch (Exception e) {
       if (storage != null) {
         storage.delete();
       }
+      storages.remove(dbName);
 
       throw OException.wrapException(
           new ODatabaseException("Cannot restore database '" + dbName + "'"), e);
