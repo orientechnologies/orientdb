@@ -85,6 +85,8 @@ class SingleBackupComponent implements OnInit, OnDestroy, OnChanges {
   private range: any;
   private logs = [];
   private currentUnitLogs = [];
+  private maxCalendarEvents = 1000; // Limit events shown in calendar for performance
+  private totalFilteredLogs = 0; // Track total logs before limiting
 
   constructor(
     private agent: AgentService,
@@ -214,7 +216,10 @@ class SingleBackupComponent implements OnInit, OnDestroy, OnChanges {
     } else {
       this.selectedEvents.splice(idx, 1);
     }
-    this.currentUnitLogs = formatLogs(this.logs, this.selectedEvents);
+    const result = formatLogs(this.logs, this.selectedEvents, this.maxCalendarEvents);
+    this.currentUnitLogs = result.events;
+    this.totalFilteredLogs = result.total;
+    console.log("Event click handled, updated logs " + this.currentUnitLogs + " and total count: " + this.totalFilteredLogs);
   }
   getClazz(t) {
     return (
@@ -228,17 +233,26 @@ class SingleBackupComponent implements OnInit, OnDestroy, OnChanges {
   fetchBackups(id, params) {
     this.backupService.logs(id, params).then(data => {
       this.logs = data.logs;
-      this.currentUnitLogs = formatLogs(data.logs, this.selectedEvents);
+      const result = formatLogs(data.logs, this.selectedEvents, this.maxCalendarEvents);
+      this.currentUnitLogs = result.events;
+      this.totalFilteredLogs = result.total;
     });
   }
 }
 
-function formatLogs(logs, selectedEvents) {
-  return logs
-    .filter(e => {
+function formatLogs(logs, selectedEvents, maxEvents) {
+  // Filter by selected event types
+  const filtered = logs.filter(e => {
       return selectedEvents.indexOf(e.op) != -1;
-    })
-    .map((e, idx, arr) => {
+  });
+  // Sort by timestamp descending (most recent first)
+  const sorted = filtered.sort((a, b) => {
+    return b.timestamp - a.timestamp;
+  });
+  // Limit the number of events for performance
+  const limited = maxEvents ? sorted.slice(0, maxEvents) : sorted;
+  // Map to calendar event format
+  const events = limited.map((e, idx) => {
       var date = new Date(e.timestamp);
       return {
         id: idx,
@@ -250,6 +264,10 @@ function formatLogs(logs, selectedEvents) {
         className: clazz(e)
       };
     });
+  return {
+    events: events,
+    total: filtered.length
+  };
 }
 
 function clazz(event) {

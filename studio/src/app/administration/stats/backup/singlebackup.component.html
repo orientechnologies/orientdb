@@ -85,6 +85,10 @@
                         </ul>
                     </div>
                     <div *ngIf="backup.uuid">
+                        <div *ngIf="totalFilteredLogs > maxCalendarEvents" class="alert alert-info" style="margin-bottom: 10px;">
+                            <i class="fa fa-info-circle"></i>
+                            Showing {{maxCalendarEvents}} most recent events out of {{totalFilteredLogs}} total events.
+                        </div>
                         <backup-calendar [events]="currentUnitLogs" (onRange)="changeRange($event)" (onSelected)="selectEvent($event)"></backup-calendar>
                     </div>
 

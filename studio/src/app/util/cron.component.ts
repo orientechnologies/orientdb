@@ -27,8 +27,8 @@ export class CronComponent implements OnInit, OnChanges {
   private changed: EventEmitter<any> = new EventEmitter();
 
   ngOnChanges(changes: SimpleChanges) {
-    if (this.cronElement) {
-      this.cronElement.cron("value", changes.cron.currentValue);
+    if (this.cronElement && changes.cronVal) {
+      this.cronElement.cron("value", changes.cronVal.currentValue);
     }
   }
   ngOnInit(): void {
