@@ -34,7 +34,7 @@ public class OSelfSignedCertificate {
   public static final int DEFAULT_CERTIFICATE_VALIDITY = 365;
 
   public static final String DEFAULT_CERTIFICATE_OWNER =
-      "CN=SelfSigenedOrientDBtestOnly, OU=SAP HANA Core, O=SAP SE, L=Walldorf, C=DE";
+      "CN=SelfSigenedOrientDBtestOnly, OU=OrientDB, O=OrientDB, L=London, C=UK";
   public static final String DEFAULT_CERTIFICATE_NAME = "ssl";
 
   private String algorithm;
