@@ -128,6 +128,7 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import sun.misc.Signal;
 
@@ -171,7 +172,7 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
   }
 
   public void waitUntilNodeOnline() throws InterruptedException {
-    serverStarted.await();
+    serverStarted.await(2, TimeUnit.MINUTES);
   }
 
   public void waitUntilNodeOnline(final String nodeName, final String databaseName)
