@@ -7,9 +7,11 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class OReceiverInputStream extends InputStream {
+
+  private record Buffer(byte[] content, boolean finished) {}
+  ;
 
   public interface RequestNext {
     void requestNext(OSyncState state, boolean b);
@@ -17,10 +19,10 @@ public class OReceiverInputStream extends InputStream {
 
   private byte[] buffer = new byte[] {};
   private int cursor = 0;
-  private final BlockingQueue<byte[]> buffers = new ArrayBlockingQueue<byte[]>(3);
+  private final BlockingQueue<Buffer> buffers = new ArrayBlockingQueue<Buffer>(10);
   private final RequestNext ctx;
   private final OSyncState state;
-  private final AtomicBoolean finished = new AtomicBoolean(false);
+  private volatile boolean finished = false;
 
   public OReceiverInputStream(RequestNext ctx, OSyncState state) {
     this.ctx = ctx;
@@ -31,11 +33,16 @@ public class OReceiverInputStream extends InputStream {
   public int read() throws IOException {
     // TODO: impl also optimized int read(byte[] b, int off, int len)
     while (cursor == buffer.length) {
-      if (finished.get()) {
+      if (finished) {
         return -1;
       }
       try {
-        buffer = buffers.take();
+        Buffer bi = buffers.take();
+        if (bi.finished) {
+          this.finished = true;
+          this.state.close();
+        }
+        buffer = bi.content;
         cursor = 0;
         ctx.requestNext(state, false);
       } catch (InterruptedException e) {
@@ -54,14 +61,18 @@ public class OReceiverInputStream extends InputStream {
   }
 
   public void receive(byte[] buffer, boolean finished) {
-    this.buffers.add(buffer);
-    if (finished) {
-      this.finished.set(finished);
+    try {
+      this.buffers.put(new Buffer(buffer, finished));
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      throw OException.wrapException(new OInterruptedException("Receive sync interrupted"), e);
     }
   }
 
   @Override
   public void close() throws IOException {
     ctx.requestNext(state, true);
+    // Close the state
+    receive(new byte[] {}, true);
   }
 }

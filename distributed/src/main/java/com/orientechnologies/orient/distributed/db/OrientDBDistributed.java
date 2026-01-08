@@ -1076,8 +1076,9 @@ public class OrientDBDistributed extends OrientDBEmbedded
     }
   }
 
-  public void receiveSync(String dbName, OSyncState state, InputStream input, OrientDBConfig conf) {
-    try {
+  public void receiveSync(
+      String dbName, OSyncState state, InputStream inputStream, OrientDBConfig conf) {
+    try (InputStream input = inputStream) {
       switch (state.getMode()) {
         case IncrementalBackup -> incrementalsSync(dbName, input, conf);
 
@@ -1086,6 +1087,8 @@ public class OrientDBDistributed extends OrientDBEmbedded
         case Delta -> deltaSync(dbName, input, conf);
       }
       setDatabaseStatus(state.getDbId(), state.getReceiver(), ODatabaseState.Online);
+    } catch (IOException e) {
+      logger.debug("Error on close of sync", e);
     } finally {
       getNodeState().getOps().completeSync(state.getSyncId());
     }
@@ -1114,13 +1117,14 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   public void syncBackup(String name, OSyncState state, OutputStream output) {
-    ODatabaseDocumentEmbedded db = openNoAuthorization(name);
-    OStorage storage = db.getStorage();
-
     try (OutputStream out = new BufferedOutputStream(output, 8096)) {
+      ODatabaseDocumentEmbedded db = openNoAuthorization(name);
+      OStorage storage = db.getStorage();
 
       switch (state.getMode()) {
-        case IncrementalBackup -> storage.incrementalSync(out, null);
+        case IncrementalBackup -> {
+          storage.incrementalSync(out, null);
+        }
         case StandardBackup -> {
           int compression =
               getConfigurations()
@@ -1178,7 +1182,9 @@ public class OrientDBDistributed extends OrientDBEmbedded
 
   public void nextBuffer(OSyncId syncId, boolean close) {
     var state = this.getNodeState().getOps().getSyncState(syncId);
-    state.requestNext(close);
+    if (state != null) {
+      state.requestNext(close);
+    }
   }
 
   public ONodeId getNodeId() {

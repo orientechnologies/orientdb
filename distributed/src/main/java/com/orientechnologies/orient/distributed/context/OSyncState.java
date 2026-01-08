@@ -112,5 +112,6 @@ public class OSyncState {
 
   public synchronized void close() {
     this.close = true;
+    this.notifyAll();
   }
 }

@@ -172,19 +172,24 @@ public class ODatabaseTopologyState {
   private boolean waitFor(Optional<Long> timeout, WaitCond cond) throws InterruptedException {
     if (timeout.isPresent()) {
       var timeOut = timeout.get();
-      long till = System.currentTimeMillis() + timeOut;
-      boolean stillTime = true;
-      while (!cond.match() && stillTime) {
-        this.wait(timeout.get());
-        stillTime = till > System.currentTimeMillis();
+      long start = currentTime();
+      long till = start + timeOut;
+      while (!cond.match() && timeOut > 0) {
+        this.wait(timeOut);
+        long current = currentTime();
+        timeOut = till - current;
       }
-      return stillTime;
+      return timeOut > 0;
     } else {
       while (!cond.match()) {
         this.wait();
       }
       return true;
     }
+  }
+
+  private long currentTime() {
+    return System.nanoTime() / 1000;
   }
 
   private void executeOn(WaitCond cond, OStateAction execute) {
