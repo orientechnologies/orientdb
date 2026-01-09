@@ -821,6 +821,7 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
     internalAcquireExclusiveLock();
     try {
       ODocument document = new ODocument(identity);
+      document.setTrackingChanges(false);
       final OTrackedSet<ODocument> indexes = new OTrackedSet<>(document);
 
       for (final OIndex i : this.indexes.values()) {

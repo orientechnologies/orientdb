@@ -757,6 +757,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
 
   public ODocument updateConfiguration() {
     ODocument document = new ODocument();
+    document.setTrackingChanges(false);
     document.field(OIndexInternal.CONFIG_TYPE, im.getType());
     document.field(OIndexInternal.CONFIG_NAME, im.getName());
     document.field(OIndexInternal.INDEX_VERSION, im.getVersion());
