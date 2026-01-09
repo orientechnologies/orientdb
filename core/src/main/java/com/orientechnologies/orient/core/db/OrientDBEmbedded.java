@@ -84,6 +84,8 @@ public class OrientDBEmbedded implements OrientDBInternal {
   private static final OLogger logger = OLogManager.instance().logger(OrientDBEmbedded.class);
 
   private static final AtomicLong queryCounter = new AtomicLong(0);
+  private ThreadGroup allGroups;
+  protected ThreadGroup threadsGroup;
 
   protected final Map<String, OStorage> storages = new ConcurrentHashMap<>();
   protected final Map<String, OSharedContext> sharedContexts = new ConcurrentHashMap<>();
@@ -123,6 +125,8 @@ public class OrientDBEmbedded implements OrientDBInternal {
     } else {
       this.basePath = null;
     }
+    allGroups = new ThreadGroup("OrientDB Context");
+    threadsGroup = new ThreadGroup(allGroups, "Threads");
 
     this.configurations = configurations != null ? configurations : OrientDBConfig.defaultConfig();
     initEngines();
@@ -203,7 +207,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
       int ioSize = excutorMaxSize(OGlobalConfiguration.EXECUTOR_POOL_IO_MAX_SIZE);
       ExecutorService exec =
           OThreadPoolExecutors.newScalingThreadPool(
-              "OrientDB-IO", excutorBaseSize(ioSize), ioSize, ioSize, 30, TimeUnit.MINUTES);
+              "IO", allGroups, excutorBaseSize(ioSize), ioSize, ioSize, 30, TimeUnit.MINUTES);
       if (getBoolConfig(OGlobalConfiguration.EXECUTOR_DEBUG_TRACE_SOURCE)) {
         exec = new OSourceTraceExecutorService(exec);
       }
@@ -213,11 +217,17 @@ public class OrientDBEmbedded implements OrientDBInternal {
     }
   }
 
+  protected void runOnThread(Runnable run) {
+    Thread thread = new Thread(threadsGroup, run);
+    thread.setDaemon(true);
+    thread.start();
+  }
+
   private ExecutorService newExecutor() {
     int size = excutorMaxSize(OGlobalConfiguration.EXECUTOR_POOL_MAX_SIZE);
     ExecutorService exec =
         OThreadPoolExecutors.newScalingThreadPool(
-            "OrientDBEmbedded", excutorBaseSize(size), size, size, 30, TimeUnit.MINUTES);
+            "Executor", allGroups, excutorBaseSize(size), size, size, 30, TimeUnit.MINUTES);
     if (getBoolConfig(OGlobalConfiguration.EXECUTOR_DEBUG_TRACE_SOURCE)) {
       exec = new OSourceTraceExecutorService(exec);
     }
@@ -805,6 +815,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
         Thread.currentThread().interrupt();
       }
     }
+    allGroups.interrupt();
     for (OStorageEngine engine : this.engines.values()) {
       engine.shutdown();
     }

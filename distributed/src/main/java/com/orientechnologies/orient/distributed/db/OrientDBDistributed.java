@@ -868,6 +868,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
   @Override
   public void close() {
     if (!isOpen()) return;
+    threadsGroup.interrupt();
     offlineOnShutdown();
     this.messageService.shutdown();
     if (this.remoteServerManager != null) {
@@ -1067,12 +1068,10 @@ public class OrientDBDistributed extends OrientDBEmbedded
       String dbName = getDbName(dbId);
       OReceiverInputStream input = new OReceiverInputStream(this::requestNext, st);
       st.setReceiver(input);
-      Thread thread =
-          new Thread(
-              () -> {
-                receiveSync(dbName, st, input, getConfigurations());
-              });
-      thread.start();
+      runOnThread(
+          () -> {
+            receiveSync(dbName, st, input, getConfigurations());
+          });
     }
   }
 
@@ -1108,12 +1107,10 @@ public class OrientDBDistributed extends OrientDBEmbedded
             .startSend(receiver, getNodeState().getNodeId(), dbId, syncId, mode, sequenceStatus);
     String name = getDbName(state.getDbId());
 
-    Thread thread =
-        new Thread(
-            () -> {
-              syncBackup(name, state, new OutputStreamMessages(this::sendBuffer, state));
-            });
-    thread.start();
+    runOnThread(
+        () -> {
+          syncBackup(name, state, new OutputStreamMessages(this::sendBuffer, state));
+        });
   }
 
   public void syncBackup(String name, OSyncState state, OutputStream output) {
