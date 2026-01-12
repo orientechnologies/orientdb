@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.distributed.db;
 
+import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.distributed.context.OSyncState;
@@ -7,6 +8,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 public class OReceiverInputStream extends InputStream {
 
@@ -37,7 +39,10 @@ public class OReceiverInputStream extends InputStream {
         return -1;
       }
       try {
-        Buffer bi = buffers.take();
+        Buffer bi = buffers.poll(5, TimeUnit.MINUTES);
+        if (bi == null) {
+          throw new OTimeoutException("Timeout waiting for sync data");
+        }
         if (bi.finished) {
           this.finished = true;
           this.state.close();
