@@ -2,7 +2,7 @@
   "name": "orientdbstudio",
   "version": "4.4.0-snapshot",
   "dependencies": {
-    "@angular/common": "^4.4.7",
+    "@angular/common": "^19.2.16",
     "@angular/compiler": "^4.4.7",
     "@angular/core": "^4.4.7",
     "@angular/forms": "^4.4.7",
