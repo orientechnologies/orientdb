@@ -3,7 +3,7 @@ package com.orientechnologies.orient.distributed.context.coordination.message;
 import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
-import com.orientechnologies.orient.distributed.context.OSyncId;
+import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncId;
 import com.orientechnologies.orient.distributed.db.OSyncMode;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import java.io.DataInput;

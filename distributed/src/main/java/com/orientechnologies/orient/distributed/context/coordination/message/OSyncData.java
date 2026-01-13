@@ -1,6 +1,6 @@
 package com.orientechnologies.orient.distributed.context.coordination.message;
 
-import com.orientechnologies.orient.distributed.context.OSyncId;
+import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncId;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import java.io.DataInput;
 import java.io.DataOutput;

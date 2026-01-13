@@ -68,4 +68,9 @@ public class OEnstablishTopology implements OOperationMessage {
   public OGroupId getGroupId() {
     return groupId;
   }
+
+  @Override
+  public String toString() {
+    return "Establish topology " + groupId + " with " + candidates + " ";
+  }
 }

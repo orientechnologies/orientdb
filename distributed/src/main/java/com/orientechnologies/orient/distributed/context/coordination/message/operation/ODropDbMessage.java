@@ -51,4 +51,9 @@ public class ODropDbMessage implements OOperationMessage {
   public String getName() {
     return name;
   }
+
+  @Override
+  public String toString() {
+    return "Dropping database with " + name + "";
+  }
 }

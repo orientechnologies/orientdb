@@ -3,7 +3,7 @@ package com.orientechnologies.orient.distributed.context.coordination.message.op
 import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
-import com.orientechnologies.orient.distributed.context.ODatabaseState;
+import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabaseState;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import java.io.DataInput;
@@ -77,5 +77,18 @@ public class OSetDatabaseState implements OOperationMessage {
 
   public long getVersion() {
     return version;
+  }
+
+  @Override
+  public String toString() {
+    return "Set database  "
+        + dbId
+        + " state for "
+        + nodeId
+        + " to "
+        + state
+        + " version="
+        + version
+        + "";
   }
 }

@@ -1,6 +1,6 @@
 package com.orientechnologies.orient.distributed.db;
 
-import com.orientechnologies.orient.distributed.context.ORetryInfo;
+import com.orientechnologies.orient.distributed.context.coordination.action.ORetryInfo;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import java.util.Optional;
 

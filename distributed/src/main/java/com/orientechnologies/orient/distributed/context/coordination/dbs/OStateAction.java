@@ -1,0 +1,5 @@
+package com.orientechnologies.orient.distributed.context.coordination.dbs;
+
+public interface OStateAction {
+  void execute();
+}

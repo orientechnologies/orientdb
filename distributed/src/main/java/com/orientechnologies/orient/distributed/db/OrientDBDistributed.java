@@ -30,23 +30,19 @@ import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
-import com.orientechnologies.orient.distributed.context.OCompleteAction;
-import com.orientechnologies.orient.distributed.context.OCoordinatedDistributedOps;
-import com.orientechnologies.orient.distributed.context.ODatabaseState;
-import com.orientechnologies.orient.distributed.context.ODatabaseStateChangeListener;
-import com.orientechnologies.orient.distributed.context.ODatabasesTopology;
-import com.orientechnologies.orient.distributed.context.ONodeRole;
 import com.orientechnologies.orient.distributed.context.ONodeState;
-import com.orientechnologies.orient.distributed.context.ORetryInfo;
 import com.orientechnologies.orient.distributed.context.ORetryOperation;
-import com.orientechnologies.orient.distributed.context.OStandardCompleteAction;
-import com.orientechnologies.orient.distributed.context.OSyncId;
-import com.orientechnologies.orient.distributed.context.OSyncInfo;
-import com.orientechnologies.orient.distributed.context.OSyncState;
+import com.orientechnologies.orient.distributed.context.coordination.OCoordinatedDistributedOps;
+import com.orientechnologies.orient.distributed.context.coordination.action.OCompleteAction;
+import com.orientechnologies.orient.distributed.context.coordination.action.ORetryInfo;
+import com.orientechnologies.orient.distributed.context.coordination.action.OStandardCompleteAction;
+import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabaseState;
+import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabaseStateChangeListener;
+import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabasesTopology;
+import com.orientechnologies.orient.distributed.context.coordination.dbs.ONodeRole;
 import com.orientechnologies.orient.distributed.context.coordination.message.OCanSync;
 import com.orientechnologies.orient.distributed.context.coordination.message.ONextBuffer;
 import com.orientechnologies.orient.distributed.context.coordination.message.ONodeFirstConnect;
-import com.orientechnologies.orient.distributed.context.coordination.message.ONodeStateNetwork;
 import com.orientechnologies.orient.distributed.context.coordination.message.OProposeOp;
 import com.orientechnologies.orient.distributed.context.coordination.message.OStartSync;
 import com.orientechnologies.orient.distributed.context.coordination.message.OStructuralMessage;
@@ -58,9 +54,13 @@ import com.orientechnologies.orient.distributed.context.coordination.message.ope
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.ODropDbMessage;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OOperationMessage;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OSetDatabaseState;
+import com.orientechnologies.orient.distributed.context.coordination.message.state.ONodeStateNetwork;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import com.orientechnologies.orient.distributed.context.coordination.result.ONoTransactionSequencialAvailable;
-import com.orientechnologies.orient.distributed.context.topology.ODiscoverAction;
+import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncId;
+import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncInfo;
+import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncState;
+import com.orientechnologies.orient.distributed.context.coordination.topology.ODiscoverAction;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerAware;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
@@ -1370,12 +1370,12 @@ public class OrientDBDistributed extends OrientDBEmbedded
     Set<ODatabaseId> dbs = new HashSet<ODatabaseId>(nodeState.getDatabaseTopology().getDatabases());
     boolean joinerNoDatabases = true;
     if (otherState != null) {
-      joinerNoDatabases = otherState.getDatabases().isEmpty();
-      dbs.removeAll(otherState.getDatabases().stream().map((x) -> x.getId()).toList());
+      joinerNoDatabases = otherState.databases().isEmpty();
+      dbs.removeAll(otherState.databases().stream().map((x) -> x.id()).toList());
     }
     if (dbs.isEmpty() || joinerNoDatabases) {
       ONodeStateNetwork st = getNodeState().getNetworkState();
-      st.getTopology().setMerge(true);
+      st.topology().setMerge(true);
       this.sendMessage(members, new ONodeFirstConnect(getNodeState().getNodeId(), st));
     } else {
       logger.warn("found join-able network, but can't merge into it with databases");

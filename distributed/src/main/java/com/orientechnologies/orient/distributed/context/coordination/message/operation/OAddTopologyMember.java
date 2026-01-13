@@ -58,4 +58,9 @@ public class OAddTopologyMember implements OOperationMessage {
   public long getVersion() {
     return version;
   }
+
+  @Override
+  public String toString() {
+    return "Add " + node + " to network, version=" + version;
+  }
 }

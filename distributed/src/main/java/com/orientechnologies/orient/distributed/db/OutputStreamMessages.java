@@ -1,6 +1,6 @@
 package com.orientechnologies.orient.distributed.db;
 
-import com.orientechnologies.orient.distributed.context.OSyncState;
+import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncState;
 import java.io.IOException;
 import java.io.OutputStream;
 

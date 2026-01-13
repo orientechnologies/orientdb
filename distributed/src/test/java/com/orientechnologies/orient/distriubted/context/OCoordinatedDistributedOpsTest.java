@@ -12,23 +12,23 @@ import com.orientechnologies.orient.core.transaction.OGroupId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
-import com.orientechnologies.orient.distributed.context.OCompleteAction;
-import com.orientechnologies.orient.distributed.context.OCoordinatedDistributedOps;
-import com.orientechnologies.orient.distributed.context.OCoordinatedDistributedOpsImpl;
-import com.orientechnologies.orient.distributed.context.ODatabaseState;
-import com.orientechnologies.orient.distributed.context.ODatabaseStateChangeListener;
 import com.orientechnologies.orient.distributed.context.ONetworkTopologyStore;
 import com.orientechnologies.orient.distributed.context.ONodeStateStore;
 import com.orientechnologies.orient.distributed.context.ONodeStateUpdated;
-import com.orientechnologies.orient.distributed.context.OOperationStart;
-import com.orientechnologies.orient.distributed.context.coordination.message.ONodeStateNetwork;
-import com.orientechnologies.orient.distributed.context.coordination.message.OTopologyStateNetwork;
+import com.orientechnologies.orient.distributed.context.coordination.OCoordinatedDistributedOps;
+import com.orientechnologies.orient.distributed.context.coordination.OCoordinatedDistributedOpsImpl;
+import com.orientechnologies.orient.distributed.context.coordination.OOperationStart;
+import com.orientechnologies.orient.distributed.context.coordination.action.OCompleteAction;
+import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabaseState;
+import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabaseStateChangeListener;
+import com.orientechnologies.orient.distributed.context.coordination.message.state.ONodeStateNetwork;
+import com.orientechnologies.orient.distributed.context.coordination.message.state.OTopologyStateNetwork;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import com.orientechnologies.orient.distributed.context.coordination.result.OInvalidSequential;
 import com.orientechnologies.orient.distributed.context.coordination.result.OQuorumNotReached;
-import com.orientechnologies.orient.distributed.context.topology.ODiscoverAction;
-import com.orientechnologies.orient.distributed.context.topology.ODiscoverAction.OAddNodeAction;
-import com.orientechnologies.orient.distributed.context.topology.OTopologyState;
+import com.orientechnologies.orient.distributed.context.coordination.topology.ODiscoverAction;
+import com.orientechnologies.orient.distributed.context.coordination.topology.ODiscoverAction.OAddNodeAction;
+import com.orientechnologies.orient.distributed.context.coordination.topology.OTopologyState;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
@@ -285,7 +285,7 @@ public class OCoordinatedDistributedOpsTest
         ((ODiscoverAction.OEstablishAction) action).candidates());
 
     assertEquals(ops.getNetworkMembers().size(), 2);
-    assertEquals(ops.getNetworkState().getTopology().getQuorum(), 2);
+    assertEquals(ops.getNetworkState().topology().getQuorum(), 2);
   }
 
   @Test
@@ -450,7 +450,7 @@ public class OCoordinatedDistributedOpsTest
     node1.load(new ONodeStateStore(Optional.empty(), Optional.of(initial), Optional.empty()));
     node1.discoverNode(nodeId1);
     assertEquals(node1.getNetworkMembers().size(), 3);
-    assertEquals(node1.getNetworkState().getTopology().getQuorum(), 2);
+    assertEquals(node1.getNetworkState().topology().getQuorum(), 2);
 
     OTopologyStateNetwork enstablis =
         new OTopologyStateNetwork(
@@ -566,7 +566,7 @@ public class OCoordinatedDistributedOpsTest
     assertTrue(exectedMerge instanceof ODiscoverAction.OMergeAction);
 
     ONodeStateNetwork mergeState = ops1.getNetworkState();
-    mergeState.getTopology().setMerge(true);
+    mergeState.topology().setMerge(true);
     ODiscoverAction addNode = ops2.nodeJoinStart(nodeId1, mergeState);
     assertTrue(addNode instanceof ODiscoverAction.OAddNodeAction);
     ODiscoverAction.OAddNodeAction add = (OAddNodeAction) addNode;

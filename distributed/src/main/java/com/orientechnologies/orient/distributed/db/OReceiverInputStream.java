@@ -3,7 +3,7 @@ package com.orientechnologies.orient.distributed.db;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.orient.distributed.context.OSyncState;
+import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncState;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.concurrent.ArrayBlockingQueue;

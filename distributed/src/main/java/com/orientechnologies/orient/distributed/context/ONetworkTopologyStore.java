@@ -5,7 +5,7 @@ import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.transaction.OGroupId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
-import com.orientechnologies.orient.distributed.context.topology.OTopologyState;
+import com.orientechnologies.orient.distributed.context.coordination.topology.OTopologyState;
 import java.util.Collection;
 import java.util.Set;
 import java.util.stream.Collectors;

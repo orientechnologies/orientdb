@@ -7,7 +7,7 @@ import java.util.concurrent.CountDownLatch;
 public class OWatchPromise {
 
   // TODO: timeout based cleanup
-  private Map<Long, CountDownLatch> map = new HashMap();
+  private Map<Long, CountDownLatch> map = new HashMap<>();
 
   public CountDownLatch watch(long sequence) {
     CountDownLatch latch = map.computeIfAbsent(sequence, (key) -> new CountDownLatch(1));

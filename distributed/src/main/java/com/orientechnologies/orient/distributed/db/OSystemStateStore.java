@@ -9,10 +9,10 @@ import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
-import com.orientechnologies.orient.distributed.context.ODatabasesTopologyStore;
 import com.orientechnologies.orient.distributed.context.ONetworkTopologyStore;
 import com.orientechnologies.orient.distributed.context.ONodeStateStore;
 import com.orientechnologies.orient.distributed.context.OStateStore;
+import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabasesTopologyStore;
 import java.io.IOException;
 import java.util.Optional;
 

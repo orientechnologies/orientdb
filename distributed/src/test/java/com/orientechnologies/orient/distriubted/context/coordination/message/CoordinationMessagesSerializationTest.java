@@ -10,22 +10,22 @@ import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
-import com.orientechnologies.orient.distributed.context.OSyncId;
 import com.orientechnologies.orient.distributed.context.coordination.message.OCanSync;
 import com.orientechnologies.orient.distributed.context.coordination.message.OConfirmOp;
 import com.orientechnologies.orient.distributed.context.coordination.message.OFailOp;
 import com.orientechnologies.orient.distributed.context.coordination.message.OFailPropose;
 import com.orientechnologies.orient.distributed.context.coordination.message.ONextBuffer;
 import com.orientechnologies.orient.distributed.context.coordination.message.ONodeFirstConnect;
-import com.orientechnologies.orient.distributed.context.coordination.message.ONodeStateNetwork;
 import com.orientechnologies.orient.distributed.context.coordination.message.OStartSync;
 import com.orientechnologies.orient.distributed.context.coordination.message.OStructuralMessage;
 import com.orientechnologies.orient.distributed.context.coordination.message.OSuccessPropose;
 import com.orientechnologies.orient.distributed.context.coordination.message.OSyncData;
 import com.orientechnologies.orient.distributed.context.coordination.message.OSyncRequest;
-import com.orientechnologies.orient.distributed.context.coordination.message.OTopologyStateNetwork;
+import com.orientechnologies.orient.distributed.context.coordination.message.state.ONodeStateNetwork;
+import com.orientechnologies.orient.distributed.context.coordination.message.state.OTopologyStateNetwork;
 import com.orientechnologies.orient.distributed.context.coordination.result.OInvalidSequential;
-import com.orientechnologies.orient.distributed.context.topology.OTopologyState;
+import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncId;
+import com.orientechnologies.orient.distributed.context.coordination.topology.OTopologyState;
 import com.orientechnologies.orient.distributed.db.OSyncMode;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -133,7 +133,7 @@ public class CoordinationMessagesSerializationTest {
     ONodeFirstConnect read = writeRead(succ);
 
     assertEquals(read.getNodeId(), nodeId);
-    OTopologyStateNetwork topology = read.getState().getTopology();
+    OTopologyStateNetwork topology = read.getState().topology();
     assertEquals(topology.getState(), OTopologyState.BOOT);
     assertEquals(topology.getVersion(), 0);
     assertTrue(topology.getMembers().isEmpty());
@@ -145,7 +145,7 @@ public class CoordinationMessagesSerializationTest {
     read = writeRead(succ);
 
     assertEquals(read.getNodeId(), nodeId);
-    OTopologyStateNetwork topology2 = read.getState().getTopology();
+    OTopologyStateNetwork topology2 = read.getState().topology();
     assertEquals(topology2.getState(), OTopologyState.ESTABLISHED);
     assertEquals(topology2.getVersion(), 10);
     assertEquals(topology2.getMembers(), nodes);

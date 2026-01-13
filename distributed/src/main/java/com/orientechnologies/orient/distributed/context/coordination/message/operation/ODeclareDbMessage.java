@@ -85,4 +85,16 @@ public class ODeclareDbMessage implements OOperationMessage {
   public int getMinimumQuorum() {
     return minimumQuorum;
   }
+
+  @Override
+  public String toString() {
+    return "Declaring database with name= "
+        + name
+        + ", id="
+        + id
+        + " nodes="
+        + partecipants
+        + ", minimumQuorum="
+        + minimumQuorum;
+  }
 }
