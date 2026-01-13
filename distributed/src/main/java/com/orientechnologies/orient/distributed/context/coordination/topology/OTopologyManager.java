@@ -153,44 +153,45 @@ public class OTopologyManager implements OTopologyEvents {
     return Optional.of(new OAlreadyEnstablishedTopologyState());
   }
 
-  public ODiscoverAction nodeJoinStart(ONodeId node, OTopologyStateNetwork externState) {
-    if (!this.groupId.equals(externState.getGroupId())) {
+  public ODiscoverAction nodeJoinStart(
+      ONodeId node, OTopologyStateNetwork externState, boolean merge) {
+    if (!this.groupId.equals(externState.groupId())) {
       // Different network ... for now ignore .. maybe crash, for sure warn;
       return new ODiscoverAction.ONoneAction();
     }
-    if (externState.getState() == OTopologyState.BOOT) {
+    if (externState.state() == OTopologyState.BOOT) {
       return nodeDiscovered(node);
     } else {
       synchronized (this) {
         // TODO: before applying check if any promise or running a coordination
-        if (externState.getMembers().contains(current)) {
+        if (externState.members().contains(current)) {
           if (state == OTopologyState.BOOT) {
-            this.state = externState.getState();
-            this.setMember(externState.getMembers());
-            this.version = externState.getVersion();
-            this.quorum = externState.getQuorum();
+            this.state = externState.state();
+            this.setMember(externState.members());
+            this.version = externState.version();
+            this.quorum = externState.quorum();
             return new ODiscoverAction.OApplyStateAction();
           } else if (this.quorum == 1 && this.members.size() == 1) {
-            this.setMember(externState.getMembers());
-            this.version = externState.getVersion();
-            this.quorum = externState.getQuorum();
+            this.setMember(externState.members());
+            this.version = externState.version();
+            this.quorum = externState.quorum();
             return new ODiscoverAction.OApplySequenceAction();
-          } else if (externState.getVersion() > version) {
-            this.setMember(externState.getMembers());
-            this.version = externState.getVersion();
-            this.quorum = externState.getQuorum();
+          } else if (externState.version() > version) {
+            this.setMember(externState.members());
+            this.version = externState.version();
+            this.quorum = externState.quorum();
             return new ODiscoverAction.OApplyStateAction();
-          } else if (externState.getVersion() != version) {
+          } else if (externState.version() != version) {
             // Other outdated just notify self state
             return new ODiscoverAction.ONotifySelf(Set.of(node));
           }
-        } else if (externState.isMerge() && !members.contains(node)) {
+        } else if (merge && !members.contains(node)) {
           return new OAddNodeAction(node, version + 1, true);
         } else if (this.quorum == 1) {
           /// Try to merge the state if possible
-          return new ODiscoverAction.OMergeAction(externState.getMembers());
+          return new ODiscoverAction.OMergeAction(externState.members());
         } else {
-          return new ODiscoverAction.ONotifySelf(externState.getMembers());
+          return new ODiscoverAction.ONotifySelf(externState.members());
         }
       }
     }

@@ -46,7 +46,7 @@ public interface OCoordinatedDistributedOps {
 
   ODiscoverAction discoverNode(ONodeId node);
 
-  ODiscoverAction nodeJoinStart(ONodeId node, ONodeStateNetwork state);
+  ODiscoverAction nodeJoinStart(ONodeId node, ONodeStateNetwork state, boolean merge);
 
   Optional<OAcceptResult> validateRegisterNode(ONodeId node, long version);
 

@@ -940,11 +940,11 @@ public class OrientDBDistributed extends OrientDBEmbedded
     return new ONetworkMessageStructural(this);
   }
 
-  public void firstConnect(ONodeId nodeId, ONodeStateNetwork state) {
+  public void firstConnect(ONodeId nodeId, ONodeStateNetwork state, boolean merge) {
     ONodeState localState = getNodeState();
     retryOperation(
         (ctx, complete) -> {
-          ODiscoverAction action = localState.getOps().nodeJoinStart(nodeId, state);
+          ODiscoverAction action = localState.getOps().nodeJoinStart(nodeId, state, merge);
           logger.debug("executing node join action %s", action);
           action.execute(this, complete, state);
           dumpNodeInfo();
@@ -1312,7 +1312,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
 
   public void sendFirstConnects(Set<ONodeId> nodes) {
     ONodeStateNetwork st = getNodeState().getNetworkState();
-    this.sendMessage(nodes, new ONodeFirstConnect(getNodeState().getNodeId(), st));
+    this.sendMessage(nodes, new ONodeFirstConnect(getNodeState().getNodeId(), st, false));
   }
 
   public List<String> getOnlineNodesNotLocal(String dbName) {
@@ -1375,8 +1375,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
     }
     if (dbs.isEmpty() || joinerNoDatabases) {
       ONodeStateNetwork st = getNodeState().getNetworkState();
-      st.topology().setMerge(true);
-      this.sendMessage(members, new ONodeFirstConnect(getNodeState().getNodeId(), st));
+      this.sendMessage(members, new ONodeFirstConnect(getNodeState().getNodeId(), st, true));
     } else {
       logger.warn("found join-able network, but can't merge into it with databases");
     }

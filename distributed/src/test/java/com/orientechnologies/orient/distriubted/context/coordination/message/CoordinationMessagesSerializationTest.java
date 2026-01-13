@@ -128,28 +128,28 @@ public class CoordinationMessagesSerializationTest {
     var sequenceStatus = new OTransactionSequenceStatus(new long[] {10, 20, 30});
 
     ONodeStateNetwork network = new ONodeStateNetwork(net, Collections.emptyList(), sequenceStatus);
-    ONodeFirstConnect succ = new ONodeFirstConnect(nodeId, network);
+    ONodeFirstConnect succ = new ONodeFirstConnect(nodeId, network, false);
 
     ONodeFirstConnect read = writeRead(succ);
 
     assertEquals(read.getNodeId(), nodeId);
     OTopologyStateNetwork topology = read.getState().topology();
-    assertEquals(topology.getState(), OTopologyState.BOOT);
-    assertEquals(topology.getVersion(), 0);
-    assertTrue(topology.getMembers().isEmpty());
+    assertEquals(topology.state(), OTopologyState.BOOT);
+    assertEquals(topology.version(), 0);
+    assertTrue(topology.members().isEmpty());
     Set<ONodeId> nodes = Set.of(newNodeId(), newNodeId());
     net = new OTopologyStateNetwork(groupId, OTopologyState.ESTABLISHED, nodes, 2, 10);
     network = new ONodeStateNetwork(net, Collections.emptyList(), sequenceStatus);
-    succ = new ONodeFirstConnect(nodeId, network);
+    succ = new ONodeFirstConnect(nodeId, network, false);
 
     read = writeRead(succ);
 
     assertEquals(read.getNodeId(), nodeId);
     OTopologyStateNetwork topology2 = read.getState().topology();
-    assertEquals(topology2.getState(), OTopologyState.ESTABLISHED);
-    assertEquals(topology2.getVersion(), 10);
-    assertEquals(topology2.getMembers(), nodes);
-    assertEquals(topology2.getGroupId(), groupId);
+    assertEquals(topology2.state(), OTopologyState.ESTABLISHED);
+    assertEquals(topology2.version(), 10);
+    assertEquals(topology2.members(), nodes);
+    assertEquals(topology2.groupId(), groupId);
   }
 
   @Test
