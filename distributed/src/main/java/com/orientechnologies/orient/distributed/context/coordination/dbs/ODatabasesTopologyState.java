@@ -141,7 +141,7 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
     if (dbTopology != null) {
       return dbTopology.promiseState(state, nodeId, version);
     } else {
-      return Optional.of(new ODatabaseMissing());
+      return Optional.of(new ODatabaseMissing(dbId));
     }
   }
 
@@ -355,7 +355,7 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
     if (db != null) {
       return db.promiseMember(nodes, version);
     } else {
-      return Optional.of(new ODatabaseMissing());
+      return Optional.of(new ODatabaseMissing(dbId));
     }
   }
 

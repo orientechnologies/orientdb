@@ -6,13 +6,7 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
-public class OQuorumNotReached implements OAcceptResult {
-
-  private Set<OAcceptResult> reasons;
-
-  public OQuorumNotReached(Set<OAcceptResult> reasons) {
-    this.reasons = reasons;
-  }
+public record OQuorumNotReached(Set<OAcceptResult> reasons) implements OAcceptResult {
 
   @Override
   public boolean executeRetry() {

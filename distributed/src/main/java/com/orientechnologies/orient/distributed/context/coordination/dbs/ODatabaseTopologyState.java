@@ -105,7 +105,7 @@ public class ODatabaseTopologyState {
   public synchronized Optional<OAcceptResult> promiseState(
       ODatabaseState state, ONodeId nodeId, long version) {
     if (!this.nodeStatus.containsKey(nodeId)) {
-      return Optional.of(new OMissingNode());
+      return Optional.of(new OMissingNode(nodeId));
     }
     if (this.version + 1 == version) {
       if (promised) {
@@ -332,7 +332,7 @@ public class ODatabaseTopologyState {
       List<OAddNodeInfo> nodes, long version) {
     for (var node : nodes) {
       if (this.nodeStatus.containsKey(node.node())) {
-        return Optional.of(new ONodeAlreadyPresent());
+        return Optional.of(new ONodeAlreadyPresent(this.id, node.node()));
       }
     }
     if (this.version + 1 == version) {

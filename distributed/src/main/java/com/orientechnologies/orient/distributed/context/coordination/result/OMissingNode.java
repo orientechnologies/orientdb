@@ -1,10 +1,12 @@
 package com.orientechnologies.orient.distributed.context.coordination.result;
 
+import com.orientechnologies.orient.core.transaction.ONodeId;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.text.MessageFormat;
 
-public class OMissingNode implements OAcceptResult {
+public record OMissingNode(ONodeId nodeId) implements OAcceptResult {
 
   @Override
   public boolean executeRetry() {
@@ -12,11 +14,14 @@ public class OMissingNode implements OAcceptResult {
   }
 
   public static OMissingNode fromNetwork(DataInput input) throws IOException {
-    return new OMissingNode();
+    var node = ONodeId.readNetwork(input);
+    return new OMissingNode(node);
   }
 
   @Override
-  public void serialize(DataOutput out) throws IOException {}
+  public void serialize(DataOutput out) throws IOException {
+    this.nodeId.writeNetwork(out);
+  }
 
   @Override
   public short getType() {
@@ -25,6 +30,6 @@ public class OMissingNode implements OAcceptResult {
 
   @Override
   public String toString() {
-    return "Missing Node";
+    return MessageFormat.format("Missing Node {0} ", nodeId);
   }
 }

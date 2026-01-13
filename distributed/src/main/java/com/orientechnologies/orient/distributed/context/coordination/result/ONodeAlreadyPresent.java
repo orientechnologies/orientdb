@@ -7,15 +7,7 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.text.MessageFormat;
 
-public class ONodeAlreadyPresent implements OAcceptResult {
-
-  private final ODatabaseId db;
-  private final ONodeId node;
-
-  public ONodeAlreadyPresent(ODatabaseId db, ONodeId node) {
-    this.db = db;
-    this.node = node;
-  }
+public record ONodeAlreadyPresent(ODatabaseId db, ONodeId node) implements OAcceptResult {
 
   @Override
   public void serialize(DataOutput out) throws IOException {

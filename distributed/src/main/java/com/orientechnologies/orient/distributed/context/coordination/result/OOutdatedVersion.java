@@ -5,15 +5,7 @@ import java.io.DataOutput;
 import java.io.IOException;
 import java.text.MessageFormat;
 
-public class OOutdatedVersion implements OAcceptResult {
-
-  private long proposed;
-  private long current;
-
-  public OOutdatedVersion(long current, long proposed) {
-    this.current = current;
-    this.proposed = proposed;
-  }
+public record OOutdatedVersion(long proposed, long current) implements OAcceptResult {
 
   @Override
   public boolean executeRetry() {

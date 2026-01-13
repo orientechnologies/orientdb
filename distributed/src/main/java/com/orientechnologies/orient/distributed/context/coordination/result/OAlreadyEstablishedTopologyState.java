@@ -4,7 +4,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-public class OAlreadyEstablishedTopologyState implements OAcceptResult {
+public record OAlreadyEstablishedTopologyState() implements OAcceptResult {
 
   public static OAlreadyEstablishedTopologyState fromNetwork(DataInput input) throws IOException {
     return new OAlreadyEstablishedTopologyState();

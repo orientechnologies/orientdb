@@ -4,15 +4,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-public class OInvalidSequential implements OAcceptResult {
-
-  private long expected;
-  private long received;
-
-  public OInvalidSequential(long expected, long received) {
-    this.expected = expected;
-    this.received = received;
-  }
+public record OInvalidSequential(long expected, long received) implements OAcceptResult {
 
   @Override
   public boolean consensusRetry() {

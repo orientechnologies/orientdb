@@ -4,7 +4,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-public class ONoTransactionSequencialAvailable implements OAcceptResult {
+public record ONoTransactionSequencialAvailable() implements OAcceptResult {
 
   @Override
   public boolean executeRetry() {

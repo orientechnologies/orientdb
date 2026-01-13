@@ -4,7 +4,7 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-public class OAlreadyPromised implements OAcceptResult {
+public record OAlreadyPromised() implements OAcceptResult {
 
   @Override
   public boolean consensusRetry() {

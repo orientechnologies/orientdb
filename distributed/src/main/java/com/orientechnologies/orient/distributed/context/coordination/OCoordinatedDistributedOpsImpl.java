@@ -329,7 +329,7 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
       Set<ONodeId> partecipants,
       int minimumQuorum) {
     if (!partecipants.contains(topology.getNodeId())) {
-      return Optional.of(new OMissingNode());
+      return Optional.of(new OMissingNode(topology.getNodeId()));
     }
     return this.databaseTopology.validateDeclare(
         promise, databaseId, database, partecipants, minimumQuorum);
