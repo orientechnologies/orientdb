@@ -22,4 +22,9 @@ public class ONoTransactionSequencialAvailable implements OAcceptResult {
   public short getType() {
     return 9;
   }
+
+  @Override
+  public String toString() {
+    return "No Transaction Sequential Available";
+  }
 }

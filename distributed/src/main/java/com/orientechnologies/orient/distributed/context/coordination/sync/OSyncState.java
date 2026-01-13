@@ -76,7 +76,7 @@ public class OSyncState {
   }
 
   public synchronized void receiveData(byte[] data, boolean finished) {
-    logger.debug("receving buffer size %d finished %b", data.length, finished);
+    logger.debug("receiving buffer size %d finished %b", data.length, finished);
     receiverStream.receive(data, finished);
     if (finished) {
       this.close = true;

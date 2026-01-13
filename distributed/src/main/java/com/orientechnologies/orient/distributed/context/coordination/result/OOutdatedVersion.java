@@ -3,6 +3,7 @@ package com.orientechnologies.orient.distributed.context.coordination.result;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.text.MessageFormat;
 
 public class OOutdatedVersion implements OAcceptResult {
 
@@ -38,6 +39,6 @@ public class OOutdatedVersion implements OAcceptResult {
 
   @Override
   public String toString() {
-    return "Outdated Version";
+    return MessageFormat.format("Outdated Version(proposed:{0} current:{1})", proposed, current);
   }
 }
