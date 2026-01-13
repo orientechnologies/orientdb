@@ -36,15 +36,15 @@ public class OStandardCompleteExecution implements OCompleteExecution {
       var delay = getRetryInfo().nextRetry();
       if (delay.isPresent()) {
         logger.info(
-            "retry whole operation for result %s delay %d",
-            result.toString(), delay.get().intValue());
+            "%s retry whole operation for result %s delay %d",
+            context.getNodeId(), result.toString(), delay.get().intValue());
         this.context.retryExecution(operation, this, delay.get());
       } else {
-        logger.debug("complete operation with %s", result.toString());
+        logger.debug("%s complete operation with %s", context.getNodeId(), result.toString());
         this.result.complete(result);
       }
     } else {
-      logger.debug("complete operation with %s", result.toString());
+      logger.debug("%s complete operation with %s", context.getNodeId(), result.toString());
       this.result.complete(result);
     }
   }

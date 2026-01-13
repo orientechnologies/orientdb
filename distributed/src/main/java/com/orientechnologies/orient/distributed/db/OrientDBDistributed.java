@@ -945,7 +945,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
     retryOperation(
         (ctx, complete) -> {
           ODiscoverAction action = localState.getOps().nodeJoinStart(nodeId, state, merge);
-          logger.debug("executing node join action %s", action);
+          logger.debug("%s executing node join action %s", getNodeId().toString(), action);
           action.execute(this, complete, state);
           dumpNodeInfo();
         });

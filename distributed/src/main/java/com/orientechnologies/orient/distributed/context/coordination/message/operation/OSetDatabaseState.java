@@ -81,7 +81,7 @@ public class OSetDatabaseState implements OOperationMessage {
 
   @Override
   public String toString() {
-    return "Set database  "
+    return "Set database "
         + dbId
         + " state for "
         + nodeId

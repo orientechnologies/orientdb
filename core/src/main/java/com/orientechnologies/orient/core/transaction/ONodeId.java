@@ -50,7 +50,7 @@ public class ONodeId {
 
   @Override
   public String toString() {
-    return "ONodeId [node=" + node + "]";
+    return "Node(" + node + ")";
   }
 
   public ODocument toDocument() {

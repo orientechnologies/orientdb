@@ -41,19 +41,24 @@ public final class OStandardCompleteAction implements OCompleteAction {
       var delay = execution.getRetryInfo().nextRetry();
       if (delay.isPresent()) {
         logger.info(
-            "retry coordination of %s for result %s, delay %d",
-            operation.toString(), result.toString(), delay.get());
+            "%s retry coordination of %s for result %s, delay %d",
+            context.getNodeId(), operation.toString(), result.toString(), delay.get());
         this.context.retryOperation(operation, this, delay.get());
       } else {
-        logger.info("failed coordination of %s with %s", operation.toString(), result.toString());
+        logger.info(
+            "%s failed coordination of %s with %s",
+            context.getNodeId(), operation.toString(), result.toString());
         this.execution.complete(result);
       }
     } else {
       if (result.isPresent()) {
-        logger.info("failed coordination of %s with %s", operation.toString(), result.toString());
+        logger.info(
+            "%s failed coordination of %s with %s",
+            context.getNodeId(), operation.toString(), result.toString());
       } else {
         logger.debug(
-            "complete coordination of %s with %s", operation.toString(), result.toString());
+            "%s complete coordination of %s with %s",
+            context.getNodeId(), operation.toString(), result.toString());
       }
       this.execution.complete(result);
     }
@@ -62,7 +67,7 @@ public final class OStandardCompleteAction implements OCompleteAction {
   @Override
   public void complete(
       OTransactionIdPromise promise, Set<ONodeId> nodes, Optional<OAcceptResult> result) {
-    logger.debug("complete coordination with %s", result.toString());
+    logger.debug("%s complete coordination with %s", context.getNodeId(), result.toString());
     this.execution.complete(result);
   }
 }

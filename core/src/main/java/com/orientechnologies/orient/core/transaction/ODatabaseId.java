@@ -45,7 +45,7 @@ public class ODatabaseId {
 
   @Override
   public String toString() {
-    return "ODatabaseId [id=" + id + "]";
+    return "Database(" + id + ")";
   }
 
   public static ODatabaseId readNetwork(DataInput input) throws IOException {
