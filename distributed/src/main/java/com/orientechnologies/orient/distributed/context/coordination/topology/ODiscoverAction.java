@@ -5,7 +5,7 @@ import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.distributed.context.coordination.message.OProposeOp;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OAddTopologyMember;
-import com.orientechnologies.orient.distributed.context.coordination.message.operation.OEnstablishTopology;
+import com.orientechnologies.orient.distributed.context.coordination.message.operation.OEstablishTopology;
 import com.orientechnologies.orient.distributed.context.coordination.message.state.ONodeStateNetwork;
 import com.orientechnologies.orient.distributed.context.coordination.result.ONoTransactionSequencialAvailable;
 import com.orientechnologies.orient.distributed.db.OCompleteExecution;
@@ -54,7 +54,7 @@ public sealed interface ODiscoverAction
     @Override
     public void execute(
         OrientDBDistributed context, OCompleteExecution execution, ONodeStateNetwork otherState) {
-      OEnstablishTopology operation = new OEnstablishTopology(groupId(), candidates());
+      OEstablishTopology operation = new OEstablishTopology(groupId(), candidates());
       Optional<OTransactionIdPromise> promise =
           context
               .getNodeState()

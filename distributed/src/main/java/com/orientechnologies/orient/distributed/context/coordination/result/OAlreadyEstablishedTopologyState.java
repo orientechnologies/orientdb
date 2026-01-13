@@ -4,10 +4,10 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-public class OAlreadyEnstablishedTopologyState implements OAcceptResult {
+public class OAlreadyEstablishedTopologyState implements OAcceptResult {
 
-  public static OAlreadyEnstablishedTopologyState fromNetwork(DataInput input) throws IOException {
-    return new OAlreadyEnstablishedTopologyState();
+  public static OAlreadyEstablishedTopologyState fromNetwork(DataInput input) throws IOException {
+    return new OAlreadyEstablishedTopologyState();
   }
 
   @Override
@@ -20,6 +20,6 @@ public class OAlreadyEnstablishedTopologyState implements OAcceptResult {
 
   @Override
   public String toString() {
-    return "Already Enstablished Topology State";
+    return "Already Established Topology State";
   }
 }

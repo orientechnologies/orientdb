@@ -19,7 +19,7 @@ public interface OAcceptResult {
     return switch (input.readShort()) {
       case 1 -> OInvalidSequential.fromNetwork(input);
       case 2 -> OQuorumNotReached.fromNetwork(input);
-      case 3 -> OAlreadyEnstablishedTopologyState.fromNetwork(input);
+      case 3 -> OAlreadyEstablishedTopologyState.fromNetwork(input);
       case 4 -> ODatabaseNameUsed.fromNetwork(input);
       case 5 -> OMissingNode.fromNetwork(input);
       case 6 -> OAlreadyPromised.fromNetwork(input);

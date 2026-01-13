@@ -60,11 +60,11 @@ public interface OCoordinatedDistributedOps {
 
   Optional<OTransactionIdPromise> startEstablish(Set<ONodeId> nodes, OCompleteAction action);
 
-  Optional<OAcceptResult> validateEnstablish(OGroupId networkId, Set<ONodeId> candidates);
+  Optional<OAcceptResult> validateEstablish(OGroupId networkId, Set<ONodeId> candidates);
 
-  Set<ONodeId> enstablish(OGroupId networkId, Set<ONodeId> candidates);
+  Set<ONodeId> establish(OGroupId networkId, Set<ONodeId> candidates);
 
-  void cancelEnstablish();
+  void cancelEstablish();
 
   // Methods for manage databases and node in the databases
 

@@ -17,7 +17,7 @@ import com.orientechnologies.orient.distributed.context.coordination.message.ope
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OAddTopologyMember;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.ODeclareDbMessage;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.ODropDbMessage;
-import com.orientechnologies.orient.distributed.context.coordination.message.operation.OEnstablishTopology;
+import com.orientechnologies.orient.distributed.context.coordination.message.operation.OEstablishTopology;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OOperationMessage;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OSetDatabaseState;
 import java.io.ByteArrayInputStream;
@@ -73,7 +73,7 @@ public class OOperationMessageTest {
   }
 
   @Test
-  public void proposeEnstablish() throws IOException {
+  public void proposeEstablish() throws IOException {
 
     var node1 = newNodeId();
     var node2 = newNodeId();
@@ -82,8 +82,8 @@ public class OOperationMessageTest {
     nodes.add(node1);
     nodes.add(node2);
 
-    OEnstablishTopology toTest = new OEnstablishTopology(groupId, nodes);
-    OEnstablishTopology operation = writeRead(toTest);
+    OEstablishTopology toTest = new OEstablishTopology(groupId, nodes);
+    OEstablishTopology operation = writeRead(toTest);
 
     assertTrue(operation.getCandidates().contains(node1));
     assertTrue(operation.getCandidates().contains(node2));

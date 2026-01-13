@@ -21,7 +21,7 @@ public interface OOperationMessage {
     return switch (input.readShort()) {
       case 1 -> ODropDbMessage.readNetwork(input);
       case 2 -> OAddTopologyMember.readNetwork(input);
-      case 3 -> OEnstablishTopology.readNetwork(input);
+      case 3 -> OEstablishTopology.readNetwork(input);
       case 4 -> ODeclareDbMessage.readNetwork(input);
       case 5 -> OSetDatabaseState.readNetwork(input);
       case 6 -> OAddDatabaseMember.readNetwork(input);

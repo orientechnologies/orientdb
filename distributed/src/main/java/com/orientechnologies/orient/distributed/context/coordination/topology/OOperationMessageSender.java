@@ -8,5 +8,5 @@ public interface OOperationMessageSender {
 
   void send(OOperationMessage message);
 
-  void enstablish(Set<ONodeId> nodes, OOperationMessage message);
+  void establish(Set<ONodeId> nodes, OOperationMessage message);
 }

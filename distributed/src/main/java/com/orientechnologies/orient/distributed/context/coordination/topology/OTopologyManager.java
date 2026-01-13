@@ -5,7 +5,7 @@ import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.distributed.context.ONetworkTopologyStore;
 import com.orientechnologies.orient.distributed.context.coordination.message.state.OTopologyStateNetwork;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
-import com.orientechnologies.orient.distributed.context.coordination.result.OAlreadyEnstablishedTopologyState;
+import com.orientechnologies.orient.distributed.context.coordination.result.OAlreadyEstablishedTopologyState;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAlreadyPromised;
 import com.orientechnologies.orient.distributed.context.coordination.result.OOutdatedVersion;
 import com.orientechnologies.orient.distributed.context.coordination.topology.ODiscoverAction.OAddNodeAction;
@@ -124,7 +124,7 @@ public class OTopologyManager implements OTopologyEvents {
     return members;
   }
 
-  public synchronized Set<ONodeId> finalizeEnstablish(OGroupId groupId, Set<ONodeId> candidates) {
+  public synchronized Set<ONodeId> finalizeEstablish(OGroupId groupId, Set<ONodeId> candidates) {
     assert this.groupId.equals(groupId);
     this.state = OTopologyState.ESTABLISHED;
     setMember(candidates);
@@ -141,7 +141,7 @@ public class OTopologyManager implements OTopologyEvents {
     this.members = Collections.unmodifiableSet(new HashSet<ONodeId>(members));
   }
 
-  public synchronized Optional<OAcceptResult> validateEnstablish(
+  public synchronized Optional<OAcceptResult> validateEstablish(
       OGroupId groupId, Set<ONodeId> candidates) {
     if (this.promise) {
       return Optional.of(new OAlreadyPromised());
@@ -150,7 +150,7 @@ public class OTopologyManager implements OTopologyEvents {
       promise = true;
       return Optional.empty();
     }
-    return Optional.of(new OAlreadyEnstablishedTopologyState());
+    return Optional.of(new OAlreadyEstablishedTopologyState());
   }
 
   public ODiscoverAction nodeJoinStart(
@@ -219,7 +219,7 @@ public class OTopologyManager implements OTopologyEvents {
     this.promise = false;
   }
 
-  public synchronized void cancelEnstablish() {
+  public synchronized void cancelEstablish() {
     this.promise = false;
   }
 

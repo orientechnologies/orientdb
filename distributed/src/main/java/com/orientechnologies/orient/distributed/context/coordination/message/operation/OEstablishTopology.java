@@ -12,39 +12,39 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
-public class OEnstablishTopology implements OOperationMessage {
+public class OEstablishTopology implements OOperationMessage {
 
   private Set<ONodeId> candidates;
   private OGroupId groupId;
 
-  public OEnstablishTopology(OGroupId groupId, Set<ONodeId> candidates) {
+  public OEstablishTopology(OGroupId groupId, Set<ONodeId> candidates) {
     this.candidates = candidates;
     this.groupId = groupId;
   }
 
   @Override
   public void apply(OrientDBDistributed ctx, OTransactionIdPromise promise) {
-    ctx.enstablish(groupId, candidates);
+    ctx.establish(groupId, candidates);
   }
 
   @Override
   public Optional<OAcceptResult> validate(OrientDBDistributed ctx, OTransactionIdPromise promise) {
-    return ctx.getNodeState().getOps().validateEnstablish(groupId, candidates);
+    return ctx.getNodeState().getOps().validateEstablish(groupId, candidates);
   }
 
   @Override
   public void cancel(OrientDBDistributed ctx, OTransactionIdPromise promise) {
-    ctx.getNodeState().getOps().cancelEnstablish();
+    ctx.getNodeState().getOps().cancelEstablish();
   }
 
-  public static OEnstablishTopology readNetwork(DataInput input) throws IOException {
+  public static OEstablishTopology readNetwork(DataInput input) throws IOException {
     OGroupId networkId = OGroupId.readNetwork(input);
     int size = input.readInt();
     Set<ONodeId> candidates = new HashSet<>();
     while (size-- > 0) {
       candidates.add(ONodeId.readNetwork(input));
     }
-    return new OEnstablishTopology(networkId, candidates);
+    return new OEstablishTopology(networkId, candidates);
   }
 
   @Override

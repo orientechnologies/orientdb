@@ -247,15 +247,15 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   }
 
   @Override
-  public Set<ONodeId> enstablish(OGroupId groupId, Set<ONodeId> candidates) {
-    Set<ONodeId> result = this.topology.finalizeEnstablish(groupId, candidates);
+  public Set<ONodeId> establish(OGroupId groupId, Set<ONodeId> candidates) {
+    Set<ONodeId> result = this.topology.finalizeEstablish(groupId, candidates);
     notifyUpdate();
     return result;
   }
 
   @Override
-  public Optional<OAcceptResult> validateEnstablish(OGroupId groupId, Set<ONodeId> candidates) {
-    return this.topology.validateEnstablish(groupId, candidates);
+  public Optional<OAcceptResult> validateEstablish(OGroupId groupId, Set<ONodeId> candidates) {
+    return this.topology.validateEstablish(groupId, candidates);
   }
 
   @Override
@@ -318,8 +318,8 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   }
 
   @Override
-  public void cancelEnstablish() {
-    this.topology.cancelEnstablish();
+  public void cancelEstablish() {
+    this.topology.cancelEstablish();
   }
 
   public Optional<OAcceptResult> validateDeclareDatabase(

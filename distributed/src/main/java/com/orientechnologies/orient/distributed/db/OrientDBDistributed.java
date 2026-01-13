@@ -1302,8 +1302,8 @@ public class OrientDBDistributed extends OrientDBEmbedded
     return plugin.getAvailableNodes(databaseName);
   }
 
-  public void enstablish(OGroupId groupId, Set<ONodeId> candidates) {
-    Set<ONodeId> allNodes = getNodeState().getOps().enstablish(groupId, candidates);
+  public void establish(OGroupId groupId, Set<ONodeId> candidates) {
+    Set<ONodeId> allNodes = getNodeState().getOps().establish(groupId, candidates);
     for (ONodeId node : allNodes) {
       sendFirstConnect(node);
     }
