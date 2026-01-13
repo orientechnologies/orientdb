@@ -42,7 +42,7 @@ public class OTopologyManager implements OTopologyEvents {
         return new OEstablishAction(groupId, new HashSet<>(candidates));
       }
     } else if (!hasMember(node)) {
-      return new OAddNodeAction(node, version + 1);
+      return new OAddNodeAction(node, version + 1, false);
     }
     return new ONoneAction();
   }
@@ -185,7 +185,7 @@ public class OTopologyManager implements OTopologyEvents {
             return new ODiscoverAction.ONotifySelf(Set.of(node));
           }
         } else if (externState.isMerge() && !members.contains(node)) {
-          return new OAddNodeAction(node, version + 1);
+          return new OAddNodeAction(node, version + 1, true);
         } else if (this.quorum == 1) {
           /// Try to merge the state if possible
           return new ODiscoverAction.OMergeAction(externState.getMembers());

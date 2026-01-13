@@ -68,12 +68,22 @@ public sealed interface ODiscoverAction
     }
   }
 
-  record OAddNodeAction(ONodeId node, long version) implements ODiscoverAction {
+  record OAddNodeAction(ONodeId node, long version, boolean merge) implements ODiscoverAction {
 
     @Override
     public void execute(
         OrientDBDistributed context, OCompleteExecution exection, ONodeStateNetwork otherState) {
       context.coordinatedOperation(new OAddTopologyMember(version(), node()), exection);
+    }
+
+    @Override
+    public boolean applyDatabaseState() {
+      return merge;
+    }
+
+    @Override
+    public boolean applySequenceState() {
+      return merge;
     }
   }
 

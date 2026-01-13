@@ -1368,15 +1368,17 @@ public class OrientDBDistributed extends OrientDBEmbedded
   public void sendMergeOperation(
       Set<ONodeId> members, OCompleteExecution execution, ONodeStateNetwork otherState) {
     Set<ODatabaseId> dbs = new HashSet<ODatabaseId>(nodeState.getDatabaseTopology().getDatabases());
+    boolean joinerNoDatabases = true;
     if (otherState != null) {
+      joinerNoDatabases = otherState.getDatabases().isEmpty();
       dbs.removeAll(otherState.getDatabases().stream().map((x) -> x.getId()).toList());
     }
-    if (dbs.isEmpty()) {
+    if (dbs.isEmpty() || joinerNoDatabases) {
       ONodeStateNetwork st = getNodeState().getNetworkState();
       st.getTopology().setMerge(true);
       this.sendMessage(members, new ONodeFirstConnect(getNodeState().getNodeId(), st));
     } else {
-      logger.warn("found joinable network, but can't merge into it with databases");
+      logger.warn("found join-able network, but can't merge into it with databases");
     }
   }
 
