@@ -1,7 +1,7 @@
 package com.orientechnologies.orient.distributed.db;
 
-import com.orientechnologies.orient.distributed.context.coordination.action.ORetryInfo;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
+import com.orientechnologies.orient.distributed.context.retryable.ORetryInfo;
 import java.util.Optional;
 
 public interface OCompleteExecution {

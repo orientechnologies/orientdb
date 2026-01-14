@@ -31,10 +31,8 @@ import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import com.orientechnologies.orient.distributed.context.ONodeState;
-import com.orientechnologies.orient.distributed.context.ORetryOperation;
 import com.orientechnologies.orient.distributed.context.coordination.OCoordinatedDistributedOps;
 import com.orientechnologies.orient.distributed.context.coordination.action.OCompleteAction;
-import com.orientechnologies.orient.distributed.context.coordination.action.ORetryInfo;
 import com.orientechnologies.orient.distributed.context.coordination.action.OStandardCompleteAction;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabaseState;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabaseStateChangeListener;
@@ -48,12 +46,8 @@ import com.orientechnologies.orient.distributed.context.coordination.message.OSt
 import com.orientechnologies.orient.distributed.context.coordination.message.OStructuralMessage;
 import com.orientechnologies.orient.distributed.context.coordination.message.OSyncData;
 import com.orientechnologies.orient.distributed.context.coordination.message.OSyncRequest;
-import com.orientechnologies.orient.distributed.context.coordination.message.operation.OAddDatabaseMember;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OAddNodeInfo;
-import com.orientechnologies.orient.distributed.context.coordination.message.operation.ODeclareDbMessage;
-import com.orientechnologies.orient.distributed.context.coordination.message.operation.ODropDbMessage;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OOperationMessage;
-import com.orientechnologies.orient.distributed.context.coordination.message.operation.OSetDatabaseState;
 import com.orientechnologies.orient.distributed.context.coordination.message.state.ONodeStateNetwork;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import com.orientechnologies.orient.distributed.context.coordination.result.ONoTransactionSequencialAvailable;
@@ -61,6 +55,13 @@ import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncI
 import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncInfo;
 import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncState;
 import com.orientechnologies.orient.distributed.context.coordination.topology.ODiscoverAction;
+import com.orientechnologies.orient.distributed.context.retryable.OAddDatabaseMembersRetryOperation;
+import com.orientechnologies.orient.distributed.context.retryable.ODeclareDatabaseRetryOperation;
+import com.orientechnologies.orient.distributed.context.retryable.ODiscoverActionRetryOperation;
+import com.orientechnologies.orient.distributed.context.retryable.ODropRetryOperation;
+import com.orientechnologies.orient.distributed.context.retryable.ORetryInfo;
+import com.orientechnologies.orient.distributed.context.retryable.ORetryOperation;
+import com.orientechnologies.orient.distributed.context.retryable.OSetDatabaseStateRetryOperation;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerAware;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
@@ -182,7 +183,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
     dumpNodeInfo();
   }
 
-  private void dumpNodeInfo() {
+  public void dumpNodeInfo() {
     logger.info("current status:\n%s", ODistributedOutput.formatServerStatus(this));
   }
 
@@ -202,7 +203,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
           ODatabaseDocumentEmbedded db = openNoAuthorization(databaseName);
           if (this.nodeState.getDatabaseTopology().getDatabaseId(databaseName).isEmpty()) {
             declareDatabaseFlow(databaseName, db.getStorage().getDatbaseId()).get();
-            setDatabaseStatus(db.getStorage().getDatbaseId(), getNodeId(), ODatabaseState.Online);
+            setDatabaseState(db.getStorage().getDatbaseId(), getNodeId(), ODatabaseState.Online);
           }
           db.close();
         } catch (Exception e) {
@@ -465,11 +466,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   private void dropFlow(String name) {
-    Future<Optional<OAcceptResult>> droped =
-        retryOperation(
-            (ctx, complete) -> {
-              coordinatedOperation(new ODropDbMessage(name), complete);
-            });
+    Future<Optional<OAcceptResult>> droped = retryOperation(new ODropRetryOperation(name));
     try {
       droped.get();
     } catch (InterruptedException | ExecutionException e) {
@@ -695,7 +692,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
       ODatabaseTask<Void> createOps) {
     declareDatabaseFlow(name, dbId);
     super.create(name, user, password, type, dbId, config, createOps);
-    setDatabaseStatus(dbId, getNodeState().getNodeId(), ODatabaseState.Online);
+    setDatabaseState(dbId, getNodeState().getNodeId(), ODatabaseState.Online);
     try {
       getNodeState().getOps().waitOnlineQuorum(dbId, Optional.empty());
     } catch (InterruptedException e) {
@@ -704,11 +701,8 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   private Future<Optional<OAcceptResult>> declareDatabaseFlow(String name, ODatabaseId dbId) {
-    return retryOperation(
-        (ctx, cmplete) -> {
-          Set<ONodeId> currentMembers = getNodeState().getNetworkMembers();
-          coordinatedOperation(new ODeclareDbMessage(name, dbId, currentMembers, 0), cmplete);
-        });
+    var members = getNodeState().getNetworkMembers();
+    return retryOperation(new ODeclareDatabaseRetryOperation(dbId, name, members));
   }
 
   public Future<Optional<OAcceptResult>> retryOperation(ORetryOperation operation) {
@@ -728,15 +722,11 @@ public class OrientDBDistributed extends OrientDBEmbedded
         delay);
   }
 
-  private void setDatabaseStatus(ODatabaseId dbId, ONodeId node, ODatabaseState state) {
-    retryOperation(
-        (ctx, complete) -> {
-          long version = this.getNodeState().getDatabaseTopology().getDatabaseVersion(dbId);
-          coordinatedOperation(new OSetDatabaseState(dbId, node, state, version + 1), complete);
-        });
+  private void setDatabaseState(ODatabaseId dbId, ONodeId node, ODatabaseState state) {
+    retryOperation(new OSetDatabaseStateRetryOperation(node, dbId, state));
   }
 
-  private ODatabaseState getDatabaseStatus(ODatabaseId dbId, ONodeId node) {
+  private ODatabaseState getDatabaseState(ODatabaseId dbId, ONodeId node) {
     return this.getNodeState().getDatabaseTopology().getState(dbId, node);
   }
 
@@ -890,11 +880,6 @@ public class OrientDBDistributed extends OrientDBEmbedded
     return messageService;
   }
 
-  public void distributedOperation(OOperationMessage operation, OCompleteExecution retry) {
-    OStandardCompleteAction action = newCompleteAction(operation, retry);
-    sendOperation(operation, action);
-  }
-
   public OStandardCompleteAction newCompleteAction(
       OOperationMessage operation, OCompleteExecution execution) {
     return new OStandardCompleteAction(this, operation, execution);
@@ -946,14 +931,9 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   public void firstConnect(ONodeId nodeId, ONodeStateNetwork state, boolean merge) {
-    ONodeState localState = getNodeState();
-    retryOperation(
-        (ctx, complete) -> {
-          ODiscoverAction action = localState.getOps().nodeJoinStart(nodeId, state, merge);
-          logger.debug("%s executing node join action %s", getNodeId().toString(), action);
-          action.execute(this, complete, state);
-          dumpNodeInfo();
-        });
+    ODiscoverAction action = getNodeState().getOps().nodeJoinStart(nodeId, state, merge);
+    logger.debugNode(getNodeId(), "executing node join action %s", action);
+    retryOperation(new ODiscoverActionRetryOperation(state, action));
   }
 
   public void connected(ONodeId node, String url, String user, String password) {
@@ -973,6 +953,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
     getNodeState().getOps().registerNode(node, version);
     // This should make aware of the added node of the fact it joined the network
     sendFirstConnect(node);
+    autoDeployIfNeed();
   }
 
   public void cancelRegisterPromise() {
@@ -1090,7 +1071,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
 
         case Delta -> deltaSync(dbName, input, conf);
       }
-      setDatabaseStatus(state.getDbId(), state.getReceiver(), ODatabaseState.Online);
+      setDatabaseState(state.getDbId(), state.getReceiver(), ODatabaseState.Online);
     } catch (IOException e) {
       logger.debug("Error on close of sync", e);
     } finally {
@@ -1219,7 +1200,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
   public void setDatabaseStatus(ONodeId nodeId, String dbName, DB_STATUS status) {
     Optional<ODatabaseId> dbID = getNodeState().getDatabaseTopology().getDatabaseId(dbName);
     if (dbID.isPresent()) {
-      setDatabaseStatus(dbID.get(), nodeId, ODatabaseState.from(status));
+      setDatabaseState(dbID.get(), nodeId, ODatabaseState.from(status));
     } else {
       logger.warn("setting database status to %s, for not defined db %s", status, dbName);
     }
@@ -1230,7 +1211,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
   public void setDatabaseStatus(String dbName, DB_STATUS status) {
     Optional<ODatabaseId> dbID = getNodeState().getDatabaseTopology().getDatabaseId(dbName);
     if (dbID.isPresent()) {
-      setDatabaseStatus(dbID.get(), getNodeId(), ODatabaseState.from(status));
+      setDatabaseState(dbID.get(), getNodeId(), ODatabaseState.from(status));
     } else {
       logger.warn("setting database status to %s, for not defined db %s", status, dbName);
     }
@@ -1240,7 +1221,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
   public DB_STATUS getDatabaseStatus(ONodeId nodeId, String dbName) {
     Optional<ODatabaseId> dbID = getNodeState().getDatabaseTopology().getDatabaseId(dbName);
     if (dbID.isPresent()) {
-      ODatabaseState status = getDatabaseStatus(dbID.get(), nodeId);
+      ODatabaseState status = getDatabaseState(dbID.get(), nodeId);
       if (status != null) {
         return status.toSatus();
       }
@@ -1257,7 +1238,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
   public DB_STATUS getDatabaseStatus(String dbName) {
     Optional<ODatabaseId> dbID = getNodeState().getDatabaseTopology().getDatabaseId(dbName);
     if (dbID.isPresent()) {
-      ODatabaseState status = getDatabaseStatus(dbID.get(), getNodeId());
+      ODatabaseState status = getDatabaseState(dbID.get(), getNodeId());
       if (status != null) {
         return status.toSatus();
       } else {
@@ -1406,12 +1387,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
         }
       }
       if (!nodes.isEmpty()) {
-        retryOperation(
-            (ctx, op) -> {
-              coordinatedOperation(
-                  new OAddDatabaseMember(databaseTopology.getDatabaseVersion(id) + 1, id, nodes),
-                  op);
-            });
+        retryOperation(new OAddDatabaseMembersRetryOperation(nodes, id));
       }
     }
   }

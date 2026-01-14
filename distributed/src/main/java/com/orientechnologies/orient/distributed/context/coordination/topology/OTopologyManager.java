@@ -42,7 +42,7 @@ public class OTopologyManager implements OTopologyEvents {
         return new OEstablishAction(groupId, new HashSet<>(candidates));
       }
     } else if (!hasMember(node)) {
-      return new OAddNodeAction(node, version + 1, false);
+      return new OAddNodeAction(node, false);
     }
     return new ONoneAction();
   }
@@ -186,11 +186,12 @@ public class OTopologyManager implements OTopologyEvents {
             return new ODiscoverAction.ONotifySelf(Set.of(node));
           }
         } else if (merge && !members.contains(node)) {
-          return new OAddNodeAction(node, version + 1, true);
+          return new OAddNodeAction(node, false);
         } else if (this.quorum == 1) {
           /// Try to merge the state if possible
           return new ODiscoverAction.OMergeAction(externState.members());
         } else {
+          // TODO: Optimize this notifying only missing members
           return new ODiscoverAction.ONotifySelf(externState.members());
         }
       }
@@ -229,5 +230,9 @@ public class OTopologyManager implements OTopologyEvents {
 
   public ONodeId getNodeId() {
     return current;
+  }
+
+  public long nextVersion() {
+    return getVersion() + 1;
   }
 }

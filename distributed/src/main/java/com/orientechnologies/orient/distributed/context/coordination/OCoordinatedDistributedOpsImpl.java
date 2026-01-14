@@ -335,6 +335,14 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
     this.databaseTopology.cancelPomise(promise, dbId, database);
   }
 
+  public synchronized long nextTopologyVersion() {
+    return this.topology.nextVersion();
+  }
+
+  public synchronized long nextDatabaseVersion(ODatabaseId Id) {
+    return this.databaseTopology.getDatabaseVersion(Id) + 1;
+  }
+
   public ODatabasesTopologyState getDatabaseTopology() {
     return databaseTopology;
   }

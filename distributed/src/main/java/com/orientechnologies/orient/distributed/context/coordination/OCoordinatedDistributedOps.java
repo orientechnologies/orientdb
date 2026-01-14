@@ -129,6 +129,10 @@ public interface OCoordinatedDistributedOps {
 
   ODatabasesTopology getDatabaseTopology();
 
+  long nextTopologyVersion();
+
+  long nextDatabaseVersion(ODatabaseId Id);
+
   Set<ONodeId> getNetworkMembers();
 
   ONodeStateNetwork getNetworkState();

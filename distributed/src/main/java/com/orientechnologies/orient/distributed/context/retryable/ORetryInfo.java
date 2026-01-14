@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.distributed.context.coordination.action;
+package com.orientechnologies.orient.distributed.context.retryable;
 
 import java.util.Optional;
 import java.util.Random;

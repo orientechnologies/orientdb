@@ -84,12 +84,13 @@ public sealed interface ODiscoverAction
     }
   }
 
-  record OAddNodeAction(ONodeId node, long version, boolean merge) implements ODiscoverAction {
+  record OAddNodeAction(ONodeId node, boolean merge) implements ODiscoverAction {
 
     @Override
     public void execute(
         OrientDBDistributed context, OCompleteExecution exection, ONodeStateNetwork otherState) {
-      context.coordinatedOperation(new OAddTopologyMember(version(), node()), exection);
+      long version = context.getNodeState().getOps().nextTopologyVersion();
+      context.coordinatedOperation(new OAddTopologyMember(version, node()), exection);
     }
 
     @Override
@@ -121,7 +122,9 @@ public sealed interface ODiscoverAction
 
     @Override
     public void execute(
-        OrientDBDistributed context, OCompleteExecution execution, ONodeStateNetwork otherState) {}
+        OrientDBDistributed context, OCompleteExecution execution, ONodeStateNetwork otherState) {
+      context.autoDeployIfNeed();
+    }
 
     @Override
     public ODiscoverAction checkAndApply(

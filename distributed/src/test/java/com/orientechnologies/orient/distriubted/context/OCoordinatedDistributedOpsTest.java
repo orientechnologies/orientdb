@@ -309,10 +309,9 @@ public class OCoordinatedDistributedOpsTest
     assertEquals(ops.getNetworkMembers().size(), 2);
     ONodeId nodeId2 = newRandomNodeId();
     action = ops.nodeJoinStart(nodeId2, bootNetworkState(groupId), false);
+    long version = ops.nextTopologyVersion();
     assertTrue(action instanceof ODiscoverAction.OAddNodeAction);
-    ops.registerNode(
-        ((ODiscoverAction.OAddNodeAction) action).node(),
-        ((ODiscoverAction.OAddNodeAction) action).version());
+    ops.registerNode(((ODiscoverAction.OAddNodeAction) action).node(), version);
     assertEquals(ops.getNetworkMembers().size(), 3);
   }
 
@@ -344,9 +343,9 @@ public class OCoordinatedDistributedOpsTest
     assertEquals(node2.getNetworkMembers().size(), 2);
 
     action = node1.nodeJoinStart(nodeId3, bootNetworkState(groupId), false);
+    long addVersion = node1.nextTopologyVersion();
     assertTrue(action instanceof ODiscoverAction.OAddNodeAction);
     var addNode = ((ODiscoverAction.OAddNodeAction) action).node();
-    var addVersion = ((ODiscoverAction.OAddNodeAction) action).version();
     assertTrue(addVersion > 0);
     var res = node1.validateRegisterNode(addNode, addVersion);
     assertTrue(res.isEmpty());
@@ -391,7 +390,7 @@ public class OCoordinatedDistributedOpsTest
     assertTrue(action instanceof ODiscoverAction.OAddNodeAction);
 
     var addNode = ((ODiscoverAction.OAddNodeAction) action).node();
-    var addVersion = ((ODiscoverAction.OAddNodeAction) action).version() - 1;
+    long addVersion = node1.nextTopologyVersion() - 1;
 
     var res = node1.validateRegisterNode(addNode, addVersion);
     assertFalse(res.isEmpty());
@@ -567,10 +566,11 @@ public class OCoordinatedDistributedOpsTest
 
     ONodeStateNetwork mergeState = ops1.getNetworkState();
     ODiscoverAction addNode = ops2.nodeJoinStart(nodeId1, mergeState, true);
+    long version = ops2.nextTopologyVersion();
     assertTrue(addNode instanceof ODiscoverAction.OAddNodeAction);
     ODiscoverAction.OAddNodeAction add = (OAddNodeAction) addNode;
-    ops2.validateRegisterNode(add.node(), add.version());
-    ops2.registerNode(add.node(), add.version());
+    ops2.validateRegisterNode(add.node(), version);
+    ops2.registerNode(add.node(), version);
     assertEquals(ops2.getNetworkMembers().size(), 2);
     ops1.nodeJoinStart(nodeId2, ops2.getNetworkState(), false);
     assertEquals(ops1.getNetworkMembers().size(), 2);
