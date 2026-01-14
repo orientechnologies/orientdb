@@ -2,6 +2,7 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
+import com.orientechnologies.orient.core.transaction.ONodeId;
 
 public interface OLoggerDistributed extends OLogger {
 
@@ -96,6 +97,22 @@ public interface OLoggerDistributed extends OLogger {
   void errorNode(String localNode, String message, Object... additionalArgs);
 
   void errorNode(String localNode, String message, Throwable exception, Object... additionalArgs);
+
+  void debugNode(ONodeId node, String message, Object... additionalArgs);
+
+  void debugNode(ONodeId node, String message, Throwable exception, Object... additionalArgs);
+
+  void infoNode(ONodeId node, String message, Object... additionalArgs);
+
+  void infoNode(ONodeId node, String message, Throwable exception, Object... additionalArgs);
+
+  void warnNode(ONodeId node, String message, Object... additionalArgs);
+
+  void warnNode(ONodeId node, String message, Throwable exception, Object... additionalArgs);
+
+  void errorNode(ONodeId node, String message, Object... additionalArgs);
+
+  void errorNode(ONodeId node, String message, Throwable exception, Object... additionalArgs);
 
   static OLoggerDistributed logger(Class<?> cl) {
     return from(OLogManager.instance().logger(cl));
