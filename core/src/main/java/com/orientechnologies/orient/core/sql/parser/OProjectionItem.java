@@ -16,7 +16,11 @@ import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSetReady;
 import com.orientechnologies.orient.core.sql.executor.stream.OExecutionStream;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class OProjectionItem extends SimpleNode {
@@ -177,7 +181,7 @@ public class OProjectionItem extends SimpleNode {
     }
     if (nestedProjection != null) {
       if (result instanceof ODocument && ((ODocument) result).isEmpty()) {
-        ((ODocument) result).load(null);
+        ctx.getDatabase().load(((ODocument) result), null);
       }
       result = nestedProjection.apply(expression, result, ctx);
     }

@@ -87,6 +87,7 @@ public class OEdgeIterator extends OLazyWrapperIterator<OEdge> {
     }
 
     if (!(record instanceof OElement)) {
+      var db = ODatabaseRecordThreadLocal.instance().get();
       // SKIP IT
       logger.warn(
           "Found a record (%s) that is not an edge. Source vertex : %s, Target vertex : %s,"
@@ -94,7 +95,7 @@ public class OEdgeIterator extends OLazyWrapperIterator<OEdge> {
           rec,
           sourceVertex != null ? sourceVertex.getIdentity() : null,
           targetVertex != null ? targetVertex.getIdentity() : null,
-          record.getDatabase().getURL());
+          db.getURL());
       return null;
     }
 

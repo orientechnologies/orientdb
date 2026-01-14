@@ -490,6 +490,7 @@ public class ORole extends OIdentity implements OSecurityRole {
   }
 
   public void reload() {
-    this.document.reload();
+    var db = ODatabaseRecordThreadLocal.instance().get();
+    this.document = (ODocument) db.reload(this.document);
   }
 }

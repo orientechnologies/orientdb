@@ -250,9 +250,7 @@ public abstract class OSequence {
   }
 
   public void save() {
-    ODocument doc = tlDocument.get();
-    doc = doc.save();
-    onUpdate(doc);
+    save(getDatabase());
   }
 
   public void save(ODatabaseDocument database) {

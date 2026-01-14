@@ -1214,9 +1214,8 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
   public static byte[] getRecordBytes(OClientConnection connection, final ORecord iRecord) {
     final byte[] stream;
     String dbSerializerName = null;
-    if (ODatabaseRecordThreadLocal.instance().getIfDefined() != null)
-      dbSerializerName =
-          ((ODatabaseDocumentInternal) iRecord.getDatabase()).getSerializer().toString();
+    ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
+    if (db != null) dbSerializerName = db.getSerializer().toString();
     String name = connection.getData().getSerializationImpl();
     if (ORecordInternal.getRecordType(iRecord) == ODocument.RECORD_TYPE
         && (dbSerializerName == null || !dbSerializerName.equals(name))) {

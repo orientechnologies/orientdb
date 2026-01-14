@@ -82,9 +82,8 @@ public class OMessageHelper {
 
     final byte[] stream;
     String dbSerializerName = null;
-    if (ODatabaseRecordThreadLocal.instance().getIfDefined() != null)
-      dbSerializerName =
-          ((ODatabaseDocumentInternal) iRecord.getDatabase()).getSerializer().toString();
+    ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
+    if (db != null) dbSerializerName = db.getSerializer().toString();
     if (ORecordInternal.getRecordType(iRecord) == ODocument.RECORD_TYPE
         && (dbSerializerName == null || !dbSerializerName.equals(serializer.toString()))) {
       ((ODocument) iRecord).deserializeFields();
