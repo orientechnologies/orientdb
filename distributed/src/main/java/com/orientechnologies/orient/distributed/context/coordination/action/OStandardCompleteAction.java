@@ -40,25 +40,25 @@ public final class OStandardCompleteAction implements OCompleteAction {
     if (result.isPresent() && result.get().consensusRetry()) {
       var delay = execution.getRetryInfo().nextRetry();
       if (delay.isPresent()) {
-        logger.info(
-            "%s retry coordination of %s for result %s, delay %d",
-            context.getNodeId(), operation.toString(), result.toString(), delay.get());
+        logger.infoNode(
+            context.getNodeId(),
+            "retry coordination of %s for result %s, delay %d",
+            operation,
+            result,
+            delay.get());
         this.context.retryOperation(operation, this, delay.get());
       } else {
-        logger.info(
-            "%s failed coordination of %s with %s",
-            context.getNodeId(), operation.toString(), result.toString());
+        logger.infoNode(
+            context.getNodeId(), "failed coordination of %s with %s", operation, result);
         this.execution.complete(result);
       }
     } else {
       if (result.isPresent()) {
-        logger.info(
-            "%s failed coordination of %s with %s",
-            context.getNodeId(), operation.toString(), result.toString());
+        logger.infoNode(
+            context.getNodeId(), "failed coordination of %s with %s", operation, result);
       } else {
-        logger.debug(
-            "%s complete coordination of %s with %s",
-            context.getNodeId(), operation.toString(), result.toString());
+        logger.debugNode(
+            context.getNodeId(), "complete coordination of %s with %s", operation, result);
       }
       this.execution.complete(result);
     }
@@ -67,7 +67,7 @@ public final class OStandardCompleteAction implements OCompleteAction {
   @Override
   public void complete(
       OTransactionIdPromise promise, Set<ONodeId> nodes, Optional<OAcceptResult> result) {
-    logger.debug("%s complete coordination with %s", context.getNodeId(), result.toString());
+    logger.debugNode(context.getNodeId(), "complete coordination %s with %s", operation, result);
     this.execution.complete(result);
   }
 }

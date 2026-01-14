@@ -60,4 +60,9 @@ public class OGroupId {
     String groupId = e.getProperty("groupId");
     return new OGroupId(groupId);
   }
+
+  @Override
+  public String toString() {
+    return "Group(" + id + ")";
+  }
 }
