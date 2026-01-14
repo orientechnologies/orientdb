@@ -45,7 +45,7 @@ public class OSystemStateStore implements OStateStore {
   }
 
   @Override
-  public void save(ONodeStateStore store) {
+  public synchronized void save(ONodeStateStore store) {
     systemDatabase.executeWithDB(
         (session) -> {
           session.begin();
