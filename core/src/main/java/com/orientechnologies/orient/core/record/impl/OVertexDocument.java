@@ -361,12 +361,6 @@ public class OVertexDocument extends ODocument implements OVertex {
     }
   }
 
-  @Override
-  public OVertexDocument delete() {
-    super.delete();
-    return this;
-  }
-
   public static void deleteLinks(ODatabaseSession db, OVertex delegate) {
     Iterable<OEdge> allEdges = delegate.getEdges(ODirection.BOTH);
     List<OEdge> items = new ArrayList<>();

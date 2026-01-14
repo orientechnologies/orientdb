@@ -29,7 +29,6 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
-import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -196,12 +195,6 @@ public class OVertexDelegate implements OVertex {
   @Override
   public OEdge addEdge(OVertex to) {
     return addEdge(to, "E");
-  }
-
-  @Override
-  public OVertex delete() {
-    element.delete();
-    return this;
   }
 
   @Override
@@ -507,7 +500,6 @@ public class OVertexDelegate implements OVertex {
     return element.getVersion();
   }
 
-  @Override
   public ODatabaseDocument getDatabase() {
     return element.getDatabase();
   }
@@ -515,48 +507,6 @@ public class OVertexDelegate implements OVertex {
   @Override
   public boolean isDirty() {
     return element.isDirty();
-  }
-
-  @Override
-  public <RET extends ORecord> RET load() throws ORecordNotFoundException {
-    return (RET) element.load();
-  }
-
-  @Override
-  public <RET extends ORecord> RET reload() throws ORecordNotFoundException {
-    element.reload();
-    return (RET) this;
-  }
-
-  @Override
-  public <RET extends ORecord> RET reload(String fetchPlan, boolean ignoreCache, boolean force)
-      throws ORecordNotFoundException {
-    element.reload(fetchPlan, ignoreCache, force);
-    return (RET) this;
-  }
-
-  @Override
-  public <RET extends ORecord> RET save() {
-    element.save();
-    return (RET) this;
-  }
-
-  @Override
-  public <RET extends ORecord> RET save(String iCluster) {
-    element.save(iCluster);
-    return (RET) this;
-  }
-
-  @Override
-  public <RET extends ORecord> RET save(boolean forceCreate) {
-    element.save(forceCreate);
-    return (RET) this;
-  }
-
-  @Override
-  public <RET extends ORecord> RET save(String iCluster, boolean forceCreate) {
-    element.save(iCluster, forceCreate);
-    return (RET) this;
   }
 
   @Override

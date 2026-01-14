@@ -56,11 +56,6 @@ public class OEdgeDocument extends ODocument implements OEdge {
     return false;
   }
 
-  public OEdgeDocument delete() {
-    super.delete();
-    return this;
-  }
-
   @Override
   public OEdgeDocument copy() {
     return (OEdgeDocument) super.copyTo(new OEdgeDocument());

@@ -52,7 +52,6 @@ import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OQueryParsingException;
-import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.exception.OValidationException;
@@ -1172,23 +1171,6 @@ public class ODocument extends ORecordAbstract
   }
 
   /**
-   * Returns an empty record as place-holder of the current. Used when a record is requested, but
-   * only the identity is needed.
-   *
-   * @return placeholder of this document
-   */
-  @Deprecated
-  public ORecord placeholder() {
-    final ODocument cloned = new ODocument();
-    cloned.source = null;
-    cloned.recordId = recordId;
-    cloned.status = STATUS.NOT_LOADED;
-    cloned.dirty = false;
-    cloned.contentChanged = false;
-    return cloned;
-  }
-
-  /**
    * Detaches all the connected records. If new records are linked to the document the detaching
    * cannot be completed and false will be returned. RidBag types cannot be fully detached when the
    * database is connected using "remote" protocol.
@@ -1215,52 +1197,6 @@ public class ODocument extends ORecordAbstract
     }
 
     return fullyDetached;
-  }
-
-  /**
-   * Loads the record using a fetch plan. Example:
-   *
-   * <p><code>doc.load( "*:3" ); // LOAD THE DOCUMENT BY EARLY FETCHING UP TO 3rd
-   * LEVEL OF CONNECTIONS</code>
-   *
-   * @param iFetchPlan Fetch plan to use
-   */
-  @Deprecated(forRemoval = true)
-  public ODocument load(final String iFetchPlan) {
-    return load(iFetchPlan, false);
-  }
-
-  /**
-   * Loads the record using a fetch plan. Example:
-   *
-   * <p><code>doc.load( "*:3", true ); // LOAD THE DOCUMENT BY EARLY FETCHING UP TO
-   * 3rd LEVEL OF CONNECTIONS IGNORING THE CACHE</code>
-   *
-   * @param iIgnoreCache Ignore the cache or use it
-   */
-  @Deprecated(forRemoval = true)
-  public ODocument load(final String iFetchPlan, boolean iIgnoreCache) {
-    Object result;
-    try {
-      result = getDatabase().load(this, iFetchPlan, iIgnoreCache);
-    } catch (Exception e) {
-      throw OException.wrapException(new ORecordNotFoundException(getIdentity()), e);
-    }
-
-    if (result == null) throw new ORecordNotFoundException(getIdentity());
-
-    return (ODocument) result;
-  }
-
-  @Override
-  @Deprecated(forRemoval = true)
-  public ODocument reload(final String fetchPlan, final boolean ignoreCache) {
-    super.reload(fetchPlan, ignoreCache);
-    if (!lazyLoad) {
-      checkForLoading();
-      checkForFields();
-    }
-    return this;
   }
 
   public boolean hasSameContentOf(final ODocument iOther) {
@@ -2419,24 +2355,6 @@ public class ODocument extends ORecordAbstract
         entry.type = null;
     }
     return this;
-  }
-
-  @Override
-  @Deprecated(forRemoval = true)
-  public ODocument save() {
-    return (ODocument) save(null, false);
-  }
-
-  @Override
-  @Deprecated(forRemoval = true)
-  public ODocument save(final String iClusterName) {
-    return (ODocument) save(iClusterName, false);
-  }
-
-  @Override
-  @Deprecated(forRemoval = true)
-  public ORecordAbstract save(final String iClusterName, final boolean forceCreate) {
-    return getDatabase().save(this, iClusterName, forceCreate);
   }
 
   /*

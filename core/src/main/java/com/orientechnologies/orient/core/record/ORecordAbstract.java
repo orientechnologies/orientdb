@@ -19,19 +19,16 @@
  */
 package com.orientechnologies.orient.core.record;
 
-import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
-import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODirtyManager;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
-import com.orientechnologies.orient.core.storage.cluster.OOfflineClusterException;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -227,89 +224,12 @@ public abstract class ORecordAbstract implements ORecord {
     return this;
   }
 
-  @Deprecated
-  public ORecord load() {
-    if (!getIdentity().isValid())
-      throw new ORecordNotFoundException(
-          getIdentity(), "The record has no id, probably it's new or transient yet ");
-
-    final ORecord result = getDatabase().load(this);
-
-    if (result == null) throw new ORecordNotFoundException(getIdentity());
-
-    return result;
-  }
-
   public ODatabaseDocumentInternal getDatabase() {
     return ODatabaseRecordThreadLocal.instance().get();
   }
 
   public ODatabaseDocumentInternal getDatabaseIfDefined() {
     return ODatabaseRecordThreadLocal.instance().getIfDefined();
-  }
-
-  @Deprecated(forRemoval = true)
-  public ORecord reload() {
-    return reload(null, true, true);
-  }
-
-  @Deprecated(forRemoval = true)
-  public ORecord reload(final String fetchPlan) {
-    return reload(fetchPlan, true);
-  }
-
-  @Deprecated(forRemoval = true)
-  public ORecord reload(final String fetchPlan, final boolean ignoreCache) {
-    return reload(fetchPlan, ignoreCache, true);
-  }
-
-  @Deprecated(forRemoval = true)
-  @Override
-  public ORecord reload(String fetchPlan, boolean ignoreCache, boolean force)
-      throws ORecordNotFoundException {
-    if (!getIdentity().isValid())
-      throw new ORecordNotFoundException(
-          getIdentity(), "The record has no id. It is probably new or still transient");
-
-    try {
-      getDatabase().reload(this, fetchPlan, ignoreCache, force);
-
-      return this;
-
-    } catch (OOfflineClusterException e) {
-      throw e;
-    } catch (ORecordNotFoundException e) {
-      throw e;
-    } catch (Exception e) {
-      throw OException.wrapException(new ORecordNotFoundException(getIdentity()), e);
-    }
-  }
-
-  @Deprecated(forRemoval = true)
-  public ORecordAbstract save() {
-    return save(false);
-  }
-
-  @Deprecated(forRemoval = true)
-  public ORecordAbstract save(final String iClusterName) {
-    return save(iClusterName, false);
-  }
-
-  @Deprecated(forRemoval = true)
-  public ORecordAbstract save(boolean forceCreate) {
-    getDatabase().save(this, null, forceCreate);
-    return this;
-  }
-
-  @Deprecated(forRemoval = true)
-  public ORecordAbstract save(String iClusterName, boolean forceCreate) {
-    return getDatabase().save(this, iClusterName, forceCreate);
-  }
-
-  @Deprecated
-  public ORecordAbstract delete() {
-    getDatabase().delete(this);
-    return this;
   }
 
   public int getSize() {
