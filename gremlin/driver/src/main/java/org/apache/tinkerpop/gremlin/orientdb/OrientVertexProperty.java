@@ -1,5 +1,6 @@
 package org.apache.tinkerpop.gremlin.orientdb;
 
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -76,7 +77,8 @@ public class OrientVertexProperty<V> extends OrientProperty<V> implements Vertex
       metadata = new ODocument();
       OElement vertexDocument = element.getRawElement();
       vertexDocument.setProperty(metadataKey(), metadata, OType.EMBEDDED);
-      vertexDocument.save();
+      var db = ODatabaseRecordThreadLocal.instance().get();
+      db.save(vertexDocument);
     }
     return metadata;
   }

@@ -93,7 +93,7 @@ public class OrientSpecBehavioursTest extends OrientGraphBaseTest {
     for (Thread t : threads) {
       t.join();
     }
-    v.getRawElement().reload();
+    noTx.getRawDatabase().reload(v.getRawElement());
     Assert.assertEquals(nThreads, v.property("count").value());
   }
 
@@ -148,7 +148,7 @@ public class OrientSpecBehavioursTest extends OrientGraphBaseTest {
     for (Thread t : threads) {
       t.join();
     }
-    v.getRawElement().reload();
+    noTx.getRawDatabase().reload(v.getRawElement());
     Assert.assertEquals(nThreads, v.property("count").value());
   }
 }

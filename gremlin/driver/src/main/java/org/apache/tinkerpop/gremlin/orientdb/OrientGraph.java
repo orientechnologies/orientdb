@@ -519,7 +519,10 @@ public final class OrientGraph implements OGraph {
     if (record == null) throw new NoSuchElementException();
     record = record.getRecord();
     ODocument currentDocument = (ODocument) record;
-    if (currentDocument.getInternalStatus() == ODocument.STATUS.NOT_LOADED) currentDocument.load();
+    if (currentDocument.getInternalStatus() == ODocument.STATUS.NOT_LOADED) {
+      ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
+      currentDocument = db.load(currentDocument);
+    }
     if (ODocumentInternal.getImmutableSchemaClass(currentDocument) == null)
       throw new IllegalArgumentException(
           "Cannot determine the graph element type because the document class is null. Probably"

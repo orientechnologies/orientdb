@@ -1,5 +1,6 @@
 package org.apache.tinkerpop.gremlin.orientdb;
 
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.OElement;
 import java.util.Collection;
@@ -83,7 +84,8 @@ public class OrientProperty<V> implements Property<V> {
   public void remove() {
     OElement doc = element.getRawElement();
     doc.removeProperty(key);
-    doc.save();
+    var db = ODatabaseRecordThreadLocal.instance().get();
+    db.save(doc);
     this.value = null;
     wrappedValue = null;
     removed = true;

@@ -2348,7 +2348,7 @@ public class OConsoleDatabaseApp extends OConsoleApplication
     currentRecord = currentDatabase.getDictionary().get(iKey);
     if (currentRecord == null) message("\nEntry not found in dictionary.");
     else {
-      currentRecord = (ORecord) currentRecord.load();
+      currentRecord = (ORecord) currentDatabase.load(currentRecord);
       displayRecord(null);
     }
   }

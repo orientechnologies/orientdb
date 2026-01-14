@@ -33,6 +33,8 @@ import com.orientechnologies.orient.core.annotation.OBeforeSerialization;
 import com.orientechnologies.orient.core.annotation.ODocumentInstance;
 import com.orientechnologies.orient.core.annotation.OId;
 import com.orientechnologies.orient.core.annotation.OVersion;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OUserObject2RecordHandler;
 import com.orientechnologies.orient.core.db.object.ODatabaseObject;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
@@ -184,8 +186,10 @@ public class OObjectSerializerHelper {
   }
 
   public static Class<?> getFieldType(ODocument iDocument, final OEntityManager iEntityManager) {
-    if (iDocument.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED)
-      iDocument = (ODocument) iDocument.load();
+    if (iDocument.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED) {
+      ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
+      iDocument = db.load(iDocument);
+    }
 
     if (iDocument.getClassName() == null) {
       return null;

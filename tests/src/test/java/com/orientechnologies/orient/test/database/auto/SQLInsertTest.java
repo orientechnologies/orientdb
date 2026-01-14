@@ -188,7 +188,7 @@ public class SQLInsertTest extends DocumentDBBaseTest {
 
     Assert.assertTrue(doc != null);
 
-    doc = (ODocument) new ODocument(doc.getIdentity()).load();
+    doc = (ODocument) database.load(new ODocument(doc.getIdentity()));
 
     Assert.assertEquals(doc.getProperty("equaledges"), "no");
     Assert.assertEquals(doc.getProperty("name"), "circle");
@@ -213,7 +213,7 @@ public class SQLInsertTest extends DocumentDBBaseTest {
 
     Assert.assertTrue(doc != null);
 
-    doc = (ODocument) new ODocument(doc.getIdentity()).load();
+    doc = (ODocument) database.load(new ODocument(doc.getIdentity()));
 
     Assert.assertEquals(doc.getProperty("equaledges"), "no");
     Assert.assertEquals(doc.getProperty("name"), "circle");
@@ -239,7 +239,7 @@ public class SQLInsertTest extends DocumentDBBaseTest {
 
     Assert.assertTrue(doc != null);
 
-    doc = (ODocument) new ODocument(doc.getIdentity()).load();
+    doc = (ODocument) database.load(new ODocument(doc.getIdentity()));
 
     Assert.assertEquals(doc.getProperty("equaledges"), "yes");
     Assert.assertEquals(doc.getProperty("name"), "square");
@@ -266,7 +266,7 @@ public class SQLInsertTest extends DocumentDBBaseTest {
 
     Assert.assertTrue(doc != null);
 
-    doc = (ODocument) new ODocument(doc.getIdentity()).load();
+    doc = (ODocument) database.load(new ODocument(doc.getIdentity()));
 
     Assert.assertEquals(doc.getProperty("equaledges"), "yes");
     Assert.assertEquals(doc.getProperty("name"), "square");

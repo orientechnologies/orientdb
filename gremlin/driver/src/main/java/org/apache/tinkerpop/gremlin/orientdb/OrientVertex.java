@@ -139,7 +139,6 @@ public final class OrientVertex extends OrientElement implements Vertex {
     OEdge oEdge = getRawElement().addEdge(((OrientVertex) inVertex).getRawElement(), label);
     final OrientEdge edge = graph.elementFactory().wrapEdge(oEdge);
     edge.property(keyValues);
-
     edge.save();
     return edge;
   }

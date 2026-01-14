@@ -2,6 +2,7 @@ package org.apache.tinkerpop.gremlin.orientdb;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.OElement;
@@ -60,7 +61,10 @@ public abstract class OrientElement implements Element, OIdentifiable {
     // them in the end
     // for performance reasons and so that the schema checker only kicks in
     // at the end
-    if (saveDocument) doc.save();
+    if (saveDocument) {
+      var db = ODatabaseRecordThreadLocal.instance().get();
+      db.save(doc);
+    }
     return new OrientProperty<>(key, value, this);
   }
 
@@ -85,7 +89,8 @@ public abstract class OrientElement implements Element, OIdentifiable {
       if (!keyValues[i].equals(T.id) && !keyValues[i].equals(T.label))
         property((String) keyValues[i], keyValues[i + 1], false);
     }
-    getRawElement().save();
+    var db = ODatabaseRecordThreadLocal.instance().get();
+    db.save(getRawElement());
   }
 
   public <V> Iterator<? extends Property<V>> properties(final String... propertyKeys) {
@@ -106,11 +111,11 @@ public abstract class OrientElement implements Element, OIdentifiable {
   @Override
   public void remove() {
     this.graph.tx().readWrite();
-    rawElement.delete();
+    this.graph.getRawDatabase().delete(rawElement);
   }
 
   public void save() {
-    rawElement.save();
+    this.graph.getRawDatabase().save(rawElement);
   }
 
   public OGraph getGraph() {

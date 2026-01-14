@@ -90,7 +90,7 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
       database.begin();
 
       // RE-READ THE RECORD
-      record1.load();
+      record1 = database.load(record1);
 
       ODatabaseRecordThreadLocal.instance().set((ODatabaseDocumentInternal) db2);
       OBlob record2 = db2.load(record1.getIdentity());
@@ -132,7 +132,7 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
       database.begin();
 
       // RE-READ THE RECORD
-      record.load();
+      record = database.load(record);
       int v1 = record.getVersion();
       record.setDirty();
       record.fromStream("This is the second version".getBytes());
@@ -161,7 +161,7 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
       database.begin();
 
       // RE-READ THE RECORD
-      record1.load();
+      record1 = database.load(record1);
       int v1 = record1.getVersion();
       record1.setDirty();
       record1.fromStream("This is the second version".getBytes());
