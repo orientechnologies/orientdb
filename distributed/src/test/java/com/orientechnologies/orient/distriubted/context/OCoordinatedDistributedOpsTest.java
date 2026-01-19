@@ -18,6 +18,8 @@ import com.orientechnologies.orient.distributed.context.ONodeStateUpdated;
 import com.orientechnologies.orient.distributed.context.coordination.OCoordinatedDistributedOps;
 import com.orientechnologies.orient.distributed.context.coordination.OCoordinatedDistributedOpsImpl;
 import com.orientechnologies.orient.distributed.context.coordination.OOperationStart;
+import com.orientechnologies.orient.distributed.context.coordination.OResponseCollector;
+import com.orientechnologies.orient.distributed.context.coordination.OResponseCollectorImpl;
 import com.orientechnologies.orient.distributed.context.coordination.action.OCompleteAction;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabaseState;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabaseStateChangeListener;
@@ -75,6 +77,12 @@ public class OCoordinatedDistributedOpsTest
         OTransactionIdPromise promise, Set<ONodeId> nodes, Optional<OAcceptResult> result) {
       complete = true;
       this.result = result;
+    }
+
+    @Override
+    public OResponseCollector newResponseCollector(
+        OTransactionIdPromise promise, int quorum, Set<ONodeId> nodes) {
+      return new OResponseCollectorImpl(this, promise, quorum, nodes);
     }
   }
 

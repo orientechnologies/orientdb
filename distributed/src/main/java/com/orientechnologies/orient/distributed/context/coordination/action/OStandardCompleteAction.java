@@ -2,6 +2,8 @@ package com.orientechnologies.orient.distributed.context.coordination.action;
 
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
+import com.orientechnologies.orient.distributed.context.coordination.OResponseCollector;
+import com.orientechnologies.orient.distributed.context.coordination.OResponseCollectorImpl;
 import com.orientechnologies.orient.distributed.context.coordination.message.OConfirmOp;
 import com.orientechnologies.orient.distributed.context.coordination.message.OFailOp;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OOperationMessage;
@@ -69,5 +71,11 @@ public final class OStandardCompleteAction implements OCompleteAction {
       OTransactionIdPromise promise, Set<ONodeId> nodes, Optional<OAcceptResult> result) {
     logger.debugNode(context.getNodeId(), "complete coordination %s with %s", operation, result);
     this.execution.complete(result);
+  }
+
+  @Override
+  public OResponseCollector newResponseCollector(
+      OTransactionIdPromise promise, int quorum, Set<ONodeId> nodes) {
+    return new OResponseCollectorImpl(this, promise, quorum, nodes);
   }
 }

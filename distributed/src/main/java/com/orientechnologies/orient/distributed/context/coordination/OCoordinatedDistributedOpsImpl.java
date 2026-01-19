@@ -105,8 +105,7 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
     if (prom.isPresent()) {
       var promise = prom.get();
       Set<ONodeId> nodes = Collections.unmodifiableSet(new HashSet<>(topology.getMembers()));
-      coordination.put(
-          promise, new OResponseCollector(action, promise, topology.getQuorum(), nodes));
+      coordination.put(promise, action.newResponseCollector(promise, topology.getQuorum(), nodes));
       return Optional.of(new OOperationStart(promise, nodes));
     } else {
       return Optional.empty();
@@ -264,7 +263,7 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
     Optional<OTransactionIdPromise> prom = this.sequenceManager.next();
     if (prom.isPresent()) {
       coordination.put(
-          prom.get(), new OResponseCollector(action, prom.get(), topology.getQuorum(), nodes));
+          prom.get(), action.newResponseCollector(prom.get(), topology.getQuorum(), nodes));
     }
     return prom;
   }
