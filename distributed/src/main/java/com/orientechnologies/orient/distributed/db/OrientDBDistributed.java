@@ -166,8 +166,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
         newExectution(
             (ctx, complete) -> {
               // no Retry;
-            }),
-        null);
+            }));
   }
 
   private OStandardCompleteExecution newExectution(ORetryOperation operation) {
@@ -933,7 +932,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
   public void firstConnect(ONodeId nodeId, ONodeStateNetwork state, boolean merge) {
     ODiscoverAction action = getNodeState().getOps().nodeJoinStart(nodeId, state, merge);
     logger.debugNode(getNodeId(), "executing node join action %s", action);
-    retryOperation(new ODiscoverActionRetryOperation(state, action));
+    retryOperation(new ODiscoverActionRetryOperation(action));
   }
 
   public void connected(ONodeId node, String url, String user, String password) {
@@ -1367,8 +1366,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
         && s != ODistributedServerManager.DB_STATUS.NOT_AVAILABLE;
   }
 
-  public void sendMergeOperation(
-      Set<ONodeId> members, OCompleteExecution execution, ONodeStateNetwork otherState) {
+  public void sendMergeOperation(Set<ONodeId> members, OCompleteExecution execution) {
     ONodeStateNetwork st = getNodeState().getNetworkState();
     this.sendMessage(members, new ONodeFirstConnect(getNodeState().getNodeId(), st, true));
   }

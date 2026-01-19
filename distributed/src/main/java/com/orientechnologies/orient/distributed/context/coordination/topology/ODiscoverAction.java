@@ -26,8 +26,7 @@ public sealed interface ODiscoverAction
         ODiscoverAction.OApplyStateAction,
         ODiscoverAction.OApplySequenceAction {
 
-  public void execute(
-      OrientDBDistributed context, OCompleteExecution execution, ONodeStateNetwork otherState);
+  public void execute(OrientDBDistributed context, OCompleteExecution execution);
 
   default ODiscoverAction checkAndApply(
       OCoordinatedDistributedOpsImpl ops, ONodeStateNetwork state, boolean merge) {
@@ -38,9 +37,8 @@ public sealed interface ODiscoverAction
     private static final OLogger logger = OLogManager.instance().logger(OMergeAction.class);
 
     @Override
-    public void execute(
-        OrientDBDistributed context, OCompleteExecution execution, ONodeStateNetwork otherState) {
-      context.sendMergeOperation(members, execution, otherState);
+    public void execute(OrientDBDistributed context, OCompleteExecution execution) {
+      context.sendMergeOperation(members, execution);
     }
 
     @Override
@@ -59,8 +57,7 @@ public sealed interface ODiscoverAction
 
   public record ONotifySelf(Set<ONodeId> nodes) implements ODiscoverAction {
     @Override
-    public void execute(
-        OrientDBDistributed context, OCompleteExecution execution, ONodeStateNetwork otherState) {
+    public void execute(OrientDBDistributed context, OCompleteExecution execution) {
       context.sendFirstConnects(nodes);
     }
   }
@@ -68,8 +65,7 @@ public sealed interface ODiscoverAction
   record OEstablishAction(OGroupId groupId, Set<ONodeId> candidates) implements ODiscoverAction {
 
     @Override
-    public void execute(
-        OrientDBDistributed context, OCompleteExecution execution, ONodeStateNetwork otherState) {
+    public void execute(OrientDBDistributed context, OCompleteExecution execution) {
       OEstablishTopology operation = new OEstablishTopology(groupId(), candidates());
       Optional<OTransactionIdPromise> promise =
           context
@@ -87,8 +83,7 @@ public sealed interface ODiscoverAction
   record OAddNodeAction(ONodeId node, boolean merge) implements ODiscoverAction {
 
     @Override
-    public void execute(
-        OrientDBDistributed context, OCompleteExecution exection, ONodeStateNetwork otherState) {
+    public void execute(OrientDBDistributed context, OCompleteExecution exection) {
       long version = context.getNodeState().getOps().nextTopologyVersion();
       context.coordinatedOperation(new OAddTopologyMember(version, node()), exection);
     }
@@ -112,8 +107,7 @@ public sealed interface ODiscoverAction
   record ONoneAction() implements ODiscoverAction {
 
     @Override
-    public void execute(
-        OrientDBDistributed context, OCompleteExecution execution, ONodeStateNetwork otherState) {
+    public void execute(OrientDBDistributed context, OCompleteExecution execution) {
       // Noting to do
     }
   }
@@ -121,8 +115,7 @@ public sealed interface ODiscoverAction
   record OApplyStateAction() implements ODiscoverAction {
 
     @Override
-    public void execute(
-        OrientDBDistributed context, OCompleteExecution execution, ONodeStateNetwork otherState) {
+    public void execute(OrientDBDistributed context, OCompleteExecution execution) {
       context.autoDeployIfNeed();
     }
 
@@ -142,8 +135,7 @@ public sealed interface ODiscoverAction
   record OApplySequenceAction() implements ODiscoverAction {
 
     @Override
-    public void execute(
-        OrientDBDistributed context, OCompleteExecution execution, ONodeStateNetwork otherState) {
+    public void execute(OrientDBDistributed context, OCompleteExecution execution) {
       context.autoDeployIfNeed();
     }
 
