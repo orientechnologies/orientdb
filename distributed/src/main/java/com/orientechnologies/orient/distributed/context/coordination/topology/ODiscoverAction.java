@@ -1,8 +1,11 @@
 package com.orientechnologies.orient.distributed.context.coordination.topology;
 
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.transaction.OGroupId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
+import com.orientechnologies.orient.distributed.context.coordination.OCoordinatedDistributedOpsImpl;
 import com.orientechnologies.orient.distributed.context.coordination.message.OProposeOp;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OAddTopologyMember;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OEstablishTopology;
@@ -10,6 +13,7 @@ import com.orientechnologies.orient.distributed.context.coordination.message.sta
 import com.orientechnologies.orient.distributed.context.coordination.result.ONoTransactionSequencialAvailable;
 import com.orientechnologies.orient.distributed.db.OCompleteExecution;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
@@ -25,19 +29,31 @@ public sealed interface ODiscoverAction
   public void execute(
       OrientDBDistributed context, OCompleteExecution execution, ONodeStateNetwork otherState);
 
-  default boolean applyDatabaseState() {
-    return false;
-  }
-
-  default boolean applySequenceState() {
-    return false;
+  default ODiscoverAction checkAndApply(
+      OCoordinatedDistributedOpsImpl ops, ONodeStateNetwork state, boolean merge) {
+    return this;
   }
 
   public record OMergeAction(Set<ONodeId> members) implements ODiscoverAction {
+    private static final OLogger logger = OLogManager.instance().logger(OMergeAction.class);
+
     @Override
     public void execute(
         OrientDBDistributed context, OCompleteExecution execution, ONodeStateNetwork otherState) {
       context.sendMergeOperation(members, execution, otherState);
+    }
+
+    @Override
+    public ODiscoverAction checkAndApply(
+        OCoordinatedDistributedOpsImpl ops, ONodeStateNetwork state, boolean merge) {
+      var otherDbs = new HashSet<>(state.databases().stream().map((x) -> x.id()).toList());
+      otherDbs.removeAll(ops.getDatabaseTopology().getDatabases());
+      if (otherDbs.isEmpty()) {
+        return this;
+      } else {
+        logger.warn("found join-able network, but can't merge into it with databases");
+        return new ONoneAction();
+      }
     }
   }
 
@@ -77,13 +93,18 @@ public sealed interface ODiscoverAction
     }
 
     @Override
-    public boolean applyDatabaseState() {
-      return merge;
-    }
-
-    @Override
-    public boolean applySequenceState() {
-      return merge;
+    public ODiscoverAction checkAndApply(
+        OCoordinatedDistributedOpsImpl ops, ONodeStateNetwork state, boolean merge) {
+      if (this.merge) {
+        if (merge) {
+          ops.getDatabaseTopology().mergeNetworkState(state.databases());
+        } else {
+          ops.getDatabaseTopology().receiverNetworkState(state.databases());
+        }
+        ops.getSequenceManager().fill(state.sequenceStatus());
+        ops.notifyUpdate();
+      }
+      return this;
     }
   }
 
@@ -103,8 +124,15 @@ public sealed interface ODiscoverAction
         OrientDBDistributed context, OCompleteExecution execution, ONodeStateNetwork otherState) {}
 
     @Override
-    public boolean applyDatabaseState() {
-      return true;
+    public ODiscoverAction checkAndApply(
+        OCoordinatedDistributedOpsImpl ops, ONodeStateNetwork state, boolean merge) {
+      if (merge) {
+        ops.getDatabaseTopology().mergeNetworkState(state.databases());
+      } else {
+        ops.getDatabaseTopology().receiverNetworkState(state.databases());
+      }
+      ops.notifyUpdate();
+      return this;
     }
   }
 
@@ -117,13 +145,16 @@ public sealed interface ODiscoverAction
     }
 
     @Override
-    public boolean applyDatabaseState() {
-      return true;
-    }
-
-    @Override
-    public boolean applySequenceState() {
-      return true;
+    public ODiscoverAction checkAndApply(
+        OCoordinatedDistributedOpsImpl ops, ONodeStateNetwork state, boolean merge) {
+      if (merge) {
+        ops.getDatabaseTopology().mergeNetworkState(state.databases());
+      } else {
+        ops.getDatabaseTopology().receiverNetworkState(state.databases());
+      }
+      ops.getSequenceManager().fill(state.sequenceStatus());
+      ops.notifyUpdate();
+      return this;
     }
   }
 }

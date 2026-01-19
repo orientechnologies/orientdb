@@ -90,7 +90,6 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
@@ -1367,18 +1366,8 @@ public class OrientDBDistributed extends OrientDBEmbedded
 
   public void sendMergeOperation(
       Set<ONodeId> members, OCompleteExecution execution, ONodeStateNetwork otherState) {
-    Set<ODatabaseId> dbs = new HashSet<ODatabaseId>(nodeState.getDatabaseTopology().getDatabases());
-    boolean joinerNoDatabases = true;
-    if (otherState != null) {
-      joinerNoDatabases = otherState.databases().isEmpty();
-      dbs.removeAll(otherState.databases().stream().map((x) -> x.id()).toList());
-    }
-    if (dbs.isEmpty() || joinerNoDatabases) {
-      ONodeStateNetwork st = getNodeState().getNetworkState();
-      this.sendMessage(members, new ONodeFirstConnect(getNodeState().getNodeId(), st, true));
-    } else {
-      logger.warn("found join-able network, but can't merge into it with databases");
-    }
+    ONodeStateNetwork st = getNodeState().getNetworkState();
+    this.sendMessage(members, new ONodeFirstConnect(getNodeState().getNodeId(), st, true));
   }
 
   public void autoDeployIfNeed() {

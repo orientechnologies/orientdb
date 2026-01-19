@@ -273,22 +273,7 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   public synchronized ODiscoverAction nodeJoinStart(
       ONodeId node, ONodeStateNetwork state, boolean merge) {
     var action = this.topology.nodeJoinStart(node, state.topology(), merge);
-    boolean notifyUpdate = false;
-    if (action.applyDatabaseState()) {
-      if (merge) {
-        this.databaseTopology.mergeNetworkState(state.databases());
-      } else {
-        this.databaseTopology.receiverNetworkState(state.databases());
-      }
-      notifyUpdate = true;
-    }
-    if (action.applySequenceState()) {
-      this.sequenceManager.fill(state.sequenceStatus());
-      notifyUpdate = true;
-    }
-    if (notifyUpdate) {
-      notifyUpdate();
-    }
+    action = action.checkAndApply(this, state, merge);
     return action;
   }
 
@@ -450,7 +435,11 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
         Optional.of(databaseTopology.getStore()));
   }
 
-  private void notifyUpdate() {
+  public void notifyUpdate() {
     this.updateLister.update(getStore());
+  }
+
+  public OTransactionSequenceManager getSequenceManager() {
+    return sequenceManager;
   }
 }
