@@ -47,6 +47,7 @@ import com.orientechnologies.orient.distributed.context.coordination.message.OSt
 import com.orientechnologies.orient.distributed.context.coordination.message.OSyncData;
 import com.orientechnologies.orient.distributed.context.coordination.message.OSyncRequest;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OAddNodeInfo;
+import com.orientechnologies.orient.distributed.context.coordination.message.operation.OEstablishTopology;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OOperationMessage;
 import com.orientechnologies.orient.distributed.context.coordination.message.state.ONodeStateNetwork;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
@@ -1387,6 +1388,18 @@ public class OrientDBDistributed extends OrientDBEmbedded
       if (!nodes.isEmpty()) {
         retryOperation(new OAddDatabaseMembersRetryOperation(nodes, id));
       }
+    }
+  }
+
+  public void sendEstablish(
+      OGroupId groupId, Set<ONodeId> candidates, OCompleteExecution execution) {
+    OEstablishTopology operation = new OEstablishTopology(groupId, candidates);
+    Optional<OTransactionIdPromise> promise =
+        getNodeState().getOps().startEstablish(candidates, newCompleteAction(operation, execution));
+    if (promise.isPresent()) {
+      sendMessage(candidates, new OProposeOp(promise.get(), operation));
+    } else {
+      execution.complete(Optional.of(new ONoTransactionSequencialAvailable()));
     }
   }
 }

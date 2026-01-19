@@ -97,15 +97,7 @@ public class OResponseCollector {
   public Optional<CompleteInfo> fail(ONodeId node, OAcceptResult acceptResult) {
     if (toReceive.remove(node)) {
       failure.add(node);
-      this.results.compute(
-          acceptResult,
-          (k, v) -> {
-            if (v == null) {
-              return 1;
-            } else {
-              return v + 1;
-            }
-          });
+      this.results.compute(acceptResult, this::defaultResult);
       if (lost.size() + failure.size() == quorum) {
         OAcceptResult result = computeResult();
         return Optional.of(new CompleteInfo(action, promise, expected, Optional.of(result)));
@@ -116,6 +108,14 @@ public class OResponseCollector {
       }
     }
     return Optional.empty();
+  }
+
+  private Integer defaultResult(OAcceptResult res, Integer v) {
+    if (v == null) {
+      return 1;
+    } else {
+      return v + 1;
+    }
   }
 
   private OAcceptResult computeResult() {

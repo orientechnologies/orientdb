@@ -4,17 +4,12 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.transaction.OGroupId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
-import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.distributed.context.coordination.OCoordinatedDistributedOpsImpl;
-import com.orientechnologies.orient.distributed.context.coordination.message.OProposeOp;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OAddTopologyMember;
-import com.orientechnologies.orient.distributed.context.coordination.message.operation.OEstablishTopology;
 import com.orientechnologies.orient.distributed.context.coordination.message.state.ONodeStateNetwork;
-import com.orientechnologies.orient.distributed.context.coordination.result.ONoTransactionSequencialAvailable;
 import com.orientechnologies.orient.distributed.db.OCompleteExecution;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import java.util.HashSet;
-import java.util.Optional;
 import java.util.Set;
 
 public sealed interface ODiscoverAction
@@ -66,17 +61,7 @@ public sealed interface ODiscoverAction
 
     @Override
     public void execute(OrientDBDistributed context, OCompleteExecution execution) {
-      OEstablishTopology operation = new OEstablishTopology(groupId(), candidates());
-      Optional<OTransactionIdPromise> promise =
-          context
-              .getNodeState()
-              .getOps()
-              .startEstablish(this.candidates(), context.newCompleteAction(operation, execution));
-      if (promise.isPresent()) {
-        context.sendMessage(candidates(), new OProposeOp(promise.get(), operation));
-      } else {
-        execution.complete(Optional.of(new ONoTransactionSequencialAvailable()));
-      }
+      context.sendEstablish(groupId(), candidates(), execution);
     }
   }
 
