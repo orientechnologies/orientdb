@@ -10,6 +10,7 @@ import com.orientechnologies.orient.distributed.context.coordination.result.OAlr
 import com.orientechnologies.orient.distributed.context.coordination.result.OOutdatedVersion;
 import com.orientechnologies.orient.distributed.context.coordination.topology.ODiscoverAction.OAddNodeAction;
 import com.orientechnologies.orient.distributed.context.coordination.topology.ODiscoverAction.OEstablishAction;
+import com.orientechnologies.orient.distributed.context.coordination.topology.ODiscoverAction.OMergeNodeAction;
 import com.orientechnologies.orient.distributed.context.coordination.topology.ODiscoverAction.ONoneAction;
 import java.util.Collections;
 import java.util.HashSet;
@@ -42,7 +43,7 @@ public class OTopologyManager implements OTopologyEvents {
         return new OEstablishAction(groupId, new HashSet<>(candidates));
       }
     } else if (!hasMember(node)) {
-      return new OAddNodeAction(node, false);
+      return new OAddNodeAction(node);
     }
     return new ONoneAction();
   }
@@ -186,10 +187,10 @@ public class OTopologyManager implements OTopologyEvents {
             return new ODiscoverAction.ONotifySelf(Set.of(node));
           }
         } else if (merge && !members.contains(node)) {
-          return new OAddNodeAction(node, false);
+          return new OMergeNodeAction(node);
         } else if (this.quorum == 1) {
           /// Try to merge the state if possible
-          return new ODiscoverAction.OMergeAction(externState.members());
+          return new ODiscoverAction.ORequestMergeAction(node);
         } else {
           // TODO: Optimize this notifying only missing members
           return new ODiscoverAction.ONotifySelf(externState.members());
@@ -234,5 +235,15 @@ public class OTopologyManager implements OTopologyEvents {
 
   public long nextVersion() {
     return getVersion() + 1;
+  }
+
+  public boolean acceptMerge(OGroupId group, ONodeId coordinator) {
+    if (!promise && this.quorum == 1) {
+      // Accept only if current quorum is 1
+      promise = true;
+      return true;
+    } else {
+      return false;
+    }
   }
 }

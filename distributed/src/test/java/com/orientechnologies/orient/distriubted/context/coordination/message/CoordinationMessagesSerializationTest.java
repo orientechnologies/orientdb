@@ -14,6 +14,8 @@ import com.orientechnologies.orient.distributed.context.coordination.message.OCa
 import com.orientechnologies.orient.distributed.context.coordination.message.OConfirmOp;
 import com.orientechnologies.orient.distributed.context.coordination.message.OFailOp;
 import com.orientechnologies.orient.distributed.context.coordination.message.OFailPropose;
+import com.orientechnologies.orient.distributed.context.coordination.message.OMergeRequest;
+import com.orientechnologies.orient.distributed.context.coordination.message.OMergeResult;
 import com.orientechnologies.orient.distributed.context.coordination.message.ONextBuffer;
 import com.orientechnologies.orient.distributed.context.coordination.message.ONodeFirstConnect;
 import com.orientechnologies.orient.distributed.context.coordination.message.OStartSync;
@@ -225,5 +227,26 @@ public class CoordinationMessagesSerializationTest {
     ONextBuffer read = writeRead(syncReq);
     assertEquals(read.getSyncId(), syncId);
     assertTrue(read.isClose());
+  }
+
+  @Test
+  public void mergeRequestTest() throws IOException {
+    var promise = newPromiseId();
+    var groupId = newGroupId();
+    OMergeRequest merge = new OMergeRequest(promise, groupId);
+    OMergeRequest read = writeRead(merge);
+    assertEquals(promise, read.getPromise());
+    assertEquals(groupId, read.getGroup());
+  }
+
+  @Test
+  public void mergeResultTest() throws IOException {
+    var node = newNodeId();
+    var promise = newPromiseId();
+    OMergeResult merge = new OMergeResult(node, promise, true);
+    OMergeResult read = writeRead(merge);
+    assertEquals(node, read.getNode());
+    assertEquals(promise, read.getPromise());
+    assertTrue(read.isAccepted());
   }
 }

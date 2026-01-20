@@ -14,7 +14,7 @@ import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
 import java.util.Optional;
 import java.util.Set;
 
-public final class OStandardCompleteAction implements OCompleteAction {
+public class OStandardCompleteAction implements OCompleteAction {
 
   private static final OLoggerDistributed logger =
       OLoggerDistributed.logger(OStandardCompleteAction.class);

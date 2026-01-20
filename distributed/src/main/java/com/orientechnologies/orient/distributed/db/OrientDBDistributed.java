@@ -33,12 +33,15 @@ import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import com.orientechnologies.orient.distributed.context.ONodeState;
 import com.orientechnologies.orient.distributed.context.coordination.OCoordinatedDistributedOps;
 import com.orientechnologies.orient.distributed.context.coordination.action.OCompleteAction;
+import com.orientechnologies.orient.distributed.context.coordination.action.OMergeCompleteAction;
 import com.orientechnologies.orient.distributed.context.coordination.action.OStandardCompleteAction;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabaseState;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabaseStateChangeListener;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabasesTopology;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ONodeRole;
 import com.orientechnologies.orient.distributed.context.coordination.message.OCanSync;
+import com.orientechnologies.orient.distributed.context.coordination.message.OMergeRequest;
+import com.orientechnologies.orient.distributed.context.coordination.message.OMergeResult;
 import com.orientechnologies.orient.distributed.context.coordination.message.ONextBuffer;
 import com.orientechnologies.orient.distributed.context.coordination.message.ONodeFirstConnect;
 import com.orientechnologies.orient.distributed.context.coordination.message.OProposeOp;
@@ -47,6 +50,7 @@ import com.orientechnologies.orient.distributed.context.coordination.message.OSt
 import com.orientechnologies.orient.distributed.context.coordination.message.OSyncData;
 import com.orientechnologies.orient.distributed.context.coordination.message.OSyncRequest;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OAddNodeInfo;
+import com.orientechnologies.orient.distributed.context.coordination.message.operation.OAddTopologyMember;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OEstablishTopology;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OOperationMessage;
 import com.orientechnologies.orient.distributed.context.coordination.message.state.ONodeStateNetwork;
@@ -1367,9 +1371,9 @@ public class OrientDBDistributed extends OrientDBEmbedded
         && s != ODistributedServerManager.DB_STATUS.NOT_AVAILABLE;
   }
 
-  public void sendMergeOperation(Set<ONodeId> members, OCompleteExecution execution) {
-    ONodeStateNetwork st = getNodeState().getNetworkState();
-    this.sendMessage(members, new ONodeFirstConnect(getNodeState().getNodeId(), st, true));
+  public void sendMergeOperation(ONodeId requestToMerge, OCompleteExecution execution) {
+    ONodeState ns = getNodeState();
+    sendMessage(requestToMerge, new ONodeFirstConnect(ns.getNodeId(), ns.getNetworkState(), true));
   }
 
   public void autoDeployIfNeed() {
@@ -1401,5 +1405,33 @@ public class OrientDBDistributed extends OrientDBEmbedded
     } else {
       execution.complete(Optional.of(new ONoTransactionSequencialAvailable()));
     }
+  }
+
+  public void sendMergeNodeAction(ONodeId node, OCompleteExecution execution) {
+    // This should do a two phase operation in the current network, but also ask for
+    // permission to the merging node, to avoid in a two network and a node case to make
+    // the node join both networks.
+    long version = getNodeState().getOps().nextTopologyVersion();
+    var operation = new OAddTopologyMember(version, node);
+    OCompleteAction action = new OMergeCompleteAction(this, operation, execution, node);
+    var startOp = getNodeState().start(action);
+    if (startOp.isPresent()) {
+      var start = startOp.get();
+      OProposeOp propose = new OProposeOp(start.promise(), operation);
+      sendMessage(start.nodes(), propose);
+      sendMessage(
+          node, new OMergeRequest(start.promise(), this.getNodeState().getOps().getGroupId()));
+    } else {
+      action.complete(null, null, Optional.of(new ONoTransactionSequencialAvailable()));
+    }
+  }
+
+  public void acceptMerge(OTransactionIdPromise promise, OGroupId group) {
+    boolean accepted = getNodeState().getOps().validateMerge(group, promise.getCoordinator());
+    sendMessage(promise.getCoordinator(), new OMergeResult(getNodeId(), promise, accepted));
+  }
+
+  public void confirmMerge(ONodeId node, OTransactionIdPromise promise, boolean accepted) {
+    getNodeState().getOps().confirmMerge(node, promise, accepted);
   }
 }

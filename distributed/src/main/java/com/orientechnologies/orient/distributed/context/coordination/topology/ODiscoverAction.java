@@ -17,9 +17,10 @@ public sealed interface ODiscoverAction
         ODiscoverAction.OAddNodeAction,
         ODiscoverAction.ONoneAction,
         ODiscoverAction.ONotifySelf,
-        ODiscoverAction.OMergeAction,
+        ODiscoverAction.ORequestMergeAction,
         ODiscoverAction.OApplyStateAction,
-        ODiscoverAction.OApplySequenceAction {
+        ODiscoverAction.OApplySequenceAction,
+        ODiscoverAction.OMergeNodeAction {
 
   public void execute(OrientDBDistributed context, OCompleteExecution execution);
 
@@ -28,12 +29,12 @@ public sealed interface ODiscoverAction
     return this;
   }
 
-  public record OMergeAction(Set<ONodeId> members) implements ODiscoverAction {
-    private static final OLogger logger = OLogManager.instance().logger(OMergeAction.class);
+  public record ORequestMergeAction(ONodeId requestToMerge) implements ODiscoverAction {
+    private static final OLogger logger = OLogManager.instance().logger(ORequestMergeAction.class);
 
     @Override
     public void execute(OrientDBDistributed context, OCompleteExecution execution) {
-      context.sendMergeOperation(members, execution);
+      context.sendMergeOperation(requestToMerge, execution);
     }
 
     @Override
@@ -65,27 +66,20 @@ public sealed interface ODiscoverAction
     }
   }
 
-  record OAddNodeAction(ONodeId node, boolean merge) implements ODiscoverAction {
+  record OMergeNodeAction(ONodeId node) implements ODiscoverAction {
+
+    @Override
+    public void execute(OrientDBDistributed context, OCompleteExecution exection) {
+      context.sendMergeNodeAction(node, exection);
+    }
+  }
+
+  record OAddNodeAction(ONodeId node) implements ODiscoverAction {
 
     @Override
     public void execute(OrientDBDistributed context, OCompleteExecution exection) {
       long version = context.getNodeState().getOps().nextTopologyVersion();
       context.coordinatedOperation(new OAddTopologyMember(version, node()), exection);
-    }
-
-    @Override
-    public ODiscoverAction checkAndApply(
-        OCoordinatedDistributedOpsImpl ops, ONodeStateNetwork state, boolean merge) {
-      if (this.merge) {
-        if (merge) {
-          ops.getDatabaseTopology().mergeNetworkState(state.databases());
-        } else {
-          ops.getDatabaseTopology().receiverNetworkState(state.databases());
-        }
-        ops.getSequenceManager().fill(state.sequenceStatus());
-        ops.notifyUpdate();
-      }
-      return this;
     }
   }
 

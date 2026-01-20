@@ -449,4 +449,22 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   public OTransactionSequenceManager getSequenceManager() {
     return sequenceManager;
   }
+
+  @Override
+  public synchronized boolean validateMerge(OGroupId group, ONodeId coordinator) {
+    return topology.acceptMerge(group, coordinator);
+  }
+
+  @Override
+  public void confirmMerge(ONodeId node, OTransactionIdPromise promise, boolean accepted) {
+    if (accepted) {
+      nodeSuccess(node, promise);
+    } else {
+      nodeFailure(node, promise, new OAlreadyPromised());
+    }
+  }
+
+  public OGroupId getGroupId() {
+    return topology.getGroupId();
+  }
 }

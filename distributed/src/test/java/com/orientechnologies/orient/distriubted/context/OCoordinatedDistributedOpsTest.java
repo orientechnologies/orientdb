@@ -29,7 +29,7 @@ import com.orientechnologies.orient.distributed.context.coordination.result.OAcc
 import com.orientechnologies.orient.distributed.context.coordination.result.OInvalidSequential;
 import com.orientechnologies.orient.distributed.context.coordination.result.OQuorumNotReached;
 import com.orientechnologies.orient.distributed.context.coordination.topology.ODiscoverAction;
-import com.orientechnologies.orient.distributed.context.coordination.topology.ODiscoverAction.OAddNodeAction;
+import com.orientechnologies.orient.distributed.context.coordination.topology.ODiscoverAction.OMergeNodeAction;
 import com.orientechnologies.orient.distributed.context.coordination.topology.OTopologyState;
 import java.util.Collections;
 import java.util.HashSet;
@@ -570,13 +570,13 @@ public class OCoordinatedDistributedOpsTest
     // This case now should start a merge case of the network
     ONodeStateNetwork state = ops2.getNetworkState();
     ODiscoverAction exectedMerge = ops1.nodeJoinStart(nodeId2, state, false);
-    assertTrue(exectedMerge instanceof ODiscoverAction.OMergeAction);
+    assertTrue(exectedMerge instanceof ODiscoverAction.ORequestMergeAction);
 
     ONodeStateNetwork mergeState = ops1.getNetworkState();
     ODiscoverAction addNode = ops2.nodeJoinStart(nodeId1, mergeState, true);
     long version = ops2.nextTopologyVersion();
-    assertTrue(addNode instanceof ODiscoverAction.OAddNodeAction);
-    ODiscoverAction.OAddNodeAction add = (OAddNodeAction) addNode;
+    assertTrue(addNode instanceof OMergeNodeAction);
+    OMergeNodeAction add = (OMergeNodeAction) addNode;
     ops2.validateRegisterNode(add.node(), version);
     ops2.registerNode(add.node(), version);
     assertEquals(ops2.getNetworkMembers().size(), 2);

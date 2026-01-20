@@ -146,4 +146,10 @@ public interface OCoordinatedDistributedOps {
   boolean isApplied(OTransactionId txId);
 
   void completeSync(OSyncId syncId);
+
+  boolean validateMerge(OGroupId group, ONodeId coordinator);
+
+  OGroupId getGroupId();
+
+  void confirmMerge(ONodeId node, OTransactionIdPromise promise, boolean accepted);
 }

@@ -25,6 +25,8 @@ public interface OStructuralMessage {
       case 9 -> OStartSync.fromNetwork(input);
       case 10 -> OSyncData.fromNetwork(input);
       case 11 -> ONextBuffer.fromNetwork(input);
+      case 12 -> OMergeRequest.fromNetwork(input);
+      case 13 -> OMergeResult.fromNetwork(input);
       default -> throw new ODistributedException("wrong structural message type from network");
     };
   }
