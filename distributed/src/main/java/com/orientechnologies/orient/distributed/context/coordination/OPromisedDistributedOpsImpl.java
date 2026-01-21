@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.distributed.context.coordination;
 
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
@@ -9,6 +11,8 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class OPromisedDistributedOpsImpl implements OPromisedDistributedOps {
+  private static final OLogger logger =
+      OLogManager.instance().logger(OPromisedDistributedOpsImpl.class);
 
   private final Map<OTransactionIdPromise, ODistributedMessage> promised;
   private final Map<OTransactionIdPromise, ODistributedMessage> notPromised;
@@ -65,5 +69,14 @@ public class OPromisedDistributedOpsImpl implements OPromisedDistributedOps {
   @Override
   public Optional<Map<OTransactionId, ODistributedMessage>> getPromised(ONodeId node) {
     return Optional.ofNullable(this.primisedByNode.get(node));
+  }
+
+  @Override
+  public void dumpActive() {
+    String active = "";
+    for (var entry : this.promised.entrySet()) {
+      active += entry.getValue() + "\n";
+    }
+    logger.debug("promised on missing sequence state: \n %s ", active);
   }
 }

@@ -11,6 +11,7 @@ import com.orientechnologies.orient.distributed.context.coordination.result.OAcc
 import com.orientechnologies.orient.distributed.db.OCompleteExecution;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
+import java.text.MessageFormat;
 import java.util.Optional;
 import java.util.Set;
 
@@ -77,5 +78,11 @@ public class OStandardCompleteAction implements OCompleteAction {
   public OResponseCollector newResponseCollector(
       OTransactionIdPromise promise, int quorum, Set<ONodeId> nodes) {
     return new OResponseCollectorImpl(this, promise, quorum, nodes);
+  }
+
+  @Override
+  public String toString() {
+    return MessageFormat.format(
+        "Complete Action For {0} state {1}", this.operation, this.execution);
   }
 }

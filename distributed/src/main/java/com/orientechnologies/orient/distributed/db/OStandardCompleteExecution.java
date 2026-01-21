@@ -4,6 +4,7 @@ import com.orientechnologies.orient.distributed.context.coordination.result.OAcc
 import com.orientechnologies.orient.distributed.context.retryable.ORetryInfo;
 import com.orientechnologies.orient.distributed.context.retryable.ORetryOperation;
 import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
+import java.text.MessageFormat;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
@@ -54,5 +55,10 @@ public class OStandardCompleteExecution implements OCompleteExecution {
 
   public Future<Optional<OAcceptResult>> getResult() {
     return result;
+  }
+
+  @Override
+  public String toString() {
+    return MessageFormat.format("Retry {0}", retryInfo);
   }
 }

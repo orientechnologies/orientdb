@@ -77,4 +77,9 @@ public class OProposeOp implements OStructuralMessage, ODistributedMessage {
   public short getType() {
     return 1;
   }
+
+  @Override
+  public String toString() {
+    return "OProposeOp [promise=" + promise + ", op=" + op + "]";
+  }
 }

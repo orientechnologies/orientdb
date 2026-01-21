@@ -5,6 +5,7 @@ import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.distributed.context.coordination.action.OCompleteAction;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import com.orientechnologies.orient.distributed.context.coordination.result.OQuorumNotReached;
+import java.text.MessageFormat;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -145,5 +146,12 @@ public class OResponseCollectorMerge implements OResponseCollector {
   public Optional<CompleteInfo> applied() {
     applied = true;
     return Optional.of(new CompleteInfo(action, promise, expected, Optional.empty()));
+  }
+
+  @Override
+  public String toString() {
+    return MessageFormat.format(
+        "{0} merge:{4} success:{1} fail:{2} missing:{3}",
+        action, success, failure, toReceive, mergeSuccess ? true : mergeFailure);
   }
 }

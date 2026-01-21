@@ -22,4 +22,6 @@ public interface OPromisedDistributedOps {
   Optional<ODistributedMessage> removeNotPromised(OTransactionIdPromise promise);
 
   Optional<Map<OTransactionId, ODistributedMessage>> getPromised(ONodeId node);
+
+  void dumpActive();
 }

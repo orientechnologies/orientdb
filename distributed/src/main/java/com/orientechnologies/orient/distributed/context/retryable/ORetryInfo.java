@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.distributed.context.retryable;
 
+import java.text.MessageFormat;
 import java.util.Optional;
 import java.util.Random;
 
@@ -24,5 +25,11 @@ public class ORetryInfo {
     } else {
       return Optional.empty();
     }
+  }
+
+  @Override
+  public String toString() {
+    return MessageFormat.format(
+        "current delay {0} remaining retry {1}", this.delay, this.retryCountDown);
   }
 }

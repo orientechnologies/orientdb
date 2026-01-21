@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.distributed.context.coordination;
 
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.OGroupId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
@@ -40,7 +42,8 @@ import java.util.Optional;
 import java.util.Set;
 
 public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOps {
-
+  private static final OLogger logger =
+      OLogManager.instance().logger(OCoordinatedDistributedOpsImpl.class);
   private final OTopologyManager topology;
   private final OTransactionSequenceManager sequenceManager;
   private final OPromisedDistributedOps promised;
@@ -108,8 +111,18 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
       coordination.put(promise, action.newResponseCollector(promise, topology.getQuorum(), nodes));
       return Optional.of(new OOperationStart(promise, nodes));
     } else {
+      dumpActive();
       return Optional.empty();
     }
+  }
+
+  private void dumpActive() {
+    String active = "";
+    for (var entry : this.coordination.entrySet()) {
+      active += " " + entry.getKey() + " -> " + entry.getValue() + "\n";
+    }
+    logger.debug("coordinating on missing sequence state: \n %s ", active);
+    this.promised.dumpActive();
   }
 
   public synchronized Optional<OAcceptResult> receive(ODistributedMessage message) {
@@ -264,6 +277,8 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
     if (prom.isPresent()) {
       coordination.put(
           prom.get(), action.newResponseCollector(prom.get(), topology.getQuorum(), nodes));
+    } else {
+      dumpActive();
     }
     return prom;
   }

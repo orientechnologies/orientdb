@@ -4,6 +4,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.binary.
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.text.MessageFormat;
 import java.util.Objects;
 
 public class OTransactionIdPromise {
@@ -73,5 +74,10 @@ public class OTransactionIdPromise {
     } else if (!id.equals(other.id)) return false;
     if (recoverSequence != other.recoverSequence) return false;
     return true;
+  }
+
+  @Override
+  public String toString() {
+    return MessageFormat.format("{0} for {1}", id, coordinator);
   }
 }
