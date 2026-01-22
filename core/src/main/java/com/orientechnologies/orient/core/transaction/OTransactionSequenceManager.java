@@ -74,23 +74,25 @@ public class OTransactionSequenceManager {
 
   public synchronized ValidationResult notifySuccess(OTransactionIdPromise promise) {
     OTransactionId transactionId = promise.getId();
-    if (this.promisedSequential[transactionId.getPosition()] != null) {
-      if (this.promisedSequential[transactionId.getPosition()].getId().getSequence()
-          == transactionId.getSequence()) {
+    OTransactionIdPromise promised = this.promisedSequential[transactionId.getPosition()];
+    if (promised != null) {
+      if (promised.getId().getSequence() == transactionId.getSequence()) {
         this.sequentials[transactionId.getPosition()] = transactionId.getSequence();
         this.promisedSequential[transactionId.getPosition()] = null;
-      } else if (this.promisedSequential[transactionId.getPosition()].getId().getSequence()
-          > transactionId.getSequence()) {
-        return ValidationResult.ALREADY_PRESENT;
       } else {
-        return ValidationResult.MISSING_PREVIOUS;
+        if (promised.getId().getSequence() > transactionId.getSequence()) {
+          return ValidationResult.ALREADY_PRESENT;
+        } else {
+          return ValidationResult.MISSING_PREVIOUS;
+        }
       }
     } else {
-      if (this.sequentials[transactionId.getPosition()] + 1 == transactionId.getSequence()) {
+      long nextSequantial = this.sequentials[transactionId.getPosition()] + 1;
+      if (nextSequantial == transactionId.getSequence()) {
         // Not promised but valid, accept it
         // TODO: may need to return this information somehow
         this.sequentials[transactionId.getPosition()] = transactionId.getSequence();
-      } else if (this.sequentials[transactionId.getPosition()] + 1 > transactionId.getSequence()) {
+      } else if (nextSequantial > transactionId.getSequence()) {
         return ValidationResult.ALREADY_PRESENT;
       } else {
         return ValidationResult.MISSING_PREVIOUS;
@@ -101,25 +103,28 @@ public class OTransactionSequenceManager {
 
   public synchronized ValidationResult validate(OTransactionIdPromise promise) {
     OTransactionId transactionId = promise.getId();
-    if (this.promisedSequential[transactionId.getPosition()] == null) {
-      if (this.sequentials[transactionId.getPosition()] + 1 == transactionId.getSequence()) {
+    OTransactionIdPromise promised = this.promisedSequential[transactionId.getPosition()];
+    long nextSequential = this.sequentials[transactionId.getPosition()] + 1;
+    if (promised == null) {
+      if (nextSequential == transactionId.getSequence()) {
         this.promisedSequential[transactionId.getPosition()] = promise;
         return ValidationResult.VALID;
-      } else if (this.sequentials[transactionId.getPosition()] + 1 < transactionId.getSequence()) {
+      } else if (nextSequential < transactionId.getSequence()) {
         return ValidationResult.MISSING_PREVIOUS;
       } else {
         return ValidationResult.ALREADY_PRESENT;
       }
     } else {
-      if (this.sequentials[transactionId.getPosition()] + 1 == transactionId.getSequence()) {
-        if (this.promisedSequential[transactionId.getPosition()]
-            .getCoordinator()
-            .equals(promise.getCoordinator())) {
+      if (nextSequential == transactionId.getSequence()) {
+        if (promised.getCoordinator().equals(promise.getCoordinator())) {
+          return ValidationResult.VALID;
+        } else if (promised.nextAccept(promise)) {
+          promised = this.promisedSequential[transactionId.getPosition()] = promise;
           return ValidationResult.VALID;
         } else {
           return ValidationResult.ALREADY_PROMISED;
         }
-      } else if (this.sequentials[transactionId.getPosition()] + 1 < transactionId.getSequence()) {
+      } else if (nextSequential < transactionId.getSequence()) {
         return ValidationResult.MISSING_PREVIOUS;
       } else {
         return ValidationResult.ALREADY_PRESENT;

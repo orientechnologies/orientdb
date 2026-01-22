@@ -299,4 +299,39 @@ public class OTransactionSequenceManagerTest {
     assertTrue(sequenceManagerRecv.notifyFailure(three));
     assertEquals(sequenceManagerRecv.validate(otherThree), VALID);
   }
+
+  @Test
+  public void testRetrySequence() {
+    var sequenceManager = new OTransactionSequenceManager(new ONodeId("one"), 1000);
+    var sequence = sequenceManager.next().get();
+
+    var sequenceManagerOther = new OTransactionSequenceManager(new ONodeId("two"), 1000);
+    assertEquals(sequenceManagerOther.validate(sequence), VALID);
+    var retrySequence = sequence.retrySequence(new ONodeId("two"));
+
+    assertEquals(sequenceManager.validate(retrySequence), VALID);
+    assertEquals(sequenceManagerOther.validate(retrySequence), VALID);
+    assertEquals(sequenceManager.notifySuccess(retrySequence), VALID);
+    assertEquals(sequenceManagerOther.notifySuccess(retrySequence), VALID);
+    assertEquals(sequenceManager.validate(sequence), ALREADY_PRESENT);
+    assertEquals(sequenceManagerOther.validate(sequence), ALREADY_PRESENT);
+  }
+
+  @Test
+  public void testRetryWithFailSequence() {
+    var sequenceManager = new OTransactionSequenceManager(new ONodeId("one"), 1000);
+    var sequence = sequenceManager.next().get();
+
+    var sequenceManagerOther = new OTransactionSequenceManager(new ONodeId("two"), 1000);
+    assertEquals(sequenceManagerOther.validate(sequence), VALID);
+    var retrySequence = sequence.retrySequence(new ONodeId("two"));
+
+    assertEquals(sequenceManager.validate(retrySequence), VALID);
+    assertEquals(sequenceManagerOther.validate(retrySequence), VALID);
+    assertTrue(sequenceManager.notifyFailure(retrySequence));
+    assertTrue(sequenceManagerOther.notifyFailure(retrySequence));
+    // After failure should re-accept the first sequence
+    assertEquals(sequenceManager.validate(sequence), VALID);
+    assertEquals(sequenceManagerOther.validate(sequence), VALID);
+  }
 }
