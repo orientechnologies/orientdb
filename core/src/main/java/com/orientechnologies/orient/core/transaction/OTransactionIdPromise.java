@@ -80,4 +80,17 @@ public class OTransactionIdPromise {
   public String toString() {
     return MessageFormat.format("{0} for {1}", id, coordinator);
   }
+
+  public boolean nextAccept(OTransactionIdPromise promise) {
+    if (this.id.equals(promise.id)) {
+      if (this.recoverSequence < promise.recoverSequence) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public OTransactionIdPromise retrySequence(ONodeId node) {
+    return new OTransactionIdPromise(node, id, recoverSequence + 1);
+  }
 }
