@@ -67,7 +67,7 @@
         <dependency>
             <groupId>org.glassfish.jaxb</groupId>
             <artifactId>jaxb-core</artifactId>
-            <version>3.0.2</version>
+            <version>4.0.6</version>
         </dependency>
     </dependencies>
 
