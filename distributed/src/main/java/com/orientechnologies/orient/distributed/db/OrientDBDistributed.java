@@ -104,7 +104,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.stream.Collectors;
 
 /** Created by tglman on 08/08/17. */
 public class OrientDBDistributed extends OrientDBEmbedded
@@ -448,25 +447,25 @@ public class OrientDBDistributed extends OrientDBEmbedded
 
   @Override
   public void drop(String name, String user, String password) {
-    //    if (getPlugin() != null && getPlugin().isEnabled()) {
-    //      plugin.executeInDistributedDatabaseLock(
-    //          name,
-    //          20000,
-    //          () -> {
-    //            plugin.dropOnAllServers(name);
-    //            return null;
-    //          });
-    //      // dropFlow(name);
-    //      plugin.dropConfig(name);
-    //    } else {
-    //      super.drop(name, user, password);
-    //    }
-
-    if (isDistributedDisabled(name)) {
-      super.drop(name, user, password);
+    if (getPlugin() != null && getPlugin().isEnabled()) {
+      plugin.executeInDistributedDatabaseLock(
+          name,
+          20000,
+          () -> {
+            plugin.dropOnAllServers(name);
+            return null;
+          });
+      // dropFlow(name);
+      plugin.dropConfig(name);
     } else {
-      dropFlow(name);
+      super.drop(name, user, password);
     }
+
+    //    if (isDistributedDisabled(name)) {
+    //      super.drop(name, user, password);
+    //    } else {
+    //      dropFlow(name);
+    //    }
   }
 
   private void dropFlow(String name) {
@@ -667,23 +666,23 @@ public class OrientDBDistributed extends OrientDBEmbedded
       ODatabaseId id,
       OrientDBConfig config,
       ODatabaseTask<Void> createOps) {
-    //    super.create(name, user, password, type, id, config, createOps);
-    //    if (!isDistributedDisabled(name)) {
-    //      Set<String> nodes = plugin.getActiveServers();
-    //      for (String node : nodes) {
-    //        try {
-    //          plugin.waitUntilNodeOnline(node, name);
-    //        } catch (InterruptedException e) {
-    //          break;
-    //        }
-    //      }
-    //    }
-
-    if (isDistributedDisabled(name)) {
-      super.create(name, user, password, type, id, config, createOps);
-    } else {
-      createDatabaseFlow(name, user, password, type, id, config, createOps);
+    super.create(name, user, password, type, id, config, createOps);
+    if (!isDistributedDisabled(name)) {
+      Set<String> nodes = plugin.getActiveServers();
+      for (String node : nodes) {
+        try {
+          plugin.waitUntilNodeOnline(node, name);
+        } catch (InterruptedException e) {
+          break;
+        }
+      }
     }
+
+    //    if (isDistributedDisabled(name)) {
+    //      super.create(name, user, password, type, id, config, createOps);
+    //    } else {
+    //      createDatabaseFlow(name, user, password, type, id, config, createOps);
+    //    }
   }
 
   private void createDatabaseFlow(
@@ -943,7 +942,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
   public void connected(ONodeId node, String url, String user, String password) {
     try {
       connectRemoteServer(node.getNode(), url, user, password);
-      sendFirstConnect(node);
+      //      sendFirstConnect(node);
     } catch (IOException e) {
       logger.warn("failing to connect to remote node %s", node.getNode(), e);
     }
@@ -1202,37 +1201,37 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   public void setDatabaseStatus(ONodeId nodeId, String dbName, DB_STATUS status) {
-    Optional<ODatabaseId> dbID = getNodeState().getDatabaseTopology().getDatabaseId(dbName);
-    if (dbID.isPresent()) {
-      setDatabaseState(dbID.get(), nodeId, ODatabaseState.from(status));
-    } else {
-      logger.warn("setting database status to %s, for not defined db %s", status, dbName);
-    }
+    //    Optional<ODatabaseId> dbID = getNodeState().getDatabaseTopology().getDatabaseId(dbName);
+    //    if (dbID.isPresent()) {
+    //      setDatabaseState(dbID.get(), nodeId, ODatabaseState.from(status));
+    //    } else {
+    //      logger.warn("setting database status to %s, for not defined db %s", status, dbName);
+    //    }
 
-    // plugin.setDatabaseStatus(nodeId.getNode(), dbName, status);
+    plugin.setDatabaseStatus(nodeId.getNode(), dbName, status);
   }
 
   public void setDatabaseStatus(String dbName, DB_STATUS status) {
-    Optional<ODatabaseId> dbID = getNodeState().getDatabaseTopology().getDatabaseId(dbName);
-    if (dbID.isPresent()) {
-      setDatabaseState(dbID.get(), getNodeId(), ODatabaseState.from(status));
-    } else {
-      logger.warn("setting database status to %s, for not defined db %s", status, dbName);
-    }
-    // plugin.setDatabaseStatus(getNodeId().getNode(), dbName, status);
+    //    Optional<ODatabaseId> dbID = getNodeState().getDatabaseTopology().getDatabaseId(dbName);
+    //    if (dbID.isPresent()) {
+    //      setDatabaseState(dbID.get(), getNodeId(), ODatabaseState.from(status));
+    //    } else {
+    //      logger.warn("setting database status to %s, for not defined db %s", status, dbName);
+    //    }
+    plugin.setDatabaseStatus(getNodeId().getNode(), dbName, status);
   }
 
   public DB_STATUS getDatabaseStatus(ONodeId nodeId, String dbName) {
-    Optional<ODatabaseId> dbID = getNodeState().getDatabaseTopology().getDatabaseId(dbName);
-    if (dbID.isPresent()) {
-      ODatabaseState status = getDatabaseState(dbID.get(), nodeId);
-      if (status != null) {
-        return status.toSatus();
-      }
-    }
-    return null;
+    //    Optional<ODatabaseId> dbID = getNodeState().getDatabaseTopology().getDatabaseId(dbName);
+    //    if (dbID.isPresent()) {
+    //      ODatabaseState status = getDatabaseState(dbID.get(), nodeId);
+    //      if (status != null) {
+    //        return status.toSatus();
+    //      }
+    //    }
+    //    return null;
 
-    //    return plugin.getDatabaseStatus(nodeId.getNode(), dbName);
+    return plugin.getDatabaseStatus(nodeId.getNode(), dbName);
   }
 
   public DB_STATUS getDatabaseStatus(String node, String dbName) {
@@ -1240,18 +1239,18 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   public DB_STATUS getDatabaseStatus(String dbName) {
-    Optional<ODatabaseId> dbID = getNodeState().getDatabaseTopology().getDatabaseId(dbName);
-    if (dbID.isPresent()) {
-      ODatabaseState status = getDatabaseState(dbID.get(), getNodeId());
-      if (status != null) {
-        return status.toSatus();
-      } else {
-        return null;
-      }
-    } else {
-      return null;
-    }
-    // return plugin.getDatabaseStatus(getNodeId().getNode(), dbName);
+    //    Optional<ODatabaseId> dbID = getNodeState().getDatabaseTopology().getDatabaseId(dbName);
+    //    if (dbID.isPresent()) {
+    //      ODatabaseState status = getDatabaseState(dbID.get(), getNodeId());
+    //      if (status != null) {
+    //        return status.toSatus();
+    //      } else {
+    //        return null;
+    //      }
+    //    } else {
+    //      return null;
+    //    }
+    return plugin.getDatabaseStatus(getNodeId().getNode(), dbName);
   }
 
   public OServer getServer() {
@@ -1264,49 +1263,50 @@ public class OrientDBDistributed extends OrientDBEmbedded
 
   public boolean installDatabase(
       boolean iStartup, String databaseName, boolean forceDeployment, boolean tryWithDeltaFirst) {
-    Optional<ODatabaseId> id = getNodeState().getDatabaseTopology().getDatabaseId(databaseName);
-    if (id.isPresent()) {
-      sync(id.get(), Optional.empty());
-      return true;
-    } else {
-      return false;
-    }
-    //    return plugin.installDatabase(iStartup, databaseName, forceDeployment, tryWithDeltaFirst);
+    //    Optional<ODatabaseId> id =
+    // getNodeState().getDatabaseTopology().getDatabaseId(databaseName);
+    //    if (id.isPresent()) {
+    //      sync(id.get(), Optional.empty());
+    //      return true;
+    //    } else {
+    //      return false;
+    //    }
+    return plugin.installDatabase(iStartup, databaseName, forceDeployment, tryWithDeltaFirst);
   }
 
   public Set<String> getAvailableNodeNotLocalNames(String name) {
-    Set<String> nodes = getAvailableNodeNames(name);
-    nodes.remove(getNodeName());
-    return nodes;
-    //    return plugin.getAvailableNodeNotLocalNames(name);
+    //    Set<String> nodes = getAvailableNodeNames(name);
+    //    nodes.remove(getNodeName());
+    //    return nodes;
+    return plugin.getAvailableNodeNotLocalNames(name);
   }
 
   public Set<String> getAvailableNodeNames(String name) {
-    Optional<ODatabaseId> id = getNodeState().getDatabaseTopology().getDatabaseId(name);
-    if (id.isPresent()) {
-      return getNodeState().getDatabaseTopology().getOnlineNodes(id.get()).stream()
-          .map((x) -> x.getNode())
-          .collect(Collectors.toSet());
-    } else {
-      return getNodeState().getNetworkMembers().stream()
-          .map((x) -> x.getNode())
-          .collect(Collectors.toSet());
-    }
-    //    return plugin.getAvailableNodeNames(name);
+    //    Optional<ODatabaseId> id = getNodeState().getDatabaseTopology().getDatabaseId(name);
+    //    if (id.isPresent()) {
+    //      return getNodeState().getDatabaseTopology().getOnlineNodes(id.get()).stream()
+    //          .map((x) -> x.getNode())
+    //          .collect(Collectors.toSet());
+    //    } else {
+    //      return getNodeState().getNetworkMembers().stream()
+    //          .map((x) -> x.getNode())
+    //          .collect(Collectors.toSet());
+    //    }
+    return plugin.getAvailableNodeNames(name);
   }
 
   public int getOnlineMasters(String databaseName) {
-    ODatabasesTopology databaseTopology = getNodeState().getDatabaseTopology();
-    Optional<ODatabaseId> id = databaseTopology.getDatabaseId(databaseName);
-    if (id.isPresent()) {
-      return (int)
-          databaseTopology.getOnlineNodes(id.get()).stream()
-              .filter((x) -> databaseTopology.isMain(id.get(), x))
-              .count();
-    } else {
-      return 0;
-    }
-    //    return plugin.getAvailableNodes(databaseName);
+    //    ODatabasesTopology databaseTopology = getNodeState().getDatabaseTopology();
+    //    Optional<ODatabaseId> id = databaseTopology.getDatabaseId(databaseName);
+    //    if (id.isPresent()) {
+    //      return (int)
+    //          databaseTopology.getOnlineNodes(id.get()).stream()
+    //              .filter((x) -> databaseTopology.isMain(id.get(), x))
+    //              .count();
+    //    } else {
+    //      return 0;
+    //    }
+    return plugin.getAvailableNodes(databaseName);
   }
 
   public void establish(OGroupId groupId, Set<ONodeId> candidates) {
@@ -1323,42 +1323,43 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   public List<String> getOnlineNodesNotLocal(String dbName) {
-    Optional<ODatabaseId> id = getNodeState().getDatabaseTopology().getDatabaseId(dbName);
-    List<String> result;
-    if (id.isPresent()) {
-      result =
-          getNodeState().getDatabaseTopology().getOnlineNodes(id.get()).stream()
-              .map((x) -> x.getNode())
-              .collect(Collectors.toList());
-    } else {
-      result =
-          getNodeState().getNetworkMembers().stream()
-              .map((x) -> x.getNode())
-              .collect(Collectors.toList());
-    }
-    result.remove(getNodeName());
-    return result;
-    //    return plugin.getOnlineNodesNotLocal(dbName);
+    //    Optional<ODatabaseId> id = getNodeState().getDatabaseTopology().getDatabaseId(dbName);
+    //    List<String> result;
+    //    if (id.isPresent()) {
+    //      result =
+    //          getNodeState().getDatabaseTopology().getOnlineNodes(id.get()).stream()
+    //              .map((x) -> x.getNode())
+    //              .collect(Collectors.toList());
+    //    } else {
+    //      result =
+    //          getNodeState().getNetworkMembers().stream()
+    //              .map((x) -> x.getNode())
+    //              .collect(Collectors.toList());
+    //    }
+    //    result.remove(getNodeName());
+    //    return result;
+    return plugin.getOnlineNodesNotLocal(dbName);
   }
 
   /** Returns the nodes with the requested status. */
   public int getNodesWithStatus(
       final Collection<String> iNodes, final String databaseName, final DB_STATUS... statuses) {
-    Optional<ODatabaseId> id = getNodeState().getDatabaseTopology().getDatabaseId(databaseName);
-    ODatabasesTopology topology = getNodeState().getDatabaseTopology();
-    for (Iterator<String> it = iNodes.iterator(); it.hasNext(); ) {
-      final String node = it.next();
-      ODatabaseState state = topology.getState(id.get(), new ONodeId(node));
-      DB_STATUS s = state.toSatus();
-      boolean matchState = false;
-      for (DB_STATUS st : statuses) {
-        if (s == st) matchState = true;
-      }
-      if (!matchState) it.remove();
-    }
-    return iNodes.size();
+    //    Optional<ODatabaseId> id =
+    // getNodeState().getDatabaseTopology().getDatabaseId(databaseName);
+    //    ODatabasesTopology topology = getNodeState().getDatabaseTopology();
+    //    for (Iterator<String> it = iNodes.iterator(); it.hasNext(); ) {
+    //      final String node = it.next();
+    //      ODatabaseState state = topology.getState(id.get(), new ONodeId(node));
+    //      DB_STATUS s = state.toSatus();
+    //      boolean matchState = false;
+    //      for (DB_STATUS st : statuses) {
+    //        if (s == st) matchState = true;
+    //      }
+    //      if (!matchState) it.remove();
+    //    }
+    //    return iNodes.size();
 
-    //    return plugin.getNodesWithStatus(iNodes, databaseName, statuses);
+    return plugin.getNodesWithStatus(iNodes, databaseName, statuses);
   }
 
   public boolean isNodeOnline(String targetNode, String databaseName) {
