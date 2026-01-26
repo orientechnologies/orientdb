@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.distributed.context.coordination.message;
 
+import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.distributed.context.ONodeState;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OOperationMessage;
@@ -8,7 +9,6 @@ import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.Collections;
 import java.util.Optional;
 
 public class OProposeOp implements OStructuralMessage, ODistributedMessage {
@@ -23,22 +23,21 @@ public class OProposeOp implements OStructuralMessage, ODistributedMessage {
   @Override
   public void execute(OrientDBDistributed ctx) {
     ONodeState nodeState = ctx.getNodeState();
+    ONodeId coordinator = promise.getCoordinator();
     Optional<OAcceptResult> result = nodeState.receive(this);
     if (result.isEmpty()) {
       Optional<OAcceptResult> res = op.validate(ctx, promise);
       if (res.isPresent()) {
-        ctx.sendMessage(
-            Collections.singleton(promise.getCoordinator()),
-            new OFailPropose(nodeState.getNodeId(), promise, res.get()));
+        nodeState.cancelPromise(promise);
+        var failure = new OFailPropose(nodeState.getNodeId(), promise, res.get());
+        ctx.sendMessage(coordinator, failure);
       } else {
-        ctx.sendMessage(
-            Collections.singleton(promise.getCoordinator()),
-            new OSuccessPropose(nodeState.getNodeId(), promise));
+        var success = new OSuccessPropose(nodeState.getNodeId(), promise);
+        ctx.sendMessage(coordinator, success);
       }
     } else {
-      ctx.sendMessage(
-          Collections.singleton(promise.getCoordinator()),
-          new OFailPropose(nodeState.getNodeId(), promise, result.get()));
+      var failure = new OFailPropose(nodeState.getNodeId(), promise, result.get());
+      ctx.sendMessage(coordinator, failure);
     }
   }
 

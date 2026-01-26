@@ -118,4 +118,8 @@ public class ONodeState {
   public OCoordinatedDistributedOps getOps() {
     return coordinated;
   }
+
+  public void cancelPromise(OTransactionIdPromise promise) {
+    coordinated.cancelPromise(promise);
+  }
 }

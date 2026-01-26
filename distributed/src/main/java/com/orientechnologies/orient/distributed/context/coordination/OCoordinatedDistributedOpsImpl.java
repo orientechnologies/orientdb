@@ -155,6 +155,17 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
     };
   }
 
+  @Override
+  public void cancelPromise(OTransactionIdPromise promise) {
+    boolean promised = sequenceManager.notifyFailure(promise);
+    if (promised) {
+      var message = this.promised.removePromised(promise);
+      if (message.isPresent()) {
+        this.promised.addNotPromised(message.get());
+      }
+    }
+  }
+
   public synchronized Optional<ODistributedMessage> consensusFailure(
       OTransactionIdPromise promise) {
     boolean promised = sequenceManager.notifyFailure(promise);

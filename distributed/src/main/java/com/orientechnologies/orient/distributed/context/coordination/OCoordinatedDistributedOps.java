@@ -152,4 +152,6 @@ public interface OCoordinatedDistributedOps {
   OGroupId getGroupId();
 
   void confirmMerge(ONodeId node, OTransactionIdPromise promise, boolean accepted);
+
+  void cancelPromise(OTransactionIdPromise promise);
 }
