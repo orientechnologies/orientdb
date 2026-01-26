@@ -178,7 +178,13 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
   public void waitUntilNodeOnline(final String nodeName, final String databaseName)
       throws InterruptedException {
     OrientDBDistributed context = (OrientDBDistributed) serverInstance.getDatabases();
-    while (!context.isNodeOnline(nodeName, databaseName)) Thread.sleep(100);
+    long waitTill = System.currentTimeMillis() + 600000;
+    while (!context.isNodeOnline(nodeName, databaseName)) {
+      if (waitTill <= System.currentTimeMillis()) {
+        throw new ODatabaseException("Failed to wait for node online");
+      }
+      Thread.sleep(100);
+    }
   }
 
   @Override
