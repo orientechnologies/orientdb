@@ -6,10 +6,10 @@ import com.orientechnologies.orient.core.transaction.OGroupId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.distributed.context.coordination.OCoordinatedDistributedOpsImpl;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OAddTopologyMember;
+import com.orientechnologies.orient.distributed.context.coordination.message.state.ODatabaseStateNetwork;
 import com.orientechnologies.orient.distributed.context.coordination.message.state.ONodeStateNetwork;
 import com.orientechnologies.orient.distributed.db.OCompleteExecution;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
-import java.util.HashSet;
 import java.util.Set;
 
 public sealed interface ODiscoverAction
@@ -40,14 +40,18 @@ public sealed interface ODiscoverAction
     @Override
     public ODiscoverAction checkAndApply(
         OCoordinatedDistributedOpsImpl ops, ONodeStateNetwork state, boolean merge) {
-      var otherDbs = new HashSet<>(state.databases().stream().map((x) -> x.id()).toList());
-      otherDbs.removeAll(ops.getDatabaseTopology().getDatabases());
-      if (otherDbs.isEmpty()) {
-        return this;
-      } else {
-        logger.warn("found join-able network, but can't merge into it with databases");
-        return new ONoneAction();
+      var localDbs = ops.getDatabaseTopology();
+      for (ODatabaseStateNetwork db : state.databases()) {
+        var locDb = localDbs.getDatabaseId(db.name());
+        if (locDb.isPresent()) {
+          if (!locDb.get().equals(db.id())) {
+            logger.warn(
+                "found join-able network, but can't merge into it with conflicting databases");
+            return new ONoneAction();
+          }
+        }
       }
+      return this;
     }
   }
 
