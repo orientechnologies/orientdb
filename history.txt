@@ -26,9 +26,17 @@
 
 This document contains the last changes of OrientDB Community Edition.
 
+-----------------------------------------------------------------------------------------------------------------------------------
+version 3.2.49 - (Jennaury, 27 2025)
+
+# Core
+- Dependency updates 
+
+# Lucene
+- fixed metadata value tracking to avoid to keep to much linked data in memory, issue #10663
 
 -----------------------------------------------------------------------------------------------------------------------------------
-version 3.2.47 - (December, 24 2025)
+version 3.2.48 - (December, 24 2025)
 
 # Core
 - Corrected slow parsing of nested json (tanks @lvca), issue #10328
