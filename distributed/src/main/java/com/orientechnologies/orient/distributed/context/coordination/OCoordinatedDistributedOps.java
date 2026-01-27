@@ -153,5 +153,7 @@ public interface OCoordinatedDistributedOps {
 
   void confirmMerge(ONodeId node, OTransactionIdPromise promise, boolean accepted);
 
+  void cancelMerge(OTransactionIdPromise promise);
+
   void cancelPromise(OTransactionIdPromise promise);
 }

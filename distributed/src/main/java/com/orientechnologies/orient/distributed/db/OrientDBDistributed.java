@@ -1433,6 +1433,14 @@ public class OrientDBDistributed extends OrientDBEmbedded
     sendMessage(promise.getCoordinator(), new OMergeResult(getNodeId(), promise, accepted));
   }
 
+  public void cancelMerge(OTransactionIdPromise promise) {
+    getNodeState().getOps().cancelMerge(promise);
+  }
+
+  public void applyMerge(OTransactionIdPromise promise) {
+    // Do Nothing for now, just wait for new network  notification
+  }
+
   public void confirmMerge(ONodeId node, OTransactionIdPromise promise, boolean accepted) {
     getNodeState().getOps().confirmMerge(node, promise, accepted);
   }

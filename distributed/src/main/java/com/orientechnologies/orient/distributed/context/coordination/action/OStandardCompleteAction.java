@@ -20,7 +20,7 @@ public class OStandardCompleteAction implements OCompleteAction {
   private static final OLoggerDistributed logger =
       OLoggerDistributed.logger(OStandardCompleteAction.class);
 
-  private final OrientDBDistributed context;
+  protected final OrientDBDistributed context;
   private final OOperationMessage operation;
   private final OCompleteExecution execution;
 

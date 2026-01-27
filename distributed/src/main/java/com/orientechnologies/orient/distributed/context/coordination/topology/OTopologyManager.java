@@ -2,6 +2,7 @@ package com.orientechnologies.orient.distributed.context.coordination.topology;
 
 import com.orientechnologies.orient.core.transaction.OGroupId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
+import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.distributed.context.ONetworkTopologyStore;
 import com.orientechnologies.orient.distributed.context.coordination.message.state.OTopologyStateNetwork;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
@@ -237,7 +238,7 @@ public class OTopologyManager implements OTopologyEvents {
     return getVersion() + 1;
   }
 
-  public boolean acceptMerge(OGroupId group, ONodeId coordinator) {
+  public synchronized boolean acceptMerge(OGroupId group, ONodeId coordinator) {
     if (!promise && this.quorum == 1) {
       // Accept only if current quorum is 1
       promise = true;
@@ -245,5 +246,9 @@ public class OTopologyManager implements OTopologyEvents {
     } else {
       return false;
     }
+  }
+
+  public synchronized void cancelMerge(OTransactionIdPromise promise) {
+    this.promise = false;
   }
 }

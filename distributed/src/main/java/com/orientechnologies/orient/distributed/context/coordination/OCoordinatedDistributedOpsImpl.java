@@ -482,6 +482,11 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   }
 
   @Override
+  public synchronized void cancelMerge(OTransactionIdPromise promise) {
+    topology.cancelMerge(promise);
+  }
+
+  @Override
   public void confirmMerge(ONodeId node, OTransactionIdPromise promise, boolean accepted) {
     if (accepted) {
       nodeSuccess(node, promise);
