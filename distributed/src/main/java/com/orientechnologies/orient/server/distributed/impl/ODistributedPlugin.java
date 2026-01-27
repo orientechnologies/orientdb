@@ -2091,25 +2091,6 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
 
       clusterManager.removeServerFromCluster(member, nodeLeftName, removeOnlyDynamicServers);
 
-      OrientDBDistributed ctx = (OrientDBDistributed) serverInstance.getDatabases();
-
-      for (String databaseName : getManagedDatabases()) {
-        try {
-          if (ctx.getDistributedConfiguration(databaseName).getServerRole(nodeName)
-              == ODistributedConfiguration.ROLES.MASTER) {
-            reassignClustersOwnership(nodeName, databaseName, false);
-          }
-        } catch (Exception e) {
-          // IGNORE IT
-          logger.errorNode(
-              nodeName,
-              "Cannot re-balance the cluster for database '%s' because the Lock Manager is not"
-                  + " available (err=%s)",
-              databaseName,
-              e.getMessage());
-        }
-      }
-
       if (nodeLeftName.equalsIgnoreCase(nodeName))
         // CURRENT NODE: EXIT
         System.exit(1);
