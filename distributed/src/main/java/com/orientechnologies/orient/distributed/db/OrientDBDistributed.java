@@ -725,8 +725,9 @@ public class OrientDBDistributed extends OrientDBEmbedded
         delay);
   }
 
-  private void setDatabaseState(ODatabaseId dbId, ONodeId node, ODatabaseState state) {
-    retryOperation(new OSetDatabaseStateRetryOperation(node, dbId, state));
+  private Future<Optional<OAcceptResult>> setDatabaseState(
+      ODatabaseId dbId, ONodeId node, ODatabaseState state) {
+    return retryOperation(new OSetDatabaseStateRetryOperation(node, dbId, state));
   }
 
   private ODatabaseState getDatabaseState(ODatabaseId dbId, ONodeId node) {
@@ -866,8 +867,8 @@ public class OrientDBDistributed extends OrientDBEmbedded
   @Override
   public void close() {
     if (!isOpen()) return;
-    threadsGroup.interrupt();
     offlineOnShutdown();
+    threadsGroup.interrupt();
     this.messageService.shutdown();
     if (this.remoteServerManager != null) {
       this.remoteServerManager.closeAll();
