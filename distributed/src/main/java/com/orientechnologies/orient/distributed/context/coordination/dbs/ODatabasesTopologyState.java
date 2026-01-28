@@ -110,25 +110,15 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
     }
   }
 
-  public synchronized void declareNode(
-      ODatabaseId db, String name, ONodeId node, ONodeRole role, ODatabaseState state) {
-    var nodes =
-        databases.computeIfAbsent(
-            db,
-            (dbKey) -> {
-              return new ODatabaseTopologyState(
-                  db, name, Set.of(new OAddNodeInfo(node, role)), 0, listener);
-            });
-
-    // First declare, version 0
-    nodes.defineNode(node, role, state, 0);
-  }
-
   public synchronized void setState(
-      ODatabaseId db, ONodeId node, ODatabaseState state, long version) {
+      ODatabaseId db,
+      ONodeId node,
+      ODatabaseState state,
+      long version,
+      OTransactionIdPromise promise) {
     var nodes = databases.get(db);
     if (nodes != null) {
-      nodes.setState(node, state, version);
+      nodes.setState(node, state, version, promise);
     }
   }
 
@@ -137,10 +127,14 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
   }
 
   public synchronized Optional<OAcceptResult> validateSetState(
-      ODatabaseId dbId, ONodeId nodeId, ODatabaseState state, long version) {
+      ODatabaseId dbId,
+      ONodeId nodeId,
+      ODatabaseState state,
+      long version,
+      OTransactionIdPromise promise) {
     ODatabaseTopologyState dbTopology = this.databases.get(dbId);
     if (dbTopology != null) {
-      return dbTopology.promiseState(state, nodeId, version);
+      return dbTopology.promiseState(state, nodeId, version, promise);
     } else {
       return Optional.of(new ODatabaseMissing(dbId));
     }
@@ -155,10 +149,11 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
     }
   }
 
-  public synchronized void cancelSetState(ODatabaseId dbId, ONodeId nodeId, long version) {
+  public synchronized void cancelSetState(
+      ODatabaseId dbId, ONodeId nodeId, long version, OTransactionIdPromise promise) {
     ODatabaseTopologyState db = this.databases.get(dbId);
     if (db != null) {
-      db.cancelSetState(nodeId, version);
+      db.cancelSetState(nodeId, version, promise);
     }
   }
 
@@ -357,27 +352,28 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
   }
 
   public synchronized Optional<OAcceptResult> validateAddMember(
-      ODatabaseId dbId, List<OAddNodeInfo> nodes, long version) {
+      ODatabaseId dbId, List<OAddNodeInfo> nodes, long version, OTransactionIdPromise promise) {
     ODatabaseTopologyState db = this.databases.get(dbId);
     if (db != null) {
-      return db.promiseMember(nodes, version);
+      return db.promiseMember(nodes, version, promise);
     } else {
       return Optional.of(new ODatabaseMissing(dbId));
     }
   }
 
   public synchronized void addDatabaseMember(
-      ODatabaseId dbId, List<OAddNodeInfo> nodes, long version) {
+      ODatabaseId dbId, List<OAddNodeInfo> nodes, long version, OTransactionIdPromise promise) {
     ODatabaseTopologyState db = this.databases.get(dbId);
     if (db != null) {
-      db.addMember(nodes, version);
+      db.addMember(nodes, version, promise);
     }
   }
 
-  public synchronized void cancelAddDatabaseMember(ODatabaseId dbId, List<OAddNodeInfo> nodes) {
+  public synchronized void cancelAddDatabaseMember(
+      ODatabaseId dbId, List<OAddNodeInfo> nodes, OTransactionIdPromise promise) {
     ODatabaseTopologyState db = this.databases.get(dbId);
     if (db != null) {
-      db.cancelAddMemer(nodes);
+      db.cancelAddMemer(nodes, promise);
     }
   }
 

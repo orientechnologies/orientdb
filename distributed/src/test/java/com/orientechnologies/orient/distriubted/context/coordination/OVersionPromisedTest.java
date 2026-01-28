@@ -8,7 +8,7 @@ import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.distributed.context.coordination.OVersion;
 import com.orientechnologies.orient.distributed.context.coordination.OVersionPromise;
-import com.orientechnologies.orient.distributed.context.coordination.result.OInvalidSequential;
+import com.orientechnologies.orient.distributed.context.coordination.result.OAlreadyPromised;
 import com.orientechnologies.orient.distributed.context.coordination.result.OOutdatedVersion;
 import java.util.UUID;
 import org.junit.Test;
@@ -96,7 +96,7 @@ public class OVersionPromisedTest {
     result = promise.promise(newNextPromise, next);
     assertTrue(result.isEmpty());
     result = promise.promise(nextPromise, next);
-    assertTrue(result.get() instanceof OInvalidSequential);
+    assertTrue(result.get() instanceof OAlreadyPromised);
   }
 
   @Test

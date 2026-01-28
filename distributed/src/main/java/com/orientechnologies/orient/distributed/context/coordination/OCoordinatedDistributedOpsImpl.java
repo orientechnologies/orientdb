@@ -376,33 +376,45 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   }
 
   public Optional<OAcceptResult> validateAddDatabaseMember(
-      ODatabaseId dbId, List<OAddNodeInfo> nodes, long version) {
-    return this.databaseTopology.validateAddMember(dbId, nodes, version);
+      ODatabaseId dbId, List<OAddNodeInfo> nodes, long version, OTransactionIdPromise promise) {
+    return this.databaseTopology.validateAddMember(dbId, nodes, version, promise);
   }
 
-  public void addDatabaseMember(ODatabaseId dbId, List<OAddNodeInfo> nodes, long version) {
-    this.databaseTopology.addDatabaseMember(dbId, nodes, version);
+  public void addDatabaseMember(
+      ODatabaseId dbId, List<OAddNodeInfo> nodes, long version, OTransactionIdPromise promise) {
+    this.databaseTopology.addDatabaseMember(dbId, nodes, version, promise);
     notifyUpdate();
   }
 
-  public void cancelAddDatabaseMember(ODatabaseId dbId, List<OAddNodeInfo> nodes) {
-    this.databaseTopology.cancelAddDatabaseMember(dbId, nodes);
+  public void cancelAddDatabaseMember(
+      ODatabaseId dbId, List<OAddNodeInfo> nodes, OTransactionIdPromise promise) {
+    this.databaseTopology.cancelAddDatabaseMember(dbId, nodes, promise);
   }
 
   @Override
   public Optional<OAcceptResult> validateSetState(
-      ODatabaseId dbId, ONodeId nodeId, ODatabaseState state, long version) {
-    return this.databaseTopology.validateSetState(dbId, nodeId, state, version);
+      ODatabaseId dbId,
+      ONodeId nodeId,
+      ODatabaseState state,
+      long version,
+      OTransactionIdPromise promise) {
+    return this.databaseTopology.validateSetState(dbId, nodeId, state, version, promise);
   }
 
   @Override
-  public void setState(ODatabaseId db, ONodeId node, ODatabaseState state, long version) {
-    this.databaseTopology.setState(db, node, state, version);
+  public void setState(
+      ODatabaseId db,
+      ONodeId node,
+      ODatabaseState state,
+      long version,
+      OTransactionIdPromise promise) {
+    this.databaseTopology.setState(db, node, state, version, promise);
   }
 
   @Override
-  public void cancelSetState(ODatabaseId dbId, ONodeId nodeId, long version) {
-    this.databaseTopology.cancelSetState(dbId, nodeId, version);
+  public void cancelSetState(
+      ODatabaseId dbId, ONodeId nodeId, long version, OTransactionIdPromise promise) {
+    this.databaseTopology.cancelSetState(dbId, nodeId, version, promise);
   }
 
   @Override

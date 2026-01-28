@@ -2,15 +2,16 @@ package com.orientechnologies.orient.distributed.context.coordination.dbs;
 
 import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
+import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
+import com.orientechnologies.orient.distributed.context.coordination.OVersion;
+import com.orientechnologies.orient.distributed.context.coordination.OVersionPromise;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OAddNodeInfo;
 import com.orientechnologies.orient.distributed.context.coordination.message.state.ODatabaseMemberNetwork;
 import com.orientechnologies.orient.distributed.context.coordination.message.state.ODatabaseStateNetwork;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
-import com.orientechnologies.orient.distributed.context.coordination.result.OAlreadyPromised;
 import com.orientechnologies.orient.distributed.context.coordination.result.OMissingNode;
 import com.orientechnologies.orient.distributed.context.coordination.result.ONodeAlreadyPresent;
-import com.orientechnologies.orient.distributed.context.coordination.result.OOutdatedVersion;
 import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncId;
 import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncInfo;
 import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncSession;
@@ -29,8 +30,7 @@ public class ODatabaseTopologyState {
   private final ODatabaseId id;
   private final String name;
   private final Map<ONodeId, ONodeDatabaseState> nodeStatus = new HashMap<>();
-  private long version = 0;
-  private boolean promised = false;
+  private final OVersionPromise versionPromise;
   private int quorum;
   private List<OActionNotification> notifications = new ArrayList<>();
   private Map<OSyncId, OSyncSession> syncSessions = new HashMap<>();
@@ -47,6 +47,7 @@ public class ODatabaseTopologyState {
     for (OAddNodeInfo p : partecipants) {
       nodeStatus.put(p.node(), new ONodeDatabaseState(p.node(), p.role(), ODatabaseState.Offline));
     }
+    this.versionPromise = new OVersionPromise(new OVersion(0));
     this.quorum = quorum;
     this.stateListener = stateListener;
   }
@@ -56,6 +57,7 @@ public class ODatabaseTopologyState {
     this.id = state.id();
     this.name = state.name();
     this.stateListener = stateListener;
+    this.versionPromise = new OVersionPromise(new OVersion(0));
     this.receiveState(state);
   }
 
@@ -65,7 +67,7 @@ public class ODatabaseTopologyState {
     this.id = store.getId();
     this.name = store.getName();
     this.quorum = store.getQuorum();
-    this.version = store.getVersion();
+    this.versionPromise = new OVersionPromise(new OVersion(store.getVersion()));
     var nodes = store.getNodes().stream().map((x) -> new ONodeDatabaseState(x)).toList();
     for (var node : nodes) {
       this.nodeStatus.put(node.getId(), node);
@@ -73,24 +75,13 @@ public class ODatabaseTopologyState {
     this.stateListener = listener;
   }
 
-  public synchronized void defineNode(
-      ONodeId node, ONodeRole role, ODatabaseState state, long version) {
-    this.nodeStatus.computeIfAbsent(
-        node,
-        (n) -> {
-          return new ONodeDatabaseState(n, role, state);
-        });
-    this.version = version;
-    this.notifyChange(node, state);
-  }
-
-  public synchronized void setState(ONodeId node, ODatabaseState state, long version) {
+  public synchronized void setState(
+      ONodeId node, ODatabaseState state, long version, OTransactionIdPromise promise) {
     var no = this.nodeStatus.get(node);
     if (no != null) {
       no.setState(state);
     }
-    this.version = version;
-    this.promised = false;
+    this.versionPromise.accept(promise, new OVersion(version));
     this.notifyChange(node, state);
   }
 
@@ -103,24 +94,15 @@ public class ODatabaseTopologyState {
   }
 
   public synchronized Optional<OAcceptResult> promiseState(
-      ODatabaseState state, ONodeId nodeId, long version) {
+      ODatabaseState state, ONodeId nodeId, long version, OTransactionIdPromise promise) {
     if (!this.nodeStatus.containsKey(nodeId)) {
       return Optional.of(new OMissingNode(nodeId));
     }
-    if (this.version + 1 == version) {
-      if (promised) {
-        return Optional.of(new OAlreadyPromised());
-      } else {
-        promised = true;
-        return Optional.empty();
-      }
-    } else {
-      return Optional.of(new OOutdatedVersion(this.version, version));
-    }
+    return this.versionPromise.promise(promise, new OVersion(version));
   }
 
-  public synchronized long getVersion() {
-    return version;
+  public long getVersion() {
+    return this.versionPromise.getVersion().getValue();
   }
 
   public synchronized ODatabaseState getState(ONodeId nodeId) {
@@ -132,10 +114,9 @@ public class ODatabaseTopologyState {
     }
   }
 
-  public synchronized void cancelSetState(ONodeId nodeId, long version) {
-    if (this.version + 1 == version && promised) {
-      this.promised = false;
-    }
+  public synchronized void cancelSetState(
+      ONodeId nodeId, long version, OTransactionIdPromise promise) {
+    this.versionPromise.cancel(promise);
   }
 
   public synchronized void executeOnOneOnline() throws InterruptedException {
@@ -275,13 +256,13 @@ public class ODatabaseTopologyState {
     for (ONodeDatabaseState state : this.nodeStatus.values()) {
       members.add(state.getNetworkState());
     }
-    return new ODatabaseStateNetwork(id, name, quorum, version, members);
+    return new ODatabaseStateNetwork(id, name, quorum, getVersion(), members);
   }
 
   public synchronized void receiveState(ODatabaseStateNetwork state) {
     // TODO: verify promised case ....
-    if (this.version < state.version()) {
-      this.version = state.version();
+    if (this.getVersion() < state.version()) {
+      this.versionPromise.loadVersion(new OVersion(state.version()));
       this.quorum = state.quorum();
       for (ODatabaseMemberNetwork member : state.members()) {
         ONodeDatabaseState status = this.nodeStatus.get(member.node());
@@ -329,35 +310,27 @@ public class ODatabaseTopologyState {
   }
 
   public synchronized Optional<OAcceptResult> promiseMember(
-      List<OAddNodeInfo> nodes, long version) {
+      List<OAddNodeInfo> nodes, long version, OTransactionIdPromise promise) {
     for (var node : nodes) {
       if (this.nodeStatus.containsKey(node.node())) {
         return Optional.of(new ONodeAlreadyPresent(this.id, node.node()));
       }
     }
-    if (this.version + 1 == version) {
-      if (promised) {
-        return Optional.of(new OAlreadyPromised());
-      } else {
-        promised = true;
-        return Optional.empty();
-      }
-    } else {
-      return Optional.of(new OOutdatedVersion(this.version, version));
-    }
+    return this.versionPromise.promise(promise, new OVersion(version));
   }
 
-  public synchronized void addMember(List<OAddNodeInfo> nodes, long version) {
+  public synchronized void addMember(
+      List<OAddNodeInfo> nodes, long version, OTransactionIdPromise promise) {
     for (var node : nodes) {
       this.nodeStatus.put(
           node.node(), new ONodeDatabaseState(node.node(), node.role(), ODatabaseState.Offline));
       this.stateListener.onStateChange(id, node.node(), ODatabaseState.Offline);
     }
-    this.promised = false;
+    this.versionPromise.accept(promise, new OVersion(version));
   }
 
-  public synchronized void cancelAddMemer(List<OAddNodeInfo> nodes) {
-    this.promised = false;
+  public synchronized void cancelAddMemer(List<OAddNodeInfo> nodes, OTransactionIdPromise promise) {
+    this.versionPromise.cancel(promise);
   }
 
   public synchronized boolean shouldSink(ONodeId nodeID) {
@@ -379,6 +352,6 @@ public class ODatabaseTopologyState {
 
   public ODatabaseTopologyStore getStore() {
     var nodes = this.nodeStatus.values().stream().map((x) -> x.toStore()).toList();
-    return new ODatabaseTopologyStore(nodes, this.id, this.name, this.version, this.quorum);
+    return new ODatabaseTopologyStore(nodes, this.id, this.name, this.getVersion(), this.quorum);
   }
 }

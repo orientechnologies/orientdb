@@ -90,20 +90,32 @@ public interface OCoordinatedDistributedOps {
   // Methods for manage the add of nodes to database
 
   Optional<OAcceptResult> validateAddDatabaseMember(
-      ODatabaseId dbId, List<OAddNodeInfo> nodes, long version);
+      ODatabaseId dbId, List<OAddNodeInfo> nodes, long version, OTransactionIdPromise promise);
 
-  void addDatabaseMember(ODatabaseId dbId, List<OAddNodeInfo> nodes, long version);
+  void addDatabaseMember(
+      ODatabaseId dbId, List<OAddNodeInfo> nodes, long version, OTransactionIdPromise promise);
 
-  public void cancelAddDatabaseMember(ODatabaseId dbId, List<OAddNodeInfo> nodes);
+  public void cancelAddDatabaseMember(
+      ODatabaseId dbId, List<OAddNodeInfo> nodes, OTransactionIdPromise promise);
 
   // Methods to manage the change state of a database on a specific node
 
   Optional<OAcceptResult> validateSetState(
-      ODatabaseId dbId, ONodeId nodeId, ODatabaseState state, long version);
+      ODatabaseId dbId,
+      ONodeId nodeId,
+      ODatabaseState state,
+      long version,
+      OTransactionIdPromise promise);
 
-  void setState(ODatabaseId db, ONodeId node, ODatabaseState state, long version);
+  void setState(
+      ODatabaseId db,
+      ONodeId node,
+      ODatabaseState state,
+      long version,
+      OTransactionIdPromise promise);
 
-  void cancelSetState(ODatabaseId dbId, ONodeId nodeId, long version);
+  void cancelSetState(
+      ODatabaseId dbId, ONodeId nodeId, long version, OTransactionIdPromise promise);
 
   // Methods for manage the sync flow
 

@@ -2,7 +2,7 @@ package com.orientechnologies.orient.distributed.context.coordination;
 
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
-import com.orientechnologies.orient.distributed.context.coordination.result.OInvalidSequential;
+import com.orientechnologies.orient.distributed.context.coordination.result.OAlreadyPromised;
 import com.orientechnologies.orient.distributed.context.coordination.result.OOutdatedVersion;
 import java.util.Optional;
 
@@ -34,8 +34,7 @@ public class OVersionPromise {
           return Optional.of(new OOutdatedVersion(version.getValue(), this.version.getValue()));
         }
       } else {
-        return Optional.of(
-            new OInvalidSequential(promised.getId().getSequence(), promise.getId().getSequence()));
+        return Optional.of(new OAlreadyPromised());
       }
     }
   }

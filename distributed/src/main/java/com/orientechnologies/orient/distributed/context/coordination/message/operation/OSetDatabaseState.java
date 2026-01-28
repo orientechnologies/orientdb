@@ -29,17 +29,17 @@ public class OSetDatabaseState implements OOperationMessage {
   public Optional<OAcceptResult> validate(OrientDBDistributed ctx, OTransactionIdPromise promise) {
     return ctx.getNodeState()
         .getOps()
-        .validateSetState(this.dbId, this.nodeId, this.state, this.version);
+        .validateSetState(this.dbId, this.nodeId, this.state, this.version, promise);
   }
 
   @Override
   public void apply(OrientDBDistributed ctx, OTransactionIdPromise promise) {
-    ctx.getNodeState().getOps().setState(this.dbId, this.nodeId, this.state, this.version);
+    ctx.getNodeState().getOps().setState(this.dbId, this.nodeId, this.state, this.version, promise);
   }
 
   @Override
   public void cancel(OrientDBDistributed ctx, OTransactionIdPromise promise) {
-    ctx.getNodeState().getOps().cancelSetState(dbId, nodeId, version);
+    ctx.getNodeState().getOps().cancelSetState(dbId, nodeId, version, promise);
   }
 
   @Override
