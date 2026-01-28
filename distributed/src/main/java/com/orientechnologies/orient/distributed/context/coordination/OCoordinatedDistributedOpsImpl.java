@@ -70,15 +70,15 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
     return this.topology.nodeDiscovered(node);
   }
 
-  public synchronized void registerNode(ONodeId node, long version) {
-    this.topology.register(node, version);
+  public synchronized void registerNode(ONodeId node, long version, OTransactionIdPromise promise) {
+    this.topology.register(node, version, promise);
     notifyUpdate();
   }
 
-  public void unregisterNode(ONodeId node, long version) {
+  public void unregisterNode(ONodeId node, long version, OTransactionIdPromise promise) {
     Optional<CompleteInfo> action = Optional.empty();
     synchronized (this) {
-      this.topology.unregister(node, version);
+      this.topology.unregister(node, version, promise);
       Iterator<OResponseCollector> iterator = coordination.values().iterator();
       while (iterator.hasNext()) {
         OResponseCollector coll = iterator.next();
@@ -265,20 +265,23 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   }
 
   @Override
-  public Optional<OAcceptResult> validateRegisterNode(ONodeId node, long version) {
-    return topology.promiseRegister(node, version);
+  public Optional<OAcceptResult> validateRegisterNode(
+      ONodeId node, long version, OTransactionIdPromise promise) {
+    return topology.promiseRegister(node, version, promise);
   }
 
   @Override
-  public Set<ONodeId> establish(OGroupId groupId, Set<ONodeId> candidates) {
-    Set<ONodeId> result = this.topology.finalizeEstablish(groupId, candidates);
+  public Set<ONodeId> establish(
+      OGroupId groupId, Set<ONodeId> candidates, OTransactionIdPromise promise) {
+    Set<ONodeId> result = this.topology.finalizeEstablish(groupId, candidates, promise);
     notifyUpdate();
     return result;
   }
 
   @Override
-  public Optional<OAcceptResult> validateEstablish(OGroupId groupId, Set<ONodeId> candidates) {
-    return this.topology.validateEstablish(groupId, candidates);
+  public Optional<OAcceptResult> validateEstablish(
+      OGroupId groupId, Set<ONodeId> candidates, OTransactionIdPromise promise) {
+    return this.topology.validateEstablish(groupId, candidates, promise);
   }
 
   @Override
@@ -323,13 +326,13 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   }
 
   @Override
-  public void cancelRegisterNode() {
-    this.topology.cancelRegisterPromise();
+  public void cancelRegisterNode(OTransactionIdPromise promise) {
+    this.topology.cancelRegisterPromise(promise);
   }
 
   @Override
-  public void cancelEstablish() {
-    this.topology.cancelEstablish();
+  public void cancelEstablish(OTransactionIdPromise promise) {
+    this.topology.cancelEstablish(promise);
   }
 
   public Optional<OAcceptResult> validateDeclareDatabase(
@@ -477,8 +480,8 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   }
 
   @Override
-  public synchronized boolean validateMerge(OGroupId group, ONodeId coordinator) {
-    return topology.acceptMerge(group, coordinator);
+  public synchronized boolean validateMerge(OGroupId group, OTransactionIdPromise promise) {
+    return topology.acceptMerge(group, promise);
   }
 
   @Override

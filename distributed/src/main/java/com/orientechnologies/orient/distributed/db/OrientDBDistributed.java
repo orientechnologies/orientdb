@@ -957,15 +957,15 @@ public class OrientDBDistributed extends OrientDBEmbedded
     sendFirstConnects(Collections.singleton(nodeId));
   }
 
-  public void registerNode(ONodeId node, long version) {
-    getNodeState().getOps().registerNode(node, version);
+  public void registerNode(ONodeId node, long version, OTransactionIdPromise promise) {
+    getNodeState().getOps().registerNode(node, version, promise);
     // This should make aware of the added node of the fact it joined the network
     sendFirstConnect(node);
     autoDeployIfNeed();
   }
 
-  public void cancelRegisterPromise() {
-    getNodeState().getOps().cancelRegisterNode();
+  public void cancelRegisterPromise(OTransactionIdPromise promise) {
+    getNodeState().getOps().cancelRegisterNode(promise);
   }
 
   public Optional<OAcceptResult> promiseDeclare(
@@ -1314,8 +1314,8 @@ public class OrientDBDistributed extends OrientDBEmbedded
     return plugin.getAvailableNodes(databaseName);
   }
 
-  public void establish(OGroupId groupId, Set<ONodeId> candidates) {
-    Set<ONodeId> allNodes = getNodeState().getOps().establish(groupId, candidates);
+  public void establish(OGroupId groupId, Set<ONodeId> candidates, OTransactionIdPromise promise) {
+    Set<ONodeId> allNodes = getNodeState().getOps().establish(groupId, candidates, promise);
     for (ONodeId node : allNodes) {
       sendFirstConnect(node);
     }
@@ -1433,7 +1433,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   public void acceptMerge(OTransactionIdPromise promise, OGroupId group) {
-    boolean accepted = getNodeState().getOps().validateMerge(group, promise.getCoordinator());
+    boolean accepted = getNodeState().getOps().validateMerge(group, promise);
     sendMessage(promise.getCoordinator(), new OMergeResult(getNodeId(), promise, accepted));
   }
 

@@ -24,17 +24,17 @@ public class OEstablishTopology implements OOperationMessage {
 
   @Override
   public void apply(OrientDBDistributed ctx, OTransactionIdPromise promise) {
-    ctx.establish(groupId, candidates);
+    ctx.establish(groupId, candidates, promise);
   }
 
   @Override
   public Optional<OAcceptResult> validate(OrientDBDistributed ctx, OTransactionIdPromise promise) {
-    return ctx.getNodeState().getOps().validateEstablish(groupId, candidates);
+    return ctx.getNodeState().getOps().validateEstablish(groupId, candidates, promise);
   }
 
   @Override
   public void cancel(OrientDBDistributed ctx, OTransactionIdPromise promise) {
-    ctx.getNodeState().getOps().cancelEstablish();
+    ctx.getNodeState().getOps().cancelEstablish(promise);
   }
 
   public static OEstablishTopology readNetwork(DataInput input) throws IOException {

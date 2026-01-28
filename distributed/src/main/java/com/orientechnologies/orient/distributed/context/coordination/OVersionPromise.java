@@ -15,7 +15,8 @@ public class OVersionPromise {
     this.version = version;
   }
 
-  public Optional<OAcceptResult> promise(OTransactionIdPromise promise, OVersion version) {
+  public synchronized Optional<OAcceptResult> promise(
+      OTransactionIdPromise promise, OVersion version) {
     if (this.promise.isEmpty()) {
       if (this.version.promise(version)) {
         this.promise = Optional.of(promise);
@@ -39,18 +40,29 @@ public class OVersionPromise {
     }
   }
 
-  public void accept(OTransactionIdPromise promise, OVersion version) {
+  public synchronized void accept(OTransactionIdPromise promise, OVersion version) {
     if (this.version.promise(version)) {
       this.version.accept(version);
       this.promise = Optional.empty();
     }
   }
 
-  public OVersion next() {
+  public synchronized void cancel(OTransactionIdPromise promise) {
+    if (this.promise.isPresent() && this.promise.get().equals(promise)) {
+      this.promise = Optional.empty();
+    }
+  }
+
+  public synchronized OVersion next() {
     return this.version.next();
   }
 
-  public OVersion getVersion() {
+  public synchronized OVersion getVersion() {
     return version;
+  }
+
+  public synchronized void loadVersion(OVersion version) {
+    this.version = version;
+    assert promise.isEmpty();
   }
 }

@@ -1814,10 +1814,10 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
     if (!lastServerDump.equals(compactStatus)) {
       lastServerDump = compactStatus;
 
-      logger.infoNode(
-          getLocalNodeName(),
-          "Distributed servers status (*=current):\n%s",
-          ODistributedOutput.formatServerStatus(this, cfg));
+      //      logger.infoNode(
+      //          getLocalNodeName(),
+      //          "Distributed servers status (*=current):\n%s",
+      //          ODistributedOutput.formatServerStatus(this, cfg));
     }
   }
 

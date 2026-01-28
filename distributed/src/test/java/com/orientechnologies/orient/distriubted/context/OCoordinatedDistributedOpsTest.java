@@ -10,6 +10,7 @@ import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.OGroupId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
+import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import com.orientechnologies.orient.distributed.context.ONetworkTopologyStore;
@@ -114,9 +115,10 @@ public class OCoordinatedDistributedOpsTest
     OGroupId groupId = newRandomGroupId();
     OCoordinatedDistributedOps ops =
         new OCoordinatedDistributedOpsImpl(nodeId, groupId, 2, this, this);
-    ops.registerNode(nodeId, 0);
+    var prom = newPromiseId(nodeId);
+    ops.registerNode(nodeId, 0, prom);
     ONodeId nodeIdtwo = newRandomNodeId();
-    ops.registerNode(nodeIdtwo, 0);
+    ops.registerNode(nodeIdtwo, 0, prom);
 
     var res = ops.start(action);
     var promise = res.get().promise();
@@ -134,9 +136,10 @@ public class OCoordinatedDistributedOpsTest
     OGroupId groupId = newRandomGroupId();
     OCoordinatedDistributedOps ops =
         new OCoordinatedDistributedOpsImpl(nodeId, groupId, 2, this, this);
-    ops.registerNode(nodeId, 0);
+    var prom = newPromiseId(nodeId);
+    ops.registerNode(nodeId, 0, prom);
     ONodeId nodeIdtwo = newRandomNodeId();
-    ops.registerNode(nodeIdtwo, 0);
+    ops.registerNode(nodeIdtwo, 0, prom);
 
     var res = ops.start(action);
     var promise = res.get().promise();
@@ -157,7 +160,8 @@ public class OCoordinatedDistributedOpsTest
     OCoordinatedDistributedOps ops =
         new OCoordinatedDistributedOpsImpl(nodeId, groupId, 2, this, this);
     ONodeId nodeIdtwo = newRandomNodeId();
-    ops.establish(groupId, Set.of(nodeId, nodeIdtwo));
+    var enPromise = newPromiseId(nodeId);
+    ops.establish(groupId, Set.of(nodeId, nodeIdtwo), enPromise);
 
     var res = ops.start(action);
     var promise = res.get().promise();
@@ -178,7 +182,8 @@ public class OCoordinatedDistributedOpsTest
     ONodeId nodeIdtwo = newRandomNodeId();
     ONodeId nodeIdthree = newRandomNodeId();
     ONodeId nodeIdFour = newRandomNodeId();
-    ops.establish(groupId, Set.of(nodeId, nodeIdtwo, nodeIdthree, nodeIdFour));
+    var enPromise = newPromiseId(nodeId);
+    ops.establish(groupId, Set.of(nodeId, nodeIdtwo, nodeIdthree, nodeIdFour), enPromise);
 
     var res = ops.start(action);
     var promise = res.get().promise();
@@ -200,16 +205,17 @@ public class OCoordinatedDistributedOpsTest
     OGroupId groupId = newRandomGroupId();
     OCoordinatedDistributedOps ops =
         new OCoordinatedDistributedOpsImpl(nodeId, groupId, 2, this, this);
-    ops.registerNode(nodeId, 0);
+    var promise = newPromiseId(nodeId);
+    ops.registerNode(nodeId, 0, promise);
     ONodeId nodeIdtwo = newRandomNodeId();
-    ops.registerNode(nodeIdtwo, 0);
+    ops.registerNode(nodeIdtwo, 0, promise);
     ONodeId nodeIdthree = newRandomNodeId();
-    ops.registerNode(nodeIdthree, 0);
+    ops.registerNode(nodeIdthree, 0, promise);
     ONodeId nodeIdFour = newRandomNodeId();
-    ops.registerNode(nodeIdFour, 0);
+    ops.registerNode(nodeIdFour, 0, promise);
 
-    ops.unregisterNode(nodeIdthree, 0);
-    ops.unregisterNode(nodeIdFour, 0);
+    ops.unregisterNode(nodeIdthree, 0, promise);
+    ops.unregisterNode(nodeIdFour, 0, promise);
 
     var res = ops.start(action);
     ops.nodeSuccess(nodeId, res.get().promise());
@@ -227,12 +233,13 @@ public class OCoordinatedDistributedOpsTest
         new OCoordinatedDistributedOpsImpl(nodeId, groupId, 2, this, this);
     ONodeId nodeIdtwo = newRandomNodeId();
     Set<ONodeId> nodes = Set.of(nodeId, nodeIdtwo);
-    ops.establish(groupId, nodes);
+    var esPromise = newPromiseId(nodeId);
+    ops.establish(groupId, nodes, esPromise);
 
     Optional<OOperationStart> start = ops.start(action);
     assertTrue(start.get().nodes().containsAll(nodes));
     ops.nodeSuccess(nodeId, start.get().promise());
-    ops.unregisterNode(nodeIdtwo, 0);
+    ops.unregisterNode(nodeIdtwo, 0, esPromise);
     assertTrue(action.failure);
     assertFalse(action.success);
     assertTrue(action.result.get() instanceof OQuorumNotReached);
@@ -249,15 +256,16 @@ public class OCoordinatedDistributedOpsTest
     ONodeId nodeIdtwo = newRandomNodeId();
     ONodeId nodeIdthree = newRandomNodeId();
     ONodeId nodeIdFour = newRandomNodeId();
+    var esPromise = newPromiseId(nodeId);
     Set<ONodeId> nodes = Set.of(nodeId, nodeIdtwo, nodeIdthree, nodeIdFour);
-    ops.establish(groupId, nodes);
+    ops.establish(groupId, nodes, esPromise);
 
     Optional<OOperationStart> start = ops.start(action);
     assertTrue(start.get().nodes().containsAll(nodes));
     OTransactionIdPromise promise = start.get().promise();
     ops.nodeSuccess(nodeId, promise);
     ops.nodeSuccess(nodeIdtwo, promise);
-    ops.unregisterNode(nodeIdthree, 0);
+    ops.unregisterNode(nodeIdthree, 0, esPromise);
     ops.nodeFailure(nodeIdFour, promise, new OInvalidSequential(0, 0));
     assertTrue(action.failure);
     assertFalse(action.success);
@@ -287,10 +295,12 @@ public class OCoordinatedDistributedOpsTest
     ONodeId nodeId1 = newRandomNodeId();
     action = ops.nodeJoinStart(nodeId1, bootNetworkState(groupId), false);
 
+    var esPromise = newPromiseId(nodeId1);
     assertTrue(action instanceof ODiscoverAction.OEstablishAction);
     ops.establish(
         ((ODiscoverAction.OEstablishAction) action).groupId(),
-        ((ODiscoverAction.OEstablishAction) action).candidates());
+        ((ODiscoverAction.OEstablishAction) action).candidates(),
+        esPromise);
 
     assertEquals(ops.getNetworkMembers().size(), 2);
     assertEquals(ops.getNetworkState().topology().quorum(), 2);
@@ -309,17 +319,20 @@ public class OCoordinatedDistributedOpsTest
     ONodeId nodeId1 = newRandomNodeId();
     action = ops.nodeJoinStart(nodeId1, bootNetworkState(groupId), false);
 
+    var esPromise = newPromiseId(nodeId1);
     assertTrue(action instanceof ODiscoverAction.OEstablishAction);
     ops.establish(
         ((ODiscoverAction.OEstablishAction) action).groupId(),
-        ((ODiscoverAction.OEstablishAction) action).candidates());
+        ((ODiscoverAction.OEstablishAction) action).candidates(),
+        esPromise);
 
     assertEquals(ops.getNetworkMembers().size(), 2);
     ONodeId nodeId2 = newRandomNodeId();
     action = ops.nodeJoinStart(nodeId2, bootNetworkState(groupId), false);
     long version = ops.nextTopologyVersion();
     assertTrue(action instanceof ODiscoverAction.OAddNodeAction);
-    ops.registerNode(((ODiscoverAction.OAddNodeAction) action).node(), version);
+    ops.registerNode(
+        ((ODiscoverAction.OAddNodeAction) action).node(), version, newPromiseId(nodeId));
     assertEquals(ops.getNetworkMembers().size(), 3);
   }
 
@@ -341,12 +354,13 @@ public class OCoordinatedDistributedOpsTest
     assertTrue(action instanceof ODiscoverAction.OEstablishAction);
     var candidates = ((ODiscoverAction.OEstablishAction) action).candidates();
     var networkId = ((ODiscoverAction.OEstablishAction) action).groupId();
-    Optional<OAcceptResult> result = node2.validateEstablish(networkId, candidates);
+    var enPromise = newPromiseId(nodeId1);
+    Optional<OAcceptResult> result = node2.validateEstablish(networkId, candidates, enPromise);
     assertTrue(result.isEmpty());
     assertTrue(result.isEmpty());
 
-    node1.establish(networkId, candidates);
-    node2.establish(networkId, candidates);
+    node1.establish(networkId, candidates, enPromise);
+    node2.establish(networkId, candidates, enPromise);
     assertEquals(node1.getNetworkMembers().size(), 2);
     assertEquals(node2.getNetworkMembers().size(), 2);
 
@@ -355,15 +369,20 @@ public class OCoordinatedDistributedOpsTest
     assertTrue(action instanceof ODiscoverAction.OAddNodeAction);
     var addNode = ((ODiscoverAction.OAddNodeAction) action).node();
     assertTrue(addVersion > 0);
-    var res = node1.validateRegisterNode(addNode, addVersion);
+    OTransactionIdPromise promise = newPromiseId(nodeId1);
+    var res = node1.validateRegisterNode(addNode, addVersion, promise);
     assertTrue(res.isEmpty());
-    res = node2.validateRegisterNode(addNode, addVersion);
+    res = node2.validateRegisterNode(addNode, addVersion, promise);
     assertTrue(res.isEmpty());
-    node1.registerNode(addNode, addVersion);
-    node2.registerNode(addNode, addVersion);
+    node1.registerNode(addNode, addVersion, promise);
+    node2.registerNode(addNode, addVersion, promise);
 
     assertEquals(node1.getNetworkMembers().size(), 3);
     assertEquals(node2.getNetworkMembers().size(), 3);
+  }
+
+  private OTransactionIdPromise newPromiseId(ONodeId nodeId) {
+    return new OTransactionIdPromise(nodeId, new OTransactionId(10, 20));
   }
 
   @Test
@@ -383,14 +402,16 @@ public class OCoordinatedDistributedOpsTest
 
     action = node1.nodeJoinStart(nodeId2, bootNetworkState(groupId), false);
     assertTrue(action instanceof ODiscoverAction.OEstablishAction);
+    var enstablishPromise = newPromiseId(nodeId1);
     var candidates = ((ODiscoverAction.OEstablishAction) action).candidates();
     var networkId = ((ODiscoverAction.OEstablishAction) action).groupId();
-    Optional<OAcceptResult> result = node2.validateEstablish(networkId, candidates);
+    Optional<OAcceptResult> result =
+        node2.validateEstablish(networkId, candidates, enstablishPromise);
     assertTrue(result.isEmpty());
     assertTrue(result.isEmpty());
 
-    node1.establish(networkId, candidates);
-    node2.establish(networkId, candidates);
+    node1.establish(networkId, candidates, enstablishPromise);
+    node2.establish(networkId, candidates, enstablishPromise);
     assertEquals(node1.getNetworkMembers().size(), 2);
     assertEquals(node2.getNetworkMembers().size(), 2);
 
@@ -399,10 +420,10 @@ public class OCoordinatedDistributedOpsTest
 
     var addNode = ((ODiscoverAction.OAddNodeAction) action).node();
     long addVersion = node1.nextTopologyVersion() - 1;
-
-    var res = node1.validateRegisterNode(addNode, addVersion);
+    OTransactionIdPromise promise = newPromiseId(nodeId1);
+    var res = node1.validateRegisterNode(addNode, addVersion, promise);
     assertFalse(res.isEmpty());
-    res = node2.validateRegisterNode(addNode, addVersion);
+    res = node2.validateRegisterNode(addNode, addVersion, promise);
     assertFalse(res.isEmpty());
 
     assertEquals(node1.getNetworkMembers().size(), 2);
@@ -549,8 +570,9 @@ public class OCoordinatedDistributedOpsTest
     ODiscoverAction action1 = ops1.nodeJoinStart(nodeId1, bootNetworkState(groupId), false);
     assertTrue(action1 instanceof ODiscoverAction.OEstablishAction);
     ops1.startEstablish(Set.of(nodeId1), new TestAction());
-    ops1.validateEstablish(groupId, Set.of(nodeId1));
-    ops1.establish(groupId, Set.of(nodeId1));
+    var enProm = newPromiseId(nodeId1);
+    ops1.validateEstablish(groupId, Set.of(nodeId1), enProm);
+    ops1.establish(groupId, Set.of(nodeId1), enProm);
 
     assertEquals(ops1.getNetworkMembers().size(), 1);
     assertTrue(ops1.getNetworkMembers().contains(nodeId1));
@@ -561,8 +583,9 @@ public class OCoordinatedDistributedOpsTest
     ODiscoverAction action2 = ops2.nodeJoinStart(nodeId2, bootNetworkState(groupId), false);
     assertTrue(action2 instanceof ODiscoverAction.OEstablishAction);
     ops2.startEstablish(Set.of(nodeId2), new TestAction());
-    ops2.validateEstablish(groupId, Set.of(nodeId2));
-    ops2.establish(groupId, Set.of(nodeId2));
+    var enProm2 = newPromiseId(nodeId2);
+    ops2.validateEstablish(groupId, Set.of(nodeId2), enProm2);
+    ops2.establish(groupId, Set.of(nodeId2), enProm2);
 
     assertEquals(ops2.getNetworkMembers().size(), 1);
     assertTrue(ops2.getNetworkMembers().contains(nodeId2));
@@ -577,8 +600,9 @@ public class OCoordinatedDistributedOpsTest
     long version = ops2.nextTopologyVersion();
     assertTrue(addNode instanceof OMergeNodeAction);
     OMergeNodeAction add = (OMergeNodeAction) addNode;
-    ops2.validateRegisterNode(add.node(), version);
-    ops2.registerNode(add.node(), version);
+    OTransactionIdPromise promise = newPromiseId(nodeId1);
+    ops2.validateRegisterNode(add.node(), version, promise);
+    ops2.registerNode(add.node(), version, promise);
     assertEquals(ops2.getNetworkMembers().size(), 2);
     ops1.nodeJoinStart(nodeId2, ops2.getNetworkState(), false);
     assertEquals(ops1.getNetworkMembers().size(), 2);

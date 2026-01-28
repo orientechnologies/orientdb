@@ -48,23 +48,26 @@ public interface OCoordinatedDistributedOps {
 
   ODiscoverAction nodeJoinStart(ONodeId node, ONodeStateNetwork state, boolean merge);
 
-  Optional<OAcceptResult> validateRegisterNode(ONodeId node, long version);
+  Optional<OAcceptResult> validateRegisterNode(
+      ONodeId node, long version, OTransactionIdPromise promise);
 
-  void registerNode(ONodeId node, long version);
+  void registerNode(ONodeId node, long version, OTransactionIdPromise promise);
 
-  void unregisterNode(ONodeId node, long version);
+  void unregisterNode(ONodeId node, long version, OTransactionIdPromise promise);
 
-  void cancelRegisterNode();
+  void cancelRegisterNode(OTransactionIdPromise promise);
 
   // Methods for coordinations of  operations to add establish the first network of nodes
 
   Optional<OTransactionIdPromise> startEstablish(Set<ONodeId> nodes, OCompleteAction action);
 
-  Optional<OAcceptResult> validateEstablish(OGroupId networkId, Set<ONodeId> candidates);
+  Optional<OAcceptResult> validateEstablish(
+      OGroupId networkId, Set<ONodeId> candidates, OTransactionIdPromise promise);
 
-  Set<ONodeId> establish(OGroupId networkId, Set<ONodeId> candidates);
+  Set<ONodeId> establish(
+      OGroupId networkId, Set<ONodeId> candidates, OTransactionIdPromise promise);
 
-  void cancelEstablish();
+  void cancelEstablish(OTransactionIdPromise promise);
 
   // Methods for manage databases and node in the databases
 
@@ -147,7 +150,7 @@ public interface OCoordinatedDistributedOps {
 
   void completeSync(OSyncId syncId);
 
-  boolean validateMerge(OGroupId group, ONodeId coordinator);
+  boolean validateMerge(OGroupId group, OTransactionIdPromise promise);
 
   OGroupId getGroupId();
 

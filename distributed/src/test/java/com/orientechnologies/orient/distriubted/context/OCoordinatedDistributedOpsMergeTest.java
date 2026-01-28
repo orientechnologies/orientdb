@@ -8,9 +8,9 @@ import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.OGroupId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
+import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
-import com.orientechnologies.orient.distributed.context.ONetworkTopologyStore;
 import com.orientechnologies.orient.distributed.context.ONodeStateStore;
 import com.orientechnologies.orient.distributed.context.ONodeStateUpdated;
 import com.orientechnologies.orient.distributed.context.coordination.OCoordinatedDistributedOps;
@@ -26,9 +26,7 @@ import com.orientechnologies.orient.distributed.context.coordination.message.sta
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAlreadyPromised;
 import com.orientechnologies.orient.distributed.context.coordination.topology.ODiscoverAction;
-import com.orientechnologies.orient.distributed.context.coordination.topology.OTopologyState;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -98,10 +96,6 @@ public class OCoordinatedDistributedOpsMergeTest
     return new OGroupId(UUID.randomUUID().toString());
   }
 
-  private ONetworkTopologyStore bootStoreState(OGroupId groupId) {
-    return new ONetworkTopologyStore(groupId, OTopologyState.BOOT, new HashSet<>(), 0, 0);
-  }
-
   private ONodeStateNetwork networkState(OTopologyStateNetwork topology) {
     return new ONodeStateNetwork(
         topology, Collections.emptyList(), new OTransactionSequenceStatus(new long[] {}));
@@ -111,6 +105,10 @@ public class OCoordinatedDistributedOpsMergeTest
     return networkState(OTopologyStateNetwork.boot(groupId));
   }
 
+  private OTransactionIdPromise newPromiseId(ONodeId nodeId) {
+    return new OTransactionIdPromise(nodeId, new OTransactionId(10, 20));
+  }
+
   private OCoordinatedDistributedOps quorum1Env(ONodeId nodeId, OGroupId groupId) {
     OCoordinatedDistributedOps ops =
         new OCoordinatedDistributedOpsImpl(nodeId, groupId, 1, this, this);
@@ -118,8 +116,9 @@ public class OCoordinatedDistributedOpsMergeTest
     assertTrue(action instanceof ODiscoverAction.OEstablishAction);
     Optional<OTransactionIdPromise> seq = ops.startEstablish(Set.of(nodeId), new TestAction(null));
     ops.consensusSuccess(seq.get());
-    ops.validateEstablish(groupId, Set.of(nodeId));
-    ops.establish(groupId, Set.of(nodeId));
+    var enPromise = newPromiseId(nodeId);
+    ops.validateEstablish(groupId, Set.of(nodeId), enPromise);
+    ops.establish(groupId, Set.of(nodeId), enPromise);
     return ops;
   }
 
@@ -210,7 +209,8 @@ public class OCoordinatedDistributedOpsMergeTest
     ops1.nodeSuccess(nodeId1, promise);
 
     OCoordinatedDistributedOps ops2 = quorum1Env(nodeId1, groupId);
-    assertTrue(ops2.validateMerge(groupId, nodeId2));
+    var enPromise = newPromiseId(nodeId2);
+    assertTrue(ops2.validateMerge(groupId, enPromise));
     ops1.confirmMerge(nodeId2, promise, true);
     assertTrue(action.success);
     assertFalse(action.failure);
@@ -238,8 +238,10 @@ public class OCoordinatedDistributedOpsMergeTest
     ops3.nodeSuccess(nodeId3, promise1);
 
     OCoordinatedDistributedOps ops2 = quorum1Env(nodeId1, groupId);
-    assertTrue(ops2.validateMerge(groupId, nodeId2));
-    assertFalse(ops2.validateMerge(groupId, nodeId3));
+    var enPromise = newPromiseId(nodeId2);
+    assertTrue(ops2.validateMerge(groupId, enPromise));
+    var enPromise2 = newPromiseId(nodeId3);
+    assertFalse(ops2.validateMerge(groupId, enPromise2));
 
     ops1.confirmMerge(nodeId2, promise, true);
     assertTrue(action.success);
