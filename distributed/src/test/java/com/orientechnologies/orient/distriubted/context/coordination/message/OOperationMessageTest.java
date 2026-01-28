@@ -112,10 +112,10 @@ public class OOperationMessageTest {
     ODatabaseId dbId = newDatabaseId();
     ONodeId nodeId1 = newNodeId();
     ONodeId nodeId2 = newNodeId();
-    Set<ONodeId> paratecipants = new HashSet<>();
-    paratecipants.add(id.getCoordinator());
-    paratecipants.add(nodeId1);
-    paratecipants.add(nodeId2);
+    Set<OAddNodeInfo> paratecipants = new HashSet<>();
+    paratecipants.add(new OAddNodeInfo(id.getCoordinator(), ONodeRole.Main));
+    paratecipants.add(new OAddNodeInfo(nodeId1, ONodeRole.Main));
+    paratecipants.add(new OAddNodeInfo(nodeId2, ONodeRole.Main));
     ODeclareDbMessage toTest = new ODeclareDbMessage("dbName", dbId, paratecipants, 2);
 
     ODeclareDbMessage operation = writeRead(toTest);

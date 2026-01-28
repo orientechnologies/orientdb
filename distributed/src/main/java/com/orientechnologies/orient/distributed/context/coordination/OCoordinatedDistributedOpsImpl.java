@@ -336,9 +336,9 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
       OTransactionIdPromise promise,
       ODatabaseId databaseId,
       String database,
-      Set<ONodeId> partecipants,
+      Set<OAddNodeInfo> partecipants,
       int minimumQuorum) {
-    if (!partecipants.contains(topology.getNodeId())) {
+    if (!partecipants.stream().anyMatch((x) -> x.node().equals(topology.getNodeId()))) {
       return Optional.of(new OMissingNode(topology.getNodeId()));
     }
     return this.databaseTopology.validateDeclare(
@@ -349,7 +349,7 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
       OTransactionIdPromise promise,
       ODatabaseId dbId,
       String database,
-      Set<ONodeId> partecipants,
+      Set<OAddNodeInfo> partecipants,
       int minimumQuorum) {
     this.databaseTopology.declareDatabase(promise, dbId, database, partecipants, minimumQuorum);
     notifyUpdate();

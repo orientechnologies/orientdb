@@ -72,14 +72,14 @@ public interface OCoordinatedDistributedOps {
       OTransactionIdPromise promise,
       ODatabaseId databaseId,
       String database,
-      Set<ONodeId> partecipants,
+      Set<OAddNodeInfo> partecipants,
       int minimumQuorum);
 
   void declareDatabase(
       OTransactionIdPromise promise,
       ODatabaseId dbId,
       String database,
-      Set<ONodeId> partecipants,
+      Set<OAddNodeInfo> partecipants,
       int minimumQuorum);
 
   void cancelDeclareDatabase(OTransactionIdPromise promise, ODatabaseId dbId, String database);

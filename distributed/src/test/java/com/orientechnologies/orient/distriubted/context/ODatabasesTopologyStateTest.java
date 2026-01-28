@@ -21,6 +21,7 @@ import com.orientechnologies.orient.distributed.context.coordination.result.OOut
 import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncInfo;
 import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncState;
 import com.orientechnologies.orient.distributed.db.OSyncMode;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -49,7 +50,7 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
 
     ODatabasesTopologyState state = new ODatabasesTopologyState(this);
     var promiseId = newPromiseId();
-    Set<ONodeId> partecipants = Set.of(promiseId.getCoordinator());
+    Set<OAddNodeInfo> partecipants = partecipants(promiseId.getCoordinator());
     var dbId = newDbId();
     String name = "dbName";
     int quorum = 2;
@@ -65,7 +66,7 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
 
     ODatabasesTopologyState state = new ODatabasesTopologyState(this);
     var promiseId = newPromiseId();
-    Set<ONodeId> partecipants = Set.of(promiseId.getCoordinator());
+    Set<OAddNodeInfo> partecipants = partecipants(promiseId.getCoordinator());
     var dbId = newDbId();
     String name = "dbName";
     int quorum = 2;
@@ -87,7 +88,7 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
     ODatabasesTopologyState state = new ODatabasesTopologyState(this);
 
     var promiseId = newPromiseId();
-    Set<ONodeId> partecipants = Set.of(promiseId.getCoordinator());
+    Set<OAddNodeInfo> partecipants = partecipants(promiseId.getCoordinator());
     var dbId = newDbId();
     String name = "dbName";
     int quorum = 2;
@@ -113,7 +114,7 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
     ODatabasesTopologyState state = new ODatabasesTopologyState(this);
 
     var promiseId = newPromiseId();
-    Set<ONodeId> partecipants = Set.of(promiseId.getCoordinator());
+    Set<OAddNodeInfo> partecipants = partecipants(promiseId.getCoordinator());
     var dbId = newDbId();
     String name = "dbName";
     int quorum = 2;
@@ -139,7 +140,7 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
 
     var promiseId = newPromiseId();
     ONodeId nodeId = promiseId.getCoordinator();
-    Set<ONodeId> partecipants = Set.of(nodeId);
+    Set<OAddNodeInfo> partecipants = partecipants(nodeId);
     var dbId = newDbId();
     String name = "dbName";
     int quorum = 2;
@@ -166,7 +167,7 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
 
     var promiseId = newPromiseId();
     ONodeId nodeId = promiseId.getCoordinator();
-    Set<ONodeId> partecipants = Set.of(nodeId);
+    Set<OAddNodeInfo> partecipants = partecipants(nodeId);
     var dbId = newDbId();
     String name = "dbName";
     int quorum = 2;
@@ -205,7 +206,7 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
 
     var promiseId = newPromiseId();
     ONodeId nodeId = promiseId.getCoordinator();
-    Set<ONodeId> partecipants = Set.of(nodeId);
+    Set<OAddNodeInfo> partecipants = partecipants(nodeId);
     var dbId = newDbId();
     String name = "dbName";
     int quorum = 2;
@@ -244,7 +245,7 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
 
     var promiseId = newPromiseId();
     ONodeId nodeId = promiseId.getCoordinator();
-    Set<ONodeId> partecipants = Set.of(nodeId);
+    Set<OAddNodeInfo> partecipants = partecipants(nodeId);
     var dbId = newDbId();
     String name = "dbName";
     int quorum = 2;
@@ -269,6 +270,14 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
     assertEquals(ns, ODatabaseState.Online);
   }
 
+  private Set<OAddNodeInfo> partecipants(ONodeId... nodes) {
+    Set<OAddNodeInfo> set = new HashSet<>(nodes.length);
+    for (ONodeId node : nodes) {
+      set.add(new OAddNodeInfo(node, ONodeRole.Main));
+    }
+    return set;
+  }
+
   @Test
   public void testRequestSync() {
 
@@ -280,7 +289,7 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
     ONodeId node1 = newNodeId();
     ONodeId node2 = newNodeId();
 
-    Set<ONodeId> partecipants = Set.of(nodeId, node1, node2);
+    Set<OAddNodeInfo> partecipants = partecipants(nodeId, node1, node2);
     var dbId = newDbId();
     String name = "dbName";
     int quorum = 2;
@@ -350,7 +359,7 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
     ONodeId node1 = newNodeId();
     ONodeId node2 = newNodeId();
 
-    Set<ONodeId> partecipants = Set.of(nodeId, node1, node2);
+    Set<OAddNodeInfo> partecipants = partecipants(nodeId, node1, node2);
     var dbId = newDbId();
     String name = "dbName";
     int quorum = 2;
@@ -428,7 +437,7 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
     var promiseId = newPromiseId();
     ONodeId nodeId = promiseId.getCoordinator();
     ONodeId nodeId1 = newNodeId();
-    Set<ONodeId> partecipants = Set.of(nodeId);
+    Set<OAddNodeInfo> partecipants = partecipants(nodeId);
     var dbId = newDbId();
     String name = "dbName";
     int quorum = 2;
@@ -456,7 +465,7 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
     var promiseId = newPromiseId();
     ONodeId nodeId = promiseId.getCoordinator();
     ONodeId nodeId1 = newNodeId();
-    Set<ONodeId> partecipants = Set.of(nodeId);
+    Set<OAddNodeInfo> partecipants = partecipants(nodeId);
     var dbId = newDbId();
     String name = "dbName";
     int quorum = 2;

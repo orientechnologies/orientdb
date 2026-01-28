@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.distributed.context.coordination.message.operation;
 
 import com.orientechnologies.orient.core.transaction.ODatabaseId;
-import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
@@ -16,11 +15,11 @@ public class ODeclareDbMessage implements OOperationMessage {
 
   private String name;
   private ODatabaseId id;
-  private Set<ONodeId> partecipants;
+  private Set<OAddNodeInfo> partecipants;
   private int minimumQuorum;
 
   public ODeclareDbMessage(
-      String name, ODatabaseId id, Set<ONodeId> partecipants, int minimumQuorum) {
+      String name, ODatabaseId id, Set<OAddNodeInfo> partecipants, int minimumQuorum) {
     this.name = name;
     this.id = id;
     this.partecipants = partecipants;
@@ -48,7 +47,7 @@ public class ODeclareDbMessage implements OOperationMessage {
     id.writeNetwork(out);
     out.writeInt(minimumQuorum);
     out.writeInt(partecipants.size());
-    for (ONodeId node : partecipants) {
+    for (OAddNodeInfo node : partecipants) {
       node.writeNetwork(out);
     }
   }
@@ -63,9 +62,9 @@ public class ODeclareDbMessage implements OOperationMessage {
     ODatabaseId id = ODatabaseId.readNetwork(input);
     int minimumQuorum = input.readInt();
     int size = input.readInt();
-    Set<ONodeId> part = new HashSet<>(size);
+    Set<OAddNodeInfo> part = new HashSet<>(size);
     while (size-- > 0) {
-      part.add(ONodeId.readNetwork(input));
+      part.add(OAddNodeInfo.readNetwork(input));
     }
     return new ODeclareDbMessage(database, id, part, minimumQuorum);
   }
@@ -78,7 +77,7 @@ public class ODeclareDbMessage implements OOperationMessage {
     return name;
   }
 
-  public Set<ONodeId> getPartecipants() {
+  public Set<OAddNodeInfo> getPartecipants() {
     return partecipants;
   }
 

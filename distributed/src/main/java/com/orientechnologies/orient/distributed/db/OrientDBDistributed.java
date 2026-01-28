@@ -704,8 +704,12 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   private Future<Optional<OAcceptResult>> declareDatabaseFlow(String name, ODatabaseId dbId) {
-    var members = getNodeState().getNetworkMembers();
-    return retryOperation(new ODeclareDatabaseRetryOperation(dbId, name, members));
+    var members =
+        getNodeState().getNetworkMembers().stream()
+            .map((n) -> new OAddNodeInfo(n, ONodeRole.Main))
+            .collect(Collectors.toSet());
+    int minimumQuorum = members.size() / 2 + 1;
+    return retryOperation(new ODeclareDatabaseRetryOperation(dbId, name, members, minimumQuorum));
   }
 
   public Future<Optional<OAcceptResult>> retryOperation(ORetryOperation operation) {
@@ -968,7 +972,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
       OTransactionIdPromise promise,
       ODatabaseId databaseId,
       String database,
-      Set<ONodeId> partecipants,
+      Set<OAddNodeInfo> partecipants,
       int minimumQuorum) {
     return getNodeState()
         .getOps()
@@ -979,7 +983,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
       OTransactionIdPromise promise,
       ODatabaseId dbId,
       String database,
-      Set<ONodeId> partecipants,
+      Set<OAddNodeInfo> partecipants,
       int minimumQuorum) {
     getNodeState().getOps().declareDatabase(promise, dbId, database, partecipants, minimumQuorum);
     getNodeState()

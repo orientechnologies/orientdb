@@ -39,13 +39,13 @@ public class ODatabaseTopologyState {
   public ODatabaseTopologyState(
       ODatabaseId db,
       String name,
-      Set<ONodeId> partecipants,
+      Set<OAddNodeInfo> partecipants,
       int quorum,
       ODatabaseStateChangeListener stateListener) {
     this.id = db;
     this.name = name;
-    for (ONodeId p : partecipants) {
-      nodeStatus.put(p, new ONodeDatabaseState(p, ONodeRole.Main, ODatabaseState.Offline));
+    for (OAddNodeInfo p : partecipants) {
+      nodeStatus.put(p.node(), new ONodeDatabaseState(p.node(), p.role(), ODatabaseState.Offline));
     }
     this.quorum = quorum;
     this.stateListener = stateListener;

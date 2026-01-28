@@ -43,7 +43,7 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
       OTransactionIdPromise promise,
       ODatabaseId db,
       String name,
-      Set<ONodeId> partecipants,
+      Set<OAddNodeInfo> partecipants,
       int minimumQuorum) {
 
     if (databases.containsKey(db)) {
@@ -94,7 +94,7 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
       OTransactionIdPromise promise,
       ODatabaseId db,
       String name,
-      Set<ONodeId> partecipants,
+      Set<OAddNodeInfo> partecipants,
       int minimumQuorum) {
     if (promised.containsKey(db)) {
       var prom = promised.remove(db);
@@ -116,7 +116,8 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
         databases.computeIfAbsent(
             db,
             (dbKey) -> {
-              return new ODatabaseTopologyState(db, name, Set.of(node), 0, listener);
+              return new ODatabaseTopologyState(
+                  db, name, Set.of(new OAddNodeInfo(node, role)), 0, listener);
             });
 
     // First declare, version 0
