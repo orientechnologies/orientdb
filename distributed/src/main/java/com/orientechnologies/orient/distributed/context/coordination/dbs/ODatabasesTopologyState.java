@@ -165,17 +165,23 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
     return false;
   }
 
-  public synchronized boolean waitOnlineQuorum(ODatabaseId dbId, Optional<Long> timeout)
+  public boolean waitOnlineQuorum(ODatabaseId dbId, Optional<Long> timeout)
       throws InterruptedException {
-    ODatabaseTopologyState db = this.databases.get(dbId);
+    ODatabaseTopologyState db;
+    synchronized (this) {
+      db = this.databases.get(dbId);
+    }
     if (db != null) {
       return db.waitOnlineQuorum(timeout);
     }
     return false;
   }
 
-  public synchronized boolean waitOnlineOne(ODatabaseId dbId) {
-    ODatabaseTopologyState db = this.databases.get(dbId);
+  public boolean waitOnlineOne(ODatabaseId dbId) {
+    ODatabaseTopologyState db;
+    synchronized (this) {
+      db = this.databases.get(dbId);
+    }
     if (db != null) {
       return db.waitOnlineOne();
     }
