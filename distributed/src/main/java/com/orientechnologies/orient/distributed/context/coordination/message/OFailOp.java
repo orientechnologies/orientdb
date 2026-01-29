@@ -41,4 +41,9 @@ public class OFailOp implements OStructuralMessage {
   public OTransactionIdPromise getPromise() {
     return promise;
   }
+
+  @Override
+  public String toString() {
+    return "OFailOp [promise=" + promise + "]";
+  }
 }

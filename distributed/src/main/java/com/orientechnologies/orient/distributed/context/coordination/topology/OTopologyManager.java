@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.distributed.context.coordination.topology;
 
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.transaction.OGroupId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
@@ -20,6 +22,7 @@ import java.util.Optional;
 import java.util.Set;
 
 public class OTopologyManager implements OTopologyEvents {
+  private static final OLogger logger = OLogManager.instance().logger(OTopologyManager.class);
 
   private final ONodeId current;
   private OGroupId groupId;
@@ -134,6 +137,7 @@ public class OTopologyManager implements OTopologyEvents {
 
   private void setMember(Set<ONodeId> members) {
     this.members = Collections.unmodifiableSet(new HashSet<ONodeId>(members));
+    logger.debug("new network members %s ", this.members);
   }
 
   public synchronized Optional<OAcceptResult> validateEstablish(

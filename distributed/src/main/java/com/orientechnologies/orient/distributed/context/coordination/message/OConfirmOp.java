@@ -43,4 +43,9 @@ public class OConfirmOp implements OStructuralMessage {
   public OTransactionIdPromise getPromise() {
     return promise;
   }
+
+  @Override
+  public String toString() {
+    return "OConfirmOp [promise=" + promise + "]";
+  }
 }

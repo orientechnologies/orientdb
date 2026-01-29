@@ -10,10 +10,14 @@ import com.orientechnologies.orient.distributed.context.coordination.message.ope
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import com.orientechnologies.orient.distributed.db.OCompleteExecution;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
+import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
 import java.util.Optional;
 import java.util.Set;
 
 public class OMergeCompleteAction extends OStandardCompleteAction implements OCompleteAction {
+
+  private static final OLoggerDistributed logger =
+      OLoggerDistributed.logger(OMergeCompleteAction.class);
 
   private final ONodeId mergeNode;
 
@@ -35,6 +39,8 @@ public class OMergeCompleteAction extends OStandardCompleteAction implements OCo
   @Override
   public void success(OTransactionIdPromise promise, Set<ONodeId> all) {
     this.context.sendMessage(mergeNode, new OMergeConfirmOp(promise));
+    logger.debugNode(
+        context.getNodeId(), "sending success merge promise %s to %s", promise, mergeNode);
     super.success(promise, all);
   }
 
@@ -42,6 +48,8 @@ public class OMergeCompleteAction extends OStandardCompleteAction implements OCo
   public void failure(
       OTransactionIdPromise promise, Set<ONodeId> all, Optional<OAcceptResult> result) {
     this.context.sendMessage(mergeNode, new OMergeFailOp(promise));
+    logger.debugNode(
+        context.getNodeId(), "sending fail merge promise %s to %s", promise, mergeNode);
     super.failure(promise, all, result);
   }
 }

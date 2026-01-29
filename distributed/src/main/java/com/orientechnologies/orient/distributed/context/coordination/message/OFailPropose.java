@@ -55,4 +55,15 @@ public class OFailPropose implements OStructuralMessage {
   public OAcceptResult getAcceptResult() {
     return acceptResult;
   }
+
+  @Override
+  public String toString() {
+    return "OFailPropose [nodeId="
+        + nodeId
+        + ", promise="
+        + promise
+        + ", acceptResult="
+        + acceptResult
+        + "]";
+  }
 }

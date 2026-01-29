@@ -33,4 +33,9 @@ public class OMergeConfirmOp implements OStructuralMessage {
     var promise = OTransactionIdPromise.readNetwork(input);
     return new OMergeConfirmOp(promise);
   }
+
+  @Override
+  public String toString() {
+    return "OMergeConfirmOp [promise=" + promise + "]";
+  }
 }

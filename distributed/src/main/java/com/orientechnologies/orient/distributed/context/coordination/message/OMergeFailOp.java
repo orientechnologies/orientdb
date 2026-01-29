@@ -33,4 +33,9 @@ public class OMergeFailOp implements OStructuralMessage {
     var promise = OTransactionIdPromise.readNetwork(input);
     return new OMergeFailOp(promise);
   }
+
+  @Override
+  public String toString() {
+    return "OMergeFailOp [promise=" + promise + "]";
+  }
 }
