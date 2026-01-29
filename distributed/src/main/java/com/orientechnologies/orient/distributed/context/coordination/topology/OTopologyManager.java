@@ -9,6 +9,7 @@ import com.orientechnologies.orient.distributed.context.coordination.OVersionPro
 import com.orientechnologies.orient.distributed.context.coordination.message.state.OTopologyStateNetwork;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAlreadyEstablishedTopologyState;
+import com.orientechnologies.orient.distributed.context.coordination.result.ONotQuorumOneMerge;
 import com.orientechnologies.orient.distributed.context.coordination.topology.ODiscoverAction.OAddNodeAction;
 import com.orientechnologies.orient.distributed.context.coordination.topology.ODiscoverAction.OEstablishAction;
 import com.orientechnologies.orient.distributed.context.coordination.topology.ODiscoverAction.OMergeNodeAction;
@@ -226,14 +227,14 @@ public class OTopologyManager implements OTopologyEvents {
     return getVersion() + 1;
   }
 
-  public synchronized boolean acceptMerge(OGroupId group, OTransactionIdPromise promise) {
+  public synchronized Optional<OAcceptResult> acceptMerge(
+      OGroupId group, OTransactionIdPromise promise) {
     if (this.quorum == 1) {
       // This is going to merge not based on version hack the accept version
       var nextVersion = this.versionPromise.next();
-      var accepted = this.versionPromise.promise(promise, nextVersion);
-      return accepted.isEmpty();
+      return this.versionPromise.promise(promise, nextVersion);
     } else {
-      return false;
+      return Optional.of(new ONotQuorumOneMerge());
     }
   }
 

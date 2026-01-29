@@ -34,7 +34,7 @@ public class OVersionPromise {
           return Optional.of(new OOutdatedVersion(version.getValue(), this.version.getValue()));
         }
       } else {
-        return Optional.of(new OAlreadyPromised());
+        return Optional.of(new OAlreadyPromised(this.promise.get().getCoordinator()));
       }
     }
   }

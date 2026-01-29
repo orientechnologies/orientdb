@@ -190,4 +190,8 @@ public class OTransactionSequenceManager {
   public synchronized boolean isApplied(OTransactionId txId) {
     return this.sequentials[txId.getPosition()] >= txId.getSequence();
   }
+
+  public OTransactionIdPromise promised(int position) {
+    return this.promisedSequential[position];
+  }
 }

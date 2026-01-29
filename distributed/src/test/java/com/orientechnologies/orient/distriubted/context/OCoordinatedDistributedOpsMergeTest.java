@@ -189,7 +189,7 @@ public class OCoordinatedDistributedOpsMergeTest
     ops.nodeSuccess(nodeId1, promise);
     assertFalse(action.success);
     assertFalse(action.failure);
-    ops.nodeFailure(nodeId2, promise, new OAlreadyPromised());
+    ops.nodeFailure(nodeId2, promise, new OAlreadyPromised(nodeId1));
 
     assertFalse(action.success);
     assertTrue(action.failure);
@@ -210,8 +210,9 @@ public class OCoordinatedDistributedOpsMergeTest
 
     OCoordinatedDistributedOps ops2 = quorum1Env(nodeId1, groupId);
     var enPromise = newPromiseId(nodeId2);
-    assertTrue(ops2.validateMerge(groupId, enPromise));
-    ops1.confirmMerge(nodeId2, promise, true);
+    var res1 = ops2.validateMerge(groupId, enPromise);
+    assertTrue(res1.isEmpty());
+    ops1.confirmMerge(nodeId2, promise, res1);
     assertTrue(action.success);
     assertFalse(action.failure);
   }
@@ -239,15 +240,17 @@ public class OCoordinatedDistributedOpsMergeTest
 
     OCoordinatedDistributedOps ops2 = quorum1Env(nodeId1, groupId);
     var enPromise = newPromiseId(nodeId2);
-    assertTrue(ops2.validateMerge(groupId, enPromise));
+    var res2 = ops2.validateMerge(groupId, enPromise);
+    assertTrue(res2.isEmpty());
     var enPromise2 = newPromiseId(nodeId3);
-    assertFalse(ops2.validateMerge(groupId, enPromise2));
+    var res21 = ops2.validateMerge(groupId, enPromise2);
+    assertFalse(res21.isEmpty());
 
-    ops1.confirmMerge(nodeId2, promise, true);
+    ops1.confirmMerge(nodeId2, promise, res2);
     assertTrue(action.success);
     assertFalse(action.failure);
 
-    ops3.confirmMerge(nodeId2, promise1, false);
+    ops3.confirmMerge(nodeId2, promise1, res21);
     assertFalse(action1.success);
     assertTrue(action1.failure);
   }

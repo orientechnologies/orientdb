@@ -1433,7 +1433,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   public void acceptMerge(OTransactionIdPromise promise, OGroupId group) {
-    boolean accepted = getNodeState().getOps().validateMerge(group, promise);
+    var accepted = getNodeState().getOps().validateMerge(group, promise);
     sendMessage(promise.getCoordinator(), new OMergeResult(getNodeId(), promise, accepted));
   }
 
@@ -1445,7 +1445,8 @@ public class OrientDBDistributed extends OrientDBEmbedded
     // Do Nothing for now, just wait for new network  notification
   }
 
-  public void confirmMerge(ONodeId node, OTransactionIdPromise promise, boolean accepted) {
+  public void confirmMerge(
+      ONodeId node, OTransactionIdPromise promise, Optional<OAcceptResult> accepted) {
     getNodeState().getOps().confirmMerge(node, promise, accepted);
   }
 }

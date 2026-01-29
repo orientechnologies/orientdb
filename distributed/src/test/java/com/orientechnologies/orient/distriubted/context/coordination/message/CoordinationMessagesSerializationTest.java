@@ -243,10 +243,10 @@ public class CoordinationMessagesSerializationTest {
   public void mergeResultTest() throws IOException {
     var node = newNodeId();
     var promise = newPromiseId();
-    OMergeResult merge = new OMergeResult(node, promise, true);
+    OMergeResult merge = new OMergeResult(node, promise, Optional.empty());
     OMergeResult read = writeRead(merge);
     assertEquals(node, read.getNode());
     assertEquals(promise, read.getPromise());
-    assertTrue(read.isAccepted());
+    assertTrue(read.getAccepted().isEmpty());
   }
 }

@@ -65,11 +65,12 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
               && prom.getFirst().getCoordinator().equals(promise.getCoordinator())) {
             return Optional.empty();
           } else {
-            return Optional.of(new OAlreadyPromised());
+            return Optional.of(new OAlreadyPromised(prom.getFirst().getCoordinator()));
           }
         }
         if (promisedByName.containsKey(name)) {
-          return Optional.of(new OAlreadyPromised());
+          var prom = promised.get(promisedByName.get(name).getId());
+          return Optional.of(new OAlreadyPromised(prom.getFirst().getCoordinator()));
         }
         var declared = new ODatabaseTopologyState(db, name, partecipants, minimumQuorum, listener);
         this.promised.put(

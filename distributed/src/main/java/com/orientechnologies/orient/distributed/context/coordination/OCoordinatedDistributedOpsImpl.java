@@ -142,7 +142,11 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
       case ALREADY_PROMISED -> {
         // Fail for promised to someone else this track it anyway in case of minority in quorum
         this.promised.addNotPromised(message);
-        yield Optional.of(new OAlreadyPromised());
+        yield Optional.of(
+            new OAlreadyPromised(
+                sequenceManager
+                    .promised(message.getPromiseId().getId().getPosition())
+                    .getCoordinator()));
       }
       case MISSING_PREVIOUS -> {
         // wait for previous one, track it anyway
@@ -492,7 +496,8 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   }
 
   @Override
-  public synchronized boolean validateMerge(OGroupId group, OTransactionIdPromise promise) {
+  public synchronized Optional<OAcceptResult> validateMerge(
+      OGroupId group, OTransactionIdPromise promise) {
     return topology.acceptMerge(group, promise);
   }
 
@@ -502,11 +507,12 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   }
 
   @Override
-  public void confirmMerge(ONodeId node, OTransactionIdPromise promise, boolean accepted) {
-    if (accepted) {
+  public void confirmMerge(
+      ONodeId node, OTransactionIdPromise promise, Optional<OAcceptResult> accepted) {
+    if (accepted.isEmpty()) {
       nodeSuccess(node, promise);
     } else {
-      nodeFailure(node, promise, new OAlreadyPromised());
+      nodeFailure(node, promise, accepted.get());
     }
   }
 

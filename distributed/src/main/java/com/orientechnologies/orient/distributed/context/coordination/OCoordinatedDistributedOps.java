@@ -162,11 +162,11 @@ public interface OCoordinatedDistributedOps {
 
   void completeSync(OSyncId syncId);
 
-  boolean validateMerge(OGroupId group, OTransactionIdPromise promise);
+  Optional<OAcceptResult> validateMerge(OGroupId group, OTransactionIdPromise promise);
 
   OGroupId getGroupId();
 
-  void confirmMerge(ONodeId node, OTransactionIdPromise promise, boolean accepted);
+  void confirmMerge(ONodeId node, OTransactionIdPromise promise, Optional<OAcceptResult> accepted);
 
   void cancelMerge(OTransactionIdPromise promise);
 
