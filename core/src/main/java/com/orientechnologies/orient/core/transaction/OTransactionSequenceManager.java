@@ -119,7 +119,7 @@ public class OTransactionSequenceManager {
         if (promised.getCoordinator().equals(promise.getCoordinator())) {
           return ValidationResult.VALID;
         } else if (promised.nextAccept(promise)) {
-          promised = this.promisedSequential[transactionId.getPosition()] = promise;
+          this.promisedSequential[transactionId.getPosition()] = promise;
           return ValidationResult.VALID;
         } else {
           return ValidationResult.ALREADY_PROMISED;

@@ -940,6 +940,9 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   public void firstConnect(ONodeId nodeId, ONodeStateNetwork state, boolean merge) {
+    if (nodeId.equals(getNodeId())) {
+      return;
+    }
     ODiscoverAction action = getNodeState().getOps().nodeJoinStart(nodeId, state, merge);
     logger.debugNode(getNodeId(), "executing node join action %s", action);
     retryOperation(new ODiscoverActionRetryOperation(action));

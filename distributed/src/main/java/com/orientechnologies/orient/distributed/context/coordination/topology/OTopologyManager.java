@@ -168,7 +168,7 @@ public class OTopologyManager implements OTopologyEvents {
             return new ODiscoverAction.OApplyStateAction();
           } else if (this.quorum == 1 && this.members.size() == 1) {
             this.setMember(externState.members());
-            this.versionPromise.loadVersion(new OVersion(externState.version()));
+            this.versionPromise.forceVersion(new OVersion(externState.version()));
             this.quorum = externState.quorum();
             return new ODiscoverAction.OApplySequenceAction();
           } else if (externState.version() > getVersion()) {
