@@ -28,6 +28,7 @@ public interface OAcceptResult {
       case 9 -> ONoTransactionSequencialAvailable.fromNetwork(input);
       case 10 -> ONodeAlreadyPresent.fromNetwork(input);
       case 11 -> ONotQuorumOneMerge.fromNetwork(input);
+      case 12 -> ODisconnectedNode.fromNetwork(input);
       default -> throw new ODistributedException("wrong accept result message type from network");
     };
   }

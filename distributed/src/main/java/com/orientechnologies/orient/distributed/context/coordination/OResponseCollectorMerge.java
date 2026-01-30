@@ -4,6 +4,7 @@ import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.distributed.context.coordination.action.OCompleteAction;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
+import com.orientechnologies.orient.distributed.context.coordination.result.ODisconnectedNode;
 import com.orientechnologies.orient.distributed.context.coordination.result.OQuorumNotReached;
 import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
 import java.text.MessageFormat;
@@ -26,6 +27,7 @@ public class OResponseCollectorMerge implements OResponseCollector {
   private final Set<ONodeId> success = new HashSet<>();
   private final Set<ONodeId> lost = new HashSet<>();
   private final Set<ONodeId> failure = new HashSet<>();
+  private final Map<ONodeId, Optional<OAcceptResult>> resultMap = new HashMap<>();
   private final Map<OAcceptResult, Integer> results = new HashMap<>();
   private boolean applied = false;
   private ONodeId mergeNode;
@@ -49,6 +51,7 @@ public class OResponseCollectorMerge implements OResponseCollector {
   }
 
   public Optional<CompleteInfo> receive(ONodeId node) {
+    resultMap.put(node, Optional.empty());
     if (node.equals(this.mergeNode)) {
       mergeSuccess = true;
       mergeResponse = true;
@@ -90,6 +93,7 @@ public class OResponseCollectorMerge implements OResponseCollector {
   }
 
   public Optional<CompleteInfo> disconnected(ONodeId node) {
+    resultMap.put(node, Optional.of(new ODisconnectedNode()));
     if (node.equals(this.mergeNode)) {
       mergeFailure = Optional.of(new OQuorumNotReached(Collections.emptySet()));
       mergeResponse = true;
@@ -108,6 +112,7 @@ public class OResponseCollectorMerge implements OResponseCollector {
   }
 
   public Optional<CompleteInfo> fail(ONodeId node, OAcceptResult acceptResult) {
+    resultMap.put(node, Optional.of(acceptResult));
     if (node.equals(this.mergeNode)) {
       mergeFailure = Optional.of(acceptResult);
       mergeResponse = true;
@@ -156,7 +161,6 @@ public class OResponseCollectorMerge implements OResponseCollector {
   @Override
   public String toString() {
     return MessageFormat.format(
-        "{0} merge:{4} success:{1} fail:{2} missing:{3}",
-        action, success, failure, toReceive, mergeSuccess ? true : mergeFailure);
+        "{0} merge:{1} results {2}", action, mergeSuccess ? true : mergeFailure, resultMap);
   }
 }
