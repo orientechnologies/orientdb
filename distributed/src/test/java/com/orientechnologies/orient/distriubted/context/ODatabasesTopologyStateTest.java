@@ -48,7 +48,7 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
   @Test
   public void testFirstDeclare() {
 
-    ODatabasesTopologyState state = new ODatabasesTopologyState(this);
+    ODatabasesTopologyState state = new ODatabasesTopologyState(this, newNodeId());
     var promiseId = newPromiseId();
     Set<OAddNodeInfo> partecipants = partecipants(promiseId.getCoordinator());
     var dbId = newDbId();
@@ -64,7 +64,7 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
   @Test
   public void testDeclareAndPassState() {
 
-    ODatabasesTopologyState state = new ODatabasesTopologyState(this);
+    ODatabasesTopologyState state = new ODatabasesTopologyState(this, newNodeId());
     var promiseId = newPromiseId();
     Set<OAddNodeInfo> partecipants = partecipants(promiseId.getCoordinator());
     var dbId = newDbId();
@@ -76,7 +76,7 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
     state.declareDatabase(promiseId, dbId, name, partecipants, quorum);
     assertTrue(state.listDatabaseIds().contains(dbId));
 
-    ODatabasesTopologyState state1 = new ODatabasesTopologyState(this);
+    ODatabasesTopologyState state1 = new ODatabasesTopologyState(this, newNodeId());
     state1.receiverNetworkState(state.getNetworkState());
     assertEquals(dbId, state1.getDatabaseId("dbName").get());
     assertEquals("dbName", state1.getDatabaseName(dbId));
@@ -85,7 +85,7 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
   @Test
   public void testFailDoublePromise() {
 
-    ODatabasesTopologyState state = new ODatabasesTopologyState(this);
+    ODatabasesTopologyState state = new ODatabasesTopologyState(this, newNodeId());
 
     var promiseId = newPromiseId();
     Set<OAddNodeInfo> partecipants = partecipants(promiseId.getCoordinator());
@@ -111,7 +111,7 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
   @Test
   public void testOkAfterCancelPromise() {
 
-    ODatabasesTopologyState state = new ODatabasesTopologyState(this);
+    ODatabasesTopologyState state = new ODatabasesTopologyState(this, newNodeId());
 
     var promiseId = newPromiseId();
     Set<OAddNodeInfo> partecipants = partecipants(promiseId.getCoordinator());
@@ -136,7 +136,7 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
   @Test
   public void testSetStateBase() {
 
-    ODatabasesTopologyState state = new ODatabasesTopologyState(this);
+    ODatabasesTopologyState state = new ODatabasesTopologyState(this, newNodeId());
 
     var promiseId = newPromiseId();
     ONodeId nodeId = promiseId.getCoordinator();
@@ -163,7 +163,7 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
   @Test
   public void testSetStateDoublePromise() {
 
-    ODatabasesTopologyState state = new ODatabasesTopologyState(this);
+    ODatabasesTopologyState state = new ODatabasesTopologyState(this, newNodeId());
 
     var promiseId = newPromiseId();
     ONodeId nodeId = promiseId.getCoordinator();
@@ -203,7 +203,7 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
   @Test
   public void testSetStateWrongVersion() {
 
-    ODatabasesTopologyState state = new ODatabasesTopologyState(this);
+    ODatabasesTopologyState state = new ODatabasesTopologyState(this, newNodeId());
 
     var promiseId = newPromiseId();
     ONodeId nodeId = promiseId.getCoordinator();
@@ -243,7 +243,7 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
   @Test
   public void testSetStateCancelPromise() {
 
-    ODatabasesTopologyState state = new ODatabasesTopologyState(this);
+    ODatabasesTopologyState state = new ODatabasesTopologyState(this, newNodeId());
 
     var promiseId = newPromiseId();
     ONodeId nodeId = promiseId.getCoordinator();
@@ -285,8 +285,8 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
   @Test
   public void testRequestSync() {
 
-    ODatabasesTopologyState state = new ODatabasesTopologyState(this);
-    ODatabasesTopologyState state1 = new ODatabasesTopologyState(this);
+    ODatabasesTopologyState state = new ODatabasesTopologyState(this, newNodeId());
+    ODatabasesTopologyState state1 = new ODatabasesTopologyState(this, newNodeId());
 
     var promiseId = newPromiseId();
     ONodeId nodeId = promiseId.getCoordinator();
@@ -355,9 +355,9 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
   @Test
   public void testRequestSyncFailAlreadySendings() {
 
-    ODatabasesTopologyState state = new ODatabasesTopologyState(this);
-    ODatabasesTopologyState state1 = new ODatabasesTopologyState(this);
-    ODatabasesTopologyState state2 = new ODatabasesTopologyState(this);
+    ODatabasesTopologyState state = new ODatabasesTopologyState(this, newNodeId());
+    ODatabasesTopologyState state1 = new ODatabasesTopologyState(this, newNodeId());
+    ODatabasesTopologyState state2 = new ODatabasesTopologyState(this, newNodeId());
 
     var promiseId = newPromiseId();
     ONodeId nodeId = promiseId.getCoordinator();
@@ -438,7 +438,7 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
   @Test
   public void testSetAddMember() {
 
-    ODatabasesTopologyState state = new ODatabasesTopologyState(this);
+    ODatabasesTopologyState state = new ODatabasesTopologyState(this, newNodeId());
 
     var promiseId = newPromiseId();
     ONodeId nodeId = promiseId.getCoordinator();
@@ -466,7 +466,7 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
   @Test
   public void testSetAddMemberCancel() {
 
-    ODatabasesTopologyState state = new ODatabasesTopologyState(this);
+    ODatabasesTopologyState state = new ODatabasesTopologyState(this, newNodeId());
 
     var promiseId = newPromiseId();
     ONodeId nodeId = promiseId.getCoordinator();

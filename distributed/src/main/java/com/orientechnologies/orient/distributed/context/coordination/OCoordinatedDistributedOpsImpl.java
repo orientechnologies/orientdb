@@ -61,7 +61,7 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
     this.sequenceManager = new OTransactionSequenceManager(current, 3);
     this.promised = new OPromisedDistributedOpsImpl();
     this.coordination = new HashMap<>();
-    this.databaseTopology = new ODatabasesTopologyState(listener);
+    this.databaseTopology = new ODatabasesTopologyState(listener, current);
     this.updateLister = updateLister;
   }
 

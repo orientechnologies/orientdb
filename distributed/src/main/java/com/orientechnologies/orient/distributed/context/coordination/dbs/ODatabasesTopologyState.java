@@ -27,6 +27,7 @@ import java.util.Set;
 
 public class ODatabasesTopologyState implements ODatabasesTopology {
 
+  private final ONodeId current;
   private final Map<ODatabaseId, ODatabaseTopologyState> databases = new HashMap<>();
   private final Map<String, ODatabaseTopologyState> databasesByName = new HashMap<>();
   private final Map<ODatabaseId, ORawPair<OTransactionIdPromise, ODatabaseTopologyState>> promised =
@@ -35,8 +36,9 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
   private final Map<OSyncId, OSyncState> activerSyncs = new HashMap<>();
   private ODatabaseStateChangeListener listener;
 
-  public ODatabasesTopologyState(ODatabaseStateChangeListener listener) {
+  public ODatabasesTopologyState(ODatabaseStateChangeListener listener, ONodeId current) {
     this.listener = listener;
+    this.current = current;
   }
 
   public synchronized Optional<OAcceptResult> validateDeclare(
@@ -72,7 +74,8 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
           var prom = promised.get(promisedByName.get(name).getId());
           return Optional.of(new OAlreadyPromised(prom.getFirst().getCoordinator()));
         }
-        var declared = new ODatabaseTopologyState(db, name, partecipants, minimumQuorum, listener);
+        var declared =
+            new ODatabaseTopologyState(db, name, partecipants, minimumQuorum, listener, current);
         this.promised.put(
             db, new ORawPair<OTransactionIdPromise, ODatabaseTopologyState>(promise, declared));
         this.promisedByName.put(name, declared);
@@ -105,7 +108,8 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
       this.databases.put(db, inst);
       this.databasesByName.put(inst.getName(), inst);
     } else {
-      var declared = new ODatabaseTopologyState(db, name, partecipants, minimumQuorum, listener);
+      var declared =
+          new ODatabaseTopologyState(db, name, partecipants, minimumQuorum, listener, current);
       this.databases.put(db, declared);
       this.databasesByName.put(declared.getName(), declared);
     }
@@ -289,7 +293,7 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
       if (db != null) {
         db.receiveState(state);
       } else {
-        db = new ODatabaseTopologyState(state, listener);
+        db = new ODatabaseTopologyState(state, listener, current);
         this.databases.put(state.id(), db);
         this.databasesByName.put(state.name(), db);
       }
@@ -345,7 +349,7 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
       if (db != null) {
         db.mergeState(state);
       } else {
-        db = new ODatabaseTopologyState(state, listener);
+        db = new ODatabaseTopologyState(state, listener, current);
         this.databases.put(state.id(), db);
         this.databasesByName.put(state.name(), db);
       }
@@ -395,7 +399,9 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
 
   public synchronized void load(ODatabasesTopologyStore store) {
     var dbs =
-        store.getDatabases().stream().map(x -> new ODatabaseTopologyState(listener, x)).toList();
+        store.getDatabases().stream()
+            .map(x -> new ODatabaseTopologyState(listener, x, current))
+            .toList();
     for (var db : dbs) {
       this.databases.put(db.getId(), db);
       this.databasesByName.put(db.getName(), db);

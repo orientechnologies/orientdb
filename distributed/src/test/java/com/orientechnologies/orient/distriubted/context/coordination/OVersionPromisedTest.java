@@ -28,7 +28,7 @@ public class OVersionPromisedTest {
     var node = newRandomNodeId();
     var promisedId = newPromiseId(node);
     var baseVersion = new OVersion(0);
-    var promise = new OVersionPromise(baseVersion);
+    var promise = new OVersionPromise(baseVersion, newRandomNodeId());
     var next = baseVersion.next();
     var result = promise.promise(promisedId, next);
     assertTrue(result.isEmpty());
@@ -39,7 +39,7 @@ public class OVersionPromisedTest {
     var node = newRandomNodeId();
     var promisedId = newPromiseId(node);
     var baseVersion = new OVersion(0);
-    var promise = new OVersionPromise(baseVersion);
+    var promise = new OVersionPromise(baseVersion, newRandomNodeId());
     var next = baseVersion.next();
     var result = promise.promise(promisedId, next);
     assertTrue(result.isEmpty());
@@ -58,7 +58,7 @@ public class OVersionPromisedTest {
     var node = newRandomNodeId();
     var promisedId = newPromiseId(node);
     var baseVersion = new OVersion(0);
-    var promise = new OVersionPromise(baseVersion);
+    var promise = new OVersionPromise(baseVersion, newRandomNodeId());
     var next = baseVersion.next();
     var result = promise.promise(promisedId, next);
     assertTrue(result.isEmpty());
@@ -72,7 +72,7 @@ public class OVersionPromisedTest {
     var node = newRandomNodeId();
     var promisedId = newPromiseId(node);
     var baseVersion = new OVersion(0);
-    var promise = new OVersionPromise(baseVersion);
+    var promise = new OVersionPromise(baseVersion, newRandomNodeId());
     var next = baseVersion.next();
     var result = promise.promise(promisedId, next);
     assertTrue(result.isEmpty());
@@ -87,7 +87,7 @@ public class OVersionPromisedTest {
     var node = newRandomNodeId();
     var promisedId = newPromiseId(node);
     var baseVersion = new OVersion(0);
-    var promise = new OVersionPromise(baseVersion);
+    var promise = new OVersionPromise(baseVersion, newRandomNodeId());
     var next = baseVersion.next();
     var result = promise.promise(promisedId, next);
     assertTrue(result.isEmpty());
@@ -104,7 +104,7 @@ public class OVersionPromisedTest {
     var node = newRandomNodeId();
     var promisedId = newPromiseId(node);
     var baseVersion = new OVersion(0);
-    var promise = new OVersionPromise(baseVersion);
+    var promise = new OVersionPromise(baseVersion, newRandomNodeId());
     var next = baseVersion.next();
     var result = promise.promise(promisedId, next);
     assertTrue(result.isEmpty());
@@ -119,7 +119,7 @@ public class OVersionPromisedTest {
     var node = newRandomNodeId();
     var promisedId = newPromiseId(node);
     var baseVersion = new OVersion(0);
-    var promise = new OVersionPromise(baseVersion);
+    var promise = new OVersionPromise(baseVersion, newRandomNodeId());
     var next = baseVersion.next();
     next = next.next();
     var result = promise.promise(promisedId, next);

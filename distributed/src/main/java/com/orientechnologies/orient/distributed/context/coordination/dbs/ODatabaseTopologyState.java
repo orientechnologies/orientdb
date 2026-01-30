@@ -41,33 +41,34 @@ public class ODatabaseTopologyState {
       String name,
       Set<OAddNodeInfo> partecipants,
       int quorum,
-      ODatabaseStateChangeListener stateListener) {
+      ODatabaseStateChangeListener stateListener,
+      ONodeId current) {
     this.id = db;
     this.name = name;
     for (OAddNodeInfo p : partecipants) {
       nodeStatus.put(p.node(), new ONodeDatabaseState(p.node(), p.role(), ODatabaseState.Offline));
     }
-    this.versionPromise = new OVersionPromise(new OVersion(0));
+    this.versionPromise = new OVersionPromise(new OVersion(0), current);
     this.quorum = quorum;
     this.stateListener = stateListener;
   }
 
   public ODatabaseTopologyState(
-      ODatabaseStateNetwork state, ODatabaseStateChangeListener stateListener) {
+      ODatabaseStateNetwork state, ODatabaseStateChangeListener stateListener, ONodeId current) {
     this.id = state.id();
     this.name = state.name();
     this.stateListener = stateListener;
-    this.versionPromise = new OVersionPromise(new OVersion(0));
+    this.versionPromise = new OVersionPromise(new OVersion(0), current);
     this.receiveState(state);
   }
 
   public ODatabaseTopologyState(
-      ODatabaseStateChangeListener listener, ODatabaseTopologyStore store) {
+      ODatabaseStateChangeListener listener, ODatabaseTopologyStore store, ONodeId current) {
     this.stateListener = listener;
     this.id = store.getId();
     this.name = store.getName();
     this.quorum = store.getQuorum();
-    this.versionPromise = new OVersionPromise(new OVersion(store.getVersion()));
+    this.versionPromise = new OVersionPromise(new OVersion(store.getVersion()), current);
     var nodes = store.getNodes().stream().map((x) -> new ONodeDatabaseState(x)).toList();
     for (var node : nodes) {
       this.nodeStatus.put(node.getId(), node);

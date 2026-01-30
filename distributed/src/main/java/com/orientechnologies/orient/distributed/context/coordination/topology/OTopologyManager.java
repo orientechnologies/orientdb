@@ -37,7 +37,7 @@ public class OTopologyManager implements OTopologyEvents {
     this.current = current;
     this.groupId = groupId;
     this.minimumQuorum = minimumQuorum;
-    this.versionPromise = new OVersionPromise(new OVersion(0));
+    this.versionPromise = new OVersionPromise(new OVersion(0), current);
   }
 
   @Override
