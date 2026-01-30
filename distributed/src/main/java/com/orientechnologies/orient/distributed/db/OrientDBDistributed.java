@@ -906,6 +906,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   private void sendOperation(OOperationMessage operation, OCompleteAction action) {
+    logger.debugNode(getNodeId(), "starting operation %s", operation);
     var startOp = getNodeState().start(action);
     if (startOp.isPresent()) {
       var start = startOp.get();
@@ -1420,6 +1421,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
     long version = getNodeState().getOps().nextTopologyVersion();
     var operation = new OAddTopologyMember(version, node);
     OCompleteAction action = new OMergeCompleteAction(this, operation, execution, node);
+    logger.debugNode(getNodeId(), "starting operation %s", operation);
     var startOp = getNodeState().start(action);
     if (startOp.isPresent()) {
       var start = startOp.get();

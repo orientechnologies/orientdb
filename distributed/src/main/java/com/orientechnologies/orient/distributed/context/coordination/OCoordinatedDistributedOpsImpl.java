@@ -1,7 +1,5 @@
 package com.orientechnologies.orient.distributed.context.coordination;
 
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.OGroupId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
@@ -32,6 +30,7 @@ import com.orientechnologies.orient.distributed.context.coordination.topology.OD
 import com.orientechnologies.orient.distributed.context.coordination.topology.OTopologyManager;
 import com.orientechnologies.orient.distributed.db.OSyncMode;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
+import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -42,8 +41,8 @@ import java.util.Optional;
 import java.util.Set;
 
 public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOps {
-  private static final OLogger logger =
-      OLogManager.instance().logger(OCoordinatedDistributedOpsImpl.class);
+  private static final OLoggerDistributed logger =
+      OLoggerDistributed.logger(OCoordinatedDistributedOpsImpl.class);
   private final OTopologyManager topology;
   private final OTransactionSequenceManager sequenceManager;
   private final OPromisedDistributedOps promised;
@@ -129,6 +128,7 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
     ValidationResult result = sequenceManager.validate(message.getPromiseId());
     return switch (result) {
       case VALID -> {
+        logger.debugNode(topology.getNodeId(), "promising %s", message.getPromiseId());
         this.promised.addPromised(message);
         yield Optional.empty();
       }
@@ -163,6 +163,7 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   public void cancelPromise(OTransactionIdPromise promise) {
     boolean promised = sequenceManager.notifyFailure(promise);
     if (promised) {
+      logger.debugNode(topology.getNodeId(), "removing promise %s", promise);
       var message = this.promised.removePromised(promise);
       if (message.isPresent()) {
         this.promised.addNotPromised(message.get());
@@ -174,6 +175,7 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
       OTransactionIdPromise promise) {
     boolean promised = sequenceManager.notifyFailure(promise);
     if (promised) {
+      logger.debugNode(topology.getNodeId(), "canceling promise %s", promise);
       return this.promised.removePromised(promise);
     }
     return Optional.empty();

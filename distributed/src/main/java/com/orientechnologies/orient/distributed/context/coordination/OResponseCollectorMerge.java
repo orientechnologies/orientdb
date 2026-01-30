@@ -5,6 +5,7 @@ import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.distributed.context.coordination.action.OCompleteAction;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import com.orientechnologies.orient.distributed.context.coordination.result.OQuorumNotReached;
+import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
 import java.text.MessageFormat;
 import java.util.Collections;
 import java.util.HashMap;
@@ -14,6 +15,8 @@ import java.util.Optional;
 import java.util.Set;
 
 public class OResponseCollectorMerge implements OResponseCollector {
+  private final OLoggerDistributed logger =
+      OLoggerDistributed.logger(OResponseCollectorMerge.class);
 
   private final OCompleteAction action;
   private final int quorum;
@@ -113,10 +116,12 @@ public class OResponseCollectorMerge implements OResponseCollector {
       this.results.compute(acceptResult, this::defaultResult);
     }
     if (lost.size() + failure.size() == quorum || mergeFailure.isPresent()) {
+      logger.debugNode(promise.getCoordinator(), "fail responses %s", this);
       OAcceptResult result = computeResult();
       return Optional.of(new CompleteInfo(action, promise, expected, Optional.of(result)));
     }
     if (isFinishedNotQuorum()) {
+      logger.debugNode(promise.getCoordinator(), "fail responses %s", this);
       OAcceptResult result = computeResult();
       return Optional.of(new CompleteInfo(action, promise, expected, Optional.of(result)));
     }

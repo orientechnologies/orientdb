@@ -28,6 +28,7 @@ public class OProposeOp implements OStructuralMessage, ODistributedMessage {
     if (result.isEmpty()) {
       Optional<OAcceptResult> res = op.validate(ctx, promise);
       if (res.isPresent()) {
+        // This is canceling the promise right away because is not accepted by the data
         nodeState.cancelPromise(promise);
         var failure = new OFailPropose(nodeState.getNodeId(), promise, res.get());
         ctx.sendMessage(coordinator, failure);
