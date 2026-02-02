@@ -24,4 +24,8 @@ public interface OPromisedDistributedOps {
   Optional<Map<OTransactionId, ODistributedMessage>> getPromised(ONodeId node);
 
   void dumpActive();
+
+  ODisconnectAction nodeDisconnected(ONodeId node);
+
+  boolean isPromised(OTransactionId id);
 }

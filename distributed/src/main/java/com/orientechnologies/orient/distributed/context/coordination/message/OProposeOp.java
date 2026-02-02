@@ -53,6 +53,11 @@ public class OProposeOp implements OStructuralMessage, ODistributedMessage {
   }
 
   @Override
+  public void recoordinate(OrientDBDistributed ctx) {
+    ctx.recoordinateOperation(promise, op);
+  }
+
+  @Override
   public OTransactionIdPromise getPromiseId() {
     return promise;
   }

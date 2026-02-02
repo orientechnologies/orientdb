@@ -32,8 +32,10 @@ import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import com.orientechnologies.orient.distributed.context.ONodeState;
 import com.orientechnologies.orient.distributed.context.coordination.OCoordinatedDistributedOps;
+import com.orientechnologies.orient.distributed.context.coordination.ODisconnectAction;
 import com.orientechnologies.orient.distributed.context.coordination.action.OCompleteAction;
 import com.orientechnologies.orient.distributed.context.coordination.action.OMergeCompleteAction;
+import com.orientechnologies.orient.distributed.context.coordination.action.ORecoordinateCompleteAction;
 import com.orientechnologies.orient.distributed.context.coordination.action.OStandardCompleteAction;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabaseState;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabaseStateChangeListener;
@@ -45,6 +47,7 @@ import com.orientechnologies.orient.distributed.context.coordination.message.OMe
 import com.orientechnologies.orient.distributed.context.coordination.message.ONextBuffer;
 import com.orientechnologies.orient.distributed.context.coordination.message.ONodeFirstConnect;
 import com.orientechnologies.orient.distributed.context.coordination.message.OProposeOp;
+import com.orientechnologies.orient.distributed.context.coordination.message.ORetryProposeOp;
 import com.orientechnologies.orient.distributed.context.coordination.message.OStartSync;
 import com.orientechnologies.orient.distributed.context.coordination.message.OStructuralMessage;
 import com.orientechnologies.orient.distributed.context.coordination.message.OSyncData;
@@ -104,6 +107,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.stream.Collectors;
 
 /** Created by tglman on 08/08/17. */
 public class OrientDBDistributed extends OrientDBEmbedded
@@ -893,6 +897,10 @@ public class OrientDBDistributed extends OrientDBEmbedded
     return new OStandardCompleteAction(this, operation, execution);
   }
 
+  public ORecoordinateCompleteAction newRecoordinateAction(OOperationMessage operation) {
+    return new ORecoordinateCompleteAction(this, operation);
+  }
+
   public ORetryInfo newRetryInfo() {
     int retryCountDown =
         getConfigurations()
@@ -1453,5 +1461,27 @@ public class OrientDBDistributed extends OrientDBEmbedded
   public void confirmMerge(
       ONodeId node, OTransactionIdPromise promise, Optional<OAcceptResult> accepted) {
     getNodeState().getOps().confirmMerge(node, promise, accepted);
+  }
+
+  public void disconnected(ONodeId node) {
+    ODisconnectAction action = getNodeState().getOps().nodeDisconnected(node);
+    action.execute(this);
+  }
+
+  public void recoordinateOperation(OTransactionIdPromise promise, OOperationMessage op) {
+    OCompleteAction action = newRecoordinateAction(op);
+
+    conseunsusOperation(promise, op, action);
+  }
+
+  private void conseunsusOperation(
+      OTransactionIdPromise prePromise, OOperationMessage op, OCompleteAction action) {
+    var startOp = getNodeState().getOps().restart(prePromise, action);
+    if (startOp.isPresent()) {
+      var promise = startOp.get().promise();
+      var nodes = startOp.get().nodes();
+      ORetryProposeOp propose = new ORetryProposeOp(promise, op);
+      sendMessage(nodes, propose);
+    }
   }
 }

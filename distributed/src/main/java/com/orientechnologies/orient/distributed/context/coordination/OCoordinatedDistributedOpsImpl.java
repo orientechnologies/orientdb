@@ -115,6 +115,22 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
     }
   }
 
+  @Override
+  public Optional<OOperationStart> restart(OTransactionIdPromise current, OCompleteAction action) {
+    if (this.topology.enoughNodes()) {
+      throw new ODistributedException(
+          String.format(
+              "No enough nodes to coordinate an operation with quorum: %d know nodes:%s",
+              this.topology.getMinimumQuorum(), this.getNetworkMembers().toString()));
+    }
+
+    var promise = current.retrySequence(topology.getNodeId());
+    // It should use previous quorum I think
+    Set<ONodeId> nodes = Collections.unmodifiableSet(new HashSet<>(topology.getMembers()));
+    coordination.put(promise, action.newResponseCollector(promise, topology.getQuorum(), nodes));
+    return Optional.of(new OOperationStart(promise, nodes));
+  }
+
   private void dumpActive() {
     String active = "";
     for (var entry : this.coordination.entrySet()) {
@@ -122,6 +138,39 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
     }
     logger.debug("coordinating on missing sequence state: \n %s ", active);
     this.promised.dumpActive();
+  }
+
+  @Override
+  public synchronized Optional<OAcceptResult> receiveRetry(OTransactionIdPromise promise) {
+    if (promised.isPromised(promise.getId())) {
+      ValidationResult result = sequenceManager.validate(promise);
+      return switch (result) {
+        case VALID -> {
+          //          this.promised.addPromised(message);
+          yield Optional.empty();
+        }
+        case ALREADY_PRESENT -> {
+          // Already present ... maybe do nothing, already done
+          long current = sequenceManager.debugGetSequence(promise.getId().getPosition());
+          yield Optional.of(new OInvalidSequential(current, promise.getId().getSequence()));
+        }
+        case ALREADY_PROMISED -> {
+          // Fail for promised to someone else this track it anyway in case of minority in quorum
+          //          this.promised.addNotPromised(message);
+          yield Optional.of(
+              new OAlreadyPromised(
+                  sequenceManager.promised(promise.getId().getPosition()).getCoordinator()));
+        }
+        case MISSING_PREVIOUS -> {
+          // wait for previous one, track it anyway
+          //          this.promised.addNotPromised(message);
+          long current = sequenceManager.debugGetSequence(promise.getId().getPosition());
+          yield Optional.of(new OInvalidSequential(current, promise.getId().getSequence()));
+        }
+      };
+    }
+    // This should use a different method where it actually check that it was promised successfully
+    return Optional.empty();
   }
 
   public synchronized Optional<OAcceptResult> receive(ODistributedMessage message) {
@@ -515,5 +564,10 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
 
   public OGroupId getGroupId() {
     return topology.getGroupId();
+  }
+
+  @Override
+  public ODisconnectAction nodeDisconnected(ONodeId node) {
+    return this.promised.nodeDisconnected(node);
   }
 }

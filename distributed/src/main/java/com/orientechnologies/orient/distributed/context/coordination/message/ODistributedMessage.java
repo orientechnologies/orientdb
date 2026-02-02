@@ -9,4 +9,6 @@ public interface ODistributedMessage {
   void apply(OrientDBDistributed ctx);
 
   void cancel(OrientDBDistributed ctx);
+
+  void recoordinate(OrientDBDistributed ctx);
 }

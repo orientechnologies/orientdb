@@ -29,6 +29,7 @@ public interface OStructuralMessage {
       case 13 -> OMergeResult.fromNetwork(input);
       case 14 -> OMergeConfirmOp.fromNetwork(input);
       case 15 -> OMergeFailOp.fromNetwork(input);
+      case 16 -> ORetryProposeOp.fromNetwork(input);
       default -> throw new ODistributedException("wrong structural message type from network");
     };
   }

@@ -30,6 +30,8 @@ public interface OCoordinatedDistributedOps {
 
   Optional<OOperationStart> start(OCompleteAction action);
 
+  Optional<OOperationStart> restart(OTransactionIdPromise current, OCompleteAction action);
+
   Optional<OAcceptResult> receive(ODistributedMessage message);
 
   void nodeSuccess(ONodeId node, OTransactionIdPromise promise);
@@ -41,6 +43,10 @@ public interface OCoordinatedDistributedOps {
   Optional<ODistributedMessage> consensusSuccess(OTransactionIdPromise promise);
 
   void completeExecution(OTransactionIdPromise promise);
+
+  long nextTopologyVersion();
+
+  long nextDatabaseVersion(ODatabaseId Id);
 
   // Methods for coordinations of operations to add and remove nodes
 
@@ -56,6 +62,13 @@ public interface OCoordinatedDistributedOps {
   void unregisterNode(ONodeId node, long version, OTransactionIdPromise promise);
 
   void cancelRegisterNode(OTransactionIdPromise promise);
+
+  // Methods to merge networks when possible
+  Optional<OAcceptResult> validateMerge(OGroupId group, OTransactionIdPromise coordinator);
+
+  void confirmMerge(ONodeId node, OTransactionIdPromise promise, Optional<OAcceptResult> accepted);
+
+  void cancelMerge(OTransactionIdPromise promise);
 
   // Methods for coordinations of  operations to add establish the first network of nodes
 
@@ -142,33 +155,32 @@ public interface OCoordinatedDistributedOps {
 
   OSyncState getSyncState(OSyncId syncId);
 
+  void completeSync(OSyncId syncId);
+
+  // State Reading
   ODatabasesTopology getDatabaseTopology();
-
-  long nextTopologyVersion();
-
-  long nextDatabaseVersion(ODatabaseId Id);
 
   Set<ONodeId> getNetworkMembers();
 
   ONodeStateNetwork getNetworkState();
 
+  OGroupId getGroupId();
+
+  boolean isApplied(OTransactionId txId);
+
+  // Load from persistent state
   void load(ONodeStateStore storeState);
 
+  // Wait for events
   boolean executeOnOneOnline(ODatabaseId dbId, OStateAction execute);
 
   boolean waitOnlineQuorum(ODatabaseId dbId, Optional<Long> timeout) throws InterruptedException;
 
-  boolean isApplied(OTransactionId txId);
+  // Network events
 
-  void completeSync(OSyncId syncId);
-
-  Optional<OAcceptResult> validateMerge(OGroupId group, OTransactionIdPromise promise);
-
-  OGroupId getGroupId();
-
-  void confirmMerge(ONodeId node, OTransactionIdPromise promise, Optional<OAcceptResult> accepted);
-
-  void cancelMerge(OTransactionIdPromise promise);
+  ODisconnectAction nodeDisconnected(ONodeId node);
 
   void cancelPromise(OTransactionIdPromise promise);
+
+  Optional<OAcceptResult> receiveRetry(OTransactionIdPromise promise);
 }

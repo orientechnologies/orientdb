@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.distributed.context.coordination.message.ODistributedMessage;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -17,16 +18,19 @@ public class OPromisedDistributedOpsImpl implements OPromisedDistributedOps {
   private final Map<OTransactionIdPromise, ODistributedMessage> promised;
   private final Map<OTransactionIdPromise, ODistributedMessage> notPromised;
   private final Map<ONodeId, Map<OTransactionId, ODistributedMessage>> primisedByNode;
+  private final Map<OTransactionId, ODistributedMessage> promisedById;
 
   public OPromisedDistributedOpsImpl() {
     this.promised = new ConcurrentHashMap<>();
     this.primisedByNode = new ConcurrentHashMap<>();
     this.notPromised = new ConcurrentHashMap<>();
+    this.promisedById = new ConcurrentHashMap<>();
   }
 
   @Override
   public void addPromised(ODistributedMessage message) {
     this.promised.put(message.getPromiseId(), message);
+    this.promisedById.put(message.getPromiseId().getId(), message);
     var perNode =
         this.primisedByNode.computeIfAbsent(
             message.getPromiseId().getCoordinator(),
@@ -78,5 +82,17 @@ public class OPromisedDistributedOpsImpl implements OPromisedDistributedOps {
       active += entry.getValue() + "\n";
     }
     logger.debug("promised on missing sequence state: \n %s ", active);
+  }
+
+  @Override
+  public ODisconnectAction nodeDisconnected(ONodeId node) {
+    var promised = primisedByNode.get(node);
+
+    return new ODisconnectAction.OReconsentPromised(new ArrayList<>(promised.values()));
+  }
+
+  @Override
+  public boolean isPromised(OTransactionId id) {
+    return promisedById.containsKey(id);
   }
 }
