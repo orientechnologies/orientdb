@@ -72,7 +72,8 @@ public class OVersionPromise {
     assert promise.isEmpty();
   }
 
-  public void forceVersion(OVersion version) {
+  public synchronized void forceVersion(OVersion version) {
+    this.promise = Optional.empty();
     this.version = version;
   }
 }
