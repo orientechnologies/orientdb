@@ -10,7 +10,12 @@ public record OQuorumNotReached(Set<OAcceptResult> reasons) implements OAcceptRe
 
   @Override
   public boolean executeRetry() {
-    return true;
+    return reasons.stream().allMatch(OAcceptResult::executeRetry);
+  }
+
+  @Override
+  public boolean consensusRetry() {
+    return reasons.stream().allMatch(OAcceptResult::consensusRetry);
   }
 
   @Override

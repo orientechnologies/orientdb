@@ -11,6 +11,11 @@ public record OInvalidSequential(long expected, long received) implements OAccep
     return true;
   }
 
+  @Override
+  public boolean executeRetry() {
+    return true;
+  }
+
   public static OInvalidSequential fromNetwork(DataInput input) throws IOException {
     long expected = input.readLong();
     long received = input.readLong();

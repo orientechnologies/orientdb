@@ -14,6 +14,11 @@ public record OAlreadyPromised(ONodeId promisedTo) implements OAcceptResult {
   }
 
   @Override
+  public boolean executeRetry() {
+    return true;
+  }
+
+  @Override
   public void serialize(DataOutput out) throws IOException {
     promisedTo.writeNetwork(out);
   }

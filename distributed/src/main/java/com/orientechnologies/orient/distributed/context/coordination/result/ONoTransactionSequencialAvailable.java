@@ -11,6 +11,11 @@ public record ONoTransactionSequencialAvailable() implements OAcceptResult {
     return true;
   }
 
+  @Override
+  public boolean consensusRetry() {
+    return true;
+  }
+
   static ONoTransactionSequencialAvailable fromNetwork(DataInput input) {
     return new ONoTransactionSequencialAvailable();
   }
