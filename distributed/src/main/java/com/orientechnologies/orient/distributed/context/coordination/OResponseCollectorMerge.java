@@ -117,6 +117,7 @@ public class OResponseCollectorMerge implements OResponseCollector {
       mergeFailure = Optional.of(acceptResult);
       mergeResponse = true;
     } else if (toReceive.remove(node)) {
+      logger.debugNode(promise.getCoordinator(), "received failure %s from %s", acceptResult, node);
       failure.add(node);
       this.results.compute(acceptResult, this::defaultResult);
     }

@@ -37,9 +37,12 @@ public class OVersionPromise {
           this.promise = Optional.of(promise);
           return Optional.empty();
         } else {
+          logger.debugNode(
+              current, "outdated version %s~%s on promising %s", this.version, version, promise);
           return Optional.of(new OOutdatedVersion(version.getValue(), this.version.getValue()));
         }
       } else {
+        logger.debugNode(current, "already promised %s on promising %s", this.promise, promise);
         return Optional.of(new OAlreadyPromised(this.promise.get().getCoordinator()));
       }
     }
