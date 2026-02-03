@@ -972,7 +972,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
   }
 
   @Override
-  public OCancellableTimer delayExecute(Runnable toExecuted, long delay) {
+  public OCancellableTimer delayExecute(Runnable toExecuted, long delayMills) {
     TimerTask tt =
         new TimerTask() {
           @Override
@@ -980,12 +980,12 @@ public class OrientDBEmbedded implements OrientDBInternal {
             execute(toExecuted);
           }
         };
-    timer.schedule(tt, delay);
+    timer.schedule(tt, delayMills);
     return new OCancellableTimerTask(tt);
   }
 
   @Override
-  public OCancellableTimer periodicExecute(Runnable toExecuted, long periodic) {
+  public OCancellableTimer periodicExecute(Runnable toExecuted, long periodicMills) {
     TimerTask tt =
         new TimerTask() {
           @Override
@@ -993,7 +993,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
             execute(toExecuted);
           }
         };
-    timer.schedule(tt, periodic, periodic);
+    timer.schedule(tt, periodicMills, periodicMills);
     return new OCancellableTimerTask(tt);
   }
 

@@ -17,7 +17,9 @@ import com.orientechnologies.orient.distributed.context.coordination.topology.OD
 import com.orientechnologies.orient.distributed.context.coordination.topology.ODiscoverAction.OMergeNodeAction;
 import com.orientechnologies.orient.distributed.context.coordination.topology.ODiscoverAction.ONoneAction;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
@@ -32,6 +34,7 @@ public class OTopologyManager implements OTopologyEvents {
   private volatile int minimumQuorum;
   private volatile int quorum = 0;
   private final OVersionPromise versionPromise;
+  private Map<ONodeId, ONodeInfo> nodesInfo = new HashMap<>();
 
   public OTopologyManager(ONodeId current, OGroupId groupId, int minimumQuorum) {
     this.current = current;
@@ -85,6 +88,7 @@ public class OTopologyManager implements OTopologyEvents {
       if (newQuorum >= minimumQuorum) {
         this.quorum = newQuorum;
       }
+      this.nodesInfo.put(toRegister, new ONodeInfo());
     }
     this.versionPromise.accept(promise, new OVersion(version));
   }
@@ -102,6 +106,7 @@ public class OTopologyManager implements OTopologyEvents {
       if (newQuorum >= minimumQuorum) {
         this.quorum = newQuorum;
       }
+      this.nodesInfo.remove(node);
     }
     this.versionPromise.accept(promise, new OVersion(version));
   }
@@ -138,6 +143,15 @@ public class OTopologyManager implements OTopologyEvents {
   private void setMember(Set<ONodeId> members) {
     this.members = Collections.unmodifiableSet(new HashSet<ONodeId>(members));
     logger.debug("new network members %s ", this.members);
+    Map<ONodeId, ONodeInfo> newNodesInfo = new HashMap<>();
+    for (var member : members) {
+      var info = this.nodesInfo.get(member);
+      if (info == null) {
+        info = new ONodeInfo();
+      }
+      newNodesInfo.put(member, info);
+    }
+    this.nodesInfo = newNodesInfo;
   }
 
   public synchronized Optional<OAcceptResult> validateEstablish(
@@ -244,5 +258,24 @@ public class OTopologyManager implements OTopologyEvents {
 
   public synchronized void cancelMerge(OTransactionIdPromise promise) {
     this.versionPromise.cancel(promise);
+  }
+
+  public synchronized void ping(ONodeId node) {
+    var info = nodesInfo.get(node);
+    if (info != null) {
+      info.ping();
+    } else {
+      logger.warn("received ping for not registered node %s", node);
+    }
+  }
+
+  public synchronized Set<ONodeId> awayNodes(long time) {
+    Set<ONodeId> nodes = new HashSet<>();
+    for (var entry : nodesInfo.entrySet()) {
+      if (entry.getValue().awayMoreThan(time)) {
+        nodes.add(entry.getKey());
+      }
+    }
+    return nodes;
   }
 }

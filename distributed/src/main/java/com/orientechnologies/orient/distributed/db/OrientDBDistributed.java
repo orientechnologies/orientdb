@@ -52,6 +52,7 @@ import com.orientechnologies.orient.distributed.context.coordination.message.OSt
 import com.orientechnologies.orient.distributed.context.coordination.message.OStructuralMessage;
 import com.orientechnologies.orient.distributed.context.coordination.message.OSyncData;
 import com.orientechnologies.orient.distributed.context.coordination.message.OSyncRequest;
+import com.orientechnologies.orient.distributed.context.coordination.message.OTopologyPing;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OAddNodeInfo;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OAddTopologyMember;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OEstablishTopology;
@@ -175,6 +176,13 @@ public class OrientDBDistributed extends OrientDBEmbedded
             (ctx, complete) -> {
               // no Retry;
             }));
+
+    var period =
+        getConfigurations()
+            .getConfigurations()
+            .getValueAsLong(OGlobalConfiguration.DISTRIBUTED_CHECK_HEALTH_EVERY);
+    periodicExecute(this::sendTopologyPing, period);
+    periodicExecute(this::checkDisconnectedNodes, period);
   }
 
   private OStandardCompleteExecution newExectution(ORetryOperation operation) {
@@ -1490,6 +1498,29 @@ public class OrientDBDistributed extends OrientDBEmbedded
       var nodes = startOp.get().nodes();
       ORetryProposeOp propose = new ORetryProposeOp(promise, op);
       sendMessage(nodes, propose);
+    }
+  }
+
+  private void sendTopologyPing() {
+    var members = getNodeState().getOps().getNetworkMembers();
+    sendMessage(
+        members,
+        new OTopologyPing(getNodeId(), getNodeState().getOps().getTransactionSequenceState()));
+  }
+
+  public void receivePing(ONodeId nodeId, OTransactionSequenceStatus status) {
+    getNodeState().getOps().receivePing(nodeId, status);
+  }
+
+  private void checkDisconnectedNodes() {
+    var time =
+        getConfigurations()
+            .getConfigurations()
+            .getValueAsLong(OGlobalConfiguration.DISTRIBUTED_HEARTBEAT_TIMEOUT);
+    var offlineNodes = getNodeState().getOps().checkOffline(time);
+    for (var offlineNode : offlineNodes) {
+      var action = getNodeState().getOps().nodeDisconnected(offlineNode);
+      action.execute(this);
     }
   }
 }

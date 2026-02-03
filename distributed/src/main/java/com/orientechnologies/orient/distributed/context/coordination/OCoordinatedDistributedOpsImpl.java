@@ -570,4 +570,19 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   public ODisconnectAction nodeDisconnected(ONodeId node) {
     return this.promised.nodeDisconnected(node);
   }
+
+  @Override
+  public OTransactionSequenceStatus getTransactionSequenceState() {
+    return sequenceManager.currentStatus();
+  }
+
+  @Override
+  public synchronized void receivePing(ONodeId nodeId, OTransactionSequenceStatus status) {
+    this.topology.ping(nodeId);
+  }
+
+  @Override
+  public synchronized Set<ONodeId> checkOffline(long time) {
+    return this.topology.awayNodes(time);
+  }
 }

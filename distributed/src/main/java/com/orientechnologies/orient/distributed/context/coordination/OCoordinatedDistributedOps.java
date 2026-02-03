@@ -183,4 +183,10 @@ public interface OCoordinatedDistributedOps {
   void cancelPromise(OTransactionIdPromise promise);
 
   Optional<OAcceptResult> receiveRetry(OTransactionIdPromise promise);
+
+  OTransactionSequenceStatus getTransactionSequenceState();
+
+  void receivePing(ONodeId nodeId, OTransactionSequenceStatus status);
+
+  Set<ONodeId> checkOffline(long time);
 }
