@@ -242,13 +242,13 @@ public class OrientDBDistributed extends OrientDBEmbedded
 
   protected ODatabaseDocumentEmbedded newSessionInstance(OStorage storage, OrientDBConfig config) {
     ODatabaseDocumentEmbedded embedded;
+    OSharedContext sharedContext = getOrCreateSharedContext(storage);
     if (isDistributedDisabled(storage.getName())) {
-      embedded = new ODatabaseDocumentEmbedded(storage);
-      embedded.init(config, getOrCreateSharedContext(storage));
+      embedded = new ODatabaseDocumentEmbedded(storage, sharedContext);
+      embedded.init(config);
     } else {
-      OSharedContext sharedContext = getOrCreateSharedContext(storage);
-      embedded = new ODatabaseDocumentDistributed(storage, plugin);
-      embedded.init(config, sharedContext);
+      embedded = new ODatabaseDocumentDistributed(storage, sharedContext, plugin);
+      embedded.init(config);
     }
     return embedded;
   }
@@ -265,13 +265,12 @@ public class OrientDBDistributed extends OrientDBEmbedded
       OStorage storage, OrientDBConfig config) {
     ODatabaseDocumentEmbedded embedded;
 
+    OSharedContext sharedContext = getOrCreateSharedContext(storage);
     if (isDistributedDisabled(storage.getName())) {
-      embedded = new ODatabaseDocumentEmbedded(storage);
-      OSharedContext sharedContext = getOrCreateSharedContext(storage);
+      embedded = new ODatabaseDocumentEmbedded(storage, sharedContext);
       embedded.internalCreate(config, sharedContext);
     } else {
-      embedded = new ODatabaseDocumentDistributed(storage, plugin);
-      OSharedContext sharedContext = getOrCreateSharedContext(storage);
+      embedded = new ODatabaseDocumentDistributed(storage, sharedContext, plugin);
       embedded.internalCreate(config, sharedContext);
       // getOrInitDistributedConfiguration(storage.getName());
     }
@@ -282,11 +281,11 @@ public class OrientDBDistributed extends OrientDBEmbedded
       ODatabasePoolInternal pool, OStorage storage, OSharedContext sharedContext) {
     ODatabaseDocumentEmbedded embedded;
     if (isDistributedDisabled(storage.getName())) {
-      embedded = new ODatabaseDocumentEmbeddedPooled(pool, storage);
-      embedded.init(pool.getConfig(), getOrCreateSharedContext(storage));
+      embedded = new ODatabaseDocumentEmbeddedPooled(pool, storage, sharedContext);
+      embedded.init(pool.getConfig());
     } else {
-      embedded = new ODatabaseDocumentDistributedPooled(pool, storage, plugin);
-      embedded.init(pool.getConfig(), getOrCreateSharedContext(storage));
+      embedded = new ODatabaseDocumentDistributedPooled(pool, storage, sharedContext, plugin);
+      embedded.init(pool.getConfig());
       // getOrInitDistributedConfiguration(storage.getName());
     }
     return embedded;

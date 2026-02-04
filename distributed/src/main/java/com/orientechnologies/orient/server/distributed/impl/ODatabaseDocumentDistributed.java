@@ -117,8 +117,9 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
   private final ODistributedPlugin distributedManager;
 
-  public ODatabaseDocumentDistributed(OStorage storage, ODistributedPlugin distributedPlugin) {
-    super(storage);
+  public ODatabaseDocumentDistributed(
+      OStorage storage, OSharedContext sharedContext, ODistributedPlugin distributedPlugin) {
+    super(storage, sharedContext);
     this.distributedManager = distributedPlugin;
   }
 
@@ -179,8 +180,8 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   @Override
   public ODatabaseDocumentInternal copy() {
     ODatabaseDocumentDistributed database =
-        new ODatabaseDocumentDistributed(getStorage(), distributedManager);
-    database.init(getConfig(), getSharedContext());
+        new ODatabaseDocumentDistributed(getStorage(), getSharedContext(), distributedManager);
+    database.init(getConfig());
     String user;
     if (getUser() != null) {
       user = getUser().getName();
@@ -267,10 +268,10 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   }
 
   @Override
-  public void init(OrientDBConfig config, OSharedContext sharedContext) {
+  public void init(OrientDBConfig config) {
     OScenarioThreadLocal.executeAsDistributed(
         () -> {
-          super.init(config, sharedContext);
+          super.init(config);
           return null;
         });
   }

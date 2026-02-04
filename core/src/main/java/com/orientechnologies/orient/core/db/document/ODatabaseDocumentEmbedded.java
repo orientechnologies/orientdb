@@ -151,7 +151,8 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
   private OrientDBConfig config;
   private OStorage storage;
 
-  public ODatabaseDocumentEmbedded(final OStorage storage) {
+  public ODatabaseDocumentEmbedded(final OStorage storage, OSharedContext sharedContext) {
+    super(sharedContext);
     activateOnCurrentThread();
 
     try {
@@ -176,8 +177,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
     }
   }
 
-  public void init(OrientDBConfig config, OSharedContext sharedContext) {
-    this.sharedContext = sharedContext;
+  public void init(OrientDBConfig config) {
     this.sharedContext.startSession();
     activateOnCurrentThread();
     this.config = config;
@@ -497,8 +497,8 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
   public ODatabaseDocumentInternal copy() {
     var storage = (OStorage) getSharedContext().getStorage();
     storage.open(config.getConfigurations());
-    ODatabaseDocumentEmbedded database = new ODatabaseDocumentEmbedded(storage);
-    database.init(config, this.sharedContext);
+    ODatabaseDocumentEmbedded database = new ODatabaseDocumentEmbedded(storage, this.sharedContext);
+    database.init(config);
     String user;
     if (getUser() != null) {
       user = getUser().getName();

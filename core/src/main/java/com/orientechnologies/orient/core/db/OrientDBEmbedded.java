@@ -324,15 +324,17 @@ public class OrientDBEmbedded implements OrientDBInternal {
   }
 
   protected ODatabaseDocumentEmbedded newSessionInstance(OStorage storage, OrientDBConfig config) {
-    ODatabaseDocumentEmbedded embedded = new ODatabaseDocumentEmbedded(storage);
-    embedded.init(config, getOrCreateSharedContext(storage));
+    OSharedContext sharedContext = getOrCreateSharedContext(storage);
+    ODatabaseDocumentEmbedded embedded = new ODatabaseDocumentEmbedded(storage, sharedContext);
+    embedded.init(config);
     return embedded;
   }
 
   protected ODatabaseDocumentEmbedded newCreateSessionInstance(
       OStorage storage, OrientDBConfig config) {
-    ODatabaseDocumentEmbedded embedded = new ODatabaseDocumentEmbedded(storage);
-    embedded.internalCreate(config, getOrCreateSharedContext(storage));
+    OSharedContext sharedContext = getOrCreateSharedContext(storage);
+    ODatabaseDocumentEmbedded embedded = new ODatabaseDocumentEmbedded(storage, sharedContext);
+    embedded.internalCreate(config, sharedContext);
     return embedded;
   }
 
@@ -456,8 +458,9 @@ public class OrientDBEmbedded implements OrientDBInternal {
 
   protected ODatabaseDocumentEmbedded newPooledSessionInstance(
       ODatabasePoolInternal pool, OStorage storage, OSharedContext sharedContext) {
-    ODatabaseDocumentEmbeddedPooled embedded = new ODatabaseDocumentEmbeddedPooled(pool, storage);
-    embedded.init(pool.getConfig(), sharedContext);
+    ODatabaseDocumentEmbeddedPooled embedded =
+        new ODatabaseDocumentEmbeddedPooled(pool, storage, sharedContext);
+    embedded.init(pool.getConfig());
     return embedded;
   }
 

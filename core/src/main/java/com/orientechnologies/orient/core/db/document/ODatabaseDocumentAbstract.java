@@ -160,9 +160,10 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   protected long minRidbagPrefetchMs;
   protected long maxRidbagPrefetchMs;
 
-  protected ODatabaseDocumentAbstract() {
+  protected ODatabaseDocumentAbstract(OSharedContext context) {
     // DO NOTHING IS FOR EXTENDED OBJECTS
     super(false);
+    this.sharedContext = context;
   }
 
   /**

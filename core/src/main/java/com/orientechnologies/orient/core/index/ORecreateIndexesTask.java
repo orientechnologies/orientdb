@@ -30,9 +30,9 @@ public class ORecreateIndexesTask implements Runnable {
   public void run() {
     try {
       final ODatabaseDocumentEmbedded newDb =
-          new ODatabaseDocumentEmbedded((OStorage) ctx.getStorage());
+          new ODatabaseDocumentEmbedded((OStorage) ctx.getStorage(), ctx);
       newDb.activateOnCurrentThread();
-      newDb.init(null, ctx);
+      newDb.init(null);
       newDb.internalOpen("admin", "nopass", false);
 
       final Collection<ODocument> indexesToRebuild;

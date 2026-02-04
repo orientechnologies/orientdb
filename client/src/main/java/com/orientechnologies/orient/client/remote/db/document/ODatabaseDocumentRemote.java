@@ -115,6 +115,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
   private ORemoteClient client;
 
   public ODatabaseDocumentRemote(OSharedContextRemote sharedContext) {
+    super(sharedContext);
     activateOnCurrentThread();
 
     try {

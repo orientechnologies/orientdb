@@ -27,8 +27,9 @@ public class ODatabaseDocumentEmbeddedPooled extends ODatabaseDocumentEmbedded {
 
   private ODatabasePoolInternal pool;
 
-  public ODatabaseDocumentEmbeddedPooled(ODatabasePoolInternal pool, OStorage storage) {
-    super(storage);
+  public ODatabaseDocumentEmbeddedPooled(
+      ODatabasePoolInternal pool, OStorage storage, OSharedContext sharedContext) {
+    super(storage, sharedContext);
     this.pool = pool;
   }
 
