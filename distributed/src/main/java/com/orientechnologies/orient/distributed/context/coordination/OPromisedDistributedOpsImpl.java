@@ -87,8 +87,11 @@ public class OPromisedDistributedOpsImpl implements OPromisedDistributedOps {
   @Override
   public ODisconnectAction nodeDisconnected(ONodeId node) {
     var promised = primisedByNode.get(node);
-
-    return new ODisconnectAction.OReconsentPromised(new ArrayList<>(promised.values()));
+    if (promised != null) {
+      return new ODisconnectAction.OReconsentPromised(new ArrayList<>(promised.values()));
+    } else {
+      return new ODisconnectAction.ONothingToDo();
+    }
   }
 
   @Override

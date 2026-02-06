@@ -4,7 +4,8 @@ import com.orientechnologies.orient.distributed.context.coordination.message.ODi
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import java.util.List;
 
-public sealed interface ODisconnectAction permits ODisconnectAction.OReconsentPromised {
+public sealed interface ODisconnectAction
+    permits ODisconnectAction.OReconsentPromised, ODisconnectAction.ONothingToDo {
 
   void execute(OrientDBDistributed context);
 
@@ -18,5 +19,11 @@ public sealed interface ODisconnectAction permits ODisconnectAction.OReconsentPr
         message.recoordinate(context);
       }
     }
+  }
+
+  public record ONothingToDo() implements ODisconnectAction {
+
+    @Override
+    public void execute(OrientDBDistributed context) {}
   }
 }
