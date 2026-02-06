@@ -1449,13 +1449,27 @@ public class OrientDBDistributed extends OrientDBEmbedded
     var operation = new OAddTopologyMember(version, node);
     OCompleteAction action = new OMergeCompleteAction(this, operation, execution, node);
     logger.debugNode(getNodeId(), "starting operation %s", operation);
+    sendMergeOperationMessages(node, operation, action);
+  }
+
+  public void retryMergeOperationMessages(
+      ONodeId mergeNode, OOperationMessage operation, OCompleteAction action, int delay) {
+    delayExecute(
+        () -> {
+          sendMergeOperationMessages(mergeNode, operation, action);
+        },
+        delay);
+  }
+
+  private void sendMergeOperationMessages(
+      ONodeId mergeNode, OOperationMessage operation, OCompleteAction action) {
     var startOp = getNodeState().start(action);
     if (startOp.isPresent()) {
       var start = startOp.get();
       OProposeOp propose = new OProposeOp(start.promise(), operation);
       sendMessage(start.nodes(), propose);
       sendMessage(
-          node, new OMergeRequest(start.promise(), this.getNodeState().getOps().getGroupId()));
+          mergeNode, new OMergeRequest(start.promise(), this.getNodeState().getOps().getGroupId()));
     } else {
       action.complete(null, null, Optional.of(new ONoTransactionSequencialAvailable()));
     }

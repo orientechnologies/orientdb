@@ -21,7 +21,7 @@ public class OStandardCompleteAction implements OCompleteAction {
       OLoggerDistributed.logger(OStandardCompleteAction.class);
 
   protected final OrientDBDistributed context;
-  private final OOperationMessage operation;
+  protected final OOperationMessage operation;
   private final OCompleteExecution execution;
 
   public OStandardCompleteAction(
@@ -49,7 +49,7 @@ public class OStandardCompleteAction implements OCompleteAction {
             operation,
             result,
             delay.get());
-        this.context.retryOperation(operation, this, delay.get());
+        retryOperation(delay.get());
       } else {
         logger.infoNode(
             context.getNodeId(), "failed coordination of %s with %s", operation, result);
@@ -65,6 +65,10 @@ public class OStandardCompleteAction implements OCompleteAction {
       }
       this.execution.complete(result);
     }
+  }
+
+  protected void retryOperation(int delay) {
+    this.context.retryOperation(operation, this, delay);
   }
 
   @Override

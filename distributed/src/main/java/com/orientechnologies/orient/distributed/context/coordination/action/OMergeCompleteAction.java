@@ -37,6 +37,11 @@ public class OMergeCompleteAction extends OStandardCompleteAction implements OCo
   }
 
   @Override
+  protected void retryOperation(int delay) {
+    this.context.retryMergeOperationMessages(mergeNode, operation, this, delay);
+  }
+
+  @Override
   public void success(OTransactionIdPromise promise, Set<ONodeId> all) {
     this.context.sendMessage(mergeNode, new OMergeConfirmOp(promise));
     logger.debugNode(
