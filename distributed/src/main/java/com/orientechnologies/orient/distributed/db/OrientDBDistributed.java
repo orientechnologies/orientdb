@@ -184,6 +184,33 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
     return embedded;
   }
 
+  protected ODatabaseDocumentEmbedded onlyOpenNoAuthorization(String name) {
+    checkDatabaseName(name);
+    try {
+      final ODatabaseDocumentEmbedded embedded;
+      synchronized (this) {
+        checkOpen();
+        OStorage storage = storages.get(name);
+        OSharedContext sharedContext = sharedContexts.get(name);
+        if (storage != null && sharedContext != null) {
+          if (!isDistributedPluginEnabled() || OSystemDatabase.SYSTEM_DB_NAME.equals(name)) {
+            embedded = new ODatabaseDocumentEmbedded(storage);
+          } else {
+            embedded = new ODatabaseDocumentDistributed(storage, plugin, sharedContext);
+          }
+          OrientDBConfig config = solveConfig(null);
+          embedded.init(config, sharedContext);
+          return embedded;
+        } else {
+          return null;
+        }
+      }
+    } catch (Exception e) {
+      throw OException.wrapException(
+          new ODatabaseException("Cannot open database '" + name + "'"), e);
+    }
+  }
+
   protected ODatabaseDocumentEmbedded newPooledSessionInstance(
       ODatabasePoolInternal pool, OAbstractPaginatedStorage storage, OSharedContext sharedContext) {
     ODatabaseDocumentEmbedded embedded;

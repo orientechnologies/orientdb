@@ -343,6 +343,8 @@ public interface OrientDBInternal extends AutoCloseable, OSchedulerInternal {
     throw new UnsupportedOperationException();
   }
 
+  <X> Future<X> executeNoAuthorizationOnActive(String database, ODatabaseTask<X> task);
+
   default boolean deltaSync(String dbName, InputStream backupStream, OrientDBConfig config) {
     throw new UnsupportedOperationException();
   }
