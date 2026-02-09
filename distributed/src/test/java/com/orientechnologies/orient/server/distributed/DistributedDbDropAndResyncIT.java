@@ -17,7 +17,9 @@ package com.orientechnologies.orient.server.distributed;
 
 import static org.junit.Assert.assertEquals;
 
+import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.setup.ServerRun;
 import org.junit.Test;
 
@@ -51,10 +53,8 @@ public class DistributedDbDropAndResyncIT extends AbstractServerClusterTxTest {
           System.currentTimeMillis() - chrono < TIMEOUT; ) {
 
         final ODistributedServerManager.DB_STATUS status =
-            s.getServerInstance()
-                .getDistributedManager()
-                .getDatabaseStatus(
-                    s.getServerInstance().getDistributedManager().getLocalNodeName(), db.getName());
+            ((OrientDBDistributed) OrientDBInternal.extract(s.getServerInstance().getContext()))
+                .getDatabaseStatus(db.getName());
 
         if (status == ODistributedServerManager.DB_STATUS.ONLINE) {
           currentStatus = status;
