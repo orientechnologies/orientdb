@@ -301,7 +301,6 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
 
     this.setSerializer(serializer);
 
-    this.sharedContext = ctx;
     this.status = STATUS.OPEN;
     // THIS IF SHOULDN'T BE NEEDED, CREATE HAPPEN ONLY IN EMBEDDED
     applyAttributes(config);
@@ -1929,7 +1928,6 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
       status = STATUS.CLOSED;
       if (!recycle) {
         sharedContext.endSession();
-        sharedContext = null;
 
         if (getStorage() != null) getStorage().close();
       }

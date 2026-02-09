@@ -142,7 +142,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
 
   protected final ORecordHook[][] hooksByScope =
       new ORecordHook[ORecordHook.SCOPE.values().length][];
-  protected OSharedContext sharedContext;
+  protected final OSharedContext sharedContext;
 
   private boolean prefetchRecords;
 

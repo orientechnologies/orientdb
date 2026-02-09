@@ -47,9 +47,9 @@ public class OSharedContextEmbedded extends OSharedContext {
   protected void init(OStorage storage) {
     stringCache =
         new OStringCache(
-            storage
-                .getConfiguration()
-                .getContextConfiguration()
+            orientDB
+                .getConfigurations()
+                .getConfigurations()
                 .getValueAsInteger(OGlobalConfiguration.DB_STRING_CAHCE_SIZE));
     schema = new OSchemaEmbedded(this);
     security = orientDB.getSecuritySystem().newSecurity(storage.getName());
@@ -61,28 +61,21 @@ public class OSharedContextEmbedded extends OSharedContext {
     liveQueryOpsV2 = new OLiveQueryHookV2.OLiveQueryOps();
     statementCache =
         new OStatementCache(
-            storage
-                .getConfiguration()
-                .getContextConfiguration()
+            orientDB
+                .getConfigurations()
+                .getConfigurations()
                 .getValueAsInteger(OGlobalConfiguration.STATEMENT_CACHE_SIZE));
 
     executionPlanCache =
         new OExecutionPlanCache(
-            storage
-                .getConfiguration()
-                .getContextConfiguration()
+            orientDB
+                .getConfigurations()
+                .getConfigurations()
                 .getValueAsInteger(OGlobalConfiguration.STATEMENT_CACHE_SIZE));
     this.registerListener(executionPlanCache);
 
     queryStats = new OQueryStats();
     activeDistributedQueries = new HashMap<>();
-    storage.setStorageConfigurationUpdateListener(
-        update -> {
-          for (OMetadataUpdateListener listener : browseListeners()) {
-            listener.onStorageConfigurationUpdate(storage.getName(), update);
-          }
-        });
-
     this.viewManager = new ViewManager(orientDB, storage.getName());
   }
 
@@ -91,6 +84,14 @@ public class OSharedContextEmbedded extends OSharedContext {
 
     try {
       if (!loaded) {
+        database
+            .getStorage()
+            .setStorageConfigurationUpdateListener(
+                update -> {
+                  for (OMetadataUpdateListener listener : browseListeners()) {
+                    listener.onStorageConfigurationUpdate(storage.getName(), update);
+                  }
+                });
         schema.load(database);
         schema.forceSnapshot(database);
         indexManager.load(database);

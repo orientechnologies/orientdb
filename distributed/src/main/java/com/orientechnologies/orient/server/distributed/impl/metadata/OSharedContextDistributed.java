@@ -36,9 +36,9 @@ public class OSharedContextDistributed extends OSharedContextEmbedded {
   protected void init(OStorage storage) {
     stringCache =
         new OStringCache(
-            storage
-                .getConfiguration()
-                .getContextConfiguration()
+            orientDB
+                .getConfigurations()
+                .getConfigurations()
                 .getValueAsInteger(OGlobalConfiguration.DB_STRING_CAHCE_SIZE));
     schema = new OSchemaDistributed(this);
     security = orientDB.getSecuritySystem().newSecurity(storage.getName());
@@ -50,16 +50,16 @@ public class OSharedContextDistributed extends OSharedContextEmbedded {
     liveQueryOpsV2 = new OLiveQueryHookV2.OLiveQueryOps();
     statementCache =
         new OStatementCache(
-            storage
-                .getConfiguration()
-                .getContextConfiguration()
+            orientDB
+                .getConfigurations()
+                .getConfigurations()
                 .getValueAsInteger(OGlobalConfiguration.STATEMENT_CACHE_SIZE));
 
     executionPlanCache =
         new OExecutionPlanCache(
-            storage
-                .getConfiguration()
-                .getContextConfiguration()
+            orientDB
+                .getConfigurations()
+                .getConfigurations()
                 .getValueAsInteger(OGlobalConfiguration.STATEMENT_CACHE_SIZE));
     this.registerListener(executionPlanCache);
 
@@ -81,6 +81,15 @@ public class OSharedContextDistributed extends OSharedContextEmbedded {
 
           try {
             if (!loaded) {
+              database
+                  .getStorage()
+                  .setStorageConfigurationUpdateListener(
+                      update -> {
+                        for (OMetadataUpdateListener listener : browseListeners()) {
+                          listener.onStorageConfigurationUpdate(storage.getName(), update);
+                        }
+                      });
+
               schema.load(database);
               indexManager.load(database);
               // The Immutable snapshot should be after index and schema that require and before

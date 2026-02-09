@@ -123,7 +123,6 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
       this.client = sharedContext.getClient();
       // OVERWRITE THE URL
       url = this.client.getURL();
-      this.sharedContext = sharedContext;
       this.componentsFactory = this.client.getComponentsFactory();
 
       unmodifiableHooks = Collections.unmodifiableMap(hooks);
@@ -1082,8 +1081,6 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
       status = STATUS.CLOSED;
       sharedContext.endSession();
       if (!recycle) {
-        sharedContext = null;
-
         if (getRemoteClient() != null) getRemoteClient().close(getSession());
       }
 
