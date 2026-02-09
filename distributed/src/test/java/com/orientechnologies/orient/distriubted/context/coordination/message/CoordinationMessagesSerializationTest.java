@@ -18,11 +18,14 @@ import com.orientechnologies.orient.distributed.context.coordination.message.OMe
 import com.orientechnologies.orient.distributed.context.coordination.message.OMergeResult;
 import com.orientechnologies.orient.distributed.context.coordination.message.ONextBuffer;
 import com.orientechnologies.orient.distributed.context.coordination.message.ONodeFirstConnect;
+import com.orientechnologies.orient.distributed.context.coordination.message.ORetryProposeOp;
 import com.orientechnologies.orient.distributed.context.coordination.message.OStartSync;
 import com.orientechnologies.orient.distributed.context.coordination.message.OStructuralMessage;
 import com.orientechnologies.orient.distributed.context.coordination.message.OSuccessPropose;
 import com.orientechnologies.orient.distributed.context.coordination.message.OSyncData;
 import com.orientechnologies.orient.distributed.context.coordination.message.OSyncRequest;
+import com.orientechnologies.orient.distributed.context.coordination.message.OTopologyPing;
+import com.orientechnologies.orient.distributed.context.coordination.message.operation.ODropDbMessage;
 import com.orientechnologies.orient.distributed.context.coordination.message.state.ONodeStateNetwork;
 import com.orientechnologies.orient.distributed.context.coordination.message.state.OTopologyStateNetwork;
 import com.orientechnologies.orient.distributed.context.coordination.result.OInvalidSequential;
@@ -248,5 +251,25 @@ public class CoordinationMessagesSerializationTest {
     assertEquals(node, read.getNode());
     assertEquals(promise, read.getPromise());
     assertTrue(read.getAccepted().isEmpty());
+  }
+
+  @Test
+  public void topologyPingTest() throws IOException {
+    var node = newNodeId();
+    var status = new OTransactionSequenceStatus(new long[] {1});
+    OTopologyPing ping = new OTopologyPing(node, status);
+    OTopologyPing read = writeRead(ping);
+    assertEquals(read.getNodeId(), node);
+    assertEquals(read.getStatus(), status);
+  }
+
+  @Test
+  public void retryProposeTest() throws IOException {
+    var promise = newPromiseId();
+    var operation = new ODropDbMessage("db-name");
+    ORetryProposeOp op = new ORetryProposeOp(promise, operation);
+    ORetryProposeOp read = writeRead(op);
+    assertTrue(read.getOp() instanceof ODropDbMessage);
+    assertEquals(read.getPromise(), promise);
   }
 }

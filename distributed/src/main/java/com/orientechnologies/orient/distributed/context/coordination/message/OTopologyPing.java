@@ -39,4 +39,12 @@ public class OTopologyPing implements OStructuralMessage {
     var status = OTransactionSequenceStatus.readNetwork(input);
     return new OTopologyPing(node, status);
   }
+
+  public ONodeId getNodeId() {
+    return nodeId;
+  }
+
+  public OTransactionSequenceStatus getStatus() {
+    return status;
+  }
 }

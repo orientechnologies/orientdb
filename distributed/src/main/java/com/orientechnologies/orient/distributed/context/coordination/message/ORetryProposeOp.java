@@ -52,4 +52,12 @@ public class ORetryProposeOp implements OStructuralMessage {
     var op = OOperationMessage.readNetwork(input);
     return new ORetryProposeOp(promise, op);
   }
+
+  public OOperationMessage getOp() {
+    return op;
+  }
+
+  public OTransactionIdPromise getPromise() {
+    return promise;
+  }
 }
