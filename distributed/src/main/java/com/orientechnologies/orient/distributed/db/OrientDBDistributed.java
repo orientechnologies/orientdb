@@ -1017,7 +1017,8 @@ public class OrientDBDistributed extends OrientDBEmbedded
             });
   }
 
-  private void sync(ODatabaseId dbId, Optional<OTransactionSequenceStatus> tx) {
+  private Optional<Future<Boolean>> sync(
+      ODatabaseId dbId, Optional<OTransactionSequenceStatus> tx) {
     Optional<OSyncInfo> sync = getNodeState().getOps().newSync(dbId);
     if (sync.isPresent()) {
       logger.debug(
@@ -1031,8 +1032,10 @@ public class OrientDBDistributed extends OrientDBEmbedded
       }
       var req = new OSyncRequest(getNodeId(), dbId, sync.get().syncId(), mode, tx);
       sendMessage(sync.get().targets(), req);
+      return Optional.of(sync.get().finished());
     } else {
       logger.warn("cannot sync missing or already synching db  %s", dbId);
+      return Optional.empty();
     }
   }
 
@@ -1296,15 +1299,23 @@ public class OrientDBDistributed extends OrientDBEmbedded
 
   public boolean installDatabase(
       boolean iStartup, String databaseName, boolean forceDeployment, boolean tryWithDeltaFirst) {
-    //    Optional<ODatabaseId> id =
-    // getNodeState().getDatabaseTopology().getDatabaseId(databaseName);
-    //    if (id.isPresent()) {
-    //      sync(id.get(), Optional.empty());
-    //      return true;
-    //    } else {
-    //      return false;
-    //    }
-    return plugin.installDatabase(iStartup, databaseName, forceDeployment, tryWithDeltaFirst);
+//    Optional<ODatabaseId> id = getNodeState().getDatabaseTopology().getDatabaseId(databaseName);
+//    if (id.isPresent()) {
+//      var res = sync(id.get(), Optional.empty());
+//      if (res.isPresent()) {
+//        try {
+//          return res.get().get();
+//        } catch (InterruptedException | ExecutionException e) {
+//          logger.warn("Error waiting synchronize", e);
+//          return false;
+//        }
+//      } else {
+//        return false;
+//      }
+//    } else {
+//      return false;
+//    }
+     return plugin.installDatabase(iStartup, databaseName, forceDeployment, tryWithDeltaFirst);
   }
 
   public Set<String> getAvailableNodeNotLocalNames(String name) {

@@ -10,6 +10,7 @@ import com.orientechnologies.orient.distributed.db.OSyncMode;
 import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
 import java.io.IOException;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 
 public class OSyncState {
   private static final OLoggerDistributed logger = OLoggerDistributed.logger(OSyncState.class);
@@ -20,6 +21,7 @@ public class OSyncState {
   private final ONodeId receiver;
   private final OSyncMode mode;
   private final Optional<OTransactionSequenceStatus> sequenceStatus;
+  private final CompletableFuture<Boolean> finished;
   private volatile int messageCount = 0;
   private volatile long totalsize = 0;
   private volatile OReceiverInputStream receiverStream;
@@ -32,13 +34,15 @@ public class OSyncState {
       ONodeId sender,
       ONodeId receiver,
       OSyncMode mode,
-      Optional<OTransactionSequenceStatus> sequenceStatus) {
+      Optional<OTransactionSequenceStatus> sequenceStatus,
+      CompletableFuture<Boolean> finished) {
     this.dbId = dbId;
     this.syncId = syncId;
     this.sender = sender;
     this.receiver = receiver;
     this.mode = mode;
     this.sequenceStatus = sequenceStatus;
+    this.finished = finished;
   }
 
   public synchronized void transaferd(long size) {
@@ -83,6 +87,7 @@ public class OSyncState {
     receiverStream.receive(data, finished);
     if (finished) {
       this.close = true;
+      this.finished.complete(true);
     }
   }
 
@@ -109,7 +114,10 @@ public class OSyncState {
   public synchronized void requestNext(boolean close) {
     logger.debug("requesting next buffer");
     canNext = true;
-    this.close = close;
+    if (close) {
+      this.close = close;
+      this.finished.complete(true);
+    }
     this.notifyAll();
   }
 
@@ -120,6 +128,7 @@ public class OSyncState {
   public synchronized void close() {
     if (!this.close) {
       this.close = true;
+      this.finished.complete(true);
       this.notifyAll();
       if (this.receiverStream != null) {
         try {

@@ -19,6 +19,7 @@ import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncS
 import com.orientechnologies.orient.distributed.db.OSyncMode;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -28,6 +29,7 @@ import java.util.stream.Collectors;
 
 public class ODatabaseTopologyState {
   private final ODatabaseId id;
+  private final ONodeId current;
   private final String name;
   private final Map<ONodeId, ONodeDatabaseState> nodeStatus = new HashMap<>();
   private final OVersionPromise versionPromise;
@@ -51,6 +53,7 @@ public class ODatabaseTopologyState {
     this.versionPromise = new OVersionPromise(new OVersion(0), current);
     this.quorum = quorum;
     this.stateListener = stateListener;
+    this.current = current;
   }
 
   public ODatabaseTopologyState(
@@ -59,6 +62,7 @@ public class ODatabaseTopologyState {
     this.name = state.name();
     this.stateListener = stateListener;
     this.versionPromise = new OVersionPromise(new OVersion(0), current);
+    this.current = current;
     this.receiveState(state);
   }
 
@@ -68,6 +72,7 @@ public class ODatabaseTopologyState {
     this.id = store.getId();
     this.name = store.getName();
     this.quorum = store.getQuorum();
+    this.current = current;
     this.versionPromise = new OVersionPromise(new OVersion(store.getVersion()), current);
     var nodes = store.getNodes().stream().map((x) -> new ONodeDatabaseState(x)).toList();
     for (var node : nodes) {
@@ -206,10 +211,11 @@ public class ODatabaseTopologyState {
     if (!syncSessions.isEmpty()) {
       return Optional.empty();
     }
-    Set<ONodeId> onlineNodes = getOnlineNodes();
+    Set<ONodeId> onlineNodes = new HashSet<>(getOnlineNodes());
+    onlineNodes.remove(current);
     OSyncSession session = new OSyncSession(getId(), onlineNodes);
     this.syncSessions.put(session.getSyncId(), session);
-    return Optional.of(new OSyncInfo(session.getSyncId(), onlineNodes));
+    return Optional.of(new OSyncInfo(session.getSyncId(), onlineNodes, session.getFinished()));
   }
 
   public synchronized Optional<OSyncState> canSync(

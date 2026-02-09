@@ -6,12 +6,15 @@ import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import com.orientechnologies.orient.distributed.db.OSyncMode;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Future;
 
 public class OSyncSession {
   private final OSyncId syncId;
   private final ODatabaseId dbId;
   private Set<ONodeId> nodes;
   private OSyncState state;
+  private CompletableFuture<Boolean> finished = new CompletableFuture<Boolean>();
 
   public OSyncSession(ODatabaseId dbId, Set<ONodeId> nodes) {
     this.dbId = dbId;
@@ -28,7 +31,7 @@ public class OSyncSession {
       Optional<OTransactionSequenceStatus> sequenceStatus) {
     this.syncId = syncId;
     this.dbId = dbId;
-    this.state = new OSyncState(dbId, syncId, from, to, mode, sequenceStatus);
+    this.state = new OSyncState(dbId, syncId, from, to, mode, sequenceStatus, finished);
   }
 
   public OSyncId getSyncId() {
@@ -47,11 +50,14 @@ public class OSyncSession {
       return Optional.empty();
     }
     if (canSync) {
-      this.state = new OSyncState(dbId, syncId, sender, receiver, mode, sequenceStatus);
+      this.state = new OSyncState(dbId, syncId, sender, receiver, mode, sequenceStatus, finished);
       return Optional.of(this.state);
     } else {
       nodes.remove(sender);
-      // TODO: if reach 0 terminate
+      // TODO: if reach remove also from the sync session map
+      if (nodes.isEmpty()) {
+        this.finished.complete(false);
+      }
       return Optional.empty();
     }
   }
@@ -66,5 +72,9 @@ public class OSyncSession {
 
   public OSyncState getState() {
     return state;
+  }
+
+  public Future<Boolean> getFinished() {
+    return finished;
   }
 }

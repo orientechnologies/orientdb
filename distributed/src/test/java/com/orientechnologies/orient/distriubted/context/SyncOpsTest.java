@@ -21,6 +21,7 @@ import com.orientechnologies.orient.distributed.db.OutputStreamMessages;
 import com.orientechnologies.orient.distributed.db.OutputStreamMessages.MessageSender;
 import java.io.OutputStream;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -94,8 +95,12 @@ public class SyncOpsTest {
     var nodeFrom = new ONodeId("node1");
     var nodeTo = new ONodeId("node2");
 
-    var sender = new OSyncState(dbId, syncId, nodeFrom, nodeTo, mode, Optional.empty());
-    var receiver = new OSyncState(dbId, syncId, nodeFrom, nodeTo, mode, Optional.empty());
+    var sender =
+        new OSyncState(
+            dbId, syncId, nodeFrom, nodeTo, mode, Optional.empty(), new CompletableFuture<>());
+    var receiver =
+        new OSyncState(
+            dbId, syncId, nodeFrom, nodeTo, mode, Optional.empty(), new CompletableFuture<>());
     var pass = new PassTrough(sender, receiver);
 
     OutputStream out = new OutputStreamMessages(pass, sender);
