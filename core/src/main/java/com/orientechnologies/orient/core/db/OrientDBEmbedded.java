@@ -338,6 +338,29 @@ public class OrientDBEmbedded implements OrientDBInternal {
     return embedded;
   }
 
+  protected ODatabaseDocumentEmbedded onlyOpenNoAuthorization(String name) {
+    checkDatabaseName(name);
+    try {
+      final ODatabaseDocumentEmbedded embedded;
+      synchronized (this) {
+        checkOpen();
+        OStorage storage = storages.get(name);
+        OSharedContext sharedContext = sharedContexts.get(name);
+        if (storage != null && sharedContext != null) {
+          embedded = new ODatabaseDocumentEmbedded(storage, sharedContext);
+          OrientDBConfig config = solveConfig(null);
+          embedded.init(config);
+          return embedded;
+        } else {
+          return null;
+        }
+      }
+    } catch (Exception e) {
+      throw OException.wrapException(
+          new ODatabaseException("Cannot open database '" + name + "'"), e);
+    }
+  }
+
   public ODatabaseDocumentEmbedded openNoAuthorization(String name) {
     checkDatabaseName(name);
     try {
@@ -1033,6 +1056,26 @@ public class OrientDBEmbedded implements OrientDBInternal {
   }
 
   @Override
+  public <X> Future<X> executeNoAuthorizationOnActive(String database, ODatabaseTask<X> task) {
+    return executor.submit(
+        () -> {
+          if (isOpen()) {
+            ODatabaseSession sess = onlyOpenNoAuthorization(database);
+            if (sess != null) {
+              try (ODatabaseSession session = sess) {
+                return task.call(session);
+              }
+            } else {
+              return null;
+            }
+          } else {
+            logger.warn(" Cancelled execution of task, OrientDB instance is closed");
+            return null;
+          }
+        });
+  }
+
+  @Override
   public <X> Future<X> executeNoAuthorization(String database, ODatabaseTask<X> task) {
     return executor.submit(
         () -> {
@@ -1105,7 +1148,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
     return basePath == null;
   }
 
-  private void checkDatabaseName(String name) {
+  protected void checkDatabaseName(String name) {
     Objects.requireNonNull(name, "Database name is null");
     if (name.contains("/") || name.contains(":")) {
       throw new ODatabaseException(String.format("Invalid database name:'%s'", name));

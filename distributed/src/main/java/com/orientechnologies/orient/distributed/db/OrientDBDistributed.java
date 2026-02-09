@@ -285,6 +285,33 @@ public class OrientDBDistributed extends OrientDBEmbedded
     return embedded;
   }
 
+  protected ODatabaseDocumentEmbedded onlyOpenNoAuthorization(String name) {
+    checkDatabaseName(name);
+    try {
+      final ODatabaseDocumentEmbedded embedded;
+      synchronized (this) {
+        checkOpen();
+        OStorage storage = storages.get(name);
+        OSharedContext sharedContext = sharedContexts.get(name);
+        if (storage != null && sharedContext != null) {
+          if (isDistributedDisabled(storage.getName())) {
+            embedded = new ODatabaseDocumentEmbedded(storage, sharedContext);
+          } else {
+            embedded = new ODatabaseDocumentDistributed(storage, sharedContext, plugin);
+          }
+          OrientDBConfig config = solveConfig(null);
+          embedded.init(config);
+          return embedded;
+        } else {
+          return null;
+        }
+      }
+    } catch (Exception e) {
+      throw OException.wrapException(
+          new ODatabaseException("Cannot open database '" + name + "'"), e);
+    }
+  }
+
   protected ODatabaseDocumentEmbedded newPooledSessionInstance(
       ODatabasePoolInternal pool, OStorage storage, OSharedContext sharedContext) {
     ODatabaseDocumentEmbedded embedded;

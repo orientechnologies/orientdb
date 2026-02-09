@@ -555,6 +555,11 @@ public class OrientDBRemote implements OrientDBInternal {
   }
 
   @Override
+  public <X> Future<X> executeNoAuthorizationOnActive(String database, ODatabaseTask<X> task) {
+    throw new UnsupportedOperationException("execute with no session not available in remote");
+  }
+
+  @Override
   public <X> Future<X> execute(String database, String user, ODatabaseTask<X> task) {
     throw new UnsupportedOperationException("execute with no session not available in remote");
   }

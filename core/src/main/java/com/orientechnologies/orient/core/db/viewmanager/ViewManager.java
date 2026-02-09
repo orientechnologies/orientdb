@@ -94,7 +94,7 @@ public class ViewManager {
   }
 
   protected void init() {
-    orientDB.executeNoAuthorization(
+    orientDB.executeNoAuthorizationOnActive(
         dbName,
         (db) -> {
           // do this to make sure that the storage is already initialized and so is the shared
@@ -149,7 +149,7 @@ public class ViewManager {
           @Override
           public void run() {
             if (closed) return;
-            orientDB.executeNoAuthorization(
+            orientDB.executeNoAuthorizationOnActive(
                 dbName,
                 (db) -> {
                   ViewManager.this.updateViews((ODatabaseDocumentInternal) db);
@@ -513,7 +513,7 @@ public class ViewManager {
   }
 
   public void updateViewAsync(String name, ViewCreationListener listener) {
-    orientDB.executeNoAuthorization(
+    orientDB.executeNoAuthorizationOnActive(
         dbName,
         (databaseSession) -> {
           if (!buildOnThisNode(

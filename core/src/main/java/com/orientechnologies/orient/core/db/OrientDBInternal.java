@@ -341,6 +341,8 @@ public interface OrientDBInternal extends AutoCloseable, OSchedulerInternal {
 
   <X> Future<X> executeNoAuthorization(String database, ODatabaseTask<X> task);
 
+  <X> Future<X> executeNoAuthorizationOnActive(String database, ODatabaseTask<X> task);
+
   default void fullSync(String dbName, InputStream backupStream, OrientDBConfig config) {
     throw new UnsupportedOperationException();
   }
