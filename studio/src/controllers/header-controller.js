@@ -60,7 +60,7 @@ let HeaderController = angular.module('header.controller', [databaseServices]).c
     let splitted = $location.path().split("/")
 
     $scope.menus.forEach(function (element, index, array) {
-      if (element.name.toLowerCase() === splitted[3].toLowerCase()) {
+      if (splitted.length > 3 && element.name.toLowerCase() === splitted[3].toLowerCase()) {
 
         $timeout(() => {
           $scope.selectedMenu = element;

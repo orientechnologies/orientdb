@@ -140,14 +140,14 @@ bookmark.factory('GraphConfig', ["$resource", "localStorageService", "DocumentAp
       $http.post(text, query).then(function (data) {
         config.user = data.data.result[0];
         DocumentApi.createDocument(database, config['@rid'], config, function (data) {
-          deferred.resolve(data.data);
+          deferred.resolve(data);
         });
       });
 
     }
     else {
       DocumentApi.updateDocument(database, config['@rid'], config, function (data) {
-        deferred.resolve(data.data);
+        deferred.resolve(data);
       });
     }
     return deferred.promise;
