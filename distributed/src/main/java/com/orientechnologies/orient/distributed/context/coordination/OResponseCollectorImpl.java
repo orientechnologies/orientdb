@@ -118,7 +118,7 @@ public class OResponseCollectorImpl implements OResponseCollector {
         return res.getKey();
       }
     }
-    return new OQuorumNotReached(this.results.keySet());
+    return new OQuorumNotReached(new HashSet<>(this.results.keySet()));
   }
 
   public Optional<CompleteInfo> applied() {
