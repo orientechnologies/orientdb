@@ -204,9 +204,6 @@ public class OHazelcastClusterMetadataManager
       throw new ODistributedStartupException("Error on registering local node on cluster");
     }
 
-    // CONNECTS TO ALL THE AVAILABLE NODES
-    distributedPlugin.connectToAllNodes(activeNodes.keySet());
-
     publishLocalNodeConfiguration();
     membershipListenerMapRegistration =
         configurationMap.getHazelcastMap().addEntryListener(this, true);

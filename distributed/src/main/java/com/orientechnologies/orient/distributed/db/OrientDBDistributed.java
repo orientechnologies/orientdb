@@ -107,6 +107,8 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
@@ -443,6 +445,9 @@ public class OrientDBDistributed extends OrientDBEmbedded
 
   @Override
   public void internalDrop(String name) {
+    if (!exists(name, null, null)) {
+      return;
+    }
     synchronized (this) {
       checkOpen();
       // This is a temporary fix for distributed drop that avoid scheduled view update to re-open
@@ -509,8 +514,9 @@ public class OrientDBDistributed extends OrientDBEmbedded
   private void dropFlow(String name) {
     Future<Optional<OAcceptResult>> droped = retryOperation(new ODropRetryOperation(name));
     try {
-      droped.get();
-    } catch (InterruptedException | ExecutionException e) {
+      droped.get(10, TimeUnit.MINUTES);
+    } catch (InterruptedException | ExecutionException | TimeoutException e) {
+      logger.debug("fail wait on drop", e);
     }
   }
 
@@ -735,7 +741,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
     super.create(name, user, password, type, dbId, config, createOps);
     setDatabaseState(dbId, getNodeState().getNodeId(), ODatabaseState.Online);
     try {
-      getNodeState().getOps().waitOnlineQuorum(dbId, Optional.empty());
+      getNodeState().getOps().waitOnlineQuorum(dbId, Optional.of(10 * 60 * 1000L));
     } catch (InterruptedException e) {
       throw OException.wrapException(new OInterruptedException("wait for online interrupted"), e);
     }

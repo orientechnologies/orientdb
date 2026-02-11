@@ -2089,8 +2089,6 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
         }
       }
 
-      clusterManager.removeServerFromCluster(member, nodeLeftName, removeOnlyDynamicServers);
-
       if (nodeLeftName.equalsIgnoreCase(nodeName))
         // CURRENT NODE: EXIT
         System.exit(1);

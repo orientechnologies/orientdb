@@ -585,7 +585,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   }
 
   public ODistributedDatabase getDistributedShared() {
-    return getContext().getDatabase(getName());
+    return getSharedContext().getDistributedContext();
   }
 
   public void register(
