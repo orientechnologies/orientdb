@@ -4880,6 +4880,28 @@ public abstract class OAbstractPaginatedStorage
 
   @Override
   public boolean supportIncremental() {
+    try {
+
+      stateLock.readLock().lock();
+      try {
+
+        checkOpennessAndMigration();
+
+        for (OBaseIndexEngine index : indexEngines) {
+          if (!index.hasIncrementalBackupSupport()) {
+            return false;
+          }
+        }
+      } finally {
+        stateLock.readLock().unlock();
+      }
+    } catch (final RuntimeException ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (final Error ee) {
+      throw logAndPrepareForRethrow(ee, false);
+    } catch (final Throwable t) {
+      throw logAndPrepareForRethrow(t, false);
+    }
     return true;
   }
 

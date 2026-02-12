@@ -138,4 +138,8 @@ public interface OBaseIndexEngine {
       engine.updateUniqueIndexVersion(changes.getKey());
     }
   }
+
+  default boolean hasIncrementalBackupSupport() {
+    return true;
+  }
 }

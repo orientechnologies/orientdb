@@ -1018,6 +1018,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
       if (tx.isPresent()) {
         mode = OSyncMode.Delta;
       } else {
+        // TODO: here should check if it support the incremental, also that at the receiving side.
         mode = OSyncMode.IncrementalBackup;
       }
       var req = new OSyncRequest(getNodeId(), dbId, sync.get().syncId(), mode, tx);
@@ -1044,11 +1045,19 @@ public class OrientDBDistributed extends OrientDBEmbedded
       logger.debug(
           "Accepted sync %s syncI: %s sender %s receiver %s", dbId, syncId, getNodeId(), receiver);
     }
+    String dbName = ops.getDatabaseTopology().getDatabaseName(dbId);
     if (OSyncMode.Delta.equals(mode) && sequenceStatus.isPresent()) {
-      String dbName = ops.getDatabaseTopology().getDatabaseName(dbId);
       List<OTransactionId> missing = getDatabase(dbName).missingTransactions(sequenceStatus.get());
       if (missing.isEmpty()) {
         accepted = false;
+      }
+    }
+    if (OSyncMode.IncrementalBackup.equals(mode)) {
+      OStorage storage = getStorage(dbName);
+      if (storage != null) {
+        if (!storage.supportIncremental()) {
+          mode = OSyncMode.StandardBackup;
+        }
       }
     }
     sendMessage(receiver, new OCanSync(getNodeId(), dbId, syncId, mode, sequenceStatus, accepted));
