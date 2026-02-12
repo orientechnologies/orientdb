@@ -58,6 +58,7 @@ public class OBackupConfig {
   public static final String DIRECTORY = "directory";
   public static final String MODES = "modes";
   public static final String ID = "uuid";
+  public static final String RETRIES = "retries";
 
   private static final String configFile = "${ORIENTDB_HOME}/config/backups.json";
   private String filePath = null;

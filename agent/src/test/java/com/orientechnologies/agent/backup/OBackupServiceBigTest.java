@@ -104,6 +104,9 @@ public class OBackupServiceBigTest {
     server.startup(stream);
 
     orient = server.getContext();
+    if (orient.exists(DB_NAME)) {
+      orient.drop(DB_NAME);
+    }
     orient.execute(
         "create database " + DB_NAME + " plocal users(admin identified by 'admin' role admin)");
     server.activate();

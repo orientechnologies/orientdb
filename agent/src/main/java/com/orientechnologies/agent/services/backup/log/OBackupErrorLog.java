@@ -25,6 +25,7 @@ public class OBackupErrorLog extends OBackupLog {
 
   protected String message;
   protected String stackTrace;
+  protected Integer retryCount;
 
   public OBackupErrorLog(long unitId, long opsId, String uuid, String dbName, String mode) {
     super(unitId, opsId, uuid, dbName, mode);
@@ -35,6 +36,7 @@ public class OBackupErrorLog extends OBackupLog {
     ODocument document = super.toDoc();
     document.field("message", message);
     document.field("stackTrace", stackTrace);
+    document.field("retryCount", retryCount);
     return document;
   }
 
@@ -43,6 +45,7 @@ public class OBackupErrorLog extends OBackupLog {
     super.fromDoc(doc);
     this.message = doc.field("message");
     this.stackTrace = doc.field("stackTrace");
+    this.retryCount = doc.field("retryCount");
   }
 
   @Override
@@ -64,5 +67,13 @@ public class OBackupErrorLog extends OBackupLog {
 
   public String getStackTrace() {
     return stackTrace;
+  }
+
+  public Integer getRetryCount() {
+    return retryCount;
+  }
+
+  public void setRetryCount(Integer retryCount) {
+    this.retryCount = retryCount;
   }
 }
