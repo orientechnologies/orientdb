@@ -29,6 +29,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ONetworkMessage;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.metadata.security.binary.OBinaryTokenSerializer;
+import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.enterprise.channel.OSocketFactory;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import java.io.ByteArrayInputStream;
@@ -54,10 +55,10 @@ public class ORemoteServerChannel {
   private final int remotePort;
   private final String userName;
   private final String userPassword;
-  private final String server;
+  private final ONodeId server;
   private OChannelBinarySynchClient channel;
   private int protocolVersion;
-  private final String localNodeName;
+  private final ONodeId localNode;
 
   private static final int MAX_RETRY = 3;
   private static final String CLIENT_TYPE = "OrientDB Server";
@@ -75,15 +76,15 @@ public class ORemoteServerChannel {
 
   public ORemoteServerChannel(
       final ORemoteServerAvailabilityCheck check,
-      String localNodeName,
-      final String iServer,
+      final ONodeId localNode,
+      final ONodeId iServer,
       final String iURL,
       final String user,
       final String passwd,
       final int currentProtocolVersion)
       throws IOException {
     this.check = check;
-    this.localNodeName = localNodeName;
+    this.localNode = localNode;
     this.server = iServer;
     this.url = iURL;
     this.userName = user;
@@ -333,7 +334,7 @@ public class ORemoteServerChannel {
     return null;
   }
 
-  public String getServer() {
+  public ONodeId getServer() {
     return server;
   }
 
@@ -346,8 +347,8 @@ public class ORemoteServerChannel {
 
     if (totalConsecutiveErrors >= MAX_CONSECUTIVE_ERRORS) {
       logger.warnOut(
-          localNodeName,
-          server,
+          localNode.getNode(),
+          server.getNode(),
           "Reached %d consecutive errors on connection, remove the server '%s' from the cluster",
           totalConsecutiveErrors,
           server);
@@ -356,7 +357,10 @@ public class ORemoteServerChannel {
         check.nodeDisconnected(server);
       } catch (Exception e) {
         logger.warnOut(
-            localNodeName, server, "Error on removing server '%s' from the cluster", server);
+            localNode.getNode(),
+            server.getNode(),
+            "Error on removing server '%s' from the cluster",
+            server);
       }
     }
   }

@@ -218,13 +218,13 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
             1,
             new ORemoteServerAvailabilityCheck() {
               @Override
-              public boolean isNodeAvailable(String node) {
-                return ODistributedPlugin.this.isNodeAvailable(node);
+              public boolean isNodeAvailable(ONodeId node) {
+                return ODistributedPlugin.this.isNodeAvailable(node.getNode());
               }
 
               @Override
-              public void nodeDisconnected(String node) {
-                ODistributedPlugin.this.removeServer(node, true);
+              public void nodeDisconnected(ONodeId node) {
+                ODistributedPlugin.this.removeServer(node.getNode(), true);
               }
             });
     clusterManager.configHazelcastPlugin(oServer, iParams, nodeName);

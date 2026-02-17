@@ -1,8 +1,10 @@
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.orient.core.transaction.ONodeId;
+
 public interface ORemoteServerAvailabilityCheck {
 
-  boolean isNodeAvailable(String node);
+  boolean isNodeAvailable(ONodeId node);
 
-  void nodeDisconnected(String node);
+  void nodeDisconnected(ONodeId node);
 }

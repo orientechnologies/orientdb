@@ -24,6 +24,7 @@ import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ONetworkMessage;
+import com.orientechnologies.orient.core.transaction.ONodeId;
 import java.io.IOException;
 
 /**
@@ -34,6 +35,9 @@ import java.io.IOException;
 public class ORemoteServerController {
   private static final OLoggerDistributed logger =
       OLoggerDistributed.logger(ORemoteServerController.class);
+  public static final int CURRENT_PROTOCOL_VERSION = 2;
+  public static final int MIN_SUPPORTED_PROTOCOL_VERSION = 2;
+
   private final ORemoteServerChannel[] requestChannels;
   private int requestChannelIndex = 0;
 
@@ -41,20 +45,26 @@ public class ORemoteServerController {
   private int responseChannelIndex = 0;
 
   private int protocolVersion = -1;
-  public static final int CURRENT_PROTOCOL_VERSION = 2;
-  public static final int MIN_SUPPORTED_PROTOCOL_VERSION = 2;
+  private final String url;
+  private final String user;
+  private final String passwd;
 
   public ORemoteServerController(
       final ORemoteServerAvailabilityCheck check,
-      String localNodeName,
-      final String server,
+      final ONodeId local,
+      final ONodeId remote,
       final String url,
       final String user,
       final String passwd) {
     if (user == null) throw new IllegalArgumentException("User is null");
     if (passwd == null) throw new IllegalArgumentException("Password is null");
 
-    logger.debugOut(localNodeName, server, "Creating remote channel(s) to distributed server...");
+    this.url = url;
+    this.user = user;
+    this.passwd = passwd;
+
+    logger.debugOut(
+        local.getNode(), remote.getNode(), "Creating remote channel(s) to distributed server...");
 
     int requestCannelCount = OGlobalConfiguration.DISTRIBUTED_REQUEST_CHANNELS.getValueAsInteger();
     int responseCannelCount =
@@ -64,7 +74,7 @@ public class ORemoteServerController {
       for (int i = 0; i < requestChannels.length; ++i) {
         var channel =
             new ORemoteServerChannel(
-                check, localNodeName, server, url, user, passwd, CURRENT_PROTOCOL_VERSION);
+                check, local, remote, url, user, passwd, CURRENT_PROTOCOL_VERSION);
         requestChannels[i] = channel;
       }
 
@@ -74,7 +84,7 @@ public class ORemoteServerController {
       for (int i = 0; i < responseChannels.length; ++i) {
         var channel =
             new ORemoteServerChannel(
-                check, localNodeName, server, url, user, passwd, CURRENT_PROTOCOL_VERSION);
+                check, local, remote, url, user, passwd, CURRENT_PROTOCOL_VERSION);
         responseChannels[i] = channel;
       }
     } catch (IOException e) {

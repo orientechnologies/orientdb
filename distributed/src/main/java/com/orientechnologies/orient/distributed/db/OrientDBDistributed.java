@@ -153,10 +153,10 @@ public class OrientDBDistributed extends OrientDBEmbedded
         new ORemoteServerAvailabilityCheck() {
 
           @Override
-          public void nodeDisconnected(String node) {}
+          public void nodeDisconnected(ONodeId node) {}
 
           @Override
-          public boolean isNodeAvailable(String node) {
+          public boolean isNodeAvailable(ONodeId node) {
             return false;
           }
         });
@@ -170,7 +170,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
     OGroupId groupId = new OGroupId(groupIdPar);
     OSystemStateStore store = new OSystemStateStore(getSystemDatabase());
     this.nodeState = new ONodeState(nodeId, groupId, miminumQuorum, store, this);
-    this.remoteServerManager = new ORemoteServerManager(nodeName, check);
+    this.remoteServerManager = new ORemoteServerManager(nodeId, check);
     ODiscoverAction action = this.nodeState.initFromStore();
     action.execute(
         this,
@@ -527,7 +527,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
       if (node.equals(getNodeState().getNodeId())) {
         this.receiveMessage(op);
       } else {
-        ORemoteServerController rem = remote.getRemoteServer(node.getNode());
+        ORemoteServerController rem = remote.getRemoteServer(node);
         if (rem != null) {
           rem.sendMessage(message);
         } else {
@@ -543,7 +543,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
     if (node.equals(getNodeState().getNodeId())) {
       this.receiveMessage(op);
     } else {
-      ORemoteServerController rem = remote.getRemoteServer(node.getNode());
+      ORemoteServerController rem = remote.getRemoteServer(node);
       if (rem != null) {
         rem.sendMessage(message);
       } else {
@@ -1248,13 +1248,13 @@ public class OrientDBDistributed extends OrientDBEmbedded
 
   public void closeRemoteServer(String node) {
     if (remoteServerManager != null) {
-      remoteServerManager.closeRemoteServer(node);
+      remoteServerManager.closeRemoteServer(new ONodeId(node));
     }
   }
 
   public ORemoteServerController getRemoteServer(String rNodeName) {
     if (remoteServerManager != null) {
-      return remoteServerManager.getRemoteServer(rNodeName);
+      return remoteServerManager.getRemoteServer(new ONodeId(rNodeName));
     }
     return null;
   }
@@ -1262,9 +1262,10 @@ public class OrientDBDistributed extends OrientDBEmbedded
   public ORemoteServerController connectRemoteServer(
       String rNodeName, String url, String replicatorUser, String userPassword) throws IOException {
     if (remoteServerManager != null) {
-      return remoteServerManager.connectRemoteServer(rNodeName, url, replicatorUser, userPassword);
+      return remoteServerManager.connectRemoteServer(
+          new ONodeId(rNodeName), url, replicatorUser, userPassword);
     } else {
-      logger.warn("failed to connect server manager not initied");
+      logger.warn("failed to connect server manager not initialized");
     }
     return null;
   }
