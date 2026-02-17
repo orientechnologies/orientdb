@@ -191,10 +191,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
               // no Retry;
             }));
 
-    var period =
-        getConfigurations()
-            .getConfigurations()
-            .getValueAsLong(OGlobalConfiguration.DISTRIBUTED_CHECK_HEALTH_EVERY);
+    var period = getLongConfig(OGlobalConfiguration.DISTRIBUTED_CHECK_HEALTH_EVERY);
     periodicExecute(this::sendTopologyPing, period);
     periodicExecute(this::checkDisconnectedNodes, period);
   }
@@ -579,10 +576,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
 
   private boolean checkDbAvailableOpen(String name) {
     if (!checkDbAvailable(name)) {
-      long waitTime =
-          getConfigurations()
-              .getConfigurations()
-              .getValueAsLong(OGlobalConfiguration.DISTRIBUTED_DATABASE_ONLINE_GRACE_PERIOD);
+      long waitTime = getLongConfig(OGlobalConfiguration.DISTRIBUTED_DATABASE_ONLINE_GRACE_PERIOD);
       if (waitTime != 0) {
         long retry = waitTime / 500;
         // TODO: when there will be proper node online event this should attach to that with a
@@ -954,14 +948,8 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   public ORetryInfo newRetryInfo() {
-    int retryCountDown =
-        getConfigurations()
-            .getConfigurations()
-            .getValueAsInteger(OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY);
-    int delay =
-        getConfigurations()
-            .getConfigurations()
-            .getValueAsInteger(OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_AUTORETRY_DELAY);
+    int retryCountDown = getIntConfig(OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY);
+    int delay = getIntConfig(OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_AUTORETRY_DELAY);
     return new ORetryInfo(retryCountDown, delay);
   }
 
@@ -1194,9 +1182,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
         }
         case StandardBackup -> {
           int compression =
-              getConfigurations()
-                  .getConfigurations()
-                  .getValueAsInteger(OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION);
+              getIntConfig(OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION);
           storage.backup(out, null, null, null, compression, 0);
         }
         case Delta -> {
@@ -1584,10 +1570,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   private void checkDisconnectedNodes() {
-    var time =
-        getConfigurations()
-            .getConfigurations()
-            .getValueAsLong(OGlobalConfiguration.DISTRIBUTED_HEARTBEAT_TIMEOUT);
+    var time = getLongConfig(OGlobalConfiguration.DISTRIBUTED_HEARTBEAT_TIMEOUT);
     var offlineNodes = getNodeState().getOps().checkOffline(time);
     for (var offlineNode : offlineNodes) {
       var action = getNodeState().getOps().nodeDisconnected(offlineNode);
