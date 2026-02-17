@@ -4,6 +4,8 @@ import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.thread.OSourceTraceExecutorService;
+import com.orientechnologies.common.thread.OThreadPoolExecutors;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentEmbeddedPooled;
@@ -106,6 +108,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -139,6 +142,15 @@ public class OrientDBDistributed extends OrientDBEmbedded
     }
   }
 
+  private ExecutorService newNetIoExecutor() {
+    int ioSize = excutorMaxSize(OGlobalConfiguration.EXECUTOR_POOL_MAX_SIZE);
+    ExecutorService exec = OThreadPoolExecutors.newThreadPool("NetIO", allGroups, ioSize, ioSize);
+    if (getBoolConfig(OGlobalConfiguration.EXECUTOR_DEBUG_TRACE_SOURCE)) {
+      exec = new OSourceTraceExecutorService(exec);
+    }
+    return exec;
+  }
+
   @Override
   public void init(OServer server) {
     // Cannot get the plugin from here, is too early, doing it lazy
@@ -170,7 +182,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
     OGroupId groupId = new OGroupId(groupIdPar);
     OSystemStateStore store = new OSystemStateStore(getSystemDatabase());
     this.nodeState = new ONodeState(nodeId, groupId, miminumQuorum, store, this);
-    this.remoteServerManager = new ORemoteServerManager(nodeId, check);
+    this.remoteServerManager = new ORemoteServerManager(nodeId, check, newNetIoExecutor());
     ODiscoverAction action = this.nodeState.initFromStore();
     action.execute(
         this,

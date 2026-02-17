@@ -19,13 +19,11 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import com.orientechnologies.common.thread.OThreadPoolExecutors;
 import com.orientechnologies.orient.client.binary.OChannelBinarySynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.client.remote.message.ODistributedConnectRequest;
 import com.orientechnologies.orient.client.remote.message.ODistributedConnectResponse;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ONetworkMessage;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.metadata.security.binary.OBinaryTokenSerializer;
@@ -37,7 +35,6 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -81,8 +78,8 @@ public class ORemoteServerChannel {
       final String iURL,
       final String user,
       final String passwd,
-      final int currentProtocolVersion)
-      throws IOException {
+      final int currentProtocolVersion,
+      ExecutorService exec) {
     this.check = check;
     this.localNode = localNode;
     this.server = iServer;
@@ -93,25 +90,18 @@ public class ORemoteServerChannel {
     final int sepPos = iURL.lastIndexOf(":");
     remoteHost = iURL.substring(0, sepPos);
     remotePort = Integer.parseInt(iURL.substring(sepPos + 1));
-    long timeout =
-        contextConfig.getValueAsLong(OGlobalConfiguration.DISTRIBUTED_TX_EXPIRE_TIMEOUT) / 2;
     protocolVersion = currentProtocolVersion;
-    RejectedExecutionHandler reject =
-        (task, executor) -> {
-          try {
-            if (!executor.getQueue().offer(task, timeout, TimeUnit.MILLISECONDS)) {
-              check.nodeDisconnected(server);
-              throw new RejectedExecutionException("Unable to enqueue task");
-            }
-          } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw new RejectedExecutionException("Unable to enqueue task");
-          }
-        };
 
-    executor = OThreadPoolExecutors.newSingleThreadPool("ORemoteServerChannel", 10, reject);
+    this.executor = exec;
     factory = new OSocketFactory(contextConfig);
-    connect();
+    executor.execute(
+        () -> {
+          try {
+            connect();
+          } catch (IOException e) {
+            handleNewError();
+          }
+        });
   }
 
   public int getDistributedProtocolVersion() {
@@ -139,7 +129,7 @@ public class ORemoteServerChannel {
   }
 
   public void checkReconnect() {
-    if (tokenInstance == null || tokenInstance.isCloseToExpire()) {
+    if (channel == null || tokenInstance == null || tokenInstance.isCloseToExpire()) {
       for (int retry = 1;
           retry <= MAX_RETRY && totalConsecutiveErrors < MAX_CONSECUTIVE_ERRORS;
           ++retry) {
@@ -167,13 +157,17 @@ public class ORemoteServerChannel {
       final String errorMessage,
       final int maxRetry,
       final boolean autoReconnect) {
-    executor.execute(
-        () -> {
-          if (autoReconnect) {
-            checkReconnect();
-          }
-          networkOperation(operationId, operation, errorMessage, maxRetry, autoReconnect);
-        });
+    try {
+      executor.execute(
+          () -> {
+            if (autoReconnect) {
+              checkReconnect();
+            }
+            networkOperation(operationId, operation, errorMessage, maxRetry, autoReconnect);
+          });
+    } catch (RejectedExecutionException e) {
+      check.nodeDisconnected(server);
+    }
   }
 
   public void sendMessage(final ONetworkMessage message) {

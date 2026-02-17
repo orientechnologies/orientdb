@@ -101,7 +101,7 @@ public class OETLProcessor implements AutoCloseable {
     factory = new OETLComponentFactory();
     stats = new OETLProcessorStats();
 
-    executor = OThreadPoolExecutors.newCachedThreadPool("OETLProcessor");
+    executor = OThreadPoolExecutors.newThreadPool("OETLProcessor");
 
     configRunBehaviour(context);
 

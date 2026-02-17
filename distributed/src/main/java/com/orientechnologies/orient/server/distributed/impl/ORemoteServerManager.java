@@ -6,6 +6,7 @@ import com.orientechnologies.orient.server.distributed.ORemoteServerController;
 import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.ExecutorService;
 
 public class ORemoteServerManager {
 
@@ -13,10 +14,13 @@ public class ORemoteServerManager {
       new ConcurrentHashMap<>();
   private final ONodeId local;
   private final ORemoteServerAvailabilityCheck check;
+  private final ExecutorService executor;
 
-  public ORemoteServerManager(ONodeId local, ORemoteServerAvailabilityCheck check) {
+  public ORemoteServerManager(
+      ONodeId local, ORemoteServerAvailabilityCheck check, ExecutorService executor) {
     this.local = local;
     this.check = check;
+    this.executor = executor;
   }
 
   public ORemoteServerController getRemoteServer(final ONodeId rNodeName) {
@@ -30,7 +34,8 @@ public class ORemoteServerManager {
         remoteServers.computeIfAbsent(
             rNodeName,
             (node) -> {
-              return new ORemoteServerController(check, local, node, host, user, password);
+              return new ORemoteServerController(
+                  check, local, node, host, user, password, executor);
             });
     return remoteServer;
   }

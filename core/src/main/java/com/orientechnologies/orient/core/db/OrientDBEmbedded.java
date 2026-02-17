@@ -84,7 +84,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
   private static final OLogger logger = OLogManager.instance().logger(OrientDBEmbedded.class);
 
   private static final AtomicLong queryCounter = new AtomicLong(0);
-  private ThreadGroup allGroups;
+  protected ThreadGroup allGroups;
   protected ThreadGroup threadsGroup;
 
   protected final Map<String, OStorage> storages = new ConcurrentHashMap<>();
@@ -234,19 +234,19 @@ public class OrientDBEmbedded implements OrientDBInternal {
     return exec;
   }
 
-  private boolean getBoolConfig(OGlobalConfiguration config) {
+  protected boolean getBoolConfig(OGlobalConfiguration config) {
     return this.configurations.getConfigurations().getValueAsBoolean(config);
   }
 
-  private int getIntConfig(OGlobalConfiguration config) {
+  protected int getIntConfig(OGlobalConfiguration config) {
     return this.configurations.getConfigurations().getValueAsInteger(config);
   }
 
-  private long getLongConfig(OGlobalConfiguration config) {
+  protected long getLongConfig(OGlobalConfiguration config) {
     return this.configurations.getConfigurations().getValueAsLong(config);
   }
 
-  private int excutorMaxSize(OGlobalConfiguration config) {
+  protected int excutorMaxSize(OGlobalConfiguration config) {
     int size = getIntConfig(config);
     if (size == 0) {
       logger.warn(
@@ -255,10 +255,13 @@ public class OrientDBEmbedded implements OrientDBInternal {
     } else if (size <= -1) {
       size = Runtime.getRuntime().availableProcessors();
     }
+    if (size < 2) {
+      size = 2;
+    }
     return size;
   }
 
-  private int excutorBaseSize(int size) {
+  protected int excutorBaseSize(int size) {
     int baseSize;
 
     if (size > 10) {

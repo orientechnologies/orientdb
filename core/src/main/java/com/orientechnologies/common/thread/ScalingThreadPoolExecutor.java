@@ -11,7 +11,7 @@ import java.util.concurrent.TimeUnit;
  * A {@link ThreadPoolExecutor} that scales the pool beyond the core pool size, even if an unbounded
  * work queue is used.
  */
-class ScalingThreadPoolExecutor extends OThreadPoolExecutorWithLogging {
+public class ScalingThreadPoolExecutor extends OThreadPoolExecutorWithLogging {
 
   /**
    * An optionally bounded work queue for a {@link ThreadPoolExecutor} that causes the pool to scale

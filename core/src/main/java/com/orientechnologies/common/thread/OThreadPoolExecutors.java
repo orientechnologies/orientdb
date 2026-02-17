@@ -59,16 +59,15 @@ public class OThreadPoolExecutors {
         new NamedThreadFactory(threadName, parentThreadGroup));
   }
 
-  public static ExecutorService newCachedThreadPool(String threadName) {
-    return newCachedThreadPool(threadName, Thread.currentThread().getThreadGroup());
+  public static ExecutorService newThreadPool(String threadName) {
+    return newThreadPool(threadName, Thread.currentThread().getThreadGroup());
   }
 
-  public static ExecutorService newCachedThreadPool(
-      String threadName, ThreadGroup parentThreadGroup) {
-    return newCachedThreadPool(threadName, parentThreadGroup, Integer.MAX_VALUE, 0);
+  public static ExecutorService newThreadPool(String threadName, ThreadGroup parentThreadGroup) {
+    return newThreadPool(threadName, parentThreadGroup, Integer.MAX_VALUE, 0);
   }
 
-  public static ExecutorService newCachedThreadPool(
+  public static ExecutorService newThreadPool(
       String threadName, ThreadGroup parentThreadGroup, int maxThreads, int maxQueue) {
     return new OThreadPoolExecutorWithLogging(
         0,
