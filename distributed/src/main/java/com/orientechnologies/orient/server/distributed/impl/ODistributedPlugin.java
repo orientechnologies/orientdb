@@ -1989,7 +1989,8 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
 
         if (userPassword != null) {
           try {
-            remoteServer = ctx.connectRemoteServer(rNodeName, url, REPLICATOR_USER, userPassword);
+            remoteServer =
+                ctx.connectRemoteServer(new ONodeId(rNodeName), url, REPLICATOR_USER, userPassword);
             break;
           } catch (ONetworkProtocolException | IOException e) {
             logger.warn("failing to connect to remote node %s", rNodeName, e);
@@ -2028,12 +2029,14 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
     clusterManager.setNodeStatus(iStatus);
   }
 
-  public void onNodeJoined(String joinedNodeName, Member member) {
+  public void onNodeJoined(String joinedNodeName, String url, String userPassword, Member member) {
     try {
       getRemoteServer(joinedNodeName);
     } catch (IOException e) {
       logger.errorOut(nodeName, joinedNodeName, "Error on connecting to node %s", joinedNodeName);
     }
+    ((OrientDBDistributed) serverInstance.getDatabases())
+        .connected(new ONodeId(joinedNodeName), url, REPLICATOR_USER, userPassword);
 
     logger.infoIn(
         nodeName,
@@ -2143,15 +2146,14 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
     }
   }
 
-  public boolean onNodeJoining(final String joinedNodeName, String url, String userPassword) {
+  public boolean onNodeJoining(final String joinedNodeName) {
     // NOTIFY NODE IS GOING TO BE ADDED. IS EVERYBODY OK?
     for (ODistributedLifecycleListener l : listeners) {
       if (!l.onNodeJoining(joinedNodeName)) {
         return false;
       }
     }
-    ((OrientDBDistributed) serverInstance.getDatabases())
-        .connected(new ONodeId(joinedNodeName), url, REPLICATOR_USER, userPassword);
+
     return true;
   }
 

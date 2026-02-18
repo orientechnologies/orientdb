@@ -998,7 +998,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
 
   public void connected(ONodeId node, String url, String user, String password) {
     try {
-      connectRemoteServer(node.getNode(), url, user, password);
+      connectRemoteServer(node, url, user, password);
       //      sendFirstConnect(node);
     } catch (IOException e) {
       logger.warn("failing to connect to remote node %s", node.getNode(), e);
@@ -1258,10 +1258,9 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   public ORemoteServerController connectRemoteServer(
-      String rNodeName, String url, String replicatorUser, String userPassword) throws IOException {
+      ONodeId node, String url, String replicatorUser, String userPassword) throws IOException {
     if (remoteServerManager != null) {
-      return remoteServerManager.connectRemoteServer(
-          new ONodeId(rNodeName), url, replicatorUser, userPassword);
+      return remoteServerManager.connectRemoteServer(node, url, replicatorUser, userPassword);
     } else {
       logger.warn("failed to connect server manager not initialized");
     }

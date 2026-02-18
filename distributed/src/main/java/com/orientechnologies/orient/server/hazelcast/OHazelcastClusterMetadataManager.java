@@ -204,6 +204,9 @@ public class OHazelcastClusterMetadataManager
       throw new ODistributedStartupException("Error on registering local node on cluster");
     }
 
+    // CONNECTS TO ALL THE AVAILABLE NODES
+    distributedPlugin.connectToAllNodes(activeNodes.keySet());
+
     publishLocalNodeConfiguration();
     membershipListenerMapRegistration =
         configurationMap.getHazelcastMap().addEntryListener(this, true);
@@ -1122,7 +1125,7 @@ public class OHazelcastClusterMetadataManager
         return;
       }
 
-      if (!distributedPlugin.onNodeJoining(joinedNodeName, url, userPassword)) {
+      if (!distributedPlugin.onNodeJoining(joinedNodeName)) {
         // DENY JOIN
         logger.infoIn(
             nodeName,
@@ -1138,7 +1141,7 @@ public class OHazelcastClusterMetadataManager
       activeNodesNamesByUuid.put(member.getUuid(), joinedNodeName);
       activeNodesUuidByName.put(joinedNodeName, member.getUuid());
 
-      distributedPlugin.onNodeJoined(joinedNodeName, member);
+      distributedPlugin.onNodeJoined(joinedNodeName, url, userPassword, member);
     }
   }
 
