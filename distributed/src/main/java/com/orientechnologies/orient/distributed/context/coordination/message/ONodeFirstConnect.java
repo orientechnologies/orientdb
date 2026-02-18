@@ -50,4 +50,9 @@ public class ONodeFirstConnect implements OStructuralMessage {
   public ONodeStateNetwork getState() {
     return state;
   }
+
+  @Override
+  public String toString() {
+    return "ONodeFirstConnect [nodeId=" + nodeId + ", state=" + state + ", merge=" + merge + "]";
+  }
 }

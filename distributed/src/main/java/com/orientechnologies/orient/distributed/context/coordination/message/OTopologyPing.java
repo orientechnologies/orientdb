@@ -47,4 +47,9 @@ public class OTopologyPing implements OStructuralMessage {
   public OTransactionSequenceStatus getStatus() {
     return status;
   }
+
+  @Override
+  public String toString() {
+    return "OTopologyPing [nodeId=" + nodeId + ", status=" + status + "]";
+  }
 }

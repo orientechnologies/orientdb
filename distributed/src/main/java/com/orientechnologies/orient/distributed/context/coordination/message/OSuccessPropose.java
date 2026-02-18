@@ -46,4 +46,9 @@ public class OSuccessPropose implements OStructuralMessage {
   public OTransactionIdPromise getPromise() {
     return promise;
   }
+
+  @Override
+  public String toString() {
+    return "OSuccessPropose [nodeId=" + nodeId + ", promise=" + promise + "]";
+  }
 }
