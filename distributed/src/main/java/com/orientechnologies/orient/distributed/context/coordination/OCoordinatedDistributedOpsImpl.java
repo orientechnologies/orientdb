@@ -585,4 +585,9 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   public synchronized Set<ONodeId> checkOffline(long time) {
     return this.topology.awayNodes(time);
   }
+
+  @Override
+  public ONodeId getCurrent() {
+    return topology.getNodeId();
+  }
 }

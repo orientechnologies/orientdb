@@ -164,6 +164,8 @@ public interface OCoordinatedDistributedOps {
 
   ONodeStateNetwork getNetworkState();
 
+  ONodeId getCurrent();
+
   OGroupId getGroupId();
 
   boolean isApplied(OTransactionId txId);

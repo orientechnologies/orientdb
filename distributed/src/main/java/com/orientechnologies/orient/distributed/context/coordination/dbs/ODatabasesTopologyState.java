@@ -5,10 +5,11 @@ import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
+import com.orientechnologies.orient.distributed.context.coordination.OVersion;
+import com.orientechnologies.orient.distributed.context.coordination.OVersionPromise;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OAddNodeInfo;
 import com.orientechnologies.orient.distributed.context.coordination.message.state.ODatabaseStateNetwork;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
-import com.orientechnologies.orient.distributed.context.coordination.result.OAlreadyPromised;
 import com.orientechnologies.orient.distributed.context.coordination.result.ODatabaseMissing;
 import com.orientechnologies.orient.distributed.context.coordination.result.ODatabaseNameUsed;
 import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncId;
@@ -30,7 +31,7 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
   private final ONodeId current;
   private final Map<ODatabaseId, ODatabaseTopologyState> databases = new HashMap<>();
   private final Map<String, ODatabaseTopologyState> databasesByName = new HashMap<>();
-  private final Map<ODatabaseId, ORawPair<OTransactionIdPromise, ODatabaseTopologyState>> promised =
+  private final Map<ODatabaseId, ORawPair<OVersionPromise, ODatabaseTopologyState>> promised =
       new HashMap<>();
   private final Map<String, ODatabaseTopologyState> promisedByName = new HashMap<>();
   private final Map<OSyncId, OSyncState> activerSyncs = new HashMap<>();
@@ -62,22 +63,18 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
       } else {
         if (promised.containsKey(db)) {
           var prom = promised.get(db);
-          var def = prom.getSecond();
-          if (!def.getName().equals(name)
-              && prom.getFirst().getCoordinator().equals(promise.getCoordinator())) {
-            return Optional.empty();
-          } else {
-            return Optional.of(new OAlreadyPromised(prom.getFirst().getCoordinator()));
-          }
+          return prom.getFirst().promise(promise, new OVersion(1));
         }
         if (promisedByName.containsKey(name)) {
           var prom = promised.get(promisedByName.get(name).getId());
-          return Optional.of(new OAlreadyPromised(prom.getFirst().getCoordinator()));
+          return prom.getFirst().promise(promise, new OVersion(1));
         }
         var declared =
             new ODatabaseTopologyState(db, name, partecipants, minimumQuorum, listener, current);
+        var version = new OVersionPromise(new OVersion(0), current);
+        version.promise(promise, new OVersion(1));
         this.promised.put(
-            db, new ORawPair<OTransactionIdPromise, ODatabaseTopologyState>(promise, declared));
+            db, new ORawPair<OVersionPromise, ODatabaseTopologyState>(version, declared));
         this.promisedByName.put(name, declared);
         return Optional.empty();
       }
