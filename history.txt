@@ -27,6 +27,16 @@
 This document contains the last changes of OrientDB Community Edition.
 
 -----------------------------------------------------------------------------------------------------------------------------------
+version 3.2.50 - (February, 24 2025)
+
+# Core
+- Dependency updates 
+- Minor fix view update execution, avoiding to run when is not yet opened or close due to conccurenct operations
+
+# Enterprise
+- Fix loop re-scheduling of backup in case of backup failure
+
+-----------------------------------------------------------------------------------------------------------------------------------
 version 3.2.49 - (Jennaury, 27 2025)
 
 # Core
