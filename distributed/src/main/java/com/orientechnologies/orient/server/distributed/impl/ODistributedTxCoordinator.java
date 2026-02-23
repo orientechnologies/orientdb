@@ -87,10 +87,7 @@ public class ODistributedTxCoordinator {
     this.retryDelay = retryDelay;
   }
 
-  public void commit(
-      final ODatabaseDocumentDistributed database,
-      final OTransactionInternal iTx,
-      Set<String> clusters) {
+  public void commit(final ODatabaseDocumentDistributed database, final OTransactionInternal iTx) {
     int count = 0;
     do {
       final ODistributedRequestId requestId = dManager.nextRequestId();

@@ -21,24 +21,19 @@ package com.orientechnologies.orient.server.distributed.impl;
 
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.NODE_STATUS;
-import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
-import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.impl.task.OGossipTask;
-import com.orientechnologies.orient.server.distributed.impl.task.ORequestDatabaseConfigurationTask;
 import com.orientechnologies.orient.server.distributed.impl.task.OUpdateDatabaseSequenceStatusTask;
 import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -70,10 +65,7 @@ public class OClusterHealthChecker implements Runnable {
     if (now - lastExecution > (healthCheckerEveryMs / 3)) {
       // CHECK CURRENT STATUS OF DBS
       try {
-        checkServerConfig();
-        checkServerStatus();
         checkServerInStall();
-        checkServerList();
         notifyDatabaseSequenceStatus();
 
       } catch (HazelcastInstanceNotActiveException e) {
@@ -92,161 +84,6 @@ public class OClusterHealthChecker implements Runnable {
           "Cluster health finished recently (%dms ago), skip this execution", now - lastExecution);
 
     lastExecution = now;
-  }
-
-  private void checkServerConfig() {
-    // NO NODES CONFIGURED: CHECK IF THERE IS ANY MISCONFIGURATION BY CHECKING THE DATABASE STATUSES
-    OrientDBDistributed context = (OrientDBDistributed) manager.getServerInstance().getDatabases();
-    for (String databaseName : manager.getDatabases()) {
-      if (manager.isSyncronizing(databaseName)) {
-        continue;
-      }
-      final ODistributedConfiguration cfg = context.getDistributedConfiguration(databaseName);
-      if (cfg == null) {
-        continue;
-      }
-      final Set<String> confServers = context.getAvailableNodeNames(databaseName);
-      for (String s : manager.getActiveServers()) {
-        if (manager.isNodeAvailable(s, databaseName) && !confServers.contains(s)) {
-          final Set<String> nodes = context.getAvailableNodeNames(databaseName);
-
-          // THE SERVERS HAS THE DATABASE ONLINE BUT IT IS NOT IN THE CFG. DETERMINE THE MOST UPD
-          // CFG
-          try {
-            final ODistributedResponse response =
-                manager.sendRequest(
-                    databaseName, nodes, new ORequestDatabaseConfigurationTask(databaseName));
-
-            final Object payload = response != null ? response.getPayload() : null;
-            if (payload instanceof Map) {
-              String mostUpdatedServer = null;
-              int mostUpdatedServerVersion = -1;
-
-              final Map<String, Object> responses = (Map<String, Object>) payload;
-              for (Map.Entry<String, Object> r : responses.entrySet()) {
-                if (r.getValue() instanceof ODocument) {
-                  final ODocument doc = (ODocument) r.getValue();
-                  int v = doc.field("version");
-                  if (v > mostUpdatedServerVersion) {
-                    mostUpdatedServerVersion = v;
-                    mostUpdatedServer = r.getKey();
-                  }
-                }
-              }
-
-              if (cfg.getVersion() < mostUpdatedServerVersion) {
-                // OVERWRITE DB VERSION
-                context.setDistributedConfiguration(
-                    databaseName,
-                    new OModifiableDistributedConfiguration(
-                        (ODocument) responses.get(mostUpdatedServer)));
-              }
-            }
-
-          } catch (ODistributedOperationException e) {
-            // NO SERVER RESPONDED, THE SERVER COULD BE ISOLATED: SET ALL THE SERVER AS OFFLINE
-          }
-        }
-      }
-    }
-  }
-
-  private void checkServerList() {
-    final Set<String> activeServers = manager.getActiveServers();
-    for (String server : activeServers) {
-      int id = manager.getNodeIdByName(server);
-      if (id == -1) {
-        logger.infoNode(
-            manager.getLocalNodeName(),
-            "Server '%s' was not found in the list of registered servers. Reloading configuration"
-                + " from cluster...",
-            server);
-
-        ((ODistributedPlugin) manager).reloadRegisteredNodes();
-        id = manager.getNodeIdByName(server);
-        if (id == -1) {
-          if (server.equals(manager.getLocalNodeName())) {
-            // LOCAL NODE
-            logger.warnNode(
-                manager.getLocalNodeName(),
-                "Local server was not found in the list of registered servers after the update",
-                server);
-
-          } else {
-            // REMOTE NODE
-            logger.warnNode(
-                manager.getLocalNodeName(),
-                "Server '%s' was not found in the list of registered servers after the update,"
-                    + " restarting the server...",
-                server);
-
-            try {
-              ((ODistributedPlugin) manager).restartNode(server);
-            } catch (IOException e) {
-              logger.warnNode(
-                  manager.getLocalNodeName(),
-                  "Error on restarting server '%s' (error=%s)",
-                  server,
-                  e);
-            }
-          }
-        }
-        break;
-      }
-    }
-  }
-
-  private void checkServerStatus() {
-    if (manager.getNodeStatus() != NODE_STATUS.ONLINE)
-      // ONLY ONLINE NODE CAN TRY TO RECOVER FOR SINGLE DB STATUS
-      return;
-
-    OServer server = manager.getServerInstance();
-    if (!server.isActive()) return;
-
-    OrientDBDistributed context = (OrientDBDistributed) server.getDatabases();
-    for (String dbName : manager.getDatabases()) {
-      if (manager.isSyncronizing(dbName)) {
-        continue;
-      }
-      final ODistributedServerManager.DB_STATUS localNodeStatus = context.getDatabaseStatus(dbName);
-      if (localNodeStatus != ODistributedServerManager.DB_STATUS.NOT_AVAILABLE)
-        // ONLY NOT_AVAILABLE NODE/DB CAN BE RECOVERED
-        continue;
-
-      final Set<String> servers = context.getAvailableNodeNames(dbName);
-      servers.remove(manager.getLocalNodeName());
-
-      if (servers.isEmpty()) {
-        logger.infoNode(
-            manager.getLocalNodeName(),
-            "No server are ONLINE for database '%s'. Considering local copy of database as the good"
-                + " one. Setting status=ONLINE...",
-            dbName);
-
-        context.distributedSetOnline(dbName);
-
-      } else {
-        logger.infoNode(
-            manager.getLocalNodeName(),
-            "Trying to recover current server for database '%s'...",
-            dbName);
-
-        final ODistributedConfiguration dCfg = context.getDistributedConfiguration(dbName);
-        if (dCfg != null) {
-          final boolean result = context.installDatabase(true, dbName, false, true);
-
-          if (result)
-            logger.infoNode(
-                manager.getLocalNodeName(), "Recover complete for database '%s'", dbName);
-          else
-            logger.infoNode(
-                manager.getLocalNodeName(),
-                "Recover cannot be completed for database '%s'",
-                dbName);
-        }
-      }
-    }
   }
 
   private void checkServerInStall() {

@@ -74,7 +74,7 @@ public class ODistributedTxCoordinatorTest {
     // HashSet<>(remoteNodes));
     when(responseManager.getDistributedTxFinalResponse()).thenReturn(Optional.of(new OTxSuccess()));
 
-    coordinator.commit(databaseDocument, tx, clusters);
+    coordinator.commit(databaseDocument, tx);
 
     InOrder inOrder =
         inOrder(distributedDatabase, databaseDocument, serverManager, responseManager);

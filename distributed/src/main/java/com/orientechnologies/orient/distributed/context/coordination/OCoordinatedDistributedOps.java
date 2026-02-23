@@ -207,4 +207,6 @@ public interface OCoordinatedDistributedOps {
   void receivePing(ONodeId nodeId, OTransactionSequenceStatus status);
 
   Set<ONodeId> checkOffline(long time);
+
+  int getDatabaseQuorum(ODatabaseId databaseId);
 }

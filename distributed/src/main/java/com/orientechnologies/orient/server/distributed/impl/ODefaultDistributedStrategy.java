@@ -21,6 +21,7 @@ package com.orientechnologies.orient.server.distributed.impl;
 
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
@@ -52,21 +53,21 @@ public class ODefaultDistributedStrategy implements ODistributedStrategy {
   @Override
   public Set<String> getNodesConcurInQuorum(
       final ODistributedServerManager manager,
+      final String databaseName,
       final ODistributedConfiguration cfg,
       final ODistributedRequest request,
       final Collection<String> iNodes) {
-
+    OrientDBDistributed ctx = (OrientDBDistributed) manager.getServerInstance().getDatabases();
     final Set<String> nodesConcurToTheQuorum = new HashSet<String>();
     if (request.getTask().getQuorumType() == OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE
         || request.getTask().getQuorumType()
             == OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE_ALL_MASTERS) {
       // ONLY MASTER NODES CONCUR TO THE MINIMUM QUORUM
       for (String node : iNodes) {
-        if (cfg.getServerRole(node) == ODistributedConfiguration.ROLES.MASTER)
-          nodesConcurToTheQuorum.add(node);
+        if (ctx.isNodeMaster(node, databaseName)) nodesConcurToTheQuorum.add(node);
       }
 
-      if (cfg.getServerRole(manager.getLocalNodeName()) == ODistributedConfiguration.ROLES.MASTER)
+      if (ctx.isNodeMaster(manager.getLocalNodeName(), databaseName))
         // INCLUDE LOCAL NODE TOO
         nodesConcurToTheQuorum.add(manager.getLocalNodeName());
 

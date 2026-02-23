@@ -16,6 +16,7 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
@@ -522,10 +523,9 @@ public class OClassDistributed extends OClassEmbedded {
     ODistributedServerManager manager = db.getDistributedManager();
     if (bestClusterIds == null) {
       if (this.allocation == null) {
-        final Set<String> availableNodes = db.getContext().getAvailableNodeNames(db.getName());
-        ODistributedConfiguration cfg = db.getDistributedConfiguration();
-        availableNodes.removeIf(
-            (node) -> cfg.getServerRole(node) != ODistributedConfiguration.ROLES.MASTER);
+        OrientDBDistributed context = db.getContext();
+        final Set<String> availableNodes = context.getAvailableNodeNames(db.getName());
+        availableNodes.removeIf((node) -> !context.isNodeMaster(node, db.getName()));
         autoAssignClusterOwnership(db, availableNodes, true);
       }
       bestClusterFromAllocation(db, manager);

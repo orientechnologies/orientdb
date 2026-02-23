@@ -841,38 +841,6 @@ public class OHazelcastClusterMetadataManager
         nodeName, "Dropped last copy of database '%s', removing it from the cluster", dbName);
   }
 
-  // Remove the given distributed db from the current server's configuration and
-  // return the name of all other servers that also have the db.
-  public Set<String> dropDbFromConfiguration(final String dbName) {
-    OrientDBDistributed ctx = (OrientDBDistributed) serverInstance.getDatabases();
-
-    final ODistributedConfiguration dCfg = ctx.getDistributedConfiguration(dbName);
-
-    final Set<String> servers = dCfg.getAllConfiguredServers();
-    final long start = System.currentTimeMillis();
-
-    // WAIT ALL THE SERVERS BECOME ONLINE
-    boolean allServersAreOnline = false;
-    while (!allServersAreOnline && System.currentTimeMillis() - start < 5000) {
-      allServersAreOnline = true;
-      for (String s : servers) {
-        final ODistributedServerManager.DB_STATUS st = getDatabaseStatus(s, dbName);
-        if (st == ODistributedServerManager.DB_STATUS.NOT_AVAILABLE
-            || st == ODistributedServerManager.DB_STATUS.SYNCHRONIZING
-            || st == ODistributedServerManager.DB_STATUS.BACKUP) {
-          allServersAreOnline = false;
-          try {
-            Thread.sleep(300);
-          } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            break;
-          }
-        }
-      }
-    }
-    return servers;
-  }
-
   public ONodeConfig getNodeConfigurationByUuid(final String iNodeId, final boolean useCache) {
     if (configurationMap == null)
       // NOT YET STARTED
@@ -930,23 +898,6 @@ public class OHazelcastClusterMetadataManager
       registeredNodeByName.clear();
       registeredNodeByName.putAll(names);
     } else throw new ODistributedException("Cannot find distributed 'doc' configuration");
-  }
-
-  private List<String> getRegisteredNodes() {
-    return configurationMap.getNodes();
-  }
-
-  public void removeNodeFromConfiguration(
-      final String nodeLeftName, final boolean removeOnlyDynamicServers) {
-    logger.infoNode(
-        nodeName,
-        "Removing server '%s' from all the databases (removeOnlyDynamicServers=%s)...",
-        nodeLeftName,
-        removeOnlyDynamicServers);
-
-    for (String dbName : distributedPlugin.getManagedDatabases()) {
-      removeNodeFromConfiguration(nodeLeftName, dbName, removeOnlyDynamicServers, false);
-    }
   }
 
   public boolean removeNodeFromConfiguration(
@@ -1017,62 +968,6 @@ public class OHazelcastClusterMetadataManager
     if (member.getUuid() != null) activeNodesNamesByUuid.remove(member.getUuid());
     activeNodesUuidByName.remove(nodeLeftName);
     return member;
-  }
-
-  public void removeServerFromCluster(
-      final Member member, final String nodeLeftName, final boolean removeOnlyDynamicServers) {
-    if (hazelcastInstance == null || !hazelcastInstance.getLifecycleService().isRunning()) return;
-
-    final long autoRemoveOffLineServer =
-        OGlobalConfiguration.DISTRIBUTED_AUTO_REMOVE_OFFLINE_SERVERS.getValueAsLong();
-    if (autoRemoveOffLineServer == 0)
-      // REMOVE THE NODE RIGHT NOW
-      removeNodeFromConfiguration(nodeLeftName, removeOnlyDynamicServers);
-    else if (autoRemoveOffLineServer > 0) {
-      // SCHEDULE AUTO REMOVAL IN A WHILE
-      autoRemovalOfServers.put(nodeLeftName, System.currentTimeMillis());
-      serverInstance
-          .getDatabases()
-          .delayExecute(
-              () -> {
-                try {
-                  final Long lastTimeNodeLeft = autoRemovalOfServers.get(nodeLeftName);
-                  if (lastTimeNodeLeft == null)
-                    // NODE WAS BACK ONLINE
-                    return;
-
-                  if (System.currentTimeMillis() - lastTimeNodeLeft >= autoRemoveOffLineServer) {
-                    removeNodeFromConfiguration(nodeLeftName, removeOnlyDynamicServers);
-                  }
-                } catch (Exception e) {
-                  // IGNORE IT
-                }
-              },
-              autoRemoveOffLineServer);
-    }
-
-    for (String databaseName : distributedPlugin.getManagedDatabases()) {
-      final ODistributedServerManager.DB_STATUS nodeLeftStatus =
-          getDatabaseStatus(nodeLeftName, databaseName);
-      if (nodeLeftStatus != ODistributedServerManager.DB_STATUS.OFFLINE
-          && nodeLeftStatus != ODistributedServerManager.DB_STATUS.NOT_AVAILABLE)
-        configurationMap.setDatabaseStatus(
-            nodeLeftName, databaseName, ODistributedServerManager.DB_STATUS.NOT_AVAILABLE);
-    }
-
-    logger.warnNode(nodeName, "Node removed id=%s name=%s", member, nodeLeftName);
-
-    if (nodeLeftName.startsWith("ext:")) {
-      final List<String> registeredNodes = getRegisteredNodes();
-
-      logger.errorNode(
-          nodeName,
-          "Removed node id=%s name=%s has not being recognized. Remove the node manually"
-              + " (doc=%s)",
-          member,
-          nodeLeftName,
-          registeredNodes);
-    }
   }
 
   public Set<String> getActiveServers() {

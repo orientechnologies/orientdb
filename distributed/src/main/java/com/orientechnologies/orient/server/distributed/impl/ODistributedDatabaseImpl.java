@@ -42,7 +42,6 @@ import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import com.orientechnologies.orient.core.tx.OTxMetadataHolder;
 import com.orientechnologies.orient.core.tx.ValidationResult;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
-import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
@@ -593,9 +592,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   public void initFirstOpen(ODatabaseDocumentInternal session) {
-    ODistributedConfiguration cfg = this.context.getOrInitDistributedConfiguration(session);
-    manager.checkNodeInConfiguration(databaseName, cfg);
-
     OStorage storage = session.getStorage();
     if (storage != null) {
       sequenceManager.fill(storage.getLastMetadata());

@@ -19,7 +19,6 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.distributed.ONodeConfig;
@@ -211,20 +210,6 @@ public interface ODistributedServerManager {
   Set<String> getActiveServerNotLocal();
 
   File getDefaultDatabaseConfigFile();
-
-  /**
-   * Executes an operation protected by a distributed lock (one per database).
-   *
-   * @param <T> Return type
-   * @param databaseName Database name
-   * @param timeoutLocking
-   * @param iCallback Operation @return The operation's result of type T
-   */
-  <T> T executeInDistributedDatabaseLock(
-      String databaseName,
-      long timeoutLocking,
-      OModifiableDistributedConfiguration lastCfg,
-      OCallable<T, OModifiableDistributedConfiguration> iCallback);
 
   /**
    * Returns true if the quorum is present in terms of number of available nodes for full

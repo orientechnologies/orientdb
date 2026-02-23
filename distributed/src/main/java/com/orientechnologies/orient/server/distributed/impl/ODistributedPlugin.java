@@ -35,7 +35,6 @@ import com.orientechnologies.common.log.OAnsiCode;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.util.OArrays;
-import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.OSignalHandler;
 import com.orientechnologies.orient.core.Orient;
@@ -90,7 +89,6 @@ import com.orientechnologies.orient.server.distributed.ORemoteServerController;
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactoryManager;
 import com.orientechnologies.orient.server.distributed.config.OClusterConfiguration;
 import com.orientechnologies.orient.server.distributed.impl.metadata.OClassDistributed;
-import com.orientechnologies.orient.server.distributed.impl.task.ODropDatabaseTask;
 import com.orientechnologies.orient.server.distributed.impl.task.ONewDeltaTaskResponse;
 import com.orientechnologies.orient.server.distributed.impl.task.ORemoteTaskFactoryManagerImpl;
 import com.orientechnologies.orient.server.distributed.impl.task.ORestartServerTask;
@@ -129,7 +127,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 import sun.misc.Signal;
 
 /**
@@ -234,16 +231,6 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
     return defaultDatabaseConfigFile;
   }
 
-  @Override
-  public <T> T executeInDistributedDatabaseLock(
-      String databaseName,
-      long timeoutLocking,
-      OModifiableDistributedConfiguration lastCfg,
-      OCallable<T, OModifiableDistributedConfiguration> iCallback) {
-    return clusterManager.executeInDistributedDatabaseLock(
-        databaseName, timeoutLocking, lastCfg, iCallback);
-  }
-
   public <T> T executeInDistributedDatabaseLock(
       String databaseName, long timeoutLocking, Callable<T> iCallback) {
     return clusterManager.executeInDistributedDatabaseLock(databaseName, timeoutLocking, iCallback);
@@ -344,13 +331,6 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
 
   public void removeDbFromClusterMetadata(String name) {
     clusterManager.removeDbFromClusterMetadata(name);
-  }
-
-  public void dropOnAllServers(final String dbName) {
-    Set<String> servers = clusterManager.dropDbFromConfiguration(dbName);
-    if (!servers.isEmpty() && getDatabase(dbName) != null) {
-      sendRequest(dbName, servers, new ODropDatabaseTask());
-    }
   }
 
   public void dropConfig(String dbName) {
@@ -518,7 +498,8 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
       if (databaseName != null) {
         cfg = getDatabaseConfiguration(databaseName);
         nodesConcurToTheQuorum =
-            getDistributedStrategy().getNodesConcurInQuorum(this, cfg, iRequest, iNodes);
+            getDistributedStrategy()
+                .getNodesConcurInQuorum(this, databaseName, cfg, iRequest, iNodes);
 
         // AFTER COMPUTED THE QUORUM, REMOVE THE OFFLINE NODES TO HAVE THE LIST OF REAL AVAILABLE
         // NODES
@@ -534,12 +515,13 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
         }
 
         // all online masters
-        //        onlineMasters = ctx.getOnlineMasters(databaseName);
-        onlineMasters =
-            getOnlineNodes(databaseName).stream()
-                .filter(f -> cfg.getServerRole(f) == ODistributedConfiguration.ROLES.MASTER)
-                .collect(Collectors.toSet())
-                .size();
+        onlineMasters = ctx.getOnlineMasters(databaseName);
+        //        onlineMasters =
+        //            getOnlineNodes(databaseName).stream()
+        //                .filter(f -> cfg.getServerRole(f) ==
+        // ODistributedConfiguration.ROLES.MASTER)
+        //                .collect(Collectors.toSet())
+        //                .size();
 
       } else {
         cfg = null;
@@ -911,9 +893,9 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
   @Override
   public void reassignClustersOwnership(
       final String iNode, final String databaseName, final boolean canCreateNewClusters) {
-    final ODistributedConfiguration cfg = getDatabaseConfiguration(databaseName);
-    final ODistributedConfiguration.ROLES role = cfg.getServerRole(iNode);
-    if (role != ODistributedConfiguration.ROLES.MASTER)
+    OrientDBDistributed ctx = (OrientDBDistributed) serverInstance.getDatabases();
+
+    if (!ctx.isNodeMaster(iNode, databaseName))
       // NO MASTER, DON'T CREATE LOCAL CLUSTERS
       return;
 
@@ -922,13 +904,12 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
 
       logger.infoNode(
           nodeName, "Reassigning ownership of clusters for database %s...", iDatabase.getName());
-      OrientDBDistributed ctx = (OrientDBDistributed) serverInstance.getDatabases();
       final Set<String> availableNodes = ctx.getAvailableNodeNames(iDatabase.getName());
 
       // FILTER OUT NON MASTER SERVER
       for (Iterator<String> it = availableNodes.iterator(); it.hasNext(); ) {
         final String node = it.next();
-        if (cfg.getServerRole(node) != ODistributedConfiguration.ROLES.MASTER) it.remove();
+        if (ctx.isNodeMaster(node, databaseName)) it.remove();
       }
       iDatabase.activateOnCurrentThread();
       final OSchema schema = iDatabase.getDatabaseOwner().getMetadata().getSchema();
@@ -1152,32 +1133,6 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
     }
 
     return databaseInstalled;
-  }
-
-  public void checkNodeInConfiguration(final String databaseName, ODistributedConfiguration cfg) {
-    executeInDistributedDatabaseLock(
-        databaseName,
-        20000,
-        cfg != null ? cfg.modify() : null,
-        lastCfg -> {
-          return internalCheckNodeInConfig(databaseName, lastCfg);
-        });
-  }
-
-  public Object internalCheckNodeInConfig(
-      final String databaseName, OModifiableDistributedConfiguration lastCfg) {
-    // GET LAST VERSION IN LOCK
-    final List<String> foundPartition = lastCfg.addNewNodeInServerList(nodeName);
-    if (foundPartition != null) {
-      logger.infoNode(
-          nodeName,
-          "Adding node '%s' in partition: %s db=%s v=%d",
-          nodeName,
-          foundPartition,
-          databaseName,
-          lastCfg.getVersion());
-    }
-    return null;
   }
 
   private Collection<String> nodesOnlineNotSelf(String db) {
@@ -2177,10 +2132,6 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
   @Override
   public ONodeConfig getNodeConfigurationByUuid(String iNode, boolean useCache) {
     return clusterManager.getNodeConfigurationByUuid(iNode, useCache);
-  }
-
-  public void reloadRegisteredNodes() {
-    clusterManager.reloadRegisteredNodes();
   }
 
   public boolean removeNodeFromConfiguration(

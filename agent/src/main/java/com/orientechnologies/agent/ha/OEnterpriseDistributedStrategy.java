@@ -1,6 +1,7 @@
 package com.orientechnologies.agent.ha;
 
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
+import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
@@ -22,6 +23,7 @@ public class OEnterpriseDistributedStrategy extends ODefaultDistributedStrategy 
   @Override
   public Set<String> getNodesConcurInQuorum(
       final ODistributedServerManager manager,
+      final String databaseName,
       final ODistributedConfiguration cfg,
       final ODistributedRequest request,
       final Collection<String> iNodes) {
@@ -32,27 +34,27 @@ public class OEnterpriseDistributedStrategy extends ODefaultDistributedStrategy 
     final OCommandDistributedReplicateRequest.QUORUM_TYPE quorum =
         request.getTask().getQuorumType();
     final String dc = cfg.getDataCenterOfServer(localNode);
-
     if (dc == null
         || !localDataCenterWriteQuorum
         || quorum == OCommandDistributedReplicateRequest.QUORUM_TYPE.ALL)
       // NO DC: DEFAULT CFG
-      return super.getNodesConcurInQuorum(manager, cfg, request, iNodes);
+      return super.getNodesConcurInQuorum(manager, databaseName, cfg, request, iNodes);
 
     // DC CONFIGURATION
     final List<String> dcServers = cfg.getDataCenterServers(dc);
+    OrientDBDistributed ctx = (OrientDBDistributed) manager.getServerInstance().getDatabases();
 
     final Set<String> nodesConcurToTheQuorum = new HashSet<String>();
     if (quorum == OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE) {
       // ONLY MASTER NODES CONCUR TO THE MINIMUM QUORUM
       for (String node : iNodes) {
-        if (cfg.getServerRole(node) == ODistributedConfiguration.ROLES.MASTER) {
+        if (ctx.isNodeMaster(node, databaseName)) {
           if (!localDataCenterWriteQuorum || dcServers.contains(node))
             nodesConcurToTheQuorum.add(node);
         }
       }
 
-      if (cfg.getServerRole(localNode) == ODistributedConfiguration.ROLES.MASTER) {
+      if (ctx.isNodeMaster(localNode, databaseName)) {
         if (!localDataCenterWriteQuorum || dcServers.contains(localNode))
           // INCLUDE LOCAL NODE TOO
           nodesConcurToTheQuorum.add(localNode);

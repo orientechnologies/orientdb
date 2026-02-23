@@ -33,6 +33,7 @@ public interface ODistributedStrategy {
 
   Set<String> getNodesConcurInQuorum(
       ODistributedServerManager manager,
+      String databaseName,
       ODistributedConfiguration cfg,
       ODistributedRequest request,
       Collection<String> iNodes);

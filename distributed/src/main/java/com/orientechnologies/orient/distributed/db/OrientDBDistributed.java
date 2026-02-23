@@ -83,6 +83,7 @@ import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
 import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ORemoteServerAvailabilityCheck;
 import com.orientechnologies.orient.server.distributed.ORemoteServerController;
+import com.orientechnologies.orient.server.distributed.OWriteOperationNotPermittedException;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributedPooled;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedConfigurationManager;
@@ -1579,5 +1580,47 @@ public class OrientDBDistributed extends OrientDBEmbedded
       var action = getNodeState().getOps().nodeDisconnected(offlineNode);
       action.execute(this);
     }
+  }
+
+  public void checkNodeIsMaster(ONodeId localNodeId, String name, String operation) {
+    //    var localNodeName = localNodeId.getNode();
+    //    final ODistributedConfiguration.ROLES nodeRole =
+    // getDistributedConfiguration(name).getServerRole(localNodeName);
+    //    if (nodeRole != ODistributedConfiguration.ROLES.MASTER)
+    //      throw new OWriteOperationNotPermittedException(
+    //          "Cannot execute write operation (" + operation + ") on node '" + localNodeName + "'
+    // because is non a master");
+    Optional<ODatabaseId> dbID = getNodeState().getDatabaseTopology().getDatabaseId(name);
+    if (dbID.isPresent()) {
+
+      ONodeRole role = getNodeState().getDatabaseTopology().getRole(dbID.get(), localNodeId);
+      if (role != ONodeRole.Main)
+        throw new OWriteOperationNotPermittedException(
+            "Cannot execute write operation ("
+                + operation
+                + ") on node '"
+                + localNodeId
+                + "' because is non a master");
+    } else {
+      throw new OWriteOperationNotPermittedException(
+          "Cannot execute write operation ("
+              + operation
+              + ") on node '"
+              + localNodeId
+              + "' because is non a master");
+    }
+  }
+
+  public boolean isNodeMaster(String node, String databaseName) {
+    ODatabasesTopology databaseTopology = getNodeState().getDatabaseTopology();
+    Optional<ODatabaseId> id = databaseTopology.getDatabaseId(databaseName);
+    if (id.isPresent()) {
+      return databaseTopology.isMain(id.get(), new ONodeId(node));
+    } else {
+      return false;
+    }
+    //    final ODistributedConfiguration cfg = getDistributedConfiguration(databaseName);
+    //    final ODistributedConfiguration.ROLES role = cfg.getServerRole(node);
+    //    return role == ODistributedConfiguration.ROLES.MASTER;
   }
 }

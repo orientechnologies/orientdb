@@ -430,4 +430,12 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
       this.databasesByName.put(db.getName(), db);
     }
   }
+
+  public int getQuorum(ODatabaseId databaseId) {
+    ODatabaseTopologyState db = this.databases.get(databaseId);
+    if (db != null) {
+      return db.getQuorum();
+    }
+    return -1;
+  }
 }

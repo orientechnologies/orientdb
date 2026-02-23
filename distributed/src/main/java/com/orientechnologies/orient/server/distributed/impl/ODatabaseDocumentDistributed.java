@@ -54,6 +54,7 @@ import com.orientechnologies.orient.core.sql.executor.stream.OExecutionStream;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
@@ -75,7 +76,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ODistributedTxContext;
 import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
-import com.orientechnologies.orient.server.distributed.OWriteOperationNotPermittedException;
 import com.orientechnologies.orient.server.distributed.exception.ODistributedTxPromiseRequestIsOldException;
 import com.orientechnologies.orient.server.distributed.exception.OTransactionAlreadyPresentException;
 import com.orientechnologies.orient.server.distributed.impl.lock.OTxPromise;
@@ -392,10 +392,9 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         }
       }
       ODistributedDatabase localDistributedDatabase = getDistributedShared();
-      final ODistributedConfiguration dbCfg = getDistributedConfiguration();
       ODistributedServerManager dManager = getDistributedManager();
-      final String localNodeName = dManager.getLocalNodeName();
-      checkNodeIsMaster(localNodeName, dbCfg, "Transaction Commit");
+      getContext().checkNodeIsMaster(getLocalNodeId(), getName(), "Transaction Commit");
+
       int nretry =
           this.getConfiguration()
               .getValueAsInteger(OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY);
@@ -405,13 +404,9 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       ODistributedTxCoordinator txManager =
           new ODistributedTxCoordinator(
               getName(), dManager, localDistributedDatabase, getLocalNodeName(), nretry, delay);
-      int quorum = 0;
-      Set<String> clusters = getInvolvedClusters(iTx.getRecordOperations());
-      for (String clusterName : clusters) {
-        final List<String> clusterServers = dbCfg.getServers(clusterName, null);
-        final int writeQuorum = dbCfg.getWriteQuorum(clusterServers.size(), localNodeName);
-        quorum = Math.max(quorum, writeQuorum);
-      }
+      ODatabaseId databaseId = getStorage().getDatbaseId();
+      int quorum = getContext().getNodeState().getOps().getDatabaseQuorum(databaseId);
+
       final int availableNodes = getContext().getOnlineMasters(getName());
 
       if (quorum > availableNodes) {
@@ -422,7 +417,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
                 online, quorum));
       }
 
-      txManager.commit(this, iTx, clusters);
+      txManager.commit(this, iTx);
       return;
     } catch (OValidationException e) {
       throw e;
@@ -983,8 +978,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       super.command(command, new Object[] {}).close();
       return;
     }
-    checkNodeIsMaster(
-        getLocalNodeName(), getDistributedConfiguration(), "Command '" + command + "'");
+    getContext().checkNodeIsMaster(getLocalNodeId(), getName(), "Command '" + command + "'");
     ODistributedDatabase local = getDistributedShared();
     // The plus 1 is for make sure it runs once even if retry is 0
     int nretry =
@@ -1225,18 +1219,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     } finally {
       getContext().setDatabaseStatus(getName(), prevStatus);
     }
-  }
-
-  protected void checkNodeIsMaster(
-      final String localNodeName, final ODistributedConfiguration dbCfg, final String operation) {
-    final ODistributedConfiguration.ROLES nodeRole = dbCfg.getServerRole(localNodeName);
-    if (nodeRole != ODistributedConfiguration.ROLES.MASTER)
-      throw new OWriteOperationNotPermittedException(
-          "Cannot execute write operation ("
-              + operation
-              + ") on node '"
-              + localNodeName
-              + "' because is non a master");
   }
 
   protected void handleDistributedException(

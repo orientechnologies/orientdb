@@ -630,4 +630,9 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   public ONodeId getCurrent() {
     return topology.getNodeId();
   }
+
+  @Override
+  public int getDatabaseQuorum(ODatabaseId databaseId) {
+    return this.databaseTopology.getQuorum(databaseId);
+  }
 }

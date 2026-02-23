@@ -385,4 +385,8 @@ public class ODatabaseTopologyState {
     var nodes = this.nodeStatus.values().stream().map((x) -> x.toStore()).toList();
     return new ODatabaseTopologyStore(nodes, this.id, this.name, this.getVersion(), this.quorum);
   }
+
+  public int getQuorum() {
+    return quorum;
+  }
 }
