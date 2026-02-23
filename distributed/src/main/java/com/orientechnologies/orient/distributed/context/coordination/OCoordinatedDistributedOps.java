@@ -59,7 +59,12 @@ public interface OCoordinatedDistributedOps {
 
   void registerNode(ONodeId node, long version, OTransactionIdPromise promise);
 
-  void unregisterNode(ONodeId node, long version, OTransactionIdPromise promise);
+  Optional<OAcceptResult> validateUnregisterNode(
+      ONodeId node, long version, OTransactionIdPromise promise);
+
+  ODisconnectAction unregisterNode(ONodeId node, long version, OTransactionIdPromise promise);
+
+  void cancelUnregisterNode(OTransactionIdPromise promise);
 
   void cancelRegisterNode(OTransactionIdPromise promise);
 

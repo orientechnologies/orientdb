@@ -229,6 +229,10 @@ public class OTopologyManager implements OTopologyEvents {
     this.versionPromise.cancel(promise);
   }
 
+  public synchronized void cancelUnregisterPromise(OTransactionIdPromise promise) {
+    this.versionPromise.cancel(promise);
+  }
+
   public synchronized void cancelEstablish(OTransactionIdPromise promise) {
     this.versionPromise.cancel(promise);
   }
@@ -277,5 +281,10 @@ public class OTopologyManager implements OTopologyEvents {
       }
     }
     return nodes;
+  }
+
+  public Optional<OAcceptResult> promiseUnregister(
+      ONodeId node, long version, OTransactionIdPromise promise) {
+    return this.versionPromise.promise(promise, new OVersion(version));
   }
 }

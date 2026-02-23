@@ -31,6 +31,7 @@ import com.orientechnologies.orient.distributed.context.coordination.topology.OT
 import com.orientechnologies.orient.distributed.db.OSyncMode;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -74,24 +75,42 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
     notifyUpdate();
   }
 
-  public void unregisterNode(ONodeId node, long version, OTransactionIdPromise promise) {
-    Optional<CompleteInfo> action = Optional.empty();
+  @Override
+  public Optional<OAcceptResult> validateUnregisterNode(
+      ONodeId node, long version, OTransactionIdPromise promise) {
+    return topology.promiseUnregister(node, version, promise);
+  }
+
+  public ODisconnectAction unregisterNode(
+      ONodeId node, long version, OTransactionIdPromise promise) {
+    var action = nodeDisconnected(node);
+
     synchronized (this) {
       this.topology.unregister(node, version, promise);
-      Iterator<OResponseCollector> iterator = coordination.values().iterator();
-      while (iterator.hasNext()) {
-        OResponseCollector coll = iterator.next();
-        action = coll.disconnected(node);
-        if (coll.isTotallyFinished()) {
-          iterator.remove();
-        }
-      }
     }
     notifyUpdate();
-    if (action.isPresent()) {
-      CompleteInfo info = action.get();
-      info.action().failure(info.promise(), info.nodes(), info.result());
+    return action;
+  }
+
+  @Override
+  public void cancelUnregisterNode(OTransactionIdPromise promise) {
+    this.topology.cancelUnregisterPromise(promise);
+  }
+
+  private synchronized List<CompleteInfo> disconnectCoordinated(ONodeId node) {
+    List<CompleteInfo> actions = new ArrayList<>();
+    Iterator<OResponseCollector> iterator = coordination.values().iterator();
+    while (iterator.hasNext()) {
+      OResponseCollector coll = iterator.next();
+      var action = coll.disconnected(node);
+      if (action.isPresent()) {
+        actions.add(action.get());
+      }
+      if (coll.isTotallyFinished()) {
+        iterator.remove();
+      }
     }
+    return actions;
   }
 
   @Override
@@ -568,6 +587,10 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
 
   @Override
   public ODisconnectAction nodeDisconnected(ONodeId node) {
+    List<CompleteInfo> actions = disconnectCoordinated(node);
+    for (var action : actions) {
+      action.action().failure(action.promise(), action.nodes(), action.result());
+    }
     return this.promised.nodeDisconnected(node);
   }
 
