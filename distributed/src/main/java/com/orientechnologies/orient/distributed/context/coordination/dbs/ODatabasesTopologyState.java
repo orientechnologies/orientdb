@@ -379,6 +379,32 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
     }
   }
 
+  public synchronized Optional<OAcceptResult> validateRemoveMembers(
+      ODatabaseId dbId, List<OAddNodeInfo> nodes, long version, OTransactionIdPromise promise) {
+    ODatabaseTopologyState db = this.databases.get(dbId);
+    if (db != null) {
+      return db.promiseRemoveMember(nodes, version, promise);
+    } else {
+      return Optional.of(new ODatabaseMissing(dbId));
+    }
+  }
+
+  public synchronized void removeDatabaseMembers(
+      ODatabaseId dbId, List<OAddNodeInfo> nodes, long version, OTransactionIdPromise promise) {
+    ODatabaseTopologyState db = this.databases.get(dbId);
+    if (db != null) {
+      db.removeMember(nodes, version, promise);
+    }
+  }
+
+  public synchronized void cancelRemoveDatabaseMembers(
+      ODatabaseId dbId, List<OAddNodeInfo> nodes, OTransactionIdPromise promise) {
+    ODatabaseTopologyState db = this.databases.get(dbId);
+    if (db != null) {
+      db.cancelRemoveMemer(nodes, promise);
+    }
+  }
+
   public synchronized void completeSync(OSyncId syncId) {
     OSyncState sync = this.activerSyncs.remove(syncId);
     if (sync != null) {
