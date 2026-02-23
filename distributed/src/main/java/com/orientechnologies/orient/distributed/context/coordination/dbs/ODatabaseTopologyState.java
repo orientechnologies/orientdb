@@ -327,22 +327,22 @@ public class ODatabaseTopologyState {
   }
 
   public synchronized Optional<OAcceptResult> promiseRemoveMember(
-      List<OAddNodeInfo> nodes, long version, OTransactionIdPromise promise) {
+      List<ONodeId> nodes, OVersion version, OTransactionIdPromise promise) {
     for (var node : nodes) {
-      if (!this.nodeStatus.containsKey(node.node())) {
-        return Optional.of(new OMissingNode(node.node()));
+      if (!this.nodeStatus.containsKey(node)) {
+        return Optional.of(new OMissingNode(node));
       }
     }
-    return this.versionPromise.promise(promise, new OVersion(version));
+    return this.versionPromise.promise(promise, version);
   }
 
   public synchronized void removeMember(
-      List<OAddNodeInfo> nodes, long version, OTransactionIdPromise promise) {
+      List<ONodeId> nodes, OVersion version, OTransactionIdPromise promise) {
     for (var node : nodes) {
-      this.nodeStatus.remove(node.node());
-      this.stateListener.onStateChange(id, node.node(), ODatabaseState.Offline);
+      this.nodeStatus.remove(node);
+      this.stateListener.onStateChange(id, node, ODatabaseState.Offline);
     }
-    this.versionPromise.accept(promise, new OVersion(version));
+    this.versionPromise.accept(promise, version);
   }
 
   public synchronized void cancelRemoveMemer(

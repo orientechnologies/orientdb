@@ -1,5 +1,9 @@
 package com.orientechnologies.orient.distributed.context.coordination;
 
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+
 public class OVersion {
   private long version;
 
@@ -44,5 +48,14 @@ public class OVersion {
   @Override
   public String toString() {
     return "OVersion(" + version + ")";
+  }
+
+  public void writeNetwork(DataOutput out) throws IOException {
+    out.writeLong(version);
+  }
+
+  public static OVersion readNetwork(DataInput input) throws IOException {
+    long version = input.readLong();
+    return new OVersion(version);
   }
 }

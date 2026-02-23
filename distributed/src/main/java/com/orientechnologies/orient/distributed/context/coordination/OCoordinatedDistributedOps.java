@@ -60,9 +60,9 @@ public interface OCoordinatedDistributedOps {
   void registerNode(ONodeId node, long version, OTransactionIdPromise promise);
 
   Optional<OAcceptResult> validateUnregisterNode(
-      ONodeId node, long version, OTransactionIdPromise promise);
+      ONodeId node, OVersion version, OTransactionIdPromise promise);
 
-  ODisconnectAction unregisterNode(ONodeId node, long version, OTransactionIdPromise promise);
+  ODisconnectAction unregisterNode(ONodeId node, OVersion version, OTransactionIdPromise promise);
 
   void cancelUnregisterNode(OTransactionIdPromise promise);
 
@@ -113,8 +113,19 @@ public interface OCoordinatedDistributedOps {
   void addDatabaseMember(
       ODatabaseId dbId, List<OAddNodeInfo> nodes, long version, OTransactionIdPromise promise);
 
-  public void cancelAddDatabaseMember(
+  void cancelAddDatabaseMember(
       ODatabaseId dbId, List<OAddNodeInfo> nodes, OTransactionIdPromise promise);
+
+  // Methods for manage the remove of nodes to database
+
+  Optional<OAcceptResult> validateRemoveDatabaseMembers(
+      ODatabaseId dbId, List<ONodeId> nodes, OVersion version, OTransactionIdPromise promise);
+
+  void removeDatabaseMembers(
+      ODatabaseId dbId, List<ONodeId> nodes, OVersion version, OTransactionIdPromise promise);
+
+  void cancelRemoveDatabaseMembers(
+      ODatabaseId dbId, List<ONodeId> nodes, OTransactionIdPromise promise);
 
   // Methods to manage the change state of a database on a specific node
 

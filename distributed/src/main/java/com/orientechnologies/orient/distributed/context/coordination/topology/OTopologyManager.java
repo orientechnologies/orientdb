@@ -97,7 +97,8 @@ public class OTopologyManager implements OTopologyEvents {
     return this.members.size() < this.minimumQuorum;
   }
 
-  public synchronized void unregister(ONodeId node, long version, OTransactionIdPromise promise) {
+  public synchronized void unregister(
+      ONodeId node, OVersion version, OTransactionIdPromise promise) {
     if (members.contains(node)) {
       var newMenbers = new HashSet<ONodeId>(members);
       newMenbers.remove(node);
@@ -108,7 +109,7 @@ public class OTopologyManager implements OTopologyEvents {
       }
       this.nodesInfo.remove(node);
     }
-    this.versionPromise.accept(promise, new OVersion(version));
+    this.versionPromise.accept(promise, version);
   }
 
   public synchronized int getQuorum() {
@@ -284,7 +285,7 @@ public class OTopologyManager implements OTopologyEvents {
   }
 
   public Optional<OAcceptResult> promiseUnregister(
-      ONodeId node, long version, OTransactionIdPromise promise) {
-    return this.versionPromise.promise(promise, new OVersion(version));
+      ONodeId node, OVersion version, OTransactionIdPromise promise) {
+    return this.versionPromise.promise(promise, version);
   }
 }

@@ -77,12 +77,12 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
 
   @Override
   public Optional<OAcceptResult> validateUnregisterNode(
-      ONodeId node, long version, OTransactionIdPromise promise) {
+      ONodeId node, OVersion version, OTransactionIdPromise promise) {
     return topology.promiseUnregister(node, version, promise);
   }
 
   public ODisconnectAction unregisterNode(
-      ONodeId node, long version, OTransactionIdPromise promise) {
+      ONodeId node, OVersion version, OTransactionIdPromise promise) {
     var action = nodeDisconnected(node);
 
     synchronized (this) {
@@ -444,21 +444,38 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
     return databaseTopology;
   }
 
+  @Override
   public Optional<OAcceptResult> validateAddDatabaseMember(
       ODatabaseId dbId, List<OAddNodeInfo> nodes, long version, OTransactionIdPromise promise) {
     return this.databaseTopology.validateAddMember(dbId, nodes, version, promise);
   }
 
+  @Override
   public void addDatabaseMember(
       ODatabaseId dbId, List<OAddNodeInfo> nodes, long version, OTransactionIdPromise promise) {
     this.databaseTopology.addDatabaseMember(dbId, nodes, version, promise);
     notifyUpdate();
   }
 
+  @Override
   public void cancelAddDatabaseMember(
       ODatabaseId dbId, List<OAddNodeInfo> nodes, OTransactionIdPromise promise) {
     this.databaseTopology.cancelAddDatabaseMember(dbId, nodes, promise);
   }
+
+  @Override
+  public Optional<OAcceptResult> validateRemoveDatabaseMembers(
+      ODatabaseId dbId, List<ONodeId> nodes, OVersion version, OTransactionIdPromise promise) {
+    return this.databaseTopology.validateRemoveMembers(dbId, nodes, version, promise);
+  }
+
+  @Override
+  public void removeDatabaseMembers(
+      ODatabaseId dbId, List<ONodeId> nodes, OVersion version, OTransactionIdPromise promise) {}
+
+  @Override
+  public void cancelRemoveDatabaseMembers(
+      ODatabaseId dbId, List<ONodeId> nodes, OTransactionIdPromise promise) {}
 
   @Override
   public Optional<OAcceptResult> validateSetState(

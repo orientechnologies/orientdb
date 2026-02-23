@@ -380,7 +380,7 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
   }
 
   public synchronized Optional<OAcceptResult> validateRemoveMembers(
-      ODatabaseId dbId, List<OAddNodeInfo> nodes, long version, OTransactionIdPromise promise) {
+      ODatabaseId dbId, List<ONodeId> nodes, OVersion version, OTransactionIdPromise promise) {
     ODatabaseTopologyState db = this.databases.get(dbId);
     if (db != null) {
       return db.promiseRemoveMember(nodes, version, promise);
@@ -390,7 +390,7 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
   }
 
   public synchronized void removeDatabaseMembers(
-      ODatabaseId dbId, List<OAddNodeInfo> nodes, long version, OTransactionIdPromise promise) {
+      ODatabaseId dbId, List<ONodeId> nodes, OVersion version, OTransactionIdPromise promise) {
     ODatabaseTopologyState db = this.databases.get(dbId);
     if (db != null) {
       db.removeMember(nodes, version, promise);

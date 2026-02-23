@@ -21,6 +21,7 @@ import com.orientechnologies.orient.distributed.context.coordination.OCoordinate
 import com.orientechnologies.orient.distributed.context.coordination.OOperationStart;
 import com.orientechnologies.orient.distributed.context.coordination.OResponseCollector;
 import com.orientechnologies.orient.distributed.context.coordination.OResponseCollectorImpl;
+import com.orientechnologies.orient.distributed.context.coordination.OVersion;
 import com.orientechnologies.orient.distributed.context.coordination.action.OCompleteAction;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabaseState;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabaseStateChangeListener;
@@ -214,8 +215,8 @@ public class OCoordinatedDistributedOpsTest
     ONodeId nodeIdFour = newRandomNodeId();
     ops.registerNode(nodeIdFour, 0, promise);
 
-    ops.unregisterNode(nodeIdthree, 0, promise);
-    ops.unregisterNode(nodeIdFour, 0, promise);
+    ops.unregisterNode(nodeIdthree, new OVersion(0), promise);
+    ops.unregisterNode(nodeIdFour, new OVersion(0), promise);
 
     var res = ops.start(action);
     ops.nodeSuccess(nodeId, res.get().promise());
@@ -239,7 +240,7 @@ public class OCoordinatedDistributedOpsTest
     Optional<OOperationStart> start = ops.start(action);
     assertTrue(start.get().nodes().containsAll(nodes));
     ops.nodeSuccess(nodeId, start.get().promise());
-    ops.unregisterNode(nodeIdtwo, 0, esPromise);
+    ops.unregisterNode(nodeIdtwo, new OVersion(0), esPromise);
     assertTrue(action.failure);
     assertFalse(action.success);
     assertTrue(action.result.get() instanceof OQuorumNotReached);
@@ -265,7 +266,7 @@ public class OCoordinatedDistributedOpsTest
     OTransactionIdPromise promise = start.get().promise();
     ops.nodeSuccess(nodeId, promise);
     ops.nodeSuccess(nodeIdtwo, promise);
-    ops.unregisterNode(nodeIdthree, 0, esPromise);
+    ops.unregisterNode(nodeIdthree, new OVersion(0), esPromise);
     ops.nodeFailure(nodeIdFour, promise, new OInvalidSequential(0, 0));
     assertTrue(action.failure);
     assertFalse(action.success);
