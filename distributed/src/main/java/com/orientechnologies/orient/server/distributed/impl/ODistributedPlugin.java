@@ -491,15 +491,12 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
       final ORemoteTask task = iRequest.getTask();
       final boolean checkNodesAreOnline = task.isNodeOnlineRequired();
 
-      final ODistributedConfiguration cfg;
       final Set<String> nodesConcurToTheQuorum;
       int availableNodes = iNodes.size();
       int onlineMasters;
       if (databaseName != null) {
-        cfg = getDatabaseConfiguration(databaseName);
         nodesConcurToTheQuorum =
-            getDistributedStrategy()
-                .getNodesConcurInQuorum(this, databaseName, cfg, iRequest, iNodes);
+            getDistributedStrategy().getNodesConcurInQuorum(this, databaseName, iRequest, iNodes);
 
         // AFTER COMPUTED THE QUORUM, REMOVE THE OFFLINE NODES TO HAVE THE LIST OF REAL AVAILABLE
         // NODES
@@ -524,7 +521,6 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
         //                .size();
 
       } else {
-        cfg = null;
         nodesConcurToTheQuorum = new HashSet<String>(iNodes);
         onlineMasters = availableNodes;
       }
@@ -534,7 +530,7 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
       final int quorum =
           calculateQuorum(
               task.getQuorumType(),
-              cfg,
+              null,
               expectedResponses,
               nodesConcurToTheQuorum.size(),
               onlineMasters,
@@ -544,7 +540,7 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
       final boolean groupByResponse =
           task.getResultStrategy() != OAbstractRemoteTask.RESULT_STRATEGY.UNION;
 
-      final boolean waitLocalNode = waitForLocalNode(cfg, iNodes);
+      final boolean waitLocalNode = waitForLocalNode(null, iNodes);
 
       // CREATE THE RESPONSE MANAGER
       final ODistributedResponseManager currentResponseMgr =

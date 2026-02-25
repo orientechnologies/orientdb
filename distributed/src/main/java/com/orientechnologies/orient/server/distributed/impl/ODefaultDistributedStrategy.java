@@ -54,7 +54,6 @@ public class ODefaultDistributedStrategy implements ODistributedStrategy {
   public Set<String> getNodesConcurInQuorum(
       final ODistributedServerManager manager,
       final String databaseName,
-      final ODistributedConfiguration cfg,
       final ODistributedRequest request,
       final Collection<String> iNodes) {
     OrientDBDistributed ctx = (OrientDBDistributed) manager.getServerInstance().getDatabases();
