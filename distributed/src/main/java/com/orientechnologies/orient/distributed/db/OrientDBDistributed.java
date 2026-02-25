@@ -70,6 +70,7 @@ import com.orientechnologies.orient.distributed.context.retryable.OAddDatabaseMe
 import com.orientechnologies.orient.distributed.context.retryable.ODeclareDatabaseRetryOperation;
 import com.orientechnologies.orient.distributed.context.retryable.ODiscoverActionRetryOperation;
 import com.orientechnologies.orient.distributed.context.retryable.ODropRetryOperation;
+import com.orientechnologies.orient.distributed.context.retryable.ORemoveMemberRetryOperation;
 import com.orientechnologies.orient.distributed.context.retryable.ORetryInfo;
 import com.orientechnologies.orient.distributed.context.retryable.ORetryOperation;
 import com.orientechnologies.orient.distributed.context.retryable.OSetDatabaseStateRetryOperation;
@@ -1622,5 +1623,16 @@ public class OrientDBDistributed extends OrientDBEmbedded
     //    final ODistributedConfiguration cfg = getDistributedConfiguration(databaseName);
     //    final ODistributedConfiguration.ROLES role = cfg.getServerRole(node);
     //    return role == ODistributedConfiguration.ROLES.MASTER;
+  }
+
+  public boolean removeDatabaseMember(ODatabaseId databaseId, ONodeId node) {
+    Future<Optional<OAcceptResult>> future =
+        retryOperation(new ORemoveMemberRetryOperation(databaseId, List.of(node)));
+
+    try {
+      return future.get().isEmpty();
+    } catch (InterruptedException | ExecutionException e) {
+      return false;
+    }
   }
 }

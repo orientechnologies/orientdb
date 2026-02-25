@@ -311,13 +311,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract
     if (!(database instanceof ODatabaseDocumentDistributed)) {
       throw new OCommandExecutionException("OrientDB is not started in distributed mode");
     }
-    final ODistributedPlugin dManager =
-        (ODistributedPlugin) ((ODatabaseDocumentDistributed) database).getDistributedManager();
-    if (dManager == null || !dManager.isEnabled()) {
-      throw new OCommandExecutionException("OrientDB is not started in distributed mode");
-    }
     final String databaseName = database.getName();
-    dManager.getDatabaseConfiguration(databaseName);
     OrientDBDistributed context = ((ODatabaseDocumentDistributed) database).getContext();
     context.setDatabaseStatus(
         new ONodeId(nodeName), databaseName, ODistributedServerManager.DB_STATUS.valueOf(status));

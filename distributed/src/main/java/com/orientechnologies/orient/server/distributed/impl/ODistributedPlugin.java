@@ -2134,15 +2134,6 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
     return clusterManager.getNodeConfigurationByUuid(iNode, useCache);
   }
 
-  public boolean removeNodeFromConfiguration(
-      String nodeName,
-      String databaseName,
-      boolean removeOnlyDynamicServers,
-      boolean statusOffline) {
-    return clusterManager.removeNodeFromConfiguration(
-        nodeName, databaseName, removeOnlyDynamicServers, statusOffline);
-  }
-
   public HazelcastInstance getHazelcastInstance() {
     return clusterManager.getHazelcastInstance();
   }

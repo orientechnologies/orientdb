@@ -11,17 +11,14 @@ import static org.mockito.Mockito.when;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
-import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxSuccess;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import org.apache.commons.collections4.CollectionUtils;
 import org.junit.Before;
 import org.junit.Test;
@@ -47,12 +44,10 @@ public class ODistributedTxCoordinatorTest {
     String dbName = "testDB";
     String localNode = "node0";
     List<String> remoteNodes = Arrays.asList("node1", "node2");
-    Set<String> clusters = new HashSet<>(Collections.singleton("c1"));
 
     ODistributedSynchronizedSequence seq =
         new ODistributedSynchronizedSequence(new ONodeId(localNode), 10);
     OTransactionInternal tx = mock(OTransactionInternal.class);
-    ODistributedConfiguration distributedConfig = mock(ODistributedConfiguration.class);
     ODistributedTxResponseManager responseManager = mock(ODistributedTxResponseManager.class);
 
     ODistributedTxCoordinator coordinator =
@@ -65,7 +60,6 @@ public class ODistributedTxCoordinatorTest {
     when(databaseDocument.getContext()).thenReturn(context);
     when(tx.getIndexOperations()).thenReturn(new HashMap<>());
     when(distributedDatabase.nextId()).thenReturn(seq.next());
-    when(serverManager.getDatabaseConfiguration(any())).thenReturn(distributedConfig);
     when(serverManager.nextRequestId()).thenReturn(new ODistributedRequestId());
     when(responseManager.isQuorumReached()).thenReturn(true);
     when(databaseDocument.beginDistributedTx(any(), any(), eq(tx), eq(true), anyInt()))

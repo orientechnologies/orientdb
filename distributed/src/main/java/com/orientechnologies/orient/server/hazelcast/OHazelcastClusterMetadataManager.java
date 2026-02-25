@@ -900,68 +900,6 @@ public class OHazelcastClusterMetadataManager
     } else throw new ODistributedException("Cannot find distributed 'doc' configuration");
   }
 
-  public boolean removeNodeFromConfiguration(
-      final String nodeLeftName,
-      final String databaseName,
-      final boolean removeOnlyDynamicServers,
-      final boolean statusOffline) {
-    OrientDBDistributed ctx = (OrientDBDistributed) serverInstance.getDatabases();
-    ODistributedConfiguration cfgr = ctx.getDistributedConfiguration(databaseName);
-    if (cfgr == null) {
-      return false;
-    }
-    final OModifiableDistributedConfiguration cfg = cfgr.modify();
-
-    if (removeOnlyDynamicServers) {
-      // CHECK THE SERVER IS NOT REGISTERED STATICALLY
-      final String dc = cfg.getDataCenterOfServer(nodeLeftName);
-      if (dc != null) {
-        logger.infoNode(
-            nodeName,
-            "Cannot remove server '%s' because it is enlisted in data center '%s' configuration for"
-                + " database '%s'",
-            nodeLeftName,
-            dc,
-            databaseName);
-        return false;
-      }
-
-      // CHECK THE SERVER IS NOT REGISTERED IN SERVERS
-      final Set<String> registeredServers = cfg.getRegisteredServers();
-      if (registeredServers.contains(nodeLeftName)) {
-        logger.infoNode(
-            nodeName,
-            "Cannot remove server '%s' because it is enlisted in 'servers' of the distributed"
-                + " configuration for database '%s'",
-            nodeLeftName,
-            databaseName);
-        return false;
-      }
-    }
-
-    final boolean found =
-        executeInDistributedDatabaseLock(
-            databaseName,
-            20000,
-            cfg,
-            new OCallable<Boolean, OModifiableDistributedConfiguration>() {
-              @Override
-              public Boolean call(OModifiableDistributedConfiguration cfg) {
-                return cfg.removeServer(nodeLeftName) != null;
-              }
-            });
-
-    final ODistributedServerManager.DB_STATUS nodeLeftStatus =
-        getDatabaseStatus(nodeLeftName, databaseName);
-    if (statusOffline && nodeLeftStatus != ODistributedServerManager.DB_STATUS.OFFLINE)
-      setDatabaseStatus(nodeLeftName, databaseName, ODistributedServerManager.DB_STATUS.OFFLINE);
-    else if (!statusOffline && nodeLeftStatus != ODistributedServerManager.DB_STATUS.NOT_AVAILABLE)
-      setDatabaseStatus(
-          nodeLeftName, databaseName, ODistributedServerManager.DB_STATUS.NOT_AVAILABLE);
-
-    return found;
-  }
-
   public Member removeFromLocalActiveServerList(String nodeLeftName) {
     final Member member = activeNodes.remove(nodeLeftName);
     if (member == null) return null;

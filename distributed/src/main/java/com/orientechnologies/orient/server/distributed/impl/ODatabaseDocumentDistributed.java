@@ -239,13 +239,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     if (distributedManager == null || !distributedManager.isEnabled())
       throw new OCommandExecutionException("OrientDB is not started in distributed mode");
 
-    final String databaseName = getName();
-
-    // The last parameter (true) indicates to set the node's database status to OFFLINE.
-    // If this is changed to false, the node will be set to NOT_AVAILABLE, and then the
-    // auto-repairer will
-    // re-synchronize the database on the node, and then set it to ONLINE.
-    return distributedManager.removeNodeFromConfiguration(serverName, databaseName, false, true);
+    return getContext().removeDatabaseMember(getStorage().getDatbaseId(), new ONodeId(serverName));
   }
 
   @Override
