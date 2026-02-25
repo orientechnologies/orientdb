@@ -18,7 +18,6 @@
 package com.orientechnologies.agent;
 
 import com.orientechnologies.agent.functions.OAgentProfilerService;
-import com.orientechnologies.agent.ha.OEnterpriseDistributedStrategy;
 import com.orientechnologies.agent.http.command.OServerCommandDistributedManager;
 import com.orientechnologies.agent.profiler.OEnterpriseProfiler;
 import com.orientechnologies.agent.services.OEnterpriseService;
@@ -235,12 +234,6 @@ public class OEnterpriseAgent extends OServerPluginAbstract
     return false;
   }
 
-  private void installComponents() {
-    if (server.getDistributedManager() != null) {
-      server.getDistributedManager().setDistributedStrategy(new OEnterpriseDistributedStrategy());
-    }
-  }
-
   // OPluginLifecycleListener
   public void onBeforeConfig(
       final OServerPlugin plugin, final OServerParameterConfiguration[] cfg) {}
@@ -248,11 +241,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract
   public void onAfterConfig(
       final OServerPlugin plugin, final OServerParameterConfiguration[] cfg) {}
 
-  public void onBeforeStartup(final OServerPlugin plugin) {
-    if (plugin instanceof ODistributedServerManager) {
-      installComponents();
-    }
-  }
+  public void onBeforeStartup(final OServerPlugin plugin) {}
 
   public void onAfterStartup(final OServerPlugin plugin) {}
 
