@@ -608,6 +608,7 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
     for (var action : actions) {
       action.action().failure(action.promise(), action.nodes(), action.result());
     }
+    this.databaseTopology.nodeDisconnected(node);
     return this.promised.nodeDisconnected(node);
   }
 

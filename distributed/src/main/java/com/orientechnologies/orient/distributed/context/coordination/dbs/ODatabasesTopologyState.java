@@ -469,4 +469,19 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
       db.cancelDrop(promise, version);
     }
   }
+
+  public synchronized void nodeDisconnected(ONodeId node) {
+    var iter = this.activerSyncs.entrySet().iterator();
+    while (iter.hasNext()) {
+      var sync = iter.next().getValue();
+      if (node.equals(sync.getSender()) || node.equals(sync.getReceiver())) {
+        var db = this.databases.get(sync.getDbId());
+        if (db != null) {
+          db.completeSync(sync.getSyncId());
+        }
+        sync.close();
+        iter.remove();
+      }
+    }
+  }
 }
