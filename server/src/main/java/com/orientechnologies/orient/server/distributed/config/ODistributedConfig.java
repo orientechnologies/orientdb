@@ -1,13 +1,14 @@
 package com.orientechnologies.orient.server.distributed.config;
 
-import com.orientechnologies.orient.core.config.OContextConfiguration;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.OrientDBConfigBuilder;
+import com.orientechnologies.orient.core.db.config.OLocalBinaryListenersConfig;
 import com.orientechnologies.orient.core.db.config.OMulticastConfguration;
-import com.orientechnologies.orient.core.db.config.ONodeConfigurationBuilder;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.server.config.OServerConfiguration;
+import com.orientechnologies.orient.server.config.OServerNetworkListenerConfiguration;
 import com.orientechnologies.orient.server.config.distributed.OServerDistributedConfiguration;
 import com.orientechnologies.orient.server.config.distributed.OServerDistributedNetworkMulticastConfiguration;
+import com.orientechnologies.orient.server.network.OServerNetworkListener;
 
 public class ODistributedConfig {
 
@@ -65,13 +66,11 @@ public class ODistributedConfig {
     }
   }
 
-  public static OrientDBConfig buildConfig(
-      OContextConfiguration contextConfiguration, OServerDistributedConfiguration distributed) {
-
-    OrientDBConfigBuilder builder = OrientDBConfig.builder().fromContext(contextConfiguration);
-
-    ONodeConfigurationBuilder nodeConfigurationBuilder = builder.getNodeConfigurationBuilder();
-
+  public static OrientDBConfigBuilder buildNodeConfig(
+      OrientDBConfigBuilder configBuilder,
+      OServerDistributedConfiguration distributed,
+      OServerConfiguration configuration) {
+    var nodeConfigurationBuilder = configBuilder.getNodeConfigurationBuilder();
     nodeConfigurationBuilder
         .setNodeName(distributed.nodeName)
         .setQuorum(distributed.quorum)
@@ -88,6 +87,15 @@ public class ODistributedConfig {
             .setDiscoveryPorts(multicast.discoveryPorts)
             .build());
 
-    return builder.build();
+    var listenerBuilder = OLocalBinaryListenersConfig.builder();
+    for (OServerNetworkListenerConfiguration listener : configuration.network.listeners) {
+      if ("binary".equals(listener.protocol)) {
+        listenerBuilder.addListener(
+            listener.ipAddress, OServerNetworkListener.getPorts(listener.portRange));
+      }
+    }
+    nodeConfigurationBuilder = nodeConfigurationBuilder.setListeners(listenerBuilder.build());
+
+    return configBuilder;
   }
 }

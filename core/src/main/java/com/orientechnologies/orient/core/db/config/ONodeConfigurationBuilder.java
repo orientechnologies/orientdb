@@ -11,6 +11,7 @@ public class ONodeConfigurationBuilder {
   private String groupPassword = "OrientDB";
   private OMulticastConfguration multicastConfguration;
   private OUDPUnicastConfiguration unicastConfiguration;
+  private OLocalBinaryListenersConfig listeners;
 
   protected ONodeConfigurationBuilder() {}
 
@@ -49,17 +50,40 @@ public class ONodeConfigurationBuilder {
     return this;
   }
 
+  public ONodeConfigurationBuilder setListeners(OLocalBinaryListenersConfig listeners) {
+    this.listeners = listeners;
+    return this;
+  }
+
   public ONodeConfiguration build() {
     if (multicastConfguration != null) {
       return new ONodeConfiguration(
-          nodeName, groupName, groupPassword, quorum, tcpPort, multicastConfguration);
+          nodeName,
+          groupName,
+          groupPassword,
+          quorum,
+          tcpPort,
+          multicastConfguration,
+          this.listeners);
     } else if (unicastConfiguration != null) {
       return new ONodeConfiguration(
-          nodeName, groupName, groupPassword, quorum, tcpPort, unicastConfiguration);
+          nodeName,
+          groupName,
+          groupPassword,
+          quorum,
+          tcpPort,
+          unicastConfiguration,
+          this.listeners);
     } else {
       // empty multicast as fallback... review...
       return new ONodeConfiguration(
-          nodeName, groupName, groupPassword, quorum, tcpPort, new OMulticastConfguration());
+          nodeName,
+          groupName,
+          groupPassword,
+          quorum,
+          tcpPort,
+          new OMulticastConfguration(),
+          this.listeners);
     }
   }
 }

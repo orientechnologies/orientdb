@@ -40,7 +40,6 @@ import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.OrientDBConfigBuilder;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
-import com.orientechnologies.orient.core.db.config.ONodeConfigurationBuilder;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OStorageException;
@@ -59,7 +58,6 @@ import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.config.OServerSocketFactoryConfiguration;
 import com.orientechnologies.orient.server.config.OServerStorageConfiguration;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
-import com.orientechnologies.orient.server.config.distributed.OServerDistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.config.ODistributedConfig;
 import com.orientechnologies.orient.server.handler.OConfigurableHooksManager;
@@ -359,42 +357,25 @@ public class OServer {
 
     OrientDBConfigBuilder builder = OrientDBConfig.builder();
     for (OServerUserConfiguration user : serverCfg.getUsers()) {
-      builder.addGlobalUser(user.getName(), user.getPassword(), user.getResources());
+      builder = builder.addGlobalUser(user.getName(), user.getPassword(), user.getResources());
     }
-    OServerDistributedConfiguration distributedConfig = serverCfg.getConfiguration().distributed;
-    if (distributedConfig != null) {
-      if (distributedConfig.enabled) {
-        ONodeConfigurationBuilder ncb = builder.getNodeConfigurationBuilder();
-        ncb.setQuorum(distributedConfig.quorum);
-        if (distributedConfig.group != null) {
-          ncb.setGroupName(distributedConfig.group.name);
-        }
-        ncb.setNodeName(distributedConfig.nodeName);
-      }
-    }
-    OrientDBConfig config =
+
+    builder =
         builder
             .fromContext(contextConfiguration)
-            .setSecurityConfig(new OServerSecurityConfig(this, this.serverCfg))
-            .build();
+            .setSecurityConfig(new OServerSecurityConfig(this, this.serverCfg));
 
     OServerConfiguration configuration = getConfiguration();
-
     if (configuration.distributed != null && configuration.distributed.enabled) {
-      try {
-        OrientDBConfig orientDBConfig =
-            ODistributedConfig.buildConfig(
-                contextConfiguration, ODistributedConfig.fromEnv(configuration.distributed));
-        databases = OrientDBInternal.distributed(this.databaseDirectory, orientDBConfig);
-      } catch (ODatabaseException ex) {
-        databases = OrientDBInternal.embedded(this.databaseDirectory, config);
-      }
-    } else {
-      try {
-        databases = OrientDBInternal.distributed(this.databaseDirectory, config);
-      } catch (ODatabaseException ex) {
-        databases = OrientDBInternal.embedded(this.databaseDirectory, config);
-      }
+      builder =
+          ODistributedConfig.buildNodeConfig(
+              builder, ODistributedConfig.fromEnv(configuration.distributed), configuration);
+    }
+
+    try {
+      databases = OrientDBInternal.distributed(this.databaseDirectory, builder.build());
+    } catch (ODatabaseException ex) {
+      databases = OrientDBInternal.embedded(this.databaseDirectory, builder.build());
     }
 
     if (databases instanceof OServerAware) {
@@ -500,25 +481,7 @@ public class OServer {
 
       running = true;
 
-      String httpAddress = "localhost:2480";
-      boolean ssl = false;
-      for (OServerNetworkListener listener : getNetworkListeners()) {
-        if (listener.getProtocolType().getName().equals(ONetworkProtocolHttpDb.class.getName())) {
-          httpAddress = listener.getListeningAddress(true);
-          ssl = listener.getSocketFactory().isEncrypted();
-        }
-      }
-      String proto;
-      if (ssl) {
-        proto = "https";
-      } else {
-        proto = "http";
-      }
-
-      logger.info(
-          "OrientDB Studio available at $ANSI{blue %s://%s/studio/index.html}", proto, httpAddress);
-      logger.info(
-          "$ANSI{green:italic OrientDB Server is active} v" + OConstants.getVersion() + ".");
+      logHttpServerInfo();
     } catch (ClassNotFoundException
         | InstantiationException
         | IllegalAccessException
@@ -538,6 +501,27 @@ public class OServer {
     }
 
     return this;
+  }
+
+  private void logHttpServerInfo() {
+    String httpAddress = "localhost:2480";
+    boolean ssl = false;
+    for (OServerNetworkListener listener : getNetworkListeners()) {
+      if (listener.getProtocolType().getName().equals(ONetworkProtocolHttpDb.class.getName())) {
+        httpAddress = listener.getListeningAddress(true);
+        ssl = listener.getSocketFactory().isEncrypted();
+      }
+    }
+    String proto;
+    if (ssl) {
+      proto = "https";
+    } else {
+      proto = "http";
+    }
+
+    logger.info(
+        "OrientDB Studio available at $ANSI{blue %s://%s/studio/index.html}", proto, httpAddress);
+    logger.info("$ANSI{green:italic OrientDB Server is active} v" + OConstants.getVersion() + ".");
   }
 
   public void removeShutdownHook() {

@@ -3,15 +3,14 @@ package com.orientechnologies.orient.core.db.config;
 public class ONodeConfiguration {
   // Node name is redundant because it can come also from user configuration appart been stored in
   // the node identity
-  private String nodeName;
-  private String groupName;
-  private String groupPassword;
-  private int quorum;
-  private Integer tcpPort;
-  private OMulticastConfguration multicast;
-  private OUDPUnicastConfiguration udpUnicast;
-
-  protected ONodeConfiguration() {}
+  private final String nodeName;
+  private final String groupName;
+  private final String groupPassword;
+  private final int quorum;
+  private final Integer tcpPort;
+  private final OMulticastConfguration multicast;
+  private final OUDPUnicastConfiguration udpUnicast;
+  private final OLocalBinaryListenersConfig listeners;
 
   protected ONodeConfiguration(
       String nodeName,
@@ -19,13 +18,16 @@ public class ONodeConfiguration {
       String groupPassword,
       int quorum,
       Integer tcpPort,
-      OMulticastConfguration multicast) {
+      OMulticastConfguration multicast,
+      OLocalBinaryListenersConfig listeners) {
     this.nodeName = nodeName;
     this.groupName = groupName;
     this.groupPassword = groupPassword;
     this.quorum = quorum;
     this.tcpPort = tcpPort;
     this.multicast = multicast;
+    this.udpUnicast = null;
+    this.listeners = listeners;
   }
 
   protected ONodeConfiguration(
@@ -34,53 +36,36 @@ public class ONodeConfiguration {
       String groupPassword,
       int quorum,
       Integer tcpPort,
-      OUDPUnicastConfiguration unicastConfig) {
+      OUDPUnicastConfiguration unicastConfig,
+      OLocalBinaryListenersConfig listeners) {
     this.nodeName = nodeName;
     this.groupName = groupName;
     this.groupPassword = groupPassword;
     this.quorum = quorum;
     this.tcpPort = tcpPort;
+    this.multicast = null;
     this.udpUnicast = unicastConfig;
+    this.listeners = listeners;
   }
 
   public int getQuorum() {
     return quorum;
   }
 
-  protected void setQuorum(int quorum) {
-    this.quorum = quorum;
-  }
-
   public String getGroupName() {
     return groupName;
-  }
-
-  public void setGroupName(String groupName) {
-    this.groupName = groupName;
   }
 
   public Integer getTcpPort() {
     return tcpPort;
   }
 
-  public void setTcpPort(int tcpPort) {
-    this.tcpPort = tcpPort;
-  }
-
   public String getGroupPassword() {
     return groupPassword;
   }
 
-  public void setGroupPassword(String groupPassword) {
-    this.groupPassword = groupPassword;
-  }
-
   public OMulticastConfguration getMulticast() {
     return multicast;
-  }
-
-  protected void setMulticast(OMulticastConfguration multicast) {
-    this.multicast = multicast;
   }
 
   public static ONodeConfigurationBuilder builder() {
@@ -93,5 +78,9 @@ public class ONodeConfiguration {
 
   public OUDPUnicastConfiguration getUdpUnicast() {
     return udpUnicast;
+  }
+
+  public OLocalBinaryListenersConfig getListeners() {
+    return listeners;
   }
 }
