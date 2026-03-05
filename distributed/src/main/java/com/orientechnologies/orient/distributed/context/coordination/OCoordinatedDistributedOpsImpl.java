@@ -635,4 +635,21 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   public int getDatabaseQuorum(ODatabaseId databaseId) {
     return this.databaseTopology.getQuorum(databaseId);
   }
+
+  @Override
+  public Optional<OAcceptResult> validateDropDatabase(
+      ODatabaseId dbId, OVersion version, OTransactionIdPromise promise) {
+    return this.databaseTopology.validateDropDatabase(promise, dbId, version);
+  }
+
+  @Override
+  public void dropDatabase(ODatabaseId dbId, OVersion version, OTransactionIdPromise promise) {
+    this.databaseTopology.dropDatabase(promise, dbId, version);
+  }
+
+  @Override
+  public void cancelDropDatabase(
+      ODatabaseId dbId, OVersion version, OTransactionIdPromise promise) {
+    this.databaseTopology.cancelDropDatabase(dbId, version, promise);
+  }
 }

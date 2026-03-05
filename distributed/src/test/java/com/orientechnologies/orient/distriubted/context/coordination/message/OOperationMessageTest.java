@@ -8,6 +8,7 @@ import com.orientechnologies.orient.core.transaction.OGroupId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
+import com.orientechnologies.orient.distributed.context.coordination.OVersion;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabaseState;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ONodeRole;
 import com.orientechnologies.orient.distributed.context.coordination.message.OProposeOp;
@@ -68,8 +69,11 @@ public class OOperationMessageTest {
 
   @Test
   public void proposeDrop() throws IOException {
-    ODropDbMessage read = writeRead(new ODropDbMessage("db-name"));
-    assertEquals(read.getName(), "db-name");
+    var version = new OVersion(0);
+    var dbId = newDatabaseId();
+    ODropDbMessage read = writeRead(new ODropDbMessage(dbId, version));
+    assertEquals(read.getDbId(), dbId);
+    assertEquals(read.getVersion(), version);
   }
 
   @Test

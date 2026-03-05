@@ -35,6 +35,7 @@ import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import com.orientechnologies.orient.distributed.context.ONodeState;
 import com.orientechnologies.orient.distributed.context.coordination.OCoordinatedDistributedOps;
 import com.orientechnologies.orient.distributed.context.coordination.ODisconnectAction;
+import com.orientechnologies.orient.distributed.context.coordination.OVersion;
 import com.orientechnologies.orient.distributed.context.coordination.action.OCompleteAction;
 import com.orientechnologies.orient.distributed.context.coordination.action.OMergeCompleteAction;
 import com.orientechnologies.orient.distributed.context.coordination.action.ORecoordinateCompleteAction;
@@ -523,11 +524,17 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   private void dropFlow(String name) {
-    Future<Optional<OAcceptResult>> droped = retryOperation(new ODropRetryOperation(name));
-    try {
-      droped.get(10, TimeUnit.MINUTES);
-    } catch (InterruptedException | ExecutionException | TimeoutException e) {
-      logger.debug("fail wait on drop", e);
+    OCoordinatedDistributedOps ops = getNodeState().getOps();
+    var id = ops.getDatabaseTopology().getDatabaseId(name);
+    if (id.isPresent()) {
+      Future<Optional<OAcceptResult>> droped = retryOperation(new ODropRetryOperation(id.get()));
+      try {
+        droped.get(10, TimeUnit.MINUTES);
+      } catch (InterruptedException | ExecutionException | TimeoutException e) {
+        logger.debug("fail wait on drop", e);
+      }
+    } else {
+      logger.warn("no database defined with name %s", name);
     }
   }
 
@@ -699,13 +706,6 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   public ODistributedDatabaseImpl unregisterDatabase(final String iDatabaseName) {
-    try {
-      setDatabaseStatus(iDatabaseName, DB_STATUS.OFFLINE);
-    } catch (Exception t) {
-      logger.warnNode(getNodeName(), "error un-registering database", t);
-      // IGNORE IT
-    }
-
     final ODistributedDatabaseImpl db = getDatabase(iDatabaseName);
     if (db != null) {
       db.onDropShutdown();
@@ -1634,5 +1634,20 @@ public class OrientDBDistributed extends OrientDBEmbedded
     } catch (InterruptedException | ExecutionException e) {
       return false;
     }
+  }
+
+  public Optional<OAcceptResult> validateDropDatabase(
+      ODatabaseId dbId, OVersion version, OTransactionIdPromise promise) {
+    return this.getNodeState().getOps().validateDropDatabase(dbId, version, promise);
+  }
+
+  public void distributedDrop(ODatabaseId dbId, OVersion version, OTransactionIdPromise promise) {
+    this.internalDrop(getDbName(dbId));
+    this.getNodeState().getOps().dropDatabase(dbId, version, promise);
+  }
+
+  public void cancelDropDatabase(
+      ODatabaseId dbId, OVersion version, OTransactionIdPromise promise) {
+    this.getNodeState().getOps().cancelDropDatabase(dbId, version, promise);
   }
 }

@@ -438,4 +438,35 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
     }
     return -1;
   }
+
+  public synchronized Set<OSyncState> getActiveSyncs() {
+    return new HashSet<>(this.activerSyncs.values());
+  }
+
+  public synchronized Optional<OAcceptResult> validateDropDatabase(
+      OTransactionIdPromise promise, ODatabaseId dbId, OVersion version) {
+    var db = this.databases.get(dbId);
+    if (db != null) {
+      return db.validateDrop(promise, version);
+    } else {
+      return Optional.of(new ODatabaseMissing(dbId));
+    }
+  }
+
+  public synchronized void dropDatabase(
+      OTransactionIdPromise promise, ODatabaseId dbId, OVersion version) {
+    var db = this.databases.remove(dbId);
+    if (db != null) {
+      /// Just .... because
+      db.drop(promise, version);
+    }
+  }
+
+  public void cancelDropDatabase(
+      ODatabaseId dbId, OVersion version, OTransactionIdPromise promise) {
+    var db = this.databases.get(dbId);
+    if (db != null) {
+      db.cancelDrop(promise, version);
+    }
+  }
 }

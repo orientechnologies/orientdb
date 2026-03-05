@@ -1283,7 +1283,9 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           .execute(
               () -> {
                 logger.warnNode(
-                    getLocalNodeName(), "Missing DDL operation, forcing database re-install");
+                    getLocalNodeName(),
+                    "Missing DDL operation, forcing database '%s' re-install",
+                    getName());
                 forceRsync();
               });
       return new OTxInvalidSequential();

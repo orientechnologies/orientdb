@@ -10,6 +10,7 @@ import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
+import com.orientechnologies.orient.distributed.context.coordination.OVersion;
 import com.orientechnologies.orient.distributed.context.coordination.message.OCanSync;
 import com.orientechnologies.orient.distributed.context.coordination.message.OConfirmOp;
 import com.orientechnologies.orient.distributed.context.coordination.message.OFailOp;
@@ -266,7 +267,9 @@ public class CoordinationMessagesSerializationTest {
   @Test
   public void retryProposeTest() throws IOException {
     var promise = newPromiseId();
-    var operation = new ODropDbMessage("db-name");
+    var version = new OVersion(0);
+    var dbId = newDatabaseId();
+    var operation = new ODropDbMessage(dbId, version);
     ORetryProposeOp op = new ORetryProposeOp(promise, operation);
     ORetryProposeOp read = writeRead(op);
     assertTrue(read.getOp() instanceof ODropDbMessage);

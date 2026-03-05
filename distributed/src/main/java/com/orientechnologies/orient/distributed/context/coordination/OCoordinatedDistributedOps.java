@@ -209,4 +209,11 @@ public interface OCoordinatedDistributedOps {
   Set<ONodeId> checkOffline(long time);
 
   int getDatabaseQuorum(ODatabaseId databaseId);
+
+  Optional<OAcceptResult> validateDropDatabase(
+      ODatabaseId dbId, OVersion version, OTransactionIdPromise promise);
+
+  void dropDatabase(ODatabaseId dbId, OVersion version, OTransactionIdPromise promise);
+
+  void cancelDropDatabase(ODatabaseId dbId, OVersion version, OTransactionIdPromise promise);
 }

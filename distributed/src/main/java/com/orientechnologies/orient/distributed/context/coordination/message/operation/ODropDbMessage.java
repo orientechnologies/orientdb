@@ -1,6 +1,8 @@
 package com.orientechnologies.orient.distributed.context.coordination.message.operation;
 
+import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
+import com.orientechnologies.orient.distributed.context.coordination.OVersion;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import java.io.DataInput;
@@ -10,32 +12,31 @@ import java.util.Optional;
 
 public class ODropDbMessage implements OOperationMessage {
 
-  private String name;
+  private final ODatabaseId dbId;
+  private final OVersion version;
 
-  public ODropDbMessage(String name) {
-    this.name = name;
+  public ODropDbMessage(ODatabaseId name, OVersion version) {
+    this.dbId = name;
+    this.version = version;
   }
 
   public void apply(OrientDBDistributed ctx, OTransactionIdPromise promise) {
-    ctx.internalDrop(name);
+    ctx.distributedDrop(this.dbId, this.version, promise);
   }
 
   public Optional<OAcceptResult> validate(OrientDBDistributed ctx, OTransactionIdPromise promise) {
-    boolean result = ctx.exists(name, null, null);
-    if (!result) {
-      // Send Error message
-    }
-    return Optional.empty();
+    return ctx.validateDropDatabase(this.dbId, this.version, promise);
   }
 
   public static ODropDbMessage readNetwork(DataInput input) throws IOException {
-    String name = input.readUTF();
-    return new ODropDbMessage(name);
+    var id = ODatabaseId.readNetwork(input);
+    var version = OVersion.readNetwork(input);
+    return new ODropDbMessage(id, version);
   }
 
   @Override
   public void cancel(OrientDBDistributed ctx, OTransactionIdPromise promise) {
-    // Promise not tracked do nothing
+    ctx.cancelDropDatabase(this.dbId, this.version, promise);
   }
 
   @Override
@@ -45,15 +46,20 @@ public class ODropDbMessage implements OOperationMessage {
 
   @Override
   public void serialize(DataOutput out) throws IOException {
-    out.writeUTF(name);
+    dbId.writeNetwork(out);
+    version.writeNetwork(out);
   }
 
-  public String getName() {
-    return name;
+  public ODatabaseId getDbId() {
+    return dbId;
+  }
+
+  public OVersion getVersion() {
+    return version;
   }
 
   @Override
   public String toString() {
-    return "Dropping database with " + name + "";
+    return "Dropping database with " + dbId + "";
   }
 }

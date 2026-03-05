@@ -10,6 +10,7 @@ import com.orientechnologies.orient.distributed.context.coordination.message.ope
 import com.orientechnologies.orient.distributed.context.coordination.message.state.ODatabaseMemberNetwork;
 import com.orientechnologies.orient.distributed.context.coordination.message.state.ODatabaseStateNetwork;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
+import com.orientechnologies.orient.distributed.context.coordination.result.ODatabaseSynching;
 import com.orientechnologies.orient.distributed.context.coordination.result.OMissingNode;
 import com.orientechnologies.orient.distributed.context.coordination.result.ONodeAlreadyPresent;
 import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncId;
@@ -381,12 +382,28 @@ public class ODatabaseTopologyState {
     syncSessions.remove(syncId);
   }
 
-  public ODatabaseTopologyStore getStore() {
+  public synchronized ODatabaseTopologyStore getStore() {
     var nodes = this.nodeStatus.values().stream().map((x) -> x.toStore()).toList();
     return new ODatabaseTopologyStore(nodes, this.id, this.name, this.getVersion(), this.quorum);
   }
 
   public int getQuorum() {
     return quorum;
+  }
+
+  public synchronized Optional<OAcceptResult> validateDrop(
+      OTransactionIdPromise promise, OVersion version) {
+    if (!this.syncSessions.isEmpty()) {
+      return Optional.of(new ODatabaseSynching(id));
+    }
+    return this.versionPromise.promise(promise, version);
+  }
+
+  public synchronized void drop(OTransactionIdPromise promise, OVersion version) {
+    this.versionPromise.accept(promise, version);
+  }
+
+  public synchronized void cancelDrop(OTransactionIdPromise promise, OVersion version) {
+    this.versionPromise.cancel(promise);
   }
 }

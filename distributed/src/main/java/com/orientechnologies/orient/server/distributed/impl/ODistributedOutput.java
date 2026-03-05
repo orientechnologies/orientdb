@@ -31,8 +31,10 @@ import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.distributed.ONodeConfig;
 import com.orientechnologies.orient.distributed.ONodeListenerConfig;
+import com.orientechnologies.orient.distributed.context.coordination.OCoordinatedDistributedOps;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabaseState;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabasesTopology;
+import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncState;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
@@ -179,7 +181,9 @@ public class ODistributedOutput {
         serverRow.field("Name", serverLabel);
         serverRow.field("Databases", (String) null);
         rows.add(serverRow);
-        ODatabasesTopology databaseTopology = distr.getNodeState().getDatabaseTopology();
+        OCoordinatedDistributedOps ops = distr.getNodeState().getOps();
+        ODatabasesTopology databaseTopology = ops.getDatabaseTopology();
+        Set<OSyncState> syncs = databaseTopology.getActiveSyncs();
         final Collection<ODatabaseId> databases = databaseTopology.getDatabases();
         if (databases != null) {
           int serverNum = 0;
@@ -190,9 +194,21 @@ public class ODistributedOutput {
             buffer.append(databaseTopology.getDatabaseName(dbId));
             buffer.append("=");
             buffer.append(databaseStatus);
-            buffer.append(" (");
-            buffer.append(databaseTopology.getRole(dbId, m));
-            buffer.append(")");
+            var role = databaseTopology.getRole(dbId, m);
+            if (role != null) {
+              buffer.append(" (");
+              buffer.append(role);
+              buffer.append(")");
+            }
+            for (OSyncState s : syncs) {
+              if (s.getDbId().equals(dbId)) {
+                if (s.getSender().equals(m)) {
+                  buffer.append(" (Sending Sync)");
+                } else {
+                  buffer.append(" (Receiving Sync)");
+                }
+              }
+            }
 
             if (serverNum++ == 0)
               // ADD THE 1ST DB IT IN THE SERVER ROW
