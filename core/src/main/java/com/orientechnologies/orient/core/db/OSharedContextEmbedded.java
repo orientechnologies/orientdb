@@ -84,14 +84,6 @@ public class OSharedContextEmbedded extends OSharedContext {
 
     try {
       if (!loaded) {
-        database
-            .getStorage()
-            .setStorageConfigurationUpdateListener(
-                update -> {
-                  for (OMetadataUpdateListener listener : browseListeners()) {
-                    listener.onStorageConfigurationUpdate(storage.getName(), update);
-                  }
-                });
         schema.load(database);
         schema.forceSnapshot(database);
         indexManager.load(database);

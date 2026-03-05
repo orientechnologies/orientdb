@@ -81,15 +81,6 @@ public class OSharedContextDistributed extends OSharedContextEmbedded {
 
           try {
             if (!loaded) {
-              database
-                  .getStorage()
-                  .setStorageConfigurationUpdateListener(
-                      update -> {
-                        for (OMetadataUpdateListener listener : browseListeners()) {
-                          listener.onStorageConfigurationUpdate(storage.getName(), update);
-                        }
-                      });
-
               schema.load(database);
               indexManager.load(database);
               // The Immutable snapshot should be after index and schema that require and before
