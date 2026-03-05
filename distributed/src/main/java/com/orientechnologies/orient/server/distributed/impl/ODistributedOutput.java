@@ -167,60 +167,63 @@ public class ODistributedOutput {
 
     final Collection<ONodeId> members = distr.getNodeState().getNetworkMembers();
 
-    if (members != null)
-      for (ONodeId m : members) {
-        if (m == null) continue;
+    for (ONodeId m : members) {
+      if (m == null) continue;
 
-        final ODocument serverRow = new ODocument();
+      final ODocument serverRow = new ODocument();
 
-        final String serverName = m.getNode();
+      final String serverName = m.getNode();
 
-        String serverLabel = serverName;
-        if (distr.getNodeName().equals(serverName)) serverLabel += "(*)";
+      String serverLabel = serverName;
+      if (distr.getNodeName().equals(serverName)) serverLabel += "(*)";
 
-        serverRow.field("Name", serverLabel);
-        serverRow.field("Databases", (String) null);
-        rows.add(serverRow);
-        OCoordinatedDistributedOps ops = distr.getNodeState().getOps();
-        ODatabasesTopology databaseTopology = ops.getDatabaseTopology();
-        Set<OSyncState> syncs = databaseTopology.getActiveSyncs();
-        final Collection<ODatabaseId> databases = databaseTopology.getDatabases();
-        if (databases != null) {
-          int serverNum = 0;
-          for (ODatabaseId dbId : databases) {
-            final StringBuilder buffer = new StringBuilder();
+      serverRow.field("Name", serverLabel);
+      serverRow.field("Databases", (String) null);
+      rows.add(serverRow);
+      OCoordinatedDistributedOps ops = distr.getNodeState().getOps();
+      ODatabasesTopology databaseTopology = ops.getDatabaseTopology();
+      Set<OSyncState> syncs = databaseTopology.getActiveSyncs();
+      final Collection<ODatabaseId> databases = databaseTopology.getDatabases();
+      if (databases != null) {
+        int serverNum = 0;
+        for (ODatabaseId dbId : databases) {
+          final StringBuilder buffer = new StringBuilder();
 
-            ODatabaseState databaseStatus = databaseTopology.getState(dbId, m);
-            buffer.append(databaseTopology.getDatabaseName(dbId));
-            buffer.append("=");
-            buffer.append(databaseStatus);
-            var role = databaseTopology.getRole(dbId, m);
-            if (role != null) {
-              buffer.append(" (");
-              buffer.append(role);
-              buffer.append(")");
-            }
-            for (OSyncState s : syncs) {
-              if (s.getDbId().equals(dbId)) {
-                if (s.getSender().equals(m)) {
-                  buffer.append(" (Sending Sync)");
-                } else {
-                  buffer.append(" (Receiving Sync)");
-                }
+          ODatabaseState databaseStatus = databaseTopology.getState(dbId, m);
+          buffer.append(databaseTopology.getDatabaseName(dbId));
+          buffer.append("=");
+          buffer.append(databaseStatus);
+          var role = databaseTopology.getRole(dbId, m);
+          if (role != null) {
+            buffer.append(" (");
+            buffer.append(role);
+            buffer.append(")");
+          }
+          for (OSyncState s : syncs) {
+            if (s.getDbId().equals(dbId)) {
+              if (s.getSender().equals(m)) {
+                buffer.append(" (Sending Sync)");
+              } else {
+                buffer.append(" (Receiving Sync)");
               }
             }
-
-            if (serverNum++ == 0)
-              // ADD THE 1ST DB IT IN THE SERVER ROW
-              serverRow.field("Databases", buffer.toString());
-            else
-              // ADD IN A SEPARATE ROW
-              rows.add(new ODocument().field("Databases", buffer.toString()));
           }
+
+          if (serverNum++ == 0)
+            // ADD THE 1ST DB IT IN THE SERVER ROW
+            serverRow.field("Databases", buffer.toString());
+          else
+            // ADD IN A SEPARATE ROW
+            rows.add(new ODocument().field("Databases", buffer.toString()));
         }
       }
+    }
 
     final StringBuilder buffer = new StringBuilder();
+    buffer.append(
+        String.format(
+            "%s status, network quorum %d:\n",
+            distr.getNodeId(), distr.getNodeState().getOps().getTopologyQuorum()));
     final OTableFormatter table =
         new OTableFormatter(
             new OTableFormatter.OTableOutput() {

@@ -652,4 +652,9 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
       ODatabaseId dbId, OVersion version, OTransactionIdPromise promise) {
     this.databaseTopology.cancelDropDatabase(dbId, version, promise);
   }
+
+  @Override
+  public int getTopologyQuorum() {
+    return this.topology.getQuorum();
+  }
 }

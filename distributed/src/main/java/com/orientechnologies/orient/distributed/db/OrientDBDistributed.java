@@ -213,7 +213,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   public void dumpNodeInfo() {
-    logger.info("current status:\n%s", ODistributedOutput.formatServerStatus(this));
+    logger.info("%s", ODistributedOutput.formatServerStatus(this));
   }
 
   private void syncIfNeeded(ODatabaseId dbId) {
@@ -1136,6 +1136,8 @@ public class OrientDBDistributed extends OrientDBEmbedded
           () -> {
             receiveSync(dbName, st, input, getConfigurations());
           });
+    } else {
+      logger.info("Not starting sync %s from %s missing database or already syncing", dbId, sender);
     }
   }
 
@@ -1153,6 +1155,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
     } catch (IOException e) {
       logger.debug("Error on close of sync", e);
     } finally {
+      logger.debug("Completing sync %s", state.getSyncId());
       getNodeState().getOps().completeSync(state.getSyncId());
     }
   }

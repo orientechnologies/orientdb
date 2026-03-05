@@ -216,4 +216,6 @@ public interface OCoordinatedDistributedOps {
   void dropDatabase(ODatabaseId dbId, OVersion version, OTransactionIdPromise promise);
 
   void cancelDropDatabase(ODatabaseId dbId, OVersion version, OTransactionIdPromise promise);
+
+  int getTopologyQuorum();
 }
