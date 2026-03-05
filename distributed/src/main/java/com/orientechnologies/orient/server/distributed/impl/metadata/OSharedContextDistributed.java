@@ -3,7 +3,6 @@ package com.orientechnologies.orient.server.distributed.impl.metadata;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
-import com.orientechnologies.orient.core.db.OMetadataUpdateListener;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.OSharedContextEmbedded;
 import com.orientechnologies.orient.core.db.OStringCache;
@@ -66,12 +65,6 @@ public class OSharedContextDistributed extends OSharedContextEmbedded {
 
     queryStats = new OQueryStats();
     activeDistributedQueries = new HashMap<>();
-    storage.setStorageConfigurationUpdateListener(
-        update -> {
-          for (OMetadataUpdateListener listener : browseListeners()) {
-            listener.onStorageConfigurationUpdate(storage.getName(), update);
-          }
-        });
 
     this.viewManager = new ViewManager(orientDB, storage.getName());
     this.distributedContext =
