@@ -29,5 +29,5 @@ public interface ODatabasesTopology {
 
   boolean isMain(ODatabaseId dbId, ONodeId node);
 
-  public Set<OSyncState> getActiveSyncs();
+  public Set<OSyncState> getActiveSyncs(ODatabaseId dbId);
 }

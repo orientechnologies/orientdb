@@ -129,7 +129,6 @@ public class OSyncState {
     if (!this.close) {
       this.close = true;
       this.finished.complete(true);
-      this.notifyAll();
       if (this.receiverStream != null) {
         try {
           this.receiverStream.close();
@@ -138,5 +137,6 @@ public class OSyncState {
         }
       }
     }
+    this.notifyAll();
   }
 }

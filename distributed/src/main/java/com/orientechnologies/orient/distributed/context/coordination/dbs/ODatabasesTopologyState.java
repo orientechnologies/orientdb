@@ -224,9 +224,6 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
       return Optional.empty();
     }
     var state = db.canSync(sender, receiver, syncId, canSync, mode, sequenceStatus);
-    if (state.isPresent()) {
-      this.activerSyncs.put(state.get().getSyncId(), state.get());
-    }
     return state;
   }
 
@@ -241,13 +238,11 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
     if (db == null) {
       throw new NullPointerException("missing database definition");
     }
-    OSyncState state = db.startSend(from, to, syncId, mode, sequenceStatus);
-    this.activerSyncs.put(syncId, state);
-    return state;
+    return db.startSend(from, to, syncId, mode, sequenceStatus);
   }
 
   public synchronized OSyncState getSyncState(OSyncId syncId) {
-    return this.activerSyncs.get(syncId);
+    return this.databases.get(syncId.getDbId()).getSyncState(syncId);
   }
 
   public synchronized String getDatabaseName(ODatabaseId dbId) {
@@ -406,12 +401,9 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
   }
 
   public synchronized void completeSync(OSyncId syncId) {
-    OSyncState sync = this.activerSyncs.remove(syncId);
-    if (sync != null) {
-      ODatabaseTopologyState db = this.databases.get(sync.getDbId());
-      if (db != null) {
-        db.completeSync(syncId);
-      }
+    ODatabaseTopologyState db = this.databases.get(syncId.getDbId());
+    if (db != null) {
+      db.completeSync(syncId);
     }
   }
 
@@ -439,8 +431,13 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
     return -1;
   }
 
-  public synchronized Set<OSyncState> getActiveSyncs() {
-    return new HashSet<>(this.activerSyncs.values());
+  public synchronized Set<OSyncState> getActiveSyncs(ODatabaseId dbId) {
+    ODatabaseTopologyState db = this.databases.get(dbId);
+    if (db != null) {
+      return db.getSyncs();
+    } else {
+      return Collections.emptySet();
+    }
   }
 
   public synchronized Optional<OAcceptResult> validateDropDatabase(
@@ -471,17 +468,8 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
   }
 
   public synchronized void nodeDisconnected(ONodeId node) {
-    var iter = this.activerSyncs.entrySet().iterator();
-    while (iter.hasNext()) {
-      var sync = iter.next().getValue();
-      if (node.equals(sync.getSender()) || node.equals(sync.getReceiver())) {
-        var db = this.databases.get(sync.getDbId());
-        if (db != null) {
-          db.completeSync(sync.getSyncId());
-        }
-        sync.close();
-        iter.remove();
-      }
+    for (var db : this.databases.values()) {
+      db.nodeDisconnected(node);
     }
   }
 }

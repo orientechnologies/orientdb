@@ -90,10 +90,10 @@ public class SyncOpsTest {
   }
 
   private void testRawSync(OSyncMode mode) {
-    var syncId = new OSyncId();
     var dbId = new ODatabaseId("test");
     var nodeFrom = new ONodeId("node1");
     var nodeTo = new ONodeId("node2");
+    var syncId = new OSyncId(dbId, nodeTo);
 
     var sender =
         new OSyncState(

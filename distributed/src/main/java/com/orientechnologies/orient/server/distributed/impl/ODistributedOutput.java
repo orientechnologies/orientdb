@@ -182,7 +182,6 @@ public class ODistributedOutput {
       rows.add(serverRow);
       OCoordinatedDistributedOps ops = distr.getNodeState().getOps();
       ODatabasesTopology databaseTopology = ops.getDatabaseTopology();
-      Set<OSyncState> syncs = databaseTopology.getActiveSyncs();
       final Collection<ODatabaseId> databases = databaseTopology.getDatabases();
       if (databases != null) {
         int serverNum = 0;
@@ -199,6 +198,7 @@ public class ODistributedOutput {
             buffer.append(role);
             buffer.append(")");
           }
+          Set<OSyncState> syncs = databaseTopology.getActiveSyncs(dbId);
           for (OSyncState s : syncs) {
             if (s.getDbId().equals(dbId)) {
               if (s.getSender().equals(m)) {

@@ -214,7 +214,7 @@ public class ODatabaseTopologyState {
     }
     Set<ONodeId> onlineNodes = new HashSet<>(getOnlineNodes());
     onlineNodes.remove(current);
-    OSyncSession session = new OSyncSession(getId(), onlineNodes);
+    OSyncSession session = new OSyncSession(getId(), current, onlineNodes);
     this.syncSessions.put(session.getSyncId(), session);
     return Optional.of(new OSyncInfo(session.getSyncId(), onlineNodes, session.getFinished()));
   }
@@ -226,9 +226,13 @@ public class ODatabaseTopologyState {
       boolean canSync,
       OSyncMode mode,
       Optional<OTransactionSequenceStatus> sequenceStatus) {
-    return this.syncSessions
-        .get(syncId)
-        .canSync(sender, receiver, syncId, canSync, mode, sequenceStatus);
+    OSyncSession session = this.syncSessions.get(syncId);
+    Optional<OSyncState> result =
+        session.canSync(sender, receiver, syncId, canSync, mode, sequenceStatus);
+    if (result.isEmpty() && session.isFinished()) {
+      this.syncSessions.remove(syncId);
+    }
+    return result;
   }
 
   public synchronized OSyncState startSend(
@@ -405,5 +409,30 @@ public class ODatabaseTopologyState {
 
   public synchronized void cancelDrop(OTransactionIdPromise promise, OVersion version) {
     this.versionPromise.cancel(promise);
+  }
+
+  public synchronized OSyncState getSyncState(OSyncId syncId) {
+    return this.syncSessions.get(syncId).getState();
+  }
+
+  public synchronized Set<OSyncState> getSyncs() {
+    var syncs = new HashSet<OSyncState>();
+    for (var session : this.syncSessions.values()) {
+      var state = session.getState();
+      if (state != null) {
+        syncs.add(state);
+      }
+    }
+    return syncs;
+  }
+
+  public synchronized void nodeDisconnected(ONodeId node) {
+    var iter = this.syncSessions.entrySet().iterator();
+    while (iter.hasNext()) {
+      var sync = iter.next().getValue();
+      if (sync.nodeDisconnected(node)) {
+        iter.remove();
+      }
+    }
   }
 }

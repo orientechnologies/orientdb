@@ -16,9 +16,9 @@ public class OSyncSession {
   private OSyncState state;
   private CompletableFuture<Boolean> finished = new CompletableFuture<Boolean>();
 
-  public OSyncSession(ODatabaseId dbId, Set<ONodeId> nodes) {
+  public OSyncSession(ODatabaseId dbId, ONodeId current, Set<ONodeId> nodes) {
     this.dbId = dbId;
-    this.syncId = new OSyncId();
+    this.syncId = new OSyncId(dbId, current);
     this.nodes = nodes;
   }
 
@@ -46,10 +46,7 @@ public class OSyncSession {
       OSyncMode mode,
       Optional<OTransactionSequenceStatus> sequenceStatus) {
     assert this.syncId.equals(syncId);
-    if (isTransferingData()) {
-      return Optional.empty();
-    }
-    if (canSync) {
+    if (canSync && this.state == null) {
       this.state = new OSyncState(dbId, syncId, sender, receiver, mode, sequenceStatus, finished);
       return Optional.of(this.state);
     } else {
@@ -70,11 +67,33 @@ public class OSyncSession {
     }
   }
 
+  public boolean isFinished() {
+    if (this.state != null) {
+      return this.state.isClose();
+    } else {
+      return nodes.isEmpty();
+    }
+  }
+
   public OSyncState getState() {
     return state;
   }
 
   public Future<Boolean> getFinished() {
     return finished;
+  }
+
+  public boolean nodeDisconnected(ONodeId node) {
+    if (state != null) {
+      if (node.equals(state.getSender()) || node.equals(state.getReceiver())) {
+        state.close();
+        return true;
+      } else {
+        return false;
+      }
+    } else {
+      nodes.remove(node);
+      return nodes.isEmpty();
+    }
   }
 }

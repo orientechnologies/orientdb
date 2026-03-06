@@ -162,7 +162,7 @@ public class CoordinationMessagesSerializationTest {
   public void syncRequestTest() throws IOException {
     ONodeId nodeId = newNodeId();
     ODatabaseId dbId = newDatabaseId();
-    OSyncId syncId = new OSyncId();
+    OSyncId syncId = new OSyncId(dbId, nodeId);
     OSyncRequest syncReq =
         new OSyncRequest(nodeId, dbId, syncId, OSyncMode.StandardBackup, Optional.empty());
 
@@ -179,7 +179,7 @@ public class CoordinationMessagesSerializationTest {
   public void canSyncTest() throws IOException {
     ONodeId nodeId = newNodeId();
     ODatabaseId dbId = newDatabaseId();
-    OSyncId syncId = new OSyncId();
+    OSyncId syncId = new OSyncId(dbId, nodeId);
     OCanSync syncReq =
         new OCanSync(nodeId, dbId, syncId, OSyncMode.StandardBackup, Optional.empty(), true);
 
@@ -197,7 +197,7 @@ public class CoordinationMessagesSerializationTest {
   public void startSyncTest() throws IOException {
     ONodeId nodeId = newNodeId();
     ODatabaseId dbId = newDatabaseId();
-    OSyncId syncId = new OSyncId();
+    OSyncId syncId = new OSyncId(dbId, nodeId);
     OStartSync syncReq =
         new OStartSync(nodeId, dbId, syncId, OSyncMode.StandardBackup, Optional.empty());
 
@@ -212,7 +212,9 @@ public class CoordinationMessagesSerializationTest {
 
   @Test
   public void syncDataTest() throws IOException {
-    OSyncId syncId = new OSyncId();
+    ONodeId nodeId = newNodeId();
+    ODatabaseId dbId = newDatabaseId();
+    OSyncId syncId = new OSyncId(dbId, nodeId);
     var data = new byte[] {0, 1, 2};
     OSyncData syncReq = new OSyncData(syncId, data, true);
 
@@ -225,7 +227,9 @@ public class CoordinationMessagesSerializationTest {
 
   @Test
   public void nextBufferTest() throws IOException {
-    OSyncId syncId = new OSyncId();
+    ONodeId nodeId = newNodeId();
+    ODatabaseId dbId = newDatabaseId();
+    OSyncId syncId = new OSyncId(dbId, nodeId);
     ONextBuffer syncReq = new ONextBuffer(syncId, true);
 
     ONextBuffer read = writeRead(syncReq);
