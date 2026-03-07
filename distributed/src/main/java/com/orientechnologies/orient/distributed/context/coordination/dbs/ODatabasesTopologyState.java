@@ -34,7 +34,6 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
   private final Map<ODatabaseId, ORawPair<OVersionPromise, ODatabaseTopologyState>> promised =
       new HashMap<>();
   private final Map<String, ODatabaseTopologyState> promisedByName = new HashMap<>();
-  private final Map<OSyncId, OSyncState> activerSyncs = new HashMap<>();
   private ODatabaseStateChangeListener listener;
 
   public ODatabasesTopologyState(ODatabaseStateChangeListener listener, ONodeId current) {
@@ -50,7 +49,7 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
       int minimumQuorum) {
 
     if (databases.containsKey(db)) {
-      var def = databases.get(db);
+      var def = getDb(db);
       if (!def.getName().equals(name)) {
         return Optional.empty();
         // Exactly the same
@@ -110,6 +109,7 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
       this.databases.put(db, declared);
       this.databasesByName.put(declared.getName(), declared);
     }
+    this.notifyAll();
   }
 
   public synchronized void setState(
@@ -118,7 +118,7 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
       ODatabaseState state,
       long version,
       OTransactionIdPromise promise) {
-    var nodes = databases.get(db);
+    var nodes = getDb(db);
     if (nodes != null) {
       nodes.setState(node, state, version, promise);
     }
@@ -134,7 +134,7 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
       ODatabaseState state,
       long version,
       OTransactionIdPromise promise) {
-    ODatabaseTopologyState dbTopology = this.databases.get(dbId);
+    ODatabaseTopologyState dbTopology = getDb(dbId);
     if (dbTopology != null) {
       return dbTopology.promiseState(state, nodeId, version, promise);
     } else {
@@ -143,7 +143,7 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
   }
 
   public synchronized long getDatabaseVersion(ODatabaseId dbId) {
-    ODatabaseTopologyState dbTopology = this.databases.get(dbId);
+    ODatabaseTopologyState dbTopology = getDb(dbId);
     if (dbTopology != null) {
       return dbTopology.getVersion();
     } else {
@@ -153,7 +153,7 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
 
   public synchronized void cancelSetState(
       ODatabaseId dbId, ONodeId nodeId, long version, OTransactionIdPromise promise) {
-    ODatabaseTopologyState db = this.databases.get(dbId);
+    ODatabaseTopologyState db = getDb(dbId);
     if (db != null) {
       db.cancelSetState(nodeId, version, promise);
     }
@@ -167,7 +167,7 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
       throws InterruptedException {
     ODatabaseTopologyState db;
     synchronized (this) {
-      db = this.databases.get(dbId);
+      db = getDb(dbId);
     }
     if (db != null) {
       return db.waitOnlineQuorum(timeout);
@@ -175,10 +175,48 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
     return false;
   }
 
+  private synchronized ODatabaseTopologyState getDb(ODatabaseId dbId) {
+    return this.databases.get(dbId);
+  }
+
+  public boolean waitSelfOnline(String dbName, Optional<Long> timeout) throws InterruptedException {
+    ODatabaseTopologyState db;
+    synchronized (this) {
+      db = this.databasesByName.get(dbName);
+    }
+    if (db != null) {
+      return db.waitSelfOnline(timeout);
+    } else {
+      if (waitFor(timeout, () -> this.databasesByName.containsKey(dbName))) {
+        synchronized (this) {
+          db = this.databasesByName.get(dbName);
+        }
+        return db.waitSelfOnline(timeout);
+      }
+    }
+    return false;
+  }
+
+  public boolean waitSelfOnline(ODatabaseId dbId, Optional<Long> timeout)
+      throws InterruptedException {
+    ODatabaseTopologyState db;
+    synchronized (this) {
+      db = getDb(dbId);
+    }
+    if (db != null) {
+      return db.waitSelfOnline(timeout);
+    } else {
+      if (waitFor(timeout, () -> this.databases.containsKey(dbId))) {
+        return getDb(dbId).waitSelfOnline(timeout);
+      }
+    }
+    return false;
+  }
+
   public boolean waitOnlineOne(ODatabaseId dbId) {
     ODatabaseTopologyState db;
     synchronized (this) {
-      db = this.databases.get(dbId);
+      db = getDb(dbId);
     }
     if (db != null) {
       return db.waitOnlineOne();
@@ -187,7 +225,7 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
   }
 
   public synchronized boolean executeOnOneOnline(ODatabaseId dbId, OStateAction execute) {
-    ODatabaseTopologyState db = this.databases.get(dbId);
+    ODatabaseTopologyState db = getDb(dbId);
     if (db != null) {
       db.executeOnOneOnline(execute);
       return true;
@@ -196,7 +234,7 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
   }
 
   public synchronized Set<ONodeId> getOnlineNodes(ODatabaseId dbId) {
-    ODatabaseTopologyState db = this.databases.get(dbId);
+    ODatabaseTopologyState db = getDb(dbId);
     if (db != null) {
       return db.getOnlineNodes();
     }
@@ -204,7 +242,7 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
   }
 
   public synchronized Optional<OSyncInfo> newSync(ODatabaseId dbId) {
-    ODatabaseTopologyState db = this.databases.get(dbId);
+    ODatabaseTopologyState db = getDb(dbId);
     if (db == null) {
       return Optional.empty();
     }
@@ -219,7 +257,7 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
       boolean canSync,
       OSyncMode mode,
       Optional<OTransactionSequenceStatus> sequenceStatus) {
-    ODatabaseTopologyState db = this.databases.get(dbId);
+    ODatabaseTopologyState db = getDb(dbId);
     if (db == null) {
       return Optional.empty();
     }
@@ -234,7 +272,7 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
       OSyncId syncId,
       OSyncMode mode,
       Optional<OTransactionSequenceStatus> sequenceStatus) {
-    ODatabaseTopologyState db = this.databases.get(dbId);
+    ODatabaseTopologyState db = getDb(dbId);
     if (db == null) {
       throw new NullPointerException("missing database definition");
     }
@@ -242,11 +280,16 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
   }
 
   public synchronized OSyncState getSyncState(OSyncId syncId) {
-    return this.databases.get(syncId.getDbId()).getSyncState(syncId);
+    ODatabaseTopologyState db = getDb(syncId.getDbId());
+    if (db != null) {
+      return db.getSyncState(syncId);
+    } else {
+      return null;
+    }
   }
 
   public synchronized String getDatabaseName(ODatabaseId dbId) {
-    ODatabaseTopologyState db = this.databases.get(dbId);
+    ODatabaseTopologyState db = getDb(dbId);
     if (db != null) {
       return db.getName();
     }
@@ -255,7 +298,7 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
 
   public synchronized boolean acceptSync(
       ONodeId sender, ONodeId receiver, ODatabaseId dbId, OSyncId syncId) {
-    ODatabaseTopologyState db = this.databases.get(dbId);
+    ODatabaseTopologyState db = getDb(dbId);
     if (db != null) {
       return db.acceptSync(sender, receiver, syncId);
     }
@@ -272,7 +315,7 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
   }
 
   public synchronized boolean isMain(ODatabaseId dbId, ONodeId nodeId) {
-    ODatabaseTopologyState stat = this.databases.get(dbId);
+    ODatabaseTopologyState stat = getDb(dbId);
     if (stat != null) {
       return stat.isMain(nodeId);
     }
@@ -281,7 +324,7 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
 
   public synchronized void receiverNetworkState(List<ODatabaseStateNetwork> network) {
     for (ODatabaseStateNetwork state : network) {
-      ODatabaseTopologyState db = this.databases.get(state.id());
+      ODatabaseTopologyState db = getDb(state.id());
       if (db != null) {
         db.receiveState(state);
       } else {
@@ -290,6 +333,7 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
         this.databasesByName.put(state.name(), db);
       }
     }
+    this.notifyAll();
   }
 
   public synchronized List<ODatabaseStateNetwork> getNetworkState() {
@@ -305,7 +349,7 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
   }
 
   public synchronized ODatabaseState getState(ODatabaseId dbId, ONodeId nodeID) {
-    ODatabaseTopologyState db = this.databases.get(dbId);
+    ODatabaseTopologyState db = getDb(dbId);
     if (db != null) {
       return db.getState(nodeID);
     } else {
@@ -318,7 +362,7 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
   }
 
   public synchronized boolean shouldSink(ODatabaseId dbId, ONodeId nodeID) {
-    ODatabaseTopologyState db = this.databases.get(dbId);
+    ODatabaseTopologyState db = getDb(dbId);
     if (db != null) {
       return db.shouldSink(nodeID);
     } else {
@@ -327,7 +371,7 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
   }
 
   public synchronized ONodeRole getRole(ODatabaseId dbId, ONodeId nodeId) {
-    ODatabaseTopologyState db = this.databases.get(dbId);
+    ODatabaseTopologyState db = getDb(dbId);
     if (db != null) {
       return db.getRole(nodeId);
     } else {
@@ -337,7 +381,7 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
 
   public synchronized void mergeNetworkState(List<ODatabaseStateNetwork> network) {
     for (ODatabaseStateNetwork state : network) {
-      ODatabaseTopologyState db = this.databases.get(state.id());
+      ODatabaseTopologyState db = getDb(state.id());
       if (db != null) {
         db.mergeState(state);
       } else {
@@ -346,11 +390,12 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
         this.databasesByName.put(state.name(), db);
       }
     }
+    this.notifyAll();
   }
 
   public synchronized Optional<OAcceptResult> validateAddMember(
       ODatabaseId dbId, List<OAddNodeInfo> nodes, long version, OTransactionIdPromise promise) {
-    ODatabaseTopologyState db = this.databases.get(dbId);
+    ODatabaseTopologyState db = getDb(dbId);
     if (db != null) {
       return db.promiseMember(nodes, version, promise);
     } else {
@@ -360,7 +405,7 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
 
   public synchronized void addDatabaseMember(
       ODatabaseId dbId, List<OAddNodeInfo> nodes, long version, OTransactionIdPromise promise) {
-    ODatabaseTopologyState db = this.databases.get(dbId);
+    ODatabaseTopologyState db = getDb(dbId);
     if (db != null) {
       db.addMember(nodes, version, promise);
     }
@@ -368,7 +413,7 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
 
   public synchronized void cancelAddDatabaseMember(
       ODatabaseId dbId, List<OAddNodeInfo> nodes, OTransactionIdPromise promise) {
-    ODatabaseTopologyState db = this.databases.get(dbId);
+    ODatabaseTopologyState db = getDb(dbId);
     if (db != null) {
       db.cancelAddMemer(nodes, promise);
     }
@@ -376,7 +421,7 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
 
   public synchronized Optional<OAcceptResult> validateRemoveMembers(
       ODatabaseId dbId, List<ONodeId> nodes, OVersion version, OTransactionIdPromise promise) {
-    ODatabaseTopologyState db = this.databases.get(dbId);
+    ODatabaseTopologyState db = getDb(dbId);
     if (db != null) {
       return db.promiseRemoveMember(nodes, version, promise);
     } else {
@@ -386,7 +431,7 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
 
   public synchronized void removeDatabaseMembers(
       ODatabaseId dbId, List<ONodeId> nodes, OVersion version, OTransactionIdPromise promise) {
-    ODatabaseTopologyState db = this.databases.get(dbId);
+    ODatabaseTopologyState db = getDb(dbId);
     if (db != null) {
       db.removeMember(nodes, version, promise);
     }
@@ -394,14 +439,14 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
 
   public synchronized void cancelRemoveDatabaseMembers(
       ODatabaseId dbId, List<OAddNodeInfo> nodes, OTransactionIdPromise promise) {
-    ODatabaseTopologyState db = this.databases.get(dbId);
+    ODatabaseTopologyState db = getDb(dbId);
     if (db != null) {
       db.cancelRemoveMemer(nodes, promise);
     }
   }
 
   public synchronized void completeSync(OSyncId syncId) {
-    ODatabaseTopologyState db = this.databases.get(syncId.getDbId());
+    ODatabaseTopologyState db = getDb(syncId.getDbId());
     if (db != null) {
       db.completeSync(syncId);
     }
@@ -424,7 +469,7 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
   }
 
   public int getQuorum(ODatabaseId databaseId) {
-    ODatabaseTopologyState db = this.databases.get(databaseId);
+    ODatabaseTopologyState db = getDb(databaseId);
     if (db != null) {
       return db.getQuorum();
     }
@@ -432,7 +477,7 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
   }
 
   public synchronized Set<OSyncState> getActiveSyncs(ODatabaseId dbId) {
-    ODatabaseTopologyState db = this.databases.get(dbId);
+    ODatabaseTopologyState db = getDb(dbId);
     if (db != null) {
       return db.getSyncs();
     } else {
@@ -442,7 +487,7 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
 
   public synchronized Optional<OAcceptResult> validateDropDatabase(
       OTransactionIdPromise promise, ODatabaseId dbId, OVersion version) {
-    var db = this.databases.get(dbId);
+    var db = getDb(dbId);
     if (db != null) {
       return db.validateDrop(promise, version);
     } else {
@@ -457,11 +502,12 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
       /// Just .... because
       db.drop(promise, version);
     }
+    this.notifyAll();
   }
 
   public void cancelDropDatabase(
       ODatabaseId dbId, OVersion version, OTransactionIdPromise promise) {
-    var db = this.databases.get(dbId);
+    var db = getDb(dbId);
     if (db != null) {
       db.cancelDrop(promise, version);
     }
@@ -471,5 +517,36 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
     for (var db : this.databases.values()) {
       db.nodeDisconnected(node);
     }
+  }
+
+  private interface WaitCond {
+    /*
+     * Return false to wait true to execute
+     */
+    boolean match();
+  }
+
+  private synchronized boolean waitFor(Optional<Long> timeout, WaitCond cond)
+      throws InterruptedException {
+    if (timeout.isPresent()) {
+      var timeOut = timeout.get();
+      long start = currentTime();
+      long till = start + timeOut;
+      while (!cond.match() && timeOut > 0) {
+        this.wait(timeOut);
+        long current = currentTime();
+        timeOut = till - current;
+      }
+      return timeOut > 0;
+    } else {
+      while (!cond.match()) {
+        this.wait();
+      }
+      return true;
+    }
+  }
+
+  private long currentTime() {
+    return System.nanoTime() / 1000;
   }
 }

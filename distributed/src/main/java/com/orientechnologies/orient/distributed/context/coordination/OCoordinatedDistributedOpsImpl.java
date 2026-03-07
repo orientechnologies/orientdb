@@ -553,6 +553,17 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   }
 
   @Override
+  public boolean waitSelfOnline(ODatabaseId dbId, Optional<Long> timeout)
+      throws InterruptedException {
+    return this.databaseTopology.waitSelfOnline(dbId, timeout);
+  }
+
+  @Override
+  public boolean waitSelfOnline(String dbName, Optional<Long> timeout) throws InterruptedException {
+    return this.databaseTopology.waitSelfOnline(dbName, timeout);
+  }
+
+  @Override
   public boolean isApplied(OTransactionId txId) {
     return this.sequenceManager.isApplied(txId);
   }

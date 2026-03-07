@@ -194,6 +194,11 @@ public interface OCoordinatedDistributedOps {
 
   boolean waitOnlineQuorum(ODatabaseId dbId, Optional<Long> timeout) throws InterruptedException;
 
+  public boolean waitSelfOnline(String dbName, Optional<Long> timeout) throws InterruptedException;
+
+  public boolean waitSelfOnline(ODatabaseId dbId, Optional<Long> timeout)
+      throws InterruptedException;
+
   // Network events
 
   ODisconnectAction nodeDisconnected(ONodeId node);

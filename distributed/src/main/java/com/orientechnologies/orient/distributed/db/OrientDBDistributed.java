@@ -584,25 +584,32 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   private boolean checkDbAvailableOpen(String name) {
-    if (!checkDbAvailable(name)) {
-      long waitTime = getLongConfig(OGlobalConfiguration.DISTRIBUTED_DATABASE_ONLINE_GRACE_PERIOD);
-      if (waitTime != 0) {
-        long retry = waitTime / 500;
-        // TODO: when there will be proper node online event this should attach to that with a
-        // notification instead of sleep
-        for (long i = 0; i < retry; i++) {
-          try {
-            Thread.sleep(500);
-          } catch (InterruptedException e) {
-            e.printStackTrace();
-          }
-          if (checkDbAvailable(name)) {
-            return true;
-          }
-        }
-      }
+    long waitTime = getLongConfig(OGlobalConfiguration.DISTRIBUTED_DATABASE_ONLINE_GRACE_PERIOD);
+    try {
+      return this.nodeState.getOps().waitSelfOnline(name, Optional.of(waitTime));
+    } catch (InterruptedException e) {
+      return false;
     }
-    return false;
+    //    if (!checkDbAvailable(name)) {
+    //      long waitTime =
+    // getLongConfig(OGlobalConfiguration.DISTRIBUTED_DATABASE_ONLINE_GRACE_PERIOD);
+    //      if (waitTime != 0) {
+    //        long retry = waitTime / 500;
+    //        // TODO: when there will be proper node online event this should attach to that with a
+    //        // notification instead of sleep
+    //        for (long i = 0; i < retry; i++) {
+    //          try {
+    //            Thread.sleep(500);
+    //          } catch (InterruptedException e) {
+    //            e.printStackTrace();
+    //          }
+    //          if (checkDbAvailable(name)) {
+    //            return true;
+    //          }
+    //        }
+    //      }
+    //    }
+    //    return false;
   }
 
   @Override

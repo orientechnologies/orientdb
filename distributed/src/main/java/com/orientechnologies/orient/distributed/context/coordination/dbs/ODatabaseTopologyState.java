@@ -139,6 +139,15 @@ public class ODatabaseTopologyState {
     return online > 0;
   }
 
+  private boolean isSelfOnline() {
+    var state = this.nodeStatus.get(current);
+    if (state != null) {
+      return state.isOnline();
+    } else {
+      return false;
+    }
+  }
+
   private boolean isQuorumOnline() {
     long online = this.nodeStatus.values().stream().filter((x) -> x.isOnline()).count();
     return online >= quorum;
@@ -146,6 +155,10 @@ public class ODatabaseTopologyState {
 
   public boolean waitOnlineOne() {
     return false;
+  }
+
+  public synchronized boolean waitSelfOnline(Optional<Long> timeout) throws InterruptedException {
+    return waitFor(timeout, this::isSelfOnline);
   }
 
   private interface WaitCond {
@@ -412,7 +425,11 @@ public class ODatabaseTopologyState {
   }
 
   public synchronized OSyncState getSyncState(OSyncId syncId) {
-    return this.syncSessions.get(syncId).getState();
+    OSyncSession session = this.syncSessions.get(syncId);
+    if (session != null) {
+      return session.getState();
+    }
+    return null;
   }
 
   public synchronized Set<OSyncState> getSyncs() {
