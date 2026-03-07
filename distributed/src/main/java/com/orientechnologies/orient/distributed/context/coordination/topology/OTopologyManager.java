@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.transaction.OGroupId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.distributed.context.ONetworkTopologyStore;
+import com.orientechnologies.orient.distributed.context.coordination.ONetworkTopology;
 import com.orientechnologies.orient.distributed.context.coordination.OVersion;
 import com.orientechnologies.orient.distributed.context.coordination.OVersionPromise;
 import com.orientechnologies.orient.distributed.context.coordination.message.state.OTopologyStateNetwork;
@@ -23,7 +24,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-public class OTopologyManager implements OTopologyEvents {
+public class OTopologyManager implements OTopologyEvents, ONetworkTopology {
   private static final OLogger logger = OLogManager.instance().logger(OTopologyManager.class);
 
   private final ONodeId current;
@@ -287,5 +288,10 @@ public class OTopologyManager implements OTopologyEvents {
   public Optional<OAcceptResult> promiseUnregister(
       ONodeId node, OVersion version, OTransactionIdPromise promise) {
     return this.versionPromise.promise(promise, version);
+  }
+
+  @Override
+  public OTopologyState getState() {
+    return state;
   }
 }

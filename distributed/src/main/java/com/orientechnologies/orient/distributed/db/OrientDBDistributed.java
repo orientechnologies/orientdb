@@ -1232,10 +1232,14 @@ public class OrientDBDistributed extends OrientDBEmbedded
 
   public void receiveSyncData(OSyncId syncId, byte[] data, boolean finished) {
     var state = this.getNodeState().getOps().getSyncState(syncId);
-    logger.debug(
-        "Receiving buffer %s syncId %s sender %s receiver %s",
-        state.getDbId(), state.getSyncId(), state.getSender(), state.getReceiver());
-    state.receiveData(data, finished);
+    if (state != null) {
+      logger.debug(
+          "Receiving buffer %s syncId %s sender %s receiver %s",
+          state.getDbId(), state.getSyncId(), state.getSender(), state.getReceiver());
+      state.receiveData(data, finished);
+    } else {
+      logger.warn("Receiving buffer syncId %s finished:%s no sync state", syncId, finished);
+    }
   }
 
   public void requestNext(OSyncState state, boolean close) {
@@ -1567,7 +1571,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   private void sendTopologyPing() {
-    var members = getNodeState().getOps().getNetworkMembers();
+    var members = getNodeState().getOps().getNetworkTopology().getMembers();
     sendMessage(
         members,
         new OTopologyPing(getNodeId(), getNodeState().getOps().getTransactionSequenceState()));

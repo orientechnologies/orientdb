@@ -176,7 +176,7 @@ public interface OCoordinatedDistributedOps {
   // State Reading
   ODatabasesTopology getDatabaseTopology();
 
-  Set<ONodeId> getNetworkMembers();
+  ONetworkTopology getNetworkTopology();
 
   ONodeStateNetwork getNetworkState();
 
@@ -216,6 +216,4 @@ public interface OCoordinatedDistributedOps {
   void dropDatabase(ODatabaseId dbId, OVersion version, OTransactionIdPromise promise);
 
   void cancelDropDatabase(ODatabaseId dbId, OVersion version, OTransactionIdPromise promise);
-
-  int getTopologyQuorum();
 }

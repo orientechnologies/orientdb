@@ -35,6 +35,7 @@ import com.orientechnologies.orient.distributed.context.coordination.OCoordinate
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabaseState;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabasesTopology;
 import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncState;
+import com.orientechnologies.orient.distributed.context.coordination.topology.OTopologyState;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
@@ -165,7 +166,9 @@ public class ODistributedOutput {
   public static String formatServerStatus(final OrientDBDistributed distr) {
     final List<OIdentifiable> rows = new ArrayList<OIdentifiable>();
 
-    final Collection<ONodeId> members = distr.getNodeState().getNetworkMembers();
+    var state = distr.getNodeState();
+    var topology = state.getOps().getNetworkTopology();
+    final Collection<ONodeId> members = topology.getMembers();
 
     for (ONodeId m : members) {
       if (m == null) continue;
@@ -180,7 +183,7 @@ public class ODistributedOutput {
       serverRow.field("Name", serverLabel);
       serverRow.field("Databases", (String) null);
       rows.add(serverRow);
-      OCoordinatedDistributedOps ops = distr.getNodeState().getOps();
+      OCoordinatedDistributedOps ops = state.getOps();
       ODatabasesTopology databaseTopology = ops.getDatabaseTopology();
       final Collection<ODatabaseId> databases = databaseTopology.getDatabases();
       if (databases != null) {
@@ -222,8 +225,10 @@ public class ODistributedOutput {
     final StringBuilder buffer = new StringBuilder();
     buffer.append(
         String.format(
-            "%s status, network quorum %d:\n",
-            distr.getNodeId(), distr.getNodeState().getOps().getTopologyQuorum()));
+            "%s(%s) status, network quorum %d:\n",
+            distr.getNodeId(),
+            topology.getState().equals(OTopologyState.BOOT) ? "Booting" : "Online",
+            topology.getQuorum()));
     final OTableFormatter table =
         new OTableFormatter(
             new OTableFormatter.OTableOutput() {

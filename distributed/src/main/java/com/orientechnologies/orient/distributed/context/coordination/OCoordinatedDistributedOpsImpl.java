@@ -119,7 +119,7 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
       throw new ODistributedException(
           String.format(
               "No enough nodes to coordinate an operation with quorum: %d know nodes:%s",
-              this.topology.getMinimumQuorum(), this.getNetworkMembers().toString()));
+              this.topology.getMinimumQuorum(), this.topology.getMembers().toString()));
     }
 
     Optional<OTransactionIdPromise> prom = this.sequenceManager.next();
@@ -140,7 +140,7 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
       throw new ODistributedException(
           String.format(
               "No enough nodes to coordinate an operation with quorum: %d know nodes:%s",
-              this.topology.getMinimumQuorum(), this.getNetworkMembers().toString()));
+              this.topology.getMinimumQuorum(), this.topology.getMembers().toString()));
     }
 
     var promise = current.retrySequence(topology.getNodeId());
@@ -329,11 +329,6 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   }
 
   @Override
-  public Set<ONodeId> getNetworkMembers() {
-    return topology.getMembers();
-  }
-
-  @Override
   public Optional<OAcceptResult> validateRegisterNode(
       ONodeId node, long version, OTransactionIdPromise promise) {
     return topology.promiseRegister(node, version, promise);
@@ -442,6 +437,11 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
 
   public ODatabasesTopologyState getDatabaseTopology() {
     return databaseTopology;
+  }
+
+  @Override
+  public ONetworkTopology getNetworkTopology() {
+    return topology;
   }
 
   @Override
@@ -652,10 +652,5 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   public void cancelDropDatabase(
       ODatabaseId dbId, OVersion version, OTransactionIdPromise promise) {
     this.databaseTopology.cancelDropDatabase(dbId, version, promise);
-  }
-
-  @Override
-  public int getTopologyQuorum() {
-    return this.topology.getQuorum();
   }
 }

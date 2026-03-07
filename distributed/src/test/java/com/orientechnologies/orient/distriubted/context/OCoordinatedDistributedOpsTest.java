@@ -281,7 +281,7 @@ public class OCoordinatedDistributedOpsTest
         new OCoordinatedDistributedOpsImpl(nodeId, groupId, 2, this, this);
     ODiscoverAction action = ops.nodeJoinStart(nodeId, bootNetworkState(groupId), false);
     assertTrue(action instanceof ODiscoverAction.ONoneAction);
-    assertTrue(ops.getNetworkMembers().isEmpty());
+    assertTrue(ops.getNetworkTopology().getMembers().isEmpty());
   }
 
   @Test
@@ -303,7 +303,7 @@ public class OCoordinatedDistributedOpsTest
         ((ODiscoverAction.OEstablishAction) action).candidates(),
         esPromise);
 
-    assertEquals(ops.getNetworkMembers().size(), 2);
+    assertEquals(ops.getNetworkTopology().getMembers().size(), 2);
     assertEquals(ops.getNetworkState().topology().quorum(), 2);
   }
 
@@ -327,14 +327,14 @@ public class OCoordinatedDistributedOpsTest
         ((ODiscoverAction.OEstablishAction) action).candidates(),
         esPromise);
 
-    assertEquals(ops.getNetworkMembers().size(), 2);
+    assertEquals(ops.getNetworkTopology().getMembers().size(), 2);
     ONodeId nodeId2 = newRandomNodeId();
     action = ops.nodeJoinStart(nodeId2, bootNetworkState(groupId), false);
     long version = ops.nextTopologyVersion();
     assertTrue(action instanceof ODiscoverAction.OAddNodeAction);
     ops.registerNode(
         ((ODiscoverAction.OAddNodeAction) action).node(), version, newPromiseId(nodeId));
-    assertEquals(ops.getNetworkMembers().size(), 3);
+    assertEquals(ops.getNetworkTopology().getMembers().size(), 3);
   }
 
   @Test
@@ -362,8 +362,8 @@ public class OCoordinatedDistributedOpsTest
 
     node1.establish(networkId, candidates, enPromise);
     node2.establish(networkId, candidates, enPromise);
-    assertEquals(node1.getNetworkMembers().size(), 2);
-    assertEquals(node2.getNetworkMembers().size(), 2);
+    assertEquals(node1.getNetworkTopology().getMembers().size(), 2);
+    assertEquals(node2.getNetworkTopology().getMembers().size(), 2);
 
     action = node1.nodeJoinStart(nodeId3, bootNetworkState(groupId), false);
     long addVersion = node1.nextTopologyVersion();
@@ -378,8 +378,8 @@ public class OCoordinatedDistributedOpsTest
     node1.registerNode(addNode, addVersion, promise);
     node2.registerNode(addNode, addVersion, promise);
 
-    assertEquals(node1.getNetworkMembers().size(), 3);
-    assertEquals(node2.getNetworkMembers().size(), 3);
+    assertEquals(node1.getNetworkTopology().getMembers().size(), 3);
+    assertEquals(node2.getNetworkTopology().getMembers().size(), 3);
   }
 
   private OTransactionIdPromise newPromiseId(ONodeId nodeId) {
@@ -413,8 +413,8 @@ public class OCoordinatedDistributedOpsTest
 
     node1.establish(networkId, candidates, enstablishPromise);
     node2.establish(networkId, candidates, enstablishPromise);
-    assertEquals(node1.getNetworkMembers().size(), 2);
-    assertEquals(node2.getNetworkMembers().size(), 2);
+    assertEquals(node1.getNetworkTopology().getMembers().size(), 2);
+    assertEquals(node2.getNetworkTopology().getMembers().size(), 2);
 
     action = node1.nodeJoinStart(nodeId3, bootNetworkState(groupId), false);
     assertTrue(action instanceof ODiscoverAction.OAddNodeAction);
@@ -427,10 +427,10 @@ public class OCoordinatedDistributedOpsTest
     res = node2.validateRegisterNode(addNode, addVersion, promise);
     assertFalse(res.isEmpty());
 
-    assertEquals(node1.getNetworkMembers().size(), 2);
-    assertEquals(node2.getNetworkMembers().size(), 2);
+    assertEquals(node1.getNetworkTopology().getMembers().size(), 2);
+    assertEquals(node2.getNetworkTopology().getMembers().size(), 2);
     try {
-      node1.getNetworkMembers().add(newRandomNodeId());
+      node1.getNetworkTopology().getMembers().add(newRandomNodeId());
       fail();
     } catch (UnsupportedOperationException e) {
     }
@@ -449,7 +449,7 @@ public class OCoordinatedDistributedOpsTest
         new ONetworkTopologyStore(gid, OTopologyState.ESTABLISHED, Set.of(nodeId1, nodeId2), 2, 2);
     node1.load(new ONodeStateStore(Optional.empty(), Optional.of(initial), Optional.empty()));
     node1.discoverNode(nodeId1);
-    assertEquals(node1.getNetworkMembers().size(), 2);
+    assertEquals(node1.getNetworkTopology().getMembers().size(), 2);
     OTopologyStateNetwork establish =
         new OTopologyStateNetwork(
             gid, OTopologyState.ESTABLISHED, Set.of(nodeId1, nodeId2, nodeId3), 2, 3);
@@ -457,9 +457,9 @@ public class OCoordinatedDistributedOpsTest
     ODiscoverAction action = node1.nodeJoinStart(nodeId2, networkState(establish), false);
     assertTrue(action instanceof ODiscoverAction.OApplyStateAction);
 
-    assertEquals(node1.getNetworkMembers().size(), 3);
+    assertEquals(node1.getNetworkTopology().getMembers().size(), 3);
     try {
-      node1.getNetworkMembers().add(newRandomNodeId());
+      node1.getNetworkTopology().getMembers().add(newRandomNodeId());
       fail();
     } catch (UnsupportedOperationException e) {
     }
@@ -478,7 +478,7 @@ public class OCoordinatedDistributedOpsTest
             groupId, OTopologyState.ESTABLISHED, Set.of(nodeId1, nodeId2, nodeId3), 2, 3);
     node1.load(new ONodeStateStore(Optional.empty(), Optional.of(initial), Optional.empty()));
     node1.discoverNode(nodeId1);
-    assertEquals(node1.getNetworkMembers().size(), 3);
+    assertEquals(node1.getNetworkTopology().getMembers().size(), 3);
     assertEquals(node1.getNetworkState().topology().quorum(), 2);
 
     OTopologyStateNetwork enstablis =
@@ -487,7 +487,7 @@ public class OCoordinatedDistributedOpsTest
     ODiscoverAction action = node1.nodeJoinStart(nodeId2, networkState(enstablis), false);
     assertTrue(action instanceof ODiscoverAction.ONotifySelf);
 
-    assertEquals(node1.getNetworkMembers().size(), 3);
+    assertEquals(node1.getNetworkTopology().getMembers().size(), 3);
   }
 
   @Test
@@ -503,12 +503,12 @@ public class OCoordinatedDistributedOpsTest
             groupId, OTopologyState.ESTABLISHED, Set.of(nodeId1, nodeId2), 2, 3);
     node1.load(new ONodeStateStore(Optional.empty(), Optional.of(initial), Optional.empty()));
     node1.discoverNode(nodeId1);
-    assertEquals(node1.getNetworkMembers().size(), 2);
+    assertEquals(node1.getNetworkTopology().getMembers().size(), 2);
 
     ODiscoverAction action = node1.nodeJoinStart(nodeId3, bootNetworkState(groupId), false);
     assertTrue(action instanceof ODiscoverAction.OAddNodeAction);
 
-    assertEquals(node1.getNetworkMembers().size(), 2);
+    assertEquals(node1.getNetworkTopology().getMembers().size(), 2);
   }
 
   @Test
@@ -523,14 +523,14 @@ public class OCoordinatedDistributedOpsTest
     ONetworkTopologyStore initial = bootStoreState(groupId);
     node1.load(new ONodeStateStore(Optional.empty(), Optional.of(initial), Optional.empty()));
     node1.discoverNode(nodeId1);
-    assertEquals(node1.getNetworkMembers().size(), 0);
+    assertEquals(node1.getNetworkTopology().getMembers().size(), 0);
 
     OTopologyStateNetwork establish =
         new OTopologyStateNetwork(gid, OTopologyState.ESTABLISHED, Set.of(nodeId2, nodeId3), 2, 2);
     ODiscoverAction action = node1.nodeJoinStart(nodeId2, networkState(establish), false);
     assertTrue(action instanceof ODiscoverAction.ONoneAction);
 
-    assertEquals(node1.getNetworkMembers().size(), 0);
+    assertEquals(node1.getNetworkTopology().getMembers().size(), 0);
   }
 
   @Test
@@ -543,7 +543,7 @@ public class OCoordinatedDistributedOpsTest
     ONetworkTopologyStore initial = bootStoreState(groupId);
     node1.load(new ONodeStateStore(Optional.empty(), Optional.of(initial), Optional.empty()));
     node1.discoverNode(nodeId1);
-    assertEquals(node1.getNetworkMembers().size(), 0);
+    assertEquals(node1.getNetworkTopology().getMembers().size(), 0);
 
     OTopologyStateNetwork establish =
         new OTopologyStateNetwork(
@@ -551,9 +551,9 @@ public class OCoordinatedDistributedOpsTest
     ODiscoverAction action = node1.nodeJoinStart(nodeId2, networkState(establish), false);
     assertTrue(action instanceof ODiscoverAction.OApplyStateAction);
 
-    assertEquals(node1.getNetworkMembers().size(), 2);
+    assertEquals(node1.getNetworkTopology().getMembers().size(), 2);
     try {
-      node1.getNetworkMembers().add(newRandomNodeId());
+      node1.getNetworkTopology().getMembers().add(newRandomNodeId());
       fail();
     } catch (UnsupportedOperationException e) {
     }
@@ -575,8 +575,8 @@ public class OCoordinatedDistributedOpsTest
     ops1.validateEstablish(groupId, Set.of(nodeId1), enProm);
     ops1.establish(groupId, Set.of(nodeId1), enProm);
 
-    assertEquals(ops1.getNetworkMembers().size(), 1);
-    assertTrue(ops1.getNetworkMembers().contains(nodeId1));
+    assertEquals(ops1.getNetworkTopology().getMembers().size(), 1);
+    assertTrue(ops1.getNetworkTopology().getMembers().contains(nodeId1));
 
     // Second node quorum1 establish
     OCoordinatedDistributedOps ops2 =
@@ -588,8 +588,8 @@ public class OCoordinatedDistributedOpsTest
     ops2.validateEstablish(groupId, Set.of(nodeId2), enProm2);
     ops2.establish(groupId, Set.of(nodeId2), enProm2);
 
-    assertEquals(ops2.getNetworkMembers().size(), 1);
-    assertTrue(ops2.getNetworkMembers().contains(nodeId2));
+    assertEquals(ops2.getNetworkTopology().getMembers().size(), 1);
+    assertTrue(ops2.getNetworkTopology().getMembers().contains(nodeId2));
 
     // This case now should start a merge case of the network
     ONodeStateNetwork state = ops2.getNetworkState();
@@ -604,8 +604,8 @@ public class OCoordinatedDistributedOpsTest
     OTransactionIdPromise promise = newPromiseId(nodeId1);
     ops2.validateRegisterNode(add.node(), version, promise);
     ops2.registerNode(add.node(), version, promise);
-    assertEquals(ops2.getNetworkMembers().size(), 2);
+    assertEquals(ops2.getNetworkTopology().getMembers().size(), 2);
     ops1.nodeJoinStart(nodeId2, ops2.getNetworkState(), false);
-    assertEquals(ops1.getNetworkMembers().size(), 2);
+    assertEquals(ops1.getNetworkTopology().getMembers().size(), 2);
   }
 }
