@@ -57,12 +57,8 @@ public class RidBagConversionIT {
 
     OServer server0Instance = setup.getServer(server0).getServerInstance();
     OServer server1Instance = setup.getServer(server1).getServerInstance();
-    server1Instance
-        .getDistributedManager()
-        .waitUntilNodeOnline(server0Instance.getDistributedManager().getLocalNodeName(), "test");
-    server0Instance
-        .getDistributedManager()
-        .waitUntilNodeOnline(server1Instance.getDistributedManager().getLocalNodeName(), "test");
+    server1Instance.getDatabases().waitOnline("test");
+    server0Instance.getDatabases().waitOnline("test");
 
     OrientDB embOri = server0Instance.getContext();
     ODatabaseSession data = embOri.open("test", "admin", "adminpwd");

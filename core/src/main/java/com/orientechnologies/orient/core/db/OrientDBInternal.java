@@ -407,4 +407,6 @@ public interface OrientDBInternal extends AutoCloseable, OSchedulerInternal {
   default ONetworkMessage newNetworkMessage() {
     throw new UnsupportedOperationException();
   }
+
+  default void waitOnline(String database) throws InterruptedException {}
 }

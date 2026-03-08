@@ -31,7 +31,7 @@ public class SimpleConnectionStrategiesIT {
   private static String databaseName = SimpleConnectionStrategiesIT.class.getSimpleName();
 
   @BeforeClass
-  public static void before() {
+  public static void before() throws InterruptedException {
     config = new SimpleDServerConfig();
     server0 = SimpleDServerConfig.SERVER0;
     server1 = SimpleDServerConfig.SERVER1;
@@ -243,11 +243,6 @@ public class SimpleConnectionStrategiesIT {
 
     remote1.close();
     toStop.startServer("orientdb-simple-dserver-config-1.xml");
-    toStop
-        .getServerInstance()
-        .getDistributedManager()
-        .waitUntilNodeOnline(
-            toStop.getServerInstance().getDistributedManager().getLocalNodeName(),
-            SimpleConnectionStrategiesIT.class.getSimpleName());
+    toStop.server.getDatabases().waitOnline(SimpleConnectionStrategiesIT.class.getSimpleName());
   }
 }

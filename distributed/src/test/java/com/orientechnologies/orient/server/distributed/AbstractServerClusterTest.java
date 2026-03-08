@@ -186,8 +186,7 @@ public abstract class AbstractServerClusterTest {
 
   protected void onServerStarted(ServerRun server) {
     try {
-      ODistributedServerManager mngr = server.getServerInstance().getDistributedManager();
-      mngr.waitUntilNodeOnline(mngr.getLocalNodeName(), getDatabaseName());
+      server.server.getDatabases().waitOnline(getDatabaseName());
     } catch (InterruptedException e) {
     }
   }

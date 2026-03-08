@@ -45,15 +45,9 @@ public class ConnectionStrategiesEEIT {
   }
 
   private void waitForDbOnlineStatus(String dbName) throws InterruptedException {
-    server0
-        .getDistributedManager()
-        .waitUntilNodeOnline(server0.getDistributedManager().getLocalNodeName(), dbName);
-    server1
-        .getDistributedManager()
-        .waitUntilNodeOnline(server1.getDistributedManager().getLocalNodeName(), dbName);
-    server2
-        .getDistributedManager()
-        .waitUntilNodeOnline(server2.getDistributedManager().getLocalNodeName(), dbName);
+    server0.getDatabases().waitOnline(dbName);
+    server1.getDatabases().waitOnline(dbName);
+    server2.getDatabases().waitOnline(dbName);
   }
 
   @Ignore
@@ -115,11 +109,7 @@ public class ConnectionStrategiesEEIT {
             .getResourceAsStream("orientdb-simple-dserver-config-1.xml"));
     server1.activate();
     server1.getDistributedManager().waitUntilNodeOnline();
-    server1
-        .getDistributedManager()
-        .waitUntilNodeOnline(
-            server1.getDistributedManager().getLocalNodeName(),
-            ConnectionStrategiesEEIT.class.getSimpleName());
+    server1.getDatabases().waitOnline("ConnectionStrategiesEEIT.class.getSimpleName()");
 
     for (int i = 0; i < 10; i++) {
       ODatabaseSession session2 =

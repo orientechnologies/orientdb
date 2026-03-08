@@ -597,7 +597,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
           final ODistributedDatabase dDatabase = manager.getDatabase(databaseName);
           if (dDatabase != null) {
             dDatabase.waitForOnline();
-          } else manager.waitUntilNodeOnline(manager.getLocalNodeName(), databaseName);
+          } else server.getDatabases().waitOnline(databaseName);
         } catch (InterruptedException e) {
           Thread.currentThread().interrupt();
           throw OException.wrapException(new OInterruptedException("Request interrupted"), e);

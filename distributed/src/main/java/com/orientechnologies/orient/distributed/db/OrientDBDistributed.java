@@ -1664,4 +1664,10 @@ public class OrientDBDistributed extends OrientDBEmbedded
       ODatabaseId dbId, OVersion version, OTransactionIdPromise promise) {
     this.getNodeState().getOps().cancelDropDatabase(dbId, version, promise);
   }
+
+  @Override
+  public void waitOnline(String database) throws InterruptedException {
+    getNodeState().getOps().waitSelfOnline(database, Optional.empty());
+    //    server.getDistributedManager().waitUntilNodeOnline(getNodeName(), database);
+  }
 }
