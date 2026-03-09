@@ -24,7 +24,6 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.distributed.NODE_STATUS;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedResponse;
@@ -87,11 +86,12 @@ public class OClusterHealthChecker implements Runnable {
   }
 
   private void checkServerInStall() {
-    if (manager.getNodeStatus() != NODE_STATUS.ONLINE)
-      // ONLY ONLINE NODE CAN CHECK FOR OTHERS
-      return;
     OServer serveri = manager.getServerInstance();
     OrientDBDistributed context = (OrientDBDistributed) serveri.getDatabases();
+
+    if (!context.getNodeState().getOps().getNetworkTopology().isSelfEnstablished())
+      // ONLY ONLINE NODE CAN TRY TO RECOVER FOR SINGLE DB STATUS
+      return;
 
     for (String dbName : manager.getDatabases()) {
       if (manager.isSyncronizing(dbName)) {
@@ -132,13 +132,13 @@ public class OClusterHealthChecker implements Runnable {
   }
 
   private void notifyDatabaseSequenceStatus() {
-    if (manager.getNodeStatus() != NODE_STATUS.ONLINE)
+    OServer server = manager.getServerInstance();
+    OrientDBDistributed context = (OrientDBDistributed) server.getDatabases();
+    if (!context.getNodeState().getOps().getNetworkTopology().isSelfEnstablished())
       // ONLY ONLINE NODE CAN TRY TO RECOVER FOR SINGLE DB STATUS
       return;
 
-    OServer server = manager.getServerInstance();
     if (!server.isActive()) return;
-    OrientDBDistributed context = (OrientDBDistributed) server.getDatabases();
 
     for (String dbName : manager.getDatabases()) {
       if (manager.isSyncronizing(dbName)) {

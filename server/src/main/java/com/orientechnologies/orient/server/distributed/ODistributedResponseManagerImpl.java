@@ -615,7 +615,7 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
       // NO QUORUM
       return null;
 
-    if (dManager.getNodeStatus() != NODE_STATUS.ONLINE)
+    if (dManager.isOffline())
       // CURRENT NODE OFFLINE: JUST RETURN
       return null;
 

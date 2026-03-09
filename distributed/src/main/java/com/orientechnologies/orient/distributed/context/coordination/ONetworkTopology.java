@@ -10,4 +10,6 @@ public interface ONetworkTopology {
   Set<ONodeId> getMembers();
 
   int getQuorum();
+
+  boolean isSelfEnstablished();
 }

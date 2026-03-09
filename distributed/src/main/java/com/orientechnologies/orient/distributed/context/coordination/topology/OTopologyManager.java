@@ -291,6 +291,11 @@ public class OTopologyManager implements OTopologyEvents, ONetworkTopology {
   }
 
   @Override
+  public boolean isSelfEnstablished() {
+    return OTopologyState.ESTABLISHED.equals(this.state);
+  }
+  
+  @Override
   public OTopologyState getState() {
     return state;
   }

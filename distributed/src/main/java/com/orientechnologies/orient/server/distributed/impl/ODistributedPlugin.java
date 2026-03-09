@@ -449,20 +449,12 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
 
   protected void checkForServerOnline(final ODistributedRequest iRequest)
       throws ODistributedException {
-    final NODE_STATUS srvStatus = getNodeStatus();
-    if (srvStatus == NODE_STATUS.OFFLINE || srvStatus == NODE_STATUS.SHUTTINGDOWN) {
+
+    if (isOffline()) {
       logger.errorOut(
-          this.nodeName,
-          null,
-          "Local server is not online (status='%s'). Request %s will be ignored",
-          srvStatus,
-          iRequest);
+          this.nodeName, null, "Local server is not online. Request %s will be ignored", iRequest);
       throw new OOfflineNodeException(
-          "Local server is not online (status='"
-              + srvStatus
-              + "'). Request "
-              + iRequest
-              + " will be ignored");
+          "Local server is not online. Request " + iRequest + " will be ignored");
     }
   }
 
@@ -963,7 +955,11 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
   }
 
   public boolean isOffline() {
-    return getNodeStatus() != NODE_STATUS.ONLINE;
+    return !((OrientDBDistributed) getServerInstance().getDatabases())
+        .getNodeState()
+        .getOps()
+        .getNetworkTopology()
+        .isSelfEnstablished();
   }
 
   @Override
