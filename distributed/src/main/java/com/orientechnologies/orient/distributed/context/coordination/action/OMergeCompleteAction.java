@@ -7,6 +7,7 @@ import com.orientechnologies.orient.distributed.context.coordination.OResponseCo
 import com.orientechnologies.orient.distributed.context.coordination.message.OMergeConfirmOp;
 import com.orientechnologies.orient.distributed.context.coordination.message.OMergeFailOp;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OOperationMessage;
+import com.orientechnologies.orient.distributed.context.coordination.message.state.ONodeStateNetwork;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import com.orientechnologies.orient.distributed.db.OCompleteExecution;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
@@ -20,14 +21,17 @@ public class OMergeCompleteAction extends OStandardCompleteAction implements OCo
       OLoggerDistributed.logger(OMergeCompleteAction.class);
 
   private final ONodeId mergeNode;
+  private final ONodeStateNetwork mergedState;
 
   public OMergeCompleteAction(
       OrientDBDistributed context,
       OOperationMessage operation,
+      ONodeStateNetwork mergedState,
       OCompleteExecution execution,
       ONodeId mergeNode) {
     super(context, operation, execution);
     this.mergeNode = mergeNode;
+    this.mergedState = mergedState;
   }
 
   @Override
@@ -38,7 +42,7 @@ public class OMergeCompleteAction extends OStandardCompleteAction implements OCo
 
   @Override
   protected void retryOperation(int delay) {
-    this.context.retryMergeOperationMessages(mergeNode, operation, this, delay);
+    this.context.retryMergeOperationMessages(mergeNode, mergedState, operation, this, delay);
   }
 
   @Override

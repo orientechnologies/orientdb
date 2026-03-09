@@ -1509,32 +1509,41 @@ public class OrientDBDistributed extends OrientDBEmbedded
     // This should do a two phase operation in the current network, but also ask for
     // permission to the merging node, to avoid in a two network and a node case to make
     // the node join both networks.
-    long version = getNodeState().getOps().nextTopologyVersion();
-    var operation = new OMergeTopology(node, state, version);
-    OCompleteAction action = new OMergeCompleteAction(this, operation, execution, node);
+    OCoordinatedDistributedOps ops = getNodeState().getOps();
+    long version = ops.nextTopologyVersion();
+    var mergedState = ops.createMergedState(state);
+    var operation = new OMergeTopology(node, mergedState, version);
+    OCompleteAction action =
+        new OMergeCompleteAction(this, operation, mergedState, execution, node);
     logger.debugNode(getNodeId(), "starting operation %s", operation);
-    sendMergeOperationMessages(node, operation, action);
+    sendMergeOperationMessages(node, mergedState, operation, action);
   }
 
   public void retryMergeOperationMessages(
-      ONodeId mergeNode, OOperationMessage operation, OCompleteAction action, int delay) {
+      ONodeId mergeNode,
+      ONodeStateNetwork mergedState,
+      OOperationMessage operation,
+      OCompleteAction action,
+      int delay) {
     delayExecute(
         () -> {
-          sendMergeOperationMessages(mergeNode, operation, action);
+          sendMergeOperationMessages(mergeNode, mergedState, operation, action);
         },
         delay);
   }
 
   private void sendMergeOperationMessages(
-      ONodeId mergeNode, OOperationMessage operation, OCompleteAction action) {
+      ONodeId mergeNode,
+      ONodeStateNetwork mergedState,
+      OOperationMessage operation,
+      OCompleteAction action) {
     OCoordinatedDistributedOps ops = this.getNodeState().getOps();
     var startOp = ops.start(action);
     if (startOp.isPresent()) {
       var start = startOp.get();
       OProposeOp propose = new OProposeOp(start.promise(), operation);
       sendMessage(start.nodes(), propose);
-      OMergeRequest op =
-          new OMergeRequest(start.promise(), ops.getGroupId(), ops.getNetworkState());
+      OMergeRequest op = new OMergeRequest(start.promise(), ops.getGroupId(), mergedState);
       sendMessage(mergeNode, op);
     } else {
       action.complete(null, null, Optional.of(new ONoTransactionSequencialAvailable()));

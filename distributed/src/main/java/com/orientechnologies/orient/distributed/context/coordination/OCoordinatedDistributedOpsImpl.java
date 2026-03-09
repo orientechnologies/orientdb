@@ -15,11 +15,14 @@ import com.orientechnologies.orient.distributed.context.coordination.action.OCom
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabaseState;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabaseStateChangeListener;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabasesTopologyState;
+import com.orientechnologies.orient.distributed.context.coordination.dbs.ONodeRole;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.OStateAction;
 import com.orientechnologies.orient.distributed.context.coordination.message.ODistributedMessage;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OAddNodeInfo;
+import com.orientechnologies.orient.distributed.context.coordination.message.state.ODatabaseMemberNetwork;
 import com.orientechnologies.orient.distributed.context.coordination.message.state.ODatabaseStateNetwork;
 import com.orientechnologies.orient.distributed.context.coordination.message.state.ONodeStateNetwork;
+import com.orientechnologies.orient.distributed.context.coordination.message.state.OTopologyStateNetwork;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAlreadyPromised;
 import com.orientechnologies.orient.distributed.context.coordination.result.ODatabaseNameUsed;
@@ -30,6 +33,7 @@ import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncI
 import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncState;
 import com.orientechnologies.orient.distributed.context.coordination.topology.ODiscoverAction;
 import com.orientechnologies.orient.distributed.context.coordination.topology.OTopologyManager;
+import com.orientechnologies.orient.distributed.context.coordination.topology.OTopologyState;
 import com.orientechnologies.orient.distributed.db.OSyncMode;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
@@ -718,6 +722,7 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
       ONodeId node, ONodeStateNetwork state, long version, OTransactionIdPromise promise) {
     this.topology.register(node, version, promise);
     this.databaseTopology.mergeNetworkState(state.databases(), promise);
+    this.sequenceManager.fill(state.sequenceStatus());
   }
 
   @Override
@@ -725,5 +730,122 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
       ONodeId node, ONodeStateNetwork state, long version, OTransactionIdPromise promise) {
     this.topology.cancelRegisterPromise(promise);
     this.databaseTopology.cancelMerge(promise);
+  }
+
+  @Override
+  public synchronized ONodeStateNetwork createMergedState(ONodeStateNetwork state) {
+    return mergeState(state, getNetworkState());
+  }
+
+  private ONodeStateNetwork mergeState(ONodeStateNetwork state, ONodeStateNetwork networkState) {
+    var topology = mergeTopology(state.topology(), networkState.topology());
+    var databases = mergeDatabases(state.databases(), networkState.databases());
+    var sequence = mergeSequence(state.sequenceStatus(), networkState.sequenceStatus());
+    return new ONodeStateNetwork(topology, databases, sequence);
+  }
+
+  private OTransactionSequenceStatus mergeSequence(
+      OTransactionSequenceStatus sequenceStatus, OTransactionSequenceStatus sequenceStatus2) {
+    long[] status = sequenceStatus.getStatus();
+    int size = status.length;
+    long[] status2 = sequenceStatus2.getStatus();
+    if (status2.length > size) {
+      size = status2.length;
+    }
+    long newStatus[] = new long[size];
+    for (int i = 0; i < size; i++) {
+      long st = 0;
+      if (i < status.length) {
+        st = status[i];
+      }
+      if (i < status2.length && st < status2[i]) {
+        st = status2[i];
+      }
+      newStatus[i] = st;
+    }
+    return new OTransactionSequenceStatus(newStatus);
+  }
+
+  private List<ODatabaseStateNetwork> mergeDatabases(
+      List<ODatabaseStateNetwork> databases, List<ODatabaseStateNetwork> databases2) {
+    Map<ODatabaseId, ODatabaseStateNetwork> dbs = new HashMap<>();
+    Map<String, ODatabaseStateNetwork> dbNames = new HashMap<>();
+    for (var db : databases) {
+      dbs.put(db.id(), db);
+      dbNames.put(db.name(), db);
+    }
+    for (var db : databases2) {
+      var db1 = dbs.get(db.id());
+      if (db1 != null) {
+        dbs.put(db.id(), mergeDatabase(db1, db));
+      } else {
+        dbs.put(db.id(), db);
+      }
+    }
+    return new ArrayList<>(dbs.values());
+  }
+
+  private ODatabaseStateNetwork mergeDatabase(
+      ODatabaseStateNetwork database, ODatabaseStateNetwork database2) {
+
+    int newQuorum;
+    if (database.quorum() > database2.quorum()) {
+      newQuorum = database.quorum();
+    } else {
+      newQuorum = database2.quorum();
+    }
+    long newVersion;
+    if (database.version() > database2.version()) {
+      newVersion = database.version();
+    } else {
+      newVersion = database2.version();
+    }
+
+    Map<ONodeId, ODatabaseMemberNetwork> members = new HashMap<>();
+
+    for (ODatabaseMemberNetwork member : database.members()) {
+      members.put(member.node(), member);
+    }
+
+    for (ODatabaseMemberNetwork member : database2.members()) {
+      var om = members.get(member.node());
+      if (om != null) {
+        members.put(member.node(), mergeMember(om, member));
+      } else {
+        members.put(member.node(), member);
+      }
+    }
+
+    return new ODatabaseStateNetwork(
+        database.id(), database.name(), newQuorum, newVersion, new ArrayList<>(members.values()));
+  }
+
+  private ODatabaseMemberNetwork mergeMember(
+      ODatabaseMemberNetwork om, ODatabaseMemberNetwork member) {
+    var role = om.role();
+    if (ONodeRole.Main.equals(member.role())) {
+      role = ONodeRole.Main;
+    }
+    return new ODatabaseMemberNetwork(om.node(), role, om.state());
+  }
+
+  private OTopologyStateNetwork mergeTopology(
+      OTopologyStateNetwork topology, OTopologyStateNetwork networkState) {
+    var newMembers = new HashSet<ONodeId>(topology.members());
+    newMembers.addAll(networkState.members());
+    int newQuorum;
+    if (topology.quorum() > networkState.quorum()) {
+      newQuorum = topology.quorum();
+    } else {
+      newQuorum = networkState.quorum();
+    }
+    long newVersion;
+    if (topology.version() > networkState.version()) {
+      newVersion = topology.version();
+    } else {
+      newVersion = networkState.version();
+    }
+    return new OTopologyStateNetwork(
+        topology.groupId(), OTopologyState.ESTABLISHED, newMembers, newQuorum, newVersion);
   }
 }

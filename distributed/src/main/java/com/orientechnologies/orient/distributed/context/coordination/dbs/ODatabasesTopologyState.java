@@ -384,17 +384,7 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
     for (var db : this.databases.values()) {
       db.applyMerge(promise);
     }
-    for (ODatabaseStateNetwork state : network) {
-      ODatabaseTopologyState db = getDb(state.id());
-      if (db != null) {
-        db.mergeState(state, promise);
-      } else {
-        db = new ODatabaseTopologyState(state, listener, current);
-        this.databases.put(state.id(), db);
-        this.databasesByName.put(state.name(), db);
-      }
-    }
-    this.notifyAll();
+    this.receiverNetworkState(network);
   }
 
   public synchronized Optional<OAcceptResult> validateAddMember(

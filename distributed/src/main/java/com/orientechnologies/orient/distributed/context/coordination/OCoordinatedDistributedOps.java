@@ -233,4 +233,6 @@ public interface OCoordinatedDistributedOps {
 
   void cancelMergeNode(
       ONodeId node, ONodeStateNetwork state, long version, OTransactionIdPromise promise);
+
+  ONodeStateNetwork createMergedState(ONodeStateNetwork state);
 }

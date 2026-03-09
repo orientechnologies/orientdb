@@ -303,21 +303,8 @@ public class OTopologyManager implements OTopologyEvents, ONetworkTopology {
 
   public synchronized void applyMerge(
       OTopologyStateNetwork topology, OTransactionIdPromise promise) {
-    var newMembers = new HashSet<ONodeId>(members);
-    newMembers.addAll(topology.members());
-    this.members = Collections.unmodifiableSet(newMembers);
-    int newQuorum = (members.size() / 2) + 1;
-    if (topology.quorum() > newQuorum) {
-      newQuorum = topology.quorum();
-    }
-    if (newQuorum >= minimumQuorum) {
-      this.quorum = newQuorum;
-    }
-    for (var member : this.members) {
-      if (!this.nodesInfo.containsKey(member)) {
-        this.nodesInfo.put(member, new ONodeInfo());
-      }
-    }
-    this.versionPromise.forceVersion(new OVersion(topology.version() + 1));
+    this.members = Collections.unmodifiableSet(topology.members());
+    this.quorum = topology.quorum();
+    this.versionPromise.forceVersion(new OVersion(topology.version()));
   }
 }
