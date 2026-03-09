@@ -69,7 +69,10 @@ public interface OCoordinatedDistributedOps {
   void cancelRegisterNode(OTransactionIdPromise promise);
 
   // Methods to merge networks when possible
-  Optional<OAcceptResult> validateMerge(OGroupId group, OTransactionIdPromise coordinator);
+  Optional<OAcceptResult> validateMerge(
+      OGroupId group, ONodeStateNetwork state, OTransactionIdPromise coordinator);
+
+  void applyMerge(OTransactionIdPromise promise);
 
   void confirmMerge(ONodeId node, OTransactionIdPromise promise, Optional<OAcceptResult> accepted);
 
@@ -221,4 +224,13 @@ public interface OCoordinatedDistributedOps {
   void dropDatabase(ODatabaseId dbId, OVersion version, OTransactionIdPromise promise);
 
   void cancelDropDatabase(ODatabaseId dbId, OVersion version, OTransactionIdPromise promise);
+
+  Optional<OAcceptResult> validateMergeNode(
+      ONodeId node, ONodeStateNetwork state, long version, OTransactionIdPromise promise);
+
+  void mergeNode(
+      ONodeId node, ONodeStateNetwork state, long version, OTransactionIdPromise promise);
+
+  void cancelMergeNode(
+      ONodeId node, ONodeStateNetwork state, long version, OTransactionIdPromise promise);
 }

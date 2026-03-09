@@ -1,12 +1,8 @@
 package com.orientechnologies.orient.distributed.context.coordination.topology;
 
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.transaction.OGroupId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
-import com.orientechnologies.orient.distributed.context.coordination.OCoordinatedDistributedOpsImpl;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OAddTopologyMember;
-import com.orientechnologies.orient.distributed.context.coordination.message.state.ODatabaseStateNetwork;
 import com.orientechnologies.orient.distributed.context.coordination.message.state.ONodeStateNetwork;
 import com.orientechnologies.orient.distributed.db.OCompleteExecution;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
@@ -22,50 +18,32 @@ public sealed interface ODiscoverAction
         ODiscoverAction.OApplySequenceAction,
         ODiscoverAction.OMergeNodeAction {
 
-  public void execute(OrientDBDistributed context, OCompleteExecution execution);
-
-  default ODiscoverAction checkAndApply(
-      OCoordinatedDistributedOpsImpl ops, ONodeStateNetwork state, boolean merge) {
-    return this;
-  }
+  public void execute(
+      OrientDBDistributed context, ONodeStateNetwork state, OCompleteExecution execution);
 
   public record ORequestMergeAction(ONodeId requestToMerge) implements ODiscoverAction {
-    private static final OLogger logger = OLogManager.instance().logger(ORequestMergeAction.class);
 
     @Override
-    public void execute(OrientDBDistributed context, OCompleteExecution execution) {
+    public void execute(
+        OrientDBDistributed context, ONodeStateNetwork state, OCompleteExecution execution) {
       context.sendMergeOperation(requestToMerge, execution);
-    }
-
-    @Override
-    public ODiscoverAction checkAndApply(
-        OCoordinatedDistributedOpsImpl ops, ONodeStateNetwork state, boolean merge) {
-      var localDbs = ops.getDatabaseTopology();
-      for (ODatabaseStateNetwork db : state.databases()) {
-        var locDb = localDbs.getDatabaseId(db.name());
-        if (locDb.isPresent()) {
-          if (!locDb.get().equals(db.id())) {
-            logger.warn(
-                "found join-able network, but can't merge into it with conflicting databases");
-            return new ONoneAction();
-          }
-        }
-      }
-      return this;
     }
   }
 
   public record ONotifySelf(Set<ONodeId> nodes) implements ODiscoverAction {
     @Override
-    public void execute(OrientDBDistributed context, OCompleteExecution execution) {
+    public void execute(
+        OrientDBDistributed context, ONodeStateNetwork state, OCompleteExecution execution) {
       context.sendFirstConnects(nodes);
+      context.dumpNodeInfo();
     }
   }
 
   record OEstablishAction(OGroupId groupId, Set<ONodeId> candidates) implements ODiscoverAction {
 
     @Override
-    public void execute(OrientDBDistributed context, OCompleteExecution execution) {
+    public void execute(
+        OrientDBDistributed context, ONodeStateNetwork state, OCompleteExecution execution) {
       context.sendEstablish(groupId(), candidates(), execution);
     }
   }
@@ -73,15 +51,17 @@ public sealed interface ODiscoverAction
   record OMergeNodeAction(ONodeId node) implements ODiscoverAction {
 
     @Override
-    public void execute(OrientDBDistributed context, OCompleteExecution exection) {
-      context.sendMergeNodeAction(node, exection);
+    public void execute(
+        OrientDBDistributed context, ONodeStateNetwork state, OCompleteExecution exection) {
+      context.sendMergeNodeAction(node, state, exection);
     }
   }
 
   record OAddNodeAction(ONodeId node) implements ODiscoverAction {
 
     @Override
-    public void execute(OrientDBDistributed context, OCompleteExecution exection) {
+    public void execute(
+        OrientDBDistributed context, ONodeStateNetwork state, OCompleteExecution exection) {
       long version = context.getNodeState().getOps().nextTopologyVersion();
       context.coordinatedOperation(new OAddTopologyMember(version, node()), exection);
     }
@@ -90,7 +70,8 @@ public sealed interface ODiscoverAction
   record ONoneAction() implements ODiscoverAction {
 
     @Override
-    public void execute(OrientDBDistributed context, OCompleteExecution execution) {
+    public void execute(
+        OrientDBDistributed context, ONodeStateNetwork state, OCompleteExecution execution) {
       // Noting to do
     }
   }
@@ -98,41 +79,20 @@ public sealed interface ODiscoverAction
   record OApplyStateAction() implements ODiscoverAction {
 
     @Override
-    public void execute(OrientDBDistributed context, OCompleteExecution execution) {
+    public void execute(
+        OrientDBDistributed context, ONodeStateNetwork state, OCompleteExecution execution) {
       context.autoDeployIfNeed();
-    }
-
-    @Override
-    public ODiscoverAction checkAndApply(
-        OCoordinatedDistributedOpsImpl ops, ONodeStateNetwork state, boolean merge) {
-      if (merge) {
-        ops.getDatabaseTopology().mergeNetworkState(state.databases());
-      } else {
-        ops.getDatabaseTopology().receiverNetworkState(state.databases());
-      }
-      ops.notifyUpdate();
-      return this;
+      context.dumpNodeInfo();
     }
   }
 
   record OApplySequenceAction() implements ODiscoverAction {
 
     @Override
-    public void execute(OrientDBDistributed context, OCompleteExecution execution) {
+    public void execute(
+        OrientDBDistributed context, ONodeStateNetwork state, OCompleteExecution execution) {
       context.autoDeployIfNeed();
-    }
-
-    @Override
-    public ODiscoverAction checkAndApply(
-        OCoordinatedDistributedOpsImpl ops, ONodeStateNetwork state, boolean merge) {
-      if (merge) {
-        ops.getDatabaseTopology().mergeNetworkState(state.databases());
-      } else {
-        ops.getDatabaseTopology().receiverNetworkState(state.databases());
-      }
-      ops.getSequenceManager().fill(state.sequenceStatus());
-      ops.notifyUpdate();
-      return this;
+      context.dumpNodeInfo();
     }
   }
 }

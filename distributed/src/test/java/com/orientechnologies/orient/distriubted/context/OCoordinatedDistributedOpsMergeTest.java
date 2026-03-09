@@ -26,6 +26,7 @@ import com.orientechnologies.orient.distributed.context.coordination.message.sta
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAlreadyPromised;
 import com.orientechnologies.orient.distributed.context.coordination.topology.ODiscoverAction;
+import com.orientechnologies.orient.distributed.context.coordination.topology.OTopologyState;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
@@ -207,14 +208,22 @@ public class OCoordinatedDistributedOpsMergeTest
     var res = ops1.start(action);
     var promise = res.get().promise();
     ops1.nodeSuccess(nodeId1, promise);
+    ONodeStateNetwork nsn = newNetworkState(nodeId1, groupId);
 
     OCoordinatedDistributedOps ops2 = quorum1Env(nodeId1, groupId);
     var enPromise = newPromiseId(nodeId2);
-    var res1 = ops2.validateMerge(groupId, enPromise);
+    var res1 = ops2.validateMerge(groupId, nsn, enPromise);
     assertTrue(res1.isEmpty());
     ops1.confirmMerge(nodeId2, promise, res1);
     assertTrue(action.success);
     assertFalse(action.failure);
+  }
+
+  private ONodeStateNetwork newNetworkState(ONodeId nodeId1, OGroupId groupId) {
+    OTopologyStateNetwork topology =
+        new OTopologyStateNetwork(groupId, OTopologyState.ESTABLISHED, Set.of(nodeId1), 1, 1);
+    OTransactionSequenceStatus status = new OTransactionSequenceStatus(new long[] {});
+    return new ONodeStateNetwork(topology, Collections.emptyList(), status);
   }
 
   @Test
@@ -237,13 +246,14 @@ public class OCoordinatedDistributedOpsMergeTest
     var res1 = ops3.start(action1);
     var promise1 = res1.get().promise();
     ops3.nodeSuccess(nodeId3, promise1);
+    ONodeStateNetwork nsn = newNetworkState(nodeId1, groupId);
 
     OCoordinatedDistributedOps ops2 = quorum1Env(nodeId1, groupId);
     var enPromise = newPromiseId(nodeId2);
-    var res2 = ops2.validateMerge(groupId, enPromise);
+    var res2 = ops2.validateMerge(groupId, nsn, enPromise);
     assertTrue(res2.isEmpty());
     var enPromise2 = newPromiseId(nodeId3);
-    var res21 = ops2.validateMerge(groupId, enPromise2);
+    var res21 = ops2.validateMerge(groupId, nsn, enPromise2);
     assertFalse(res21.isEmpty());
 
     ops1.confirmMerge(nodeId2, promise, res2);

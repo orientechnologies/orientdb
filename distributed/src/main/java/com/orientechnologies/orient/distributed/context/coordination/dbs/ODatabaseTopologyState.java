@@ -51,7 +51,7 @@ public class ODatabaseTopologyState {
     for (OAddNodeInfo p : partecipants) {
       nodeStatus.put(p.node(), new ONodeDatabaseState(p.node(), p.role(), ODatabaseState.Offline));
     }
-    this.versionPromise = new OVersionPromise(new OVersion(0), current);
+    this.versionPromise = new OVersionPromise(new OVersion(1), current);
     this.quorum = quorum;
     this.stateListener = stateListener;
     this.current = current;
@@ -306,9 +306,12 @@ public class ODatabaseTopologyState {
     }
   }
 
-  public synchronized void mergeState(ODatabaseStateNetwork state) {
+  public synchronized void mergeState(ODatabaseStateNetwork state, OTransactionIdPromise promise) {
     if (state.quorum() > this.quorum) {
       this.quorum = state.quorum();
+    }
+    if (this.getVersion() < state.version()) {
+      this.versionPromise.loadVersion(new OVersion(state.version()));
     }
     for (ODatabaseMemberNetwork member : state.members()) {
       ONodeDatabaseState status = this.nodeStatus.get(member.node());
@@ -451,5 +454,17 @@ public class ODatabaseTopologyState {
         iter.remove();
       }
     }
+  }
+
+  public Optional<OAcceptResult> validateMerge(OTransactionIdPromise promise) {
+    return this.versionPromise.promise(promise, this.versionPromise.next());
+  }
+
+  public void cancelMerge(OTransactionIdPromise promise) {
+    this.versionPromise.cancel(promise);
+  }
+
+  public void applyMerge(OTransactionIdPromise promise) {
+    this.versionPromise.accept(promise, this.versionPromise.next());
   }
 }

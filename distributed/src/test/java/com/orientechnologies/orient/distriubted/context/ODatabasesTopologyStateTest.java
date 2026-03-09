@@ -220,7 +220,7 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
     assertEquals(ns, ODatabaseState.Offline);
 
     Optional<OAcceptResult> prom =
-        state.validateSetState(dbId, nodeId, ODatabaseState.Online, 1L, promiseId);
+        state.validateSetState(dbId, nodeId, ODatabaseState.Online, 2L, promiseId);
     assertTrue(prom.isEmpty());
 
     state.setState(dbId, nodeId, ODatabaseState.Online, 1L, promiseId);
@@ -260,15 +260,15 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
     assertEquals(ns, ODatabaseState.Offline);
 
     Optional<OAcceptResult> prom =
-        state.validateSetState(dbId, nodeId, ODatabaseState.Online, 1L, promiseId);
+        state.validateSetState(dbId, nodeId, ODatabaseState.Online, 2L, promiseId);
     assertTrue(prom.isEmpty());
-    state.cancelSetState(dbId, nodeId, 1L, promiseId);
+    state.cancelSetState(dbId, nodeId, 2L, promiseId);
 
     Optional<OAcceptResult> prom1 =
-        state.validateSetState(dbId, nodeId, ODatabaseState.Online, 1L, promiseId);
+        state.validateSetState(dbId, nodeId, ODatabaseState.Online, 2L, promiseId);
     assertTrue(prom1.isEmpty());
 
-    state.setState(dbId, nodeId, ODatabaseState.Online, 1L, promiseId);
+    state.setState(dbId, nodeId, ODatabaseState.Online, 2L, promiseId);
 
     ns = state.getState(dbId, nodeId);
     assertEquals(ns, ODatabaseState.Online);
@@ -309,15 +309,15 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
     assertEquals(ns, ODatabaseState.Offline);
 
     Optional<OAcceptResult> prom =
-        state.validateSetState(dbId, nodeId, ODatabaseState.Online, 1L, promiseId);
+        state.validateSetState(dbId, nodeId, ODatabaseState.Online, 2L, promiseId);
 
     assertTrue(prom.isEmpty());
     Optional<OAcceptResult> prom1 =
-        state1.validateSetState(dbId, nodeId, ODatabaseState.Online, 1L, promiseId);
+        state1.validateSetState(dbId, nodeId, ODatabaseState.Online, 2L, promiseId);
     assertTrue(prom1.isEmpty());
 
-    state.setState(dbId, nodeId, ODatabaseState.Online, 1L, promiseId);
-    state1.setState(dbId, nodeId, ODatabaseState.Online, 1L, promiseId);
+    state.setState(dbId, nodeId, ODatabaseState.Online, 2L, promiseId);
+    state1.setState(dbId, nodeId, ODatabaseState.Online, 2L, promiseId);
 
     OSyncInfo syncInfo = state1.newSync(dbId).get();
     assertTrue(syncInfo.targets().contains(nodeId));
@@ -383,19 +383,19 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
     assertEquals(ns, ODatabaseState.Offline);
 
     Optional<OAcceptResult> prom =
-        state.validateSetState(dbId, nodeId, ODatabaseState.Online, 1L, promiseId);
+        state.validateSetState(dbId, nodeId, ODatabaseState.Online, 2L, promiseId);
 
     assertTrue(prom.isEmpty());
     Optional<OAcceptResult> prom1 =
-        state1.validateSetState(dbId, nodeId, ODatabaseState.Online, 1L, promiseId);
+        state1.validateSetState(dbId, nodeId, ODatabaseState.Online, 2L, promiseId);
     assertTrue(prom1.isEmpty());
     Optional<OAcceptResult> prom2 =
-        state2.validateSetState(dbId, nodeId, ODatabaseState.Online, 1L, promiseId);
+        state2.validateSetState(dbId, nodeId, ODatabaseState.Online, 2L, promiseId);
     assertTrue(prom2.isEmpty());
 
-    state.setState(dbId, nodeId, ODatabaseState.Online, 1L, promiseId);
-    state1.setState(dbId, nodeId, ODatabaseState.Online, 1L, promiseId);
-    state2.setState(dbId, nodeId, ODatabaseState.Online, 1L, promiseId);
+    state.setState(dbId, nodeId, ODatabaseState.Online, 2L, promiseId);
+    state1.setState(dbId, nodeId, ODatabaseState.Online, 2L, promiseId);
+    state2.setState(dbId, nodeId, ODatabaseState.Online, 2L, promiseId);
 
     OSyncInfo syncInfo = state1.newSync(dbId).get();
     assertTrue(syncInfo.targets().contains(nodeId));

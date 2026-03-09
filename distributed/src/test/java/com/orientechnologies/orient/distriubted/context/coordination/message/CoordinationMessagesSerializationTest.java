@@ -237,11 +237,19 @@ public class CoordinationMessagesSerializationTest {
     assertTrue(read.isClose());
   }
 
+  private ONodeStateNetwork newNetworkState(ONodeId nodeId1, OGroupId groupId) {
+    OTopologyStateNetwork topology =
+        new OTopologyStateNetwork(groupId, OTopologyState.ESTABLISHED, Set.of(nodeId1), 1, 1);
+    OTransactionSequenceStatus status = new OTransactionSequenceStatus(new long[] {});
+    return new ONodeStateNetwork(topology, Collections.emptyList(), status);
+  }
+
   @Test
   public void mergeRequestTest() throws IOException {
     var promise = newPromiseId();
     var groupId = newGroupId();
-    OMergeRequest merge = new OMergeRequest(promise, groupId);
+    var state = newNetworkState(newNodeId(), groupId);
+    OMergeRequest merge = new OMergeRequest(promise, groupId, state);
     OMergeRequest read = writeRead(merge);
     assertEquals(promise, read.getPromise());
     assertEquals(groupId, read.getGroup());

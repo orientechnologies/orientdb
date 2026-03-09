@@ -1,7 +1,5 @@
 package com.orientechnologies.orient.distributed.context.coordination.topology;
 
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.transaction.OGroupId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
@@ -9,6 +7,7 @@ import com.orientechnologies.orient.distributed.context.ONetworkTopologyStore;
 import com.orientechnologies.orient.distributed.context.coordination.ONetworkTopology;
 import com.orientechnologies.orient.distributed.context.coordination.OVersion;
 import com.orientechnologies.orient.distributed.context.coordination.OVersionPromise;
+import com.orientechnologies.orient.distributed.context.coordination.message.state.ONodeStateNetwork;
 import com.orientechnologies.orient.distributed.context.coordination.message.state.OTopologyStateNetwork;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAlreadyEstablishedTopologyState;
@@ -17,6 +16,7 @@ import com.orientechnologies.orient.distributed.context.coordination.topology.OD
 import com.orientechnologies.orient.distributed.context.coordination.topology.ODiscoverAction.OEstablishAction;
 import com.orientechnologies.orient.distributed.context.coordination.topology.ODiscoverAction.OMergeNodeAction;
 import com.orientechnologies.orient.distributed.context.coordination.topology.ODiscoverAction.ONoneAction;
+import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -25,7 +25,8 @@ import java.util.Optional;
 import java.util.Set;
 
 public class OTopologyManager implements OTopologyEvents, ONetworkTopology {
-  private static final OLogger logger = OLogManager.instance().logger(OTopologyManager.class);
+  private static final OLoggerDistributed logger =
+      OLoggerDistributed.logger(OTopologyManager.class);
 
   private final ONodeId current;
   private OGroupId groupId;
@@ -144,7 +145,7 @@ public class OTopologyManager implements OTopologyEvents, ONetworkTopology {
 
   private void setMember(Set<ONodeId> members) {
     this.members = Collections.unmodifiableSet(new HashSet<ONodeId>(members));
-    logger.debug("new network members %s ", this.members);
+    logger.debugNode(current, "new network members %s ", this.members);
     Map<ONodeId, ONodeInfo> newNodesInfo = new HashMap<>();
     for (var member : members) {
       var info = this.nodesInfo.get(member);
@@ -251,8 +252,8 @@ public class OTopologyManager implements OTopologyEvents, ONetworkTopology {
     return getVersion() + 1;
   }
 
-  public synchronized Optional<OAcceptResult> acceptMerge(
-      OGroupId group, OTransactionIdPromise promise) {
+  public synchronized Optional<OAcceptResult> validateMerge(
+      OGroupId group, ONodeStateNetwork mergeState, OTransactionIdPromise promise) {
     if (this.quorum == 1) {
       // This is going to merge not based on version hack the accept version
       var nextVersion = this.versionPromise.next();
@@ -294,9 +295,29 @@ public class OTopologyManager implements OTopologyEvents, ONetworkTopology {
   public boolean isSelfEnstablished() {
     return OTopologyState.ESTABLISHED.equals(this.state);
   }
-  
+
   @Override
   public OTopologyState getState() {
     return state;
+  }
+
+  public synchronized void applyMerge(
+      OTopologyStateNetwork topology, OTransactionIdPromise promise) {
+    var newMembers = new HashSet<ONodeId>(members);
+    newMembers.addAll(topology.members());
+    this.members = Collections.unmodifiableSet(newMembers);
+    int newQuorum = (members.size() / 2) + 1;
+    if (topology.quorum() > newQuorum) {
+      newQuorum = topology.quorum();
+    }
+    if (newQuorum >= minimumQuorum) {
+      this.quorum = newQuorum;
+    }
+    for (var member : this.members) {
+      if (!this.nodesInfo.containsKey(member)) {
+        this.nodesInfo.put(member, new ONodeInfo());
+      }
+    }
+    this.versionPromise.forceVersion(new OVersion(topology.version() + 1));
   }
 }

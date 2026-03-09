@@ -379,11 +379,15 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
     }
   }
 
-  public synchronized void mergeNetworkState(List<ODatabaseStateNetwork> network) {
+  public synchronized void mergeNetworkState(
+      List<ODatabaseStateNetwork> network, OTransactionIdPromise promise) {
+    for (var db : this.databases.values()) {
+      db.applyMerge(promise);
+    }
     for (ODatabaseStateNetwork state : network) {
       ODatabaseTopologyState db = getDb(state.id());
       if (db != null) {
-        db.mergeState(state);
+        db.mergeState(state, promise);
       } else {
         db = new ODatabaseTopologyState(state, listener, current);
         this.databases.put(state.id(), db);
@@ -548,5 +552,28 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
 
   private long currentTime() {
     return System.nanoTime() / 1000;
+  }
+
+  public synchronized void cancelMerge(OTransactionIdPromise promise) {
+    for (var db : this.databases.values()) {
+      db.cancelMerge(promise);
+    }
+  }
+
+  public synchronized Optional<OAcceptResult> validateMerge(
+      List<ODatabaseStateNetwork> databases, OTransactionIdPromise promise) {
+    var promised = new HashSet<ODatabaseTopologyState>();
+    for (var db : this.databases.values()) {
+      var res = db.validateMerge(promise);
+      if (res.isEmpty()) {
+        promised.add(db);
+      } else {
+        for (var dbp : promised) {
+          dbp.cancelMerge(promise);
+        }
+        return res;
+      }
+    }
+    return Optional.empty();
   }
 }
