@@ -2566,6 +2566,9 @@ public class OSelectExecutionPlanner {
     String order = null;
 
     for (OOrderByItem item : orderBy.getItems()) {
+      if (item.getModifier() != null) {
+        return false;
+      }
       if (order == null) {
         order = item.getType();
       } else if (!order.equals(item.getType())) {
