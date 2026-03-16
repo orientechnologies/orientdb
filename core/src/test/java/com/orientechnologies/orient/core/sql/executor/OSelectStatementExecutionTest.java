@@ -14,6 +14,7 @@ import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OClass.INDEX_TYPE;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -404,6 +405,64 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
       lastName = name;
     }
     Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test
+  public void testSelectOrderLinkSetIndex() {
+    String className = "testSelectOrderLinkSetIndex";
+    OClass c1 = db.getMetadata().getSchema().createClass(className);
+    c1.createProperty("Name", OType.STRING);
+    String className2 = "testSelectOrderLinkSetIndexLink";
+    OClass c2 = db.getMetadata().getSchema().createClass(className2);
+    OProperty p = c2.createProperty("NativeState", OType.LINKSET, c1);
+    p.createIndex(INDEX_TYPE.NOTUNIQUE);
+
+    db.command("INSERT INTO " + className + " SET Name = 'M'").close();
+    ;
+    db.command("INSERT INTO " + className + " SET Name = 'P'").close();
+    ;
+    db.command("INSERT INTO " + className + " SET Name = 'G'").close();
+    ;
+
+    db.command(
+            "INSERT INTO "
+                + className2
+                + " SET NativeState = (SELECT FROM "
+                + className
+                + " WHERE Name = 'M')")
+        .close();
+    ;
+    db.command(
+            "INSERT INTO "
+                + className2
+                + " SET NativeState = (SELECT FROM "
+                + className
+                + " WHERE Name = 'P')")
+        .close();
+    ;
+    db.command(
+            "INSERT INTO "
+                + className2
+                + " SET NativeState = (SELECT FROM "
+                + className
+                + " WHERE Name = 'G')")
+        .close();
+    ;
+
+    OResultSet result =
+        db.query(
+            "SELECT NativeState, NativeState[0].Name AS _NativeState_Name \n"
+                + "FROM "
+                + className2
+                + " WHERE NativeState IN (SELECT FROM "
+                + className
+                + " WHERE Name IN ['M','P','G']) \n"
+                + "ORDER BY NativeState[0].Name DESC");
+    printExecutionPlan(result);
+    List<String> names =
+        result.stream().map((x) -> (String) x.getProperty("_NativeState_Name")).toList();
+    assertEquals(Arrays.asList("P", "M", "G"), names);
     result.close();
   }
 

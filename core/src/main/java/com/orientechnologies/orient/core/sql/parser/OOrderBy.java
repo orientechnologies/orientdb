@@ -159,5 +159,9 @@ public class OOrderBy extends SimpleNode {
     }
     return orderItems;
   }
+
+  public boolean ordersNested() {
+    return getItems().stream().anyMatch(x -> x.getModifier() != null);
+  }
 }
 /* JavaCC - OriginalChecksum=d5529400217169f15e556e5dc6fe4f5b (do not edit this line) */

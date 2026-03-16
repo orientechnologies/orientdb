@@ -2193,7 +2193,7 @@ public class OSelectExecutionPlanner {
   }
 
   private boolean fullySorted(OOrderBy orderBy, OIndexCandidate desc, OCommandContext ctx) {
-    if (orderBy.ordersWithCollate() || !orderBy.ordersSameDirection()) {
+    if (orderBy.ordersWithCollate() || !orderBy.ordersSameDirection() || orderBy.ordersNested()) {
       return false;
     }
     return desc.fullySorted(orderBy.getProperties(), ctx);
