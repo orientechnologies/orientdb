@@ -108,19 +108,13 @@ public class OLuceneIndexFactory implements OIndexFactory, ODatabaseLifecycleLis
   }
 
   @Override
-  public void onCreate(ODatabaseInternal db) {
-    OLogManager.instance().debug(this, "onCreate");
-  }
+  public void onCreate(ODatabaseInternal db) {}
 
   @Override
-  public void onOpen(ODatabaseInternal db) {
-    OLogManager.instance().debug(this, "onOpen");
-  }
+  public void onOpen(ODatabaseInternal db) {}
 
   @Override
-  public void onClose(ODatabaseInternal db) {
-    OLogManager.instance().debug(this, "onClose");
-  }
+  public void onClose(ODatabaseInternal db) {}
 
   @Override
   public void onDrop(final ODatabaseInternal db) {
