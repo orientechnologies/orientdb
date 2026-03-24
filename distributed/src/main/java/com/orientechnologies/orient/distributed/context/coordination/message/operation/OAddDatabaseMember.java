@@ -79,6 +79,6 @@ public class OAddDatabaseMember implements OOperationMessage {
 
   @Override
   public String toString() {
-    return "Add " + nodes + " to database " + dbId + ", version=" + version;
+    return "Add member " + nodes + " to database " + dbId + ", version=" + version;
   }
 }

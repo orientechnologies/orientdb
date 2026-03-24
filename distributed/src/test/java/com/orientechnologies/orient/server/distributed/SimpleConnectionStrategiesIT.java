@@ -5,7 +5,6 @@ import static com.orientechnologies.orient.core.config.OGlobalConfiguration.CLIE
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import com.orientechnologies.orient.client.remote.ORemoteClient;
 import com.orientechnologies.orient.client.remote.db.document.ODatabaseDocumentRemote;
 import com.orientechnologies.orient.core.db.ODatabasePool;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
@@ -149,11 +148,7 @@ public class SimpleConnectionStrategiesIT {
             server0,
             OrientDBConfig.builder().addConfig(CLIENT_CONNECTION_FETCH_HOST_LIST, false).build());
     ODatabaseSession session = remote.open(databaseName, "admin", "adminpwd");
-    assertEquals(
-        ((ORemoteClient) ((ODatabaseDocumentRemote) session).getRemoteClient())
-            .getServerURLs()
-            .size(),
-        1);
+    assertEquals(((ODatabaseDocumentRemote) session).getRemoteClient().getServerURLs().size(), 1);
     session.close();
     remote.close();
 
@@ -162,11 +157,7 @@ public class SimpleConnectionStrategiesIT {
             server0,
             OrientDBConfig.builder().addConfig(CLIENT_CONNECTION_FETCH_HOST_LIST, true).build());
     ODatabaseSession session1 = remote1.open(databaseName, "admin", "adminpwd");
-    assertTrue(
-        ((ORemoteClient) ((ODatabaseDocumentRemote) session1).getRemoteClient())
-                .getServerURLs()
-                .size()
-            > 1);
+    assertTrue(((ODatabaseDocumentRemote) session1).getRemoteClient().getServerURLs().size() > 1);
     session1.close();
     remote1.close();
   }
@@ -180,11 +171,7 @@ public class SimpleConnectionStrategiesIT {
 
     ODatabasePool pool = new ODatabasePool(remote, databaseName, "admin", "adminpwd");
     ODatabaseSession session = pool.acquire();
-    assertEquals(
-        ((ORemoteClient) ((ODatabaseDocumentRemote) session).getRemoteClient())
-            .getServerURLs()
-            .size(),
-        1);
+    assertEquals(((ODatabaseDocumentRemote) session).getRemoteClient().getServerURLs().size(), 1);
     session.close();
     pool.close();
     remote.close();
@@ -195,11 +182,7 @@ public class SimpleConnectionStrategiesIT {
             OrientDBConfig.builder().addConfig(CLIENT_CONNECTION_FETCH_HOST_LIST, true).build());
     ODatabasePool pool1 = new ODatabasePool(remote1, databaseName, "admin", "adminpwd");
     ODatabaseSession session1 = pool1.acquire();
-    assertTrue(
-        ((ORemoteClient) ((ODatabaseDocumentRemote) session1).getRemoteClient())
-                .getServerURLs()
-                .size()
-            > 1);
+    assertTrue(((ODatabaseDocumentRemote) session1).getRemoteClient().getServerURLs().size() > 1);
     session1.close();
     pool1.close();
     remote1.close();

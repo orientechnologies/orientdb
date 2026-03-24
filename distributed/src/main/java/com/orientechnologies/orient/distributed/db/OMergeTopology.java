@@ -57,4 +57,9 @@ public class OMergeTopology implements OOperationMessage {
     var version = input.readLong();
     return new OMergeTopology(node, state, version);
   }
+
+  @Override
+  public String toString() {
+    return "OMergeTopology [node=" + node + ", state=" + state + ", version=" + version + "]";
+  }
 }

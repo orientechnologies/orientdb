@@ -45,7 +45,7 @@ public class OStandardCompleteAction implements OCompleteAction {
       if (delay.isPresent()) {
         logger.infoNode(
             context.getNodeId(),
-            "failed coordination of %s whit result %s, scheduling retry with delay %d",
+            "failed coordination of %s with result %s, scheduling retry with delay %d",
             operation,
             result,
             delay.get());
