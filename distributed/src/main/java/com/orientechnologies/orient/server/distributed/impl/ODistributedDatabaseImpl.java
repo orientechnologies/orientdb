@@ -400,14 +400,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   @Override
   public void setOnline() {
     fillStatus();
-    logger.infoNode(
-        localNodeName,
-        "Publishing ONLINE status for database %s.%s...",
-        localNodeName,
-        databaseName);
-
-    // SET THE NODE.DB AS ONLINE
-    context.setDatabaseStatus(databaseName, DB_STATUS.ONLINE);
     resume();
   }
 

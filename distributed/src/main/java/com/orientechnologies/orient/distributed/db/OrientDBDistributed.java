@@ -335,7 +335,6 @@ public class OrientDBDistributed extends OrientDBEmbedded
     } else {
       embedded = new ODatabaseDocumentDistributedPooled(pool, storage, sharedContext, plugin);
       embedded.init(pool.getConfig());
-      // getOrInitDistributedConfiguration(storage.getName());
     }
     return embedded;
   }
@@ -1300,6 +1299,10 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   public void setDatabaseStatus(String dbName, DB_STATUS status) {
+    var pre = getDatabaseStatus(dbName);
+    if (pre != null && pre.equals(status)) {
+      return;
+    }
     Optional<ODatabaseId> dbID = getNodeState().getDatabaseTopology().getDatabaseId(dbName);
     if (dbID.isPresent()) {
       setDatabaseState(dbID.get(), getNodeId(), ODatabaseState.from(status));
