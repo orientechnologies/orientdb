@@ -100,13 +100,14 @@ public class OOperationMessageTest {
     ODatabaseId dbId = newDatabaseId();
     ONodeId nodeId1 = newNodeId();
 
-    OSetDatabaseState toTest = new OSetDatabaseState(dbId, nodeId1, ODatabaseState.Online, 1);
+    OSetDatabaseState toTest =
+        new OSetDatabaseState(dbId, nodeId1, ODatabaseState.Online, new OVersion(1));
     OSetDatabaseState operation = writeRead(toTest);
 
     assertEquals(operation.getDbId(), dbId);
     assertEquals(operation.getNodeId(), nodeId1);
     assertEquals(operation.getState(), ODatabaseState.Online);
-    assertEquals(operation.getVersion(), 1);
+    assertEquals(operation.getVersion(), new OVersion(1));
   }
 
   @Test
@@ -148,11 +149,11 @@ public class OOperationMessageTest {
     var node1 = newNodeId();
     var dbId = newDatabaseId();
     var nodes = List.of(new OAddNodeInfo(node1, ONodeRole.Main));
-    OAddDatabaseMember toTest = new OAddDatabaseMember(1, dbId, nodes);
+    OAddDatabaseMember toTest = new OAddDatabaseMember(new OVersion(1), dbId, nodes);
 
     OAddDatabaseMember operation = writeRead(toTest);
 
-    assertEquals(operation.getVersion(), 1);
+    assertEquals(operation.getVersion().getValue(), 1);
     assertEquals(operation.getDbId(), dbId);
     assertEquals(operation.getNodes().get(0).node(), node1);
     assertEquals(operation.getNodes().get(0).role(), ONodeRole.Main);

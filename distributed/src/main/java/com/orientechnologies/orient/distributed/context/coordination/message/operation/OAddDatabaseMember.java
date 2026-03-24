@@ -2,6 +2,7 @@ package com.orientechnologies.orient.distributed.context.coordination.message.op
 
 import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
+import com.orientechnologies.orient.distributed.context.coordination.OVersion;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import java.io.DataInput;
@@ -13,11 +14,11 @@ import java.util.Optional;
 
 public class OAddDatabaseMember implements OOperationMessage {
 
-  private final long version;
+  private final OVersion version;
   private final ODatabaseId dbId;
   private final List<OAddNodeInfo> nodes;
 
-  public OAddDatabaseMember(long version, ODatabaseId dbId, List<OAddNodeInfo> nodes) {
+  public OAddDatabaseMember(OVersion version, ODatabaseId dbId, List<OAddNodeInfo> nodes) {
     this.version = version;
     this.dbId = dbId;
     this.nodes = nodes;
@@ -40,7 +41,7 @@ public class OAddDatabaseMember implements OOperationMessage {
 
   @Override
   public void serialize(DataOutput out) throws IOException {
-    out.writeLong(version);
+    version.writeNetwork(out);
     this.dbId.writeNetwork(out);
     out.writeInt(nodes.size());
     for (OAddNodeInfo node : nodes) {
@@ -49,7 +50,7 @@ public class OAddDatabaseMember implements OOperationMessage {
   }
 
   public static OAddDatabaseMember readNetwork(DataInput input) throws IOException {
-    long version = input.readLong();
+    var version = OVersion.readNetwork(input);
     ODatabaseId dbId = ODatabaseId.readNetwork(input);
     int size = input.readInt();
     List<OAddNodeInfo> nodes = new ArrayList<>();
@@ -65,7 +66,7 @@ public class OAddDatabaseMember implements OOperationMessage {
     return 6;
   }
 
-  public long getVersion() {
+  public OVersion getVersion() {
     return version;
   }
 

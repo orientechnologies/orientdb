@@ -46,7 +46,7 @@ public interface OCoordinatedDistributedOps {
 
   long nextTopologyVersion();
 
-  long nextDatabaseVersion(ODatabaseId Id);
+  OVersion nextDatabaseVersion(ODatabaseId Id);
 
   // Methods for coordinations of operations to add and remove nodes
 
@@ -111,10 +111,10 @@ public interface OCoordinatedDistributedOps {
   // Methods for manage the add of nodes to database
 
   Optional<OAcceptResult> validateAddDatabaseMember(
-      ODatabaseId dbId, List<OAddNodeInfo> nodes, long version, OTransactionIdPromise promise);
+      ODatabaseId dbId, List<OAddNodeInfo> nodes, OVersion version, OTransactionIdPromise promise);
 
   void addDatabaseMember(
-      ODatabaseId dbId, List<OAddNodeInfo> nodes, long version, OTransactionIdPromise promise);
+      ODatabaseId dbId, List<OAddNodeInfo> nodes, OVersion version, OTransactionIdPromise promise);
 
   void cancelAddDatabaseMember(
       ODatabaseId dbId, List<OAddNodeInfo> nodes, OTransactionIdPromise promise);
@@ -136,18 +136,18 @@ public interface OCoordinatedDistributedOps {
       ODatabaseId dbId,
       ONodeId nodeId,
       ODatabaseState state,
-      long version,
+      OVersion version,
       OTransactionIdPromise promise);
 
   void setState(
       ODatabaseId db,
       ONodeId node,
       ODatabaseState state,
-      long version,
+      OVersion version,
       OTransactionIdPromise promise);
 
   void cancelSetState(
-      ODatabaseId dbId, ONodeId nodeId, long version, OTransactionIdPromise promise);
+      ODatabaseId dbId, ONodeId nodeId, OVersion version, OTransactionIdPromise promise);
 
   // Methods for manage the sync flow
 

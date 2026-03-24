@@ -11,7 +11,7 @@ public record OAddDatabaseMembersRetryOperation(List<OAddNodeInfo> nodes, ODatab
     implements ORetryOperation {
   @Override
   public void execute(OrientDBDistributed ctx, OCompleteExecution op) {
-    long version = ctx.getNodeState().getOps().nextDatabaseVersion(id);
+    var version = ctx.getNodeState().getOps().nextDatabaseVersion(id);
     ctx.coordinatedOperation(new OAddDatabaseMember(version, id, nodes), op);
   }
 }

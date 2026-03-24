@@ -2,6 +2,7 @@ package com.orientechnologies.orient.distributed.context.coordination.dbs;
 
 import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
+import com.orientechnologies.orient.distributed.context.coordination.OVersion;
 import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncState;
 import java.util.Collection;
 import java.util.Optional;
@@ -17,7 +18,7 @@ public interface ODatabasesTopology {
 
   boolean shouldSink(ODatabaseId dbId, ONodeId nodeID);
 
-  long getDatabaseVersion(ODatabaseId dbId);
+  OVersion getDatabaseVersion(ODatabaseId dbId);
 
   String getDatabaseName(ODatabaseId dbId);
 

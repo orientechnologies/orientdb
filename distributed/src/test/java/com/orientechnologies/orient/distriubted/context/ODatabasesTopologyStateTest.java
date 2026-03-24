@@ -9,6 +9,7 @@ import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
+import com.orientechnologies.orient.distributed.context.coordination.OVersion;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabaseState;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabaseStateChangeListener;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabasesTopologyState;
@@ -152,9 +153,9 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
     ODatabaseState ns = state.getState(dbId, nodeId);
     assertEquals(ns, ODatabaseState.Offline);
 
-    state.validateSetState(dbId, nodeId, ODatabaseState.Online, 1L, promiseId);
+    state.validateSetState(dbId, nodeId, ODatabaseState.Online, new OVersion(1L), promiseId);
 
-    state.setState(dbId, nodeId, ODatabaseState.Online, 1L, promiseId);
+    state.setState(dbId, nodeId, ODatabaseState.Online, new OVersion(1L), promiseId);
 
     ns = state.getState(dbId, nodeId);
     assertEquals(ns, ODatabaseState.Online);
@@ -181,10 +182,10 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
 
     ONodeId newNode = newNodeId();
     var addInfos = List.of(new OAddNodeInfo(newNode, ONodeRole.Main));
-    var nextVersion = state.getDatabaseVersion(dbId) + 1;
+    var nextVersion = state.nextDatabaseVersion(dbId);
     state.validateAddMember(dbId, addInfos, nextVersion, promiseId);
     state.addDatabaseMember(dbId, addInfos, nextVersion, promiseId);
-    var nextVersion1 = state.getDatabaseVersion(dbId) + 1;
+    var nextVersion1 = state.nextDatabaseVersion(dbId);
     Optional<OAcceptResult> prom =
         state.validateSetState(dbId, nodeId, ODatabaseState.Online, nextVersion1, promiseId);
     assertTrue(prom.isEmpty());
@@ -194,7 +195,7 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
     assertTrue(prom1.isPresent());
     assertTrue(prom1.get() instanceof OAlreadyPromised);
 
-    state.setState(dbId, nodeId, ODatabaseState.Online, 1L, promiseId);
+    state.setState(dbId, nodeId, ODatabaseState.Online, new OVersion(1L), promiseId);
 
     ns = state.getState(dbId, nodeId);
     assertEquals(ns, ODatabaseState.Online);
@@ -220,22 +221,22 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
     assertEquals(ns, ODatabaseState.Offline);
 
     Optional<OAcceptResult> prom =
-        state.validateSetState(dbId, nodeId, ODatabaseState.Online, 2L, promiseId);
+        state.validateSetState(dbId, nodeId, ODatabaseState.Online, new OVersion(2L), promiseId);
     assertTrue(prom.isEmpty());
 
-    state.setState(dbId, nodeId, ODatabaseState.Online, 1L, promiseId);
+    state.setState(dbId, nodeId, ODatabaseState.Online, new OVersion(1L), promiseId);
 
     ns = state.getState(dbId, nodeId);
     assertEquals(ns, ODatabaseState.Online);
 
     ONodeId newNode = newNodeId();
     var addInfos = List.of(new OAddNodeInfo(newNode, ONodeRole.Main));
-    var nextVersion = state.getDatabaseVersion(dbId) + 1;
+    var nextVersion = state.nextDatabaseVersion(dbId);
     state.validateAddMember(dbId, addInfos, nextVersion, promiseId);
     state.addDatabaseMember(dbId, addInfos, nextVersion, promiseId);
 
     Optional<OAcceptResult> prom1 =
-        state.validateSetState(dbId, newNode, ODatabaseState.Offline, 1L, promiseId);
+        state.validateSetState(dbId, newNode, ODatabaseState.Offline, new OVersion(1L), promiseId);
     assertTrue(prom1.isPresent());
     assertTrue(prom1.get() instanceof OOutdatedVersion);
   }
@@ -260,15 +261,15 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
     assertEquals(ns, ODatabaseState.Offline);
 
     Optional<OAcceptResult> prom =
-        state.validateSetState(dbId, nodeId, ODatabaseState.Online, 2L, promiseId);
+        state.validateSetState(dbId, nodeId, ODatabaseState.Online, new OVersion(2L), promiseId);
     assertTrue(prom.isEmpty());
-    state.cancelSetState(dbId, nodeId, 2L, promiseId);
+    state.cancelSetState(dbId, nodeId, new OVersion(2L), promiseId);
 
     Optional<OAcceptResult> prom1 =
-        state.validateSetState(dbId, nodeId, ODatabaseState.Online, 2L, promiseId);
+        state.validateSetState(dbId, nodeId, ODatabaseState.Online, new OVersion(2L), promiseId);
     assertTrue(prom1.isEmpty());
 
-    state.setState(dbId, nodeId, ODatabaseState.Online, 2L, promiseId);
+    state.setState(dbId, nodeId, ODatabaseState.Online, new OVersion(2L), promiseId);
 
     ns = state.getState(dbId, nodeId);
     assertEquals(ns, ODatabaseState.Online);
@@ -309,15 +310,15 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
     assertEquals(ns, ODatabaseState.Offline);
 
     Optional<OAcceptResult> prom =
-        state.validateSetState(dbId, nodeId, ODatabaseState.Online, 2L, promiseId);
+        state.validateSetState(dbId, nodeId, ODatabaseState.Online, new OVersion(2L), promiseId);
 
     assertTrue(prom.isEmpty());
     Optional<OAcceptResult> prom1 =
-        state1.validateSetState(dbId, nodeId, ODatabaseState.Online, 2L, promiseId);
+        state1.validateSetState(dbId, nodeId, ODatabaseState.Online, new OVersion(2L), promiseId);
     assertTrue(prom1.isEmpty());
 
-    state.setState(dbId, nodeId, ODatabaseState.Online, 2L, promiseId);
-    state1.setState(dbId, nodeId, ODatabaseState.Online, 2L, promiseId);
+    state.setState(dbId, nodeId, ODatabaseState.Online, new OVersion(2L), promiseId);
+    state1.setState(dbId, nodeId, ODatabaseState.Online, new OVersion(2L), promiseId);
 
     OSyncInfo syncInfo = state1.newSync(dbId).get();
     assertTrue(syncInfo.targets().contains(nodeId));
@@ -383,19 +384,19 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
     assertEquals(ns, ODatabaseState.Offline);
 
     Optional<OAcceptResult> prom =
-        state.validateSetState(dbId, nodeId, ODatabaseState.Online, 2L, promiseId);
+        state.validateSetState(dbId, nodeId, ODatabaseState.Online, new OVersion(2L), promiseId);
 
     assertTrue(prom.isEmpty());
     Optional<OAcceptResult> prom1 =
-        state1.validateSetState(dbId, nodeId, ODatabaseState.Online, 2L, promiseId);
+        state1.validateSetState(dbId, nodeId, ODatabaseState.Online, new OVersion(2L), promiseId);
     assertTrue(prom1.isEmpty());
     Optional<OAcceptResult> prom2 =
-        state2.validateSetState(dbId, nodeId, ODatabaseState.Online, 2L, promiseId);
+        state2.validateSetState(dbId, nodeId, ODatabaseState.Online, new OVersion(2L), promiseId);
     assertTrue(prom2.isEmpty());
 
-    state.setState(dbId, nodeId, ODatabaseState.Online, 2L, promiseId);
-    state1.setState(dbId, nodeId, ODatabaseState.Online, 2L, promiseId);
-    state2.setState(dbId, nodeId, ODatabaseState.Online, 2L, promiseId);
+    state.setState(dbId, nodeId, ODatabaseState.Online, new OVersion(2L), promiseId);
+    state1.setState(dbId, nodeId, ODatabaseState.Online, new OVersion(2L), promiseId);
+    state2.setState(dbId, nodeId, ODatabaseState.Online, new OVersion(2L), promiseId);
 
     OSyncInfo syncInfo = state1.newSync(dbId).get();
     assertTrue(syncInfo.targets().contains(nodeId));
@@ -452,7 +453,7 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
 
     state.declareDatabase(promiseId, dbId, name, partecipants, quorum);
 
-    long version = state.getDatabaseVersion(dbId) + 1;
+    OVersion version = state.nextDatabaseVersion(dbId);
     var nodes = List.of(new OAddNodeInfo(nodeId1, ONodeRole.Main));
     Optional<OAcceptResult> accept = state.validateAddMember(dbId, nodes, version, promiseId);
     assertTrue(accept.isEmpty());
@@ -480,7 +481,7 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
 
     state.declareDatabase(promiseId, dbId, name, partecipants, quorum);
 
-    long version = state.getDatabaseVersion(dbId) + 1;
+    OVersion version = state.nextDatabaseVersion(dbId);
     var nodes = List.of(new OAddNodeInfo(nodeId1, ONodeRole.Main));
     Optional<OAcceptResult> accept = state.validateAddMember(dbId, nodes, version, promiseId);
     assertTrue(accept.isEmpty());

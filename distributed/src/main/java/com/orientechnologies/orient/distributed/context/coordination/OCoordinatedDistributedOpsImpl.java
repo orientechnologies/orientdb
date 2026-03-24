@@ -436,8 +436,8 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
     return this.topology.nextVersion();
   }
 
-  public synchronized long nextDatabaseVersion(ODatabaseId Id) {
-    return this.databaseTopology.getDatabaseVersion(Id) + 1;
+  public synchronized OVersion nextDatabaseVersion(ODatabaseId Id) {
+    return this.databaseTopology.getDatabaseVersion(Id).next();
   }
 
   public ODatabasesTopologyState getDatabaseTopology() {
@@ -451,13 +451,13 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
 
   @Override
   public Optional<OAcceptResult> validateAddDatabaseMember(
-      ODatabaseId dbId, List<OAddNodeInfo> nodes, long version, OTransactionIdPromise promise) {
+      ODatabaseId dbId, List<OAddNodeInfo> nodes, OVersion version, OTransactionIdPromise promise) {
     return this.databaseTopology.validateAddMember(dbId, nodes, version, promise);
   }
 
   @Override
   public void addDatabaseMember(
-      ODatabaseId dbId, List<OAddNodeInfo> nodes, long version, OTransactionIdPromise promise) {
+      ODatabaseId dbId, List<OAddNodeInfo> nodes, OVersion version, OTransactionIdPromise promise) {
     this.databaseTopology.addDatabaseMember(dbId, nodes, version, promise);
     notifyUpdate();
   }
@@ -487,7 +487,7 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
       ODatabaseId dbId,
       ONodeId nodeId,
       ODatabaseState state,
-      long version,
+      OVersion version,
       OTransactionIdPromise promise) {
     return this.databaseTopology.validateSetState(dbId, nodeId, state, version, promise);
   }
@@ -497,14 +497,14 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
       ODatabaseId db,
       ONodeId node,
       ODatabaseState state,
-      long version,
+      OVersion version,
       OTransactionIdPromise promise) {
     this.databaseTopology.setState(db, node, state, version, promise);
   }
 
   @Override
   public void cancelSetState(
-      ODatabaseId dbId, ONodeId nodeId, long version, OTransactionIdPromise promise) {
+      ODatabaseId dbId, ONodeId nodeId, OVersion version, OTransactionIdPromise promise) {
     this.databaseTopology.cancelSetState(dbId, nodeId, version, promise);
   }
 

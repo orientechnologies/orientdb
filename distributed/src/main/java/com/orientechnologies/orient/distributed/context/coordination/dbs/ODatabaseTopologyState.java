@@ -83,12 +83,12 @@ public class ODatabaseTopologyState {
   }
 
   public synchronized void setState(
-      ONodeId node, ODatabaseState state, long version, OTransactionIdPromise promise) {
+      ONodeId node, ODatabaseState state, OVersion version, OTransactionIdPromise promise) {
     var no = this.nodeStatus.get(node);
     if (no != null) {
       no.setState(state);
     }
-    this.versionPromise.accept(promise, new OVersion(version));
+    this.versionPromise.accept(promise, version);
     this.notifyChange(node, state);
   }
 
@@ -101,15 +101,15 @@ public class ODatabaseTopologyState {
   }
 
   public synchronized Optional<OAcceptResult> promiseState(
-      ODatabaseState state, ONodeId nodeId, long version, OTransactionIdPromise promise) {
+      ODatabaseState state, ONodeId nodeId, OVersion version, OTransactionIdPromise promise) {
     if (!this.nodeStatus.containsKey(nodeId)) {
       return Optional.of(new OMissingNode(nodeId));
     }
-    return this.versionPromise.promise(promise, new OVersion(version));
+    return this.versionPromise.promise(promise, version);
   }
 
-  public long getVersion() {
-    return this.versionPromise.getVersion().getValue();
+  public OVersion getVersion() {
+    return this.versionPromise.getVersion();
   }
 
   public synchronized ODatabaseState getState(ONodeId nodeId) {
@@ -122,7 +122,7 @@ public class ODatabaseTopologyState {
   }
 
   public synchronized void cancelSetState(
-      ONodeId nodeId, long version, OTransactionIdPromise promise) {
+      ONodeId nodeId, OVersion version, OTransactionIdPromise promise) {
     this.versionPromise.cancel(promise);
   }
 
@@ -281,12 +281,12 @@ public class ODatabaseTopologyState {
     for (ONodeDatabaseState state : this.nodeStatus.values()) {
       members.add(state.getNetworkState());
     }
-    return new ODatabaseStateNetwork(id, name, quorum, getVersion(), members);
+    return new ODatabaseStateNetwork(id, name, quorum, getVersion().getValue(), members);
   }
 
   public synchronized void receiveState(ODatabaseStateNetwork state) {
     // TODO: verify promised case ....
-    if (this.getVersion() < state.version()) {
+    if (this.getVersion().getValue() < state.version()) {
       this.versionPromise.loadVersion(new OVersion(state.version()));
       this.quorum = state.quorum();
       for (ODatabaseMemberNetwork member : state.members()) {
@@ -310,7 +310,7 @@ public class ODatabaseTopologyState {
     if (state.quorum() > this.quorum) {
       this.quorum = state.quorum();
     }
-    if (this.getVersion() < state.version()) {
+    if (this.getVersion().getValue() < state.version()) {
       this.versionPromise.loadVersion(new OVersion(state.version()));
     }
     for (ODatabaseMemberNetwork member : state.members()) {
@@ -338,13 +338,13 @@ public class ODatabaseTopologyState {
   }
 
   public synchronized Optional<OAcceptResult> promiseMember(
-      List<OAddNodeInfo> nodes, long version, OTransactionIdPromise promise) {
+      List<OAddNodeInfo> nodes, OVersion version, OTransactionIdPromise promise) {
     for (var node : nodes) {
       if (this.nodeStatus.containsKey(node.node())) {
         return Optional.of(new ONodeAlreadyPresent(this.id, node.node()));
       }
     }
-    return this.versionPromise.promise(promise, new OVersion(version));
+    return this.versionPromise.promise(promise, version);
   }
 
   public synchronized Optional<OAcceptResult> promiseRemoveMember(
@@ -372,13 +372,13 @@ public class ODatabaseTopologyState {
   }
 
   public synchronized void addMember(
-      List<OAddNodeInfo> nodes, long version, OTransactionIdPromise promise) {
+      List<OAddNodeInfo> nodes, OVersion version, OTransactionIdPromise promise) {
     for (var node : nodes) {
       this.nodeStatus.put(
           node.node(), new ONodeDatabaseState(node.node(), node.role(), ODatabaseState.Offline));
       this.stateListener.onStateChange(id, node.node(), ODatabaseState.Offline);
     }
-    this.versionPromise.accept(promise, new OVersion(version));
+    this.versionPromise.accept(promise, version);
   }
 
   public synchronized void cancelAddMemer(List<OAddNodeInfo> nodes, OTransactionIdPromise promise) {
@@ -404,7 +404,8 @@ public class ODatabaseTopologyState {
 
   public synchronized ODatabaseTopologyStore getStore() {
     var nodes = this.nodeStatus.values().stream().map((x) -> x.toStore()).toList();
-    return new ODatabaseTopologyStore(nodes, this.id, this.name, this.getVersion(), this.quorum);
+    return new ODatabaseTopologyStore(
+        nodes, this.id, this.name, this.getVersion().getValue(), this.quorum);
   }
 
   public int getQuorum() {
@@ -466,5 +467,9 @@ public class ODatabaseTopologyState {
 
   public void applyMerge(OTransactionIdPromise promise) {
     this.versionPromise.accept(promise, this.versionPromise.next());
+  }
+
+  public synchronized OVersion nextVersion() {
+    return this.versionPromise.next();
   }
 }

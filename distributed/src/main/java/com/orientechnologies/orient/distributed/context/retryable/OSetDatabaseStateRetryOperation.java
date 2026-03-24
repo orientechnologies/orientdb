@@ -12,7 +12,7 @@ public record OSetDatabaseStateRetryOperation(ONodeId node, ODatabaseId dbId, OD
 
   @Override
   public void execute(OrientDBDistributed ctx, OCompleteExecution complete) {
-    long version = ctx.getNodeState().getOps().nextDatabaseVersion(dbId);
+    var version = ctx.getNodeState().getOps().nextDatabaseVersion(dbId);
     ctx.coordinatedOperation(new OSetDatabaseState(dbId, node, state, version), complete);
   }
 }

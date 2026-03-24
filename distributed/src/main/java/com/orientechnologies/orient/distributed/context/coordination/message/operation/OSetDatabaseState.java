@@ -3,6 +3,7 @@ package com.orientechnologies.orient.distributed.context.coordination.message.op
 import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
+import com.orientechnologies.orient.distributed.context.coordination.OVersion;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabaseState;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
@@ -16,9 +17,10 @@ public class OSetDatabaseState implements OOperationMessage {
   private final ODatabaseId dbId;
   private final ONodeId nodeId;
   private final ODatabaseState state;
-  private final long version;
+  private final OVersion version;
 
-  public OSetDatabaseState(ODatabaseId dbId, ONodeId nodeId, ODatabaseState state, long version) {
+  public OSetDatabaseState(
+      ODatabaseId dbId, ONodeId nodeId, ODatabaseState state, OVersion version) {
     this.dbId = dbId;
     this.nodeId = nodeId;
     this.state = state;
@@ -47,14 +49,15 @@ public class OSetDatabaseState implements OOperationMessage {
     this.dbId.writeNetwork(out);
     this.nodeId.writeNetwork(out);
     this.state.writeNetwork(out);
-    out.writeLong(version);
+    this.version.writeNetwork(out);
   }
 
   public static OSetDatabaseState readNetwork(DataInput input) throws IOException {
     ODatabaseId id = ODatabaseId.readNetwork(input);
     ONodeId nodeId = ONodeId.readNetwork(input);
     ODatabaseState state = ODatabaseState.readNetwork(input);
-    long version = input.readLong();
+    OVersion version = OVersion.readNetwork(input);
+
     return new OSetDatabaseState(id, nodeId, state, version);
   }
 
@@ -75,7 +78,7 @@ public class OSetDatabaseState implements OOperationMessage {
     return state;
   }
 
-  public long getVersion() {
+  public OVersion getVersion() {
     return version;
   }
 

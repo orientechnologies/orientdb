@@ -116,7 +116,7 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
       ODatabaseId db,
       ONodeId node,
       ODatabaseState state,
-      long version,
+      OVersion version,
       OTransactionIdPromise promise) {
     var nodes = getDb(db);
     if (nodes != null) {
@@ -132,7 +132,7 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
       ODatabaseId dbId,
       ONodeId nodeId,
       ODatabaseState state,
-      long version,
+      OVersion version,
       OTransactionIdPromise promise) {
     ODatabaseTopologyState dbTopology = getDb(dbId);
     if (dbTopology != null) {
@@ -142,17 +142,17 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
     }
   }
 
-  public synchronized long getDatabaseVersion(ODatabaseId dbId) {
+  public synchronized OVersion getDatabaseVersion(ODatabaseId dbId) {
     ODatabaseTopologyState dbTopology = getDb(dbId);
     if (dbTopology != null) {
       return dbTopology.getVersion();
     } else {
-      return 0;
+      return new OVersion(0);
     }
   }
 
   public synchronized void cancelSetState(
-      ODatabaseId dbId, ONodeId nodeId, long version, OTransactionIdPromise promise) {
+      ODatabaseId dbId, ONodeId nodeId, OVersion version, OTransactionIdPromise promise) {
     ODatabaseTopologyState db = getDb(dbId);
     if (db != null) {
       db.cancelSetState(nodeId, version, promise);
@@ -388,7 +388,7 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
   }
 
   public synchronized Optional<OAcceptResult> validateAddMember(
-      ODatabaseId dbId, List<OAddNodeInfo> nodes, long version, OTransactionIdPromise promise) {
+      ODatabaseId dbId, List<OAddNodeInfo> nodes, OVersion version, OTransactionIdPromise promise) {
     ODatabaseTopologyState db = getDb(dbId);
     if (db != null) {
       return db.promiseMember(nodes, version, promise);
@@ -398,7 +398,7 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
   }
 
   public synchronized void addDatabaseMember(
-      ODatabaseId dbId, List<OAddNodeInfo> nodes, long version, OTransactionIdPromise promise) {
+      ODatabaseId dbId, List<OAddNodeInfo> nodes, OVersion version, OTransactionIdPromise promise) {
     ODatabaseTopologyState db = getDb(dbId);
     if (db != null) {
       db.addMember(nodes, version, promise);
@@ -565,5 +565,14 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
       }
     }
     return Optional.empty();
+  }
+
+  public synchronized OVersion nextDatabaseVersion(ODatabaseId id) {
+    ODatabaseTopologyState dbTopology = getDb(id);
+    if (dbTopology != null) {
+      return dbTopology.nextVersion();
+    } else {
+      return new OVersion(0);
+    }
   }
 }
