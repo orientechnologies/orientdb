@@ -1022,7 +1022,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
     sendFirstConnects(Collections.singleton(nodeId));
   }
 
-  public void registerNode(ONodeId node, long version, OTransactionIdPromise promise) {
+  public void registerNode(ONodeId node, OVersion version, OTransactionIdPromise promise) {
     getNodeState().getOps().registerNode(node, version, promise);
     // This should make aware of the added node of the fact it joined the network
     sendFirstConnect(node);
@@ -1510,7 +1510,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
     // permission to the merging node, to avoid in a two network and a node case to make
     // the node join both networks.
     OCoordinatedDistributedOps ops = getNodeState().getOps();
-    long version = ops.nextTopologyVersion();
+    var version = ops.nextTopologyVersion();
     var mergedState = ops.createMergedState(state);
     var operation = new OMergeTopology(node, mergedState, version);
     OCompleteAction action =
@@ -1687,7 +1687,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   public void mergeNode(
-      ONodeId node, ONodeStateNetwork state, long version, OTransactionIdPromise promise) {
+      ONodeId node, ONodeStateNetwork state, OVersion version, OTransactionIdPromise promise) {
     getNodeState().getOps().mergeNode(node, state, version, promise);
     dumpNodeInfo();
   }

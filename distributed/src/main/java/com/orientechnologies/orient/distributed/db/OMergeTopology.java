@@ -2,6 +2,7 @@ package com.orientechnologies.orient.distributed.db;
 
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
+import com.orientechnologies.orient.distributed.context.coordination.OVersion;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OOperationMessage;
 import com.orientechnologies.orient.distributed.context.coordination.message.state.ONodeStateNetwork;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
@@ -14,9 +15,9 @@ public class OMergeTopology implements OOperationMessage {
 
   private final ONodeId node;
   private final ONodeStateNetwork state;
-  private final long version;
+  private final OVersion version;
 
-  public OMergeTopology(ONodeId node, ONodeStateNetwork state, long version) {
+  public OMergeTopology(ONodeId node, ONodeStateNetwork state, OVersion version) {
     this.node = node;
     this.state = state;
     this.version = version;
@@ -43,7 +44,7 @@ public class OMergeTopology implements OOperationMessage {
   public void serialize(DataOutput out) throws IOException {
     this.node.writeNetwork(out);
     this.state.writeNetwork(out);
-    out.writeLong(version);
+    this.version.writeNetwork(out);
   }
 
   @Override
@@ -54,7 +55,7 @@ public class OMergeTopology implements OOperationMessage {
   public static OMergeTopology readNetwork(DataInput input) throws IOException {
     var node = ONodeId.readNetwork(input);
     var state = ONodeStateNetwork.fromNetwork(input);
-    var version = input.readLong();
+    var version = OVersion.readNetwork(input);
     return new OMergeTopology(node, state, version);
   }
 

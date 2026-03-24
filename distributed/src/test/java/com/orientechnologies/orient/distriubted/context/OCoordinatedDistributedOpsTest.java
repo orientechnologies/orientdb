@@ -117,9 +117,9 @@ public class OCoordinatedDistributedOpsTest
     OCoordinatedDistributedOps ops =
         new OCoordinatedDistributedOpsImpl(nodeId, groupId, 2, this, this);
     var prom = newPromiseId(nodeId);
-    ops.registerNode(nodeId, 0, prom);
+    ops.registerNode(nodeId, new OVersion(0), prom);
     ONodeId nodeIdtwo = newRandomNodeId();
-    ops.registerNode(nodeIdtwo, 0, prom);
+    ops.registerNode(nodeIdtwo, new OVersion(0), prom);
 
     var res = ops.start(action);
     var promise = res.get().promise();
@@ -138,9 +138,9 @@ public class OCoordinatedDistributedOpsTest
     OCoordinatedDistributedOps ops =
         new OCoordinatedDistributedOpsImpl(nodeId, groupId, 2, this, this);
     var prom = newPromiseId(nodeId);
-    ops.registerNode(nodeId, 0, prom);
+    ops.registerNode(nodeId, new OVersion(0), prom);
     ONodeId nodeIdtwo = newRandomNodeId();
-    ops.registerNode(nodeIdtwo, 0, prom);
+    ops.registerNode(nodeIdtwo, new OVersion(0), prom);
 
     var res = ops.start(action);
     var promise = res.get().promise();
@@ -207,13 +207,13 @@ public class OCoordinatedDistributedOpsTest
     OCoordinatedDistributedOps ops =
         new OCoordinatedDistributedOpsImpl(nodeId, groupId, 2, this, this);
     var promise = newPromiseId(nodeId);
-    ops.registerNode(nodeId, 0, promise);
+    ops.registerNode(nodeId, new OVersion(0), promise);
     ONodeId nodeIdtwo = newRandomNodeId();
-    ops.registerNode(nodeIdtwo, 0, promise);
+    ops.registerNode(nodeIdtwo, new OVersion(0), promise);
     ONodeId nodeIdthree = newRandomNodeId();
-    ops.registerNode(nodeIdthree, 0, promise);
+    ops.registerNode(nodeIdthree, new OVersion(0), promise);
     ONodeId nodeIdFour = newRandomNodeId();
-    ops.registerNode(nodeIdFour, 0, promise);
+    ops.registerNode(nodeIdFour, new OVersion(0), promise);
 
     ops.unregisterNode(nodeIdthree, new OVersion(0), promise);
     ops.unregisterNode(nodeIdFour, new OVersion(0), promise);
@@ -330,7 +330,7 @@ public class OCoordinatedDistributedOpsTest
     assertEquals(ops.getNetworkTopology().getMembers().size(), 2);
     ONodeId nodeId2 = newRandomNodeId();
     action = ops.nodeJoinStart(nodeId2, bootNetworkState(groupId), false);
-    long version = ops.nextTopologyVersion();
+    var version = ops.nextTopologyVersion();
     assertTrue(action instanceof ODiscoverAction.OAddNodeAction);
     ops.registerNode(
         ((ODiscoverAction.OAddNodeAction) action).node(), version, newPromiseId(nodeId));
@@ -366,10 +366,10 @@ public class OCoordinatedDistributedOpsTest
     assertEquals(node2.getNetworkTopology().getMembers().size(), 2);
 
     action = node1.nodeJoinStart(nodeId3, bootNetworkState(groupId), false);
-    long addVersion = node1.nextTopologyVersion();
+    var addVersion = node1.nextTopologyVersion();
     assertTrue(action instanceof ODiscoverAction.OAddNodeAction);
     var addNode = ((ODiscoverAction.OAddNodeAction) action).node();
-    assertTrue(addVersion > 0);
+    assertTrue(addVersion.getValue() > 0);
     OTransactionIdPromise promise = newPromiseId(nodeId1);
     var res = node1.validateRegisterNode(addNode, addVersion, promise);
     assertTrue(res.isEmpty());
@@ -420,7 +420,7 @@ public class OCoordinatedDistributedOpsTest
     assertTrue(action instanceof ODiscoverAction.OAddNodeAction);
 
     var addNode = ((ODiscoverAction.OAddNodeAction) action).node();
-    long addVersion = node1.nextTopologyVersion() - 1;
+    var addVersion = new OVersion(node1.nextTopologyVersion().getValue() - 1);
     OTransactionIdPromise promise = newPromiseId(nodeId1);
     var res = node1.validateRegisterNode(addNode, addVersion, promise);
     assertFalse(res.isEmpty());
@@ -598,7 +598,7 @@ public class OCoordinatedDistributedOpsTest
 
     ONodeStateNetwork mergeState = ops1.getNetworkState();
     ODiscoverAction addNode = ops2.nodeJoinStart(nodeId1, mergeState, true);
-    long version = ops2.nextTopologyVersion();
+    var version = ops2.nextTopologyVersion();
     assertTrue(addNode instanceof OMergeNodeAction);
     OMergeNodeAction add = (OMergeNodeAction) addNode;
     OTransactionIdPromise promise = newPromiseId(nodeId1);

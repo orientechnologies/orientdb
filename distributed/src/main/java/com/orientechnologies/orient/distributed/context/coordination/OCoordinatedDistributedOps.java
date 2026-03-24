@@ -44,7 +44,7 @@ public interface OCoordinatedDistributedOps {
 
   void completeExecution(OTransactionIdPromise promise);
 
-  long nextTopologyVersion();
+  OVersion nextTopologyVersion();
 
   OVersion nextDatabaseVersion(ODatabaseId Id);
 
@@ -55,9 +55,9 @@ public interface OCoordinatedDistributedOps {
   ODiscoverAction nodeJoinStart(ONodeId node, ONodeStateNetwork state, boolean merge);
 
   Optional<OAcceptResult> validateRegisterNode(
-      ONodeId node, long version, OTransactionIdPromise promise);
+      ONodeId node, OVersion version, OTransactionIdPromise promise);
 
-  void registerNode(ONodeId node, long version, OTransactionIdPromise promise);
+  void registerNode(ONodeId node, OVersion version, OTransactionIdPromise promise);
 
   Optional<OAcceptResult> validateUnregisterNode(
       ONodeId node, OVersion version, OTransactionIdPromise promise);
@@ -226,13 +226,13 @@ public interface OCoordinatedDistributedOps {
   void cancelDropDatabase(ODatabaseId dbId, OVersion version, OTransactionIdPromise promise);
 
   Optional<OAcceptResult> validateMergeNode(
-      ONodeId node, ONodeStateNetwork state, long version, OTransactionIdPromise promise);
+      ONodeId node, ONodeStateNetwork state, OVersion version, OTransactionIdPromise promise);
 
   void mergeNode(
-      ONodeId node, ONodeStateNetwork state, long version, OTransactionIdPromise promise);
+      ONodeId node, ONodeStateNetwork state, OVersion version, OTransactionIdPromise promise);
 
   void cancelMergeNode(
-      ONodeId node, ONodeStateNetwork state, long version, OTransactionIdPromise promise);
+      ONodeId node, ONodeStateNetwork state, OVersion version, OTransactionIdPromise promise);
 
   ONodeStateNetwork createMergedState(ONodeStateNetwork state);
 }

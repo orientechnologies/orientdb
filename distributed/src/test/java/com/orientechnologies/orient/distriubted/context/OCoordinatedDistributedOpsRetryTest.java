@@ -125,7 +125,7 @@ public class OCoordinatedDistributedOpsRetryTest
     assertTrue(exectedMerge instanceof ODiscoverAction.ORequestMergeAction);
     ONodeStateNetwork mergeState = ops1.getNetworkState();
     ODiscoverAction addNode = ops2.nodeJoinStart(ops1.getCurrent(), mergeState, true);
-    long version = ops2.nextTopologyVersion();
+    var version = ops2.nextTopologyVersion();
     assertTrue(addNode instanceof OMergeNodeAction);
     OMergeNodeAction add = (OMergeNodeAction) addNode;
     OTransactionIdPromise promise = newPromiseId(ops1.getCurrent());

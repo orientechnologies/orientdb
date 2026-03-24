@@ -135,11 +135,11 @@ public class OOperationMessageTest {
   public void proposeAddNode() throws IOException {
 
     var node1 = newNodeId();
-    OAddTopologyMember toTest = new OAddTopologyMember(1, node1);
+    OAddTopologyMember toTest = new OAddTopologyMember(new OVersion(1), node1);
 
     OAddTopologyMember operation = writeRead(toTest);
 
-    assertEquals(operation.getVersion(), 1);
+    assertEquals(operation.getVersion().getValue(), 1);
     assertEquals(operation.getNode(), node1);
   }
 

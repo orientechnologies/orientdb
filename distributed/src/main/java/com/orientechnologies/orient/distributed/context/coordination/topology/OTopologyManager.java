@@ -75,12 +75,12 @@ public class OTopologyManager implements OTopologyEvents, ONetworkTopology {
   }
 
   public synchronized Optional<OAcceptResult> promiseRegister(
-      ONodeId toAdd, long version, OTransactionIdPromise promise) {
-    return this.versionPromise.promise(promise, new OVersion(version));
+      ONodeId toAdd, OVersion version, OTransactionIdPromise promise) {
+    return this.versionPromise.promise(promise, version);
   }
 
   public synchronized void register(
-      ONodeId toRegister, long version, OTransactionIdPromise promise) {
+      ONodeId toRegister, OVersion version, OTransactionIdPromise promise) {
     // TODO: verify promise and clean it, verification is not needed is just for solidity
     if (!members.contains(toRegister)) {
       var newMenbers = new HashSet<ONodeId>(members);
@@ -92,7 +92,7 @@ public class OTopologyManager implements OTopologyEvents, ONetworkTopology {
       }
       this.nodesInfo.put(toRegister, new ONodeInfo());
     }
-    this.versionPromise.accept(promise, new OVersion(version));
+    this.versionPromise.accept(promise, version);
   }
 
   public synchronized boolean enoughNodes() {
@@ -248,8 +248,8 @@ public class OTopologyManager implements OTopologyEvents, ONetworkTopology {
     return current;
   }
 
-  public long nextVersion() {
-    return getVersion() + 1;
+  public OVersion nextVersion() {
+    return this.versionPromise.next();
   }
 
   public synchronized Optional<OAcceptResult> validateMerge(

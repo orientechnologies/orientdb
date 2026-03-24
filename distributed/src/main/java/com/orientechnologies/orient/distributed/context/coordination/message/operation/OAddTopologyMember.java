@@ -2,6 +2,7 @@ package com.orientechnologies.orient.distributed.context.coordination.message.op
 
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
+import com.orientechnologies.orient.distributed.context.coordination.OVersion;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import java.io.DataInput;
@@ -11,10 +12,10 @@ import java.util.Optional;
 
 public class OAddTopologyMember implements OOperationMessage {
 
-  private final long version;
+  private final OVersion version;
   private final ONodeId node;
 
-  public OAddTopologyMember(long version, ONodeId node) {
+  public OAddTopologyMember(OVersion version, ONodeId node) {
     this.version = version;
     this.node = node;
   }
@@ -36,12 +37,12 @@ public class OAddTopologyMember implements OOperationMessage {
 
   @Override
   public void serialize(DataOutput out) throws IOException {
-    out.writeLong(version);
+    this.version.writeNetwork(out);
     this.node.writeNetwork(out);
   }
 
   public static OAddTopologyMember readNetwork(DataInput input) throws IOException {
-    long version = input.readLong();
+    var version = OVersion.readNetwork(input);
     ONodeId node = ONodeId.readNetwork(input);
     return new OAddTopologyMember(version, node);
   }
@@ -55,7 +56,7 @@ public class OAddTopologyMember implements OOperationMessage {
     return node;
   }
 
-  public long getVersion() {
+  public OVersion getVersion() {
     return version;
   }
 

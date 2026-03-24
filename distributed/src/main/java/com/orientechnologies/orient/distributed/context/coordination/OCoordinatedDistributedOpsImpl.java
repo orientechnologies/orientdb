@@ -77,7 +77,8 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
     return this.topology.nodeDiscovered(node);
   }
 
-  public synchronized void registerNode(ONodeId node, long version, OTransactionIdPromise promise) {
+  public synchronized void registerNode(
+      ONodeId node, OVersion version, OTransactionIdPromise promise) {
     this.topology.register(node, version, promise);
     notifyUpdate();
   }
@@ -337,7 +338,7 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
 
   @Override
   public Optional<OAcceptResult> validateRegisterNode(
-      ONodeId node, long version, OTransactionIdPromise promise) {
+      ONodeId node, OVersion version, OTransactionIdPromise promise) {
     return topology.promiseRegister(node, version, promise);
   }
 
@@ -432,7 +433,7 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
     this.databaseTopology.cancelPomise(promise, dbId, database);
   }
 
-  public synchronized long nextTopologyVersion() {
+  public synchronized OVersion nextTopologyVersion() {
     return this.topology.nextVersion();
   }
 
@@ -694,7 +695,7 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
 
   @Override
   public synchronized Optional<OAcceptResult> validateMergeNode(
-      ONodeId node, ONodeStateNetwork state, long version, OTransactionIdPromise promise) {
+      ONodeId node, ONodeStateNetwork state, OVersion version, OTransactionIdPromise promise) {
     var accepted = this.topology.promiseRegister(node, version, promise);
     if (accepted.isEmpty()) {
       // TODO: promise database names/ids;
@@ -719,7 +720,7 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
 
   @Override
   public synchronized void mergeNode(
-      ONodeId node, ONodeStateNetwork state, long version, OTransactionIdPromise promise) {
+      ONodeId node, ONodeStateNetwork state, OVersion version, OTransactionIdPromise promise) {
     this.topology.register(node, version, promise);
     this.databaseTopology.mergeNetworkState(state.databases(), promise);
     this.sequenceManager.fill(state.sequenceStatus());
@@ -727,7 +728,7 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
 
   @Override
   public synchronized void cancelMergeNode(
-      ONodeId node, ONodeStateNetwork state, long version, OTransactionIdPromise promise) {
+      ONodeId node, ONodeStateNetwork state, OVersion version, OTransactionIdPromise promise) {
     this.topology.cancelRegisterPromise(promise);
     this.databaseTopology.cancelMerge(promise);
   }

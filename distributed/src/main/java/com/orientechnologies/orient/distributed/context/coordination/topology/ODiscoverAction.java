@@ -62,7 +62,7 @@ public sealed interface ODiscoverAction
     @Override
     public void execute(
         OrientDBDistributed context, ONodeStateNetwork state, OCompleteExecution exection) {
-      long version = context.getNodeState().getOps().nextTopologyVersion();
+      var version = context.getNodeState().getOps().nextTopologyVersion();
       context.coordinatedOperation(new OAddTopologyMember(version, node()), exection);
     }
   }
