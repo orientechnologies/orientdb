@@ -457,8 +457,9 @@ public class ODatabaseTopologyState {
     }
   }
 
-  public Optional<OAcceptResult> validateMerge(OTransactionIdPromise promise) {
-    return this.versionPromise.promise(promise, this.versionPromise.next());
+  public Optional<OAcceptResult> validateMerge(
+      OTransactionIdPromise promise, ODatabaseStateNetwork stateDb) {
+    return this.versionPromise.validateMerge(promise, new OVersion(stateDb.version() + 1));
   }
 
   public void cancelMerge(OTransactionIdPromise promise) {

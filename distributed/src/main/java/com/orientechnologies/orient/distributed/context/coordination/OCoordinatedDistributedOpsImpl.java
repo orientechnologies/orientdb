@@ -25,9 +25,12 @@ import com.orientechnologies.orient.distributed.context.coordination.message.sta
 import com.orientechnologies.orient.distributed.context.coordination.message.state.OTopologyStateNetwork;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAlreadyPromised;
+import com.orientechnologies.orient.distributed.context.coordination.result.OCannotMerge;
+import com.orientechnologies.orient.distributed.context.coordination.result.ODatabaseMissing;
 import com.orientechnologies.orient.distributed.context.coordination.result.ODatabaseNameUsed;
 import com.orientechnologies.orient.distributed.context.coordination.result.OInvalidSequential;
 import com.orientechnologies.orient.distributed.context.coordination.result.OMissingNode;
+import com.orientechnologies.orient.distributed.context.coordination.result.OOutdatedVersion;
 import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncId;
 import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncInfo;
 import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncState;
@@ -606,6 +609,14 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
         topology.cancelMerge(promise);
       }
     }
+    if (res.isPresent()) {
+      OAcceptResult acc = res.get();
+      if (acc instanceof OInvalidSequential
+          || acc instanceof ODatabaseMissing
+          || acc instanceof OOutdatedVersion) {
+        return Optional.of(new OCannotMerge(getNetworkState(), acc));
+      }
+    }
     return res;
   }
 
@@ -628,7 +639,7 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   }
 
   @Override
-  public void confirmMerge(
+  public void nodeMergeResult(
       ONodeId node, OTransactionIdPromise promise, Optional<OAcceptResult> accepted) {
     if (accepted.isEmpty()) {
       nodeSuccess(node, promise);
@@ -696,7 +707,7 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   @Override
   public synchronized Optional<OAcceptResult> validateMergeNode(
       ONodeId node, ONodeStateNetwork state, OVersion version, OTransactionIdPromise promise) {
-    var accepted = this.topology.promiseRegister(node, version, promise);
+    var accepted = this.topology.validateMerge(state.topology().groupId(), state, promise);
     if (accepted.isEmpty()) {
       // TODO: promise database names/ids;
       for (ODatabaseStateNetwork db : state.databases()) {

@@ -74,7 +74,8 @@ public interface OCoordinatedDistributedOps {
 
   void applyMerge(OTransactionIdPromise promise);
 
-  void confirmMerge(ONodeId node, OTransactionIdPromise promise, Optional<OAcceptResult> accepted);
+  void nodeMergeResult(
+      ONodeId node, OTransactionIdPromise promise, Optional<OAcceptResult> accepted);
 
   void cancelMerge(OTransactionIdPromise promise);
 

@@ -190,7 +190,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
         this,
         null,
         newExectution(
-            (ctx, complete) -> {
+            (ctx, complete, previousResult) -> {
               // no Retry;
             }));
 
@@ -778,15 +778,19 @@ public class OrientDBDistributed extends OrientDBEmbedded
     OStandardCompleteExecution exec = newExectution(operation);
     execute(
         () -> {
-          operation.execute(this, exec);
+          operation.execute(this, exec, Optional.empty());
         });
     return exec.getResult();
   }
 
-  public void retryExecution(ORetryOperation operation, OCompleteExecution exec, int delay) {
+  public void retryExecution(
+      ORetryOperation operation,
+      OCompleteExecution exec,
+      int delay,
+      Optional<OAcceptResult> result) {
     delayExecute(
         () -> {
-          operation.execute(this, exec);
+          operation.execute(this, exec, result);
         },
         delay);
   }
@@ -1568,9 +1572,9 @@ public class OrientDBDistributed extends OrientDBEmbedded
     dumpNodeInfo();
   }
 
-  public void confirmMerge(
+  public void nodeMergeResult(
       ONodeId node, OTransactionIdPromise promise, Optional<OAcceptResult> accepted) {
-    getNodeState().getOps().confirmMerge(node, promise, accepted);
+    getNodeState().getOps().nodeMergeResult(node, promise, accepted);
   }
 
   public void disconnected(ONodeId node) {

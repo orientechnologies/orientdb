@@ -256,8 +256,8 @@ public class OTopologyManager implements OTopologyEvents, ONetworkTopology {
       OGroupId group, ONodeStateNetwork mergeState, OTransactionIdPromise promise) {
     if (this.quorum == 1) {
       // This is going to merge not based on version hack the accept version
-      var nextVersion = this.versionPromise.next();
-      return this.versionPromise.promise(promise, nextVersion);
+      return this.versionPromise.validateMerge(
+          promise, new OVersion(mergeState.topology().version() + 1));
     } else {
       return Optional.of(new ONotQuorumOneMerge());
     }

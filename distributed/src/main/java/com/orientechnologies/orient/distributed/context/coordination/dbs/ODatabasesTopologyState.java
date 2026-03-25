@@ -553,17 +553,28 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
   public synchronized Optional<OAcceptResult> validateMerge(
       List<ODatabaseStateNetwork> databases, OTransactionIdPromise promise) {
     var promised = new HashSet<ODatabaseTopologyState>();
-    for (var db : this.databases.values()) {
-      var res = db.validateMerge(promise);
-      if (res.isEmpty()) {
-        promised.add(db);
-      } else {
-        for (var dbp : promised) {
-          dbp.cancelMerge(promise);
+    for (var stateDb : databases) {
+      var db = this.databases.get(stateDb.id());
+      if (db != null) {
+        var res = db.validateMerge(promise, stateDb);
+        if (res.isEmpty()) {
+          promised.add(db);
+        } else {
+          for (var dbp : promised) {
+            dbp.cancelMerge(promise);
+          }
+          return res;
         }
-        return res;
+      } else {
+        return Optional.of(new ODatabaseMissing(stateDb.id()));
       }
     }
+    if (promised.size() != this.databases.size()) {
+      var dbs = new HashSet<>(this.databases.keySet());
+      dbs.removeAll(promised.stream().map((x) -> x.getId()).toList());
+      return Optional.of(new ODatabaseMissing(dbs.iterator().next()));
+    }
+
     return Optional.empty();
   }
 

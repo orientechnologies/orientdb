@@ -30,6 +30,7 @@ public interface OAcceptResult {
       case 11 -> ONotQuorumOneMerge.fromNetwork(input);
       case 12 -> ODisconnectedNode.fromNetwork(input);
       case 13 -> ODatabaseSynching.fromNetwork(input);
+      case 14 -> OCannotMerge.fromNetwork(input);
       default -> throw new ODistributedException("wrong accept result message type from network");
     };
   }
