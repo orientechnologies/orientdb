@@ -70,8 +70,9 @@ public class OTopologyManager implements OTopologyEvents, ONetworkTopology {
     candidates.add(node);
   }
 
-  public long getVersion() {
-    return versionPromise.getVersion().getValue();
+  @Override
+  public OVersion getVersion() {
+    return versionPromise.getVersion();
   }
 
   public synchronized Optional<OAcceptResult> promiseRegister(
@@ -188,12 +189,12 @@ public class OTopologyManager implements OTopologyEvents, ONetworkTopology {
             this.versionPromise.forceVersion(new OVersion(externState.version()));
             this.quorum = externState.quorum();
             return new ODiscoverAction.OApplySequenceAction();
-          } else if (externState.version() > getVersion()) {
+          } else if (externState.version() > getVersion().getValue()) {
             this.setMember(externState.members());
             this.versionPromise.loadVersion(new OVersion(externState.version()));
             this.quorum = externState.quorum();
             return new ODiscoverAction.OApplyStateAction();
-          } else if (externState.version() != getVersion()) {
+          } else if (externState.version() != getVersion().getValue()) {
             // Other outdated just notify self state
             return new ODiscoverAction.ONotifySelf(Set.of(node));
           }
@@ -213,7 +214,7 @@ public class OTopologyManager implements OTopologyEvents, ONetworkTopology {
 
   public synchronized OTopologyStateNetwork getNetworkState() {
     return new OTopologyStateNetwork(
-        this.groupId, this.state, this.members, this.quorum, getVersion());
+        this.groupId, this.state, this.members, this.quorum, getVersion().getValue());
   }
 
   public synchronized void load(ONetworkTopologyStore nodeStateStore) {
@@ -225,7 +226,7 @@ public class OTopologyManager implements OTopologyEvents, ONetworkTopology {
   }
 
   public synchronized ONetworkTopologyStore getStore() {
-    return new ONetworkTopologyStore(groupId, state, this.members, quorum, getVersion());
+    return new ONetworkTopologyStore(groupId, state, this.members, quorum, getVersion().getValue());
   }
 
   public synchronized void cancelRegisterPromise(OTransactionIdPromise promise) {

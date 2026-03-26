@@ -813,6 +813,9 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
       newVersion = database2.version();
     }
 
+    // Make sure it will progress version
+    newVersion += 1;
+
     Map<ONodeId, ODatabaseMemberNetwork> members = new HashMap<>();
 
     for (ODatabaseMemberNetwork member : database.members()) {
@@ -851,12 +854,18 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
     } else {
       newQuorum = networkState.quorum();
     }
+    int newCompQuorum = (newMembers.size() / 2) + 1;
+    if (newCompQuorum >= newQuorum) {
+      newQuorum = newCompQuorum;
+    }
     long newVersion;
     if (topology.version() > networkState.version()) {
       newVersion = topology.version();
     } else {
       newVersion = networkState.version();
     }
+    // Make sure it will progress version
+    newVersion += 1;
     return new OTopologyStateNetwork(
         topology.groupId(), OTopologyState.ESTABLISHED, newMembers, newQuorum, newVersion);
   }

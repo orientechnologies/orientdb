@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.distriubted.context;
 
+import static org.junit.Assert.assertArrayEquals;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -433,5 +435,21 @@ public class OCoordinatedDistributedOpsMergeTest
     assertTrue(ops3.getNetworkTopology().getMembers().contains(nodeId1));
     assertTrue(ops3.getNetworkTopology().getMembers().contains(nodeId2));
     assertTrue(ops3.getNetworkTopology().getMembers().contains(nodeId3));
+
+    var first = ops1.getTransactionSequenceState().getStatus();
+    assertArrayEquals(first, ops2.getTransactionSequenceState().getStatus());
+    assertArrayEquals(first, ops3.getTransactionSequenceState().getStatus());
+
+    var dbv = ops1.getDatabaseTopology().getDatabaseVersion(dbId);
+    assertEquals(dbv, ops2.getDatabaseTopology().getDatabaseVersion(dbId));
+    assertEquals(dbv, ops3.getDatabaseTopology().getDatabaseVersion(dbId));
+
+    var topologyv = ops1.getNetworkTopology().getVersion();
+    assertEquals(topologyv, ops2.getNetworkTopology().getVersion());
+    assertEquals(topologyv, ops3.getNetworkTopology().getVersion());
+
+    var topologyQ = ops1.getNetworkTopology().getQuorum();
+    assertEquals(topologyQ, ops2.getNetworkTopology().getQuorum());
+    assertEquals(topologyQ, ops3.getNetworkTopology().getQuorum());
   }
 }

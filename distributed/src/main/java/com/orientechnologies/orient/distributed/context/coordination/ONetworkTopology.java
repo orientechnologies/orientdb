@@ -12,4 +12,6 @@ public interface ONetworkTopology {
   int getQuorum();
 
   boolean isSelfEnstablished();
+
+  OVersion getVersion();
 }

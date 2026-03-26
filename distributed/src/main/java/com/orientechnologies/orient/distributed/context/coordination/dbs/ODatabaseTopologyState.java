@@ -466,10 +466,6 @@ public class ODatabaseTopologyState {
     this.versionPromise.cancel(promise);
   }
 
-  public void applyMerge(OTransactionIdPromise promise) {
-    this.versionPromise.accept(promise, this.versionPromise.next());
-  }
-
   public synchronized OVersion nextVersion() {
     return this.versionPromise.next();
   }

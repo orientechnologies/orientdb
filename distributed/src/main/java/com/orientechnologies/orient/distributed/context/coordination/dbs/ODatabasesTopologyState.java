@@ -381,9 +381,6 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
 
   public synchronized void mergeNetworkState(
       List<ODatabaseStateNetwork> network, OTransactionIdPromise promise) {
-    for (var db : this.databases.values()) {
-      db.applyMerge(promise);
-    }
     this.receiverNetworkState(network);
   }
 
