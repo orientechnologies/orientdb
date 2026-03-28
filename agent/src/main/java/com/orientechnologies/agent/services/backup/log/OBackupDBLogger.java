@@ -77,6 +77,24 @@ public class OBackupDBLogger implements OBackupLogger {
 
   @Override
   public OBackupLog log(final OBackupLog log) {
+    // Log to local file only for error operations
+    OBackupLogType op = log.getType();
+    if (op == OBackupLogType.BACKUP_ERROR && log instanceof OBackupErrorLog) {
+      OBackupErrorLog errorLog = (OBackupErrorLog) log;
+      logger.error(
+          "Backup operation: %s, UUID: %s, UnitId: %d, TxId: %d, DbName: %s, Mode: %s, Timestamp:"
+              + " %s, Message: %s",
+          null,
+          op,
+          log.getUuid(),
+          log.getUnitId(),
+          log.getTxId(),
+          log.getDbName(),
+          log.getMode(),
+          log.getTimestamp(),
+          errorLog.getMessage());
+    }
+
     return getDatabase()
         .executeWithDB(
             session -> {

@@ -183,10 +183,22 @@ public class OBackupConfig {
   }
 
   public ODocument changeBackup(String uuid, ODocument doc) {
-    validateBackup(doc);
-    removeBackup(uuid);
-    pushBackup(doc);
-    return doc;
+    synchronized (this) {
+      doc.field(ID, uuid);
+      validateBackup(doc);
+      final Collection<ODocument> backups = configuration.field(BACKUPS);
+      ODocument toRemove = null;
+      for (ODocument backup : backups) {
+        if (backup.field(ID).equals(uuid)) {
+          toRemove = backup;
+        }
+      }
+      if (toRemove != null) {
+        backups.remove(toRemove);
+      }
+      pushBackup(doc);
+      return doc;
+    }
   }
 
   public ODocument removeBackup(final String uuid) {
