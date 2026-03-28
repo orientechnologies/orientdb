@@ -69,4 +69,9 @@ public class OTransactionSequenceStatus {
   public int hashCode() {
     return Arrays.hashCode(status);
   }
+
+  @Override
+  public String toString() {
+    return "OTransactionSequenceStatus [status=" + Arrays.toString(status) + "]";
+  }
 }

@@ -381,7 +381,17 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
 
   public synchronized void mergeNetworkState(
       List<ODatabaseStateNetwork> network, OTransactionIdPromise promise) {
-    this.receiverNetworkState(network);
+    for (ODatabaseStateNetwork state : network) {
+      ODatabaseTopologyState db = getDb(state.id());
+      if (db != null) {
+        db.mergeState(state, promise);
+      } else {
+        db = new ODatabaseTopologyState(state, listener, current);
+        this.databases.put(state.id(), db);
+        this.databasesByName.put(state.name(), db);
+      }
+    }
+    this.notifyAll();
   }
 
   public synchronized Optional<OAcceptResult> validateAddMember(

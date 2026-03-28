@@ -307,12 +307,8 @@ public class ODatabaseTopologyState {
   }
 
   public synchronized void mergeState(ODatabaseStateNetwork state, OTransactionIdPromise promise) {
-    if (state.quorum() > this.quorum) {
-      this.quorum = state.quorum();
-    }
-    if (this.getVersion().getValue() < state.version()) {
-      this.versionPromise.loadVersion(new OVersion(state.version()));
-    }
+    this.versionPromise.forceVersion(new OVersion(state.version()));
+    this.quorum = state.quorum();
     for (ODatabaseMemberNetwork member : state.members()) {
       ONodeDatabaseState status = this.nodeStatus.get(member.node());
       if (status != null) {

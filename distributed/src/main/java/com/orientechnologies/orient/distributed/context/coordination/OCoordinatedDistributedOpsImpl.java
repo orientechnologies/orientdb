@@ -182,7 +182,7 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
         case ALREADY_PRESENT -> {
           // Already present ... maybe do nothing, already done
           long current = sequenceManager.debugGetSequence(promise.getId().getPosition());
-          yield Optional.of(new OInvalidSequential(current, promise.getId().getSequence()));
+          yield Optional.of(new OInvalidSequential(current + 1, promise.getId().getSequence()));
         }
         case ALREADY_PROMISED -> {
           // Fail for promised to someone else this track it anyway in case of minority in quorum
@@ -195,7 +195,7 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
           // wait for previous one, track it anyway
           //          this.promised.addNotPromised(message);
           long current = sequenceManager.debugGetSequence(promise.getId().getPosition());
-          yield Optional.of(new OInvalidSequential(current, promise.getId().getSequence()));
+          yield Optional.of(new OInvalidSequential(current + 1, promise.getId().getSequence()));
         }
       };
     }
@@ -216,7 +216,7 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
       case ALREADY_PRESENT -> {
         // Already present ... maybe do nothing, already done
         long current = sequenceManager.debugGetSequence(txId.getPosition());
-        yield Optional.of(new OInvalidSequential(current, txId.getSequence()));
+        yield Optional.of(new OInvalidSequential(current + 1, txId.getSequence()));
       }
       case ALREADY_PROMISED -> {
         // Fail for promised to someone else this track it anyway in case of minority in quorum
@@ -228,7 +228,7 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
         // wait for previous one, track it anyway
         this.promised.addNotPromised(message);
         long current = sequenceManager.debugGetSequence(txId.getPosition());
-        yield Optional.of(new OInvalidSequential(current, txId.getSequence()));
+        yield Optional.of(new OInvalidSequential(current + 1, txId.getSequence()));
       }
     };
   }
@@ -751,7 +751,7 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
 
   private ONodeStateNetwork mergeState(ONodeStateNetwork state, ONodeStateNetwork networkState) {
     var topology = mergeTopology(state.topology(), networkState.topology());
-    var databases = mergeDatabases(state.databases(), networkState.databases());
+    var databases = mergeDatabases(state.databases(), networkState.databases(), topology.members());
     var sequence = mergeSequence(state.sequenceStatus(), networkState.sequenceStatus());
     return new ONodeStateNetwork(topology, databases, sequence);
   }
@@ -773,13 +773,15 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
       if (i < status2.length && st < status2[i]) {
         st = status2[i];
       }
-      newStatus[i] = st;
+      newStatus[i] = st + 1;
     }
     return new OTransactionSequenceStatus(newStatus);
   }
 
   private List<ODatabaseStateNetwork> mergeDatabases(
-      List<ODatabaseStateNetwork> databases, List<ODatabaseStateNetwork> databases2) {
+      List<ODatabaseStateNetwork> databases,
+      List<ODatabaseStateNetwork> databases2,
+      Set<ONodeId> allNetwork) {
     Map<ODatabaseId, ODatabaseStateNetwork> dbs = new HashMap<>();
     Map<String, ODatabaseStateNetwork> dbNames = new HashMap<>();
     for (var db : databases) {
@@ -789,16 +791,30 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
     for (var db : databases2) {
       var db1 = dbs.get(db.id());
       if (db1 != null) {
-        dbs.put(db.id(), mergeDatabase(db1, db));
+        dbs.put(db.id(), mergeDatabase(db1, db, allNetwork));
       } else {
-        dbs.put(db.id(), db);
+        var members = new ArrayList<>(db.members());
+        for (ONodeId node : allNetwork) {
+          if (db.members().stream().noneMatch((x) -> x.node().equals(node))) {
+            members.add(new ODatabaseMemberNetwork(node, ONodeRole.Main, ODatabaseState.Offline));
+          }
+        }
+        int newQuorum = db.quorum();
+        int newCompQuorum = (members.size() / 2) + 1;
+        if (newCompQuorum >= newQuorum) {
+          newQuorum = newCompQuorum;
+        }
+
+        dbs.put(
+            db.id(),
+            new ODatabaseStateNetwork(db.id(), db.name(), newQuorum, db.version() + 1, members));
       }
     }
     return new ArrayList<>(dbs.values());
   }
 
   private ODatabaseStateNetwork mergeDatabase(
-      ODatabaseStateNetwork database, ODatabaseStateNetwork database2) {
+      ODatabaseStateNetwork database, ODatabaseStateNetwork database2, Set<ONodeId> allNetwork) {
 
     int newQuorum;
     if (database.quorum() > database2.quorum()) {
@@ -829,6 +845,17 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
       } else {
         members.put(member.node(), member);
       }
+    }
+
+    for (ONodeId node : allNetwork) {
+      if (!members.containsKey(node)) {
+        members.put(node, new ODatabaseMemberNetwork(node, ONodeRole.Main, ODatabaseState.Offline));
+      }
+    }
+
+    int newCompQuorum = (members.size() / 2) + 1;
+    if (newCompQuorum >= newQuorum) {
+      newQuorum = newCompQuorum;
     }
 
     return new ODatabaseStateNetwork(

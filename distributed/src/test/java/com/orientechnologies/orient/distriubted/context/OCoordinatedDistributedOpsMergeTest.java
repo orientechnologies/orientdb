@@ -288,8 +288,18 @@ public class OCoordinatedDistributedOpsMergeTest
     ops2.applyMerge(promise);
     assertTrue(ops1.getNetworkTopology().getMembers().contains(nodeId1));
     assertTrue(ops1.getNetworkTopology().getMembers().contains(nodeId2));
+
     assertTrue(ops2.getNetworkTopology().getMembers().contains(nodeId1));
     assertTrue(ops2.getNetworkTopology().getMembers().contains(nodeId2));
+
+    var first = ops1.getTransactionSequenceState().getStatus();
+    assertArrayEquals(first, ops2.getTransactionSequenceState().getStatus());
+
+    var topologyv = ops1.getNetworkTopology().getVersion();
+    assertEquals(topologyv, ops2.getNetworkTopology().getVersion());
+
+    var topologyQ = ops1.getNetworkTopology().getQuorum();
+    assertEquals(topologyQ, ops2.getNetworkTopology().getQuorum());
   }
 
   @Test
@@ -363,8 +373,8 @@ public class OCoordinatedDistributedOpsMergeTest
     assertTrue(validate1.isEmpty());
     var validate2 = ops2.validateMerge(groupId, mergedState, promise);
     assertTrue(validate2.isEmpty());
-    ops1.mergeNode(nodeId2, mergedState, version, promise);
     ops1.consensusSuccess(promise);
+    ops1.mergeNode(nodeId2, mergedState, version, promise);
     ops2.applyMerge(promise);
     assertTrue(ops1.getNetworkTopology().getMembers().contains(nodeId1));
     assertTrue(ops1.getNetworkTopology().getMembers().contains(nodeId2));
@@ -382,8 +392,8 @@ public class OCoordinatedDistributedOpsMergeTest
     var declareRes =
         ops3.validateDeclareDatabase(declarePromise, dbId, databaseName, parts, minQuo);
     assertTrue(declareRes.isEmpty());
-    ops3.declareDatabase(declarePromise, dbId, databaseName, parts, minQuo);
     ops3.consensusSuccess(declarePromise);
+    ops3.declareDatabase(declarePromise, dbId, databaseName, parts, minQuo);
 
     var secMergedState = ops2.createMergedState(ops3.getNetworkState());
     var secVersion = ops2.nextTopologyVersion();
@@ -397,8 +407,8 @@ public class OCoordinatedDistributedOpsMergeTest
     var statePromise = state.get().promise();
     var stateVersion = ops3.nextDatabaseVersion(dbId);
     ops3.validateSetState(dbId, nodeId3, ODatabaseState.Online, stateVersion, statePromise);
-    ops3.setState(dbId, nodeId3, ODatabaseState.Online, stateVersion, statePromise);
     ops3.consensusSuccess(statePromise);
+    ops3.setState(dbId, nodeId3, ODatabaseState.Online, stateVersion, statePromise);
 
     var secValidate2 = ops3.validateMerge(groupId, secMergedState, secPromise);
     assertTrue(secValidate2.isPresent());
@@ -419,10 +429,10 @@ public class OCoordinatedDistributedOpsMergeTest
     var secValidate1_3 = ops3.validateMerge(groupId, secMergedState1, secPromise1);
     assertTrue(secValidate1_3.isEmpty());
 
-    ops1.mergeNode(nodeId3, secMergedState1, secVersion1, secPromise1);
     ops1.consensusSuccess(secPromise1);
-    ops2.mergeNode(nodeId3, secMergedState1, secVersion1, secPromise1);
+    ops1.mergeNode(nodeId3, secMergedState1, secVersion1, secPromise1);
     ops2.consensusSuccess(secPromise1);
+    ops2.mergeNode(nodeId3, secMergedState1, secVersion1, secPromise1);
     ops3.applyMerge(secPromise1);
     assertTrue(ops1.getNetworkTopology().getMembers().contains(nodeId1));
     assertTrue(ops1.getNetworkTopology().getMembers().contains(nodeId2));
