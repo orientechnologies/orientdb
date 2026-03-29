@@ -60,4 +60,9 @@ public class ORetryProposeOp implements OStructuralMessage {
   public OTransactionIdPromise getPromise() {
     return promise;
   }
+
+  @Override
+  public String toString() {
+    return "Retry promise " + promise + " for operation " + op + "";
+  }
 }

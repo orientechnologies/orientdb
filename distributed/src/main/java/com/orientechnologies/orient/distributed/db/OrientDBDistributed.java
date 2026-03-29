@@ -585,7 +585,11 @@ public class OrientDBDistributed extends OrientDBEmbedded
   private boolean checkDbAvailableOpen(String name) {
     long waitTime = getLongConfig(OGlobalConfiguration.DISTRIBUTED_DATABASE_ONLINE_GRACE_PERIOD);
     try {
-      return this.nodeState.getOps().waitSelfOnline(name, Optional.of(waitTime));
+      if (this.nodeState == null) {
+        return true;
+      } else {
+        return this.nodeState.getOps().waitSelfOnline(name, Optional.of(waitTime));
+      }
     } catch (InterruptedException e) {
       return false;
     }

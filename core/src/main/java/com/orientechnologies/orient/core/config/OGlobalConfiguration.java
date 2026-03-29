@@ -1236,7 +1236,7 @@ public enum OGlobalConfiguration { // ENVIRONMENT
       "distributed.databaseOnlineGracePeriod",
       "Millisecond to wait for a database to become online before to send the offline exception",
       Long.class,
-      10000,
+      60000,
       false),
 
   DB_DOCUMENT_SERIALIZER(
