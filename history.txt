@@ -27,6 +27,16 @@
 This document contains the last changes of OrientDB Community Edition.
 
 -----------------------------------------------------------------------------------------------------------------------------------
+version 3.2.51 - (March, 31 2025)
+
+# Core
+- Fix order by for nested properties, issue 
+- Updated deps
+
+# Enterprise Agent
+- Fix store of settings for scheduled backups
+
+-----------------------------------------------------------------------------------------------------------------------------------
 version 3.2.50 - (February, 24 2025)
 
 # Core
