@@ -34,11 +34,13 @@ import com.orientechnologies.enterprise.server.OEnterpriseServer;
 import com.orientechnologies.enterprise.server.OEnterpriseServerImpl;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.enterprise.OEnterpriseEndpoint;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.metadata.schema.OClassEmbedded;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.transaction.ONodeId;
@@ -329,19 +331,10 @@ public class OEnterpriseAgent extends OServerPluginAbstract
   @Override
   public void haSetOwner(ODatabaseDocument database, String clusterName, String owner) {
     database.checkSecurity(ORule.ResourceGeneric.SERVER, "status", ORole.PERMISSION_UPDATE);
-    if (!(database instanceof ODatabaseDocumentDistributed)) {
-      throw new OCommandExecutionException("OrientDB is not started in distributed mode");
-    }
-    final ODistributedPlugin dManager =
-        (ODistributedPlugin) ((ODatabaseDocumentDistributed) database).getDistributedManager();
-    if (dManager == null || !dManager.isEnabled()) {
-      throw new OCommandExecutionException("OrientDB is not started in distributed mode");
-    }
-    final String databaseName = database.getName();
-    final ODistributedConfiguration cfg = dManager.getDatabaseConfiguration(databaseName);
-    final OModifiableDistributedConfiguration newCfg = cfg.modify();
-    newCfg.setServerOwner(clusterName, owner);
-    dManager.updateCachedDatabaseConfiguration(databaseName, newCfg);
+    int clId = database.getClusterIdByName(clusterName);
+    var cla = database.getMetadata().getSchema().getClassByClusterId(clId);
+    ((OClassEmbedded) cla)
+        .addAllocations((ODatabaseDocumentInternal) database, owner, List.of(clusterName));
   }
 
   public OEnterpriseServer getEnterpriseServer() {

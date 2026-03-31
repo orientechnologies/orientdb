@@ -29,9 +29,7 @@ import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.OVertex;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedPlugin;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -66,10 +64,6 @@ public class BasicShardingNoReplicaScenarioIT extends AbstractShardingScenarioTe
     ODistributedPlugin manager1 =
         (ODistributedPlugin) serverInstance.get(0).getServerInstance().getDistributedManager();
 
-    final OModifiableDistributedConfiguration databaseConfiguration =
-        manager1.getDatabaseConfiguration(this.getDatabaseName()).modify();
-    ODocument cfg = databaseConfiguration.getDocument();
-
     ODatabaseDocumentInternal graphNoTx = null;
     try {
       OrientDB orientDB = serverInstance.get(0).getServerInstance().getContext();
@@ -86,15 +80,19 @@ public class BasicShardingNoReplicaScenarioIT extends AbstractShardingScenarioTe
 
       OClass clientType = schema.getClass("Client");
 
-      OModifiableDistributedConfiguration dCfg = new OModifiableDistributedConfiguration(cfg);
       for (int i = 0; i < serverInstance.size(); ++i) {
         final String serverName =
             serverInstance.get(i).getServerInstance().getDistributedManager().getLocalNodeName();
         clientType.addCluster("client_" + serverName);
-
-        dCfg.setServerOwner("client_" + serverName, serverName);
+        graphNoTx
+            .command(
+                "alter class allocation Client add "
+                    + serverName
+                    + " clusters [client_"
+                    + serverName
+                    + "]")
+            .close();
       }
-      manager1.updateCachedDatabaseConfiguration(this.getDatabaseName(), dCfg);
 
       final OProperty prop = clientType.createProperty("name", OType.STRING);
       prop.createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
