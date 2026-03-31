@@ -50,11 +50,8 @@ import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerLifecycleListener;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
-import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
-import com.orientechnologies.orient.server.distributed.impl.ODistributedPlugin;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpAbstract;
 import com.orientechnologies.orient.server.plugin.OPluginLifecycleListener;
@@ -315,17 +312,8 @@ public class OEnterpriseAgent extends OServerPluginAbstract
     if (!(database instanceof ODatabaseDocumentDistributed)) {
       throw new OCommandExecutionException("OrientDB is not started in distributed mode");
     }
-
-    final ODistributedPlugin dManager =
-        (ODistributedPlugin) ((ODatabaseDocumentDistributed) database).getDistributedManager();
-    if (dManager == null || !dManager.isEnabled()) {
-      throw new OCommandExecutionException("OrientDB is not started in distributed mode");
-    }
-    final String databaseName = database.getName();
-    final ODistributedConfiguration cfg = dManager.getDatabaseConfiguration(databaseName);
-    final OModifiableDistributedConfiguration newCfg = cfg.modify();
-    newCfg.setServerRole(serverName, ODistributedConfiguration.ROLES.valueOf(role));
-    dManager.updateCachedDatabaseConfiguration(databaseName, newCfg);
+    ODatabaseDocumentDistributed db = (ODatabaseDocumentDistributed) database;
+    db.getContext().setDatabaseNodeRole(db.getStorage().getDatbaseId(), serverName, role);
   }
 
   @Override

@@ -897,4 +897,34 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
     return new OTopologyStateNetwork(
         topology.groupId(), OTopologyState.ESTABLISHED, newMembers, newQuorum, newVersion);
   }
+
+  @Override
+  public Optional<OAcceptResult> validateSetDatabaseNodeRole(
+      ODatabaseId db,
+      ONodeId node,
+      ONodeRole role,
+      OVersion version,
+      OTransactionIdPromise promise) {
+    return this.databaseTopology.validateSetDatabaseNodeRole(db, node, role, version, promise);
+  }
+
+  @Override
+  public void setDatabaseNodeRole(
+      ODatabaseId db,
+      ONodeId node,
+      ONodeRole role,
+      OVersion version,
+      OTransactionIdPromise promise) {
+    this.databaseTopology.setDatabaseNodeRole(db, node, role, version, promise);
+  }
+
+  @Override
+  public void cancelSetDatabaseNodeRole(
+      ODatabaseId db,
+      ONodeId node,
+      ONodeRole role,
+      OVersion version,
+      OTransactionIdPromise promise) {
+    this.databaseTopology.cancelSetDatabaseNodeRole(db, node, role, version, promise);
+  }
 }

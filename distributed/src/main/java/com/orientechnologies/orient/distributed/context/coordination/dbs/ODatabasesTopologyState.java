@@ -593,4 +593,42 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
       return new OVersion(0);
     }
   }
+
+  public synchronized Optional<OAcceptResult> validateSetDatabaseNodeRole(
+      ODatabaseId db,
+      ONodeId node,
+      ONodeRole role,
+      OVersion version,
+      OTransactionIdPromise promise) {
+    ODatabaseTopologyState dbTopology = getDb(db);
+    if (dbTopology != null) {
+      return dbTopology.validateRole(node, version, promise);
+    } else {
+      return Optional.of(new ODatabaseMissing(db));
+    }
+  }
+
+  public synchronized void setDatabaseNodeRole(
+      ODatabaseId db,
+      ONodeId node,
+      ONodeRole role,
+      OVersion version,
+      OTransactionIdPromise promise) {
+    ODatabaseTopologyState dbTopology = getDb(db);
+    if (dbTopology != null) {
+      dbTopology.setRole(node, role, version, promise);
+    }
+  }
+
+  public synchronized void cancelSetDatabaseNodeRole(
+      ODatabaseId db,
+      ONodeId node,
+      ONodeRole role,
+      OVersion version,
+      OTransactionIdPromise promise) {
+    ODatabaseTopologyState dbTopology = getDb(db);
+    if (dbTopology != null) {
+      dbTopology.cancelRole(node, version, promise);
+    }
+  }
 }

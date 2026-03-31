@@ -465,4 +465,26 @@ public class ODatabaseTopologyState {
   public synchronized OVersion nextVersion() {
     return this.versionPromise.next();
   }
+
+  public synchronized Optional<OAcceptResult> validateRole(
+      ONodeId node, OVersion version, OTransactionIdPromise promise) {
+    if (!this.nodeStatus.containsKey(node)) {
+      return Optional.of(new OMissingNode(node));
+    }
+    return this.versionPromise.promise(promise, version);
+  }
+
+  public synchronized void setRole(
+      ONodeId node, ONodeRole role, OVersion version, OTransactionIdPromise promise) {
+    var no = this.nodeStatus.get(node);
+    if (no != null) {
+      no.setRole(role);
+    }
+    this.versionPromise.accept(promise, version);
+  }
+
+  public synchronized void cancelRole(
+      ONodeId nodeId, OVersion version, OTransactionIdPromise promise) {
+    this.versionPromise.cancel(promise);
+  }
 }

@@ -16,4 +16,13 @@ public enum ONodeRole {
     int ord = input.readInt();
     return ONodeRole.values()[ord];
   }
+
+  public static ONodeRole fromString(String role) {
+    return switch (role.toLowerCase()) {
+      case "main" -> ONodeRole.Main;
+      case "replica" -> ONodeRole.Replica;
+
+      default -> throw new IllegalArgumentException("Unexpected value: " + role);
+    };
+  }
 }

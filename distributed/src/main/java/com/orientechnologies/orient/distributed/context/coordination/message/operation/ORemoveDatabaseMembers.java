@@ -13,13 +13,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public class ORemoveDatabaseMember implements OOperationMessage {
+public class ORemoveDatabaseMembers implements OOperationMessage {
 
   private ODatabaseId database;
   private List<ONodeId> nodes;
   private OVersion version;
 
-  public ORemoveDatabaseMember(ODatabaseId database, List<ONodeId> nodes, OVersion version) {
+  public ORemoveDatabaseMembers(ODatabaseId database, List<ONodeId> nodes, OVersion version) {
     this.database = database;
     this.nodes = nodes;
     this.version = version;
@@ -57,7 +57,7 @@ public class ORemoveDatabaseMember implements OOperationMessage {
     return 7;
   }
 
-  public static ORemoveDatabaseMember readNetwork(DataInput input) throws IOException {
+  public static ORemoveDatabaseMembers readNetwork(DataInput input) throws IOException {
     ODatabaseId dbId = ODatabaseId.readNetwork(input);
     int nodesSize = input.readInt();
     List<ONodeId> nodes = new ArrayList<>(nodesSize);
@@ -65,6 +65,6 @@ public class ORemoveDatabaseMember implements OOperationMessage {
       nodes.add(ONodeId.readNetwork(input));
     }
     OVersion version = OVersion.readNetwork(input);
-    return new ORemoveDatabaseMember(dbId, nodes, version);
+    return new ORemoveDatabaseMembers(dbId, nodes, version);
   }
 }

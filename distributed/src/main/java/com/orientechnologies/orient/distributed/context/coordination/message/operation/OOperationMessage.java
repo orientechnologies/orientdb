@@ -25,10 +25,11 @@ public interface OOperationMessage {
       case 3 -> OEstablishTopology.readNetwork(input);
       case 4 -> ODeclareDbMessage.readNetwork(input);
       case 5 -> OSetDatabaseState.readNetwork(input);
-      case 6 -> OAddDatabaseMember.readNetwork(input);
-      case 7 -> ORemoveDatabaseMember.readNetwork(input);
+      case 6 -> OAddDatabaseMembers.readNetwork(input);
+      case 7 -> ORemoveDatabaseMembers.readNetwork(input);
       case 8 -> ORemoveTopologyMember.readNetwork(input);
       case 9 -> OMergeTopology.readNetwork(input);
+      case 10 -> OSetDatabaseMemberRole.readNetwork(input);
       default -> throw new ODistributedException("wrong operation message type from network");
     };
   }

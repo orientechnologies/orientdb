@@ -13,7 +13,7 @@ import com.orientechnologies.orient.distributed.context.coordination.dbs.ODataba
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ONodeRole;
 import com.orientechnologies.orient.distributed.context.coordination.message.OProposeOp;
 import com.orientechnologies.orient.distributed.context.coordination.message.OStructuralMessage;
-import com.orientechnologies.orient.distributed.context.coordination.message.operation.OAddDatabaseMember;
+import com.orientechnologies.orient.distributed.context.coordination.message.operation.OAddDatabaseMembers;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OAddNodeInfo;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OAddTopologyMember;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.ODeclareDbMessage;
@@ -149,9 +149,9 @@ public class OOperationMessageTest {
     var node1 = newNodeId();
     var dbId = newDatabaseId();
     var nodes = List.of(new OAddNodeInfo(node1, ONodeRole.Main));
-    OAddDatabaseMember toTest = new OAddDatabaseMember(new OVersion(1), dbId, nodes);
+    OAddDatabaseMembers toTest = new OAddDatabaseMembers(new OVersion(1), dbId, nodes);
 
-    OAddDatabaseMember operation = writeRead(toTest);
+    OAddDatabaseMembers operation = writeRead(toTest);
 
     assertEquals(operation.getVersion().getValue(), 1);
     assertEquals(operation.getDbId(), dbId);

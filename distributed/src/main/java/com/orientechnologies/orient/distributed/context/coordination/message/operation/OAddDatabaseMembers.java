@@ -12,13 +12,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-public class OAddDatabaseMember implements OOperationMessage {
+public class OAddDatabaseMembers implements OOperationMessage {
 
   private final OVersion version;
   private final ODatabaseId dbId;
   private final List<OAddNodeInfo> nodes;
 
-  public OAddDatabaseMember(OVersion version, ODatabaseId dbId, List<OAddNodeInfo> nodes) {
+  public OAddDatabaseMembers(OVersion version, ODatabaseId dbId, List<OAddNodeInfo> nodes) {
     this.version = version;
     this.dbId = dbId;
     this.nodes = nodes;
@@ -49,7 +49,7 @@ public class OAddDatabaseMember implements OOperationMessage {
     }
   }
 
-  public static OAddDatabaseMember readNetwork(DataInput input) throws IOException {
+  public static OAddDatabaseMembers readNetwork(DataInput input) throws IOException {
     var version = OVersion.readNetwork(input);
     ODatabaseId dbId = ODatabaseId.readNetwork(input);
     int size = input.readInt();
@@ -58,7 +58,7 @@ public class OAddDatabaseMember implements OOperationMessage {
       nodes.add(OAddNodeInfo.readNetwork(input));
     }
 
-    return new OAddDatabaseMember(version, dbId, nodes);
+    return new OAddDatabaseMembers(version, dbId, nodes);
   }
 
   @Override

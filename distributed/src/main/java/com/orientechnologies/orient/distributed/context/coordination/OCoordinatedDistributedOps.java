@@ -10,6 +10,7 @@ import com.orientechnologies.orient.distributed.context.ONodeStateStore;
 import com.orientechnologies.orient.distributed.context.coordination.action.OCompleteAction;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabaseState;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabasesTopology;
+import com.orientechnologies.orient.distributed.context.coordination.dbs.ONodeRole;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.OStateAction;
 import com.orientechnologies.orient.distributed.context.coordination.message.ODistributedMessage;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OAddNodeInfo;
@@ -236,4 +237,25 @@ public interface OCoordinatedDistributedOps {
       ONodeId node, ONodeStateNetwork state, OVersion version, OTransactionIdPromise promise);
 
   ONodeStateNetwork createMergedState(ONodeStateNetwork state);
+
+  Optional<OAcceptResult> validateSetDatabaseNodeRole(
+      ODatabaseId db,
+      ONodeId node,
+      ONodeRole role,
+      OVersion version,
+      OTransactionIdPromise promise);
+
+  void setDatabaseNodeRole(
+      ODatabaseId db,
+      ONodeId node,
+      ONodeRole role,
+      OVersion version,
+      OTransactionIdPromise promise);
+
+  void cancelSetDatabaseNodeRole(
+      ODatabaseId db,
+      ONodeId node,
+      ONodeRole role,
+      OVersion version,
+      OTransactionIdPromise promise);
 }
