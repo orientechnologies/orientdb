@@ -132,28 +132,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     return getContext().getNodeName();
   }
 
-  /**
-   * returns the data center map for current deploy. The keys are data center names, the values are
-   * node names per data center
-   *
-   * @return data center map for current deploy
-   */
-  public Map<String, Set<String>> getActiveDataCenterMap() {
-    Map<String, Set<String>> result = new HashMap<>();
-    ODistributedConfiguration cfg = getDistributedConfiguration();
-    Set<String> servers = cfg.getRegisteredServers();
-    for (String server : servers) {
-      String dc = cfg.getDataCenterOfServer(server);
-      Set<String> dcConfig = result.get(dc);
-      if (dcConfig == null) {
-        dcConfig = new HashSet<>();
-        result.put(dc, dcConfig);
-      }
-      dcConfig.add(server);
-    }
-    return result;
-  }
-
   @Override
   public boolean isSharded() {
     /*
@@ -213,8 +191,8 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
     final String databaseName = getName();
 
+    // TODO: replace with new configuration structure
     final ODistributedConfiguration cfg = distributedManager.getDatabaseConfiguration(databaseName);
-
     Map<String, Object> row = new HashMap<>();
     if (servers) row.put("servers", distributedManager.getClusterConfiguration());
     if (db) row.put("database", cfg.getDocument());
@@ -956,10 +934,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
   public ODistributedServerManager getDistributedManager() {
     return distributedManager;
-  }
-
-  public ODistributedConfiguration getDistributedConfiguration() {
-    return getContext().getDistributedConfiguration(this);
   }
 
   public void sendDDLCommand(String command, boolean excludeLocal) {

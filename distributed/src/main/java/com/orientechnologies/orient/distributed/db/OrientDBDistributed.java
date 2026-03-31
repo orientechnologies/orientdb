@@ -848,15 +848,6 @@ public class OrientDBDistributed extends OrientDBEmbedded
     return configurations.get(database);
   }
 
-  public ODistributedConfiguration getDistributedConfiguration(ODatabaseSession session) {
-    ODistributedConfigurationManager cm = getConfigurationManager(session.getName());
-    if (cm != null) {
-      return cm.getDistributedConfiguration(session);
-    } else {
-      return null;
-    }
-  }
-
   private interface ConfigOp<T> {
     T op(ODistributedConfigurationManager cm, ODatabaseSession session);
   }

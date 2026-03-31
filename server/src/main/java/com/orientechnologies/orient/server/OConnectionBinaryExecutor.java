@@ -1089,6 +1089,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
           ((ODistributedServerManager) plugin)
               .getDatabaseConfiguration(connection.getDatabase().getName());
       if (dbCfg != null) {
+        // TODO: regenerate configuration from new structures.
         // ENHANCE SERVER CFG WITH DATABASE CFG
         distributedCfg.setDatabaseConfiguration(dbCfg);
       }

@@ -21,7 +21,6 @@ import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
-import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OCallableNoParamNoReturn;
 import com.orientechnologies.common.util.OCallableUtils;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -798,32 +797,6 @@ public class OHazelcastClusterMetadataManager
 
       publishLocalNodeConfiguration();
       setNodeStatus(NODE_STATUS.ONLINE);
-
-      // TEMPORARY PATCH TO FIX HAZELCAST'S BEHAVIOUR THAT ENQUEUES THE MERGING ITEM EVENT WITH
-      // THIS
-      // AND ACTIVE NODES MAP COULD BE STILL NOT FILLED
-      OrientDBInternal ctx = serverInstance.getDatabases();
-      ctx.execute(
-          () -> {
-            try {
-              for (final String databaseName : distributedPlugin.getDatabases()) {
-                executeInDistributedDatabaseLock(
-                    databaseName,
-                    20000,
-                    null,
-                    new OCallable<Object, OModifiableDistributedConfiguration>() {
-                      @Override
-                      public Object call(final OModifiableDistributedConfiguration cfg) {
-                        cfg.override(configurationMap.getDatabaseConfiguration(databaseName));
-                        return null;
-                      }
-                    });
-              }
-            } finally {
-              logger.warnNode(nodeName, "Network merged ...");
-              setNodeStatus(NODE_STATUS.ONLINE);
-            }
-          });
     }
   }
 
@@ -1065,56 +1038,6 @@ public class OHazelcastClusterMetadataManager
       if (isNodeAvailable(entry.getKey(), iDatabaseName)) nodes.add(entry.getKey());
     }
     return nodes;
-  }
-
-  /**
-   * Executes an operation protected by a distributed lock (one per database).
-   *
-   * @param <T> Return type
-   * @param databaseName Database name
-   * @param iCallback Operation @return The operation's result of type T
-   */
-  public <T> T executeInDistributedDatabaseLock(
-      final String databaseName,
-      final long timeoutLocking,
-      OModifiableDistributedConfiguration lastCfg,
-      final OCallable<T, OModifiableDistributedConfiguration> iCallback) {
-
-    boolean updated;
-    T result;
-    getLockManagerRequester().acquireExclusiveLock(databaseName, nodeName, timeoutLocking);
-    try {
-
-      if (lastCfg == null) {
-        // ACQUIRE CFG INSIDE THE LOCK
-        lastCfg =
-            ((OrientDBDistributed) serverInstance.getDatabases())
-                .getDistributedConfiguration(databaseName)
-                .modify();
-      }
-
-      try {
-
-        result = iCallback.call(lastCfg);
-
-      } finally {
-        // CONFIGURATION CHANGED, UPDATE IT ON THE CLUSTER AND DISK
-        updated = updateCachedDatabaseConfiguration(databaseName, lastCfg);
-      }
-
-    } catch (RuntimeException e) {
-      throw e;
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-
-    } finally {
-      getLockManagerRequester().releaseExclusiveLock(databaseName, nodeName);
-    }
-    if (updated) {
-      // SEND NEW CFG TO ALL THE CONNECTED CLIENTS
-      distributedPlugin.notifyClients(databaseName);
-    }
-    return result;
   }
 
   /**
