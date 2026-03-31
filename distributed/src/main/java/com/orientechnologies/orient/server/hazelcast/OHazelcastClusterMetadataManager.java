@@ -54,7 +54,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -379,10 +378,6 @@ public class OHazelcastClusterMetadataManager
     } catch (Exception e) {
       logger.errorNode(nodeName, "Error on publishing local server configuration", e);
     }
-  }
-
-  public ODistributedLockManager getLockManagerRequester() {
-    return distributedLockManager;
   }
 
   public void prepareHazelcastPluginShutdown() {
@@ -1038,38 +1033,6 @@ public class OHazelcastClusterMetadataManager
       if (isNodeAvailable(entry.getKey(), iDatabaseName)) nodes.add(entry.getKey());
     }
     return nodes;
-  }
-
-  /**
-   * Executes an operation protected by a distributed lock (one per database).
-   *
-   * @param <T> Return type
-   * @param databaseName Database name
-   * @param iCallback Operation @return The operation's result of type T
-   */
-  public <T> T executeInDistributedDatabaseLock(
-      final String databaseName, final long timeoutLocking, final Callable<T> iCallback) {
-
-    T result;
-    getLockManagerRequester().acquireExclusiveLock(databaseName, nodeName, timeoutLocking);
-    try {
-
-      try {
-
-        result = iCallback.call();
-
-      } finally {
-      }
-
-    } catch (RuntimeException e) {
-      throw e;
-    } catch (Exception e) {
-      throw new RuntimeException(e);
-
-    } finally {
-      getLockManagerRequester().releaseExclusiveLock(databaseName, nodeName);
-    }
-    return result;
   }
 
   public ODocument getOnlineDatabaseConfiguration(final String iDatabaseName) {

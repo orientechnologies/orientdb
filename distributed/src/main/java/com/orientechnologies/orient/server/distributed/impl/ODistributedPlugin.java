@@ -19,8 +19,6 @@
  */
 package com.orientechnologies.orient.server.distributed.impl;
 
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_MAX_STARTUP_DELAY;
-
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.hazelcast.core.Member;
@@ -29,8 +27,6 @@ import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.console.OConsoleReader;
 import com.orientechnologies.common.console.ODefaultConsoleReader;
 import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OAnsiCode;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
@@ -46,8 +42,6 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
-import com.orientechnologies.orient.core.db.OSystemDatabase;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -57,8 +51,6 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.transaction.ONodeId;
-import com.orientechnologies.orient.core.tx.OTxMetadataHolder;
-import com.orientechnologies.orient.core.tx.OTxMetadataHolderImpl;
 import com.orientechnologies.orient.distributed.ONodeConfig;
 import com.orientechnologies.orient.distributed.ONodeListenerConfig;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
@@ -89,16 +81,11 @@ import com.orientechnologies.orient.server.distributed.ORemoteServerController;
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactoryManager;
 import com.orientechnologies.orient.server.distributed.config.OClusterConfiguration;
 import com.orientechnologies.orient.server.distributed.impl.metadata.OClassDistributed;
-import com.orientechnologies.orient.server.distributed.impl.task.ONewDeltaTaskResponse;
 import com.orientechnologies.orient.server.distributed.impl.task.ORemoteTaskFactoryManagerImpl;
 import com.orientechnologies.orient.server.distributed.impl.task.ORestartServerTask;
 import com.orientechnologies.orient.server.distributed.impl.task.OStopServerTask;
-import com.orientechnologies.orient.server.distributed.impl.task.OSyncDatabaseNewDeltaTask;
-import com.orientechnologies.orient.server.distributed.impl.task.OSyncDatabaseTask;
 import com.orientechnologies.orient.server.distributed.impl.task.OUpdateDatabaseConfigurationTask;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
-import com.orientechnologies.orient.server.distributed.task.ODatabaseIsOldException;
-import com.orientechnologies.orient.server.distributed.task.ODistributedDatabaseDeltaSyncException;
 import com.orientechnologies.orient.server.distributed.task.ODistributedLockException;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastClusterMetadataManager;
@@ -106,13 +93,6 @@ import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 import java.io.File;
 import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.AtomicMoveNotSupportedException;
-import java.nio.file.DirectoryNotEmptyException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -121,9 +101,7 @@ import java.util.Date;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -229,11 +207,6 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
 
   public File getDefaultDatabaseConfigFile() {
     return defaultDatabaseConfigFile;
-  }
-
-  public <T> T executeInDistributedDatabaseLock(
-      String databaseName, long timeoutLocking, Callable<T> iCallback) {
-    return clusterManager.executeInDistributedDatabaseLock(databaseName, timeoutLocking, iCallback);
   }
 
   @Override
@@ -994,478 +967,8 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
     return clusterManager.getAvailableNodes(iDatabaseName);
   }
 
-  @Override
-  public boolean installDatabase(
-      final boolean iStartup,
-      final String databaseName,
-      final boolean forceDeployment,
-      final boolean tryWithDeltaFirst) {
-    if (getDatabaseStatus(getLocalNodeName(), databaseName) == DB_STATUS.OFFLINE)
-      // OFFLINE: AVOID TO INSTALL IT
-      return false;
-
-    if (databaseName.equalsIgnoreCase(OSystemDatabase.SYSTEM_DB_NAME))
-      // DON'T REPLICATE SYSTEM BECAUSE IS DIFFERENT AND PER SERVER
-      return false;
-
-    if (!installingDatabases.add(databaseName)) {
-      return false;
-    }
-
-    try {
-      return executeInDistributedDatabaseLock(
-          databaseName,
-          20000,
-          () -> {
-            return internalInstallDatabase(
-                iStartup, databaseName, forceDeployment, tryWithDeltaFirst);
-          });
-    } finally {
-      installingDatabases.remove(databaseName);
-    }
-  }
-
   public boolean isSyncronizing(String databaseName) {
     return this.installingDatabases.contains(databaseName);
-  }
-
-  public Boolean internalInstallDatabase(
-      final boolean iStartup,
-      final String databaseName,
-      final boolean forceDeployment,
-      final boolean tryWithDeltaFirst) {
-    OrientDBDistributed context = (OrientDBDistributed) getServerInstance().getDatabases();
-    ODistributedConfiguration cfg = context.getExistingDistributedConfiguration(databaseName);
-    if (cfg == null) {
-      cfg = context.getDefaultDistributedConfiguration(databaseName);
-    }
-
-    // GET ALL THE OTHER SERVERS
-    final Collection<String> nodes = nodesOnlineNotSelf(databaseName);
-    if (nodes.size() == 0) {
-      logger.errorNode(
-          nodeName,
-          "Cannot install database '%s' on local node, because no servers are available",
-          databaseName);
-      return false;
-    }
-
-    logger.infoNode(
-        nodeName,
-        "Current node is a %s for database '%s'",
-        cfg.getServerRole(nodeName),
-        databaseName);
-
-    if (!forceDeployment && getDatabaseStatus(getLocalNodeName(), databaseName) == DB_STATUS.ONLINE)
-      return false;
-
-    context.distributedPauseDatabase(databaseName);
-
-    final Boolean deploy = forceDeployment ? Boolean.TRUE : (Boolean) cfg.isAutoDeploy();
-
-    boolean databaseInstalled;
-
-    try {
-
-      // CREATE THE DISTRIBUTED QUEUE
-      // TODO: This should check also but can't do it now
-      // storage.getLastMetadata().isPresent();
-      if (!context.exists(databaseName, null, null)) {
-
-        if (deploy == null || !deploy) {
-          context.distributedSetOnline(databaseName);
-          return false;
-        }
-
-        // FIRST TIME, ASK FOR FULL REPLICA
-        databaseInstalled = requestFullDatabase(databaseName, iStartup);
-
-      } else {
-        if (tryWithDeltaFirst) {
-          try {
-
-            // TRY WITH DELTA SYNC
-            databaseInstalled = requestNewDatabaseDelta(databaseName);
-
-          } catch (ODistributedDatabaseDeltaSyncException e) {
-            if (deploy == null || !deploy) {
-              context.distributedSetOnline(databaseName);
-              return false;
-            }
-
-            databaseInstalled = requestFullDatabase(databaseName, iStartup);
-          }
-        } else
-          // SKIP DELTA AND EXECUTE FULL BACKUP
-          databaseInstalled = requestFullDatabase(databaseName, iStartup);
-      }
-
-      if (!databaseInstalled) {
-        setDatabaseStatus(getLocalNodeName(), databaseName, DB_STATUS.NOT_AVAILABLE);
-      }
-
-    } catch (ODatabaseIsOldException e) {
-
-      // CURRENT DATABASE IS NEWER, SET ALL OTHER DATABASES AS NOT_AVAILABLE TO FORCE THEM
-      // TO ASK FOR THE CURRENT DATABASE
-      context.distributedSetOnline(databaseName);
-
-      logger.infoOut(
-          nodeName,
-          null,
-          "Current copy of database '%s' is newer than the copy present in the cluster. Use the"
-              + " local copy and force other nodes to download this",
-          databaseName);
-
-      databaseInstalled = true;
-    } catch (RuntimeException e) {
-      // UNLOCK ACCEPTING REQUESTS EVEN IN CASE OF ERROR.
-      context.distributedSetOnline(databaseName);
-      throw e;
-    }
-
-    return databaseInstalled;
-  }
-
-  private Collection<String> nodesOnlineNotSelf(String db) {
-    Collection<String> nodes = new HashSet<String>(getActiveServers());
-    if (nodes.isEmpty()) {
-      return nodes;
-    }
-    nodes.remove(getLocalNodeName());
-    final List<String> selectedNodes = new ArrayList<String>();
-
-    for (String n : nodes) {
-      if (isNodeStatusEqualsTo(n, db, DB_STATUS.ONLINE, DB_STATUS.BACKUP)) {
-        selectedNodes.add(n);
-        break;
-      }
-    }
-    if (selectedNodes.isEmpty()) {
-      // NO NODE ONLINE, SEND THE MESSAGE TO EVERYONE
-      for (String n : nodes) {
-        if (isNodeAvailable(n)) {
-          selectedNodes.add(n);
-        }
-      }
-    }
-    return selectedNodes;
-  }
-
-  private boolean requestNewDatabaseDelta(String databaseName) {
-    // GET ALL THE OTHER SERVERS
-    final Collection<String> nodes = nodesOnlineNotSelf(databaseName);
-    if (nodes.size() == 0) {
-      return false;
-    }
-
-    logger.warnOut(
-        nodeName,
-        nodes.toString(),
-        "requesting delta database sync for '%s' on local server...",
-        databaseName);
-
-    boolean databaseInstalledCorrectly = false;
-    OrientDBDistributed databases = (OrientDBDistributed) serverInstance.getDatabases();
-    for (String targetNode : nodes) {
-
-      if (!databases.isNodeOnline(targetNode, databaseName)) {
-        continue;
-      }
-      OTxMetadataHolder metadata;
-      try (ODatabaseDocumentInternal inst = databases.openNoAuthorization(databaseName)) {
-        Optional<byte[]> read = inst.getStorage().getLastMetadata();
-        if (read.isPresent()) {
-          metadata = OTxMetadataHolderImpl.read(read.get());
-        } else {
-          throw new ODistributedDatabaseDeltaSyncException("Trigger full sync");
-        }
-      }
-      final OSyncDatabaseNewDeltaTask deployTask =
-          new OSyncDatabaseNewDeltaTask(metadata.getStatus());
-
-      try {
-        final ODistributedResponse response =
-            sendSingleRequest(databaseName, targetNode, deployTask);
-
-        if (response == null)
-          throw new ODistributedDatabaseDeltaSyncException("Error requesting delta sync");
-
-        databaseInstalledCorrectly =
-            installResponseNewDeltaSync(
-                databaseName, targetNode, (ONewDeltaTaskResponse) response.getPayload());
-
-      } catch (ODistributedDatabaseDeltaSyncException e) {
-        // RE-THROW IT
-        throw e;
-      } catch (Exception e) {
-        logger.errorOut(
-            nodeName,
-            targetNode,
-            "Error on asking delta backup of database '%s' (err=%s)",
-            databaseName,
-            e.getMessage());
-        throw OException.wrapException(new ODistributedDatabaseDeltaSyncException(e.toString()), e);
-      }
-
-      if (databaseInstalledCorrectly) {
-        try {
-          reassignClustersOwnership(nodeName, databaseName, true);
-        } catch (Exception e) {
-          // HANDLE IT AS WARNING
-          logger.warnNode(
-              nodeName, "Error on re-balancing the cluster for database '%s'", e, databaseName);
-          // NOT CRITICAL, CONTINUE
-        }
-        return true;
-      }
-    }
-
-    throw new ODistributedDatabaseDeltaSyncException("Requested database delta sync error");
-  }
-
-  protected boolean requestFullDatabase(final String databaseName, final boolean backupDatabase) {
-    logger.infoNode(nodeName, "Requesting full sync for database '%s'...", databaseName);
-
-    for (int retry = 0; retry < DEPLOY_DB_MAX_RETRIES; ++retry) {
-      // ASK DATABASE TO THE FIRST NODE, THE FIRST ATTEMPT, OTHERWISE ASK TO EVERYONE
-      if (requestDatabaseFullSync(backupDatabase, databaseName))
-        // DEPLOYED
-        return true;
-      try {
-        Thread.sleep(
-            serverInstance.getContextConfiguration().getValueAsLong(DISTRIBUTED_MAX_STARTUP_DELAY));
-      } catch (InterruptedException e) {
-        Thread.currentThread().interrupt();
-        return false;
-      }
-    }
-    // RETRY COUNTER EXCEED
-    return false;
-  }
-
-  private boolean installResponseNewDeltaSync(
-      String databaseName, String targetNode, ONewDeltaTaskResponse results) {
-    final String dbPath = serverInstance.getDatabaseDirectory() + databaseName;
-    boolean databaseInstalledCorrectly = false;
-    // EXTRACT THE REAL RESULT
-    if (results.getResponseType() == ONewDeltaTaskResponse.ResponseType.CHUNK) {
-      ODistributedDatabaseChunk firstChunk = results.getChunk().get();
-      try {
-
-        OSyncReceiver receiver =
-            new OSyncReceiver(this, databaseName, firstChunk, targetNode, dbPath);
-        receiver.spawnReceiverThread();
-        receiver.getStarted().await();
-
-        try (InputStream in = receiver.getInputStream()) {
-          OrientDBInternal context = serverInstance.getDatabases();
-          databaseInstalledCorrectly =
-              context.deltaSync(databaseName, in, OrientDBConfig.defaultConfig());
-        } catch (IOException e) {
-          throw OException.wrapException(
-              new OIOException("Error on distributed sync of database"), e);
-        }
-        if (databaseInstalledCorrectly) {
-          logger.infoIn(nodeName, targetNode, "Installed delta of database '%s'", databaseName);
-        }
-
-        // DATABASE INSTALLED CORRECTLY
-
-      } catch (OException | InterruptedException e) {
-        logger.error("Error installing database from network", e);
-        databaseInstalledCorrectly = false;
-      }
-    } else if (results.getResponseType() == ONewDeltaTaskResponse.ResponseType.FULL_SYNC) {
-      throw new ODistributedDatabaseDeltaSyncException("Full sync required");
-    } else if (results.getResponseType() == ONewDeltaTaskResponse.ResponseType.NO_CHANGES) {
-      OrientDBInternal context = serverInstance.getDatabases();
-      context.distributedSetOnline(databaseName);
-      return true;
-    }
-    return databaseInstalledCorrectly;
-  }
-
-  protected boolean requestDatabaseFullSync(
-      final boolean backupDatabase, final String databaseName) {
-    final Collection<String> nodes = nodesOnlineNotSelf(databaseName);
-    if (nodes.isEmpty()) {
-      logger.warnNode(
-          nodeName,
-          "Cannot request full deploy of database '%s' because there are no nodes available with"
-              + " such database",
-          databaseName);
-      return false;
-    }
-
-    logger.infoOut(
-        nodeName,
-        nodes.toString(),
-        "Requesting deploy of database '%s' on local server...",
-        databaseName);
-    for (String nodetoSend : nodes) {
-      OSyncDatabaseTask deployTask = new OSyncDatabaseTask();
-      ODistributedResponse response = sendSingleRequest(databaseName, nodetoSend, deployTask);
-
-      if (response == null || response.getPayload() == null) {
-        logger.errorIn(
-            nodeName,
-            nodes.toString(),
-            "Timeout waiting the sync database please set the `distributed.deployDbTaskTimeout` to"
-                + " appropriate value");
-        setDatabaseStatus(nodeName, databaseName, DB_STATUS.NOT_AVAILABLE);
-        return false;
-      }
-
-      final Object value = response.getPayload();
-      final String dbPath = serverInstance.getDatabaseDirectory() + databaseName;
-
-      if (value instanceof ODistributedDatabaseChunk) {
-        if (backupDatabase) backupCurrentDatabase(databaseName);
-
-        try {
-          installDatabaseFromNetwork(
-              dbPath, databaseName, nodetoSend, (ODistributedDatabaseChunk) value);
-        } catch (OException e) {
-          logger.error("Error installing database from network", e);
-          continue;
-        }
-
-        return true;
-      } else if (value instanceof Boolean) {
-        serverInstance.getDatabases().distributedSetOnline(databaseName);
-        continue;
-      } else if (value instanceof ODatabaseIsOldException) {
-
-        // MANAGE THIS EXCEPTION AT UPPER LEVEL
-        throw (ODatabaseIsOldException) value;
-
-      } else if (value instanceof Throwable) {
-        logger.errorIn(
-            nodeName,
-            nodetoSend,
-            "Error on installing database '%s' in %s",
-            (Throwable) value,
-            databaseName,
-            dbPath);
-
-        setDatabaseStatus(nodeName, databaseName, DB_STATUS.NOT_AVAILABLE);
-
-        if (value instanceof ODistributedException) throw (ODistributedException) value;
-
-      } else throw new IllegalArgumentException("Type " + value + " not supported");
-    }
-
-    throw new ODistributedException(
-        "No response received from remote nodes for auto-deploy of database '"
-            + databaseName
-            + "'");
-  }
-
-  protected void backupCurrentDatabase(final String iDatabaseName) {
-    serverInstance.getDatabases().forceDatabaseClose(iDatabaseName);
-
-    final String backupDirectory =
-        serverInstance
-            .getContextConfiguration()
-            .getValueAsString(OGlobalConfiguration.DISTRIBUTED_BACKUP_DIRECTORY);
-
-    Path serverDir = Paths.get(serverInstance.getDatabaseDirectory());
-    Path backupPath = serverDir.resolve(backupDirectory).toAbsolutePath();
-
-    backupPath = backupPath.resolve(iDatabaseName);
-
-    final String dbpath = serverInstance.getDatabaseDirectory() + iDatabaseName;
-    final File backupFullPath = backupPath.toFile();
-    try {
-      if (backupFullPath.exists()) {
-        OFileUtils.deleteRecursively(backupFullPath);
-      }
-
-      Files.createDirectories(backupFullPath.toPath());
-
-      // move the database on current node
-      logger.warnNode(
-          nodeName,
-          "Moving existent database '%s' in '%s' to '%s' and get a fresh copy from a remote"
-              + " node...",
-          iDatabaseName,
-          dbpath,
-          backupPath);
-
-      final File oldDirectory = new File(dbpath);
-      if (oldDirectory.exists() && oldDirectory.isDirectory()) {
-        if (oldDirectory.getCanonicalPath().equals(backupFullPath.getCanonicalPath())) {
-          throw new ODistributedException(
-              String.format(
-                  "Backup folder configured as same of database folder:'%s'",
-                  oldDirectory.getAbsolutePath()));
-        }
-        try {
-          try {
-            Files.move(
-                oldDirectory.toPath(), backupFullPath.toPath(), StandardCopyOption.ATOMIC_MOVE);
-          } catch (AtomicMoveNotSupportedException e) {
-            logger.errorNoDb(
-                "Atomic moves not supported during database backup, will try not atomic move",
-                null);
-            if (backupFullPath.exists()) {
-              OFileUtils.deleteRecursively(backupFullPath);
-            }
-            Files.createDirectories(backupFullPath.toPath());
-
-            Files.move(oldDirectory.toPath(), backupPath.resolve(oldDirectory.getName()));
-          }
-        } catch (DirectoryNotEmptyException e) {
-          logger.errorNoDb(
-              "File rename not supported during database backup, will try coping files", null);
-          if (backupFullPath.exists()) {
-            OFileUtils.deleteRecursively(backupFullPath);
-          }
-          Files.createDirectories(backupFullPath.toPath());
-          try {
-            OFileUtils.copyDirectory(
-                oldDirectory, backupPath.resolve(oldDirectory.getName()).toFile());
-            OFileUtils.deleteRecursively(backupFullPath);
-          } catch (IOException ioe) {
-            logger.errorNoDb("Error moving old database removing it", ioe);
-            OFileUtils.deleteRecursively(backupFullPath);
-          }
-        }
-      }
-    } catch (IOException e) {
-      logger.warnNode(
-          nodeName,
-          "Error on moving existent database '%s' located in '%s' to '%s' (error=%s).",
-          e,
-          iDatabaseName,
-          dbpath,
-          backupFullPath,
-          e);
-    }
-  }
-
-  /** Installs a database from the network. */
-  protected void installDatabaseFromNetwork(
-      final String dbPath,
-      final String databaseName,
-      final String iNode,
-      final ODistributedDatabaseChunk firstChunk) {
-
-    OSyncReceiver receiver = new OSyncReceiver(this, databaseName, firstChunk, iNode, dbPath);
-    receiver.spawnReceiverThread();
-
-    installDatabaseOnLocalNode(databaseName, dbPath, iNode, firstChunk.incremental, receiver);
-    receiver.close();
-
-    try {
-      reassignClustersOwnership(nodeName, databaseName, false);
-    } catch (Exception e) {
-      // HANDLE IT AS WARNING
-      logger.warnNode(
-          nodeName, "Error on re-balancing the cluster for database '%s'", e, databaseName);
-      // NOT CRITICAL, CONTINUE
-    }
   }
 
   @Override
@@ -1638,70 +1141,6 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
         }
         break;
       }
-    }
-  }
-
-  protected void installDatabaseOnLocalNode(
-      final String databaseName,
-      final String dbPath,
-      final String iNode,
-      boolean incremental,
-      OSyncReceiver receiver) {
-    logger.infoIn(nodeName, iNode, "Installing database '%s' to: %s...", databaseName, dbPath);
-
-    new File(dbPath).mkdirs();
-    try {
-      receiver.getStarted().await();
-    } catch (InterruptedException e) {
-      throw OException.wrapException(
-          new OInterruptedException("Interrupted waiting receive of sync"), e);
-    }
-
-    executeInDistributedDatabaseLock(
-        databaseName,
-        20000,
-        () -> {
-          return internalInstallDatabase(databaseName, iNode, incremental, receiver);
-        });
-  }
-
-  private Object internalInstallDatabase(
-      final String database, final String node, boolean incremental, OSyncReceiver receiver) {
-    try {
-      OrientDBDistributed context = (OrientDBDistributed) serverInstance.getDatabases();
-      if (incremental) {
-        context.fullSync(database, receiver.getInputStream(), OrientDBConfig.defaultConfig());
-        context.saveDatabaseConfiguration(database);
-
-        try (ODatabaseDocumentInternal inst = context.openNoAuthorization(database)) {
-          Optional<byte[]> read = inst.getStorage().getLastMetadata();
-          if (read.isPresent()) {
-            OTxMetadataHolder metadata = OTxMetadataHolderImpl.read(read.get());
-            final OSyncDatabaseNewDeltaTask deployTask =
-                new OSyncDatabaseNewDeltaTask(metadata.getStatus());
-
-            final ODistributedResponse response = sendSingleRequest(database, node, deployTask);
-            if (response == null)
-              throw new ODistributedDatabaseDeltaSyncException("Error Requesting delta sync");
-            boolean installed =
-                installResponseNewDeltaSync(
-                    database, node, (ONewDeltaTaskResponse) response.getPayload());
-            if (!installed)
-              throw new ODistributedDatabaseDeltaSyncException("Error Requesting delta sync");
-          }
-        }
-      } else {
-
-        // USES A CUSTOM WRAPPER OF IS TO WAIT FOR FILE IS WRITTEN (ASYNCH)
-        try (InputStream in = receiver.getInputStream()) {
-
-          // IMPORT FULL DATABASE (LISTENER ONLY FOR DEBUG PURPOSE)
-          context.networkRestore(database, in, null);
-        }
-      }
-      return null;
-    } catch (IOException e) {
-      throw OException.wrapException(new OIOException("Error on distributed sync of database"), e);
     }
   }
 

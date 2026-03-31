@@ -196,9 +196,6 @@ public interface ODistributedServerManager {
 
   List<String> getOnlineNodesNotLocal(String iDatabaseName);
 
-  boolean installDatabase(
-      boolean iStartup, String databaseName, boolean forceDeployment, boolean tryWithDeltaFirst);
-
   /**
    * Returns the task factory manager. During first connect the minor version of the protocol is
    * used.

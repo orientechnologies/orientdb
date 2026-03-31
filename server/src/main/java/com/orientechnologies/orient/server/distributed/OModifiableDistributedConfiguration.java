@@ -19,7 +19,6 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 
 /**
@@ -35,20 +34,6 @@ public class OModifiableDistributedConfiguration extends ODistributedConfigurati
 
   public OModifiableDistributedConfiguration modify() {
     return this;
-  }
-
-  /** Sets the server role between MASTER (default) and REPLICA. */
-  public void setServerRole(final String iServerName, final ROLES role) {
-    synchronized (configuration) {
-      ODocument servers = configuration.field(SERVERS);
-      if (servers == null) {
-        servers = new ODocument();
-        configuration.field(SERVERS, servers, OType.EMBEDDED);
-      }
-
-      servers.field(iServerName, role);
-      incrementVersion();
-    }
   }
 
   private void incrementVersion() {
