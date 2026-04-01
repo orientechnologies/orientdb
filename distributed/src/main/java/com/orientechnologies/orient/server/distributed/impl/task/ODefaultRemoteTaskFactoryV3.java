@@ -44,20 +44,8 @@ public class ODefaultRemoteTaskFactoryV3 implements ORemoteTaskFactory {
       case ORestartServerTask.FACTORYID: // 10
         return new ORestartServerTask();
 
-      case OSyncClusterTask.FACTORYID: // 12
-        return new OSyncClusterTask();
-
-      case OSyncDatabaseTask.FACTORYID: // 14
-        return new OSyncDatabaseTask();
-
-      case OCopyDatabaseChunkTask.FACTORYID: // 15
-        return new OCopyDatabaseChunkTask();
-
       case OGossipTask.FACTORYID: // 16
         return new OGossipTask();
-
-      case ODropDatabaseTask.FACTORYID: // 23
-        return new ODropDatabaseTask();
 
       case OUpdateDatabaseConfigurationTask.FACTORYID: // 24
         return new OUpdateDatabaseConfigurationTask();
@@ -88,9 +76,6 @@ public class ODefaultRemoteTaskFactoryV3 implements ORemoteTaskFactory {
 
       case NodeOperationTask.FACTORYID: // 55
         return new NodeOperationTask();
-
-      case OSyncDatabaseNewDeltaTask.FACTORYID: // 57
-        return new OSyncDatabaseNewDeltaTask();
 
       case OUpdateDatabaseSequenceStatusTask.FACTORYID: // 58
         return new OUpdateDatabaseSequenceStatusTask();

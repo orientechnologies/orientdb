@@ -186,7 +186,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       boolean servers, boolean db, boolean latency, boolean messages) {
     checkSecurity(ORule.ResourceGeneric.SERVER, "status", ORole.PERMISSION_READ);
 
-    if (distributedManager == null || !distributedManager.isEnabled())
+    if (getContext().isDistributedDisabled(getName()))
       throw new OCommandExecutionException("OrientDB is not started in distributed mode");
 
     final String databaseName = getName();
@@ -214,7 +214,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   public boolean removeHaServer(String serverName) {
     checkSecurity(ORule.ResourceGeneric.SERVER, "remove", ORole.PERMISSION_EXECUTE);
 
-    if (distributedManager == null || !distributedManager.isEnabled())
+    if (getContext().isDistributedDisabled(getName()))
       throw new OCommandExecutionException("OrientDB is not started in distributed mode");
 
     return getContext().removeDatabaseMember(getStorage().getDatbaseId(), new ONodeId(serverName));
@@ -231,7 +231,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
   public ODistributedResponse executeTaskOnNode(ORemoteTask task, String nodeName) {
 
-    if (distributedManager == null || !distributedManager.isEnabled())
+    if (getContext().isDistributedDisabled(getName()))
       throw new ODistributedException("OrientDB is not started in distributed mode");
 
     final String databaseName = getName();

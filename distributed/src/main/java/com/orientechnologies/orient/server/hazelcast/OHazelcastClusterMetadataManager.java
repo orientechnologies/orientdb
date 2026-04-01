@@ -45,7 +45,6 @@ import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
 import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.config.OClusterConfiguration;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedPlugin;
-import com.orientechnologies.orient.server.distributed.impl.task.OSyncDatabaseTask;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -97,6 +96,8 @@ public class OHazelcastClusterMetadataManager
   private OServer serverInstance;
 
   private final ODistributedPlugin distributedPlugin;
+
+  public static final String DEPLOYDB = "deploydb.";
 
   public OHazelcastClusterMetadataManager(ODistributedPlugin distributedPlugin) {
     this.distributedPlugin = distributedPlugin;
@@ -804,7 +805,7 @@ public class OHazelcastClusterMetadataManager
   public void dropDatabaseConfiguration(final String dbName) {
     // LAST NODE HOLDING THE DATABASE, DELETE DISTRIBUTED CFG TOO
     configurationMap.removeDatabaseConfiguration(dbName);
-    configurationMap.remove(OSyncDatabaseTask.DEPLOYDB + dbName);
+    configurationMap.remove(OHazelcastClusterMetadataManager.DEPLOYDB + dbName);
     logger.infoNode(
         nodeName, "Dropped last copy of database '%s', removing it from the cluster", dbName);
   }

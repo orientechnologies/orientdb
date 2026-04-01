@@ -520,7 +520,6 @@ public class OClassDistributed extends OClassEmbedded {
   }
 
   public int getClusterForNewInstance(ODatabaseDocumentDistributed db, ODocument doc) {
-    ODistributedServerManager manager = db.getDistributedManager();
     if (bestClusterIds == null) {
       if (this.allocation == null) {
         OrientDBDistributed context = db.getContext();
@@ -528,7 +527,7 @@ public class OClassDistributed extends OClassEmbedded {
         availableNodes.removeIf((node) -> !context.isNodeMaster(node, db.getName()));
         autoAssignClusterOwnership(db, availableNodes, true);
       }
-      bestClusterFromAllocation(db, manager);
+      bestClusterFromAllocation(db);
     }
     final int size = bestClusterIds.length;
     if (size == 0) {
@@ -544,8 +543,7 @@ public class OClassDistributed extends OClassEmbedded {
     return cluster;
   }
 
-  private void bestClusterFromAllocation(
-      ODatabaseDocumentDistributed db, ODistributedServerManager manager) {
+  private void bestClusterFromAllocation(ODatabaseDocumentDistributed db) {
     String nodeName = db.getLocalNodeName();
     List<String> cls;
     if (getAllocation() != null && getAllocation().getAllocationClusters(nodeName) != null) {

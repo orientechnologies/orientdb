@@ -276,7 +276,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
     return embedded;
   }
 
-  protected boolean isDistributedDisabled(String storage) {
+  public boolean isDistributedDisabled(String storage) {
     if (OSystemDatabase.SYSTEM_DB_NAME.equals(storage)) {
       return true;
     } else if (plugin == null || !plugin.isEnabled()) {
