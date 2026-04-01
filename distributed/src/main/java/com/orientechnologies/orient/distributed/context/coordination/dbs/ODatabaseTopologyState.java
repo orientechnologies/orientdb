@@ -64,7 +64,7 @@ public class ODatabaseTopologyState {
     this.stateListener = stateListener;
     this.versionPromise = new OVersionPromise(new OVersion(0), current);
     this.current = current;
-    this.receiveState(state);
+    this.receiveState(state, false);
   }
 
   public ODatabaseTopologyState(
@@ -227,6 +227,9 @@ public class ODatabaseTopologyState {
     }
     Set<ONodeId> onlineNodes = new HashSet<>(getOnlineNodes());
     onlineNodes.remove(current);
+    if (onlineNodes.isEmpty()) {
+      return Optional.empty();
+    }
     OSyncSession session = new OSyncSession(getId(), current, onlineNodes);
     this.syncSessions.put(session.getSyncId(), session);
     return Optional.of(new OSyncInfo(session.getSyncId(), onlineNodes, session.getFinished()));
@@ -284,7 +287,7 @@ public class ODatabaseTopologyState {
     return new ODatabaseStateNetwork(id, name, quorum, getVersion().getValue(), members);
   }
 
-  public synchronized void receiveState(ODatabaseStateNetwork state) {
+  public synchronized void receiveState(ODatabaseStateNetwork state, boolean notify) {
     // TODO: verify promised case ....
     if (this.getVersion().getValue() < state.version()) {
       this.versionPromise.loadVersion(new OVersion(state.version()));
@@ -294,13 +297,17 @@ public class ODatabaseTopologyState {
         if (status != null) {
           if (status.getState() != member.state()) {
             status.setState(member.state());
-            this.stateListener.onStateChange(id, member.node(), member.state());
+            if (notify) {
+              this.stateListener.onStateChange(id, member.node(), member.state());
+            }
           }
           status.setRole(member.role());
         } else {
           var m = new ONodeDatabaseState(member.node(), member.role(), member.state());
           this.nodeStatus.put(member.node(), m);
-          this.stateListener.onStateChange(id, member.node(), member.state());
+          if (notify) {
+            this.stateListener.onStateChange(id, member.node(), member.state());
+          }
         }
       }
     }
@@ -486,5 +493,11 @@ public class ODatabaseTopologyState {
   public synchronized void cancelRole(
       ONodeId nodeId, OVersion version, OTransactionIdPromise promise) {
     this.versionPromise.cancel(promise);
+  }
+
+  public synchronized void notifyAllNodesStates() {
+    for (ONodeDatabaseState state : this.nodeStatus.values()) {
+      this.stateListener.onStateChange(id, state.getId(), state.getState());
+    }
   }
 }
