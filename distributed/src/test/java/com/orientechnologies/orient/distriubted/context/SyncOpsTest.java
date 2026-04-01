@@ -22,6 +22,7 @@ import com.orientechnologies.orient.distributed.db.OutputStreamMessages.MessageS
 import java.io.OutputStream;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -32,14 +33,26 @@ public class SyncOpsTest {
   private OrientDB context1;
 
   @Before
-  public void before() {
+  public void before() throws InterruptedException, ExecutionException {
     OrientDBConfigBuilder config1 = OrientDBConfig.builder();
-    config1.getNodeConfigurationBuilder().setNodeName("node1");
+    config1
+        .getNodeConfigurationBuilder()
+        .setNodeName("node1")
+        .setGroupName("OrientDB")
+        .setQuorum(1);
     context = OrientDBInternal.distributed("./target/sync", config1.build()).newOrientDB();
     context.execute("create database test plocal users(admin identified by 'adminpwd' role admin)");
+    OrientDBDistributed ctx = (OrientDBDistributed) OrientDBInternal.extract(context);
+    var dbId = ctx.getStorage("test").getDatbaseId();
     OrientDBConfigBuilder config2 = OrientDBConfig.builder();
-    config2.getNodeConfigurationBuilder().setNodeName("node2");
+    config2
+        .getNodeConfigurationBuilder()
+        .setNodeName("node2")
+        .setGroupName("OrientDB")
+        .setQuorum(1);
     context1 = OrientDBInternal.distributed("./target/sync_receive", config2.build()).newOrientDB();
+    OrientDBDistributed ctx1 = (OrientDBDistributed) OrientDBInternal.extract(context1);
+    ctx1.declareDatabaseFlow("test", dbId); // .get();
   }
 
   private class PassTrough implements RequestNext, MessageSender {

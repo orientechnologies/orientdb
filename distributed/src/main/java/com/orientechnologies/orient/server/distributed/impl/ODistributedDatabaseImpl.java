@@ -110,12 +110,11 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   private OFreezeGuard freezeGuard;
   private final OrientDBDistributed context;
 
-  public ODistributedDatabaseImpl(
-      OrientDBDistributed context, final ODistributedPlugin manager, final String iDatabaseName) {
+  public ODistributedDatabaseImpl(OrientDBDistributed context, final String iDatabaseName) {
     this.context = context;
-    this.manager = manager;
+    this.manager = context.getPlugin();
     this.databaseName = iDatabaseName;
-    this.localNodeName = manager.getLocalNodeName();
+    this.localNodeName = context.getNodeName();
 
     initExecutor();
 
@@ -587,15 +586,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     OStorage storage = session.getStorage();
     if (storage != null) {
       sequenceManager.fill(storage.getLastMetadata());
-    }
-    // SET THE NODE.DB AS ONLINE
-    if (storage != null && !manager.isSyncronizing(databaseName)) {
-      logger.infoNode(
-          localNodeName,
-          "Publishing ONLINE status for database %s.%s...",
-          localNodeName,
-          databaseName);
-      context.setDatabaseStatus(databaseName, DB_STATUS.ONLINE);
     }
     resume();
   }

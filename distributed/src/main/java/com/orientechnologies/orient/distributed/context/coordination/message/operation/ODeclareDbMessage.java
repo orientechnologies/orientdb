@@ -87,7 +87,7 @@ public class ODeclareDbMessage implements OOperationMessage {
 
   @Override
   public String toString() {
-    return "Declaring database with name= "
+    return "Declaring database with name="
         + name
         + ", id="
         + id

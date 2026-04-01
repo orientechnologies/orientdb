@@ -244,7 +244,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   public ODistributedPlugin getPlugin() {
-    if (plugin == null) {
+    if (plugin == null && server != null) {
       synchronized (this) {
         if (plugin == null) {
           if (server != null && server.isActive()) {
@@ -277,10 +277,17 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   protected boolean isDistributedDisabled(String storage) {
-    return OSystemDatabase.SYSTEM_DB_NAME.equals(storage)
-        || plugin == null
-        || !plugin.isEnabled()
-        || nodeState == null;
+    if (OSystemDatabase.SYSTEM_DB_NAME.equals(storage)) {
+      return true;
+    } else if (plugin == null || !plugin.isEnabled()) {
+      if (nodeState == null) {
+        return true;
+      } else {
+        return false;
+      }
+    } else {
+      return false;
+    }
   }
 
   @Override
@@ -484,8 +491,9 @@ public class OrientDBDistributed extends OrientDBEmbedded
     }
 
     unregisterDatabase(name);
-    plugin.removeDbFromClusterMetadata(name);
-
+    if (plugin != null) {
+      plugin.removeDbFromClusterMetadata(name);
+    }
     synchronized (this) {
       if (exists(name, null, null)) {
         OStorage storage = getAndOpenStorage(name, getConfigurations());
@@ -771,7 +779,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
     }
   }
 
-  private Future<Optional<OAcceptResult>> declareDatabaseFlow(String name, ODatabaseId dbId) {
+  public Future<Optional<OAcceptResult>> declareDatabaseFlow(String name, ODatabaseId dbId) {
     var members =
         getNodeState().getNetworkMembers().stream()
             .map((n) -> new OAddNodeInfo(n, ONodeRole.Main))

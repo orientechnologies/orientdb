@@ -546,7 +546,7 @@ public class OClassDistributed extends OClassEmbedded {
 
   private void bestClusterFromAllocation(
       ODatabaseDocumentDistributed db, ODistributedServerManager manager) {
-    String nodeName = manager.getLocalNodeName();
+    String nodeName = db.getLocalNodeName();
     List<String> cls;
     if (getAllocation() != null && getAllocation().getAllocationClusters(nodeName) != null) {
       cls = new ArrayList<>(getAllocation().getAllocationClusters(nodeName));
