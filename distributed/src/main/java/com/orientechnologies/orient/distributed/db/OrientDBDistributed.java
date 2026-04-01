@@ -391,6 +391,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
     }
 
     embedded.getSharedContext().reInit(storage, embedded);
+    distributedSetOnline(dbName);
     ODatabaseRecordThreadLocal.instance().remove();
     return;
   }
@@ -1068,7 +1069,8 @@ public class OrientDBDistributed extends OrientDBEmbedded
     Optional<OSyncInfo> sync = getNodeState().getOps().newSync(dbId);
     if (sync.isPresent()) {
       logger.debug(
-          "Requesting sync %s syncId %s receiver %s", dbId, sync.get().syncId(), getNodeId());
+          "Requesting sync of %s to %s syncId %s receiver %s",
+          dbId, sync.get().targets(), sync.get().syncId(), getNodeId());
       OSyncMode mode;
       if (tx.isPresent()) {
         mode = OSyncMode.Delta;
@@ -1154,7 +1156,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
       switch (state.getMode()) {
         case IncrementalBackup -> incrementalsSync(dbName, input, conf);
 
-        case StandardBackup -> restore(dbName, input, null, null, null);
+        case StandardBackup -> networkRestore(dbName, input, null);
 
         case Delta -> deltaSync(dbName, input, conf);
       }
