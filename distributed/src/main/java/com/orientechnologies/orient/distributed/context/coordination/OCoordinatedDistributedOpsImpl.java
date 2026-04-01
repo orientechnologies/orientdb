@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.distributed.context.coordination;
 
+import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.OGroupId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
@@ -59,7 +60,8 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   private final Map<OTransactionIdPromise, OResponseCollector> coordination;
   private final ODatabasesTopologyState databaseTopology;
   private ONodeStateUpdated updateLister;
-  private Optional<ONodeStateNetwork> promisedMergeState = Optional.empty();
+  private Optional<ORawPair<OTransactionIdPromise, ONodeStateNetwork>> promisedMergeState =
+      Optional.empty();
 
   public OCoordinatedDistributedOpsImpl(
       ONodeId current,
@@ -604,7 +606,7 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
     if (res.isEmpty()) {
       res = this.databaseTopology.validateMerge(state.databases(), promise);
       if (res.isEmpty()) {
-        this.promisedMergeState = Optional.of(state);
+        this.promisedMergeState = Optional.of(new ORawPair<>(promise, state));
       } else {
         topology.cancelMerge(promise);
       }
@@ -622,21 +624,29 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
 
   @Override
   public synchronized void cancelMerge(OTransactionIdPromise promise) {
-    topology.cancelMerge(promise);
-    databaseTopology.cancelMerge(promise);
-    promisedMergeState = Optional.empty();
+    if (this.promisedMergeState.isPresent()
+        && this.promisedMergeState.get().first.equals(promise)) {
+      topology.cancelMerge(promise);
+      databaseTopology.cancelMerge(promise);
+      promisedMergeState = Optional.empty();
+      logger.debugNode(this.getCurrent(), "canceling merging network for promise %s", promise);
+    } else {
+      logger.debugNode(this.getCurrent(), "ignoring cancel merge for promise %s", promise);
+    }
   }
 
   @Override
   public synchronized void applyMerge(OTransactionIdPromise promise) {
-    logger.debugNode(this.getCurrent(), "merging network for promise ", promise);
+    logger.debugNode(this.getCurrent(), "merging network for promise %s", promise);
     assert this.promisedMergeState.isPresent();
-    var state = this.promisedMergeState.get();
-    topology.applyMerge(state.topology(), promise);
-    this.databaseTopology.mergeNetworkState(state.databases(), promise);
-    this.promisedMergeState = Optional.empty();
-    this.sequenceManager.fill(state.sequenceStatus());
-    this.sequenceManager.notifySuccess(promise);
+    if (this.promisedMergeState.get().first.equals(promise)) {
+      var state = this.promisedMergeState.get().second;
+      topology.applyMerge(state.topology(), promise);
+      this.databaseTopology.mergeNetworkState(state.databases(), promise);
+      this.promisedMergeState = Optional.empty();
+      this.sequenceManager.fill(state.sequenceStatus());
+      this.sequenceManager.notifySuccess(promise);
+    }
   }
 
   @Override
