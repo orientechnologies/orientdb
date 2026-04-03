@@ -67,7 +67,10 @@ public class OReceiverInputStream extends InputStream {
 
   public void receive(byte[] buffer, boolean finished) {
     try {
-      this.buffers.put(new Buffer(buffer, finished));
+      var offered = this.buffers.offer(new Buffer(buffer, finished), 5, TimeUnit.MINUTES);
+      if (!offered) {
+        throw new OTimeoutException("Timeout waiting for sync data");
+      }
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       throw OException.wrapException(new OInterruptedException("Receive sync interrupted"), e);

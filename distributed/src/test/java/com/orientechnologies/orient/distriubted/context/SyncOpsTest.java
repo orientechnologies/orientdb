@@ -23,6 +23,8 @@ import java.io.OutputStream;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -33,7 +35,7 @@ public class SyncOpsTest {
   private OrientDB context1;
 
   @Before
-  public void before() throws InterruptedException, ExecutionException {
+  public void before() throws InterruptedException, ExecutionException, TimeoutException {
     OrientDBConfigBuilder config1 = OrientDBConfig.builder();
     config1
         .getNodeConfigurationBuilder()
@@ -52,7 +54,7 @@ public class SyncOpsTest {
         .setQuorum(1);
     context1 = OrientDBInternal.distributed("./target/sync_receive", config2.build()).newOrientDB();
     OrientDBDistributed ctx1 = (OrientDBDistributed) OrientDBInternal.extract(context1);
-    ctx1.declareDatabaseFlow("test", dbId); // .get();
+    ctx1.declareDatabaseFlow("test", dbId).get(5, TimeUnit.MINUTES);
   }
 
   private class PassTrough implements RequestNext, MessageSender {

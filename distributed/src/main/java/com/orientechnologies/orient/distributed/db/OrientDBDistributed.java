@@ -1672,8 +1672,8 @@ public class OrientDBDistributed extends OrientDBEmbedded
         retryOperation(new ORemoveMemberRetryOperation(databaseId, List.of(node)));
 
     try {
-      return future.get().isEmpty();
-    } catch (InterruptedException | ExecutionException e) {
+      return future.get(10, TimeUnit.MINUTES).isEmpty();
+    } catch (InterruptedException | ExecutionException | TimeoutException e) {
       return false;
     }
   }
