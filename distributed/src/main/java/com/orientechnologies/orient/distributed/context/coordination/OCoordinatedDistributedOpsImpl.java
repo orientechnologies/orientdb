@@ -705,8 +705,10 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   }
 
   @Override
-  public void dropDatabase(ODatabaseId dbId, OVersion version, OTransactionIdPromise promise) {
+  public synchronized void dropDatabase(
+      ODatabaseId dbId, OVersion version, OTransactionIdPromise promise) {
     this.databaseTopology.dropDatabase(promise, dbId, version);
+    notifyUpdate();
   }
 
   @Override

@@ -502,6 +502,7 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
       OTransactionIdPromise promise, ODatabaseId dbId, OVersion version) {
     var db = this.databases.remove(dbId);
     if (db != null) {
+      this.databasesByName.remove(db.getName());
       /// Just .... because
       db.drop(promise, version);
     }
