@@ -180,14 +180,13 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
           break;
         } catch (ONeedRetryException e) {
           // RETRY
-          System.out.println("EXCEPTION " + e.getCause() + " RETRY " + retry + " ON CREATE RECORD");
+          System.out.println("EXCEPTION " + e + " RETRY " + retry + " ON CREATE RECORD");
           Thread.sleep(200);
 
         } catch (OException e) {
           if (e.getCause() instanceof ONeedRetryException) {
             // RETRY
-            System.out.println(
-                "EXCEPTION " + e.getCause().getCause() + " RETRY " + retry + " ON CREATE RECORD");
+            System.out.println("EXCEPTION " + e + " RETRY " + retry + " ON CREATE RECORD");
             Thread.sleep(200);
           } else throw e;
         }

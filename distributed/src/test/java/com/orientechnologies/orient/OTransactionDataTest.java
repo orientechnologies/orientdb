@@ -7,10 +7,12 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import com.orientechnologies.orient.core.OCreateDatabaseUtil;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDB;
+import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
@@ -72,8 +74,20 @@ public class OTransactionDataTest {
 
   @Test
   public void testTransactionDataChangesFromTransaction() throws IOException {
-    try (final OrientDB orientDB =
-        OCreateDatabaseUtil.createDatabase("test", "embedded:", OCreateDatabaseUtil.TYPE_MEMORY)) {
+    var builder =
+        OrientDBConfig.builder().addConfig(OGlobalConfiguration.CREATE_DEFAULT_USERS, false);
+    builder
+        .getNodeConfigurationBuilder()
+        .setNodeName("node1")
+        .setGroupName("OrientDB")
+        .setQuorum(1);
+    try (OrientDB orientDB = new OrientDB("embedded:", builder.build())) {
+      if (!orientDB.exists("test")) {
+        orientDB.execute(
+            "create database test memory users ( admin identified by '"
+                + OCreateDatabaseUtil.NEW_ADMIN_PASSWORD
+                + "' role admin)");
+      }
       try (final ODatabaseSession db =
           orientDB.open("test", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD)) {
         db.createClass("test");
@@ -106,7 +120,7 @@ public class OTransactionDataTest {
   @Test
   public void testReApplyFromTransactionData()
       throws IOException, ClassNotFoundException, InstantiationException, IllegalAccessException {
-    OServer server0 = OServer.startFromClasspathConfig("orientdb-simple-dserver-config-0.xml");
+    OServer server0 = OServer.startFromClasspathConfig("orientdb-server-config.xml");
 
     try (OrientDB orientDB = server0.getContext()) {
       OCreateDatabaseUtil.createDatabase("test", orientDB, OCreateDatabaseUtil.TYPE_MEMORY);
