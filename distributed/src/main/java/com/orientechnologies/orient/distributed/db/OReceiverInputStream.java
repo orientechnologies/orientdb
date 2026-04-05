@@ -32,7 +32,7 @@ public class OReceiverInputStream extends InputStream {
   }
 
   @Override
-  public int read() throws IOException {
+  public synchronized int read() throws IOException {
     // TODO: impl also optimized int read(byte[] b, int off, int len)
     while (cursor == buffer.length) {
       if (finished) {
@@ -75,9 +75,11 @@ public class OReceiverInputStream extends InputStream {
   }
 
   @Override
-  public void close() throws IOException {
-    ctx.requestNext(state, true);
-    // Close the state
-    receive(new byte[] {}, true);
+  public synchronized void close() throws IOException {
+    if (!finished) {
+      ctx.requestNext(state, true);
+      // Close the state
+      receive(new byte[] {}, true);
+    }
   }
 }

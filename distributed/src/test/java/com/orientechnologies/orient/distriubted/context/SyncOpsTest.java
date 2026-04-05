@@ -1,11 +1,14 @@
 package com.orientechnologies.orient.distriubted.context;
 
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
+import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.OrientDBConfigBuilder;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncId;
@@ -40,7 +43,7 @@ public class SyncOpsTest {
 
   private class PassTrough implements RequestNext, MessageSender {
     private OSyncState sender;
-    private OSyncState receiver;
+    protected OSyncState receiver;
 
     public PassTrough(OSyncState sender, OSyncState receiver) {
       this.sender = sender;
@@ -66,6 +69,25 @@ public class SyncOpsTest {
     }
   }
 
+  private class FailPassTrough extends PassTrough {
+    private int failCount;
+
+    public FailPassTrough(OSyncState sender, OSyncState receiver, int failCount) {
+      super(sender, receiver);
+      this.failCount = failCount;
+    }
+
+    @Override
+    public void sendBuffer(OSyncState state, byte[] data, boolean finished) {
+      if (this.failCount > 0) {
+        super.sendBuffer(state, data, finished);
+      } else {
+        this.receiver.close();
+      }
+      this.failCount -= 1;
+    }
+  }
+
   private void testRawSync(OSyncMode mode) {
     var syncId = new OSyncId();
     var dbId = new ODatabaseId("test");
@@ -78,7 +100,7 @@ public class SyncOpsTest {
 
     OutputStream out = new OutputStreamMessages(pass, sender);
     OReceiverInputStream input = new OReceiverInputStream(pass, receiver);
-    receiver.setReceiver(input);
+    receiver.setReceiverStream(input);
 
     OrientDBDistributed ctx = (OrientDBDistributed) OrientDBInternal.extract(context);
     new Thread(
@@ -109,11 +131,58 @@ public class SyncOpsTest {
     testRawSync(OSyncMode.IncrementalBackup);
   }
 
+  @Test
+  public void testFailRawSyncIncremental() {
+    var syncId = new OSyncId();
+    var dbId = new ODatabaseId("test");
+    var nodeFrom = new ONodeId("node1");
+    var nodeTo = new ONodeId("node2");
+
+    var sender =
+        new OSyncState(
+            dbId, syncId, nodeFrom, nodeTo, OSyncMode.IncrementalBackup, Optional.empty());
+    var receiver =
+        new OSyncState(
+            dbId, syncId, nodeFrom, nodeTo, OSyncMode.IncrementalBackup, Optional.empty());
+    var pass = new FailPassTrough(sender, receiver, 5);
+
+    OutputStream out = new OutputStreamMessages(pass, sender);
+    OReceiverInputStream input = new OReceiverInputStream(pass, receiver);
+    receiver.setReceiverStream(input);
+
+    OrientDBDistributed ctx = (OrientDBDistributed) OrientDBInternal.extract(context);
+    new Thread(
+            () -> {
+              try {
+                ctx.syncBackup("test", sender, out);
+              } catch (Exception e) {
+                e.printStackTrace();
+              }
+            })
+        .start();
+
+    OrientDBDistributed ctx1 = (OrientDBDistributed) OrientDBInternal.extract(context1);
+    try {
+      ctx1.receiveSync("test", receiver, input, OrientDBConfig.defaultConfig());
+      fail("Should fail to restore");
+    } catch (ODatabaseException e) {
+      // TODO: handle exception
+    }
+    try (var session = context1.open("test", "admin", "adminpwd")) {
+      // if it can open is good, it restored the right password
+      fail("Should not open not synched");
+    } catch (OOfflineNodeException | ODatabaseException e) {
+      // TODO: it should be database exception, getting offline one ... fix
+    }
+  }
+
   @After
   public void after() {
     context.drop("test");
     context.close();
-    context1.drop("test");
+    if (context1.exists("test")) {
+      context1.drop("test");
+    }
     context1.close();
   }
 }

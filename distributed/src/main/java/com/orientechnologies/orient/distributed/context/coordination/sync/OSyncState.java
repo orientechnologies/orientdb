@@ -1,11 +1,14 @@
 package com.orientechnologies.orient.distributed.context.coordination.sync;
 
+import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import com.orientechnologies.orient.distributed.db.OReceiverInputStream;
 import com.orientechnologies.orient.distributed.db.OSyncMode;
 import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
+import java.io.IOException;
 import java.util.Optional;
 
 public class OSyncState {
@@ -83,8 +86,12 @@ public class OSyncState {
     }
   }
 
-  public synchronized void setReceiver(OReceiverInputStream receiver) {
+  public synchronized void setReceiverStream(OReceiverInputStream receiver) {
     this.receiverStream = receiver;
+  }
+
+  public OReceiverInputStream getReceiverStream() {
+    return receiverStream;
   }
 
   public boolean isClose() {
@@ -111,7 +118,16 @@ public class OSyncState {
   }
 
   public synchronized void close() {
-    this.close = true;
-    this.notifyAll();
+    if (!this.close) {
+      this.close = true;
+      this.notifyAll();
+      if (this.receiverStream != null) {
+        try {
+          this.receiverStream.close();
+        } catch (IOException e) {
+          throw OException.wrapException(new OIOException("fail closing sync stream"), e);
+        }
+      }
+    }
   }
 }

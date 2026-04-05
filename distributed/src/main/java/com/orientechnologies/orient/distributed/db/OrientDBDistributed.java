@@ -1081,7 +1081,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
       sendMessage(sender, new OStartSync(getNodeId(), dbId, syncId, mode, sequenceStatus));
       String dbName = getDbName(dbId);
       OReceiverInputStream input = new OReceiverInputStream(this::requestNext, st);
-      st.setReceiver(input);
+      st.setReceiverStream(input);
       runOnThread(
           () -> {
             receiveSync(dbName, st, input, getConfigurations());
