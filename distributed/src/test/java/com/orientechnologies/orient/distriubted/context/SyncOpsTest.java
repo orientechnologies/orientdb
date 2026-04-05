@@ -153,17 +153,29 @@ public class SyncOpsTest {
 
   @Test
   public void testFailRawSyncIncremental() {
-    var syncId = new OSyncId();
     var dbId = new ODatabaseId("test");
     var nodeFrom = new ONodeId("node1");
     var nodeTo = new ONodeId("node2");
+    var syncId = new OSyncId(dbId, nodeTo);
 
     var sender =
         new OSyncState(
-            dbId, syncId, nodeFrom, nodeTo, OSyncMode.IncrementalBackup, Optional.empty());
+            dbId,
+            syncId,
+            nodeFrom,
+            nodeTo,
+            OSyncMode.IncrementalBackup,
+            Optional.empty(),
+            new CompletableFuture<>());
     var receiver =
         new OSyncState(
-            dbId, syncId, nodeFrom, nodeTo, OSyncMode.IncrementalBackup, Optional.empty());
+            dbId,
+            syncId,
+            nodeFrom,
+            nodeTo,
+            OSyncMode.IncrementalBackup,
+            Optional.empty(),
+            new CompletableFuture<>());
     var pass = new FailPassTrough(sender, receiver, 5);
 
     OutputStream out = new OutputStreamMessages(pass, sender);
