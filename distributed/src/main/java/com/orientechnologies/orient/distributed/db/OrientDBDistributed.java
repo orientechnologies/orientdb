@@ -76,6 +76,7 @@ import com.orientechnologies.orient.distributed.context.retryable.OAddDatabaseMe
 import com.orientechnologies.orient.distributed.context.retryable.ODeclareDatabaseRetryOperation;
 import com.orientechnologies.orient.distributed.context.retryable.ODiscoverActionRetryOperation;
 import com.orientechnologies.orient.distributed.context.retryable.ODropRetryOperation;
+import com.orientechnologies.orient.distributed.context.retryable.OInitRetryOperation;
 import com.orientechnologies.orient.distributed.context.retryable.ORemoveMemberRetryOperation;
 import com.orientechnologies.orient.distributed.context.retryable.ORetryInfo;
 import com.orientechnologies.orient.distributed.context.retryable.ORetryOperation;
@@ -167,10 +168,17 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   public void initDistributed(ONodeConfiguration config) {
-    initDistributed(
-        config.getNodeName(),
-        config.getGroupName(),
-        config.getQuorum(),
+    initDistributed(config.getNodeName(), config.getGroupName(), config.getQuorum());
+  }
+
+  public void initDistributed(String nodeName, String groupIdPar, int miminumQuorum) {
+    this.nodeName = nodeName;
+    // TODO: resolve groupId and minimum quorum;
+    ONodeId nodeId = new ONodeId(nodeName);
+    OGroupId groupId = new OGroupId(groupIdPar);
+    OSystemStateStore store = new OSystemStateStore(getSystemDatabase());
+    this.nodeState = new ONodeState(nodeId, groupId, miminumQuorum, store, this);
+    var check =
         new ORemoteServerAvailabilityCheck() {
 
           @Override
@@ -180,26 +188,12 @@ public class OrientDBDistributed extends OrientDBEmbedded
           public boolean isNodeAvailable(ONodeId node) {
             return false;
           }
-        });
-  }
+        };
 
-  public void initDistributed(
-      String nodeName, String groupIdPar, int miminumQuorum, ORemoteServerAvailabilityCheck check) {
-    this.nodeName = nodeName;
-    // TODO: resolve groupId and minimum quorum;
-    ONodeId nodeId = new ONodeId(nodeName);
-    OGroupId groupId = new OGroupId(groupIdPar);
-    OSystemStateStore store = new OSystemStateStore(getSystemDatabase());
-    this.nodeState = new ONodeState(nodeId, groupId, miminumQuorum, store, this);
     this.remoteServerManager = new ORemoteServerManager(nodeId, check, newNetIoExecutor());
     ODiscoverAction action = this.nodeState.initFromStore();
-    action.execute(
-        this,
-        null,
-        newExectution(
-            (ctx, complete, previousResult) -> {
-              // no Retry;
-            }));
+
+    action.execute(this, null, newExectution(new OInitRetryOperation(action)));
 
     reconciliateState();
 

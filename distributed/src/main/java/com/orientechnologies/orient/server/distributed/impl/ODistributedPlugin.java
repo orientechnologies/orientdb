@@ -76,7 +76,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedStartupExcept
 import com.orientechnologies.orient.server.distributed.ODistributedStrategy;
 import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
 import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
-import com.orientechnologies.orient.server.distributed.ORemoteServerAvailabilityCheck;
 import com.orientechnologies.orient.server.distributed.ORemoteServerController;
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactoryManager;
 import com.orientechnologies.orient.server.distributed.config.OClusterConfiguration;
@@ -186,22 +185,7 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
 
     if (nodeName == null) assignNodeName();
     // TODO: get the group name from some configuration
-    ((OrientDBDistributed) serverInstance.getDatabases())
-        .initDistributed(
-            nodeName,
-            "OrientDB",
-            1,
-            new ORemoteServerAvailabilityCheck() {
-              @Override
-              public boolean isNodeAvailable(ONodeId node) {
-                return ODistributedPlugin.this.isNodeAvailable(node.getNode());
-              }
-
-              @Override
-              public void nodeDisconnected(ONodeId node) {
-                ODistributedPlugin.this.removeServer(node.getNode(), true);
-              }
-            });
+    ((OrientDBDistributed) serverInstance.getDatabases()).initDistributed(nodeName, "OrientDB", 1);
     clusterManager.configHazelcastPlugin(oServer, iParams, nodeName);
   }
 

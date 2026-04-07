@@ -44,7 +44,8 @@ public class OStandardCompleteExecution implements OCompleteExecution {
             delay.get().intValue());
         this.context.retryExecution(operation, this, delay.get(), result);
       } else {
-        logger.debugNode(context.getNodeId(), "complete operation %s with %s", operation, result);
+        logger.debugNode(
+            context.getNodeId(), "complete operation %s after retry with %s", operation, result);
         this.result.complete(result);
       }
     } else {
