@@ -4,12 +4,10 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.OrientDBConfigBuilder;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncId;
@@ -55,7 +53,7 @@ public class SyncOpsTest {
         .setQuorum(1);
     context1 = OrientDBInternal.distributed("./target/sync_receive", config2.build()).newOrientDB();
     OrientDBDistributed ctx1 = (OrientDBDistributed) OrientDBInternal.extract(context1);
-    ctx1.declareDatabaseFlow("test", dbId).get(5, TimeUnit.MINUTES);
+    ctx1.declareDatabaseFlow("test", dbId).get(1, TimeUnit.MINUTES);
   }
 
   private class PassTrough implements RequestNext, MessageSender {
@@ -194,11 +192,12 @@ public class SyncOpsTest {
     OrientDBDistributed ctx1 = (OrientDBDistributed) OrientDBInternal.extract(context1);
     ctx1.receiveSync("test", receiver, input, OrientDBConfig.defaultConfig());
     assertFalse(ctx1.exists("test", null, null));
-    try (var session = context1.open("test", "admin", "adminpwd")) {
+    try {
       // if it can open is good, it restored the right password
-      fail("Should not open not synched");
-    } catch (OOfflineNodeException | ODatabaseException e) {
-      // TODO: it should be database exception, getting offline one ... fix
+      if (ctx1.getNodeState().getOps().waitSelfOnline("test", Optional.of(1L))) {
+        fail("Should not open not synched");
+      }
+    } catch (InterruptedException e) {
     }
   }
 
