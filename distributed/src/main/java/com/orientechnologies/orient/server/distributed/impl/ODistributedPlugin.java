@@ -544,24 +544,13 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
             }
           }
 
-          if (!isNodeAvailable(node))
-            // NODE IS NOT AVAILABLE
-            logger.debugOut(
-                this.nodeName,
-                node,
-                "Error on sending distributed request %s. The target node is not available. Active"
-                    + " nodes: %s",
-                e,
-                iRequest,
-                ctx.getAvailableNodeNames(databaseName));
-          else
-            logger.errorOut(
-                this.nodeName,
-                node,
-                "Error on sending distributed request %s (err=%s). Active nodes: %s",
-                iRequest,
-                reason,
-                ctx.getAvailableNodeNames(databaseName));
+          logger.warnOut(
+              this.nodeName,
+              node,
+              "Error on sending distributed request %s (err=%s). Active nodes: %s",
+              iRequest,
+              reason,
+              ctx.getAvailableNodeNames(databaseName));
         }
       }
 
@@ -875,11 +864,6 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
   }
 
   @Override
-  public boolean isNodeAvailable(String iNodeName, String databaseName) {
-    return clusterManager.isNodeAvailable(iNodeName, databaseName);
-  }
-
-  @Override
   public boolean isNodeOnline(String iNodeName, String databaseName) {
     return clusterManager.isNodeOnline(iNodeName, databaseName);
   }
@@ -892,23 +876,6 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
       if (s == st) return true;
     }
     return false;
-  }
-
-  @Override
-  public boolean isNodeAvailable(String iNodeName) {
-    return clusterManager.isNodeAvailable(iNodeName);
-  }
-
-  @Override
-  public Set<String> getAvailableNodeNames(String databaseName) {
-    return clusterManager.getAvailableNodeNames(databaseName);
-  }
-
-  @Override
-  public Set<String> getAvailableNodeNotLocalNames(String databaseName) {
-    Set<String> set = clusterManager.getAvailableNodeNames(databaseName);
-    set.remove(getLocalNodeName());
-    return set;
   }
 
   public boolean isOffline() {
@@ -944,11 +911,6 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
   @Override
   public ODistributedMessageService getMessageService() {
     return ((OrientDBDistributed) serverInstance.getDatabases()).getMessageService();
-  }
-
-  @Override
-  public int getAvailableNodes(String iDatabaseName) {
-    return clusterManager.getAvailableNodes(iDatabaseName);
   }
 
   public boolean isSyncronizing(String databaseName) {
@@ -1278,12 +1240,13 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
           || currStatus == DB_STATUS.ONLINE
           || currStatus == DB_STATUS.BACKUP)
         // FIX PREVIOUS STATUS OF DATABASE
-        setDatabaseStatus(nodeName, databaseName, DB_STATUS.NOT_AVAILABLE);
+        context.setDatabaseStatus(new ONodeId(nodeName), databaseName, DB_STATUS.NOT_AVAILABLE);
 
       try {
 
         if (!context.installDatabase(true, databaseName, false, true)) {
-          setDatabaseStatus(getLocalNodeName(), databaseName, DB_STATUS.NOT_AVAILABLE);
+          context.setDatabaseStatus(
+              new ONodeId(getLocalNodeName()), databaseName, DB_STATUS.NOT_AVAILABLE);
         }
       } catch (Exception e) {
         logger.errorNode(

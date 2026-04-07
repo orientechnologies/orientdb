@@ -78,12 +78,6 @@ public interface ODistributedServerManager {
    */
   boolean isNodeStatusEqualsTo(String iNodeName, String iDatabaseName, DB_STATUS... statuses);
 
-  boolean isNodeAvailable(String iNodeName);
-
-  Set<String> getAvailableNodeNames(String databaseName);
-
-  Set<String> getAvailableNodeNotLocalNames(String databaseName);
-
   void waitUntilNodeOnline() throws InterruptedException;
 
   void waitUntilNodeOnline(String nodeName, String databaseName) throws InterruptedException;
@@ -137,13 +131,8 @@ public interface ODistributedServerManager {
 
   void reassignClustersOwnership(String iNode, String databaseName, boolean canCreateNewClusters);
 
-  /** Available means not OFFLINE, so ONLINE or SYNCHRONIZING. */
-  boolean isNodeAvailable(String iNodeName, String databaseName);
-
   /** Returns true if the node status is ONLINE. */
   boolean isNodeOnline(String iNodeName, String databaseName);
-
-  int getAvailableNodes(String iDatabaseName);
 
   boolean isOffline();
 

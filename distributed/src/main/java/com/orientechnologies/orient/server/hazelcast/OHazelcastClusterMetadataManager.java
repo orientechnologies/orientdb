@@ -360,12 +360,6 @@ public class OHazelcastClusterMetadataManager
     return name;
   }
 
-  public boolean isNodeAvailable(final String iNodeName) {
-    if (iNodeName == null) return false;
-    Member member = activeNodes.get(iNodeName);
-    return member != null && hazelcastInstance.getCluster().getMembers().contains(member);
-  }
-
   public boolean isNodeAvailable(final String iNodeName, final String iDatabaseName) {
     final ODistributedServerManager.DB_STATUS s = getDatabaseStatus(iNodeName, iDatabaseName);
     return s != ODistributedServerManager.DB_STATUS.OFFLINE
@@ -613,11 +607,6 @@ public class OHazelcastClusterMetadataManager
             nodeName, databaseName, (ODistributedServerManager.DB_STATUS) iEvent.getValue());
         distributedPlugin.invokeOnDatabaseStatusChange(
             nodeName, databaseName, (ODistributedServerManager.DB_STATUS) iEvent.getValue());
-
-        if (!iEvent.getMember().equals(hazelcastInstance.getCluster().getLocalMember())
-            && ODistributedServerManager.DB_STATUS.ONLINE.equals(iEvent.getValue())) {
-          distributedPlugin.onDbStatusOnline(databaseName);
-        }
       }
     } catch (HazelcastInstanceNotActiveException | RetryableHazelcastException e) {
       logger.error("Hazelcast is not running", e);
@@ -663,11 +652,6 @@ public class OHazelcastClusterMetadataManager
             nodeName, databaseName, (ODistributedServerManager.DB_STATUS) iEvent.getValue());
         distributedPlugin.invokeOnDatabaseStatusChange(
             nodeName, databaseName, (ODistributedServerManager.DB_STATUS) iEvent.getValue());
-
-        if (!iEvent.getMember().equals(hazelcastInstance.getCluster().getLocalMember())
-            && ODistributedServerManager.DB_STATUS.ONLINE.equals(iEvent.getValue())) {
-          distributedPlugin.onDbStatusOnline(databaseName);
-        }
 
       } else if (OHazelcastDistributedMap.isRegisteredNodes(key)) {
         logger.infoIn(nodeName, eventNodeName, "Received updated about registered nodes");
@@ -1025,15 +1009,6 @@ public class OHazelcastClusterMetadataManager
       if (isNodeOnline(entry.getKey(), iDatabaseName)) onlineNodes.add(entry.getKey());
     }
     return onlineNodes;
-  }
-
-  public Set<String> getAvailableNodeNames(final String iDatabaseName) {
-    final Set<String> nodes = new HashSet<String>();
-
-    for (Map.Entry<String, Member> entry : activeNodes.entrySet()) {
-      if (isNodeAvailable(entry.getKey(), iDatabaseName)) nodes.add(entry.getKey());
-    }
-    return nodes;
   }
 
   public ODocument getOnlineDatabaseConfiguration(final String iDatabaseName) {

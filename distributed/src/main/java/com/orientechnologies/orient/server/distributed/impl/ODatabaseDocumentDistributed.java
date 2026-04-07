@@ -1171,21 +1171,10 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       int compressionLevel,
       int bufferSize)
       throws IOException {
-
-    final ODistributedServerManager.DB_STATUS prevStatus =
-        getContext().getDatabaseStatus(getName());
-    if (prevStatus == ODistributedServerManager.DB_STATUS.ONLINE)
-      // SET STATUS = BACKUP
-      getContext().setDatabaseStatus(getName(), ODistributedServerManager.DB_STATUS.BACKUP);
-
     try {
-
       return super.backup(out, options, callable, iListener, compressionLevel, bufferSize);
-
     } catch (IOException e) {
       throw OException.wrapException(new OIOException("Error on executing backup"), e);
-    } finally {
-      getContext().setDatabaseStatus(getName(), prevStatus);
     }
   }
 

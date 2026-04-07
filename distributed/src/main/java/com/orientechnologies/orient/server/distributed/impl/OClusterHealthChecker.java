@@ -20,7 +20,6 @@
 package com.orientechnologies.orient.server.distributed.impl;
 
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.OServer;
@@ -122,37 +121,6 @@ public class OClusterHealthChecker implements Runnable {
         logger.debugNode(
             manager.getLocalNodeName(), "Error on sending request for cluster health check", e);
       }
-    }
-  }
-
-  private void setDatabaseOffline(final String dbName, final String server) {
-    OServer serveri = manager.getServerInstance();
-    OrientDBDistributed context = (OrientDBDistributed) serveri.getDatabases();
-    if (context.getDatabaseStatus(server, dbName) != ODistributedServerManager.DB_STATUS.ONLINE)
-      return;
-
-    if (OGlobalConfiguration.DISTRIBUTED_CHECK_HEALTH_CAN_OFFLINE_SERVER.getValueAsBoolean()) {
-      logger.warnOut(
-          manager.getLocalNodeName(),
-          server,
-          "Server '%s' did not respond to the gossip message (db=%s, timeout=%dms). Setting the"
-              + " database as NOT_AVAILABLE",
-          server,
-          dbName,
-          OGlobalConfiguration.DISTRIBUTED_HEARTBEAT_TIMEOUT.getValueAsLong());
-
-      manager.setDatabaseStatus(server, dbName, ODistributedServerManager.DB_STATUS.NOT_AVAILABLE);
-
-    } else {
-
-      logger.warnOut(
-          manager.getLocalNodeName(),
-          server,
-          "Server '%s' did not respond to the gossip message (db=%s, timeout=%dms), but cannot be"
-              + " set OFFLINE by configuration",
-          server,
-          dbName,
-          OGlobalConfiguration.DISTRIBUTED_HEARTBEAT_TIMEOUT.getValueAsLong());
     }
   }
 }

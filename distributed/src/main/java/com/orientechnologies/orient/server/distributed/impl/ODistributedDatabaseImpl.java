@@ -835,9 +835,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
   public synchronized void freezeStatus() {
     freezePrevStatus = context.getDatabaseStatus(databaseName);
-    if (freezePrevStatus == DB_STATUS.ONLINE)
-      // SET STATUS = BACKUP
-      context.setDatabaseStatus(databaseName, DB_STATUS.BACKUP);
   }
 
   public synchronized void releaseStatus() {
