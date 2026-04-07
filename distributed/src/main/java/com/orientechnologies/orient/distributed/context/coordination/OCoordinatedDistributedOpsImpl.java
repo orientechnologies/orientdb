@@ -131,8 +131,10 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
     if (this.topology.enoughNodes()) {
       throw new ODistributedException(
           String.format(
-              "No enough nodes to coordinate an operation with quorum: %d know nodes:%s",
-              this.topology.getMinimumQuorum(), this.topology.getMembers().toString()));
+              "No enough nodes to coordinate operation: %s with quorum: %d know nodes:%s",
+              action.toString(),
+              this.topology.getMinimumQuorum(),
+              this.topology.getMembers().toString()));
     }
 
     Optional<OTransactionIdPromise> prom = this.sequenceManager.next();

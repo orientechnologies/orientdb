@@ -56,7 +56,7 @@ public class OTransactionSequenceManager {
     if (this.promisedSequential[0] != null || this.promisedSequential[1] != null) {
       return Optional.empty();
     }
-    return Optional.of(new ORawPair(nextAt(0), nextAt(1)));
+    return Optional.of(new ORawPair<>(nextAt(0), nextAt(1)));
   }
 
   /**
