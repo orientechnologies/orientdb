@@ -558,7 +558,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
   }
 
   @Override
-  public void networkRestore(String name, InputStream in, Callable<Object> callable) {
+  public boolean networkRestore(String name, InputStream in, Callable<Object> callable) {
     checkDatabaseName(name);
     OStorage storage = null;
     OContextConfiguration config = getConfigurations().getConfigurations();
@@ -583,9 +583,11 @@ public class OrientDBEmbedded implements OrientDBInternal {
       storage.restore(in, null, callable, null);
       dbCount.incrementAndGet();
       distributedSetOnline(name);
+      return true;
     } catch (OModificationOperationProhibitedException e) {
       throw e;
     } catch (Exception e) {
+      logger.warn("failed  non blocking sync of database %s", name, e);
       synchronized (this) {
         dbCount.decrementAndGet();
         if (storage != null) {
@@ -598,6 +600,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
             name);
         storages.remove(name);
       }
+      return false;
     }
   }
 

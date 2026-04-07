@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.distriubted.context;
 
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -153,6 +154,15 @@ public class SyncOpsTest {
 
   @Test
   public void testFailRawSyncIncremental() {
+    testFailRawSync(OSyncMode.IncrementalBackup);
+  }
+
+  @Test
+  public void testFailRawSyncBackup() {
+    testFailRawSync(OSyncMode.StandardBackup);
+  }
+
+  public void testFailRawSync(OSyncMode mode) {
     var dbId = new ODatabaseId("test");
     var nodeFrom = new ONodeId("node1");
     var nodeTo = new ONodeId("node2");
@@ -160,22 +170,10 @@ public class SyncOpsTest {
 
     var sender =
         new OSyncState(
-            dbId,
-            syncId,
-            nodeFrom,
-            nodeTo,
-            OSyncMode.IncrementalBackup,
-            Optional.empty(),
-            new CompletableFuture<>());
+            dbId, syncId, nodeFrom, nodeTo, mode, Optional.empty(), new CompletableFuture<>());
     var receiver =
         new OSyncState(
-            dbId,
-            syncId,
-            nodeFrom,
-            nodeTo,
-            OSyncMode.IncrementalBackup,
-            Optional.empty(),
-            new CompletableFuture<>());
+            dbId, syncId, nodeFrom, nodeTo, mode, Optional.empty(), new CompletableFuture<>());
     var pass = new FailPassTrough(sender, receiver, 5);
 
     OutputStream out = new OutputStreamMessages(pass, sender);
@@ -194,12 +192,8 @@ public class SyncOpsTest {
         .start();
 
     OrientDBDistributed ctx1 = (OrientDBDistributed) OrientDBInternal.extract(context1);
-    try {
-      ctx1.receiveSync("test", receiver, input, OrientDBConfig.defaultConfig());
-      fail("Should fail to restore");
-    } catch (ODatabaseException e) {
-      // TODO: handle exception
-    }
+    ctx1.receiveSync("test", receiver, input, OrientDBConfig.defaultConfig());
+    assertFalse(ctx1.exists("test", null, null));
     try (var session = context1.open("test", "admin", "adminpwd")) {
       // if it can open is good, it restored the right password
       fail("Should not open not synched");

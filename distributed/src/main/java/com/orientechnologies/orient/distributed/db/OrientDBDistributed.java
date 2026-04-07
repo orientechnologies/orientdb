@@ -1,5 +1,8 @@
 package com.orientechnologies.orient.distributed.db;
 
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.FILE_DELETE_DELAY;
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.FILE_DELETE_RETRY;
+
 import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
@@ -7,6 +10,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.thread.OSourceTraceExecutorService;
 import com.orientechnologies.common.thread.OThreadPoolExecutors;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentEmbeddedPooled;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -27,6 +31,7 @@ import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.OGroupId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
@@ -352,56 +357,64 @@ public class OrientDBDistributed extends OrientDBEmbedded
     this.plugin = plugin;
   }
 
-  public void incrementalsSync(String dbName, InputStream backupStream, OrientDBConfig config) {
+  public boolean nonBlockingSync(String name, InputStream backupStream, OrientDBConfig config) {
     OStorage storage = null;
     ODatabaseDocumentEmbedded embedded;
 
+    OContextConfiguration cc = getConfigurations().getConfigurations();
     if (!isOpen()) {
-      return;
+      return false;
     }
     try {
       synchronized (this) {
-        storage = storages.get(dbName);
+        storage = storages.get(name);
 
         if (storage != null) {
           // The underlying storage instance will be closed so no need to closed it
           ODatabaseDocumentEmbedded deleteInstance = newSessionInstance(storage, config);
-          OSharedContext context = sharedContexts.remove(dbName);
+          OSharedContext context = sharedContexts.remove(name);
           dbCount.decrementAndGet();
           context.close();
           dropStorageFiles(storage);
 
           storage.delete();
-          storages.remove(dbName);
+          storages.remove(name);
           ODatabaseRecordThreadLocal.instance().remove();
         }
 
         storage =
             getDefaultEngine()
                 .createForRestoreLocal(
-                    this, new ODatabaseId("mock"), dbName, config.getConfigurations());
+                    this, new ODatabaseId("mock"), name, config.getConfigurations());
 
-        storages.put(dbName, storage);
+        storages.put(name, storage);
       }
       storage.restoreFullIncrementalBackup(backupStream);
       synchronized (this) {
         embedded = newSessionInstance(storage, config);
       }
+      embedded.getSharedContext().reInit(storage, embedded);
+      distributedSetOnline(name);
+      ODatabaseRecordThreadLocal.instance().remove();
+      return true;
     } catch (OModificationOperationProhibitedException e) {
       throw e;
     } catch (Exception e) {
-      if (storage != null) {
-        storage.delete();
+      logger.warn("failed  non blocking sync of database %s", name, e);
+      synchronized (this) {
+        dbCount.decrementAndGet();
+        if (storage != null) {
+          storage.delete();
+        }
+        OLocalPaginatedStorage.deleteFilesFromDisc(
+            name,
+            cc.getValueAsInteger(FILE_DELETE_RETRY),
+            cc.getValueAsInteger(FILE_DELETE_DELAY),
+            name);
+        storages.remove(name);
       }
-
-      throw OException.wrapException(
-          new ODatabaseException("Cannot restore database '" + dbName + "'"), e);
+      return false;
     }
-
-    embedded.getSharedContext().reInit(storage, embedded);
-    distributedSetOnline(dbName);
-    ODatabaseRecordThreadLocal.instance().remove();
-    return;
   }
 
   public void fullSync(String dbName, InputStream backupStream, OrientDBConfig config) {
@@ -488,7 +501,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
       }
       db.callOnDropListeners();
       db.close();
-    } catch (OStorageException e) {
+    } catch (OStorageException | ODatabaseException e) {
       logger.warnNoDb("Error opening %s for drop hook call ", name, e);
     } finally {
       ODatabaseRecordThreadLocal.instance().set(current);
@@ -1165,14 +1178,21 @@ public class OrientDBDistributed extends OrientDBEmbedded
   public void receiveSync(
       String dbName, OSyncState state, InputStream inputStream, OrientDBConfig conf) {
     try (InputStream input = inputStream) {
-      switch (state.getMode()) {
-        case IncrementalBackup -> incrementalsSync(dbName, input, conf);
-
-        case StandardBackup -> networkRestore(dbName, input, null);
-
-        case Delta -> deltaSync(dbName, input, conf);
+      boolean success =
+          switch (state.getMode()) {
+            case IncrementalBackup -> {
+              yield nonBlockingSync(dbName, input, conf);
+            }
+            case StandardBackup -> {
+              yield networkRestore(dbName, input, null);
+            }
+            case Delta -> {
+              yield deltaSync(dbName, input, conf);
+            }
+          };
+      if (success) {
+        setDatabaseState(state.getDbId(), state.getReceiver(), ODatabaseState.Online);
       }
-      setDatabaseState(state.getDbId(), state.getReceiver(), ODatabaseState.Online);
     } catch (IOException e) {
       logger.debug("Error on close of sync", e);
     } finally {
