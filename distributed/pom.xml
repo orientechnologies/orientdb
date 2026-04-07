@@ -43,30 +43,22 @@
         <project.rootdir>${project.basedir}/../</project.rootdir>
         <!--This property is updated automatically and is needed to make build reproducible-->
         <project.build.outputTimestamp>2023-01-01T00:00:00Z</project.build.outputTimestamp>
+        <argLine>-ea
+            -Xmx${heapSize}
+            -Dstorage.diskCache.bufferSize=4096
+            -Dmemory.directMemory.trackMode=true
+            -Dserver.backwardCompatibility=false
+            -Dhazelcast.wait.seconds.before.join=3
+            -Djava.util.logging.manager=com.orientechnologies.common.log.ShutdownLogManager
+            -Dstorage.diskCache.checksumMode=storeAndThrow
+            -Dexecutor.debug.traceSource=true
+            -Djava.util.logging.config.file=src/test/resources/orientdb-server-log.properties
+            --add-opens jdk.unsupported/sun.misc=ALL-UNNAMED
+            --add-opens java.base/sun.security.x509=ALL-UNNAMED
+        </argLine>
     </properties>
 
     <profiles>
-        <profile>
-            <id>java17</id>
-            <activation>
-                <jdk>[17,)</jdk>
-            </activation>
-            <properties>
-                <argLine>-ea
-                    -Xmx${heapSize}
-                    -Dstorage.diskCache.bufferSize=4096
-                    -Dmemory.directMemory.trackMode=true
-                    -Dserver.backwardCompatibility=false
-                    -Dhazelcast.wait.seconds.before.join=3
-                    -Djava.util.logging.manager=com.orientechnologies.common.log.ShutdownLogManager
-                    -Dstorage.diskCache.checksumMode=storeAndThrow
-                    -Dsecurity.warningDefaultUsers=false
-                    -Dexecutor.debug.traceSource=true
-                    --add-opens jdk.unsupported/sun.misc=ALL-UNNAMED
-                    --add-opens java.base/sun.security.x509=ALL-UNNAMED
-                </argLine>
-            </properties>
-        </profile>
         <profile>
             <id>crash-tests</id>
             <build>
