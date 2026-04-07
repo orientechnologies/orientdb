@@ -637,4 +637,9 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
       dbTopology.cancelRole(node, version, promise);
     }
   }
+
+  public void dbRemovedFromDiskWhenOffline(ODatabaseId db) {
+    var rd = this.databases.remove(db);
+    this.databasesByName.remove(rd.getName());
+  }
 }

@@ -258,4 +258,6 @@ public interface OCoordinatedDistributedOps {
       ONodeRole role,
       OVersion version,
       OTransactionIdPromise promise);
+
+  void dbRemovedFromDiskWhenOffline(ODatabaseId db);
 }

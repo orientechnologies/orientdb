@@ -683,6 +683,8 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   @Override
   public synchronized void receivePing(ONodeId nodeId, OTransactionSequenceStatus status) {
     this.topology.ping(nodeId);
+    // TODO: potentially initiate a sync checking if the current status is outdated compared to
+    // the received
   }
 
   @Override
@@ -940,5 +942,10 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
       OVersion version,
       OTransactionIdPromise promise) {
     this.databaseTopology.cancelSetDatabaseNodeRole(db, node, role, version, promise);
+  }
+
+  @Override
+  public void dbRemovedFromDiskWhenOffline(ODatabaseId db) {
+    this.databaseTopology.dbRemovedFromDiskWhenOffline(db);
   }
 }

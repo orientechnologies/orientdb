@@ -201,9 +201,22 @@ public class OrientDBDistributed extends OrientDBEmbedded
               // no Retry;
             }));
 
+    reconciliateState();
+
     var period = getLongConfig(OGlobalConfiguration.DISTRIBUTED_CHECK_HEALTH_EVERY);
     periodicExecute(this::sendTopologyPing, period);
     periodicExecute(this::checkDisconnectedNodes, period);
+  }
+
+  public void reconciliateState() {
+    ODatabasesTopology dt = this.nodeState.getDatabaseTopology();
+    var dbs = dt.getDatabases();
+    for (var db : dbs) {
+      var dbName = dt.getDatabaseName(db);
+      if (!this.exists(dbName, null, null)) {
+        this.nodeState.getOps().dbRemovedFromDiskWhenOffline(db);
+      }
+    }
   }
 
   private OStandardCompleteExecution newExectution(ORetryOperation operation) {
