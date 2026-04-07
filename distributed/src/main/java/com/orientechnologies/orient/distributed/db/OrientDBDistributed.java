@@ -25,6 +25,7 @@ import com.orientechnologies.orient.core.db.OrientDBEmbedded;
 import com.orientechnologies.orient.core.db.config.ONodeConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.OGroupId;
@@ -485,7 +486,10 @@ public class OrientDBDistributed extends OrientDBEmbedded
           it.hasNext(); ) {
         it.next().onDrop(db);
       }
+      db.callOnDropListeners();
       db.close();
+    } catch (OStorageException e) {
+      logger.warnNoDb("Error opening %s for drop hook call ", name, e);
     } finally {
       ODatabaseRecordThreadLocal.instance().set(current);
     }

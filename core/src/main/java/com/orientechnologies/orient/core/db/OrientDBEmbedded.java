@@ -731,6 +731,8 @@ public class OrientDBEmbedded implements OrientDBInternal {
       }
       db.callOnDropListeners();
       db.close();
+    } catch (OStorageException e) {
+      logger.warnNoDb("Error opening %s for drop hook call ", name, e);
     } finally {
       ODatabaseRecordThreadLocal.instance().set(current);
       synchronized (this) {
