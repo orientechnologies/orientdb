@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSe
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OMemoryWriteAheadLog;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Path;
@@ -200,6 +201,11 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
 
   @Override
   protected void checkBackupRunning() {}
+
+  protected void doDelete() throws IOException {
+    // CLOSE THE DATABASE BY REMOVING THE CURRENT USER
+    doShutdownOnDelete();
+  }
 
   @Override
   protected Path checkAndCleanPath(String zipPath) {

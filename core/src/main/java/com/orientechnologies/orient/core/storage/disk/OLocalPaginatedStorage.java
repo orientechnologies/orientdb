@@ -916,6 +916,16 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
         });
   }
 
+  protected void doDelete() throws IOException {
+    if (startupMetadata.isOpen()) {
+      startupMetadata.makeDirty(OConstants.getVersion());
+    }
+
+    // CLOSE THE DATABASE BY REMOVING THE CURRENT USER
+    doShutdownOnDelete();
+    postDeleteSteps();
+  }
+
   @Override
   public Optional<Path> getPath() {
     return Optional.of(getStoragePath());

@@ -382,6 +382,10 @@ public class StorageStartupMetadata {
     return dirtyFlag;
   }
 
+  public boolean isOpen() {
+    return this.channel != null;
+  }
+
   public long getLastTxId() {
     return lastTxId;
   }

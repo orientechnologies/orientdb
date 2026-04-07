@@ -1052,13 +1052,7 @@ public abstract class OAbstractPaginatedStorage
     }
   }
 
-  private void doDelete() throws IOException {
-    makeStorageDirty();
-
-    // CLOSE THE DATABASE BY REMOVING THE CURRENT USER
-    doShutdownOnDelete();
-    postDeleteSteps();
-  }
+  protected abstract void doDelete() throws IOException;
 
   public boolean check(final boolean verbose, final OCommandOutputListener listener) {
     try {
@@ -4563,7 +4557,7 @@ public abstract class OAbstractPaginatedStorage
     }
   }
 
-  private void doShutdownOnDelete() {
+  protected void doShutdownOnDelete() {
     if (status == STATUS.CLOSED) {
       return;
     }
@@ -5238,6 +5232,7 @@ public abstract class OAbstractPaginatedStorage
     throw new UnsupportedOperationException();
   }
 
+  @SuppressWarnings("unused")
   protected void restoreFromIncrementalBackup(
       final String charset,
       final Locale serverLocale,
@@ -5248,6 +5243,7 @@ public abstract class OAbstractPaginatedStorage
       final boolean isFull)
       throws IOException {
     stateLock.writeLock().lock();
+    File walTempDir = null;
     try {
 
       final List<String> currentFiles = new ArrayList<>(writeCache.files().keySet());
@@ -5272,7 +5268,7 @@ public abstract class OAbstractPaginatedStorage
         }
       }
 
-      final File walTempDir = createWalTempDirectory();
+      walTempDir = createWalTempDirectory();
 
       byte[] encryptionIv = null;
       byte[] walIv = null;
@@ -5437,8 +5433,14 @@ public abstract class OAbstractPaginatedStorage
         writeAheadLog.moveLsnAfter(maxLsn);
       }
 
-      OFileUtils.deleteRecursively(walTempDir);
     } finally {
+      if (walTempDir != null) {
+        try {
+          OFileUtils.deleteRecursively(walTempDir);
+        } catch (Exception e) {
+          logger.warn("failed cleaning temporary directory %s", walTempDir, e);
+        }
+      }
       stateLock.writeLock().unlock();
     }
   }
