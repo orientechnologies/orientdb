@@ -29,14 +29,11 @@ import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
-import com.orientechnologies.orient.server.distributed.impl.task.OGossipTask;
 import com.orientechnologies.orient.server.distributed.impl.task.OUpdateDatabaseSequenceStatusTask;
 import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 
 /**
  * Timer task that checks periodically the cluster health status.
@@ -64,7 +61,6 @@ public class OClusterHealthChecker implements Runnable {
     if (now - lastExecution > (healthCheckerEveryMs / 3)) {
       // CHECK CURRENT STATUS OF DBS
       try {
-        checkServerInStall();
         notifyDatabaseSequenceStatus();
 
       } catch (HazelcastInstanceNotActiveException e) {
@@ -83,52 +79,6 @@ public class OClusterHealthChecker implements Runnable {
           "Cluster health finished recently (%dms ago), skip this execution", now - lastExecution);
 
     lastExecution = now;
-  }
-
-  private void checkServerInStall() {
-    OServer serveri = manager.getServerInstance();
-    OrientDBDistributed context = (OrientDBDistributed) serveri.getDatabases();
-
-    if (!context.getNodeState().getOps().getNetworkTopology().isSelfEnstablished())
-      // ONLY ONLINE NODE CAN TRY TO RECOVER FOR SINGLE DB STATUS
-      return;
-
-    for (String dbName : manager.getDatabases()) {
-      if (manager.isSyncronizing(dbName)) {
-        continue;
-      }
-      final ODistributedServerManager.DB_STATUS localNodeStatus = context.getDatabaseStatus(dbName);
-      if (localNodeStatus != ODistributedServerManager.DB_STATUS.ONLINE)
-        // ONLY ONLINE NODE/DB CAN CHECK FOR OTHERS
-        continue;
-
-      final Set<String> servers = context.getAvailableNodeNotLocalNames(dbName);
-
-      if (servers.isEmpty()) continue;
-
-      try {
-        final ODistributedResponse response =
-            manager.sendRequest(dbName, servers, new OGossipTask());
-
-        final Object payload = response != null ? response.getPayload() : null;
-        if (payload instanceof Map) {
-          final Map<String, Object> responses = (Map<String, Object>) payload;
-          servers.removeAll(responses.keySet());
-        }
-      } catch (ODistributedException e) {
-        // NO SERVER RESPONDED, THE SERVER COULD BE ISOLATED: SET ALL THE SERVER AS OFFLINE
-        logger.debugNode(
-            manager.getLocalNodeName(), "Error on sending request for cluster health check", e);
-      } catch (ODistributedOperationException e) {
-        // NO SERVER RESPONDED, THE SERVER COULD BE ISOLATED: SET ALL THE SERVER AS OFFLINE
-        logger.debugNode(
-            manager.getLocalNodeName(), "Error on sending request for cluster health check", e);
-      }
-
-      for (String server : servers) {
-        setDatabaseOffline(dbName, server);
-      }
-    }
   }
 
   private void notifyDatabaseSequenceStatus() {
