@@ -11,6 +11,7 @@ import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
 import java.io.IOException;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 
 public class OSyncState {
   private static final OLoggerDistributed logger = OLoggerDistributed.logger(OSyncState.class);
@@ -104,9 +105,10 @@ public class OSyncState {
   }
 
   public synchronized void waitForNext() throws InterruptedException {
-    while (!canNext && !close) {
-      // TODO: use timeout !
-      this.wait();
+    int retry = 5;
+    while (!canNext && !close && retry > 0) {
+      this.wait(TimeUnit.MINUTES.toMillis(1));
+      retry--;
     }
     canNext = false;
   }
