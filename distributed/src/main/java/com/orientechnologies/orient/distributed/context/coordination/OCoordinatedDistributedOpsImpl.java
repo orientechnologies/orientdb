@@ -85,7 +85,6 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   public synchronized void registerNode(
       ONodeId node, OVersion version, OTransactionIdPromise promise) {
     this.topology.register(node, version, promise);
-    notifyUpdate();
   }
 
   @Override
@@ -101,7 +100,6 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
     synchronized (this) {
       this.topology.unregister(node, version, promise);
     }
-    notifyUpdate();
     return action;
   }
 
@@ -342,6 +340,7 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
       CompleteInfo info = action.get();
       info.action().complete(info.promise(), info.nodes(), info.result());
     }
+    this.notifyUpdate();
   }
 
   @Override
@@ -354,7 +353,6 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   public Set<ONodeId> establish(
       OGroupId groupId, Set<ONodeId> candidates, OTransactionIdPromise promise) {
     Set<ONodeId> result = this.topology.finalizeEstablish(groupId, candidates, promise);
-    notifyUpdate();
     return result;
   }
 
@@ -433,7 +431,6 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
       Set<OAddNodeInfo> partecipants,
       int minimumQuorum) {
     this.databaseTopology.declareDatabase(promise, dbId, database, partecipants, minimumQuorum);
-    notifyUpdate();
   }
 
   public void cancelDeclareDatabase(
@@ -468,7 +465,6 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   public void addDatabaseMember(
       ODatabaseId dbId, List<OAddNodeInfo> nodes, OVersion version, OTransactionIdPromise promise) {
     this.databaseTopology.addDatabaseMember(dbId, nodes, version, promise);
-    notifyUpdate();
   }
 
   @Override
