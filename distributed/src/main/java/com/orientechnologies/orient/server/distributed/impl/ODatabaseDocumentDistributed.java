@@ -39,6 +39,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OClassAllocation;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
 import com.orientechnologies.orient.core.metadata.schema.OView;
 import com.orientechnologies.orient.core.metadata.security.ORole;
@@ -1393,13 +1394,16 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
     var listCl = new ArrayList<OAllocationInfoOClass>();
     for (var cl : getMetadata().getSchema().getClasses()) {
-      var nodes = cl.getAllocation().getDefinedNodes();
-      var infoNodes = new ArrayList<OAllocationInfoOClassNode>();
-      for (var node : nodes) {
-        var clus = cl.getAllocation().getAllocationClusters(node);
-        infoNodes.add(new OAllocationInfoOClassNode(new ONodeId(node), clus));
+      OClassAllocation allocation = cl.getAllocation();
+      if (allocation != null) {
+        var infoNodes = new ArrayList<OAllocationInfoOClassNode>();
+        var nodes = allocation.getDefinedNodes();
+        for (var node : nodes) {
+          var clus = allocation.getAllocationClusters(node);
+          infoNodes.add(new OAllocationInfoOClassNode(new ONodeId(node), clus));
+        }
+        listCl.add(new OAllocationInfoOClass(cl.getName(), infoNodes));
       }
-      listCl.add(new OAllocationInfoOClass(cl.getName(), infoNodes));
     }
 
     OAllocationInfo ai = new OAllocationInfo(listCl);
