@@ -397,7 +397,7 @@ public interface OStorage extends OStorageInfo {
 
   Optional<Path> getPath();
 
-  ODatabaseId getDatbaseId();
+  ODatabaseId getDatabaseId();
 
   int getIndexApiVersion(int indexId);
 

@@ -639,7 +639,7 @@ public class OrientDBEmbeddedTests {
             "testUUID", "embedded:", OCreateDatabaseUtil.TYPE_MEMORY)) {
       final ODatabaseSession session =
           orientDb.open("testUUID", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
-      assertNotNull(((ODatabaseDocumentInternal) session).getStorage().getDatbaseId());
+      assertNotNull(((ODatabaseDocumentInternal) session).getStorage().getDatabaseId());
       session.close();
     }
   }
@@ -651,7 +651,7 @@ public class OrientDBEmbeddedTests {
             "testPersistentUUID", "embedded:./target/", OCreateDatabaseUtil.TYPE_PLOCAL);
     final ODatabaseSession session =
         orientDb.open("testPersistentUUID", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
-    ODatabaseId uuid = ((ODatabaseDocumentInternal) session).getStorage().getDatbaseId();
+    ODatabaseId uuid = ((ODatabaseDocumentInternal) session).getStorage().getDatabaseId();
     assertNotNull(uuid);
     session.close();
     orientDb.close();
@@ -664,7 +664,7 @@ public class OrientDBEmbeddedTests {
                 .build());
     ODatabaseSession session1 =
         orientDb1.open("testPersistentUUID", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
-    assertEquals(uuid, ((ODatabaseDocumentInternal) session1).getStorage().getDatbaseId());
+    assertEquals(uuid, ((ODatabaseDocumentInternal) session1).getStorage().getDatabaseId());
     session1.close();
     orientDb1.drop("testPersistentUUID");
     orientDb1.close();

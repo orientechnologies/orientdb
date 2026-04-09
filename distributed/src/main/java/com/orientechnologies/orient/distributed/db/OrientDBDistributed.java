@@ -245,8 +245,8 @@ public class OrientDBDistributed extends OrientDBEmbedded
           logger.infoNode(getNodeName(), "Opening database '%s'...", databaseName);
           ODatabaseDocumentEmbedded db = openNoAuthorization(databaseName);
           if (this.nodeState.getDatabaseTopology().getDatabaseId(databaseName).isEmpty()) {
-            declareDatabaseFlow(databaseName, db.getStorage().getDatbaseId()).get();
-            setDatabaseState(db.getStorage().getDatbaseId(), getNodeId(), ODatabaseState.Online);
+            declareDatabaseFlow(databaseName, db.getStorage().getDatabaseId()).get();
+            setDatabaseState(db.getStorage().getDatabaseId(), getNodeId(), ODatabaseState.Online);
           }
           db.close();
         } catch (Exception e) {

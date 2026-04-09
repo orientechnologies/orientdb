@@ -132,6 +132,10 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     return getContext().getNodeName();
   }
 
+  public ODatabaseId getDatabaseId() {
+    return this.getStorage().getDatabaseId();
+  }
+
   @Override
   public boolean isSharded() {
     /*
@@ -217,7 +221,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     if (getContext().isDistributedDisabled(getName()))
       throw new OCommandExecutionException("OrientDB is not started in distributed mode");
 
-    return getContext().removeDatabaseMember(getStorage().getDatbaseId(), new ONodeId(serverName));
+    return getContext().removeDatabaseMember(getDatabaseId(), new ONodeId(serverName));
   }
 
   @Override
@@ -376,8 +380,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       ODistributedTxCoordinator txManager =
           new ODistributedTxCoordinator(
               getName(), dManager, localDistributedDatabase, getLocalNodeName(), nretry, delay);
-      ODatabaseId databaseId = getStorage().getDatbaseId();
-      int quorum = getContext().getNodeState().getOps().getDatabaseQuorum(databaseId);
+      int quorum = getContext().getNodeState().getOps().getDatabaseQuorum(getDatabaseId());
 
       final int availableNodes = getContext().getOnlineMasters(getName());
 

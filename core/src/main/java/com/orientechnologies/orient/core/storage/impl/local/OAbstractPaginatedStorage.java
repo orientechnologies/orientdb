@@ -1379,7 +1379,7 @@ public abstract class OAbstractPaginatedStorage
     return id;
   }
 
-  public ODatabaseId getDatbaseId() {
+  public ODatabaseId getDatabaseId() {
     return databaseId;
   }
 

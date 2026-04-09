@@ -44,7 +44,7 @@ public class SyncOpsTest {
     context = OrientDBInternal.distributed("./target/sync", config1.build()).newOrientDB();
     context.execute("create database test plocal users(admin identified by 'adminpwd' role admin)");
     OrientDBDistributed ctx = (OrientDBDistributed) OrientDBInternal.extract(context);
-    var dbId = ctx.getStorage("test").getDatbaseId();
+    var dbId = ctx.getStorage("test").getDatabaseId();
     OrientDBConfigBuilder config2 = OrientDBConfig.builder();
     config2
         .getNodeConfigurationBuilder()
