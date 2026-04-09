@@ -258,6 +258,52 @@ public class OCoordinatedDistributedOpsMergeTest
   }
 
   @Test
+  public void threeMergeCoordinationSuccessComplete() {
+    ONodeId nodeId1 = newRandomNodeId();
+    ONodeId nodeId2 = newRandomNodeId();
+    ONodeId nodeId3 = newRandomNodeId();
+
+    ONodeId nodeId4 = newRandomNodeId();
+
+    OGroupId groupId = newRandomGroupId();
+
+    OCoordinatedDistributedOps ops1 = quorum1Env(nodeId1, groupId);
+    OCoordinatedDistributedOps ops2 = quorum1Env(nodeId2, groupId);
+    OCoordinatedDistributedOps ops3 = quorum1Env(nodeId3, groupId);
+    mergeNetworks(List.of(ops1), ops2);
+    mergeNetworks(List.of(ops1, ops2), ops3);
+
+    OCoordinatedDistributedOps ops4 = quorum1Env(nodeId4, groupId);
+
+    TestAction action = new TestAction(ops4.getCurrent());
+    var promise = ops1.start(action).get().promise();
+    var mergedState = ops1.createMergedState(ops4.getNetworkState());
+    var version = ops1.nextTopologyVersion();
+
+    var validate2 = ops4.validateMerge(ops1.getGroupId(), mergedState, promise);
+    ops1.nodeMergeResult(ops4.getCurrent(), promise, validate2);
+    assertTrue(validate2.isEmpty());
+
+    for (var node : List.of(ops1, ops2, ops3)) {
+      var validate1 = node.validateMergeNode(nodeId4, mergedState, version, promise);
+      assertTrue(validate1.isEmpty());
+      ops1.nodeSuccess(node.getCurrent(), promise);
+    }
+
+    for (var node : List.of(ops1, ops2, ops3)) {
+      node.consensusSuccess(promise);
+      node.mergeNode(nodeId4, mergedState, version, promise);
+      node.completeExecution(promise);
+    }
+    ops4.applyMerge(promise);
+
+    assertTrue(action.success);
+    assertFalse(action.failure);
+    assertEquals(action.count, 1);
+    assertTrue(action.complete);
+  }
+
+  @Test
   public void baseCoordinationFail() {
     ONodeId nodeId1 = newRandomNodeId();
     OGroupId groupId = newRandomGroupId();
