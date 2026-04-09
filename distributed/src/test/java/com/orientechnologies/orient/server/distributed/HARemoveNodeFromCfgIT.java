@@ -18,7 +18,9 @@ package com.orientechnologies.orient.server.distributed;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager.DB_STATUS;
+import com.orientechnologies.orient.core.transaction.ONodeId;
+import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabaseState;
+import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.setup.ServerRun;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.Assert;
@@ -51,21 +53,14 @@ public class HARemoveNodeFromCfgIT extends AbstractServerClusterTxTest {
             .getServerInstance()
             .getDistributedManager()
             .getLocalNodeName();
-    Assert.assertTrue(
-        serverInstance
-            .get(0)
-            .getServerInstance()
-            .getDistributedManager()
-            .getDatabaseConfiguration(getDatabaseName())
-            .getAllConfiguredServers()
-            .contains(removedServer));
-    Assert.assertEquals(
-        serverInstance
-            .get(0)
-            .getServerInstance()
-            .getDistributedManager()
-            .getDatabaseStatus(removedServer, getDatabaseName()),
-        DB_STATUS.ONLINE);
+    var dbt =
+        ((OrientDBDistributed) serverInstance.get(0).getServerInstance().getDatabases())
+            .getNodeState()
+            .getDatabaseTopology();
+    var nodeId = new ONodeId(removedServer);
+    var dbId = dbt.getDatabaseId(getDatabaseName()).get();
+    Assert.assertTrue(dbt.getMembers(dbId).contains(nodeId));
+    Assert.assertEquals(dbt.getState(dbId, nodeId), ODatabaseState.Online);
 
     banner("SIMULATE SOFT SHUTDOWN OF SERVER " + (SERVERS - 1));
 
@@ -86,22 +81,9 @@ public class HARemoveNodeFromCfgIT extends AbstractServerClusterTxTest {
 
     banner("RESTARTING SERVER " + (SERVERS - 1) + "...");
 
-    Assert.assertFalse(
-        serverInstance
-            .get(0)
-            .getServerInstance()
-            .getDistributedManager()
-            .getDatabaseConfiguration(getDatabaseName())
-            .getAllConfiguredServers()
-            .contains(removedServer));
+    Assert.assertFalse(dbt.getMembers(dbId).contains(nodeId));
 
-    Assert.assertEquals(
-        serverInstance
-            .get(0)
-            .getServerInstance()
-            .getDistributedManager()
-            .getDatabaseStatus(removedServer, getDatabaseName()),
-        ODistributedServerManager.DB_STATUS.NOT_AVAILABLE);
+    Assert.assertEquals(dbt.getState(dbId, nodeId), ODatabaseState.NotAvailable);
 
     serverInstance
         .get(SERVERS - 1)
