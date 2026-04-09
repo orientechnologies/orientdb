@@ -29,7 +29,6 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
-import com.orientechnologies.orient.server.distributed.config.OClusterConfiguration;
 import com.orientechnologies.orient.setup.ServerRun;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -159,13 +158,6 @@ public abstract class AbstractServerClusterTest {
         Thread.sleep(delayServerAlign * serverInstance.size());
       } catch (InterruptedException e) {
       }
-
-    for (ServerRun server : serverInstance) {
-      final ODistributedServerManager mgr = server.getServerInstance().getDistributedManager();
-      Assert.assertNotNull(mgr);
-      OClusterConfiguration cfg = mgr.getClusterConfiguration();
-      Assert.assertNotNull(cfg);
-    }
   }
 
   protected void banner(final String iMessage) {
@@ -363,13 +355,9 @@ public abstract class AbstractServerClusterTest {
       final String serverName,
       final String dbName,
       final ODistributedServerManager.DB_STATUS status) {
-    Assert.assertEquals(
-        status,
-        serverInstance
-            .get(fromServerId)
-            .getServerInstance()
-            .getDistributedManager()
-            .getDatabaseStatus(serverName, dbName));
+    OrientDBDistributed ctx =
+        (OrientDBDistributed) serverInstance.get(fromServerId).getServerInstance().getDatabases();
+    Assert.assertEquals(status, ctx.getDatabaseStatus(serverName, dbName));
   }
 
   protected void waitForDatabaseStatus(
@@ -379,12 +367,9 @@ public abstract class AbstractServerClusterTest {
       final ODistributedServerManager.DB_STATUS status,
       final long timeout) {
     final long startTime = System.currentTimeMillis();
-    while (serverInstance
-            .get(serverId)
-            .getServerInstance()
-            .getDistributedManager()
-            .getDatabaseStatus(serverName, dbName)
-        != status) {
+    OrientDBDistributed ctx =
+        (OrientDBDistributed) serverInstance.get(serverId).getServerInstance().getDatabases();
+    while (ctx.getDatabaseStatus(serverName, dbName) != status) {
 
       if (timeout > 0 && System.currentTimeMillis() - startTime > timeout) {
         logger.error("TIMEOUT on wait-for condition (timeout=%d)", null, timeout);

@@ -20,11 +20,13 @@
 
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
+import com.orientechnologies.orient.core.metadata.schema.OClassAllocation;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.setup.ServerRun;
-import java.util.Set;
+import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -126,15 +128,19 @@ public class ReplicaServerIT extends AbstractServerClusterTest {
   }
 
   private void checkReplicasDontOwnAnyClusters() {
-    final ODistributedServerManager dMgr =
-        serverInstance.get(0).getServerInstance().getDistributedManager();
-    final ODistributedConfiguration dCfg = dMgr.getDatabaseConfiguration(getDatabaseName());
+    ODatabaseDocumentInternal db =
+        serverInstance.get(0).getServerInstance().openDatabase(getDatabaseName());
 
     for (int s = 1; s < SERVERS; ++s) {
-      final Set<String> clusters =
-          dCfg.getClustersOwnedByServer(
-              serverInstance.get(s).getServerInstance().getDistributedManager().getLocalNodeName());
-      Assert.assertTrue(clusters.isEmpty());
+      String nodeName =
+          serverInstance.get(s).getServerInstance().getDistributedManager().getLocalNodeName();
+      for (OClass cl : db.getMetadata().getSchema().getClasses()) {
+        OClassAllocation allocation = cl.getAllocation();
+        if (allocation != null) {
+          final List<String> clusters = allocation.getAllocationClusters(nodeName);
+          Assert.assertTrue(clusters.isEmpty());
+        }
+      }
     }
   }
 

@@ -24,7 +24,6 @@ public class DistributedDbDropAndReCreateAnotherIT extends AbstractServerCluster
   static final int SERVERS = 3;
   private int lastServerNum = 0;
 
-  // TODO: is distributed
   @Test
   public void test() throws Exception {
     count = 10;
