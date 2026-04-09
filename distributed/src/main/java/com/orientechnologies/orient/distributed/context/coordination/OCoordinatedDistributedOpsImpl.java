@@ -637,14 +637,15 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   @Override
   public synchronized void applyMerge(OTransactionIdPromise promise) {
     logger.debugNode(this.getCurrent(), "merging network for promise %s", promise);
-    assert this.promisedMergeState.isPresent();
-    if (this.promisedMergeState.get().first.equals(promise)) {
+    if (this.promisedMergeState.isPresent() && this.promisedMergeState.get().first.equals(promise)) {
       var state = this.promisedMergeState.get().second;
       topology.applyMerge(state.topology(), promise);
       this.databaseTopology.mergeNetworkState(state.databases(), promise);
       this.promisedMergeState = Optional.empty();
       this.sequenceManager.fill(state.sequenceStatus());
       this.sequenceManager.notifySuccess(promise);
+    } else {
+      logger.warnNode(this.getCurrent(), "received merge confirmation for %s promised merge: %s ", promise, this.promisedMergeState);
     }
   }
 
