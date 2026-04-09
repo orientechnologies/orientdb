@@ -551,6 +551,18 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     return true;
   }
 
+  private void waitQuorumOnline() {
+    long waitTime =
+        getConfiguration()
+            .getValueAsLong(OGlobalConfiguration.DISTRIBUTED_DATABASE_ONLINE_GRACE_PERIOD);
+
+    try {
+      getContext().getNodeState().getOps().waitOnlineQuorum(getDatabaseId(), Optional.of(waitTime));
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
+  }
+
   public ODistributedDatabase getDistributedShared() {
     return getSharedContext().getDistributedContext();
   }
@@ -577,6 +589,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
    */
   public boolean commit2pc(
       ODistributedRequestId transactionId, boolean isCoordinator, ODistributedRequestId requestId) {
+    waitQuorumOnline();
     ODistributedDatabaseImpl localDistributedDatabase =
         (ODistributedDatabaseImpl) getDistributedShared();
     localDistributedDatabase.resetLastValidBackup();
@@ -946,6 +959,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       super.command(command, new Object[] {}).close();
       return;
     }
+    waitQuorumOnline();
     getContext().checkNodeIsMaster(getLocalNodeId(), getName(), "Command '" + command + "'");
     ODistributedDatabase local = getDistributedShared();
     // The plus 1 is for make sure it runs once even if retry is 0
