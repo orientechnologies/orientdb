@@ -31,4 +31,8 @@ public interface ODatabasesTopology {
   boolean isMain(ODatabaseId dbId, ONodeId node);
 
   public Set<OSyncState> getActiveSyncs(ODatabaseId dbId);
+
+  Set<ONodeId> getMembers(ODatabaseId databaseId);
+
+  int getQuorum(ODatabaseId databaseId);
 }

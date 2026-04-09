@@ -50,6 +50,7 @@ import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.stream.OExecutionStream;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
@@ -66,6 +67,7 @@ import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.core.tx.OTxMetadataHolder;
 import com.orientechnologies.orient.core.tx.ValidationResult;
+import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabasesTopology;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
@@ -1372,5 +1374,39 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   @Override
   public OSharedContextDistributed getSharedContext() {
     return (OSharedContextDistributed) super.getSharedContext();
+  }
+
+  @Override
+  public OResult getDistributedInfo() {
+
+    var id = getDatabaseId();
+    ODatabasesTopology topology = getContext().getNodeState().getDatabaseTopology();
+    var members = topology.getMembers(id);
+    var name = getName();
+    var mi =
+        members.stream()
+            .map(
+                (x) -> {
+                  return new OMemberInfo(x, topology.getRole(id, x));
+                })
+            .toList();
+
+    var listCl = new ArrayList<OAllocationInfoOClass>();
+    for (var cl : getMetadata().getSchema().getClasses()) {
+      var nodes = cl.getAllocation().getDefinedNodes();
+      var infoNodes = new ArrayList<OAllocationInfoOClassNode>();
+      for (var node : nodes) {
+        var clus = cl.getAllocation().getAllocationClusters(node);
+        infoNodes.add(new OAllocationInfoOClassNode(new ONodeId(node), clus));
+      }
+      listCl.add(new OAllocationInfoOClass(cl.getName(), infoNodes));
+    }
+
+    OAllocationInfo ai = new OAllocationInfo(listCl);
+
+    ODistributedDatabaseInfo info =
+        new ODistributedDatabaseInfo(name, id, mi, topology.getQuorum(id), ai);
+
+    return info.toLegacyResult();
   }
 }

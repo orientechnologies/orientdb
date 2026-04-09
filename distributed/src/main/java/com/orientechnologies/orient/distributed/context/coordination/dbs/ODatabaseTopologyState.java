@@ -500,4 +500,8 @@ public class ODatabaseTopologyState {
       this.stateListener.onStateChange(id, state.getId(), state.getState());
     }
   }
+
+  public Set<ONodeId> getMembers() {
+    return this.nodeStatus.keySet();
+  }
 }

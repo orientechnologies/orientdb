@@ -642,4 +642,13 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
     var rd = this.databases.remove(db);
     this.databasesByName.remove(rd.getName());
   }
+
+  @Override
+  public Set<ONodeId> getMembers(ODatabaseId databaseId) {
+    ODatabaseTopologyState db = getDb(databaseId);
+    if (db != null) {
+      return db.getMembers();
+    }
+    return Set.of();
+  }
 }
