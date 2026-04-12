@@ -1958,6 +1958,10 @@ public class OSelectExecutionPlanner {
       String orderType = null;
       for (int i = 0; i < info.orderBy.getItems().size(); i++) {
         OOrderByItem orderItem = info.orderBy.getItems().get(i);
+        if (orderItem.getModifier() != null) {
+          return false;
+        }
+
         if (orderItem.getCollate() != null) {
           return false;
         }
