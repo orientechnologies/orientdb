@@ -422,11 +422,8 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
     p.createIndex(INDEX_TYPE.NOTUNIQUE);
 
     db.command("INSERT INTO " + className + " SET Name = 'M'").close();
-    ;
     db.command("INSERT INTO " + className + " SET Name = 'P'").close();
-    ;
     db.command("INSERT INTO " + className + " SET Name = 'G'").close();
-    ;
 
     db.command(
             "INSERT INTO "
@@ -435,7 +432,6 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
                 + className
                 + " WHERE Name = 'M')")
         .close();
-    ;
     db.command(
             "INSERT INTO "
                 + className2
@@ -443,7 +439,6 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
                 + className
                 + " WHERE Name = 'P')")
         .close();
-    ;
     db.command(
             "INSERT INTO "
                 + className2
@@ -451,7 +446,6 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
                 + className
                 + " WHERE Name = 'G')")
         .close();
-    ;
 
     OResultSet result =
         db.query(
@@ -464,6 +458,19 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
                 + "ORDER BY NativeState[0].Name DESC");
     printExecutionPlan(result);
     List<String> names =
+        result.stream()
+            .map((x) -> (String) x.getProperty("_NativeState_Name"))
+            .collect(Collectors.toList());
+    assertEquals(Arrays.asList("P", "M", "G"), names);
+
+    result =
+        db.query(
+            "SELECT NativeState, NativeState[0].Name AS _NativeState_Name \n"
+                + "FROM "
+                + className2
+                + " ORDER BY NativeState[0].Name DESC");
+    printExecutionPlan(result);
+    names =
         result.stream()
             .map((x) -> (String) x.getProperty("_NativeState_Name"))
             .collect(Collectors.toList());
