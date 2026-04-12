@@ -951,4 +951,8 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   public void dbRemovedFromDiskWhenOffline(ODatabaseId db) {
     this.databaseTopology.dbRemovedFromDiskWhenOffline(db);
   }
+
+  public boolean waitForEnstablish(Optional<Long> timeout) throws InterruptedException {
+    return this.topology.waitForEnstablished(timeout);
+  }
 }

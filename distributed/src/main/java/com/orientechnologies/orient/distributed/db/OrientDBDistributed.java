@@ -1736,4 +1736,10 @@ public class OrientDBDistributed extends OrientDBEmbedded
     var r = ONodeRole.fromString(role);
     retryOperation(new OSetDatabaseNodeRoleRetryOperation(datbaseId, new ONodeId(serverName), r));
   }
+
+  @Override
+  public void gracefulWaitFullStartup() throws InterruptedException {
+    long waitTime = getLongConfig(OGlobalConfiguration.DISTRIBUTED_DATABASE_ONLINE_GRACE_PERIOD);
+    this.nodeState.getOps().waitForEnstablish(Optional.of(waitTime));
+  }
 }

@@ -260,4 +260,6 @@ public interface OCoordinatedDistributedOps {
       OTransactionIdPromise promise);
 
   void dbRemovedFromDiskWhenOffline(ODatabaseId db);
+
+  boolean waitForEnstablish(Optional<Long> timeout) throws InterruptedException;
 }

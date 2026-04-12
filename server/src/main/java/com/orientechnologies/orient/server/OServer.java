@@ -499,7 +499,11 @@ public class OServer {
         Thread.currentThread().interrupt();
       }
     }
-
+    try {
+      databases.gracefulWaitFullStartup();
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+    }
     return this;
   }
 

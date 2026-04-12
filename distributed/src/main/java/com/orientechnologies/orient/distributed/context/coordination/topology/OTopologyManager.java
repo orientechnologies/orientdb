@@ -7,6 +7,7 @@ import com.orientechnologies.orient.distributed.context.ONetworkTopologyStore;
 import com.orientechnologies.orient.distributed.context.coordination.ONetworkTopology;
 import com.orientechnologies.orient.distributed.context.coordination.OVersion;
 import com.orientechnologies.orient.distributed.context.coordination.OVersionPromise;
+import com.orientechnologies.orient.distributed.context.coordination.dbs.OWatcher;
 import com.orientechnologies.orient.distributed.context.coordination.message.state.ONodeStateNetwork;
 import com.orientechnologies.orient.distributed.context.coordination.message.state.OTopologyStateNetwork;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
@@ -24,7 +25,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-public class OTopologyManager implements OTopologyEvents, ONetworkTopology {
+public class OTopologyManager extends OWatcher implements OTopologyEvents, ONetworkTopology {
   private static final OLoggerDistributed logger =
       OLoggerDistributed.logger(OTopologyManager.class);
 
@@ -141,6 +142,7 @@ public class OTopologyManager implements OTopologyEvents, ONetworkTopology {
     allNodes.addAll(this.candidates);
     this.candidates = new HashSet<>();
     this.versionPromise.accept(promise, new OVersion(1));
+    this.notifyChange();
     return allNodes;
   }
 
@@ -183,16 +185,19 @@ public class OTopologyManager implements OTopologyEvents, ONetworkTopology {
             this.setMember(externState.members());
             this.versionPromise.loadVersion(new OVersion(externState.version()));
             this.quorum = externState.quorum();
+            this.notifyChange();
             return new ODiscoverAction.OApplyStateAction();
           } else if (this.quorum == 1 && this.members.size() == 1) {
             this.setMember(externState.members());
             this.versionPromise.forceVersion(new OVersion(externState.version()));
             this.quorum = externState.quorum();
+            this.notifyChange();
             return new ODiscoverAction.OApplySequenceAction();
           } else if (externState.version() > getVersion().getValue()) {
             this.setMember(externState.members());
             this.versionPromise.loadVersion(new OVersion(externState.version()));
             this.quorum = externState.quorum();
+            this.notifyChange();
             return new ODiscoverAction.OApplyStateAction();
           } else if (externState.version() != getVersion().getValue()) {
             // Other outdated just notify self state
@@ -307,5 +312,10 @@ public class OTopologyManager implements OTopologyEvents, ONetworkTopology {
     this.members = Collections.unmodifiableSet(topology.members());
     this.quorum = topology.quorum();
     this.versionPromise.forceVersion(new OVersion(topology.version()));
+  }
+
+  public synchronized boolean waitForEnstablished(Optional<Long> timeout)
+      throws InterruptedException {
+    return waitFor(timeout, this::isSelfEnstablished);
   }
 }
