@@ -21,21 +21,19 @@ import com.orientechnologies.orient.distributed.db.OSyncMode;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class ODatabaseTopologyState {
+public class ODatabaseTopologyState extends OWatcher {
   private final ODatabaseId id;
   private final ONodeId current;
   private final String name;
   private final Map<ONodeId, ONodeDatabaseState> nodeStatus = new HashMap<>();
   private final OVersionPromise versionPromise;
   private int quorum;
-  private List<OActionNotification> notifications = new ArrayList<>();
   private Map<OSyncId, OSyncSession> syncSessions = new HashMap<>();
   private ODatabaseStateChangeListener stateListener;
 
@@ -161,57 +159,13 @@ public class ODatabaseTopologyState {
     return waitFor(timeout, this::isSelfOnline);
   }
 
-  private interface WaitCond {
-    /*
-     * Return false to wait true to execute
-     */
-    boolean match();
-  }
-
-  public synchronized void executeOnOneOnline(OStateAction execute) {
+  public synchronized void executeOnOneOnline(ONotificationAction execute) {
     executeOn(this::isOneOnline, execute);
   }
 
-  private record OActionNotification(WaitCond cond, OStateAction execute) {}
-
-  private boolean waitFor(Optional<Long> timeout, WaitCond cond) throws InterruptedException {
-    if (timeout.isPresent()) {
-      var timeOut = timeout.get();
-      long start = currentTime();
-      long till = start + timeOut;
-      while (!cond.match() && timeOut > 0) {
-        this.wait(timeOut);
-        long current = currentTime();
-        timeOut = till - current;
-      }
-      return timeOut > 0;
-    } else {
-      while (!cond.match()) {
-        this.wait();
-      }
-      return true;
-    }
-  }
-
-  private long currentTime() {
-    return System.nanoTime() / 1000;
-  }
-
-  private void executeOn(WaitCond cond, OStateAction execute) {
-    this.notifications.add(new OActionNotification(cond, execute));
-  }
-
   private void notifyChange(ONodeId node, ODatabaseState state) {
-    Iterator<OActionNotification> iter = this.notifications.iterator();
-    while (iter.hasNext()) {
-      OActionNotification act = iter.next();
-      if (act.cond.match()) {
-        act.execute.execute();
-        iter.remove();
-      }
-    }
     this.stateListener.onStateChange(id, node, state);
-    this.notifyAll();
+    super.notifyChange();
   }
 
   public synchronized Set<ONodeId> getOnlineNodes() {

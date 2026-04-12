@@ -17,7 +17,7 @@ import com.orientechnologies.orient.distributed.context.coordination.dbs.ODataba
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabaseStateChangeListener;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabasesTopologyState;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ONodeRole;
-import com.orientechnologies.orient.distributed.context.coordination.dbs.OStateAction;
+import com.orientechnologies.orient.distributed.context.coordination.dbs.ONotificationAction;
 import com.orientechnologies.orient.distributed.context.coordination.message.ODistributedMessage;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OAddNodeInfo;
 import com.orientechnologies.orient.distributed.context.coordination.message.state.ODatabaseMemberNetwork;
@@ -552,7 +552,7 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
     return this.databaseTopology.getSyncState(syncId);
   }
 
-  public boolean executeOnOneOnline(ODatabaseId dbId, OStateAction execute) {
+  public boolean executeOnOneOnline(ODatabaseId dbId, ONotificationAction execute) {
     return this.databaseTopology.executeOnOneOnline(dbId, execute);
   }
 

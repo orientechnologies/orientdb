@@ -26,7 +26,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
-public class ODatabasesTopologyState implements ODatabasesTopology {
+public class ODatabasesTopologyState extends OWatcher implements ODatabasesTopology {
 
   private final ONodeId current;
   private final Map<ODatabaseId, ODatabaseTopologyState> databases = new HashMap<>();
@@ -224,7 +224,7 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
     return false;
   }
 
-  public synchronized boolean executeOnOneOnline(ODatabaseId dbId, OStateAction execute) {
+  public synchronized boolean executeOnOneOnline(ODatabaseId dbId, ONotificationAction execute) {
     ODatabaseTopologyState db = getDb(dbId);
     if (db != null) {
       db.executeOnOneOnline(execute);
@@ -521,37 +521,6 @@ public class ODatabasesTopologyState implements ODatabasesTopology {
     for (var db : this.databases.values()) {
       db.nodeDisconnected(node);
     }
-  }
-
-  private interface WaitCond {
-    /*
-     * Return false to wait true to execute
-     */
-    boolean match();
-  }
-
-  private synchronized boolean waitFor(Optional<Long> timeout, WaitCond cond)
-      throws InterruptedException {
-    if (timeout.isPresent()) {
-      var timeOut = timeout.get();
-      long start = currentTime();
-      long till = start + timeOut;
-      while (!cond.match() && timeOut > 0) {
-        this.wait(timeOut);
-        long current = currentTime();
-        timeOut = till - current;
-      }
-      return timeOut > 0;
-    } else {
-      while (!cond.match()) {
-        this.wait();
-      }
-      return true;
-    }
-  }
-
-  private long currentTime() {
-    return System.nanoTime() / 1000;
   }
 
   public synchronized void cancelMerge(OTransactionIdPromise promise) {

@@ -11,7 +11,7 @@ import com.orientechnologies.orient.distributed.context.coordination.action.OCom
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabaseState;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabasesTopology;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ONodeRole;
-import com.orientechnologies.orient.distributed.context.coordination.dbs.OStateAction;
+import com.orientechnologies.orient.distributed.context.coordination.dbs.ONotificationAction;
 import com.orientechnologies.orient.distributed.context.coordination.message.ODistributedMessage;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OAddNodeInfo;
 import com.orientechnologies.orient.distributed.context.coordination.message.state.ONodeStateNetwork;
@@ -195,7 +195,7 @@ public interface OCoordinatedDistributedOps {
   void load(ONodeStateStore storeState);
 
   // Wait for events
-  boolean executeOnOneOnline(ODatabaseId dbId, OStateAction execute);
+  boolean executeOnOneOnline(ODatabaseId dbId, ONotificationAction execute);
 
   boolean waitOnlineQuorum(ODatabaseId dbId, Optional<Long> timeout) throws InterruptedException;
 
