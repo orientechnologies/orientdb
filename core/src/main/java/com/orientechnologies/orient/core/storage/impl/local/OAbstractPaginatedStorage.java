@@ -368,6 +368,7 @@ public abstract class OAbstractPaginatedStorage
 
   private volatile int backupRunning = 0;
   private volatile int ddlRunning = 0;
+  private OStorageConfigurationUpdateListener configurationUpdateListener;
 
   public OAbstractPaginatedStorage(
       final String name,
@@ -5784,18 +5785,23 @@ public abstract class OAbstractPaginatedStorage
     return true;
   }
 
-  @SuppressWarnings("unused")
-  public void setStorageConfigurationUpdateListener(
-      final OStorageConfigurationUpdateListener storageConfigurationUpdateListener) {
+  public OStorageConfigurationUpdateListener getConfigurationUpdateListener() {
     stateLock.readLock().lock();
     try {
-
-      checkOpennessAndMigration();
-
-      ((OClusterBasedStorageConfiguration) configuration)
-          .setConfigurationUpdateListener(storageConfigurationUpdateListener);
+      return this.configurationUpdateListener;
     } finally {
       stateLock.readLock().unlock();
+    }
+  }
+
+  @SuppressWarnings("unused")
+  public void setConfigurationUpdateListener(
+      final OStorageConfigurationUpdateListener configurationUpdateListener) {
+    stateLock.writeLock().lock();
+    try {
+      this.configurationUpdateListener = configurationUpdateListener;
+    } finally {
+      stateLock.writeLock().unlock();
     }
   }
 

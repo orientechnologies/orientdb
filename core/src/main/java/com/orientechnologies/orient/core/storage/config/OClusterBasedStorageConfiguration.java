@@ -12,7 +12,6 @@ import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
-import com.orientechnologies.orient.core.config.OStorageConfigurationUpdateListener;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
 import com.orientechnologies.orient.core.config.OStorageFileConfiguration;
 import com.orientechnologies.orient.core.config.OStoragePaginatedClusterConfiguration;
@@ -134,8 +133,6 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
 
   private final HashMap<String, Object> cache = new HashMap<>();
 
-  private OStorageConfigurationUpdateListener updateListener;
-
   private final ThreadLocal<PausedNotificationsState> pauseNotifications =
       ThreadLocal.withInitial(PausedNotificationsState::new);
 
@@ -200,8 +197,6 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
   public void delete(OAtomicOperation atomicOperation) throws IOException {
     lock.writeLock().lock();
     try {
-      updateListener = null;
-
       final long firstPosition = cluster.getFirstPosition();
       OPhysicalPosition[] positions =
           cluster.ceilingPositions(new OPhysicalPosition(firstPosition));
@@ -230,8 +225,6 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
   public void close(final OAtomicOperation atomicOperation) {
     lock.writeLock().lock();
     try {
-      updateListener = null;
-
       updateConfigurationProperty(atomicOperation);
       updateMinimumClusters(atomicOperation);
 
@@ -282,7 +275,7 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     lock.writeLock().lock();
     try {
       final PausedNotificationsState pausedNotificationsState = pauseNotifications.get();
-
+      var updateListener = storage.getConfigurationUpdateListener();
       if (pausedNotificationsState.pendingChanges > 0 && updateListener != null) {
         updateListener.onUpdate(this);
         pausedNotificationsState.pendingChanges = 0;
@@ -1420,16 +1413,6 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     }
   }
 
-  public void setConfigurationUpdateListener(
-      final OStorageConfigurationUpdateListener updateListener) {
-    lock.writeLock().lock();
-    try {
-      this.updateListener = updateListener;
-    } finally {
-      lock.writeLock().unlock();
-    }
-  }
-
   private static byte[] serializeIndexEngineProperty(final IndexEngineData indexEngineData) {
     int totalSize = 0;
     final List<byte[]> entries = new ArrayList<>(16);
@@ -1709,6 +1692,7 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     }
 
     final PausedNotificationsState pausedNotificationsState = pauseNotifications.get();
+    var updateListener = storage.getConfigurationUpdateListener();
     if (updateListener != null) {
       if (!pausedNotificationsState.notificationsPaused) {
         updateListener.onUpdate(this);
@@ -1794,6 +1778,7 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
     }
 
     final PausedNotificationsState pausedNotificationsState = pauseNotifications.get();
+    var updateListener = storage.getConfigurationUpdateListener();
     if (updateListener != null) {
       if (!pausedNotificationsState.notificationsPaused) {
         pausedNotificationsState.pendingChanges = 0;

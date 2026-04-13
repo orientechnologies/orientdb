@@ -287,7 +287,7 @@ public interface OStorage extends OStorageInfo {
 
   void open(OContextConfiguration configurations);
 
-  void setStorageConfigurationUpdateListener(
+  void setConfigurationUpdateListener(
       final OStorageConfigurationUpdateListener storageConfigurationUpdateListener);
 
   void startDDL();

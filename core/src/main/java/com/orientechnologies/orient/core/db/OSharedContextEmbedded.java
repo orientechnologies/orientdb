@@ -35,7 +35,7 @@ public class OSharedContextEmbedded extends OSharedContext {
   public OSharedContextEmbedded(OStorage storage, OrientDBEmbedded orientDB) {
     this.orientDB = orientDB;
     this.storage = storage;
-    storage.setStorageConfigurationUpdateListener(
+    storage.setConfigurationUpdateListener(
         update -> {
           for (OMetadataUpdateListener listener : browseListeners()) {
             listener.onStorageConfigurationUpdate(storage.getName(), update);
