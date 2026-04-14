@@ -27,6 +27,10 @@ public class ORetryInfo {
     }
   }
 
+  public boolean isFinished() {
+    return this.retryCountDown == 0;
+  }
+
   @Override
   public String toString() {
     return MessageFormat.format(

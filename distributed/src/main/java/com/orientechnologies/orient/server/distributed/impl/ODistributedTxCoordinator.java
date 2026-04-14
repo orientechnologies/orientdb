@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
+import com.orientechnologies.orient.distributed.context.retryable.ORetryInfo;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
@@ -55,7 +56,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
-import java.util.Random;
 import java.util.Set;
 
 public class ODistributedTxCoordinator {
@@ -88,7 +88,7 @@ public class ODistributedTxCoordinator {
   }
 
   public void commit(final ODatabaseDocumentDistributed database, final OTransactionInternal iTx) {
-    int count = 0;
+    var retry = new ORetryInfo(maxRetries, retryDelay);
     do {
       final ODistributedRequestId requestId = dManager.nextRequestId();
       localDistributedDatabase.startOperation();
@@ -99,10 +99,15 @@ public class ODistributedTxCoordinator {
           tryCommit(database, iTx, txId, requestId);
           return;
         } else {
-          try {
-            Thread.sleep(new Random().nextInt(retryDelay));
-          } catch (InterruptedException e) {
-            OException.wrapException(new OInterruptedException(e.getMessage()), e);
+          var nextWait = retry.nextRetry();
+          if (nextWait.isPresent()) {
+            try {
+              Thread.sleep(nextWait.get());
+            } catch (InterruptedException e) {
+              OException.wrapException(new OInterruptedException(e.getMessage()), e);
+            }
+          } else {
+            throw new ODistributedOperationException("Reached limit of retry to commit");
           }
         }
       } catch (OConcurrentCreateException
@@ -115,14 +120,16 @@ public class ODistributedTxCoordinator {
         }
 
         // Nothing just retry
-        if (count > maxRetries) {
+        var nextWait = retry.nextRetry();
+        if (nextWait.isPresent()) {
+          try {
+            Thread.sleep(nextWait.get());
+          } catch (InterruptedException e) {
+            OException.wrapException(new OInterruptedException(e.getMessage()), e);
+          }
+        } else {
           destroyContext(requestId);
           throw ex;
-        }
-        try {
-          Thread.sleep(new Random().nextInt(retryDelay));
-        } catch (InterruptedException e) {
-          OException.wrapException(new OInterruptedException(e.getMessage()), e);
         }
 
       } catch (RuntimeException | Error ex) {
@@ -131,7 +138,6 @@ public class ODistributedTxCoordinator {
       } finally {
         localDistributedDatabase.endOperation();
       }
-      count++;
     } while (true);
   }
 
