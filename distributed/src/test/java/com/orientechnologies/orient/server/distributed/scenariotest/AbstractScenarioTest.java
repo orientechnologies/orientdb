@@ -24,11 +24,9 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.server.distributed.AbstractServerClusterInsertTest;
-import com.orientechnologies.orient.server.distributed.impl.ODistributedStorageEventListener;
 import com.orientechnologies.orient.setup.ServerRun;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -723,52 +721,5 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
 
       return null;
     }
-  }
-
-  class AfterRecordLockDelayer implements ODistributedStorageEventListener {
-
-    private String serverName;
-    private long delay;
-
-    public AfterRecordLockDelayer(String serverName, long delay) {
-      this.serverName = serverName;
-      this.delay = delay;
-      logger.info(
-          "Thread [%s-%d] delayer created with " + delay + "ms of delay",
-          serverName,
-          Thread.currentThread().getId());
-    }
-
-    public AfterRecordLockDelayer(String serverName) {
-      this.serverName = serverName;
-      this.delay = DOCUMENT_WRITE_TIMEOUT;
-      logger.info(
-          "Thread [%s-%d] delayer created with " + delay + "ms of delay",
-          serverName,
-          Thread.currentThread().getId());
-    }
-
-    @Override
-    public void onAfterRecordLock(ORecordId rid) {
-      if (delay > 0)
-        try {
-          logger.info(
-              "Thread [%s-%d] waiting for %dms with locked record [%s]",
-              serverName, Thread.currentThread().getId(), delay, rid.toString());
-          Thread.sleep(delay);
-
-          logger.info(
-              "Thread [%s-%d] finished waiting for %dms with locked record [%s]",
-              serverName, Thread.currentThread().getId(), delay, rid.toString());
-
-          // RESET THE DELAY FOR FURTHER TIMES
-          delay = 0;
-
-        } catch (InterruptedException e) {
-        }
-    }
-
-    @Override
-    public void onAfterRecordUnlock(ORecordId rid) {}
   }
 }
