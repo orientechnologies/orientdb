@@ -1742,6 +1742,9 @@ public class OrientDBDistributed extends OrientDBEmbedded
   @Override
   public void gracefulWaitFullStartup() throws InterruptedException {
     long waitTime = getLongConfig(OGlobalConfiguration.DISTRIBUTED_DATABASE_ONLINE_GRACE_PERIOD);
-    this.nodeState.getOps().waitForEnstablish(Optional.of(waitTime));
+    // TODO: actually wait for node state to be online
+    if (nodeState != null) {
+      this.nodeState.getOps().waitForEnstablish(Optional.of(waitTime));
+    }
   }
 }
