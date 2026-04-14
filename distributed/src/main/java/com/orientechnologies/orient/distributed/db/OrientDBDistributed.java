@@ -407,7 +407,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
     } catch (OModificationOperationProhibitedException e) {
       throw e;
     } catch (Exception e) {
-      logger.warn("failed  non blocking sync of database %s", name, e);
+      logger.warn("failed non blocking sync of database %s", e, name);
       synchronized (this) {
         dbCount.decrementAndGet();
         if (storage != null) {
