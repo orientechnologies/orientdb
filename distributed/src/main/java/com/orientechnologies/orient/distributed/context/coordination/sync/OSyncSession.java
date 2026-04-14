@@ -3,7 +3,6 @@ package com.orientechnologies.orient.distributed.context.coordination.sync;
 import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
-import com.orientechnologies.orient.distributed.db.OSyncMode;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;

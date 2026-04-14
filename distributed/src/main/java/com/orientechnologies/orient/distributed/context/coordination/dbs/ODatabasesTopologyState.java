@@ -14,8 +14,8 @@ import com.orientechnologies.orient.distributed.context.coordination.result.ODat
 import com.orientechnologies.orient.distributed.context.coordination.result.ODatabaseNameUsed;
 import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncId;
 import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncInfo;
+import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncMode;
 import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncState;
-import com.orientechnologies.orient.distributed.db.OSyncMode;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;

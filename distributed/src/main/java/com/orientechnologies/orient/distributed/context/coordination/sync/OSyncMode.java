@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.distributed.db;
+package com.orientechnologies.orient.distributed.context.coordination.sync;
 
 import java.io.DataInput;
 import java.io.DataOutput;

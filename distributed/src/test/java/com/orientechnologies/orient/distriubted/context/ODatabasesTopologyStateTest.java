@@ -20,8 +20,8 @@ import com.orientechnologies.orient.distributed.context.coordination.result.OAlr
 import com.orientechnologies.orient.distributed.context.coordination.result.ONodeAlreadyPresent;
 import com.orientechnologies.orient.distributed.context.coordination.result.OOutdatedVersion;
 import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncInfo;
+import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncMode;
 import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncState;
-import com.orientechnologies.orient.distributed.db.OSyncMode;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;

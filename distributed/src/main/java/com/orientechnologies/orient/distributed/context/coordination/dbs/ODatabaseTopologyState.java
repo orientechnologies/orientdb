@@ -15,9 +15,9 @@ import com.orientechnologies.orient.distributed.context.coordination.result.OMis
 import com.orientechnologies.orient.distributed.context.coordination.result.ONodeAlreadyPresent;
 import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncId;
 import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncInfo;
+import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncMode;
 import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncSession;
 import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncState;
-import com.orientechnologies.orient.distributed.db.OSyncMode;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;

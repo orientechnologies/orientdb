@@ -18,7 +18,7 @@ public class OWatcher {
 
   protected record ONotificationActionData(WaitCond cond, ONotificationAction action) {}
 
-  /** Wait for a condition, it returns true if the condition is matched false 
+  /** Wait for a condition, it returns true if the condition is matched false
    *  in case of timeout.
    * @param timeout
    * @param cond
