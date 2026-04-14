@@ -1221,7 +1221,7 @@ public enum OGlobalConfiguration { // ENVIRONMENT
       "Delay (in ms) between attempts on executing a distributed transaction, which had failed"
           + " because of locked records. (0=no delay)",
       Integer.class,
-      1000,
+      10,
       true),
 
   DISTRIBUTED_TRANSACTION_SEQUENCE_SET_SIZE(
