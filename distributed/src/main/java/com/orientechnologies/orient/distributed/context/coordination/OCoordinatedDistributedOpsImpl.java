@@ -816,6 +816,7 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
         var members = new ArrayList<>(db.members());
         for (ONodeId node : allNetwork) {
           if (db.members().stream().noneMatch((x) -> x.node().equals(node))) {
+            // TODO: define the role from a configuration
             members.add(new ODatabaseMemberNetwork(node, ONodeRole.Main, ODatabaseState.Offline));
           }
         }

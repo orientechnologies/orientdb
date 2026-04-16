@@ -343,8 +343,7 @@ public class ODatabaseTopologyState extends OWatcher {
   }
 
   public synchronized boolean shouldSink(ONodeId nodeID) {
-    if (ODatabaseState.NotAvailable.equals(getState(nodeID))
-        || ODatabaseState.Offline.equals(getState(nodeID))) {
+    if (ODatabaseState.Offline.equals(getState(nodeID))) {
       for (var state : this.nodeStatus.values()) {
         if (ODatabaseState.Online.equals(state.getState())) {
           return true;

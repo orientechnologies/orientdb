@@ -1081,16 +1081,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
       Set<OAddNodeInfo> partecipants,
       int minimumQuorum) {
     getNodeState().getOps().declareDatabase(promise, dbId, database, partecipants, minimumQuorum);
-    getNodeState()
-        .getOps()
-        .executeOnOneOnline(
-            dbId,
-            () -> {
-              if (!ODatabaseState.Online.equals(
-                  getNodeState().getDatabaseTopology().getState(dbId, getNodeId()))) {
-                execute(() -> sync(dbId, Optional.empty()));
-              }
-            });
+    getNodeState().getOps().executeOnOneOnline(dbId, () -> syncIfNeeded(dbId));
   }
 
   private Optional<Future<Boolean>> sync(
