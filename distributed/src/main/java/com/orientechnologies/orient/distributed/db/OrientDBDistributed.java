@@ -222,9 +222,8 @@ public class OrientDBDistributed extends OrientDBEmbedded
 
   @Override
   public void onStateChange(ODatabaseId dbId, ONodeId nodeId, ODatabaseState state) {
-    if (getNodeState().getDatabaseTopology().shouldSink(dbId, getNodeId())) {
-      execute(() -> syncIfNeeded(dbId));
-    }
+    autoDeployIfNeed();
+    syncIfNeeded(dbId);
     dumpNodeInfo();
   }
 
@@ -235,6 +234,15 @@ public class OrientDBDistributed extends OrientDBEmbedded
   private void syncIfNeeded(ODatabaseId dbId) {
     if (getNodeState().getDatabaseTopology().shouldSink(dbId, getNodeId())) {
       sync(dbId, Optional.empty());
+    }
+  }
+
+  private void syncIfNeededAll() {
+    var dbp = getNodeState().getDatabaseTopology();
+    for (var dbId : dbp.getDatabases()) {
+      if (dbp.shouldSink(dbId, getNodeId())) {
+        sync(dbId, Optional.empty());
+      }
     }
   }
 
@@ -1022,11 +1030,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   public void retryOperation(OOperationMessage operation, OCompleteAction action, int delay) {
-    delayExecute(
-        () -> {
-          sendOperation(operation, action);
-        },
-        delay);
+    delayExecute(() -> sendOperation(operation, action), delay);
   }
 
   public void coordinatedOperation(OOperationMessage operation, OCompleteExecution execution) {
@@ -1736,6 +1740,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
   public void mergeNode(
       ONodeId node, ONodeStateNetwork state, OVersion version, OTransactionIdPromise promise) {
     getNodeState().getOps().mergeNode(node, state, version, promise);
+    syncIfNeededAll();
     dumpNodeInfo();
   }
 

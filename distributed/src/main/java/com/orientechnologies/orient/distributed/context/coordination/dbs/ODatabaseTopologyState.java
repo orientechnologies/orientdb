@@ -124,10 +124,6 @@ public class ODatabaseTopologyState extends OWatcher {
     this.versionPromise.cancel(promise);
   }
 
-  public synchronized void executeOnOneOnline() throws InterruptedException {
-    executeOn(this::isOneOnline, () -> {});
-  }
-
   public synchronized boolean waitOnlineQuorum(Optional<Long> timeout) throws InterruptedException {
     return waitFor(timeout, this::isQuorumOnline);
   }

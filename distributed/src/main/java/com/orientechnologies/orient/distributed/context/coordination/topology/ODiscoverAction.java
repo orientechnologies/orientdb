@@ -80,19 +80,13 @@ public sealed interface ODiscoverAction
 
     @Override
     public void execute(
-        OrientDBDistributed context, ONodeStateNetwork state, OCompleteExecution execution) {
-      context.autoDeployIfNeed();
-      context.dumpNodeInfo();
-    }
+        OrientDBDistributed context, ONodeStateNetwork state, OCompleteExecution execution) {}
   }
 
   record OApplySequenceAction() implements ODiscoverAction {
 
     @Override
     public void execute(
-        OrientDBDistributed context, ONodeStateNetwork state, OCompleteExecution execution) {
-      context.autoDeployIfNeed();
-      context.dumpNodeInfo();
-    }
+        OrientDBDistributed context, ONodeStateNetwork state, OCompleteExecution execution) {}
   }
 }
