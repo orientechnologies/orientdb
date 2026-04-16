@@ -413,7 +413,11 @@ public class OrientDBDistributed extends OrientDBEmbedded
       synchronized (this) {
         dbCount.decrementAndGet();
         if (storage != null) {
-          storage.delete();
+          try {
+            storage.delete();
+          } catch (Exception ed) {
+            logger.warn("Error while deleting storage %s on failed sync ", ed, name);
+          }
         }
         OLocalPaginatedStorage.deleteFilesFromDisc(
             name,
@@ -465,8 +469,18 @@ public class OrientDBDistributed extends OrientDBEmbedded
       throw e;
     } catch (Exception e) {
       if (storage != null) {
-        storage.delete();
+        try {
+          storage.delete();
+        } catch (Exception ed) {
+          logger.warn("Error while deleting storage %s on failed sync ", ed, dbName);
+        }
       }
+      OContextConfiguration cc = getConfigurations().getConfigurations();
+      OLocalPaginatedStorage.deleteFilesFromDisc(
+          dbName,
+          cc.getValueAsInteger(FILE_DELETE_RETRY),
+          cc.getValueAsInteger(FILE_DELETE_DELAY),
+          dbName);
       storages.remove(dbName);
 
       throw OException.wrapException(
