@@ -956,4 +956,19 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   public boolean waitForEnstablish(Optional<Long> timeout) throws InterruptedException {
     return this.topology.waitForEnstablished(timeout);
   }
+
+  public Optional<OAcceptResult> validateSetDatabaseQuorum(
+      ODatabaseId db, int quorum, OVersion version, OTransactionIdPromise promise) {
+    return this.databaseTopology.validateSetDatabaseQuorum(db, quorum, version, promise);
+  }
+
+  public void setDatabaseQuorum(
+      ODatabaseId db, int quorum, OVersion version, OTransactionIdPromise promise) {
+    this.databaseTopology.setDatabaseQuorum(db, quorum, version, promise);
+  }
+
+  public void cancelSetDatabaseQuorum(
+      ODatabaseId db, int quorum, OVersion version, OTransactionIdPromise promise) {
+    this.databaseTopology.cancelSetDatabaseQuorum(db, quorum, version, promise);
+  }
 }

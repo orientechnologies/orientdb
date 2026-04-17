@@ -31,6 +31,8 @@ public interface OAcceptResult {
       case 12 -> ODisconnectedNode.fromNetwork(input);
       case 13 -> ODatabaseSynching.fromNetwork(input);
       case 14 -> OCannotMerge.fromNetwork(input);
+      case 15 -> OQuormuTooSmall.fromNetwork(input);
+      case 16 -> OQuormuTooBig.fromNetwork(input);
       default -> throw new ODistributedException("wrong accept result message type from network");
     };
   }

@@ -83,6 +83,7 @@ import com.orientechnologies.orient.distributed.context.retryable.ORemoveMemberR
 import com.orientechnologies.orient.distributed.context.retryable.ORetryInfo;
 import com.orientechnologies.orient.distributed.context.retryable.ORetryOperation;
 import com.orientechnologies.orient.distributed.context.retryable.OSetDatabaseNodeRoleRetryOperation;
+import com.orientechnologies.orient.distributed.context.retryable.OSetDatabaseQuorumRetryOperation;
 import com.orientechnologies.orient.distributed.context.retryable.OSetDatabaseStateRetryOperation;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerAware;
@@ -1744,9 +1745,13 @@ public class OrientDBDistributed extends OrientDBEmbedded
     dumpNodeInfo();
   }
 
-  public void setDatabaseNodeRole(ODatabaseId datbaseId, String serverName, String role) {
+  public void setDatabaseNodeRole(ODatabaseId databaseId, String serverName, String role) {
     var r = ONodeRole.fromString(role);
-    retryOperation(new OSetDatabaseNodeRoleRetryOperation(datbaseId, new ONodeId(serverName), r));
+    retryOperation(new OSetDatabaseNodeRoleRetryOperation(databaseId, new ONodeId(serverName), r));
+  }
+
+  public void setDatabaseQuorum(ODatabaseId databaseId, int newQuorum) {
+    retryOperation(new OSetDatabaseQuorumRetryOperation(databaseId, newQuorum));
   }
 
   @Override

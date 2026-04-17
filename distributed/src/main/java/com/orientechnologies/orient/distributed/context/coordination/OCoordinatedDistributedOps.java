@@ -262,4 +262,13 @@ public interface OCoordinatedDistributedOps {
   void dbRemovedFromDiskWhenOffline(ODatabaseId db);
 
   boolean waitForEnstablish(Optional<Long> timeout) throws InterruptedException;
+
+  Optional<OAcceptResult> validateSetDatabaseQuorum(
+      ODatabaseId db, int quorum, OVersion version, OTransactionIdPromise promise);
+
+  void setDatabaseQuorum(
+      ODatabaseId db, int quorum, OVersion version, OTransactionIdPromise promise);
+
+  void cancelSetDatabaseQuorum(
+      ODatabaseId db, int quorum, OVersion version, OTransactionIdPromise promise);
 }

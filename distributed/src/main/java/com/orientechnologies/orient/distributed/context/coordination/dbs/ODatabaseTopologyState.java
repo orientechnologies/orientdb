@@ -13,6 +13,8 @@ import com.orientechnologies.orient.distributed.context.coordination.result.OAcc
 import com.orientechnologies.orient.distributed.context.coordination.result.ODatabaseSynching;
 import com.orientechnologies.orient.distributed.context.coordination.result.OMissingNode;
 import com.orientechnologies.orient.distributed.context.coordination.result.ONodeAlreadyPresent;
+import com.orientechnologies.orient.distributed.context.coordination.result.OQuormuTooBig;
+import com.orientechnologies.orient.distributed.context.coordination.result.OQuormuTooSmall;
 import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncId;
 import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncInfo;
 import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncMode;
@@ -449,6 +451,26 @@ public class ODatabaseTopologyState extends OWatcher {
     for (ONodeDatabaseState state : this.nodeStatus.values()) {
       this.stateListener.onStateChange(id, state.getId(), state.getState());
     }
+  }
+
+  public synchronized Optional<OAcceptResult> validateSetQurum(
+      int newQuorum, OVersion version, OTransactionIdPromise promise) {
+    if (newQuorum < nodeStatus.size() / 2) {
+      return Optional.of(new OQuormuTooSmall());
+    } else if (newQuorum > nodeStatus.size()) {
+      return Optional.of(new OQuormuTooBig());
+    }
+    return this.versionPromise.promise(promise, version);
+  }
+
+  public synchronized void setQuorum(
+      int newQuorum, OVersion version, OTransactionIdPromise promise) {
+    this.quorum = newQuorum;
+    this.versionPromise.accept(promise, version);
+  }
+
+  public synchronized void cancelQuorum(OVersion version, OTransactionIdPromise promise) {
+    this.versionPromise.cancel(promise);
   }
 
   public Set<ONodeId> getMembers() {

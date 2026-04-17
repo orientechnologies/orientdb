@@ -620,4 +620,30 @@ public class ODatabasesTopologyState extends OWatcher implements ODatabasesTopol
     }
     return Set.of();
   }
+
+  public Optional<OAcceptResult> validateSetDatabaseQuorum(
+      ODatabaseId db, int quorum, OVersion version, OTransactionIdPromise promise) {
+    ODatabaseTopologyState dbTopology = getDb(db);
+    if (dbTopology != null) {
+      return dbTopology.validateSetQurum(quorum, version, promise);
+    } else {
+      return Optional.of(new ODatabaseMissing(db));
+    }
+  }
+
+  public void setDatabaseQuorum(
+      ODatabaseId db, int quorum, OVersion version, OTransactionIdPromise promise) {
+    ODatabaseTopologyState dbTopology = getDb(db);
+    if (dbTopology != null) {
+      dbTopology.setQuorum(quorum, version, promise);
+    }
+  }
+
+  public void cancelSetDatabaseQuorum(
+      ODatabaseId db, int quorum, OVersion version, OTransactionIdPromise promise) {
+    ODatabaseTopologyState dbTopology = getDb(db);
+    if (dbTopology != null) {
+      dbTopology.cancelQuorum(version, promise);
+    }
+  }
 }
