@@ -275,7 +275,23 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
       }
       case ALREADY_PROMISED -> {
         // Fail for promised to someone else
-        yield Optional.empty();
+        var notPromised = this.promised.getNotPromised(promise);
+        if (notPromised != null) {
+          var promisedPromise = this.sequenceManager.promised(promise.getId().getPosition());
+          if (promisedPromise != null) {
+            // All the times not null isn't
+            this.promised.removePromised(promisedPromise);
+          }
+          sequenceManager.notifyFailure(promisedPromise);
+          // TODO this may not be valid all the times need to revalidate ....
+          var validation = sequenceManager.validate(promise);
+          var confirm = sequenceManager.notifyFailure(promise);
+          this.promised.removeNotPromised(promise);
+
+          yield Optional.of(notPromised);
+        } else {
+          yield Optional.empty();
+        }
       }
       case MISSING_PREVIOUS -> {
         // wait for previous one
