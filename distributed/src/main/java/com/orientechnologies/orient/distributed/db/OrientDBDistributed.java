@@ -1750,8 +1750,8 @@ public class OrientDBDistributed extends OrientDBEmbedded
     retryOperation(new OSetDatabaseNodeRoleRetryOperation(databaseId, new ONodeId(serverName), r));
   }
 
-  public void setDatabaseQuorum(ODatabaseId databaseId, int newQuorum) {
-    retryOperation(new OSetDatabaseQuorumRetryOperation(databaseId, newQuorum));
+  public Future<Optional<OAcceptResult>> setDatabaseQuorum(ODatabaseId databaseId, int newQuorum) {
+    return retryOperation(new OSetDatabaseQuorumRetryOperation(databaseId, newQuorum));
   }
 
   @Override

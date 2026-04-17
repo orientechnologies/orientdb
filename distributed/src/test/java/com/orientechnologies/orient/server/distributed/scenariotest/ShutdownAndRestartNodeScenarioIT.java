@@ -27,8 +27,8 @@ import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
-import com.orientechnologies.orient.server.distributed.impl.ODistributedPlugin;
+import com.orientechnologies.orient.core.transaction.ODatabaseId;
+import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.setup.ServerRun;
 import java.util.LinkedList;
 import java.util.List;
@@ -228,14 +228,11 @@ public class ShutdownAndRestartNodeScenarioIT extends AbstractScenarioTest {
 
         ODocument cfg = null;
         ServerRun server = serverInstance.get(0);
-        ODistributedPlugin manager =
-            (ODistributedPlugin) server.getServerInstance().getDistributedManager();
-        OModifiableDistributedConfiguration databaseConfiguration =
-            manager.getDatabaseConfiguration(getDatabaseName()).modify();
-        cfg = databaseConfiguration.getDocument();
-        cfg.field("writeQuorum", 3);
-        cfg.field("version", (Integer) cfg.field("version") + 1);
-        manager.updateCachedDatabaseConfiguration(getDatabaseName(), databaseConfiguration);
+
+        OrientDBDistributed ctx = (OrientDBDistributed) server.getServerInstance().getDatabases();
+        ODatabaseId databaseId =
+            ctx.getNodeState().getDatabaseTopology().getDatabaseId(getDatabaseName()).get();
+        ctx.setDatabaseQuorum(databaseId, 3);
 
         System.out.println("\nConfiguration updated.");
 

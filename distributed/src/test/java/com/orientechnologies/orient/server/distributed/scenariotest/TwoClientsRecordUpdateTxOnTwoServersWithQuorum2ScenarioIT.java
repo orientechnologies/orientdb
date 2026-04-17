@@ -20,12 +20,14 @@ import static org.junit.Assert.assertEquals;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
-import com.orientechnologies.orient.server.distributed.impl.ODistributedPlugin;
+import com.orientechnologies.orient.core.transaction.ODatabaseId;
+import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
+import com.orientechnologies.orient.setup.ServerRun;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import org.junit.Ignore;
@@ -123,13 +125,15 @@ public class TwoClientsRecordUpdateTxOnTwoServersWithQuorum2ScenarioIT
   }
 
   private void setWriteQuorum(int quorum) throws InterruptedException {
-    ODistributedPlugin manager =
-        (ODistributedPlugin) serverInstance.get(0).getServerInstance().getDistributedManager();
-    OModifiableDistributedConfiguration databaseConfiguration =
-        manager.getDatabaseConfiguration(getDatabaseName()).modify();
-    ODocument cfg = databaseConfiguration.getDocument();
-    cfg.field("writeQuorum", quorum);
-    manager.updateCachedDatabaseConfiguration(getDatabaseName(), databaseConfiguration);
-    Thread.sleep(100);
+    ServerRun server = serverInstance.get(0);
+
+    OrientDBDistributed ctx = (OrientDBDistributed) server.getServerInstance().getDatabases();
+    ODatabaseId databaseId =
+        ctx.getNodeState().getDatabaseTopology().getDatabaseId(getDatabaseName()).get();
+    try {
+      ctx.setDatabaseQuorum(databaseId, quorum).get();
+    } catch (ExecutionException e) {
+      throw new RuntimeException(e);
+    }
   }
 }

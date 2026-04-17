@@ -26,6 +26,9 @@ import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.transaction.ODatabaseId;
+import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
+import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedPlugin;
 import com.orientechnologies.orient.setup.ServerRun;
@@ -132,15 +135,11 @@ public class IncrementalRestartScenarioIT extends AbstractScenarioTest {
         banner("Test with quorum = 2");
 
         // checking distributed configuration
-        ODistributedPlugin manager =
-            (ODistributedPlugin) serverInstance.get(0).getServerInstance().getDistributedManager();
-        OModifiableDistributedConfiguration databaseConfiguration =
-            manager.getDatabaseConfiguration(getDatabaseName()).modify();
-        ODocument cfg = databaseConfiguration.getDocument();
-        cfg.field("writeQuorum", 2);
-        cfg.field("version", (Integer) cfg.field("version") + 1);
-        manager.updateCachedDatabaseConfiguration(getDatabaseName(), databaseConfiguration);
-        assertEquals(2, (int) cfg.field("writeQuorum"));
+        OServer server = serverInstance.get(0).getServerInstance();
+        OrientDBDistributed ctx = (OrientDBDistributed) server.getDatabases();
+        ODatabaseId databaseId =
+            ctx.getNodeState().getDatabaseTopology().getDatabaseId(getDatabaseName()).get();
+        ctx.setDatabaseQuorum(databaseId, 2);
 
         // network fault on server2
         System.out.println("Network fault on server2.\n");

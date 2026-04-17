@@ -23,8 +23,8 @@ import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
-import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
-import com.orientechnologies.orient.server.distributed.impl.ODistributedPlugin;
+import com.orientechnologies.orient.core.transaction.ODatabaseId;
+import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.setup.ServerRun;
 import java.util.ArrayList;
 import java.util.List;
@@ -69,17 +69,11 @@ public class IsolatedNodeRejoinScenarioIT extends AbstractScenarioTest {
 
     System.out.print("\nChanging configuration (writeQuorum=2, autoDeploy=false)...");
 
-    ODocument cfg = null;
     ServerRun server = serverInstance.get(2);
-    ODistributedPlugin manager =
-        (ODistributedPlugin) server.getServerInstance().getDistributedManager();
-    OModifiableDistributedConfiguration databaseConfiguration =
-        manager.getDatabaseConfiguration(getDatabaseName()).modify();
-    cfg = databaseConfiguration.getDocument();
-    cfg.field("writeQuorum", 2);
-    cfg.field("autoDeploy", true);
-    cfg.field("version", (Integer) cfg.field("version") + 1);
-    manager.updateCachedDatabaseConfiguration(getDatabaseName(), databaseConfiguration);
+    OrientDBDistributed ctx = (OrientDBDistributed) server.getServerInstance().getDatabases();
+    ODatabaseId databaseId =
+        ctx.getNodeState().getDatabaseTopology().getDatabaseId(getDatabaseName()).get();
+    ctx.setDatabaseQuorum(databaseId, 2);
     System.out.println("\nConfiguration updated.");
 
     // isolating server3

@@ -22,8 +22,8 @@ import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
-import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
-import com.orientechnologies.orient.server.distributed.impl.ODistributedPlugin;
+import com.orientechnologies.orient.core.transaction.ODatabaseId;
+import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.setup.ServerRun;
 import java.util.ArrayList;
 import java.util.List;
@@ -66,18 +66,11 @@ public class Quorum1ScenarioIT extends AbstractScenarioTest {
 
     System.out.print("\nChanging configuration (writeQuorum=1, autoDeploy=false)...");
 
-    ODocument cfg = null;
     ServerRun server = serverInstance.get(0);
-    ODistributedPlugin manager =
-        (ODistributedPlugin) server.getServerInstance().getDistributedManager();
-    OModifiableDistributedConfiguration databaseConfiguration =
-        manager.getDatabaseConfiguration(getDatabaseName()).modify();
-    cfg = databaseConfiguration.getDocument();
-    cfg.field("writeQuorum", 1);
-    cfg.field("autoDeploy", true);
-    cfg.field("version", (Integer) cfg.field("version") + 1);
-    manager.updateCachedDatabaseConfiguration(getDatabaseName(), databaseConfiguration);
-    System.out.println("\nConfiguration updated.");
+    OrientDBDistributed ctx = (OrientDBDistributed) server.getServerInstance().getDatabases();
+    ODatabaseId databaseId =
+        ctx.getNodeState().getDatabaseTopology().getDatabaseId(getDatabaseName()).get();
+    ctx.setDatabaseQuorum(databaseId, 1);
 
     // execute writes on server1 and server2
     executeMultipleWrites(super.executeTestsOnServers, "plocal");

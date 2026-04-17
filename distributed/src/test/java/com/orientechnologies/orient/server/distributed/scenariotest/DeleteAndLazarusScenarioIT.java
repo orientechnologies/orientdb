@@ -25,9 +25,6 @@ import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
-import com.orientechnologies.orient.server.distributed.impl.ODistributedPlugin;
-import com.orientechnologies.orient.setup.ServerRun;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -72,14 +69,6 @@ public class DeleteAndLazarusScenarioIT extends AbstractScenarioTest {
 
     // changing configuration: readQuorum=2, autoDeploy=false
     System.out.print("\nChanging configuration (autoDeploy=false)...");
-
-    ODocument cfg = null;
-    ServerRun server = serverInstance.get(2);
-    ODistributedPlugin manager =
-        (ODistributedPlugin) server.getServerInstance().getDistributedManager();
-    ODistributedConfiguration databaseConfiguration =
-        manager.getDatabaseConfiguration(getDatabaseName());
-    cfg = databaseConfiguration.getDocument();
 
     System.out.println("\nConfiguration updated.");
 
