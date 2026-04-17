@@ -85,6 +85,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.binary.
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.transaction.ODatabaseId;
+import com.orientechnologies.orient.core.transaction.ONodeId;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -796,5 +797,10 @@ public class OrientDBRemote implements OrientDBInternal {
   @Override
   public String getConnectionUrl() {
     return "remote:" + String.join(ORemoteClient.ADDRESS_SEPARATOR, this.urls.getUrls());
+  }
+
+  @Override
+  public ONodeId getNodeId() {
+    return new ONodeId("$$remote_unknown_id");
   }
 }

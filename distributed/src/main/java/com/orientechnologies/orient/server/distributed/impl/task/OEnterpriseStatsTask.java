@@ -26,7 +26,6 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 
 /**
@@ -43,7 +42,6 @@ public class OEnterpriseStatsTask extends OAbstractRemoteTask {
   public Object execute(
       final ODistributedRequestId msgId,
       final OServer iServer,
-      ODistributedServerManager iManager,
       final ODatabaseDocumentInternal database)
       throws Exception {
     if (Orient.instance().getProfiler().getStatsAsJson() != null) {

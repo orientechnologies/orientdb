@@ -763,9 +763,8 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
       final ODistributedRequestId reqId,
       final ORemoteTask task,
       final ODatabaseDocumentInternal database) {
-    final ODistributedPlugin manager = this;
     try {
-      final Object result = task.execute(reqId, serverInstance, manager, database);
+      final Object result = task.execute(reqId, serverInstance, database);
 
       if (result instanceof Throwable && !(result instanceof OException))
         // EXCEPTION

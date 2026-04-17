@@ -30,6 +30,7 @@ import com.orientechnologies.orient.core.security.OSecuritySystem;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.transaction.ODatabaseId;
+import com.orientechnologies.orient.core.transaction.ONodeId;
 import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
@@ -411,4 +412,6 @@ public interface OrientDBInternal extends AutoCloseable, OSchedulerInternal {
   default void waitOnline(String database) throws InterruptedException {}
 
   default void gracefulWaitFullStartup() throws InterruptedException {}
+
+  ONodeId getNodeId();
 }

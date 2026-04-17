@@ -7,7 +7,6 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import java.io.ByteArrayInputStream;
@@ -58,14 +57,11 @@ public class NodeOperationTask implements ORemoteTask {
 
   @Override
   public Object execute(
-      ODistributedRequestId requestId,
-      OServer iServer,
-      ODistributedServerManager iManager,
-      ODatabaseDocumentInternal database)
+      ODistributedRequestId requestId, OServer iServer, ODatabaseDocumentInternal database)
       throws Exception {
 
     if (task != null) {
-      return new NodeOperationTaskResponse(task.getMessageId(), task.execute(iServer, iManager));
+      return new NodeOperationTaskResponse(task.getMessageId(), task.execute(iServer));
     } else {
       return new NodeOperationTaskResponse(
           0,
@@ -73,7 +69,7 @@ public class NodeOperationTask implements ORemoteTask {
               404,
               String.format(
                   "Handler not found for message with id %d in server %s",
-                  messageId, iManager.getLocalNodeName())));
+                  messageId, iServer.getNodeId().getNode())));
     }
   }
 

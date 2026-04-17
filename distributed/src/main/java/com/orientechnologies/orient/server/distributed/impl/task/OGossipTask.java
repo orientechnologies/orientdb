@@ -24,7 +24,6 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import java.io.DataInput;
@@ -54,7 +53,6 @@ public class OGossipTask extends OAbstractRemoteTask {
   public Object execute(
       final ODistributedRequestId msgId,
       final OServer iServer,
-      ODistributedServerManager iManager,
       final ODatabaseDocumentInternal database)
       throws Exception {
     // RETURN LOCAL TIME

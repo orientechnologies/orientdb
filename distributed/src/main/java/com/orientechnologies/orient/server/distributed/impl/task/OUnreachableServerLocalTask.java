@@ -25,7 +25,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 
 /**
@@ -49,12 +49,11 @@ public class OUnreachableServerLocalTask extends OAbstractRemoteTask {
   public Object execute(
       final ODistributedRequestId msgId,
       final OServer iServer,
-      ODistributedServerManager iManager,
       final ODatabaseDocumentInternal database)
       throws Exception {
 
-    final ODistributedDatabase dDatabase = iManager.getDatabase(database.getName());
-
+    final ODistributedDatabase dDatabase =
+        ((ODatabaseDocumentDistributed) database).getDistributedShared();
     dDatabase.unlockResourcesOfServer(database, unreachableServer);
 
     return Boolean.TRUE;

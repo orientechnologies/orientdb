@@ -128,7 +128,7 @@ public class OTransactionTreeRidbagsTest {
     task = passNetwork(task);
     OTransactionPhase1TaskResult res =
         (OTransactionPhase1TaskResult)
-            task.execute(requestId, server, null, (ODatabaseDocumentInternal) session);
+            task.execute(requestId, server, (ODatabaseDocumentInternal) session);
 
     assertTrue(res.getResultPayload().toString(), res.getResultPayload() instanceof OTxSuccess);
   }
@@ -176,10 +176,10 @@ public class OTransactionTreeRidbagsTest {
 
     session.activateOnCurrentThread();
     secondPhase.execute(
-        new ODistributedRequestId(10, 21), server, null, (ODatabaseDocumentInternal) session);
+        new ODistributedRequestId(10, 21), server, (ODatabaseDocumentInternal) session);
     session2.activateOnCurrentThread();
     secondPhase.execute(
-        new ODistributedRequestId(10, 21), server, null, (ODatabaseDocumentInternal) session2);
+        new ODistributedRequestId(10, 21), server, (ODatabaseDocumentInternal) session2);
 
     // Applied the first transaction to two nodes
 
@@ -206,15 +206,15 @@ public class OTransactionTreeRidbagsTest {
     OTransactionPhase2Task secondPhase1 =
         new OTransactionPhase2Task(requestIdTx1, true, ids, new TreeSet<>(), task1.getPromise());
     secondPhase1.execute(
-        new ODistributedRequestId(11, 21), server, null, (ODatabaseDocumentInternal) session1);
+        new ODistributedRequestId(11, 21), server, (ODatabaseDocumentInternal) session1);
 
     session.activateOnCurrentThread();
     secondPhase1.execute(
-        new ODistributedRequestId(11, 21), server, null, (ODatabaseDocumentInternal) session);
+        new ODistributedRequestId(11, 21), server, (ODatabaseDocumentInternal) session);
 
     session2.activateOnCurrentThread();
     secondPhase1.execute(
-        new ODistributedRequestId(11, 21), server, null, (ODatabaseDocumentInternal) session2);
+        new ODistributedRequestId(11, 21), server, (ODatabaseDocumentInternal) session2);
 
     // Completed the second transaction to all nodes.
 
@@ -223,7 +223,7 @@ public class OTransactionTreeRidbagsTest {
 
     firstPhaseExecution(task, requestIdTx, session1);
     secondPhase.execute(
-        new ODistributedRequestId(10, 21), server, null, (ODatabaseDocumentInternal) session1);
+        new ODistributedRequestId(10, 21), server, (ODatabaseDocumentInternal) session1);
 
     assertContent(session);
     assertContent(session1);

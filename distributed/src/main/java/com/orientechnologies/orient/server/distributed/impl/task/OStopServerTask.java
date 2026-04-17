@@ -24,7 +24,6 @@ import com.orientechnologies.orient.core.command.OCommandDistributedReplicateReq
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 
@@ -43,11 +42,10 @@ public class OStopServerTask extends OAbstractRemoteTask {
   public Object execute(
       ODistributedRequestId requestId,
       final OServer iServer,
-      final ODistributedServerManager iManager,
       final ODatabaseDocumentInternal database)
       throws Exception {
 
-    logger.warnIn(iManager.getLocalNodeName(), getNodeSource(), "Stopping current server...");
+    logger.warnIn(iServer.getNodeId().getNode(), getNodeSource(), "Stopping current server...");
 
     Orient.instance()
         .scheduleTask(
@@ -58,7 +56,7 @@ public class OStopServerTask extends OAbstractRemoteTask {
                   iServer.shutdown();
                 } catch (Exception e) {
                   logger.errorIn(
-                      iManager.getLocalNodeName(),
+                      iServer.getNodeId().getNode(),
                       getNodeSource(),
                       "Error on stopping current server",
                       e);

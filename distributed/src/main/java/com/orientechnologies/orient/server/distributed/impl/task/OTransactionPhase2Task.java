@@ -17,7 +17,6 @@ import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTransactionUniqueKey;
@@ -125,10 +124,7 @@ public class OTransactionPhase2Task extends OAbstractRemoteTask implements OLock
 
   @Override
   public Object execute(
-      ODistributedRequestId requestId,
-      OServer iServer,
-      ODistributedServerManager iManager,
-      ODatabaseDocumentInternal database)
+      ODistributedRequestId requestId, OServer iServer, ODatabaseDocumentInternal database)
       throws Exception {
     if (success) {
       if (!((ODatabaseDocumentDistributed) database).commit2pc(firstPhaseId, false, requestId)) {

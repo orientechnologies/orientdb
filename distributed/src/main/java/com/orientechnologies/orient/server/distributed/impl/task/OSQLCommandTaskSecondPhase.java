@@ -4,7 +4,6 @@ import com.orientechnologies.orient.core.command.OCommandDistributedReplicateReq
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
@@ -38,10 +37,7 @@ public class OSQLCommandTaskSecondPhase extends OAbstractRemoteTask {
 
   @Override
   public Object execute(
-      ODistributedRequestId requestId,
-      OServer iServer,
-      ODistributedServerManager iManager,
-      ODatabaseDocumentInternal database)
+      ODistributedRequestId requestId, OServer iServer, ODatabaseDocumentInternal database)
       throws Exception {
     ((ODatabaseDocumentDistributed) database).secondPhaseDDL(this.confirmSentRequest, this.apply);
     return null;

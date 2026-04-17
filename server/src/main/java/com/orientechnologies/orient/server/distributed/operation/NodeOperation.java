@@ -1,14 +1,13 @@
 package com.orientechnologies.orient.server.distributed.operation;
 
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
 public interface NodeOperation {
 
-  NodeOperationResponse execute(OServer iServer, ODistributedServerManager iManager);
+  NodeOperationResponse execute(OServer iServer);
 
   void write(DataOutput out) throws IOException;
 

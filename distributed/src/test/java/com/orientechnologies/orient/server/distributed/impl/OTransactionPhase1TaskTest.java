@@ -80,10 +80,7 @@ public class OTransactionPhase1TaskTest {
     OTransactionPhase1TaskResult res =
         (OTransactionPhase1TaskResult)
             task.execute(
-                new ODistributedRequestId(10, 20),
-                server,
-                null,
-                (ODatabaseDocumentInternal) session);
+                new ODistributedRequestId(10, 20), server, (ODatabaseDocumentInternal) session);
 
     assertTrue(res.getResultPayload() instanceof OTxSuccess);
     // TODO: verify the check of the locked record if possible
@@ -110,10 +107,7 @@ public class OTransactionPhase1TaskTest {
     OTransactionPhase1TaskResult res =
         (OTransactionPhase1TaskResult)
             task.execute(
-                new ODistributedRequestId(10, 20),
-                server,
-                null,
-                (ODatabaseDocumentInternal) session);
+                new ODistributedRequestId(10, 20), server, (ODatabaseDocumentInternal) session);
     assertTrue(res.getResultPayload() instanceof OTxConcurrentModification);
     assertEquals(
         ((OTxConcurrentModification) res.getResultPayload()).getRecordId(), old.getIdentity());
@@ -142,10 +136,7 @@ public class OTransactionPhase1TaskTest {
     OTransactionPhase1TaskResult res =
         (OTransactionPhase1TaskResult)
             task.execute(
-                new ODistributedRequestId(10, 20),
-                server,
-                null,
-                (ODatabaseDocumentInternal) session);
+                new ODistributedRequestId(10, 20), server, (ODatabaseDocumentInternal) session);
     assertTrue(res.getResultPayload() instanceof OTxConcurrentModification);
     assertEquals(
         ((OTxConcurrentModification) res.getResultPayload()).getRecordId(), old.getIdentity());
@@ -176,10 +167,7 @@ public class OTransactionPhase1TaskTest {
     OTransactionPhase1TaskResult res =
         (OTransactionPhase1TaskResult)
             task.execute(
-                new ODistributedRequestId(10, 20),
-                server,
-                null,
-                (ODatabaseDocumentInternal) session);
+                new ODistributedRequestId(10, 20), server, (ODatabaseDocumentInternal) session);
     assertTrue(res.getResultPayload() instanceof OTxUniqueIndex);
     assertEquals(((OTxUniqueIndex) res.getResultPayload()).getRecordId(), doc.getIdentity());
   }

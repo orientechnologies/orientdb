@@ -48,6 +48,7 @@ import com.orientechnologies.orient.core.metadata.security.auth.OTokenAuthInfo;
 import com.orientechnologies.orient.core.security.OInvalidPasswordException;
 import com.orientechnologies.orient.core.security.OParsedToken;
 import com.orientechnologies.orient.core.security.OSecuritySystem;
+import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
 import com.orientechnologies.orient.server.config.OServerConfigurationManager;
 import com.orientechnologies.orient.server.config.OServerEntryConfiguration;
@@ -1140,6 +1141,10 @@ public class OServer {
 
   public void restore(String name, String path) {
     databases.restore(name, null, null, null, path, OrientDBConfig.defaultConfig());
+  }
+
+  public ONodeId getNodeId() {
+    return databases.getNodeId();
   }
 
   public Date getStartedOn() {

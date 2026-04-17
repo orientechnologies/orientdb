@@ -7,7 +7,6 @@ import com.orientechnologies.orient.core.db.OSharedContextEmbedded;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import java.io.DataInput;
@@ -39,10 +38,7 @@ public class OFetchQueryPageTask extends OAbstractRemoteTask {
 
   @Override
   public Object execute(
-      ODistributedRequestId requestId,
-      OServer iServer,
-      ODistributedServerManager iManager,
-      ODatabaseDocumentInternal database)
+      ODistributedRequestId requestId, OServer iServer, ODatabaseDocumentInternal database)
       throws Exception {
 
     DistributedQueryContext ctx =

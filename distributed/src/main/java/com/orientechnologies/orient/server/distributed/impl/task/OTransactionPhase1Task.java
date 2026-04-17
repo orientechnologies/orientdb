@@ -36,7 +36,6 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseImpl;
@@ -142,10 +141,7 @@ public class OTransactionPhase1Task extends OAbstractRemoteTask implements OLock
 
   @Override
   public Object execute(
-      ODistributedRequestId requestId,
-      OServer iServer,
-      ODistributedServerManager iManager,
-      ODatabaseDocumentInternal database)
+      ODistributedRequestId requestId, OServer iServer, ODatabaseDocumentInternal database)
       throws Exception {
 
     convert(database);

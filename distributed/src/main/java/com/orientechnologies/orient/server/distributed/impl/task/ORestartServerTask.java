@@ -23,9 +23,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.distributed.NODE_STATUS;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
@@ -49,13 +47,10 @@ public class ORestartServerTask extends OAbstractRemoteTask {
   public Object execute(
       ODistributedRequestId requestId,
       final OServer iServer,
-      final ODistributedServerManager iManager,
       final ODatabaseDocumentInternal database)
       throws Exception {
 
-    logger.warnIn(iManager.getLocalNodeName(), getNodeSource(), "Restarting server...");
-
-    iManager.setNodeStatus(NODE_STATUS.OFFLINE);
+    logger.warnIn(iServer.getNodeId().getNode(), getNodeSource(), "Restarting server...");
 
     Orient.instance()
         .scheduleTask(
@@ -66,7 +61,7 @@ public class ORestartServerTask extends OAbstractRemoteTask {
                   iServer.restart();
                 } catch (Exception e) {
                   logger.errorIn(
-                      iManager.getLocalNodeName(),
+                      iServer.getNodeId().getNode(),
                       getNodeSource(),
                       "Error on restarting server",
                       e);

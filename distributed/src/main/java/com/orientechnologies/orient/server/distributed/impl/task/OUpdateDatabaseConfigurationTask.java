@@ -26,7 +26,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
@@ -57,7 +56,6 @@ public class OUpdateDatabaseConfigurationTask extends OAbstractRemoteTask {
   public Object execute(
       final ODistributedRequestId msgId,
       final OServer iServer,
-      ODistributedServerManager iManager,
       final ODatabaseDocumentInternal database)
       throws Exception {
 

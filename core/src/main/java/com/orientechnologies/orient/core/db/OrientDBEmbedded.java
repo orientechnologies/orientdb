@@ -53,6 +53,7 @@ import com.orientechnologies.orient.core.storage.OStorageEngine.RegisterResult;
 import com.orientechnologies.orient.core.storage.config.OClusterBasedStorageConfiguration;
 import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.transaction.ODatabaseId;
+import com.orientechnologies.orient.core.transaction.ONodeId;
 import java.io.File;
 import java.io.InputStream;
 import java.nio.file.Path;
@@ -1191,5 +1192,10 @@ public class OrientDBEmbedded implements OrientDBInternal {
 
   public ExecutorService getIoExecutor() {
     return ioExecutor;
+  }
+
+  @Override
+  public ONodeId getNodeId() {
+    return new ONodeId("$$unnamed");
   }
 }
