@@ -274,22 +274,24 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
         yield Optional.empty();
       }
       case ALREADY_PROMISED -> {
-        // Fail for promised to someone else
-        var notPromised = this.promised.getNotPromised(promise);
-        if (notPromised != null) {
+        // Consensus has been reached on a different message of what the current node promised,
+        // cancel the promised and try to promise e apply the message that reached consensus
+        var notPromised = this.promised.removeNotPromised(promise);
+        if (notPromised.isPresent()) {
           var promisedPromise = this.sequenceManager.promised(promise.getId().getPosition());
+          // All the times not null isn't?
           if (promisedPromise != null) {
-            // All the times not null isn't
-            this.promised.removePromised(promisedPromise);
+            consensusFailure(promisedPromise);
           }
-          sequenceManager.notifyFailure(promisedPromise);
-          // TODO this may not be valid all the times need to revalidate ....
-          var validation = sequenceManager.validate(promise);
-          var confirm = sequenceManager.notifyFailure(promise);
-          this.promised.removeNotPromised(promise);
-
-          yield Optional.of(notPromised);
+          var reReceive = receive(notPromised.get());
+          if (reReceive.isEmpty()) {
+            yield consensusSuccess(promise);
+          } else {
+            // It may happen that there is a gap in the messages
+            yield Optional.empty();
+          }
         } else {
+          // Never received the message
           yield Optional.empty();
         }
       }
