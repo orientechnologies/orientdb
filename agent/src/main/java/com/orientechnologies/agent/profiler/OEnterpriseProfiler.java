@@ -29,7 +29,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.orientechnologies.orient.server.distributed.ODistributedLifecycleListener;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.sun.management.OperatingSystemMXBean;
 import java.io.File;
 import java.io.PrintStream;
@@ -763,21 +762,6 @@ public class OEnterpriseProfiler extends OAbstractProfiler
     cpuUsage = Math.min(99F, elapsedCpu / (elapsedTime * 10000F * availableProcessors));
     return cpuUsage;
   }
-
-  @Override
-  public boolean onNodeJoining(String iNode) {
-    return true;
-  }
-
-  @Override
-  public void onNodeJoined(String iNode) {}
-
-  @Override
-  public void onNodeLeft(final String iNode) {}
-
-  @Override
-  public void onDatabaseChangeStatus(
-      String iNode, String iDatabaseName, ODistributedServerManager.DB_STATUS iNewStatus) {}
 
   private void createSnapshot() {
     final OProfilerData snapshot = lastSnapshot.getAndSet(new OProfilerData());

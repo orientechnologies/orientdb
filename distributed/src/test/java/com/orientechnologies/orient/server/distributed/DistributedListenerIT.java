@@ -55,16 +55,6 @@ public class DistributedListenerIT extends AbstractServerClusterTxTest {
         .getDistributedManager()
         .registerLifecycleListener(
             new ODistributedLifecycleListener() {
-              @Override
-              public boolean onNodeJoining(String iNode) {
-                return true;
-              }
-
-              @Override
-              public void onNodeJoined(String iNode) {}
-
-              @Override
-              public void onNodeLeft(String iNode) {}
 
               public void onDatabaseChangeStatus(
                   String iNode,

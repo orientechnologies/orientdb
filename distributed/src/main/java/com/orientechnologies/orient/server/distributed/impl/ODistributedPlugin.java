@@ -1171,50 +1171,6 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
     return listenUrl;
   }
 
-  @Override
-  public void messageReceived(ODistributedRequest request) {
-
-    for (ODistributedLifecycleListener listener : listeners) {
-      listener.onMessageReceived(request);
-    }
-  }
-
-  @Override
-  public void messageBeforeOp(String op, ODistributedRequestId request) {
-
-    for (ODistributedLifecycleListener listener : listeners) {
-      listener.onMessageBeforeOp(op, request);
-    }
-  }
-
-  @Override
-  public void messageAfterOp(String op, ODistributedRequestId request) {
-    for (ODistributedLifecycleListener listener : listeners) {
-      listener.onMessageAfterOp(op, request);
-    }
-  }
-
-  @Override
-  public void messageCurrentPayload(ODistributedRequestId requestId, Object responsePayload) {
-    for (ODistributedLifecycleListener listener : listeners) {
-      listener.onMessageCurrentPayload(requestId, responsePayload);
-    }
-  }
-
-  @Override
-  public void messageProcessStart(ODistributedRequest message) {
-    for (ODistributedLifecycleListener listener : listeners) {
-      listener.onMessageProcessStart(message);
-    }
-  }
-
-  @Override
-  public void messageProcessEnd(ODistributedRequest iRequest, Object responsePayload) {
-    for (ODistributedLifecycleListener listener : listeners) {
-      listener.onMessageProcessEnd(iRequest, responsePayload);
-    }
-  }
-
   /** Initializes all the available server's databases as distributed. */
   public void loadLocalDatabases() {
     ((OrientDBDistributed) serverInstance.getDatabases()).loadAllDatabases();

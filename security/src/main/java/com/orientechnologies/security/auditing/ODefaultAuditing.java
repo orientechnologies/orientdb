@@ -34,7 +34,6 @@ import com.orientechnologies.orient.core.security.OAuditingService;
 import com.orientechnologies.orient.core.security.OSecuritySystem;
 import com.orientechnologies.orient.server.OServerAware;
 import com.orientechnologies.orient.server.distributed.ODistributedLifecycleListener;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -301,10 +300,6 @@ public class ODefaultAuditing
   }
 
   //////
-  // ODistributedLifecycleListener
-  public boolean onNodeJoining(String iNode) {
-    return true;
-  }
 
   public void onNodeJoined(String iNode) {
     if (distribConfig != null && distribConfig.isEnabled(OAuditingOperation.NODEJOINED))
@@ -319,9 +314,6 @@ public class ODefaultAuditing
           OAuditingOperation.NODELEFT,
           distribConfig.formatMessage(OAuditingOperation.NODELEFT, iNode));
   }
-
-  public void onDatabaseChangeStatus(
-      String iNode, String iDatabaseName, ODistributedServerManager.DB_STATUS iNewStatus) {}
 
   @Deprecated
   public static String getClusterName(final String dbName) {

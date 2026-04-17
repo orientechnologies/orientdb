@@ -76,10 +76,6 @@ public class StopNodeIT extends AbstractServerClusterTxTest {
           .getDistributedManager()
           .registerLifecycleListener(
               new ODistributedLifecycleListener() {
-                @Override
-                public boolean onNodeJoining(String iNode) {
-                  return true;
-                }
 
                 @Override
                 public void onNodeJoined(String iNode) {
@@ -92,12 +88,6 @@ public class StopNodeIT extends AbstractServerClusterTxTest {
                   nodeLefts.incrementAndGet();
                   logger.info("NODE LEFT %s = %d", iNode, nodeLefts.get());
                 }
-
-                @Override
-                public void onDatabaseChangeStatus(
-                    String iNode,
-                    String iDatabaseName,
-                    ODistributedServerManager.DB_STATUS iNewStatus) {}
               });
     }
 

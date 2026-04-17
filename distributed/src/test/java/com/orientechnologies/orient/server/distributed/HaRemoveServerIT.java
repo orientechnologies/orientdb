@@ -70,16 +70,6 @@ public class HaRemoveServerIT extends AbstractServerClusterTest {
       final CountDownLatch latch = new CountDownLatch(3);
       distributedManager.registerLifecycleListener(
           new ODistributedLifecycleListener() {
-            @Override
-            public boolean onNodeJoining(String iNode) {
-              return false;
-            }
-
-            @Override
-            public void onNodeJoined(String iNode) {}
-
-            @Override
-            public void onNodeLeft(String iNode) {}
 
             @Override
             public void onDatabaseChangeStatus(

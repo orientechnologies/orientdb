@@ -600,7 +600,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         (ODistributedDatabaseImpl) getDistributedShared();
     localDistributedDatabase.resetLastValidBackup();
 
-    ODistributedServerManager manager = getDistributedManager();
     ONewDistributedTxContextImpl txContext =
         (ONewDistributedTxContextImpl) localDistributedDatabase.getTxContext(transactionId);
 
@@ -623,10 +622,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
                   transactionId));
         }
         try {
-          if (manager != null) {
-            manager.messageCurrentPayload(requestId, txContext);
-            manager.messageBeforeOp("commit", requestId);
-          }
           txContext.commit(this);
           localDistributedDatabase.popTxContext(transactionId);
           OLiveQueryHook.notifyForTxChanges(this);
@@ -641,9 +636,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           getContext().execute(this::forceRsync);
           throw e;
         } finally {
-          if (manager != null) {
-            manager.messageAfterOp("commit", requestId);
-          }
           OLiveQueryHook.removePendingDatabaseOps(this);
           OLiveQueryHookV2.removePendingDatabaseOps(this);
         }
@@ -768,7 +760,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
    */
   public void internalBegin2pc(
       ONewDistributedTxContextImpl txContext, boolean isCoordinator, boolean force) {
-    final ODistributedDatabaseImpl localDb = (ODistributedDatabaseImpl) getDistributedShared();
     OTransaction pre = this.currentTx;
     OTransactionInternal transaction = txContext.getTransaction();
     // This is moved before checks because also the coordinator first node allocate before checks
@@ -778,14 +769,11 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         ((OTransactionOptimisticDistributed) transaction).setDatabase(this);
         ((OTransactionOptimistic) transaction).begin();
       }
-      localDb.getManager().messageBeforeOp("locks", txContext.getReqId());
 
       if (isCoordinator) {
         // make sure the create record operations have a valid id assigned that is used also on the
         // followers.
-        getDistributedShared().getManager().messageBeforeOp("allocate", txContext.getReqId());
         getStorage().preallocateRids(transaction);
-        getDistributedShared().getManager().messageAfterOp("allocate", txContext.getReqId());
       }
 
       acquireLocksForTx(transaction, txContext, isCoordinator, force);
@@ -800,15 +788,11 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       final boolean isCoordinator,
       final OTransactionInternal transaction,
       final ONewDistributedTxContextImpl txContext) {
-    getDistributedShared().getManager().messageAfterOp("locks", txContext.getReqId());
 
     if (!isCoordinator) {
-      getDistributedShared().getManager().messageBeforeOp("allocate", txContext.getReqId());
       getStorage().preallocateRids(transaction);
-      getDistributedShared().getManager().messageAfterOp("allocate", txContext.getReqId());
     }
 
-    getDistributedShared().getManager().messageBeforeOp("indexCheck", txContext.getReqId());
     for (Map.Entry<String, OTransactionIndexChanges> change :
         transaction.getIndexOperations().entrySet()) {
       final String indexName = change.getKey();
@@ -893,9 +877,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         }
       }
     }
-    getDistributedShared().getManager().messageAfterOp("indexCheck", txContext.getReqId());
-
-    getDistributedShared().getManager().messageBeforeOp("mvccCheck", txContext.getReqId());
     for (ORecordOperation entry : transaction.getRecordOperations()) {
       if (entry.getType() != ORecordOperation.CREATED) {
         int changeVersion = entry.getRecord().getVersion();
@@ -922,7 +903,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         }
       }
     }
-    getDistributedShared().getManager().messageAfterOp("mvccCheck", txContext.getReqId());
   }
 
   @Override
@@ -930,10 +910,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     OImmutableSchema schema = getMetadata().getImmutableSchemaSnapshot();
     OView view = schema.getViewByClusterId(cluster);
     if (view == null) {
-      String viewName =
-          ((OSharedContextDistributed) getSharedContext())
-              .getViewManager()
-              .getViewFromOldCluster(cluster);
+      String viewName = getSharedContext().getViewManager().getViewFromOldCluster(cluster);
       if (viewName != null) {
         view = schema.getView(viewName);
       }

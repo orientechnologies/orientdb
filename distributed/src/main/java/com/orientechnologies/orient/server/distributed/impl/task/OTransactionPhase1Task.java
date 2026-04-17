@@ -148,13 +148,7 @@ public class OTransactionPhase1Task extends OAbstractRemoteTask implements OLock
       ODatabaseDocumentInternal database)
       throws Exception {
 
-    if (iManager != null) {
-      iManager.messageBeforeOp("prepare1Phase", requestId);
-    }
     convert(database);
-    if (iManager != null) {
-      iManager.messageAfterOp("prepare1Phase", requestId);
-    }
 
     OTransactionOptimisticDistributed tx =
         new OTransactionOptimisticDistributed(database, ops, uniqueIndexKeys);

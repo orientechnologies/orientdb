@@ -302,7 +302,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     }
     synchronized (this) {
       task.received(request, this);
-      manager.messageReceived(request);
 
       totalReceivedRequests.incrementAndGet();
       if (task instanceof OLockKeySource) {
@@ -359,7 +358,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   private void execute(ODistributedRequest request) {
     ORemoteTask task = request.getTask();
     try {
-      manager.messageProcessStart(request);
       Object response;
       if (task.isUsingDatabase()) {
         try (ODatabaseDocumentInternal db = context.openNoAuthorization(databaseName)) {
@@ -371,7 +369,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       if (task.hasResponse()) {
         sendResponseBack(this, this.manager, request.getId(), response);
       }
-      manager.messageProcessEnd(request, response);
     } finally {
       task.finished(this);
     }
