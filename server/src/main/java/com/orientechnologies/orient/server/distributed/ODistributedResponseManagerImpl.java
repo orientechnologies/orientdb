@@ -23,6 +23,7 @@ import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
+import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.exception.OConcurrentCreateException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
@@ -68,6 +69,7 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
   private final Lock synchronousResponsesLock = new ReentrantLock();
   private final CountDownLatch synchronousResponsesArrived = new CountDownLatch(1);
   private final int quorum;
+  private final OrientDBInternal ctx;
   private final boolean waitForLocalNode;
   private ODistributedResponse localResponse;
   private volatile int receivedResponses = 0;
@@ -76,14 +78,16 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
   private AtomicBoolean canceled = new AtomicBoolean(false);
 
   public ODistributedResponseManagerImpl(
-      final ODistributedServerManager iManager,
-      final ODistributedRequest iRequest,
-      final Collection<String> expectedResponses,
-      final Set<String> iNodesConcurInQuorum,
-      final int iQuorum,
-      final boolean iWaitForLocalNode,
-      final long iSynchTimeout,
-      final boolean iGroupResponsesByResult) {
+      ODistributedServerManager iManager,
+      OrientDBInternal ctx,
+      ODistributedRequest iRequest,
+      Collection<String> expectedResponses,
+      Set<String> iNodesConcurInQuorum,
+      int iQuorum,
+      boolean iWaitForLocalNode,
+      long iSynchTimeout,
+      boolean iGroupResponsesByResult) {
+    this.ctx = ctx;
     this.dManager = iManager;
     this.request = iRequest;
     this.sentOn = System.nanoTime();
@@ -111,8 +115,7 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
 
     synchronousResponsesLock.lock();
     try {
-      if (!executorNode.equals(dManager.getLocalNodeName())
-          && !responses.containsKey(executorNode)) {
+      if (!executorNode.equals(ctx.getNodeId().getNode()) && !responses.containsKey(executorNode)) {
         logger.warnIn(
             senderNode,
             executorNode,
@@ -277,7 +280,7 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
         if (Thread.currentThread().isInterrupted()) {
           // INTERRUPTED
           logger.warnNode(
-              dManager.getLocalNodeName(),
+              ctx.getNodeId().getNode(),
               "Thread has been interrupted wait for request (%s)",
               request);
           Thread.currentThread().interrupt();
@@ -307,7 +310,6 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
 
             if (curr.getValue() == NO_RESPONSE) {
               missingResponses++;
-
               // ANALYZE THE NODE WITHOUT A RESPONSE
               final ODistributedServerManager.DB_STATUS dbStatus =
                   dManager.getDatabaseStatus(curr.getKey(), getDatabaseName());
@@ -386,11 +388,7 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
       final RuntimeException failure = manageConflicts();
       if (failure != null)
         return new ODistributedResponse(
-            this,
-            request.getId(),
-            dManager.getLocalNodeName(),
-            dManager.getLocalNodeName(),
-            failure);
+            this, request.getId(), ctx.getNodeId().getNode(), ctx.getNodeId().getNode(), failure);
 
       if (receivedResponses == 0) {
         if (quorum > 0 && !request.getTask().isIdempotent())
@@ -615,7 +613,7 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
       // NO QUORUM
       return null;
 
-    if (dManager.isOffline())
+    if (!ctx.isDistributedOnline())
       // CURRENT NODE OFFLINE: JUST RETURN
       return null;
 
@@ -731,7 +729,7 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
         details.append(", B=").append(bResponse);
 
         logger.errorNode(
-            dManager.getLocalNodeName(),
+            ctx.getNodeId().getNode(),
             "Detected possible split brain network where 2 groups of servers A%s and B%s have"
                 + " different contents. Cannot decide who is the winner even if the quorum (%d) has"
                 + " been reached. Request (%s) responses:%s",

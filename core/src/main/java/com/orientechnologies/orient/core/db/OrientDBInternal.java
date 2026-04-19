@@ -414,4 +414,8 @@ public interface OrientDBInternal extends AutoCloseable, OSchedulerInternal {
   default void gracefulWaitFullStartup() throws InterruptedException {}
 
   ONodeId getNodeId();
+
+  default boolean isDistributedOnline() {
+    return false;
+  }
 }

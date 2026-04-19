@@ -116,8 +116,6 @@ public interface ODistributedServerManager {
 
   void reassignClustersOwnership(String iNode, String databaseName, boolean canCreateNewClusters);
 
-  boolean isOffline();
-
   int getLocalNodeId();
 
   String getLocalNodeName();

@@ -1764,4 +1764,13 @@ public class OrientDBDistributed extends OrientDBEmbedded
       this.nodeState.getOps().waitForEnstablish(Optional.of(waitTime));
     }
   }
+
+  @Override
+  public boolean isDistributedOnline() {
+    if (isOpen() && getNodeState() != null) {
+      return getNodeState().getOps().getNetworkTopology().isSelfEnstablished();
+    } else {
+      return false;
+    }
+  }
 }
