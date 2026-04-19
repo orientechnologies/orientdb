@@ -19,18 +19,13 @@
  */
 package com.orientechnologies.orient.server.distributed.impl;
 
-import com.orientechnologies.common.io.OFileUtils;
-import com.orientechnologies.common.log.OAnsiCode;
 import com.orientechnologies.orient.console.OTableFormatter;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.distributed.ONodeConfig;
-import com.orientechnologies.orient.distributed.ONodeListenerConfig;
 import com.orientechnologies.orient.distributed.context.coordination.OCoordinatedDistributedOps;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabaseState;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabasesTopology;
@@ -47,7 +42,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
@@ -60,108 +54,6 @@ import java.util.stream.Collectors;
  * @author Luca Garulli (l.garulli--at--orientdb.com)
  */
 public class ODistributedOutput {
-
-  public static String formatServerStatus(
-      final ODistributedServerManager manager, final OClusterConfiguration distribCfg) {
-    final List<OIdentifiable> rows = new ArrayList<OIdentifiable>();
-
-    final Collection<ONodeConfig> members = distribCfg.getMembers();
-
-    if (members != null)
-      for (ONodeConfig m : members) {
-        if (m == null) continue;
-
-        final ODocument serverRow = new ODocument();
-
-        final String serverName = m.getName();
-
-        String serverLabel = serverName;
-        if (manager.getLocalNodeName().equals(serverName)) serverLabel += "(*)";
-
-        serverRow.field("Name", serverLabel);
-        serverRow.field("Status", (Object) m.getStatus());
-        serverRow.field("Databases", (String) null);
-        serverRow.field("Conns", (Object) m.getConnections());
-
-        final Date date = m.getStartedOn();
-
-        if (date != null) {
-          final SimpleDateFormat sdf = new SimpleDateFormat("yyyy/MM/dd");
-          if (sdf.format(date).equals(sdf.format(new Date())))
-            // TODAY, PUT ONLY THE HOUR
-            serverRow.field("StartedOn", new SimpleDateFormat("HH:mm:ss").format(date));
-          else
-            // ANY OTHER DAY, PUT FULL DATE
-            serverRow.field("StartedOn", date);
-        }
-
-        final List<ONodeListenerConfig> listeners = m.getListeners();
-        if (listeners != null) {
-          for (ONodeListenerConfig l : listeners) {
-            final String protocol = (String) l.getProtocol();
-            if (protocol.equals("ONetworkProtocolBinary")) {
-              serverRow.field("Binary", l.getListen());
-            } else if (protocol.equals("ONetworkProtocolHttpDb")) {
-              serverRow.field("HTTP", l.getListen());
-            }
-          }
-        }
-
-        final Long usedMem = m.getUsedMemory();
-        if (usedMem != null) {
-          final long maxMem = m.getMaxMemory();
-
-          serverRow.field(
-              "UsedMemory",
-              String.format(
-                  "%s/%s (%.2f%%)",
-                  OFileUtils.getSizeAsString(usedMem),
-                  OFileUtils.getSizeAsString(maxMem),
-                  ((float) usedMem / (float) maxMem) * 100));
-        }
-        rows.add(serverRow);
-
-        final Collection<String> databases = m.getDatabases();
-        if (databases != null) {
-          int serverNum = 0;
-          for (String dbName : databases) {
-            final StringBuilder buffer = new StringBuilder();
-            OrientDBDistributed ctx =
-                (OrientDBDistributed) manager.getServerInstance().getDatabases();
-            final ODistributedConfiguration dbCfg = ctx.getExistingDistributedConfiguration(dbName);
-            if (dbCfg == null) continue;
-
-            buffer.append(dbName);
-            buffer.append("=");
-            buffer.append(manager.getDatabaseStatus(serverName, dbName));
-            buffer.append(" (");
-            buffer.append(dbCfg.getServerRole(serverName));
-            buffer.append(")");
-
-            if (serverNum++ == 0)
-              // ADD THE 1ST DB IT IN THE SERVER ROW
-              serverRow.field("Databases", buffer.toString());
-            else
-              // ADD IN A SEPARATE ROW
-              rows.add(new ODocument().field("Databases", buffer.toString()));
-          }
-        }
-      }
-
-    final StringBuilder buffer = new StringBuilder();
-    final OTableFormatter table =
-        new OTableFormatter(
-            new OTableFormatter.OTableOutput() {
-              @Override
-              public void onMessage(final String text, final Object... args) {
-                buffer.append(String.format(text, args));
-              }
-            });
-    table.setColumnHidden("#");
-    table.writeRecords(rows, -1);
-    buffer.append("\n");
-    return buffer.toString();
-  }
 
   public static String formatServerStatus(final OrientDBDistributed distr) {
     final List<OIdentifiable> rows = new ArrayList<OIdentifiable>();
@@ -582,146 +474,6 @@ public class ODistributedOutput {
       }
       buffer.append("]");
     }
-
-    return buffer.toString();
-  }
-
-  public static String formatClusterTable(
-      final ODistributedServerManager manager,
-      final String databaseName,
-      final ODistributedConfiguration cfg,
-      final int totalConfiguredServers) {
-    final StringBuilder buffer = new StringBuilder();
-
-    if (cfg.hasDataCenterConfiguration()) {
-      buffer.append("\n\nDATA CENTER CONFIGURATION");
-      final OTableFormatter table =
-          new OTableFormatter(
-              new OTableFormatter.OTableOutput() {
-                @Override
-                public void onMessage(final String text, final Object... args) {
-                  buffer.append(String.format(text, args));
-                }
-              });
-      table.setColumnSorting("NAME", true);
-      table.setColumnHidden("#");
-      table.setColumnAlignment("SERVERS", OTableFormatter.ALIGNMENT.LEFT);
-      table.setColumnAlignment("writeQuorum", OTableFormatter.ALIGNMENT.CENTER);
-
-      final List<OIdentifiable> rows = new ArrayList<OIdentifiable>();
-
-      for (String dcName : cfg.getDataCenters()) {
-        final ODocument row = new ODocument();
-        rows.add(row);
-
-        final String dcServers = cfg.getDataCenterServers(dcName).toString();
-
-        row.field("NAME", dcName);
-        row.field("SERVERS", dcServers.substring(1, dcServers.length() - 1));
-        row.field("writeQuorum", cfg.getDataCenterWriteQuorum(dcName));
-      }
-
-      table.writeRecords(rows, -1);
-    }
-
-    buffer.append(
-        "\n\nCLUSTER CONFIGURATION [wQuorum: "
-            + manager.isWriteQuorumPresent(databaseName)
-            + "] (LEGEND: X = Owner, o = Copy)");
-
-    final OTableFormatter table =
-        new OTableFormatter(
-            new OTableFormatter.OTableOutput() {
-
-              @Override
-              public void onMessage(final String text, final Object... args) {
-                buffer.append(String.format(text, args));
-              }
-            });
-
-    ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
-    if (db != null && db.isClosed()) db = null;
-
-    table.setColumnSorting("CLUSTER", true);
-    table.setColumnHidden("#");
-    if (db != null) table.setColumnAlignment("id", OTableFormatter.ALIGNMENT.RIGHT);
-    table.setColumnAlignment("writeQuorum", OTableFormatter.ALIGNMENT.CENTER);
-    table.setColumnAlignment("readQuorum", OTableFormatter.ALIGNMENT.CENTER);
-
-    final String localNodeName = manager.getLocalNodeName();
-
-    // READ DEFAULT CFG (CLUSTER=*)
-    final String defaultWQ;
-    if (cfg.isLocalDataCenterWriteQuorum()) {
-      defaultWQ = ODistributedConfiguration.QUORUM_LOCAL_DC;
-    } else {
-      defaultWQ = "" + cfg.getWriteQuorum(totalConfiguredServers, localNodeName);
-    }
-    final int defaultRQ = cfg.getReadQuorum(totalConfiguredServers, localNodeName);
-    final String defaultOwner = "" + cfg.getClusterOwner(ODistributedConfiguration.ALL_WILDCARD);
-    final List<String> defaultServers =
-        cfg.getConfiguredServers(ODistributedConfiguration.ALL_WILDCARD);
-
-    final List<OIdentifiable> rows = new ArrayList<OIdentifiable>();
-    final Set<String> allServers = new HashSet<String>();
-
-    for (String cluster : cfg.getClusterNames()) {
-      final String wQ;
-      if (cfg.isLocalDataCenterWriteQuorum()) {
-        wQ = ODistributedConfiguration.QUORUM_LOCAL_DC;
-      } else {
-        wQ = "" + cfg.getWriteQuorum(totalConfiguredServers, localNodeName);
-      }
-      final int rQ = cfg.getReadQuorum(totalConfiguredServers, localNodeName);
-      final String owner = cfg.getClusterOwner(cluster);
-      final List<String> servers = cfg.getConfiguredServers(cluster);
-
-      if (!cluster.equals(ODistributedConfiguration.ALL_WILDCARD)
-          && defaultWQ.equals(wQ)
-          && defaultRQ == rQ
-          && defaultOwner.equals(owner)
-          && defaultServers.size() == servers.size()
-          && defaultServers.containsAll(servers))
-        // SAME CFG AS THE DEFAULT: DON'T DISPLAY IT
-        continue;
-
-      final ODocument row = new ODocument();
-      rows.add(row);
-
-      row.field("CLUSTER", cluster);
-      if (db != null) {
-        final int clId = db.getClusterIdByName(cluster);
-        row.field("id", clId > -1 ? clId : "");
-      }
-      row.field("writeQuorum", wQ);
-      row.field("readQuorum", rQ);
-
-      if (servers != null)
-        for (String server : servers) {
-          if (server.equalsIgnoreCase("<NEW_NODE>")) continue;
-
-          allServers.add(server);
-
-          row.field(server, OAnsiCode.format(server.equals(owner) ? "X" : "o"));
-          table.setColumnAlignment(server, OTableFormatter.ALIGNMENT.CENTER);
-        }
-    }
-
-    final Set<String> registeredServers = cfg.getRegisteredServers();
-
-    for (String server : allServers) {
-      table.setColumnMetadata(
-          server, "CFG", registeredServers.contains(server) ? "static" : "dynamic");
-      table.setColumnMetadata(server, "ROLE", cfg.getServerRole(server).toString());
-      table.setColumnMetadata(
-          server, "STATUS", manager.getDatabaseStatus(server, databaseName).toString());
-      if (cfg.hasDataCenterConfiguration())
-        table.setColumnMetadata(server, "DC", "DC(" + cfg.getDataCenterOfServer(server) + ")");
-    }
-
-    table.writeRecords(rows, -1);
-
-    buffer.append("\n");
 
     return buffer.toString();
   }

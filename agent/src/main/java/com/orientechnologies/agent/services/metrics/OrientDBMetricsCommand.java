@@ -15,8 +15,8 @@ import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.enterprise.server.OEnterpriseServer;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.distributed.ONodeConfig;
+import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabasesTopology;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
-import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.config.OClusterConfiguration;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
@@ -79,8 +79,7 @@ public class OrientDBMetricsCommand extends OServerCommandAuthenticatedServerAbs
     return false;
   }
 
-  private ODocument calculateDBStatus(
-      final ODistributedServerManager manager, final OClusterConfiguration cfg) {
+  private ODocument calculateDBStatus(final OClusterConfiguration cfg) {
 
     final ODocument doc = new ODocument();
     final Collection<ONodeConfig> members = cfg.getMembers();
@@ -93,21 +92,20 @@ public class OrientDBMetricsCommand extends OServerCommandAuthenticatedServerAbs
       }
     }
     for (String database : databases) {
-      doc.field(database, singleDBStatus(manager, database));
+      doc.field(database, singleDBStatus(database));
     }
     return doc;
   }
 
-  private ODocument singleDBStatus(ODistributedServerManager manager, String database) {
+  private ODocument singleDBStatus(String database) {
+    OrientDBDistributed ctx = ((OrientDBDistributed) server.getDatabases());
+    ODatabasesTopology dbTopology = ctx.getNodeState().getDatabaseTopology();
+    var dbId = dbTopology.getDatabaseId(database).get();
+    var members = dbTopology.getMembers(dbId);
     final ODocument entries = new ODocument();
-    final ODistributedConfiguration dbCfg =
-        ((OrientDBDistributed) manager.getServerInstance().getDatabases())
-            .getExistingDistributedConfiguration(database);
-    final Set<String> servers = dbCfg.getAllConfiguredServers();
-    for (String serverName : servers) {
-      final ODistributedServerManager.DB_STATUS databaseStatus =
-          manager.getDatabaseStatus(serverName, database);
-      entries.field(serverName, databaseStatus.toString());
+    for (var member : members) {
+      var status = dbTopology.getState(dbId, member);
+      entries.setProperty(member.toString(), status.toString());
     }
     return entries;
   }
@@ -148,7 +146,7 @@ public class OrientDBMetricsCommand extends OServerCommandAuthenticatedServerAbs
 
           metrics.setClusterStats(responses);
 
-          metrics.setDatabaseStatus(calculateDBStatus(manager, metrics));
+          metrics.setDatabaseStatus(calculateDBStatus(metrics));
         }
 
       } else {

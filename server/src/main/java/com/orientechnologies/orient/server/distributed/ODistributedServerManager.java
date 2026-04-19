@@ -28,7 +28,6 @@ import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.List;
 import java.util.Set;
 
 /**
@@ -68,16 +67,6 @@ public interface ODistributedServerManager {
     BACKUP
   }
 
-  /**
-   * Checks the node status if it's one of the statuses received as argument.
-   *
-   * @param iNodeName Node name
-   * @param iDatabaseName Database name
-   * @param statuses vararg of statuses
-   * @return true if the node's status is equals to one of the passed statuses, otherwise false
-   */
-  boolean isNodeStatusEqualsTo(String iNodeName, String iDatabaseName, DB_STATUS... statuses);
-
   void waitUntilNodeOnline() throws InterruptedException;
 
   void waitUntilNodeOnline(String nodeName, String databaseName) throws InterruptedException;
@@ -107,10 +96,6 @@ public interface ODistributedServerManager {
 
   DB_STATUS getDatabaseStatus(String iNode, String iDatabaseName);
 
-  void setDatabaseStatus(String iNode, String iDatabaseName, DB_STATUS iStatus);
-
-  int getNodesWithStatus(Collection<String> iNodes, String databaseName, DB_STATUS... statuses);
-
   ODistributedMessageService getMessageService();
 
   ODistributedDatabase getDatabase(String name);
@@ -130,9 +115,6 @@ public interface ODistributedServerManager {
   void updateLastClusterChange();
 
   void reassignClustersOwnership(String iNode, String databaseName, boolean canCreateNewClusters);
-
-  /** Returns true if the node status is ONLINE. */
-  boolean isNodeOnline(String iNodeName, String databaseName);
 
   boolean isOffline();
 
@@ -181,10 +163,6 @@ public interface ODistributedServerManager {
       Object localResult,
       ODistributedResponseManagerFactory responseManagerFactory);
 
-  List<String> getOnlineNodes(String iDatabaseName);
-
-  List<String> getOnlineNodesNotLocal(String iDatabaseName);
-
   /**
    * Returns the task factory manager. During first connect the minor version of the protocol is
    * used.
@@ -196,14 +174,6 @@ public interface ODistributedServerManager {
   Set<String> getActiveServerNotLocal();
 
   File getDefaultDatabaseConfigFile();
-
-  /**
-   * Returns true if the quorum is present in terms of number of available nodes for full
-   * replication only. With sharding, instead, the quorum may depend on the involved clusters.
-   *
-   * @return
-   */
-  boolean isWriteQuorumPresent(String databaseName);
 
   void notifyClients(String databaseName);
 

@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.distributed.ONodeConfig;
 import com.orientechnologies.orient.distributed.ONodeListenerConfig;
+import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabasesTopology;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
@@ -321,12 +322,11 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
       doc.setClusterStats((Map<String, ODocument>) payload);
     }
 
-    doc.setDatabaseStatus(calculateDBStatus(manager, doc));
+    doc.setDatabaseStatus(calculateDBStatus(doc));
     return doc;
   }
 
-  private ODocument calculateDBStatus(
-      final ODistributedServerManager manager, final OClusterConfiguration cfg) {
+  private ODocument calculateDBStatus(final OClusterConfiguration cfg) {
 
     final ODocument doc = new ODocument();
     final Collection<ONodeConfig> members = cfg.getMembers();
@@ -339,21 +339,20 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
       }
     }
     for (String database : databases) {
-      doc.setProperty(database, singleDBStatus(manager, database));
+      doc.setProperty(database, singleDBStatus(database));
     }
     return doc;
   }
 
-  private ODocument singleDBStatus(ODistributedServerManager manager, String database) {
+  private ODocument singleDBStatus(String database) {
+    OrientDBDistributed ctx = ((OrientDBDistributed) server.getDatabases());
+    ODatabasesTopology dbTopology = ctx.getNodeState().getDatabaseTopology();
+    var dbId = dbTopology.getDatabaseId(database).get();
+    var members = dbTopology.getMembers(dbId);
     final ODocument entries = new ODocument();
-    final ODistributedConfiguration dbCfg =
-        ((OrientDBDistributed) manager.getServerInstance().getDatabases())
-            .getExistingDistributedConfiguration(database);
-    final Set<String> servers = dbCfg.getAllConfiguredServers();
-    for (String serverName : servers) {
-      final ODistributedServerManager.DB_STATUS databaseStatus =
-          manager.getDatabaseStatus(serverName, database);
-      entries.setProperty(serverName, databaseStatus.toString());
+    for (var member : members) {
+      var status = dbTopology.getState(dbId, member);
+      entries.setProperty(member.toString(), status.toString());
     }
     return entries;
   }

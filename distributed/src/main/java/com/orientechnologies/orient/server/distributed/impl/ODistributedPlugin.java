@@ -85,7 +85,6 @@ import com.orientechnologies.orient.server.distributed.impl.task.ORestartServerT
 import com.orientechnologies.orient.server.distributed.impl.task.OStopServerTask;
 import com.orientechnologies.orient.server.distributed.impl.task.OUpdateDatabaseConfigurationTask;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
-import com.orientechnologies.orient.server.distributed.task.ODistributedLockException;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastClusterMetadataManager;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
@@ -191,11 +190,6 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
 
   public File getDefaultDatabaseConfigFile() {
     return defaultDatabaseConfigFile;
-  }
-
-  @Override
-  public boolean isWriteQuorumPresent(String databaseName) {
-    return clusterManager.isWriteQuorumPresent(databaseName);
   }
 
   public void setDefaultDatabaseConfigFile(final String iFile) {
@@ -812,18 +806,6 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
   }
 
   @Override
-  public List<String> getOnlineNodes(String iDatabaseName) {
-    return clusterManager.getOnlineNodes(iDatabaseName);
-  }
-
-  @Override
-  public List<String> getOnlineNodesNotLocal(String iDatabaseName) {
-    List<String> list = clusterManager.getOnlineNodes(iDatabaseName);
-    list.remove(getLocalNodeName());
-    return list;
-  }
-
-  @Override
   public void reassignClustersOwnership(
       final String iNode, final String databaseName, final boolean canCreateNewClusters) {
     OrientDBDistributed ctx = (OrientDBDistributed) serverInstance.getDatabases();
@@ -862,21 +844,6 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
     }
   }
 
-  @Override
-  public boolean isNodeOnline(String iNodeName, String databaseName) {
-    return clusterManager.isNodeOnline(iNodeName, databaseName);
-  }
-
-  @Override
-  public boolean isNodeStatusEqualsTo(
-      final String iNodeName, final String iDatabaseName, final DB_STATUS... statuses) {
-    final DB_STATUS s = getDatabaseStatus(iNodeName, iDatabaseName);
-    for (DB_STATUS st : statuses) {
-      if (s == st) return true;
-    }
-    return false;
-  }
-
   public boolean isOffline() {
     return !((OrientDBDistributed) getServerInstance().getDatabases())
         .getNodeState()
@@ -888,18 +855,6 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
   @Override
   public int getLocalNodeId() {
     return clusterManager.getLocalNodeId();
-  }
-
-  /** Returns the nodes with the requested status. */
-  @Override
-  public int getNodesWithStatus(
-      final Collection<String> iNodes, final String databaseName, final DB_STATUS... statuses) {
-    for (Iterator<String> it = iNodes.iterator(); it.hasNext(); ) {
-      final String node = it.next();
-
-      if (!isNodeStatusEqualsTo(node, databaseName, statuses)) it.remove();
-    }
-    return iNodes.size();
   }
 
   @Override
@@ -1190,7 +1145,7 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
         // NO NODE HAS THIS DATABASE AVAILABLE
         continue;
 
-      final DB_STATUS currStatus = getDatabaseStatus(nodeName, databaseName);
+      final DB_STATUS currStatus = context.getDatabaseStatus(databaseName);
       if (currStatus == DB_STATUS.SYNCHRONIZING
           || currStatus == DB_STATUS.ONLINE
           || currStatus == DB_STATUS.BACKUP)
@@ -1387,30 +1342,9 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
     return clusterManager.getDatabaseStatus(iNode, iDatabaseName);
   }
 
-  @Override
-  public void setDatabaseStatus(String iNode, String iDatabaseName, DB_STATUS iStatus) {
-    clusterManager.setDatabaseStatus(iNode, iDatabaseName, iStatus);
-  }
-
   // Called to notify this server, that a node has been removed from the cluster
   public void onServerRemoved(String nodeName) {
     closeRemoteServer(nodeName);
-  }
-
-  // Called when the status of a distributed database changes to online
-  public void onDbStatusOnline(String databaseName) {
-    final DB_STATUS s = getDatabaseStatus(getLocalNodeName(), databaseName);
-    if (s == DB_STATUS.NOT_AVAILABLE) {
-      // INSTALL THE DATABASE
-      try {
-        OrientDBDistributed context = (OrientDBDistributed) serverInstance.getDatabases();
-        context.installDatabase(false, databaseName, false, true);
-      } catch (ODistributedLockException lock) {
-        setDatabaseStatus(getLocalNodeName(), databaseName, DB_STATUS.NOT_AVAILABLE);
-        logger.warn(
-            " Failing to acquire lock install database '%s' will retry later ", lock, databaseName);
-      }
-    }
   }
 
   // Called when the db config has changed

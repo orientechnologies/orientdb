@@ -47,7 +47,6 @@ import com.orientechnologies.orient.server.distributed.config.OClusterConfigurat
 import com.orientechnologies.orient.server.distributed.impl.ODistributedPlugin;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -328,20 +327,6 @@ public class OHazelcastClusterMetadataManager
         members.size());
   }
 
-  public boolean isWriteQuorumPresent(final String databaseName) {
-    OrientDBDistributed ctx = (OrientDBDistributed) serverInstance.getDatabases();
-
-    final ODistributedConfiguration cfg = ctx.getDistributedConfiguration(databaseName);
-    if (cfg != null) {
-      final int availableServers = getAvailableNodes(databaseName);
-      if (availableServers == 0) return false;
-
-      final int quorum = cfg.getWriteQuorum(cfg.getMasterServers().size(), nodeName);
-      return availableServers >= quorum;
-    }
-    return false;
-  }
-
   public int getNodeIdByName(final String name) {
     int id = tryGetNodeIdByName(name);
     if (name == null) {
@@ -358,12 +343,6 @@ public class OHazelcastClusterMetadataManager
       name = tryGetNodeNameById(id);
     }
     return name;
-  }
-
-  public boolean isNodeAvailable(final String iNodeName, final String iDatabaseName) {
-    final ODistributedServerManager.DB_STATUS s = getDatabaseStatus(iNodeName, iDatabaseName);
-    return s != ODistributedServerManager.DB_STATUS.OFFLINE
-        && s != ODistributedServerManager.DB_STATUS.NOT_AVAILABLE;
   }
 
   protected void publishLocalNodeConfiguration() {
@@ -821,20 +800,6 @@ public class OHazelcastClusterMetadataManager
     return status != null ? status : ODistributedServerManager.DB_STATUS.NOT_AVAILABLE;
   }
 
-  public void setDatabaseStatus(
-      final String iNode,
-      final String iDatabaseName,
-      final ODistributedServerManager.DB_STATUS iStatus) {
-
-    final ODistributedServerManager.DB_STATUS currStatus =
-        configurationMap.getDatabaseStatus(iNode, iDatabaseName);
-
-    if (currStatus == null || currStatus != iStatus) {
-      configurationMap.setDatabaseStatus(iNode, iDatabaseName, iStatus);
-      distributedPlugin.invokeOnDatabaseStatusChange(iNode, iDatabaseName, iStatus);
-    }
-  }
-
   // Returns name of distributed databases in the cluster.
   public Set<String> getDatabases() {
     return configurationMap.getDatabases();
@@ -995,22 +960,6 @@ public class OHazelcastClusterMetadataManager
     return activeNodesUuidByName.get(name);
   }
 
-  public int getAvailableNodes(final String iDatabaseName) {
-    int availableNodes = 0;
-    for (Map.Entry<String, Member> entry : activeNodes.entrySet()) {
-      if (isNodeAvailable(entry.getKey(), iDatabaseName)) availableNodes++;
-    }
-    return availableNodes;
-  }
-
-  public List<String> getOnlineNodes(final String iDatabaseName) {
-    final List<String> onlineNodes = new ArrayList<String>(activeNodes.size());
-    for (Map.Entry<String, Member> entry : activeNodes.entrySet()) {
-      if (isNodeOnline(entry.getKey(), iDatabaseName)) onlineNodes.add(entry.getKey());
-    }
-    return onlineNodes;
-  }
-
   public ODocument getOnlineDatabaseConfiguration(final String iDatabaseName) {
     return configurationMap.getDatabaseConfiguration(iDatabaseName);
   }
@@ -1037,11 +986,6 @@ public class OHazelcastClusterMetadataManager
 
   public NODE_STATUS getNodeStatus() {
     return status;
-  }
-
-  public boolean isNodeOnline(final String iNodeName, final String iDatabaseName) {
-    return getDatabaseStatus(iNodeName, iDatabaseName)
-        == ODistributedServerManager.DB_STATUS.ONLINE;
   }
 
   public void updateLastClusterChange() {
