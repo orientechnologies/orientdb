@@ -64,6 +64,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.concurrent.ExecutionException;
 
 public class OEnterpriseAgent extends OServerPluginAbstract
     implements ODatabaseLifecycleListener,
@@ -313,7 +314,11 @@ public class OEnterpriseAgent extends OServerPluginAbstract
       throw new OCommandExecutionException("OrientDB is not started in distributed mode");
     }
     ODatabaseDocumentDistributed db = (ODatabaseDocumentDistributed) database;
-    db.getContext().setDatabaseNodeRole(db.getDatabaseId(), serverName, role);
+    try {
+      db.getContext().setDatabaseNodeRole(db.getDatabaseId(), serverName, role).get();
+    } catch (InterruptedException | ExecutionException e) {
+      logger.warn("fail on set of database role", e);
+    }
   }
 
   @Override

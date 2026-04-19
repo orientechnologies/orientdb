@@ -71,7 +71,6 @@ import com.orientechnologies.orient.core.tx.ValidationResult;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabasesTopology;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
@@ -196,13 +195,9 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     if (getContext().isDistributedDisabled(getName()))
       throw new OCommandExecutionException("OrientDB is not started in distributed mode");
 
-    final String databaseName = getName();
-
-    // TODO: replace with new configuration structure
-    final ODistributedConfiguration cfg = distributedManager.getDatabaseConfiguration(databaseName);
     Map<String, Object> row = new HashMap<>();
     if (servers) row.put("servers", distributedManager.getClusterConfiguration());
-    if (db) row.put("database", cfg.getDocument());
+    if (db) row.put("database", getDistributedInfo().toElement());
     if (latency)
       row.put(
           "latency",

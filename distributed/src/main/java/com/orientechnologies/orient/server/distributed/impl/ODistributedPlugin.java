@@ -1338,13 +1338,6 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
     for (ODistributedLifecycleListener l : listeners) l.onNodeJoined(joinedNodeName);
 
     // FORCE THE ALIGNMENT FOR ALL THE ONLINE DATABASES AFTER THE JOIN ONLY IF AUTO-DEPLOY IS SET
-    for (String db : getDatabases()) {
-      ODistributedConfiguration cfg = getDatabaseConfiguration(db);
-      if (cfg == null
-          || cfg.isAutoDeploy() && getDatabaseStatus(joinedNodeName, db) == DB_STATUS.ONLINE) {
-        setDatabaseStatus(joinedNodeName, db, DB_STATUS.NOT_AVAILABLE);
-      }
-    }
     dumpServersStatus();
   }
 

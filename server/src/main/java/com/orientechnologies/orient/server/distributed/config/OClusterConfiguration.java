@@ -28,6 +28,10 @@ public class OClusterConfiguration {
     doc.setProperty("database", dbCfg.getDocument(), OType.EMBEDDED);
   }
 
+  public void setDatabaseConfiguration(ODocument doc) {
+    doc.setProperty("database", doc, OType.EMBEDDED);
+  }
+
   public ODocument getDocument() {
     return doc;
   }

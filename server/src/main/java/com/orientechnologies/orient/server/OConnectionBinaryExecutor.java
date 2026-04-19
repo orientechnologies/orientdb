@@ -64,7 +64,6 @@ import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionNoTx;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
-import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ORemoteServerController;
 import com.orientechnologies.orient.server.distributed.config.OClusterConfiguration;
@@ -1085,15 +1084,13 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     if (plugin instanceof ODistributedServerManager) {
       distributedCfg = ((ODistributedServerManager) plugin).getClusterConfiguration();
 
-      final ODistributedConfiguration dbCfg =
-          ((ODistributedServerManager) plugin)
-              .getDatabaseConfiguration(connection.getDatabase().getName());
-      if (dbCfg != null) {
-        // TODO: regenerate configuration from new structures.
+      var infoDoc = distributedCfg.getDocument();
+      var distributedInfo = db.getDistributedInfo();
+      if (!distributedInfo.getPropertyNames().isEmpty()) {
         // ENHANCE SERVER CFG WITH DATABASE CFG
-        distributedCfg.setDatabaseConfiguration(dbCfg);
+        distributedCfg.setDatabaseConfiguration((ODocument) distributedInfo.toElement());
       }
-      distriConf = getRecordBytes(connection, distributedCfg.getDocument());
+      distriConf = getRecordBytes(connection, infoDoc);
     }
 
     String[] clusterNames = new String[clusters.size()];

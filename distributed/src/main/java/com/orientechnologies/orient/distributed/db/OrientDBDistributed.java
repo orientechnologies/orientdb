@@ -1745,9 +1745,11 @@ public class OrientDBDistributed extends OrientDBEmbedded
     dumpNodeInfo();
   }
 
-  public void setDatabaseNodeRole(ODatabaseId databaseId, String serverName, String role) {
+  public Future<Optional<OAcceptResult>> setDatabaseNodeRole(
+      ODatabaseId databaseId, String serverName, String role) {
     var r = ONodeRole.fromString(role);
-    retryOperation(new OSetDatabaseNodeRoleRetryOperation(databaseId, new ONodeId(serverName), r));
+    return retryOperation(
+        new OSetDatabaseNodeRoleRetryOperation(databaseId, new ONodeId(serverName), r));
   }
 
   public Future<Optional<OAcceptResult>> setDatabaseQuorum(ODatabaseId databaseId, int newQuorum) {

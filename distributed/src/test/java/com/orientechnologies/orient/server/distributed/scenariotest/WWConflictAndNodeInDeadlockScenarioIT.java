@@ -22,8 +22,9 @@ import static org.junit.Assert.fail;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
-import com.orientechnologies.orient.server.distributed.impl.ODistributedPlugin;
+import com.orientechnologies.orient.core.transaction.ODatabaseId;
+import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
+import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.setup.ServerRun;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -106,16 +107,11 @@ public class WWConflictAndNodeInDeadlockScenarioIT extends AbstractScenarioTest 
       // changing configuration: writeQuorum=1, autoDeploy=false
       System.out.print("\nChanging configuration (writeQuorum=1, autoDeploy=false)...");
 
-      ODocument cfg = null;
-      ServerRun server = serverInstance.get(2);
-      ODistributedPlugin manager =
-          (ODistributedPlugin) server.getServerInstance().getDistributedManager();
-      OModifiableDistributedConfiguration databaseConfiguration =
-          manager.getDatabaseConfiguration(getDatabaseName()).modify();
-      cfg = databaseConfiguration.getDocument();
-      cfg.field("writeQuorum", 1);
-      cfg.field("version", (Integer) cfg.field("version") + 1);
-      manager.updateCachedDatabaseConfiguration(getDatabaseName(), databaseConfiguration);
+      OServer server = serverInstance.get(2).getServerInstance();
+      OrientDBDistributed ctx = (OrientDBDistributed) server.getDatabases();
+      ODatabaseId databaseId =
+          ctx.getNodeState().getDatabaseTopology().getDatabaseId(getDatabaseName()).get();
+      ctx.setDatabaseQuorum(databaseId, 1);
       System.out.println("\nConfiguration updated.");
 
       // deadlock on server3
