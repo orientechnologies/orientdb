@@ -56,15 +56,8 @@ public class ODistributedConfigurationManager {
   }
 
   private void loadDistributedConfiguration(ODatabaseSession session) {
-    ODocument doc = distributedManager.getOnlineDatabaseConfiguration(databaseName);
-    if (doc != null) {
-      // DISTRIBUTED CFG AVAILABLE: COPY IT TO THE LOCAL DIRECTORY
-      logger.infoNode(
-          distributedManager.getLocalNodeName(),
-          "Downloaded configuration for database '%s' from the cluster",
-          databaseName);
-      setDistributedConfiguration(session, new OModifiableDistributedConfiguration(doc));
-    } else if (!isMemory() && distributedConfigFileExists()) {
+    ODocument doc = null;
+    if (!isMemory() && distributedConfigFileExists()) {
       doc = loadConfigurationFromFile(getDistributedConfigFile());
       if (doc == null) {
         doc = loadConfigurationFromFile(distributedManager.getDefaultDatabaseConfigFile());
@@ -82,9 +75,6 @@ public class ODistributedConfigurationManager {
       // JUST LOAD THE FILE IN MEMORY
       distributedConfiguration = new ODistributedConfiguration(doc);
 
-      // LOADED FILE, PUBLISH IT IN THE CLUSTER
-      distributedManager.publishDistributedConfiguration(databaseName, distributedConfiguration);
-
     } else {
       doc = readDistributedConfiguration(session);
       if (doc == null) {
@@ -99,9 +89,6 @@ public class ODistributedConfigurationManager {
       }
       // JUST LOAD THE FILE IN MEMORY
       distributedConfiguration = new ODistributedConfiguration(doc);
-
-      // LOADED FILE, PUBLISH IT IN THE CLUSTER
-      distributedManager.publishDistributedConfiguration(databaseName, distributedConfiguration);
     }
   }
 

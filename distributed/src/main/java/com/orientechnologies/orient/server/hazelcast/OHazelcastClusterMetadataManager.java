@@ -26,9 +26,7 @@ import com.orientechnologies.common.util.OCallableUtils;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.OCancellableTimer;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocumentAbstract;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
-import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.distributed.ONodeConfig;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
@@ -38,11 +36,9 @@ import com.orientechnologies.orient.server.distributed.NODE_STATUS;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedLockManager;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.DB_STATUS;
 import com.orientechnologies.orient.server.distributed.ODistributedStartupException;
 import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
-import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.config.OClusterConfiguration;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedPlugin;
 import java.io.FileNotFoundException;
@@ -61,9 +57,7 @@ public class OHazelcastClusterMetadataManager
   private static final OLoggerDistributed logger =
       OLoggerDistributed.logger(OHazelcastClusterMetadataManager.class);
 
-  public static final String CONFIG_DATABASE_PREFIX = "database.";
   public static final String CONFIG_NODE_PREFIX = "node.";
-  public static final String CONFIG_DBSTATUS_PREFIX = "dbstatus.";
   public static final String CONFIG_REGISTEREDNODES = "doc";
 
   protected String hazelcastConfigFile = "hazelcast.xml";
@@ -355,34 +349,6 @@ public class OHazelcastClusterMetadataManager
   }
 
   public void prepareHazelcastPluginShutdown() {
-    try {
-      final Set<String> databases = new HashSet<String>();
-
-      if (hazelcastInstance != null && hazelcastInstance.getLifecycleService().isRunning())
-        for (Map.Entry<String, Object> entry : configurationMap.entrySet()) {
-          if (OHazelcastDistributedMap.isDatabaseStatus(entry.getKey())) {
-
-            final String values =
-                OHazelcastDistributedMap.getDatabaseStatusKeyValues(entry.getKey());
-            final String nodeName = values.substring(0, values.indexOf("."));
-            final String databaseName = values.substring(values.indexOf(".") + 1);
-
-            if (nodeName.equals(this.nodeName)) {
-              databases.add(databaseName);
-            }
-          }
-        }
-
-      // PUT DATABASES AS NOT_AVAILABLE
-      for (String k : databases) {
-        configurationMap.setDatabaseStatus(
-            this.nodeName, k, ODistributedServerManager.DB_STATUS.NOT_AVAILABLE);
-      }
-
-    } catch (HazelcastInstanceNotActiveException e) {
-      // HZ IS ALREADY DOWN, IGNORE IT
-    }
-
     if (publishLocalNodeConfigurationTask != null) publishLocalNodeConfigurationTask.cancel();
   }
 
@@ -493,44 +459,6 @@ public class OHazelcastClusterMetadataManager
   @Override
   public void memberAttributeChanged(final MemberAttributeEvent memberAttributeEvent) {}
 
-  public boolean updateCachedDatabaseConfiguration(
-      final String databaseName, final OModifiableDistributedConfiguration cfg) {
-    // VALIDATE THE CONFIGURATION FIRST
-    distributedPlugin.getDistributedStrategy().validateConfiguration(cfg);
-    OrientDBDistributed context = (OrientDBDistributed) serverInstance.getDatabases();
-    boolean updated = context.tryUpdatingDatabaseConfigurationLocally(databaseName, cfg);
-
-    if (!updated && !getConfigurationMap().existsDatabaseConfiguration(databaseName))
-      // FIRST TIME, FORCE PUBLISHING
-      updated = true;
-
-    if (updated) {
-      publishDistributedConfiguration(databaseName, cfg);
-    }
-
-    return updated;
-  }
-
-  public void publishDistributedConfiguration(
-      final String databaseName, final ODistributedConfiguration cfg) {
-
-    logger.infoNode(
-        getLocalNodeName(),
-        "Broadcasting new distributed configuration for database: %s (version=%d)\n",
-        databaseName,
-        cfg.getVersion());
-
-    final ODocument document = cfg.getDocument();
-    // WRITE TO THE MAP TO BE READ BY NEW SERVERS ON JOIN
-    ORecordInternal.setRecordSerializer(document, ODatabaseDocumentAbstract.getDefaultSerializer());
-    configurationMap.setDatabaseConfiguration(databaseName, document);
-    distributedPlugin.onDbConfigUpdated(databaseName, document);
-
-    // SEND NEW CFG TO ALL THE CONNECTED CLIENTS
-
-    distributedPlugin.dumpServersStatus();
-  }
-
   @Override
   public void entryAdded(final EntryEvent<String, Object> iEvent) {
     if (hazelcastInstance == null || !hazelcastInstance.getLifecycleService().isRunning()) return;
@@ -572,20 +500,6 @@ public class OHazelcastClusterMetadataManager
 
           registerNode(iEvent.getMember(), joinedNodeName);
         }
-
-      } else if (OHazelcastDistributedMap.isDatabaseStatus(key)) {
-        String values = OHazelcastDistributedMap.getDatabaseStatusKeyValues(key);
-        logger.infoIn(
-            nodeName, eventNodeName, "Received new status %s=%s", values, iEvent.getValue());
-
-        // REASSIGN HIS CLUSTER
-        final String nodeName = values.substring(0, values.indexOf("."));
-        final String databaseName = values.substring(values.indexOf(".") + 1);
-
-        distributedPlugin.onDatabaseEvent(
-            nodeName, databaseName, (ODistributedServerManager.DB_STATUS) iEvent.getValue());
-        distributedPlugin.invokeOnDatabaseStatusChange(
-            nodeName, databaseName, (ODistributedServerManager.DB_STATUS) iEvent.getValue());
       }
     } catch (HazelcastInstanceNotActiveException | RetryableHazelcastException e) {
       logger.error("Hazelcast is not running", e);
@@ -617,20 +531,6 @@ public class OHazelcastClusterMetadataManager
           activeNodesUuidByName.put(name, iEvent.getMember().getUuid());
         }
         distributedPlugin.dumpServersStatus();
-
-      } else if (OHazelcastDistributedMap.isDatabaseStatus(key)) {
-        String values = OHazelcastDistributedMap.getDatabaseStatusKeyValues(key);
-        logger.infoIn(
-            nodeName, eventNodeName, "Received updated status %s=%s", values, iEvent.getValue());
-
-        // CALL DATABASE EVENT
-        final String nodeName = values.substring(0, values.indexOf("."));
-        final String databaseName = values.substring(values.indexOf(".") + 1);
-
-        distributedPlugin.onDatabaseEvent(
-            nodeName, databaseName, (ODistributedServerManager.DB_STATUS) iEvent.getValue());
-        distributedPlugin.invokeOnDatabaseStatusChange(
-            nodeName, databaseName, (ODistributedServerManager.DB_STATUS) iEvent.getValue());
 
       } else if (OHazelcastDistributedMap.isRegisteredNodes(key)) {
         logger.infoIn(nodeName, eventNodeName, "Received updated about registered nodes");
@@ -665,18 +565,6 @@ public class OHazelcastClusterMetadataManager
         updateLastClusterChange();
 
         distributedPlugin.dumpServersStatus();
-
-      } else if (OHazelcastDistributedMap.isDatabaseConfiguration(key)) {
-        updateLastClusterChange();
-
-      } else if (OHazelcastDistributedMap.isDatabaseStatus(key)) {
-        String values = OHazelcastDistributedMap.getDatabaseStatusKeyValues(key);
-        // CALL DATABASE EVENT
-        final String nodeName = values.substring(0, values.indexOf("."));
-        final String databaseName = values.substring(values.indexOf(".") + 1);
-
-        distributedPlugin.onDatabaseEvent(
-            nodeName, databaseName, (ODistributedServerManager.DB_STATUS) iEvent.getValue());
       }
     } catch (HazelcastInstanceNotActiveException | RetryableHazelcastException e) {
       logger.error("Hazelcast is not running", e);
@@ -707,8 +595,6 @@ public class OHazelcastClusterMetadataManager
 
           final String nodeLeftName = getNodeName(iEvent.getMember(), true);
           if (nodeLeftName == null) return;
-
-          distributedPlugin.removeServer(nodeLeftName, true);
         });
   }
 
@@ -759,20 +645,6 @@ public class OHazelcastClusterMetadataManager
     }
   }
 
-  public void removeDbFromClusterMetadata(final String dbName) {
-    if (configurationMap != null) {
-      configurationMap.removeDatabaseStatus(nodeName, dbName);
-    }
-  }
-
-  public void dropDatabaseConfiguration(final String dbName) {
-    // LAST NODE HOLDING THE DATABASE, DELETE DISTRIBUTED CFG TOO
-    configurationMap.removeDatabaseConfiguration(dbName);
-    configurationMap.remove(OHazelcastClusterMetadataManager.DEPLOYDB + dbName);
-    logger.infoNode(
-        nodeName, "Dropped last copy of database '%s', removing it from the cluster", dbName);
-  }
-
   public ONodeConfig getNodeConfigurationByUuid(final String iNodeId, final boolean useCache) {
     if (configurationMap == null)
       // NOT YET STARTED
@@ -791,18 +663,6 @@ public class OHazelcastClusterMetadataManager
   public ONodeConfig getNodeConfigurationByName(final String nodeName, final boolean useCache) {
     String uuid = getNodeUuidByName(nodeName);
     return getNodeConfigurationByUuid(uuid, useCache);
-  }
-
-  public ODistributedServerManager.DB_STATUS getDatabaseStatus(
-      final String iNode, final String iDatabaseName) {
-    final ODistributedServerManager.DB_STATUS status =
-        configurationMap.getCachedDatabaseStatus(iNode, iDatabaseName);
-    return status != null ? status : ODistributedServerManager.DB_STATUS.NOT_AVAILABLE;
-  }
-
-  // Returns name of distributed databases in the cluster.
-  public Set<String> getDatabases() {
-    return configurationMap.getDatabases();
   }
 
   public void reloadRegisteredNodes() {
@@ -915,21 +775,25 @@ public class OHazelcastClusterMetadataManager
   public OClusterConfiguration getClusterConfiguration() {
 
     OClusterConfiguration clusterConfig = new OClusterConfiguration();
+    OrientDBDistributed context = (OrientDBDistributed) serverInstance.getDatabases();
 
     clusterConfig.setLocalName(distributedPlugin.getName());
     clusterConfig.setLocalId(nodeUuid);
 
+    var networkTopology = context.getNodeState().getOps().getNetworkTopology();
+    var databaseTopology = context.getNodeState().getOps().getDatabaseTopology();
     // INSERT MEMBERS
-    for (Member member : activeNodes.values()) {
-      ONodeConfig nodeConfig = getNodeConfigurationByUuid(member.getUuid(), true);
+    for (var member : networkTopology.getMembers()) {
+      ONodeConfig nodeConfig = getNodeConfigurationByName(member.getNode(), true);
       if (nodeConfig == null) {
         continue;
       }
-      final String nodeName = getNodeName(member, true);
+      final String nodeName = member.getNode();
       final Map<String, String> dbStatus = new HashMap<>();
-      for (String db : distributedPlugin.getManagedDatabases()) {
-        final DB_STATUS nodeDbState = getDatabaseStatus(nodeName, db);
-        dbStatus.put(db, nodeDbState.toString());
+      for (var db : databaseTopology.getDatabases()) {
+        var dbName = databaseTopology.getDatabaseName(db);
+        final DB_STATUS nodeDbState = context.getDatabaseStatus(nodeName, dbName);
+        dbStatus.put(dbName, nodeDbState.toString());
       }
       nodeConfig.setDatabasesStatus(dbStatus);
       clusterConfig.addMember(nodeConfig);
@@ -958,10 +822,6 @@ public class OHazelcastClusterMetadataManager
       throw new IllegalArgumentException("Node name " + name + " is invalid");
 
     return activeNodesUuidByName.get(name);
-  }
-
-  public ODocument getOnlineDatabaseConfiguration(final String iDatabaseName) {
-    return configurationMap.getDatabaseConfiguration(iDatabaseName);
   }
 
   public ODistributedConfiguration getDatabaseConfiguration(final String iDatabaseName) {

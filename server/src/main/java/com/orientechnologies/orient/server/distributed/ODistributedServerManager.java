@@ -20,7 +20,6 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.distributed.ONodeConfig;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.config.OClusterConfiguration;
@@ -92,8 +91,6 @@ public interface ODistributedServerManager {
 
   void setNodeStatus(NODE_STATUS iStatus);
 
-  void removeServer(String nodeLeftName, boolean removeOnlyDynamicServers);
-
   DB_STATUS getDatabaseStatus(String iNode, String iDatabaseName);
 
   ODistributedMessageService getMessageService();
@@ -103,12 +100,6 @@ public interface ODistributedServerManager {
   ODistributedStrategy getDistributedStrategy();
 
   void setDistributedStrategy(ODistributedStrategy streatgy);
-
-  // This is always used with deployToCluster=true!
-  boolean updateCachedDatabaseConfiguration(
-      String iDatabaseName, OModifiableDistributedConfiguration cfg);
-
-  void publishDistributedConfiguration(String iDatabaseName, ODistributedConfiguration cfg);
 
   long getNextMessageIdCounter();
 
@@ -174,10 +165,6 @@ public interface ODistributedServerManager {
   File getDefaultDatabaseConfigFile();
 
   void notifyClients(String databaseName);
-
-  ODocument getOnlineDatabaseConfiguration(String databaseName);
-
-  Set<String> getDatabases();
 
   boolean isSyncronizing(String databaseName);
 

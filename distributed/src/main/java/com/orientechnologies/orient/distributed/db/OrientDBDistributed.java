@@ -540,9 +540,6 @@ public class OrientDBDistributed extends OrientDBEmbedded
     }
 
     unregisterDatabase(name);
-    if (plugin != null) {
-      plugin.removeDbFromClusterMetadata(name);
-    }
     synchronized (this) {
       if (exists(name, null, null)) {
         OStorage storage = getAndOpenStorage(name, getConfigurations());

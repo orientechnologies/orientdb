@@ -464,7 +464,7 @@ public class ODistributedOutput {
 
             buffer.append(dbName);
             buffer.append("=");
-            buffer.append(manager.getDatabaseStatus(serverName, dbName));
+            buffer.append(ctx.getDatabaseStatus(serverName, dbName));
             buffer.append(" (");
             buffer.append(dbCfg.getServerRole(serverName));
             buffer.append(")");

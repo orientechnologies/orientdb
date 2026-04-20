@@ -105,10 +105,7 @@ public class ReinstallDatabaseTestIT {
     int retry = 0;
     while (true) {
       ODistributedServerManager.DB_STATUS databaseStatus =
-          server2Instance
-              .getDistributedManager()
-              .getDatabaseStatus(
-                  server2Instance.getDistributedManager().getLocalNodeName(), DATABASE_NAME);
+          ((OrientDBDistributed) server2Instance.getDatabases()).getDatabaseStatus(DATABASE_NAME);
       if (databaseStatus.equals(ODistributedServerManager.DB_STATUS.ONLINE) || retry > 10) {
         break;
       }

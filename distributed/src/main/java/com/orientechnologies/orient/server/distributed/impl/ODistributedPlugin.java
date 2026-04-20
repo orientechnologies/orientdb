@@ -53,6 +53,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.distributed.ONodeConfig;
 import com.orientechnologies.orient.distributed.ONodeListenerConfig;
+import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabasesTopology;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolException;
 import com.orientechnologies.orient.server.OServer;
@@ -75,7 +76,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
 import com.orientechnologies.orient.server.distributed.ODistributedStartupException;
 import com.orientechnologies.orient.server.distributed.ODistributedStrategy;
 import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
-import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ORemoteServerController;
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactoryManager;
 import com.orientechnologies.orient.server.distributed.config.OClusterConfiguration;
@@ -103,6 +103,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import sun.misc.Signal;
 
 /**
@@ -280,14 +281,6 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
     clusterManager.hazelcastPluginShutdown();
   }
 
-  public void removeDbFromClusterMetadata(String name) {
-    clusterManager.removeDbFromClusterMetadata(name);
-  }
-
-  public void dropConfig(String dbName) {
-    clusterManager.dropDatabaseConfiguration(dbName);
-  }
-
   @Override
   public String getName() {
     return "cluster";
@@ -328,7 +321,18 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
     if (user != null)
       nodeCfg.setReplicator(serverInstance.getSecurity().getUser(REPLICATOR_USER).getPassword());
 
-    nodeCfg.setDatabases(getManagedDatabases());
+    if (((OrientDBDistributed) serverInstance.getDatabases()).getNodeState() != null) {
+      ODatabasesTopology databaseTopology =
+          ((OrientDBDistributed) serverInstance.getDatabases())
+              .getNodeState()
+              .getDatabaseTopology();
+      var dbIds = databaseTopology.getDatabases();
+      var dbs =
+          dbIds.stream()
+              .map((id) -> databaseTopology.getDatabaseName(id))
+              .collect(Collectors.toSet());
+      nodeCfg.setDatabases(dbs);
+    }
 
     final long maxMem = Runtime.getRuntime().maxMemory();
     final long totMem = Runtime.getRuntime().totalMemory();
@@ -798,10 +802,6 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
     }
   }
 
-  public Set<String> getManagedDatabases() {
-    return getDatabases();
-  }
-
   public String getLocalNodeName() {
     return nodeName;
   }
@@ -887,17 +887,6 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
 
   public void setDistributedStrategy(final ODistributedStrategy streatgy) {
     this.responseManagerFactory = streatgy;
-  }
-
-  @Override
-  public boolean updateCachedDatabaseConfiguration(
-      String iDatabaseName, OModifiableDistributedConfiguration cfg) {
-    return clusterManager.updateCachedDatabaseConfiguration(iDatabaseName, cfg);
-  }
-
-  @Override
-  public void publishDistributedConfiguration(String iDatabaseName, ODistributedConfiguration cfg) {
-    clusterManager.publishDistributedConfiguration(iDatabaseName, cfg);
   }
 
   public void notifyClients(String databaseName) {
@@ -1129,9 +1118,12 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
       return;
     }
 
-    final List<String> dbs = new ArrayList<>(clusterManager.getDatabases());
-    Collections.sort(dbs);
     OrientDBDistributed context = (OrientDBDistributed) serverInstance.getDatabases();
+    ODatabasesTopology databaseTopology = context.getNodeState().getOps().getDatabaseTopology();
+    var dbIds = databaseTopology.getDatabases();
+    final List<String> dbs =
+        dbIds.stream().map((dbId) -> databaseTopology.getDatabaseName(dbId)).toList();
+    Collections.sort(dbs);
     for (String databaseName : dbs) {
       final Set<String> availableServers = context.getAvailableNodeNames(databaseName);
       if (availableServers.isEmpty())
@@ -1170,8 +1162,14 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
     try {
       final OClusterConfiguration clusterCfg = getClusterConfiguration();
 
-      final Set<String> dbs = getManagedDatabases();
-
+      ODatabasesTopology databaseTopology =
+          ((OrientDBDistributed) serverInstance.getDatabases())
+              .getNodeState()
+              .getDatabaseTopology();
+      var dbIds = databaseTopology.getDatabases();
+      final List<String> dbs =
+          dbIds.stream().map((dbId) -> databaseTopology.getDatabaseName(dbId)).toList();
+      Collections.sort(dbs);
       final StringBuilder buffer = new StringBuilder(8192);
 
       buffer.append(ODistributedOutput.formatLatency(this, clusterCfg));
@@ -1295,44 +1293,9 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
   }
 
   @Override
-  public void removeServer(final String nodeLeftName, final boolean removeOnlyDynamicServers) {
-    if (nodeLeftName == null) return;
-    Member member = clusterManager.removeFromLocalActiveServerList(nodeLeftName);
-    if (member == null) return;
-
-    try {
-      // REMOVE INTRA SERVER CONNECTION
-      closeRemoteServer(nodeLeftName);
-
-      // NOTIFY ABOUT THE NODE HAS LEFT
-      for (ODistributedLifecycleListener l : listeners)
-        try {
-          l.onNodeLeft(nodeLeftName);
-        } catch (Exception e) {
-          // IGNORE IT
-          logger.debugIn(nodeName, nodeLeftName, "Error on calling onNodeLeft event on '%s'", e, l);
-        }
-
-      // UNLOCK ANY PENDING LOCKS
-      for (String dbName : getDatabases()) {
-        ODistributedDatabaseImpl db = getDatabase(dbName);
-        if (db != null) {
-          db.handleUnreachableNode(nodeLeftName);
-        }
-      }
-
-      if (nodeLeftName.equalsIgnoreCase(nodeName))
-        // CURRENT NODE: EXIT
-        System.exit(1);
-    } finally {
-      // REMOVE NODE IN DB CFG
-      getMessageService().handleUnreachableNode(nodeLeftName);
-    }
-  }
-
-  @Override
   public DB_STATUS getDatabaseStatus(String iNode, String iDatabaseName) {
-    return clusterManager.getDatabaseStatus(iNode, iDatabaseName);
+    return ((OrientDBDistributed) serverInstance.getDatabases())
+        .getDatabaseStatus(iNode, iDatabaseName);
   }
 
   // Called to notify this server, that a node has been removed from the cluster
@@ -1392,16 +1355,7 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
   }
 
   @Override
-  public ODocument getOnlineDatabaseConfiguration(String databaseName) {
-    return clusterManager.getOnlineDatabaseConfiguration(databaseName);
-  }
-
-  @Override
   public ODistributedDatabaseImpl getDatabase(String name) {
     return ((OrientDBDistributed) getServerInstance().getDatabases()).getDatabase(name);
-  }
-
-  public Set<String> getDatabases() {
-    return clusterManager.getDatabases();
   }
 }

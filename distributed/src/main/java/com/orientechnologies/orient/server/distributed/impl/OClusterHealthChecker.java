@@ -86,13 +86,11 @@ public class OClusterHealthChecker implements Runnable {
     if (!context.getNodeState().getOps().getNetworkTopology().isSelfEnstablished())
       // ONLY ONLINE NODE CAN TRY TO RECOVER FOR SINGLE DB STATUS
       return;
-
+    var dbTopology = context.getNodeState().getOps().getDatabaseTopology();
     if (!server.isActive()) return;
 
-    for (String dbName : manager.getDatabases()) {
-      if (manager.isSyncronizing(dbName)) {
-        continue;
-      }
+    for (var dbId : dbTopology.getDatabases()) {
+      var dbName = dbTopology.getDatabaseName(dbId);
       final ODistributedServerManager.DB_STATUS localNodeStatus = context.getDatabaseStatus(dbName);
       if (localNodeStatus != ODistributedServerManager.DB_STATUS.ONLINE)
         // ONLY NOT_AVAILABLE NODE/DB CAN BE RECOVERED

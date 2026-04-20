@@ -30,7 +30,6 @@ import com.hazelcast.map.listener.EntryUpdatedListener;
 import com.hazelcast.map.listener.MapClearedListener;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.distributed.ONodeConfig;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -243,70 +242,5 @@ public class OHazelcastDistributedMap extends ConcurrentHashMap<String, Object>
 
   public static boolean isRegisteredNodes(String key) {
     return key.startsWith(OHazelcastClusterMetadataManager.CONFIG_REGISTEREDNODES);
-  }
-
-  public boolean existsDatabaseConfiguration(String databaseName) {
-    return this.containsKey(OHazelcastClusterMetadataManager.CONFIG_DATABASE_PREFIX + databaseName);
-  }
-
-  public void setDatabaseConfiguration(String databaseName, ODocument document) {
-    this.put(OHazelcastClusterMetadataManager.CONFIG_DATABASE_PREFIX + databaseName, document);
-  }
-
-  public ODocument getDatabaseConfiguration(String databaseName) {
-    return (ODocument)
-        this.get(OHazelcastClusterMetadataManager.CONFIG_DATABASE_PREFIX + databaseName);
-  }
-
-  // Returns name of distributed databases in the cluster.
-  public Set<String> getDatabases() {
-    final Set<String> dbs = new HashSet<>();
-    for (String key : keySet()) {
-      if (key.startsWith(OHazelcastClusterMetadataManager.CONFIG_DATABASE_PREFIX)) {
-        final String databaseName =
-            key.substring(OHazelcastClusterMetadataManager.CONFIG_DATABASE_PREFIX.length());
-        dbs.add(databaseName);
-      }
-    }
-    return dbs;
-  }
-
-  public void removeDatabaseConfiguration(String databaseName) {
-    this.remove(OHazelcastClusterMetadataManager.CONFIG_DATABASE_PREFIX + databaseName);
-  }
-
-  public static boolean isDatabaseConfiguration(String key) {
-    return key.startsWith(OHazelcastClusterMetadataManager.CONFIG_DATABASE_PREFIX);
-  }
-
-  public void setDatabaseStatus(
-      String node, String databaseName, ODistributedServerManager.DB_STATUS status) {
-    put(
-        OHazelcastClusterMetadataManager.CONFIG_DBSTATUS_PREFIX + node + "." + databaseName,
-        status);
-  }
-
-  public void removeDatabaseStatus(String node, String databaseName) {
-    remove(OHazelcastClusterMetadataManager.CONFIG_DBSTATUS_PREFIX + node + "." + databaseName);
-  }
-
-  public ODistributedServerManager.DB_STATUS getDatabaseStatus(String node, String databaseName) {
-    return (ODistributedServerManager.DB_STATUS)
-        get(OHazelcastClusterMetadataManager.CONFIG_DBSTATUS_PREFIX + node + "." + databaseName);
-  }
-
-  public ODistributedServerManager.DB_STATUS getCachedDatabaseStatus(
-      String node, String databaseName) {
-    return (ODistributedServerManager.DB_STATUS)
-        getLocalCachedValue(
-            OHazelcastClusterMetadataManager.CONFIG_DBSTATUS_PREFIX + node + "." + databaseName);
-  }
-
-  public static boolean isDatabaseStatus(String key) {
-    return key.startsWith(OHazelcastClusterMetadataManager.CONFIG_DBSTATUS_PREFIX);
-  }
-
-  public static String getDatabaseStatusKeyValues(String key) {
-    return key.substring(OHazelcastClusterMetadataManager.CONFIG_DBSTATUS_PREFIX.length());
   }
 }

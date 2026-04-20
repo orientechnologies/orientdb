@@ -38,7 +38,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedConfiguration
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
-import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.config.OClusterConfiguration;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedPlugin;
 import com.orientechnologies.orient.server.distributed.impl.task.OEnterpriseStatsTask;
@@ -80,11 +79,8 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
 
     if (command.equalsIgnoreCase("database")) {
 
-      String jsonContent = iRequest.getContent();
-
-      changeConfig(server, id, jsonContent);
-
-      iResponse.send(OHttpUtils.STATUS_OK_CODE, null, null, OHttpUtils.STATUS_OK_DESCRIPTION, null);
+      iResponse.send(
+          OHttpUtils.STATUS_NOTIMPL_CODE, null, null, OHttpUtils.STATUS_NOTIMPL_CODE, null);
     }
   }
 
@@ -126,7 +122,8 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
         throw new OConfigurationException(
             "Cannot stop the server: local server is not distributed");
 
-      server.getDistributedManager().removeServer(parts[2], false);
+      final ODistributedPlugin dManager = (ODistributedPlugin) server.getDistributedManager();
+      dManager.stopNode(parts[2]);
 
       iResponse.send(OHttpUtils.STATUS_OK_CODE, null, null, OHttpUtils.STATUS_OK_DESCRIPTION, null);
 
@@ -139,7 +136,7 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
         throw new OConfigurationException(
             "Cannot restart the server: local server is not distributed");
 
-      final ODistributedPlugin dManager = ((ODistributedPlugin) server.getDistributedManager());
+      final ODistributedPlugin dManager = (ODistributedPlugin) server.getDistributedManager();
       dManager.restartNode(parts[2]);
 
       iResponse.send(OHttpUtils.STATUS_OK_CODE, null, null, OHttpUtils.STATUS_OK_DESCRIPTION, null);
@@ -196,18 +193,6 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
     ODocument document = new ODocument().field("result", installDatabase);
     iResponse.send(
         OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, document.toJSON(""), null);
-  }
-
-  public void changeConfig(final OServer server, final String database, final String jsonContent) {
-    final ODistributedPlugin manager = (ODistributedPlugin) server.getDistributedManager();
-
-    final OModifiableDistributedConfiguration databaseConfiguration =
-        manager.getDatabaseConfiguration(database).modify();
-    final ODocument cfg = databaseConfiguration.getDocument().fromJSON(jsonContent, "noMap");
-    cfg.field("version", (Integer) cfg.field("version") + 1);
-
-    OModifiableDistributedConfiguration config = new OModifiableDistributedConfiguration(cfg);
-    manager.updateCachedDatabaseConfiguration(database, config);
   }
 
   private void doGet(

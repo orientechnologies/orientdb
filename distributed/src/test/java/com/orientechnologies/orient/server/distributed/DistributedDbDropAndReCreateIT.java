@@ -18,7 +18,6 @@ package com.orientechnologies.orient.server.distributed;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.setup.ServerRun;
-import org.junit.Assert;
 import org.junit.Test;
 
 /** Distributed test on drop + recreate database. */
@@ -50,21 +49,9 @@ public class DistributedDbDropAndReCreateIT extends AbstractServerClusterTxTest 
 
       Thread.sleep(3000);
 
-      Assert.assertNull(
-          server
-              .getServerInstance()
-              .getDistributedManager()
-              .getOnlineDatabaseConfiguration(getDatabaseName()));
-
       server = serverInstance.get(s);
 
       banner("RE-CREATING DATABASE ON SERVER " + server.getServerId());
-
-      Assert.assertNull(
-          server
-              .getServerInstance()
-              .getDistributedManager()
-              .getOnlineDatabaseConfiguration(getDatabaseName()));
 
       for (int retry = 0; retry < 10; retry++) {
         try {
