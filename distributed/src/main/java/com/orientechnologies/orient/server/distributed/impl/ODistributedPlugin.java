@@ -1131,13 +1131,6 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
         // NO NODE HAS THIS DATABASE AVAILABLE
         continue;
 
-      final DB_STATUS currStatus = context.getDatabaseStatus(databaseName);
-      if (currStatus == DB_STATUS.SYNCHRONIZING
-          || currStatus == DB_STATUS.ONLINE
-          || currStatus == DB_STATUS.BACKUP)
-        // FIX PREVIOUS STATUS OF DATABASE
-        context.setDatabaseStatus(new ONodeId(nodeName), databaseName, DB_STATUS.NOT_AVAILABLE);
-
       try {
 
         if (!context.installDatabase(true, databaseName, false, true)) {

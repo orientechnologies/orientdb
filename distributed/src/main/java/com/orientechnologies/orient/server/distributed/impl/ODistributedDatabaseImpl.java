@@ -542,32 +542,18 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     }
     running = false;
 
-    try {
-      if (txTimeoutTask != null) txTimeoutTask.cancel();
-      requestExecutor.shutdown();
-      if (wait) {
-        try {
-          requestExecutor.awaitTermination(1, TimeUnit.MINUTES);
-        } catch (InterruptedException e) {
-        }
-      }
-
-      activeTxContexts.clear();
-
-      removeProfilerHook();
-
-    } finally {
-
-      final DB_STATUS serverStatus = context.getDatabaseStatus(databaseName);
-
-      if (serverStatus == DB_STATUS.ONLINE || serverStatus == DB_STATUS.SYNCHRONIZING) {
-        try {
-          context.setDatabaseStatus(databaseName, DB_STATUS.NOT_AVAILABLE);
-        } catch (Exception e) {
-          // IGNORE IT
-        }
+    if (txTimeoutTask != null) txTimeoutTask.cancel();
+    requestExecutor.shutdown();
+    if (wait) {
+      try {
+        requestExecutor.awaitTermination(1, TimeUnit.MINUTES);
+      } catch (InterruptedException e) {
       }
     }
+
+    activeTxContexts.clear();
+
+    removeProfilerHook();
   }
 
   public void removeProfilerHook() {
