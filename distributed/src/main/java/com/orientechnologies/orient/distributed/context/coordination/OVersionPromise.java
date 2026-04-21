@@ -80,7 +80,8 @@ public class OVersionPromise {
     this.version = version;
   }
 
-  public Optional<OAcceptResult> validateMerge(OTransactionIdPromise promise, OVersion version) {
+  public synchronized Optional<OAcceptResult> validateMerge(
+      OTransactionIdPromise promise, OVersion version) {
     if (this.promise.isEmpty()) {
       if (version.getValue() > this.version.getValue()) {
         logger.debugNode(current, "version promising %s", promise);

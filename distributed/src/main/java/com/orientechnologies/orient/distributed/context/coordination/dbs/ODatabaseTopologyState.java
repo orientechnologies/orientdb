@@ -412,12 +412,12 @@ public class ODatabaseTopologyState extends OWatcher {
     }
   }
 
-  public Optional<OAcceptResult> validateMerge(
+  public synchronized Optional<OAcceptResult> validateMerge(
       OTransactionIdPromise promise, ODatabaseStateNetwork stateDb) {
     return this.versionPromise.validateMerge(promise, new OVersion(stateDb.version() + 1));
   }
 
-  public void cancelMerge(OTransactionIdPromise promise) {
+  public synchronized void cancelMerge(OTransactionIdPromise promise) {
     this.versionPromise.cancel(promise);
   }
 
