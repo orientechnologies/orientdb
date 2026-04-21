@@ -1122,7 +1122,8 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
     ODatabasesTopology databaseTopology = context.getNodeState().getOps().getDatabaseTopology();
     var dbIds = databaseTopology.getDatabases();
     final List<String> dbs =
-        dbIds.stream().map((dbId) -> databaseTopology.getDatabaseName(dbId)).toList();
+        new ArrayList<>(
+            dbIds.stream().map((dbId) -> databaseTopology.getDatabaseName(dbId)).toList());
     Collections.sort(dbs);
     for (String databaseName : dbs) {
       final Set<String> availableServers = context.getAvailableNodeNames(databaseName);
@@ -1168,7 +1169,8 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
               .getDatabaseTopology();
       var dbIds = databaseTopology.getDatabases();
       final List<String> dbs =
-          dbIds.stream().map((dbId) -> databaseTopology.getDatabaseName(dbId)).toList();
+          new ArrayList<>(
+              dbIds.stream().map((dbId) -> databaseTopology.getDatabaseName(dbId)).toList());
       Collections.sort(dbs);
       final StringBuilder buffer = new StringBuilder(8192);
 
