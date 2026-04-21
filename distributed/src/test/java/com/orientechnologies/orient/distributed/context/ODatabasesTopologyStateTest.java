@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.distriubted.context;
+package com.orientechnologies.orient.distributed.context;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;

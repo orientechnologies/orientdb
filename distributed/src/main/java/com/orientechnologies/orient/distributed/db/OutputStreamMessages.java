@@ -11,11 +11,11 @@ public class OutputStreamMessages extends OutputStream {
   }
 
   private OSyncState state;
-  private MessageSender ctx;
+  private MessageSender sender;
 
-  public OutputStreamMessages(MessageSender ctx, OSyncState state) {
+  public OutputStreamMessages(MessageSender sender, OSyncState state) {
     this.state = state;
-    this.ctx = ctx;
+    this.sender = sender;
   }
 
   @Override
@@ -25,14 +25,15 @@ public class OutputStreamMessages extends OutputStream {
 
   @Override
   public void write(byte[] b, int off, int len) throws IOException {
+    // Copy every time the data because of multi-threading
     byte[] data = new byte[len];
     System.arraycopy(b, off, data, 0, len);
-    this.ctx.sendBuffer(state, data, false);
+    this.sender.sendBuffer(state, data, false);
   }
 
   @Override
   public void close() throws IOException {
-    this.ctx.sendBuffer(state, new byte[] {}, true);
+    this.sender.sendBuffer(state, new byte[] {}, true);
     state.close();
   }
 }

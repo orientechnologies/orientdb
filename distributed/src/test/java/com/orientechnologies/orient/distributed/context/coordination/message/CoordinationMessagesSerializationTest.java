@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.distriubted.context.coordination.message;
+package com.orientechnologies.orient.distributed.context.coordination.message;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
@@ -11,21 +11,6 @@ import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import com.orientechnologies.orient.distributed.context.coordination.OVersion;
-import com.orientechnologies.orient.distributed.context.coordination.message.OCanSync;
-import com.orientechnologies.orient.distributed.context.coordination.message.OConfirmOp;
-import com.orientechnologies.orient.distributed.context.coordination.message.OFailOp;
-import com.orientechnologies.orient.distributed.context.coordination.message.OFailPropose;
-import com.orientechnologies.orient.distributed.context.coordination.message.OMergeRequest;
-import com.orientechnologies.orient.distributed.context.coordination.message.OMergeResult;
-import com.orientechnologies.orient.distributed.context.coordination.message.ONextBuffer;
-import com.orientechnologies.orient.distributed.context.coordination.message.ONodeFirstConnect;
-import com.orientechnologies.orient.distributed.context.coordination.message.ORetryProposeOp;
-import com.orientechnologies.orient.distributed.context.coordination.message.OStartSync;
-import com.orientechnologies.orient.distributed.context.coordination.message.OStructuralMessage;
-import com.orientechnologies.orient.distributed.context.coordination.message.OSuccessPropose;
-import com.orientechnologies.orient.distributed.context.coordination.message.OSyncData;
-import com.orientechnologies.orient.distributed.context.coordination.message.OSyncRequest;
-import com.orientechnologies.orient.distributed.context.coordination.message.OTopologyPing;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.ODropDbMessage;
 import com.orientechnologies.orient.distributed.context.coordination.message.state.ONodeStateNetwork;
 import com.orientechnologies.orient.distributed.context.coordination.message.state.OTopologyStateNetwork;

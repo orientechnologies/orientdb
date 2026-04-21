@@ -13,7 +13,6 @@ import java.util.concurrent.TimeUnit;
 public class OReceiverInputStream extends InputStream {
 
   private record Buffer(byte[] content, boolean finished) {}
-  ;
 
   public interface RequestNext {
     void requestNext(OSyncState state, boolean b);
@@ -43,13 +42,14 @@ public class OReceiverInputStream extends InputStream {
         if (bi == null) {
           throw new OTimeoutException("Timeout waiting for sync data");
         }
+        buffer = bi.content;
+        cursor = 0;
         if (bi.finished) {
           this.finished = true;
           this.state.close();
+        } else {
+          ctx.requestNext(state, false);
         }
-        buffer = bi.content;
-        cursor = 0;
-        ctx.requestNext(state, false);
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
         throw OException.wrapException(new OInterruptedException("Receive sync interrupted"), e);

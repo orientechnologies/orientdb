@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.distriubted.context;
+package com.orientechnologies.orient.distributed.context;
 
 import static org.junit.Assert.assertTrue;
 
@@ -10,8 +10,6 @@ import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
-import com.orientechnologies.orient.distributed.context.ONodeStateStore;
-import com.orientechnologies.orient.distributed.context.ONodeStateUpdated;
 import com.orientechnologies.orient.distributed.context.coordination.OCoordinatedDistributedOps;
 import com.orientechnologies.orient.distributed.context.coordination.OCoordinatedDistributedOpsImpl;
 import com.orientechnologies.orient.distributed.context.coordination.OOperationStart;

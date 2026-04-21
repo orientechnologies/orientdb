@@ -1186,7 +1186,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
     }
   }
 
-  public void receiveSync(
+  public boolean receiveSync(
       String dbName, OSyncState state, InputStream inputStream, OrientDBConfig conf) {
     try (InputStream input = inputStream) {
       boolean success =
@@ -1204,8 +1204,10 @@ public class OrientDBDistributed extends OrientDBEmbedded
       if (success) {
         setDatabaseState(state.getDbId(), state.getReceiver(), ODatabaseState.Online);
       }
+      return success;
     } catch (IOException e) {
       logger.debug("Error on close of sync", e);
+      return false;
     } finally {
       logger.debug("Completing sync %s", state.getSyncId());
       getNodeState().getOps().completeSync(state.getSyncId());

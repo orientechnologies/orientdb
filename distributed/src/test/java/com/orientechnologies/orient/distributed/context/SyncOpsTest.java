@@ -1,9 +1,11 @@
-package com.orientechnologies.orient.distriubted.context;
+package com.orientechnologies.orient.distributed.context;
 
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.OrientDBConfigBuilder;
@@ -29,9 +31,10 @@ import org.junit.Before;
 import org.junit.Test;
 
 public class SyncOpsTest {
-
+  private final OLogger logger = OLogManager.instance().logger(SyncOpsTest.class);
   private OrientDB context;
   private OrientDB context1;
+  private ODatabaseId dbId;
 
   @Before
   public void before() throws InterruptedException, ExecutionException, TimeoutException {
@@ -44,7 +47,7 @@ public class SyncOpsTest {
     context = OrientDBInternal.distributed("./target/sync", config1.build()).newOrientDB();
     context.execute("create database test plocal users(admin identified by 'adminpwd' role admin)");
     OrientDBDistributed ctx = (OrientDBDistributed) OrientDBInternal.extract(context);
-    var dbId = ctx.getStorage("test").getDatabaseId();
+    dbId = ctx.getStorage("test").getDatabaseId();
     OrientDBConfigBuilder config2 = OrientDBConfig.builder();
     config2
         .getNodeConfigurationBuilder()
@@ -67,11 +70,14 @@ public class SyncOpsTest {
 
     @Override
     public void requestNext(OSyncState state, boolean close) {
+      logger.debug("requesting next from receiver close:%b", close);
       this.sender.requestNext(close);
     }
 
     @Override
     public void sendBuffer(OSyncState state, byte[] data, boolean finished) {
+      logger.debug("sending data from sender size:%s finished:%b", data.length, finished);
+
       this.receiver.receiveData(data, finished);
       state.transaferd(data.length);
       if (!finished) {
@@ -104,7 +110,6 @@ public class SyncOpsTest {
   }
 
   private void testRawSync(OSyncMode mode) {
-    var dbId = new ODatabaseId("test");
     var nodeFrom = new ONodeId("node1");
     var nodeTo = new ONodeId("node2");
     var syncId = new OSyncId(dbId, nodeTo);
@@ -133,7 +138,8 @@ public class SyncOpsTest {
         .start();
 
     OrientDBDistributed ctx1 = (OrientDBDistributed) OrientDBInternal.extract(context1);
-    ctx1.receiveSync("test", receiver, input, OrientDBConfig.defaultConfig());
+    var result = ctx1.receiveSync("test", receiver, input, OrientDBConfig.defaultConfig());
+    assertTrue(result);
     try (var session = context1.open("test", "admin", "adminpwd")) {
       // if it can open is good, it restored the right password
       assertTrue(true);
@@ -161,7 +167,6 @@ public class SyncOpsTest {
   }
 
   public void testFailRawSync(OSyncMode mode) {
-    var dbId = new ODatabaseId("test");
     var nodeFrom = new ONodeId("node1");
     var nodeTo = new ONodeId("node2");
     var syncId = new OSyncId(dbId, nodeTo);
@@ -190,7 +195,8 @@ public class SyncOpsTest {
         .start();
 
     OrientDBDistributed ctx1 = (OrientDBDistributed) OrientDBInternal.extract(context1);
-    ctx1.receiveSync("test", receiver, input, OrientDBConfig.defaultConfig());
+    var result = ctx1.receiveSync("test", receiver, input, OrientDBConfig.defaultConfig());
+    assertFalse(result);
     assertFalse(ctx1.exists("test", null, null));
     try {
       // if it can open is good, it restored the right password
