@@ -343,7 +343,6 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
   public void restore(
       final InputStream in,
       final Map<String, Object> options,
-      final Callable<Object> callable,
       final OCommandOutputListener iListener) {
     stateLock.writeLock().lock();
     try {

@@ -19,6 +19,7 @@ package com.orientechnologies.orient.server.network.protocol.http.command.post;
 
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
@@ -50,12 +51,7 @@ public class OServerCommandPostInstallDatabase extends OServerCommandAuthenticat
           conn.setDefaultUseCaches(false);
           server
               .getDatabases()
-              .networkRestore(
-                  name,
-                  conn.getInputStream(),
-                  () -> {
-                    return null;
-                  });
+              .networkRestore(name, new ODatabaseId("mock"), conn.getInputStream());
           try (ODatabaseSession session = server.getDatabases().openNoAuthorization(name)) {}
 
           iResponse.send(

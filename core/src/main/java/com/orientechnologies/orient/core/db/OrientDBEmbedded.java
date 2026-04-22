@@ -559,7 +559,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
   }
 
   @Override
-  public boolean networkRestore(String name, InputStream in, Callable<Object> callable) {
+  public boolean networkRestore(String name, ODatabaseId databaseId, InputStream in) {
     checkDatabaseName(name);
     OStorage storage = null;
     OContextConfiguration config = getConfigurations().getConfigurations();
@@ -576,12 +576,11 @@ public class OrientDBEmbedded implements OrientDBInternal {
           storage.close();
         }
 
-        storage =
-            getDefaultEngine().createForRestoreLocal(this, new ODatabaseId("mock"), name, config);
+        storage = getDefaultEngine().createForRestoreLocal(this, databaseId, name, config);
 
         storages.put(name, storage);
       }
-      storage.restore(in, null, callable, null);
+      storage.restore(in, null, null);
       dbCount.incrementAndGet();
       distributedSetOnline(name);
       return true;
@@ -666,7 +665,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
       dbCount.incrementAndGet();
     }
     try {
-      storage.restore(in, options, callable, iListener);
+      storage.restore(in, options, iListener);
     } catch (Exception e) {
       synchronized (this) {
         dbCount.decrementAndGet();

@@ -434,15 +434,10 @@ public interface OStorage extends OStorageInfo {
    * @param in InputStream used to read the backup content. Use a FileInputStream to read a backup
    *     on a disk
    * @param options Backup options as Map<String, Object> object
-   * @param callable Callback to execute when the database is locked
    * @param iListener Listener called for backup messages
    * @throws IOException
    * @see ODatabaseImport
    */
-  void restore(
-      InputStream in,
-      Map<String, Object> options,
-      Callable<Object> callable,
-      OCommandOutputListener iListener)
+  void restore(InputStream in, Map<String, Object> options, OCommandOutputListener iListener)
       throws IOException;
 }

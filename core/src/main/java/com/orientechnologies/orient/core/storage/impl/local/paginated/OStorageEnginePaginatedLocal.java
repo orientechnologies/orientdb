@@ -381,7 +381,7 @@ public class OStorageEnginePaginatedLocal implements OStorageEngine {
   @Override
   public OStorage createForRestoreLocal(
       OrientDBInternal context, ODatabaseId id, String name, OContextConfiguration config) {
-    return createLocal(context, new ODatabaseId("mock"), name, config);
+    return createLocal(context, id, name, config);
   }
 
   @Override

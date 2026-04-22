@@ -375,7 +375,8 @@ public class OrientDBDistributed extends OrientDBEmbedded
     this.plugin = plugin;
   }
 
-  public boolean nonBlockingSync(String name, InputStream backupStream, OrientDBConfig config) {
+  public boolean nonBlockingSync(
+      String name, ODatabaseId databaseId, InputStream backupStream, OrientDBConfig config) {
     OStorage storage = null;
     ODatabaseDocumentEmbedded embedded;
 
@@ -402,8 +403,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
 
         storage =
             getDefaultEngine()
-                .createForRestoreLocal(
-                    this, new ODatabaseId("mock"), name, config.getConfigurations());
+                .createForRestoreLocal(this, databaseId, name, config.getConfigurations());
 
         storages.put(name, storage);
       }
@@ -437,69 +437,6 @@ public class OrientDBDistributed extends OrientDBEmbedded
       }
       return false;
     }
-  }
-
-  public void fullSync(String dbName, InputStream backupStream, OrientDBConfig config) {
-    OStorage storage = null;
-    ODatabaseDocumentEmbedded embedded;
-
-    if (!isOpen()) {
-      return;
-    }
-    try {
-      synchronized (this) {
-        storage = storages.get(dbName);
-
-        if (storage != null) {
-          // The underlying storage instance will be closed so no need to closed it
-          ODatabaseDocumentEmbedded deleteInstance = newSessionInstance(storage, config);
-          OSharedContext context = sharedContexts.remove(dbName);
-          dbCount.decrementAndGet();
-          context.close();
-          dropStorageFiles(storage);
-
-          storage.delete();
-          storages.remove(dbName);
-          ODatabaseRecordThreadLocal.instance().remove();
-        }
-
-        storage =
-            getDefaultEngine()
-                .createForRestoreLocal(
-                    this, new ODatabaseId("mock"), dbName, config.getConfigurations());
-
-        storages.put(dbName, storage);
-      }
-      storage.restoreFullIncrementalBackup(backupStream);
-      synchronized (this) {
-        embedded = newSessionInstance(storage, config);
-      }
-    } catch (OModificationOperationProhibitedException e) {
-      throw e;
-    } catch (Exception e) {
-      if (storage != null) {
-        try {
-          storage.delete();
-        } catch (Exception ed) {
-          logger.warn("Error while deleting storage %s on failed sync ", ed, dbName);
-        }
-      }
-      OContextConfiguration cc = getConfigurations().getConfigurations();
-      OLocalPaginatedStorage.deleteFilesFromDisc(
-          dbName,
-          cc.getValueAsInteger(FILE_DELETE_RETRY),
-          cc.getValueAsInteger(FILE_DELETE_DELAY),
-          dbName);
-      storages.remove(dbName);
-
-      throw OException.wrapException(
-          new ODatabaseException("Cannot restore database '" + dbName + "'"), e);
-    }
-
-    embedded.getSharedContext().reInit(storage, embedded);
-    distributedSetOnline(dbName);
-    ODatabaseRecordThreadLocal.instance().remove();
-    return;
   }
 
   @Override
@@ -1192,10 +1129,10 @@ public class OrientDBDistributed extends OrientDBEmbedded
       boolean success =
           switch (state.getMode()) {
             case IncrementalBackup -> {
-              yield nonBlockingSync(dbName, input, conf);
+              yield nonBlockingSync(dbName, state.getDbId(), input, conf);
             }
             case StandardBackup -> {
-              yield networkRestore(dbName, input, null);
+              yield networkRestore(dbName, state.getDbId(), input);
             }
             case Delta -> {
               yield deltaSync(dbName, input, conf);

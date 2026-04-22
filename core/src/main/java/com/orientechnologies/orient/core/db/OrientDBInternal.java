@@ -344,10 +344,6 @@ public interface OrientDBInternal extends AutoCloseable, OSchedulerInternal {
 
   <X> Future<X> executeNoAuthorizationOnActive(String database, ODatabaseTask<X> task);
 
-  default void fullSync(String dbName, InputStream backupStream, OrientDBConfig config) {
-    throw new UnsupportedOperationException();
-  }
-
   default boolean deltaSync(String dbName, InputStream backupStream, OrientDBConfig config) {
     throw new UnsupportedOperationException();
   }
@@ -356,7 +352,7 @@ public interface OrientDBInternal extends AutoCloseable, OSchedulerInternal {
     throw new UnsupportedOperationException();
   }
 
-  default boolean networkRestore(String databaseName, InputStream in, Callable<Object> callback) {
+  default boolean networkRestore(String databaseName, ODatabaseId databaseId, InputStream in) {
     throw new UnsupportedOperationException();
   }
 

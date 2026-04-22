@@ -1871,7 +1871,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
       throws IOException {
     checkOpenness();
 
-    getStorage().restore(in, options, callable, iListener);
+    getStorage().restore(in, options, iListener);
 
     if (!isClosed()) {
       loadMetadata();

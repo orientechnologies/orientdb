@@ -332,7 +332,6 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   public final void restore(
       final InputStream in,
       final Map<String, Object> options,
-      final Callable<Object> callable,
       final OCommandOutputListener iListener) {
     try {
       stateLock.writeLock().lock();
@@ -382,13 +381,6 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
           }
         }
 
-        if (callable != null) {
-          try {
-            callable.call();
-          } catch (final Exception e) {
-            logger.error("Error on calling callback on database restore", e);
-          }
-        }
       } finally {
         stateLock.writeLock().unlock();
       }
