@@ -38,6 +38,7 @@ import com.orientechnologies.orient.core.fetch.remote.ORemoteFetchContext;
 import com.orientechnologies.orient.core.fetch.remote.ORemoteFetchListener;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHookV2;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -1085,11 +1086,12 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
       distributedCfg = ((ODistributedServerManager) plugin).getClusterConfiguration();
 
       var distributedInfo = db.getDistributedInfo();
+      var clConfig = distributedCfg.getDocument();
       if (!distributedInfo.getPropertyNames().isEmpty()) {
         // ENHANCE SERVER CFG WITH DATABASE CFG
-        distributedCfg.setDatabaseConfiguration((ODocument) distributedInfo.toElement());
+        clConfig.setProperty("database", distributedInfo.toElement(), OType.EMBEDDED);
       }
-      distriConf = getRecordBytes(connection, distributedCfg.getDocument());
+      distriConf = getRecordBytes(connection, clConfig);
     }
 
     String[] clusterNames = new String[clusters.size()];

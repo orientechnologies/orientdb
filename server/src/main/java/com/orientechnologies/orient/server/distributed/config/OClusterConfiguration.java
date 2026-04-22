@@ -1,9 +1,7 @@
 package com.orientechnologies.orient.server.distributed.config;
 
-import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.distributed.ONodeConfig;
-import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -22,14 +20,6 @@ public class OClusterConfiguration {
 
   public void setLocalId(String nodeUuid) {
     doc.setProperty("localId", nodeUuid);
-  }
-
-  public void setDatabaseConfiguration(ODistributedConfiguration dbCfg) {
-    doc.setProperty("database", dbCfg.getDocument(), OType.EMBEDDED);
-  }
-
-  public void setDatabaseConfiguration(ODocument doc) {
-    doc.setProperty("database", doc, OType.EMBEDDED);
   }
 
   public ODocument getDocument() {
