@@ -1084,13 +1084,12 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     if (plugin instanceof ODistributedServerManager) {
       distributedCfg = ((ODistributedServerManager) plugin).getClusterConfiguration();
 
-      var infoDoc = distributedCfg.getDocument();
       var distributedInfo = db.getDistributedInfo();
       if (!distributedInfo.getPropertyNames().isEmpty()) {
         // ENHANCE SERVER CFG WITH DATABASE CFG
         distributedCfg.setDatabaseConfiguration((ODocument) distributedInfo.toElement());
       }
-      distriConf = getRecordBytes(connection, infoDoc);
+      distriConf = getRecordBytes(connection, distributedCfg.getDocument());
     }
 
     String[] clusterNames = new String[clusters.size()];
