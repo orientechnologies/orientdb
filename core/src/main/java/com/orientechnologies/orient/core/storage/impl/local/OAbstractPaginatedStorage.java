@@ -4871,7 +4871,7 @@ public abstract class OAbstractPaginatedStorage
         checkOpennessAndMigration();
 
         for (OBaseIndexEngine index : indexEngines) {
-          if (!index.hasIncrementalBackupSupport()) {
+          if (index != null && !index.hasIncrementalBackupSupport()) {
             return false;
           }
         }
