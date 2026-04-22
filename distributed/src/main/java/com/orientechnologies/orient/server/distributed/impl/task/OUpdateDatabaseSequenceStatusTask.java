@@ -4,11 +4,11 @@ import com.orientechnologies.orient.core.command.OCommandDistributedReplicateReq
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
+import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
-import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -36,7 +36,7 @@ public class OUpdateDatabaseSequenceStatusTask extends OAbstractRemoteTask {
       throws Exception {
 
     ODistributedDatabase database1 =
-        ((ODatabaseDocumentDistributed) database).getDistributedShared();
+        ((OrientDBDistributed) iServer.getDatabases()).getDatabase(databaseName);
     if (database1 != null) {
       database1.validateStatus(status);
     }
