@@ -2969,7 +2969,6 @@ public final class OWOWCache extends OAbstractWriteCache
     final int[] chunkFileIds = new int[chunks.size()];
 
     final Map<Long, List<ORawPair<Long, ByteBuffer>>> buffersByFileId = new HashMap<>();
-    final List<OClosableEntry<Long, OFile>> acquiredFiles = new ArrayList<>();
     try {
       for (int i = 0; i < chunks.size(); i++) {
         final List<OQuarto<Long, ByteBuffer, OPointer, OCachePointer>> chunk = chunks.get(i);
@@ -3013,6 +3012,8 @@ public final class OWOWCache extends OAbstractWriteCache
 
       fsyncFiles = doubleWriteLog.write(containerBuffers, chunkFileIds, chunkPositions);
 
+      final List<OClosableEntry<Long, OFile>> acquiredFiles =
+          new ArrayList<>(buffersByFileId.size());
       final List<IOResult> ioResults = new ArrayList<>(buffersByFileId.size());
 
       final Iterator<Map.Entry<Long, List<ORawPair<Long, ByteBuffer>>>> filesIterator =
@@ -3047,13 +3048,13 @@ public final class OWOWCache extends OAbstractWriteCache
             for (final IOResult ioResult : ioResults) {
               ioResult.await();
             }
-            Iterator<OClosableEntry<Long, OFile>> releaseIter = acquiredFiles.iterator();
-            while (releaseIter.hasNext()) {
-              files.release(releaseIter.next());
-              releaseIter.remove();
+
+            for (final OClosableEntry<Long, OFile> closableEntry : acquiredFiles) {
+              files.release(closableEntry);
             }
 
             ioResults.clear();
+            acquiredFiles.clear();
           } else {
             Thread.yield();
           }
@@ -3069,10 +3070,8 @@ public final class OWOWCache extends OAbstractWriteCache
           ioResult.await();
         }
 
-        Iterator<OClosableEntry<Long, OFile>> releaseIter = acquiredFiles.iterator();
-        while (releaseIter.hasNext()) {
-          files.release(releaseIter.next());
-          releaseIter.remove();
+        for (final OClosableEntry<Long, OFile> closableEntry : acquiredFiles) {
+          files.release(closableEntry);
         }
       }
 
@@ -3081,11 +3080,6 @@ public final class OWOWCache extends OAbstractWriteCache
         if (containerPointer != null) {
           allocator.deallocate(containerPointer);
         }
-      }
-      Iterator<OClosableEntry<Long, OFile>> releaseIter = acquiredFiles.iterator();
-      while (releaseIter.hasNext()) {
-        files.release(releaseIter.next());
-        releaseIter.remove();
       }
     }
 
