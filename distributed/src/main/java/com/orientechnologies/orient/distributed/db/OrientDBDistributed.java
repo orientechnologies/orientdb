@@ -9,6 +9,7 @@ import com.orientechnologies.common.concur.lock.OModificationOperationProhibited
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.thread.OSourceTraceExecutorService;
 import com.orientechnologies.common.thread.OThreadPoolExecutors;
+import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -30,6 +31,7 @@ import com.orientechnologies.orient.core.db.config.ONodeConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.transaction.ODatabaseId;
@@ -38,6 +40,8 @@ import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
+import com.orientechnologies.orient.distributed.ONodeConfig;
+import com.orientechnologies.orient.distributed.ONodeListenerConfig;
 import com.orientechnologies.orient.distributed.context.ONodeState;
 import com.orientechnologies.orient.distributed.context.coordination.OCoordinatedDistributedOps;
 import com.orientechnologies.orient.distributed.context.coordination.ODisconnectAction;
@@ -96,6 +100,7 @@ import com.orientechnologies.orient.server.distributed.OModifiableDistributedCon
 import com.orientechnologies.orient.server.distributed.ORemoteServerAvailabilityCheck;
 import com.orientechnologies.orient.server.distributed.ORemoteServerController;
 import com.orientechnologies.orient.server.distributed.OWriteOperationNotPermittedException;
+import com.orientechnologies.orient.server.distributed.config.OClusterConfiguration;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributedPooled;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedConfigurationManager;
@@ -106,6 +111,7 @@ import com.orientechnologies.orient.server.distributed.impl.ODistributedPlugin;
 import com.orientechnologies.orient.server.distributed.impl.ONewDeltaSyncImporter;
 import com.orientechnologies.orient.server.distributed.impl.ORemoteServerManager;
 import com.orientechnologies.orient.server.distributed.impl.metadata.OSharedContextDistributed;
+import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -115,8 +121,10 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -1708,5 +1716,110 @@ public class OrientDBDistributed extends OrientDBEmbedded
     } else {
       return false;
     }
+  }
+
+  public OClusterConfiguration getClusterConfiguration() {
+    OClusterConfiguration cc = new OClusterConfiguration();
+    cc.setLocalName(getNodeName());
+    cc.setLocalId(getSystemDatabase().getServerId());
+
+    var networkTopology = getNodeState().getOps().getNetworkTopology();
+    var databaseTopology = getNodeState().getOps().getDatabaseTopology();
+    // INSERT MEMBERS
+    for (var member : networkTopology.getMembers()) {
+      ONodeConfig nodeConfig = getNodeConfiguration(member);
+      if (nodeConfig == null) {
+        continue;
+      }
+      final String nodeName = member.getNode();
+      final Map<String, String> dbStatus = new HashMap<>();
+      for (var db : databaseTopology.getDatabases()) {
+        var dbName = databaseTopology.getDatabaseName(db);
+        final DB_STATUS nodeDbState = getDatabaseStatus(nodeName, dbName);
+        dbStatus.put(dbName, nodeDbState.toString());
+      }
+      nodeConfig.setDatabasesStatus(dbStatus);
+      cc.addMember(nodeConfig);
+    }
+
+    return cc;
+  }
+
+  private ONodeConfig getNodeConfiguration(ONodeId member) {
+    // TODO: collect more informations
+    ONodeConfig nodeCfg = new ONodeConfig();
+    nodeCfg.setName(member.getNode());
+
+    if (getNodeState() != null) {
+      ODatabasesTopology databaseTopology = getNodeState().getDatabaseTopology();
+      var dbIds = databaseTopology.getDatabases();
+      var dbs =
+          dbIds.stream()
+              .map((id) -> databaseTopology.getDatabaseName(id))
+              .collect(Collectors.toSet());
+      nodeCfg.setDatabases(dbs);
+    }
+
+    return nodeCfg;
+  }
+
+  // This will probably disappear soon
+  public static final String REPLICATOR_USER = "_CrossServerTempUser";
+
+  public ONodeConfig getLocalNodeConfiguration() {
+    ONodeConfig nodeCfg = new ONodeConfig();
+
+    nodeCfg.setUuid(getSystemDatabase().getServerId());
+    nodeCfg.setName(nodeName);
+    nodeCfg.setVersion(OConstants.getRawVersion());
+    //    if(plugin != null) {
+    //      nodeCfg.setPublicAddress(plugin.getPublicAddress());
+    //    }
+    //    nodeCfg.setStartedOn(startedOn);
+    nodeCfg.setStatus(getNodeState().getOps().getNetworkTopology().getState().toString());
+    nodeCfg.setConnections(server.getClientConnectionManager().getTotal());
+
+    List<ONodeListenerConfig> listeners = new ArrayList<>();
+    for (OServerNetworkListener listener : server.getNetworkListeners()) {
+      listeners.add(
+          new ONodeListenerConfig(
+              listener.getProtocolType().getSimpleName(), listener.getListeningAddress(true)));
+    }
+    nodeCfg.setListeners(listeners);
+
+    // STORE THE TEMP USER/PASSWD USED FOR REPLICATION
+    final OSecurityUser user = getSecuritySystem().getUser(REPLICATOR_USER);
+    if (user != null)
+      nodeCfg.setReplicator(getSecuritySystem().getUser(REPLICATOR_USER).getPassword());
+
+    if (getNodeState() != null) {
+      ODatabasesTopology databaseTopology = getNodeState().getDatabaseTopology();
+      var dbIds = databaseTopology.getDatabases();
+      var dbs =
+          dbIds.stream()
+              .map((id) -> databaseTopology.getDatabaseName(id))
+              .collect(Collectors.toSet());
+      nodeCfg.setDatabases(dbs);
+    }
+
+    final long maxMem = Runtime.getRuntime().maxMemory();
+    final long totMem = Runtime.getRuntime().totalMemory();
+    final long freeMem = Runtime.getRuntime().freeMemory();
+    final long usedMem = totMem - freeMem;
+
+    nodeCfg.setUsedMemory(usedMem);
+    nodeCfg.setFreeMemory(freeMem);
+    nodeCfg.setMaxMemory(maxMem);
+
+    nodeCfg.setLatencies("latencies", getMessageService().getLatencies());
+    nodeCfg.setMessages("messages", getMessageService().getMessageStats());
+
+    for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners();
+        it.hasNext(); ) {
+      final ODatabaseLifecycleListener listener = it.next();
+      if (listener != null) listener.onLocalNodeConfigurationRequest(nodeCfg);
+    }
+
+    return nodeCfg;
   }
 }
