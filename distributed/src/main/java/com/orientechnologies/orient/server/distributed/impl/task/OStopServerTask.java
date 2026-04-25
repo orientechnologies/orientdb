@@ -45,22 +45,15 @@ public class OStopServerTask extends OAbstractRemoteTask {
       final ODatabaseDocumentInternal database)
       throws Exception {
 
-    logger.warnIn(iServer.getNodeId().getNode(), getNodeSource(), "Stopping current server...");
+    logger.warnNode(iServer.getNodeId(), "Stopping current server...");
 
     Orient.instance()
         .scheduleTask(
-            new Runnable() {
-              @Override
-              public void run() {
-                try {
-                  iServer.shutdown();
-                } catch (Exception e) {
-                  logger.errorIn(
-                      iServer.getNodeId().getNode(),
-                      getNodeSource(),
-                      "Error on stopping current server",
-                      e);
-                }
+            () -> {
+              try {
+                iServer.shutdown();
+              } catch (Exception e) {
+                logger.errorNode(iServer.getNodeId(), "Error on stopping current server", e);
               }
             },
             1,

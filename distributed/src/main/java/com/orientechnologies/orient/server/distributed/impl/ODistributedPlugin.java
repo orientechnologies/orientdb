@@ -767,9 +767,8 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
 
       if (result instanceof Throwable && !(result instanceof OException))
         // EXCEPTION
-        logger.debugIn(
+        logger.debugNode(
             nodeName,
-            getNodeNameById(reqId.getNodeId()),
             "Error on executing request %d (%s) on local node: ",
             (Throwable) result,
             reqId,
@@ -779,9 +778,8 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
 
     } catch (InterruptedException e) {
       // IGNORE IT
-      logger.debugIn(
+      logger.debugNode(
           nodeName,
-          getNodeNameById(reqId.getNodeId()),
           "Interrupted execution on executing distributed request %s on local node: %s",
           e,
           reqId,
@@ -790,9 +788,8 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
 
     } catch (Exception e) {
       if (!(e instanceof OException))
-        logger.errorIn(
+        logger.errorNode(
             nodeName,
-            getNodeNameById(reqId.getNodeId()),
             "Error on executing distributed request %s on local node: %s",
             e,
             reqId,

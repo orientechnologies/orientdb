@@ -32,8 +32,6 @@ import java.io.IOException;
  */
 public abstract class OAbstractRemoteTask implements ORemoteTask {
 
-  protected transient String nodeSource;
-
   /** Constructor used from unmarshalling. */
   public OAbstractRemoteTask() {}
 
@@ -69,16 +67,6 @@ public abstract class OAbstractRemoteTask implements ORemoteTask {
   @Override
   public String toString() {
     return getName();
-  }
-
-  @Override
-  public String getNodeSource() {
-    return nodeSource;
-  }
-
-  @Override
-  public void setNodeSource(String nodeSource) {
-    this.nodeSource = nodeSource;
   }
 
   @Override

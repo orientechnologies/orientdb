@@ -50,22 +50,15 @@ public class ORestartServerTask extends OAbstractRemoteTask {
       final ODatabaseDocumentInternal database)
       throws Exception {
 
-    logger.warnIn(iServer.getNodeId().getNode(), getNodeSource(), "Restarting server...");
+    logger.warnNode(iServer.getNodeId(), "Restarting server...");
 
     Orient.instance()
         .scheduleTask(
-            new Runnable() {
-              @Override
-              public void run() {
-                try {
-                  iServer.restart();
-                } catch (Exception e) {
-                  logger.errorIn(
-                      iServer.getNodeId().getNode(),
-                      getNodeSource(),
-                      "Error on restarting server",
-                      e);
-                }
+            () -> {
+              try {
+                iServer.restart();
+              } catch (Exception e) {
+                logger.errorNode(iServer.getNodeId(), "Error on restarting server", e);
               }
             },
             1,

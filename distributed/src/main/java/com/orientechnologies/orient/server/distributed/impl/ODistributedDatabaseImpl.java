@@ -202,9 +202,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       remoteSenderServer.sendResponse(response);
 
     } catch (Exception e) {
-      logger.errorOut(
+      logger.errorNode(
           local,
-          sender,
           "Error on sending response '%s' back (reqId=%s err=%s)",
           e,
           response,

@@ -666,10 +666,6 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
             "Database configuration not found for database '" + req.getDatabaseName() + "'");
     }
 
-    // SET THE SENDER IN THE TASK
-    String senderNodeName = manager.getNodeNameById(req.getId().getNodeId());
-    req.getTask().setNodeSource(senderNodeName);
-
     if (ddb != null) ddb.processRequest(req, true);
     else {
       manager.executeOnLocalNodeFromRemote(req);

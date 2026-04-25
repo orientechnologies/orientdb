@@ -61,10 +61,6 @@ public interface ORemoteTask {
 
   OAbstractRemoteTask.RESULT_STRATEGY getResultStrategy();
 
-  String getNodeSource();
-
-  void setNodeSource(String nodeSource);
-
   boolean isIdempotent();
 
   boolean isNodeOnlineRequired();

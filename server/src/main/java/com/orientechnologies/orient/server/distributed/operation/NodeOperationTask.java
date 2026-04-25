@@ -24,8 +24,6 @@ public class NodeOperationTask implements ORemoteTask {
   private static final OLogger logger = OLogManager.instance().logger(NodeOperationTask.class);
   public static final int FACTORYID = 55;
   private NodeOperation task;
-  private String nodeSource;
-
   private Integer messageId;
 
   private static Map<Integer, NodeOperationFactory> MESSAGES = new HashMap<>();
@@ -91,16 +89,6 @@ public class NodeOperationTask implements ORemoteTask {
   @Override
   public RESULT_STRATEGY getResultStrategy() {
     throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public String getNodeSource() {
-    return this.nodeSource;
-  }
-
-  @Override
-  public void setNodeSource(String nodeSource) {
-    this.nodeSource = nodeSource;
   }
 
   @Override
