@@ -4,6 +4,7 @@ import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import com.orientechnologies.orient.core.tx.ValidationResult;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -26,6 +27,10 @@ public class OTransactionSequenceManager {
     this.coordinator = coordinator;
     // Reserve position 0,1 for DDLs, so the random range is one less
     this.sequenceSize = size - 2;
+  }
+
+  public static byte[] initData(int size) throws IOException {
+    return new OTransactionSequenceStatus(new long[size]).store();
   }
 
   public synchronized void fill(OTransactionSequenceStatus data) {

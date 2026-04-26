@@ -20,6 +20,8 @@
 
 package com.orientechnologies.orient.core.storage.impl.local;
 
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_TRANSACTION_SEQUENCE_SET_SIZE;
+
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.OLockManager;
@@ -170,6 +172,7 @@ import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollection
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeRidBag;
 import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.OTransactionId;
+import com.orientechnologies.orient.core.transaction.OTransactionSequenceManager;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTransactionData;
 import com.orientechnologies.orient.core.tx.OTxMetadataHolder;
@@ -892,8 +895,12 @@ public abstract class OAbstractPaginatedStorage
     preCreateSteps();
     makeStorageDirty();
 
+    int sequenceSize =
+        contextConfiguration.getValueAsInteger(DISTRIBUTED_TRANSACTION_SEQUENCE_SET_SIZE);
+    var initSequence = OTransactionSequenceManager.initData(sequenceSize);
+
     atomicOperationsManager.executeInsideAtomicOperation(
-        null,
+        initSequence,
         (atomicOperation) -> {
           configuration = new OClusterBasedStorageConfiguration(this);
           ((OClusterBasedStorageConfiguration) configuration)
