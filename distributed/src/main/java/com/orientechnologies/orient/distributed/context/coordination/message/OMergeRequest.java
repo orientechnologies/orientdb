@@ -13,16 +13,22 @@ public class OMergeRequest implements OStructuralMessage {
   private OTransactionIdPromise promise;
   private OGroupId group;
   private ONodeStateNetwork state;
+  private ONodeStateNetwork original;
 
-  public OMergeRequest(OTransactionIdPromise promise, OGroupId groupId, ONodeStateNetwork state) {
+  public OMergeRequest(
+      OTransactionIdPromise promise,
+      OGroupId groupId,
+      ONodeStateNetwork state,
+      ONodeStateNetwork original) {
     this.promise = promise;
     this.group = groupId;
     this.state = state;
+    this.original = original;
   }
 
   @Override
   public void execute(OrientDBDistributed ctx) {
-    ctx.validateMerge(group, state, promise);
+    ctx.validateMergeToNetwork(group, state, original, promise);
   }
 
   @Override
@@ -30,6 +36,7 @@ public class OMergeRequest implements OStructuralMessage {
     promise.writeNetwork(out);
     group.writeNetwork(out);
     this.state.writeNetwork(out);
+    this.original.writeNetwork(out);
   }
 
   @Override
@@ -41,7 +48,8 @@ public class OMergeRequest implements OStructuralMessage {
     OTransactionIdPromise promise = OTransactionIdPromise.readNetwork(input);
     OGroupId group = OGroupId.readNetwork(input);
     var state = ONodeStateNetwork.fromNetwork(input);
-    return new OMergeRequest(promise, group, state);
+    var original = ONodeStateNetwork.fromNetwork(input);
+    return new OMergeRequest(promise, group, state, original);
   }
 
   public OGroupId getGroup() {

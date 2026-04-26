@@ -16,7 +16,7 @@ public class OMergeConfirmOp implements OStructuralMessage {
 
   @Override
   public void execute(OrientDBDistributed ctx) {
-    ctx.applyMerge(promise);
+    ctx.mergeToNetwork(promise);
   }
 
   @Override

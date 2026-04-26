@@ -529,29 +529,34 @@ public class ODatabasesTopologyState extends OWatcher implements ODatabasesTopol
     }
   }
 
-  public synchronized Optional<OAcceptResult> validateMerge(
-      List<ODatabaseStateNetwork> databases, OTransactionIdPromise promise) {
-    var promised = new HashSet<ODatabaseTopologyState>();
+  public synchronized Optional<OAcceptResult> validateMergeToNetwork(
+      List<ODatabaseStateNetwork> original, OTransactionIdPromise promise) {
+    var promised = new ArrayList<ODatabaseTopologyState>();
     var promisedId = new HashSet<ODatabaseId>();
-
-    for (var stateDb : databases) {
-      var db = this.databases.get(stateDb.id());
+    for (var originalDb : original) {
+      Optional<OAcceptResult> res;
+      var db = this.databases.get(originalDb.id());
       if (db != null) {
-        var res = db.validateMerge(promise, stateDb);
+        res = db.validateMerge(promise, originalDb);
         if (res.isEmpty()) {
           promised.add(db);
-          promisedId.add(db.getId());
-        } else {
-          for (var dbp : promised) {
-            dbp.cancelMerge(promise);
-          }
-          return res;
+          promisedId.add(originalDb.id());
         }
       } else {
-        promisedId.add(stateDb.id());
+        res = Optional.of(new ODatabaseMissing(originalDb.id()));
+      }
+      if (res.isPresent()) {
+        for (var dbp : promised) {
+          dbp.cancelMerge(promise);
+        }
+        return res;
       }
     }
-    if (promised.size() != this.databases.size()) {
+
+    if (promisedId.size() != this.databases.size()) {
+      for (var dbp : promised) {
+        dbp.cancelMerge(promise);
+      }
       var dbs = new HashSet<>(this.databases.keySet());
       dbs.removeAll(promisedId);
       return Optional.of(new ODatabaseMissing(dbs.iterator().next()));
@@ -645,5 +650,39 @@ public class ODatabasesTopologyState extends OWatcher implements ODatabasesTopol
     if (dbTopology != null) {
       dbTopology.cancelQuorum(version, promise);
     }
+  }
+
+  public synchronized Optional<OAcceptResult> validateMergeNode(
+      List<ODatabaseStateNetwork> databases, OTransactionIdPromise promise) {
+    var promised = new HashSet<ODatabaseTopologyState>();
+    var promisedId = new HashSet<ODatabaseId>();
+
+    for (var stateDb : databases) {
+      var db = this.databases.get(stateDb.id());
+      if (db != null) {
+        var res = db.validateMergeNode(promise, stateDb);
+        if (res.isEmpty()) {
+          promised.add(db);
+          promisedId.add(db.getId());
+        } else {
+          for (var dbp : promised) {
+            dbp.cancelMerge(promise);
+          }
+          return res;
+        }
+      } else {
+        promisedId.add(stateDb.id());
+      }
+    }
+    if (promised.size() != this.databases.size()) {
+      for (var dbp : promised) {
+        dbp.cancelMerge(promise);
+      }
+      var dbs = new HashSet<>(this.databases.keySet());
+      dbs.removeAll(promisedId);
+      return Optional.of(new ODatabaseMissing(dbs.iterator().next()));
+    }
+
+    return Optional.empty();
   }
 }

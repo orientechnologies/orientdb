@@ -22,15 +22,18 @@ public class OMergeCompleteAction extends OStandardCompleteAction implements OCo
 
   private final ONodeId mergeNode;
   private final ONodeStateNetwork mergedState;
+  private final ONodeStateNetwork original;
 
   public OMergeCompleteAction(
       OrientDBDistributed context,
       OOperationMessage operation,
       ONodeStateNetwork mergedState,
+      ONodeStateNetwork original,
       OCompleteExecution execution,
       ONodeId mergeNode) {
     super(context, operation, execution);
     this.mergeNode = mergeNode;
+    this.original = original;
     this.mergedState = mergedState;
   }
 
@@ -42,7 +45,8 @@ public class OMergeCompleteAction extends OStandardCompleteAction implements OCo
 
   @Override
   protected void retryOperation(int delay) {
-    this.context.retryMergeOperationMessages(mergeNode, mergedState, operation, this, delay);
+    this.context.retryMergeOperationMessages(
+        mergeNode, mergedState, original, operation, this, delay);
   }
 
   @Override

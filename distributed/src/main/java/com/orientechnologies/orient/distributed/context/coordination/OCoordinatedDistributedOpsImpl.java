@@ -28,7 +28,6 @@ import com.orientechnologies.orient.distributed.context.coordination.result.OAcc
 import com.orientechnologies.orient.distributed.context.coordination.result.OAlreadyPromised;
 import com.orientechnologies.orient.distributed.context.coordination.result.OCannotMerge;
 import com.orientechnologies.orient.distributed.context.coordination.result.ODatabaseMissing;
-import com.orientechnologies.orient.distributed.context.coordination.result.ODatabaseNameUsed;
 import com.orientechnologies.orient.distributed.context.coordination.result.OInvalidSequential;
 import com.orientechnologies.orient.distributed.context.coordination.result.OMissingNode;
 import com.orientechnologies.orient.distributed.context.coordination.result.OOutdatedVersion;
@@ -617,11 +616,14 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   }
 
   @Override
-  public synchronized Optional<OAcceptResult> validateMerge(
-      OGroupId group, ONodeStateNetwork state, OTransactionIdPromise promise) {
-    var res = topology.validateMerge(group, state, promise);
+  public synchronized Optional<OAcceptResult> validateMergeToNetwork(
+      OGroupId group,
+      ONodeStateNetwork state,
+      ONodeStateNetwork original,
+      OTransactionIdPromise promise) {
+    var res = topology.validateMergeToNetwork(group, original, promise);
     if (res.isEmpty()) {
-      res = this.databaseTopology.validateMerge(state.databases(), promise);
+      res = this.databaseTopology.validateMergeToNetwork(original.databases(), promise);
       if (res.isEmpty()) {
         this.promisedMergeState = Optional.of(new ORawPair<>(promise, state));
       } else {
@@ -640,7 +642,7 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   }
 
   @Override
-  public synchronized void cancelMerge(OTransactionIdPromise promise) {
+  public synchronized void cancelMergeToNetwork(OTransactionIdPromise promise) {
     if (this.promisedMergeState.isPresent()
         && this.promisedMergeState.get().first.equals(promise)) {
       topology.cancelMerge(promise);
@@ -653,7 +655,7 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   }
 
   @Override
-  public synchronized void applyMerge(OTransactionIdPromise promise) {
+  public synchronized void mergeToNetwork(OTransactionIdPromise promise) {
     logger.debugNode(this.getCurrent(), "merging network for promise %s", promise);
     if (this.promisedMergeState.isPresent()
         && this.promisedMergeState.get().first.equals(promise)) {
@@ -744,22 +746,13 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
 
   @Override
   public synchronized Optional<OAcceptResult> validateMergeNode(
-      ONodeId node, ONodeStateNetwork state, OVersion version, OTransactionIdPromise promise) {
-    var accepted = this.topology.validateMerge(state.topology().groupId(), state, promise);
+      ONodeId node,
+      ONodeStateNetwork state,
+      ONodeStateNetwork original,
+      OTransactionIdPromise promise) {
+    var accepted = this.topology.validateMergeNode(state.topology().groupId(), original, promise);
     if (accepted.isEmpty()) {
-      // TODO: promise database names/ids;
-      for (ODatabaseStateNetwork db : state.databases()) {
-        var locDb = this.databaseTopology.getDatabaseId(db.name());
-        if (locDb.isPresent()) {
-          if (!locDb.get().equals(db.id())) {
-            this.topology.cancelRegisterPromise(promise);
-            logger.warn(
-                "found join-able network, but can't merge into it with conflicting databases");
-            return Optional.of(new ODatabaseNameUsed());
-          }
-        }
-      }
-      accepted = this.databaseTopology.validateMerge(state.databases(), promise);
+      accepted = this.databaseTopology.validateMergeNode(original.databases(), promise);
       if (accepted.isPresent()) {
         this.topology.cancelRegisterPromise(promise);
       }
@@ -769,15 +762,21 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
 
   @Override
   public synchronized void mergeNode(
-      ONodeId node, ONodeStateNetwork state, OVersion version, OTransactionIdPromise promise) {
-    this.topology.register(node, version, promise);
+      ONodeId node,
+      ONodeStateNetwork state,
+      ONodeStateNetwork original,
+      OTransactionIdPromise promise) {
+    this.topology.mergeNode(node, new OVersion(state.topology().version()), promise);
     this.databaseTopology.mergeNetworkState(state.databases(), promise);
     this.sequenceManager.fill(state.sequenceStatus());
   }
 
   @Override
   public synchronized void cancelMergeNode(
-      ONodeId node, ONodeStateNetwork state, OVersion version, OTransactionIdPromise promise) {
+      ONodeId node,
+      ONodeStateNetwork state,
+      ONodeStateNetwork original,
+      OTransactionIdPromise promise) {
     this.topology.cancelRegisterPromise(promise);
     this.databaseTopology.cancelMerge(promise);
   }

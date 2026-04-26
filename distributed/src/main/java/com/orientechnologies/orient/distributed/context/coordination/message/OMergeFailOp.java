@@ -16,7 +16,7 @@ public class OMergeFailOp implements OStructuralMessage {
 
   @Override
   public void execute(OrientDBDistributed ctx) {
-    ctx.cancelMerge(promise);
+    ctx.cancelMergeToNetwork(promise);
   }
 
   @Override

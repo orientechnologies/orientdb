@@ -258,11 +258,16 @@ public class OTopologyManager extends OWatcher implements OTopologyEvents, ONetw
     return this.versionPromise.next();
   }
 
-  public synchronized Optional<OAcceptResult> validateMerge(
+  public synchronized Optional<OAcceptResult> validateMergeNode(
+      OGroupId group, ONodeStateNetwork original, OTransactionIdPromise promise) {
+    return this.versionPromise.promise(promise, new OVersion(original.topology().version() + 1));
+  }
+
+  public synchronized Optional<OAcceptResult> validateMergeToNetwork(
       OGroupId group, ONodeStateNetwork mergeState, OTransactionIdPromise promise) {
     if (this.quorum == 1) {
-      // This is going to merge not based on version hack the accept version
-      return this.versionPromise.validateMerge(
+      // Promise next version from base state
+      return this.versionPromise.promise(
           promise, new OVersion(mergeState.topology().version() + 1));
     } else {
       return Optional.of(new ONotQuorumOneMerge());
@@ -317,5 +322,20 @@ public class OTopologyManager extends OWatcher implements OTopologyEvents, ONetw
   public synchronized boolean waitForEnstablished(Optional<Long> timeout)
       throws InterruptedException {
     return waitFor(timeout, this::isSelfEnstablished);
+  }
+
+  public void mergeNode(ONodeId node, OVersion version, OTransactionIdPromise promise) {
+    // TODO: verify promise and clean it, verification is not needed is just for solidity
+    if (!members.contains(node)) {
+      var newMenbers = new HashSet<ONodeId>(members);
+      newMenbers.add(node);
+      this.members = Collections.unmodifiableSet(newMenbers);
+      int newQuorum = (members.size() / 2) + 1;
+      if (newQuorum >= minimumQuorum) {
+        this.quorum = newQuorum;
+      }
+      this.nodesInfo.put(node, new ONodeInfo());
+    }
+    this.versionPromise.forceVersion(version);
   }
 }

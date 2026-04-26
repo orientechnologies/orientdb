@@ -68,7 +68,7 @@ import com.orientechnologies.orient.distributed.context.coordination.message.OSy
 import com.orientechnologies.orient.distributed.context.coordination.message.OTopologyPing;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OAddNodeInfo;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OEstablishTopology;
-import com.orientechnologies.orient.distributed.context.coordination.message.operation.OMergeTopology;
+import com.orientechnologies.orient.distributed.context.coordination.message.operation.OMergeNode;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OOperationMessage;
 import com.orientechnologies.orient.distributed.context.coordination.message.state.ONodeStateNetwork;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
@@ -1505,24 +1505,28 @@ public class OrientDBDistributed extends OrientDBEmbedded
     // permission to the merging node, to avoid in a two network and a node case to make
     // the node join both networks.
     OCoordinatedDistributedOps ops = getNodeState().getOps();
-    var version = ops.nextTopologyVersion();
+    if (ops.getNetworkTopology().getMembers().contains(node)) {
+      execution.complete(Optional.empty());
+      return;
+    }
     var mergedState = ops.createMergedState(state);
-    var operation = new OMergeTopology(node, mergedState, version);
+    var operation = new OMergeNode(node, mergedState, ops.getNetworkState());
     OCompleteAction action =
-        new OMergeCompleteAction(this, operation, mergedState, execution, node);
+        new OMergeCompleteAction(this, operation, mergedState, state, execution, node);
     logger.debugNode(getNodeId(), "starting operation %s", operation);
-    sendMergeOperationMessages(node, mergedState, operation, action);
+    sendMergeOperationMessages(node, mergedState, state, operation, action);
   }
 
   public void retryMergeOperationMessages(
       ONodeId mergeNode,
       ONodeStateNetwork mergedState,
+      ONodeStateNetwork original,
       OOperationMessage operation,
       OCompleteAction action,
       int delay) {
     delayExecute(
         () -> {
-          sendMergeOperationMessages(mergeNode, mergedState, operation, action);
+          sendMergeOperationMessages(mergeNode, mergedState, original, operation, action);
         },
         delay);
   }
@@ -1530,6 +1534,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
   private void sendMergeOperationMessages(
       ONodeId mergeNode,
       ONodeStateNetwork mergedState,
+      ONodeStateNetwork original,
       OOperationMessage operation,
       OCompleteAction action) {
     OCoordinatedDistributedOps ops = this.getNodeState().getOps();
@@ -1538,29 +1543,33 @@ public class OrientDBDistributed extends OrientDBEmbedded
       var start = startOp.get();
       OProposeOp propose = new OProposeOp(start.promise(), operation);
       sendMessage(start.nodes(), propose);
-      OMergeRequest op = new OMergeRequest(start.promise(), ops.getGroupId(), mergedState);
+      OMergeRequest op =
+          new OMergeRequest(start.promise(), ops.getGroupId(), mergedState, original);
       sendMessage(mergeNode, op);
     } else {
       action.complete(null, null, Optional.of(new ONoTransactionSequencialAvailable()));
     }
   }
 
-  public void validateMerge(
-      OGroupId group, ONodeStateNetwork state, OTransactionIdPromise promise) {
-    var accepted = getNodeState().getOps().validateMerge(group, state, promise);
+  public void validateMergeToNetwork(
+      OGroupId group,
+      ONodeStateNetwork state,
+      ONodeStateNetwork original,
+      OTransactionIdPromise promise) {
+    var accepted = getNodeState().getOps().validateMergeToNetwork(group, state, original, promise);
     sendMessage(promise.getCoordinator(), new OMergeResult(getNodeId(), promise, accepted));
   }
 
-  public void cancelMerge(OTransactionIdPromise promise) {
-    getNodeState().getOps().cancelMerge(promise);
+  public void cancelMergeToNetwork(OTransactionIdPromise promise) {
+    getNodeState().getOps().cancelMergeToNetwork(promise);
   }
 
-  public void applyMerge(OTransactionIdPromise promise) {
-    getNodeState().getOps().applyMerge(promise);
+  public void mergeToNetwork(OTransactionIdPromise promise) {
+    getNodeState().getOps().mergeToNetwork(promise);
     dumpNodeInfo();
   }
 
-  public void nodeMergeResult(
+  public void mergeNodeResult(
       ONodeId node, OTransactionIdPromise promise, Optional<OAcceptResult> accepted) {
     getNodeState().getOps().nodeMergeResult(node, promise, accepted);
   }
@@ -1683,8 +1692,11 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   public void mergeNode(
-      ONodeId node, ONodeStateNetwork state, OVersion version, OTransactionIdPromise promise) {
-    getNodeState().getOps().mergeNode(node, state, version, promise);
+      ONodeId node,
+      ONodeStateNetwork state,
+      ONodeStateNetwork original,
+      OTransactionIdPromise promise) {
+    getNodeState().getOps().mergeNode(node, state, original, promise);
     syncIfNeededAll();
     dumpNodeInfo();
   }

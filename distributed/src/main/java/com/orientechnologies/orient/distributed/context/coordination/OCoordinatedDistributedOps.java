@@ -70,15 +70,18 @@ public interface OCoordinatedDistributedOps {
   void cancelRegisterNode(OTransactionIdPromise promise);
 
   // Methods to merge networks when possible
-  Optional<OAcceptResult> validateMerge(
-      OGroupId group, ONodeStateNetwork state, OTransactionIdPromise coordinator);
+  Optional<OAcceptResult> validateMergeToNetwork(
+      OGroupId group,
+      ONodeStateNetwork state,
+      ONodeStateNetwork original,
+      OTransactionIdPromise coordinator);
 
-  void applyMerge(OTransactionIdPromise promise);
+  void mergeToNetwork(OTransactionIdPromise promise);
 
   void nodeMergeResult(
       ONodeId node, OTransactionIdPromise promise, Optional<OAcceptResult> accepted);
 
-  void cancelMerge(OTransactionIdPromise promise);
+  void cancelMergeToNetwork(OTransactionIdPromise promise);
 
   // Methods for coordinations of  operations to add establish the first network of nodes
 
@@ -228,13 +231,22 @@ public interface OCoordinatedDistributedOps {
   void cancelDropDatabase(ODatabaseId dbId, OVersion version, OTransactionIdPromise promise);
 
   Optional<OAcceptResult> validateMergeNode(
-      ONodeId node, ONodeStateNetwork state, OVersion version, OTransactionIdPromise promise);
+      ONodeId node,
+      ONodeStateNetwork state,
+      ONodeStateNetwork original,
+      OTransactionIdPromise promise);
 
   void mergeNode(
-      ONodeId node, ONodeStateNetwork state, OVersion version, OTransactionIdPromise promise);
+      ONodeId node,
+      ONodeStateNetwork state,
+      ONodeStateNetwork original,
+      OTransactionIdPromise promise);
 
   void cancelMergeNode(
-      ONodeId node, ONodeStateNetwork state, OVersion version, OTransactionIdPromise promise);
+      ONodeId node,
+      ONodeStateNetwork state,
+      ONodeStateNetwork original,
+      OTransactionIdPromise promise);
 
   ONodeStateNetwork createMergedState(ONodeStateNetwork state);
 

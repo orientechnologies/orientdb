@@ -135,23 +135,27 @@ public class OCoordinatedDistributedOpsMergeTest
       List<OCoordinatedDistributedOps> network, OCoordinatedDistributedOps toMerge) {
     var first = network.get(0);
     var promise = first.start(new TestAction(toMerge.getCurrent())).get().promise();
-    var mergedState = first.createMergedState(toMerge.getNetworkState());
-    var version = first.nextTopologyVersion();
+    ONodeStateNetwork toMergeOriginalState = toMerge.getNetworkState();
+    var originalState = first.getNetworkState();
+    var mergedState = first.createMergedState(toMergeOriginalState);
     for (var node : network) {
-      var validate1 = node.validateMergeNode(toMerge.getCurrent(), mergedState, version, promise);
+      var validate1 =
+          node.validateMergeNode(toMerge.getCurrent(), mergedState, originalState, promise);
       assertTrue(validate1.isEmpty());
       first.nodeSuccess(node.getCurrent(), promise);
     }
 
-    var validate2 = toMerge.validateMerge(first.getGroupId(), mergedState, promise);
+    var validate2 =
+        toMerge.validateMergeToNetwork(
+            first.getGroupId(), mergedState, toMergeOriginalState, promise);
     first.nodeMergeResult(toMerge.getCurrent(), promise, validate2);
     assertTrue(validate2.isEmpty());
     for (var node : network) {
       node.consensusSuccess(promise);
-      node.mergeNode(toMerge.getCurrent(), mergedState, version, promise);
+      node.mergeNode(toMerge.getCurrent(), mergedState, originalState, promise);
       node.completeExecution(promise);
     }
-    toMerge.applyMerge(promise);
+    toMerge.mergeToNetwork(promise);
   }
 
   @Test
@@ -225,15 +229,17 @@ public class OCoordinatedDistributedOpsMergeTest
 
     TestAction action = new TestAction(ops4.getCurrent());
     var promise = ops1.start(action).get().promise();
-    var mergedState = ops1.createMergedState(ops4.getNetworkState());
-    var version = ops1.nextTopologyVersion();
+    ONodeStateNetwork toMergeOriginalState = ops4.getNetworkState();
+    var originalState = ops1.getNetworkState();
+    var mergedState = ops1.createMergedState(toMergeOriginalState);
 
-    var validate2 = ops4.validateMerge(ops1.getGroupId(), mergedState, promise);
+    var validate2 =
+        ops4.validateMergeToNetwork(ops1.getGroupId(), mergedState, toMergeOriginalState, promise);
     ops1.nodeMergeResult(ops4.getCurrent(), promise, validate2);
     assertTrue(validate2.isEmpty());
 
     for (var node : List.of(ops1, ops2)) {
-      var validate1 = node.validateMergeNode(nodeId4, mergedState, version, promise);
+      var validate1 = node.validateMergeNode(nodeId4, mergedState, originalState, promise);
       assertTrue(validate1.isEmpty());
       ops1.nodeSuccess(node.getCurrent(), promise);
     }
@@ -244,10 +250,10 @@ public class OCoordinatedDistributedOpsMergeTest
 
     for (var node : List.of(ops1, ops2, ops3)) {
       node.consensusSuccess(promise);
-      node.mergeNode(nodeId4, mergedState, version, promise);
+      node.mergeNode(nodeId4, mergedState, originalState, promise);
       node.completeExecution(promise);
     }
-    ops4.applyMerge(promise);
+    ops4.mergeToNetwork(promise);
 
     assertTrue(action.success);
     assertFalse(action.failure);
@@ -275,25 +281,27 @@ public class OCoordinatedDistributedOpsMergeTest
 
     TestAction action = new TestAction(ops4.getCurrent());
     var promise = ops1.start(action).get().promise();
-    var mergedState = ops1.createMergedState(ops4.getNetworkState());
-    var version = ops1.nextTopologyVersion();
+    ONodeStateNetwork toMergeOriginalState = ops4.getNetworkState();
+    var originalState = ops1.getNetworkState();
+    var mergedState = ops1.createMergedState(toMergeOriginalState);
 
-    var validate2 = ops4.validateMerge(ops1.getGroupId(), mergedState, promise);
+    var validate2 =
+        ops4.validateMergeToNetwork(ops1.getGroupId(), mergedState, toMergeOriginalState, promise);
     ops1.nodeMergeResult(ops4.getCurrent(), promise, validate2);
     assertTrue(validate2.isEmpty());
 
     for (var node : List.of(ops1, ops2, ops3)) {
-      var validate1 = node.validateMergeNode(nodeId4, mergedState, version, promise);
+      var validate1 = node.validateMergeNode(nodeId4, mergedState, originalState, promise);
       assertTrue(validate1.isEmpty());
       ops1.nodeSuccess(node.getCurrent(), promise);
     }
 
     for (var node : List.of(ops1, ops2, ops3)) {
       node.consensusSuccess(promise);
-      node.mergeNode(nodeId4, mergedState, version, promise);
+      node.mergeNode(nodeId4, mergedState, originalState, promise);
       node.completeExecution(promise);
     }
-    ops4.applyMerge(promise);
+    ops4.mergeToNetwork(promise);
 
     assertTrue(action.success);
     assertFalse(action.failure);
@@ -338,7 +346,7 @@ public class OCoordinatedDistributedOpsMergeTest
     ONodeStateNetwork nsn = newNetworkState(nodeId1, groupId);
 
     OCoordinatedDistributedOps ops2 = quorum1Env(nodeId2, groupId);
-    var res1 = ops2.validateMerge(groupId, nsn, promise);
+    var res1 = ops2.validateMergeToNetwork(groupId, nsn, ops1.getNetworkState(), promise);
     assertTrue(res1.isEmpty());
     ops1.nodeMergeResult(nodeId2, promise, res1);
     assertTrue(action.success);
@@ -375,9 +383,9 @@ public class OCoordinatedDistributedOpsMergeTest
     ONodeStateNetwork nsn = newNetworkState(nodeId1, groupId);
 
     OCoordinatedDistributedOps ops2 = quorum1Env(nodeId2, groupId);
-    var res2 = ops2.validateMerge(groupId, nsn, promise);
+    var res2 = ops2.validateMergeToNetwork(groupId, nsn, ops2.getNetworkState(), promise);
     assertTrue(res2.isEmpty());
-    var res21 = ops2.validateMerge(groupId, nsn, promise);
+    var res21 = ops2.validateMergeToNetwork(groupId, nsn, ops2.getNetworkState(), promise);
     assertFalse(res21.isEmpty());
 
     ops1.nodeMergeResult(nodeId2, promise, res2);
@@ -399,15 +407,15 @@ public class OCoordinatedDistributedOpsMergeTest
     OCoordinatedDistributedOps ops2 = quorum1Env(nodeId2, groupId);
 
     var promise = newPromiseId(nodeId1);
-    var mergedState = ops1.createMergedState(ops2.getNetworkState());
-    var version = ops1.nextTopologyVersion();
-    var validate1 = ops1.validateMergeNode(nodeId2, mergedState, version, promise);
+    ONodeStateNetwork ops2Original = ops2.getNetworkState();
+    var mergedState = ops1.createMergedState(ops2Original);
+    var validate1 = ops1.validateMergeNode(nodeId2, mergedState, ops1.getNetworkState(), promise);
 
     assertTrue(validate1.isEmpty());
-    var validate2 = ops2.validateMerge(groupId, mergedState, promise);
+    var validate2 = ops2.validateMergeToNetwork(groupId, mergedState, ops2Original, promise);
     assertTrue(validate2.isEmpty());
-    ops1.mergeNode(nodeId2, mergedState, version, promise);
-    ops2.applyMerge(promise);
+    ops1.mergeNode(nodeId2, mergedState, ops2.getNetworkState(), promise);
+    ops2.mergeToNetwork(promise);
     assertTrue(ops1.getNetworkTopology().getMembers().contains(nodeId1));
     assertTrue(ops1.getNetworkTopology().getMembers().contains(nodeId2));
 
@@ -435,15 +443,16 @@ public class OCoordinatedDistributedOpsMergeTest
     OCoordinatedDistributedOps ops2 = quorum1Env(nodeId2, groupId);
 
     var promise = newPromiseId(nodeId1);
-    var mergedState = ops1.createMergedState(ops2.getNetworkState());
-    var version = ops1.nextTopologyVersion();
-    var validate1 = ops1.validateMergeNode(nodeId2, mergedState, version, promise);
+    ONodeStateNetwork ops2Original = ops2.getNetworkState();
+    var mergedState = ops1.createMergedState(ops2Original);
+    ONodeStateNetwork ops1Original = ops1.getNetworkState();
+    var validate1 = ops1.validateMergeNode(nodeId2, mergedState, ops1Original, promise);
 
     assertTrue(validate1.isEmpty());
-    var validate2 = ops2.validateMerge(groupId, mergedState, promise);
+    var validate2 = ops2.validateMergeToNetwork(groupId, mergedState, ops2Original, promise);
     assertTrue(validate2.isEmpty());
-    ops1.mergeNode(nodeId2, mergedState, version, promise);
-    ops2.applyMerge(promise);
+    ops1.mergeNode(nodeId2, mergedState, ops1Original, promise);
+    ops2.mergeToNetwork(promise);
     assertTrue(ops1.getNetworkTopology().getMembers().contains(nodeId1));
     assertTrue(ops1.getNetworkTopology().getMembers().contains(nodeId2));
     assertTrue(ops2.getNetworkTopology().getMembers().contains(nodeId1));
@@ -451,19 +460,21 @@ public class OCoordinatedDistributedOpsMergeTest
 
     OCoordinatedDistributedOps ops3 = quorum1Env(nodeId3, groupId);
 
-    var secMergedState = ops2.createMergedState(ops3.getNetworkState());
-    var secVersion = ops2.nextTopologyVersion();
+    ONodeStateNetwork ops3Original = ops3.getNetworkState();
+    var secMergedState = ops2.createMergedState(ops3Original);
     var secPromise = newPromiseId(nodeId2);
-    var secValidate = ops2.validateMergeNode(nodeId3, secMergedState, secVersion, secPromise);
+    ONodeStateNetwork ops2Original1 = ops2.getNetworkState();
+    var secValidate = ops2.validateMergeNode(nodeId3, secMergedState, ops2Original1, secPromise);
     assertTrue(secValidate.isEmpty());
-    var secValidate1 = ops1.validateMergeNode(nodeId3, secMergedState, secVersion, secPromise);
+    var secValidate1 = ops1.validateMergeNode(nodeId3, secMergedState, ops2Original1, secPromise);
     assertTrue(secValidate1.isEmpty());
-    var secValidate2 = ops3.validateMerge(groupId, secMergedState, secPromise);
+    var secValidate2 =
+        ops3.validateMergeToNetwork(groupId, secMergedState, ops3Original, secPromise);
     assertTrue(secValidate2.isEmpty());
 
-    ops1.mergeNode(nodeId3, secMergedState, secVersion, secPromise);
-    ops2.mergeNode(nodeId3, secMergedState, secVersion, secPromise);
-    ops3.applyMerge(secPromise);
+    ops1.mergeNode(nodeId3, secMergedState, ops2Original1, secPromise);
+    ops2.mergeNode(nodeId3, secMergedState, ops2Original1, secPromise);
+    ops3.mergeToNetwork(secPromise);
     assertTrue(ops1.getNetworkTopology().getMembers().contains(nodeId1));
     assertTrue(ops1.getNetworkTopology().getMembers().contains(nodeId2));
     assertTrue(ops1.getNetworkTopology().getMembers().contains(nodeId3));
@@ -488,16 +499,17 @@ public class OCoordinatedDistributedOpsMergeTest
     OCoordinatedDistributedOps ops2 = quorum1Env(nodeId2, groupId);
 
     var promise = ops1.start(new TestAction(null)).get().promise();
-    var mergedState = ops1.createMergedState(ops2.getNetworkState());
-    var version = ops1.nextTopologyVersion();
-    var validate1 = ops1.validateMergeNode(nodeId2, mergedState, version, promise);
+    ONodeStateNetwork ops2Original = ops2.getNetworkState();
+    var mergedState = ops1.createMergedState(ops2Original);
+    ONodeStateNetwork ops1Original = ops1.getNetworkState();
+    var validate1 = ops1.validateMergeNode(nodeId2, mergedState, ops1Original, promise);
 
     assertTrue(validate1.isEmpty());
-    var validate2 = ops2.validateMerge(groupId, mergedState, promise);
+    var validate2 = ops2.validateMergeToNetwork(groupId, mergedState, ops2Original, promise);
     assertTrue(validate2.isEmpty());
     ops1.consensusSuccess(promise);
-    ops1.mergeNode(nodeId2, mergedState, version, promise);
-    ops2.applyMerge(promise);
+    ops1.mergeNode(nodeId2, mergedState, ops1Original, promise);
+    ops2.mergeToNetwork(promise);
     assertTrue(ops1.getNetworkTopology().getMembers().contains(nodeId1));
     assertTrue(ops1.getNetworkTopology().getMembers().contains(nodeId2));
     assertTrue(ops2.getNetworkTopology().getMembers().contains(nodeId1));
@@ -517,12 +529,13 @@ public class OCoordinatedDistributedOpsMergeTest
     ops3.consensusSuccess(declarePromise);
     ops3.declareDatabase(declarePromise, dbId, databaseName, parts, minQuo);
 
-    var secMergedState = ops2.createMergedState(ops3.getNetworkState());
-    var secVersion = ops2.nextTopologyVersion();
+    ONodeStateNetwork ops3Original = ops3.getNetworkState();
+    var secMergedState = ops2.createMergedState(ops3Original);
     var secPromise = ops2.start(new TestAction(null)).get().promise();
-    var secValidate = ops2.validateMergeNode(nodeId3, secMergedState, secVersion, secPromise);
+    var ops2Original1 = ops2.getNetworkState();
+    var secValidate = ops2.validateMergeNode(nodeId3, secMergedState, ops2Original1, secPromise);
     assertTrue(secValidate.isEmpty());
-    var secValidate1 = ops1.validateMergeNode(nodeId3, secMergedState, secVersion, secPromise);
+    var secValidate1 = ops1.validateMergeNode(nodeId3, secMergedState, ops2Original1, secPromise);
     assertTrue(secValidate1.isEmpty());
 
     var state = ops3.start(new TestAction(null));
@@ -532,7 +545,8 @@ public class OCoordinatedDistributedOpsMergeTest
     ops3.consensusSuccess(statePromise);
     ops3.setState(dbId, nodeId3, ODatabaseState.Online, stateVersion, statePromise);
 
-    var secValidate2 = ops3.validateMerge(groupId, secMergedState, secPromise);
+    var secValidate2 =
+        ops3.validateMergeToNetwork(groupId, secMergedState, ops3Original, secPromise);
     assertTrue(secValidate2.isPresent());
     ops1.consensusFailure(secPromise);
     ops2.consensusFailure(secPromise);
@@ -541,21 +555,24 @@ public class OCoordinatedDistributedOpsMergeTest
     var newState = ((OCannotMerge) secValidate2.get()).currentState();
 
     var secMergedState1 = ops2.createMergedState(newState);
-    var secVersion1 = ops2.nextTopologyVersion();
     var secPromise1 = newPromiseId(nodeId2);
-    var secValidate1_1 = ops2.validateMergeNode(nodeId3, secMergedState1, secVersion1, secPromise1);
+    var ops2Original2 = ops2.getNetworkState();
+    var secValidate1_1 =
+        ops2.validateMergeNode(nodeId3, secMergedState1, ops2Original2, secPromise1);
     assertTrue(secValidate1_1.isEmpty());
-    var secValidate1_2 = ops1.validateMergeNode(nodeId3, secMergedState1, secVersion1, secPromise1);
+    var secValidate1_2 =
+        ops1.validateMergeNode(nodeId3, secMergedState1, ops2Original2, secPromise1);
     assertTrue(secValidate1_2.isEmpty());
 
-    var secValidate1_3 = ops3.validateMerge(groupId, secMergedState1, secPromise1);
+    var secValidate1_3 =
+        ops3.validateMergeToNetwork(groupId, secMergedState1, newState, secPromise1);
     assertTrue(secValidate1_3.isEmpty());
 
     ops1.consensusSuccess(secPromise1);
-    ops1.mergeNode(nodeId3, secMergedState1, secVersion1, secPromise1);
+    ops1.mergeNode(nodeId3, secMergedState1, ops2Original2, secPromise1);
     ops2.consensusSuccess(secPromise1);
-    ops2.mergeNode(nodeId3, secMergedState1, secVersion1, secPromise1);
-    ops3.applyMerge(secPromise1);
+    ops2.mergeNode(nodeId3, secMergedState1, ops2Original2, secPromise1);
+    ops3.mergeToNetwork(secPromise1);
     assertTrue(ops1.getNetworkTopology().getMembers().contains(nodeId1));
     assertTrue(ops1.getNetworkTopology().getMembers().contains(nodeId2));
     assertTrue(ops1.getNetworkTopology().getMembers().contains(nodeId3));

@@ -234,7 +234,8 @@ public class CoordinationMessagesSerializationTest {
     var promise = newPromiseId();
     var groupId = newGroupId();
     var state = newNetworkState(newNodeId(), groupId);
-    OMergeRequest merge = new OMergeRequest(promise, groupId, state);
+    var original = newNetworkState(newNodeId(), groupId);
+    OMergeRequest merge = new OMergeRequest(promise, groupId, state, original);
     OMergeRequest read = writeRead(merge);
     assertEquals(promise, read.getPromise());
     assertEquals(groupId, read.getGroup());

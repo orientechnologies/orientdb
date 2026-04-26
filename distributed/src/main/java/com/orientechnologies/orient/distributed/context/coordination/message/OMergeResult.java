@@ -24,7 +24,7 @@ public class OMergeResult implements OStructuralMessage {
 
   @Override
   public void execute(OrientDBDistributed ctx) {
-    ctx.nodeMergeResult(this.node, this.promise, this.accepted);
+    ctx.mergeNodeResult(this.node, this.promise, this.accepted);
   }
 
   @Override
