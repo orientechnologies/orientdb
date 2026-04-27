@@ -546,6 +546,7 @@ public class OCoordinatedDistributedOpsMergeTest
     ops3.validateSetState(dbId, nodeId3, ODatabaseState.Online, stateVersion, statePromise);
     ops3.consensusSuccess(statePromise);
     ops3.setState(dbId, nodeId3, ODatabaseState.Online, stateVersion, statePromise);
+    ops3.completeExecution(statePromise);
 
     var secValidate2 =
         ops3.validateMergeToNetwork(groupId, secMergedState, ops3Original, secPromise);

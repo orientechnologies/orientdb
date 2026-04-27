@@ -127,7 +127,7 @@ public class CoordinationMessagesSerializationTest {
     assertEquals(read.getNodeId(), nodeId);
     OTopologyStateNetwork topology = read.getState().topology();
     assertEquals(topology.state(), OTopologyState.BOOT);
-    assertEquals(topology.version(), 0);
+    assertEquals(topology.version().getValue(), 0);
     assertTrue(topology.members().isEmpty());
     Set<ONodeId> nodes = Set.of(newNodeId(), newNodeId());
     net =
@@ -140,7 +140,7 @@ public class CoordinationMessagesSerializationTest {
     assertEquals(read.getNodeId(), nodeId);
     OTopologyStateNetwork topology2 = read.getState().topology();
     assertEquals(topology2.state(), OTopologyState.ESTABLISHED);
-    assertEquals(topology2.version(), 10);
+    assertEquals(topology2.version().getValue(), 10);
     assertEquals(topology2.members(), nodes);
     assertEquals(topology2.groupId(), groupId);
   }

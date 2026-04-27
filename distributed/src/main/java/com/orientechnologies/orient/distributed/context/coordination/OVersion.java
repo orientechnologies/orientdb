@@ -5,7 +5,7 @@ import java.io.DataOutput;
 import java.io.IOException;
 
 public class OVersion {
-  private long version;
+  private final long version;
 
   public OVersion(long version) {
     this.version = version;
@@ -21,10 +21,6 @@ public class OVersion {
 
   public long getValue() {
     return this.version;
-  }
-
-  public void accept(OVersion version) {
-    this.version = version.version;
   }
 
   public boolean isAfter(OVersion version) {

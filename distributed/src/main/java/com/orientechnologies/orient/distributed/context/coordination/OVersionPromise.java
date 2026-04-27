@@ -49,8 +49,8 @@ public class OVersionPromise {
   }
 
   public synchronized void accept(OTransactionIdPromise promise, OVersion version) {
-    if (this.version.promise(version)) {
-      this.version.accept(version);
+    if (this.version.promise(version) && this.promise.map((x) -> x.equals(promise)).orElse(false)) {
+      this.version = version;
       this.promise = Optional.empty();
     }
   }

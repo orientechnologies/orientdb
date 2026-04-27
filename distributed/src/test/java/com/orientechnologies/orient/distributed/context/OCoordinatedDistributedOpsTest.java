@@ -353,8 +353,9 @@ public class OCoordinatedDistributedOpsTest
     var candidates = ((ODiscoverAction.OEstablishAction) action).candidates();
     var networkId = ((ODiscoverAction.OEstablishAction) action).groupId();
     var enPromise = newPromiseId(nodeId1);
-    Optional<OAcceptResult> result = node2.validateEstablish(networkId, candidates, enPromise);
+    Optional<OAcceptResult> result = node1.validateEstablish(networkId, candidates, enPromise);
     assertTrue(result.isEmpty());
+    result = node2.validateEstablish(networkId, candidates, enPromise);
     assertTrue(result.isEmpty());
 
     node1.establish(networkId, candidates, enPromise);
