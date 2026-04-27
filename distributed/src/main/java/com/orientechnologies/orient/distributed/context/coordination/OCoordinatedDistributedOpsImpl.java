@@ -861,7 +861,7 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
       newQuorum = database2.quorum();
     }
     OVersion newVersion;
-    if (database.version().getValue() > database2.version().getValue()) {
+    if (database.version().isAfter(database2.version())) {
       newVersion = database.version();
     } else {
       newVersion = database2.version();
@@ -924,7 +924,7 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
       newQuorum = newCompQuorum;
     }
     OVersion newVersion;
-    if (topology.version().getValue() > networkState.version().getValue()) {
+    if (topology.version().isAfter(networkState.version())) {
       newVersion = topology.version();
     } else {
       newVersion = networkState.version();

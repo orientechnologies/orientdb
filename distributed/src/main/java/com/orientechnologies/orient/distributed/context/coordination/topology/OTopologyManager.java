@@ -193,13 +193,13 @@ public class OTopologyManager extends OWatcher implements OTopologyEvents, ONetw
             this.quorum = externState.quorum();
             this.notifyChange();
             return new ODiscoverAction.OApplySequenceAction();
-          } else if (externState.version().getValue() > getVersion().getValue()) {
+          } else if (externState.version().isAfter(getVersion())) {
             this.setMember(externState.members());
             this.versionPromise.loadVersion(externState.version());
             this.quorum = externState.quorum();
             this.notifyChange();
             return new ODiscoverAction.OApplyStateAction();
-          } else if (!externState.version().equals(getVersion().getValue())) {
+          } else if (!externState.version().equals(getVersion())) {
             // Other outdated just notify self state
             return new ODiscoverAction.ONotifySelf(Set.of(node));
           }

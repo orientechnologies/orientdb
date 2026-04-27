@@ -27,6 +27,14 @@ public class OVersion {
     this.version = version.version;
   }
 
+  public boolean isAfter(OVersion version) {
+    return this.version > version.version;
+  }
+
+  public boolean isBefore(OVersion version) {
+    return this.version < version.version;
+  }
+
   @Override
   public int hashCode() {
     final int prime = 31;

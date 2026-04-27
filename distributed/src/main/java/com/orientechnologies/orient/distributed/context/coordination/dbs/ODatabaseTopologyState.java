@@ -241,7 +241,7 @@ public class ODatabaseTopologyState extends OWatcher {
 
   public synchronized void receiveState(ODatabaseStateNetwork state, boolean notify) {
     // TODO: verify promised case ....
-    if (this.getVersion().getValue() < state.version().getValue()) {
+    if (this.getVersion().isBefore(state.version())) {
       this.versionPromise.loadVersion(state.version());
       this.quorum = state.quorum();
       for (ODatabaseMemberNetwork member : state.members()) {
