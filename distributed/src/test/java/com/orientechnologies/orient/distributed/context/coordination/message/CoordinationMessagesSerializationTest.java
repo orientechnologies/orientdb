@@ -115,7 +115,8 @@ public class CoordinationMessagesSerializationTest {
     var groupId = newGroupId();
     ONodeId nodeId = newNodeId();
     OTopologyStateNetwork net =
-        new OTopologyStateNetwork(groupId, OTopologyState.BOOT, new HashSet<>(), 0, 0);
+        new OTopologyStateNetwork(
+            groupId, OTopologyState.BOOT, new HashSet<>(), 0, new OVersion(0));
     var sequenceStatus = new OTransactionSequenceStatus(new long[] {10, 20, 30});
 
     ONodeStateNetwork network = new ONodeStateNetwork(net, Collections.emptyList(), sequenceStatus);
@@ -129,7 +130,8 @@ public class CoordinationMessagesSerializationTest {
     assertEquals(topology.version(), 0);
     assertTrue(topology.members().isEmpty());
     Set<ONodeId> nodes = Set.of(newNodeId(), newNodeId());
-    net = new OTopologyStateNetwork(groupId, OTopologyState.ESTABLISHED, nodes, 2, 10);
+    net =
+        new OTopologyStateNetwork(groupId, OTopologyState.ESTABLISHED, nodes, 2, new OVersion(10));
     network = new ONodeStateNetwork(net, Collections.emptyList(), sequenceStatus);
     succ = new ONodeFirstConnect(nodeId, network, false);
 
@@ -224,7 +226,8 @@ public class CoordinationMessagesSerializationTest {
 
   private ONodeStateNetwork newNetworkState(ONodeId nodeId1, OGroupId groupId) {
     OTopologyStateNetwork topology =
-        new OTopologyStateNetwork(groupId, OTopologyState.ESTABLISHED, Set.of(nodeId1), 1, 1);
+        new OTopologyStateNetwork(
+            groupId, OTopologyState.ESTABLISHED, Set.of(nodeId1), 1, new OVersion(1));
     OTransactionSequenceStatus status = new OTransactionSequenceStatus(new long[] {});
     return new ONodeStateNetwork(topology, Collections.emptyList(), status);
   }

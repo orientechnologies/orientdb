@@ -766,7 +766,7 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
       ONodeStateNetwork state,
       ONodeStateNetwork original,
       OTransactionIdPromise promise) {
-    this.topology.mergeNode(node, new OVersion(state.topology().version()), promise);
+    this.topology.mergeNode(node, state.topology().version(), promise);
     this.databaseTopology.mergeNetworkState(state.databases(), promise);
     this.sequenceManager.fill(state.sequenceStatus());
   }
@@ -845,7 +845,7 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
 
         dbs.put(
             db.id(),
-            new ODatabaseStateNetwork(db.id(), db.name(), newQuorum, db.version() + 1, members));
+            new ODatabaseStateNetwork(db.id(), db.name(), newQuorum, db.version().next(), members));
       }
     }
     return new ArrayList<>(dbs.values());
@@ -860,15 +860,15 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
     } else {
       newQuorum = database2.quorum();
     }
-    long newVersion;
-    if (database.version() > database2.version()) {
+    OVersion newVersion;
+    if (database.version().getValue() > database2.version().getValue()) {
       newVersion = database.version();
     } else {
       newVersion = database2.version();
     }
 
     // Make sure it will progress version
-    newVersion += 1;
+    newVersion = newVersion.next();
 
     Map<ONodeId, ODatabaseMemberNetwork> members = new HashMap<>();
 
@@ -923,14 +923,14 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
     if (newCompQuorum >= newQuorum) {
       newQuorum = newCompQuorum;
     }
-    long newVersion;
-    if (topology.version() > networkState.version()) {
+    OVersion newVersion;
+    if (topology.version().getValue() > networkState.version().getValue()) {
       newVersion = topology.version();
     } else {
       newVersion = networkState.version();
     }
     // Make sure it will progress version
-    newVersion += 1;
+    newVersion = newVersion.next();
     return new OTopologyStateNetwork(
         topology.groupId(), OTopologyState.ESTABLISHED, newMembers, newQuorum, newVersion);
   }

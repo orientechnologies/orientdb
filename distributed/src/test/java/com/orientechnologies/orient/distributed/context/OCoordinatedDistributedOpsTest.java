@@ -449,7 +449,7 @@ public class OCoordinatedDistributedOpsTest
     assertEquals(node1.getNetworkTopology().getMembers().size(), 2);
     OTopologyStateNetwork establish =
         new OTopologyStateNetwork(
-            gid, OTopologyState.ESTABLISHED, Set.of(nodeId1, nodeId2, nodeId3), 2, 3);
+            gid, OTopologyState.ESTABLISHED, Set.of(nodeId1, nodeId2, nodeId3), 2, new OVersion(3));
 
     ODiscoverAction action = node1.nodeJoinStart(nodeId2, networkState(establish), false);
     assertTrue(action instanceof ODiscoverAction.OApplyStateAction);
@@ -480,7 +480,7 @@ public class OCoordinatedDistributedOpsTest
 
     OTopologyStateNetwork enstablis =
         new OTopologyStateNetwork(
-            groupId, OTopologyState.ESTABLISHED, Set.of(nodeId1, nodeId2), 2, 2);
+            groupId, OTopologyState.ESTABLISHED, Set.of(nodeId1, nodeId2), 2, new OVersion(2));
     ODiscoverAction action = node1.nodeJoinStart(nodeId2, networkState(enstablis), false);
     assertTrue(action instanceof ODiscoverAction.ONotifySelf);
 
@@ -523,7 +523,8 @@ public class OCoordinatedDistributedOpsTest
     assertEquals(node1.getNetworkTopology().getMembers().size(), 0);
 
     OTopologyStateNetwork establish =
-        new OTopologyStateNetwork(gid, OTopologyState.ESTABLISHED, Set.of(nodeId2, nodeId3), 2, 2);
+        new OTopologyStateNetwork(
+            gid, OTopologyState.ESTABLISHED, Set.of(nodeId2, nodeId3), 2, new OVersion(2));
     ODiscoverAction action = node1.nodeJoinStart(nodeId2, networkState(establish), false);
     assertTrue(action instanceof ODiscoverAction.ONoneAction);
 
@@ -544,7 +545,7 @@ public class OCoordinatedDistributedOpsTest
 
     OTopologyStateNetwork establish =
         new OTopologyStateNetwork(
-            groupId, OTopologyState.ESTABLISHED, Set.of(nodeId1, nodeId2), 2, 2);
+            groupId, OTopologyState.ESTABLISHED, Set.of(nodeId1, nodeId2), 2, new OVersion(2));
     ODiscoverAction action = node1.nodeJoinStart(nodeId2, networkState(establish), false);
     assertTrue(action instanceof ODiscoverAction.OApplyStateAction);
 

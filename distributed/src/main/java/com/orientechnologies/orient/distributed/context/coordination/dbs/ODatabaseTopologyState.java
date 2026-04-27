@@ -236,13 +236,13 @@ public class ODatabaseTopologyState extends OWatcher {
     for (ONodeDatabaseState state : this.nodeStatus.values()) {
       members.add(state.getNetworkState());
     }
-    return new ODatabaseStateNetwork(id, name, quorum, getVersion().getValue(), members);
+    return new ODatabaseStateNetwork(id, name, quorum, getVersion(), members);
   }
 
   public synchronized void receiveState(ODatabaseStateNetwork state, boolean notify) {
     // TODO: verify promised case ....
-    if (this.getVersion().getValue() < state.version()) {
-      this.versionPromise.loadVersion(new OVersion(state.version()));
+    if (this.getVersion().getValue() < state.version().getValue()) {
+      this.versionPromise.loadVersion(state.version());
       this.quorum = state.quorum();
       for (ODatabaseMemberNetwork member : state.members()) {
         ONodeDatabaseState status = this.nodeStatus.get(member.node());
@@ -266,7 +266,7 @@ public class ODatabaseTopologyState extends OWatcher {
   }
 
   public synchronized void mergeState(ODatabaseStateNetwork state, OTransactionIdPromise promise) {
-    this.versionPromise.forceVersion(new OVersion(state.version()));
+    this.versionPromise.forceVersion(state.version());
     this.quorum = state.quorum();
     for (ODatabaseMemberNetwork member : state.members()) {
       ONodeDatabaseState status = this.nodeStatus.get(member.node());
@@ -414,12 +414,12 @@ public class ODatabaseTopologyState extends OWatcher {
 
   public synchronized Optional<OAcceptResult> validateMerge(
       OTransactionIdPromise promise, ODatabaseStateNetwork stateDb) {
-    return this.versionPromise.promise(promise, new OVersion(stateDb.version() + 1));
+    return this.versionPromise.promise(promise, stateDb.version().next());
   }
 
   public synchronized Optional<OAcceptResult> validateMergeNode(
       OTransactionIdPromise promise, ODatabaseStateNetwork stateDb) {
-    return this.versionPromise.promise(promise, new OVersion(stateDb.version() + 1));
+    return this.versionPromise.promise(promise, stateDb.version().next());
   }
 
   public synchronized void cancelMerge(OTransactionIdPromise promise) {

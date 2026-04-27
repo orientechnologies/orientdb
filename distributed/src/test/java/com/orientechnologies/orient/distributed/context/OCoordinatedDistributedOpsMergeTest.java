@@ -18,6 +18,7 @@ import com.orientechnologies.orient.distributed.context.coordination.OCoordinate
 import com.orientechnologies.orient.distributed.context.coordination.OResponseCollector;
 import com.orientechnologies.orient.distributed.context.coordination.OResponseCollectorImpl;
 import com.orientechnologies.orient.distributed.context.coordination.OResponseCollectorMerge;
+import com.orientechnologies.orient.distributed.context.coordination.OVersion;
 import com.orientechnologies.orient.distributed.context.coordination.action.OCompleteAction;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabaseState;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabaseStateChangeListener;
@@ -355,7 +356,8 @@ public class OCoordinatedDistributedOpsMergeTest
 
   private ONodeStateNetwork newNetworkState(ONodeId nodeId1, OGroupId groupId) {
     OTopologyStateNetwork topology =
-        new OTopologyStateNetwork(groupId, OTopologyState.ESTABLISHED, Set.of(nodeId1), 1, 1);
+        new OTopologyStateNetwork(
+            groupId, OTopologyState.ESTABLISHED, Set.of(nodeId1), 1, new OVersion(1));
     OTransactionSequenceStatus status = new OTransactionSequenceStatus(new long[] {});
     return new ONodeStateNetwork(topology, Collections.emptyList(), status);
   }

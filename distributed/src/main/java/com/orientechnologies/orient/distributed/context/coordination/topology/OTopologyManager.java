@@ -183,23 +183,23 @@ public class OTopologyManager extends OWatcher implements OTopologyEvents, ONetw
           if (state == OTopologyState.BOOT) {
             this.state = externState.state();
             this.setMember(externState.members());
-            this.versionPromise.loadVersion(new OVersion(externState.version()));
+            this.versionPromise.loadVersion(externState.version());
             this.quorum = externState.quorum();
             this.notifyChange();
             return new ODiscoverAction.OApplyStateAction();
           } else if (this.quorum == 1 && this.members.size() == 1) {
             this.setMember(externState.members());
-            this.versionPromise.forceVersion(new OVersion(externState.version()));
+            this.versionPromise.forceVersion(externState.version());
             this.quorum = externState.quorum();
             this.notifyChange();
             return new ODiscoverAction.OApplySequenceAction();
-          } else if (externState.version() > getVersion().getValue()) {
+          } else if (externState.version().getValue() > getVersion().getValue()) {
             this.setMember(externState.members());
-            this.versionPromise.loadVersion(new OVersion(externState.version()));
+            this.versionPromise.loadVersion(externState.version());
             this.quorum = externState.quorum();
             this.notifyChange();
             return new ODiscoverAction.OApplyStateAction();
-          } else if (externState.version() != getVersion().getValue()) {
+          } else if (!externState.version().equals(getVersion().getValue())) {
             // Other outdated just notify self state
             return new ODiscoverAction.ONotifySelf(Set.of(node));
           }
@@ -219,7 +219,7 @@ public class OTopologyManager extends OWatcher implements OTopologyEvents, ONetw
 
   public synchronized OTopologyStateNetwork getNetworkState() {
     return new OTopologyStateNetwork(
-        this.groupId, this.state, this.members, this.quorum, getVersion().getValue());
+        this.groupId, this.state, this.members, this.quorum, getVersion());
   }
 
   public synchronized void load(ONetworkTopologyStore nodeStateStore) {
@@ -260,15 +260,14 @@ public class OTopologyManager extends OWatcher implements OTopologyEvents, ONetw
 
   public synchronized Optional<OAcceptResult> validateMergeNode(
       OGroupId group, ONodeStateNetwork original, OTransactionIdPromise promise) {
-    return this.versionPromise.promise(promise, new OVersion(original.topology().version() + 1));
+    return this.versionPromise.promise(promise, original.topology().version().next());
   }
 
   public synchronized Optional<OAcceptResult> validateMergeToNetwork(
       OGroupId group, ONodeStateNetwork mergeState, OTransactionIdPromise promise) {
     if (this.quorum == 1) {
       // Promise next version from base state
-      return this.versionPromise.promise(
-          promise, new OVersion(mergeState.topology().version() + 1));
+      return this.versionPromise.promise(promise, mergeState.topology().version().next());
     } else {
       return Optional.of(new ONotQuorumOneMerge());
     }
@@ -316,7 +315,7 @@ public class OTopologyManager extends OWatcher implements OTopologyEvents, ONetw
       OTopologyStateNetwork topology, OTransactionIdPromise promise) {
     this.members = Collections.unmodifiableSet(topology.members());
     this.quorum = topology.quorum();
-    this.versionPromise.forceVersion(new OVersion(topology.version()));
+    this.versionPromise.forceVersion(topology.version());
   }
 
   public synchronized boolean waitForEnstablished(Optional<Long> timeout)

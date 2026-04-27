@@ -2,6 +2,7 @@ package com.orientechnologies.orient.distributed.context.coordination.message.st
 
 import com.orientechnologies.orient.core.transaction.OGroupId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
+import com.orientechnologies.orient.distributed.context.coordination.OVersion;
 import com.orientechnologies.orient.distributed.context.coordination.topology.OTopologyState;
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -11,11 +12,11 @@ import java.util.HashSet;
 import java.util.Set;
 
 public record OTopologyStateNetwork(
-    OGroupId groupId, OTopologyState state, Set<ONodeId> members, int quorum, long version) {
+    OGroupId groupId, OTopologyState state, Set<ONodeId> members, int quorum, OVersion version) {
 
   public OTopologyStateNetwork(
-      OGroupId groupId, OTopologyState state, Set<ONodeId> members, int quorum, long version) {
-    assert (state == OTopologyState.BOOT && members.isEmpty() && version == 0)
+      OGroupId groupId, OTopologyState state, Set<ONodeId> members, int quorum, OVersion version) {
+    assert (state == OTopologyState.BOOT && members.isEmpty() && version.getValue() == 0)
         || (state == OTopologyState.ESTABLISHED);
     this.groupId = groupId;
     this.state = state;
@@ -25,7 +26,8 @@ public record OTopologyStateNetwork(
   }
 
   public static OTopologyStateNetwork boot(OGroupId groupId) {
-    return new OTopologyStateNetwork(groupId, OTopologyState.BOOT, Collections.emptySet(), 0, 0);
+    return new OTopologyStateNetwork(
+        groupId, OTopologyState.BOOT, Collections.emptySet(), 0, new OVersion(0));
   }
 
   public void writeNetwork(DataOutput output) throws IOException {
@@ -37,7 +39,7 @@ public record OTopologyStateNetwork(
       case ESTABLISHED -> {
         output.writeByte(2);
         this.groupId.writeNetwork(output);
-        output.writeLong(version);
+        version.writeNetwork(output);
         output.writeInt(quorum);
         output.writeInt(members.size());
         for (ONodeId node : members) {
@@ -53,12 +55,13 @@ public record OTopologyStateNetwork(
       case 1:
         {
           OGroupId networkId = OGroupId.readNetwork(input);
-          return new OTopologyStateNetwork(networkId, OTopologyState.BOOT, new HashSet<>(), 0, 0);
+          return new OTopologyStateNetwork(
+              networkId, OTopologyState.BOOT, new HashSet<>(), 0, new OVersion(0));
         }
       case 2:
         {
           OGroupId networkId = OGroupId.readNetwork(input);
-          long version = input.readLong();
+          var version = OVersion.readNetwork(input);
           int quorum = input.readInt();
           int size = input.readInt();
           Set<ONodeId> members = new HashSet<ONodeId>(size);
