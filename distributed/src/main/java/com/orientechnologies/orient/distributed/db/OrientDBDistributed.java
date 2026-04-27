@@ -1057,7 +1057,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
         mode = OSyncMode.Delta;
       } else {
         // TODO: here should check if it support the incremental, also that at the receiving side.
-        mode = OSyncMode.IncrementalBackup;
+        mode = OSyncMode.StandardBackup;
       }
       var req = new OSyncRequest(getNodeId(), dbId, sync.get().syncId(), mode, tx);
       sendMessage(sync.get().targets(), req);
