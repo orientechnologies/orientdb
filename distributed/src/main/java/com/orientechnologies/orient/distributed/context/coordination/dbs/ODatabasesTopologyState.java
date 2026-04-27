@@ -494,7 +494,8 @@ public class ODatabasesTopologyState extends OWatcher implements ODatabasesTopol
     if (db != null) {
       return db.validateDrop(promise, version);
     } else {
-      return Optional.of(new ODatabaseMissing(dbId));
+      // Database is missing here ... fair we can drop it
+      return Optional.empty();
     }
   }
 
