@@ -440,4 +440,6 @@ public interface OStorage extends OStorageInfo {
    */
   void restore(InputStream in, Map<String, Object> options, OCommandOutputListener iListener)
       throws IOException;
+
+  void restoreNetwork(InputStream in);
 }

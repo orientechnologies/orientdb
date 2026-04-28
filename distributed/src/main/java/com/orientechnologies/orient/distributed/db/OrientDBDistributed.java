@@ -1,8 +1,5 @@
 package com.orientechnologies.orient.distributed.db;
 
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.FILE_DELETE_DELAY;
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.FILE_DELETE_RETRY;
-
 import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
@@ -33,7 +30,6 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.OGroupId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
@@ -426,21 +422,9 @@ public class OrientDBDistributed extends OrientDBEmbedded
     } catch (OModificationOperationProhibitedException e) {
       throw e;
     } catch (Exception e) {
-      logger.warn("failed non blocking sync of database %s", e, name);
+      logger.warnNode(getNodeId(), "failed non blocking sync of database %s", e, name);
       synchronized (this) {
         dbCount.decrementAndGet();
-        if (storage != null) {
-          try {
-            storage.delete();
-          } catch (Exception ed) {
-            logger.warn("Error while deleting storage %s on failed sync ", ed, name);
-          }
-        }
-        OLocalPaginatedStorage.deleteFilesFromDisc(
-            name,
-            cc.getValueAsInteger(FILE_DELETE_RETRY),
-            cc.getValueAsInteger(FILE_DELETE_DELAY),
-            name);
         storages.remove(name);
       }
       return false;

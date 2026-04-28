@@ -598,6 +598,19 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
   }
 
   @Override
+  public void restoreNetwork(final InputStream in) {
+    try {
+      throw new UnsupportedOperationException();
+    } catch (final RuntimeException e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (final Error e) {
+      throw logAndPrepareForRethrow(e);
+    } catch (final Throwable t) {
+      throw logAndPrepareForRethrow(t);
+    }
+  }
+
+  @Override
   protected OLogSequenceNumber copyWALToIncrementalBackup(
       final ZipOutputStream zipOutputStream, final long startSegment) {
     return null;

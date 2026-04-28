@@ -580,7 +580,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
 
         storages.put(name, storage);
       }
-      storage.restore(in, null, null);
+      storage.restoreNetwork(in);
       dbCount.incrementAndGet();
       distributedSetOnline(name);
       return true;
@@ -590,14 +590,6 @@ public class OrientDBEmbedded implements OrientDBInternal {
       logger.warn("failed non sync of database %s", e, name);
       synchronized (this) {
         dbCount.decrementAndGet();
-        if (storage != null) {
-          storage.delete();
-        }
-        OLocalPaginatedStorage.deleteFilesFromDisc(
-            name,
-            config.getValueAsInteger(FILE_DELETE_RETRY),
-            config.getValueAsInteger(FILE_DELETE_DELAY),
-            name);
         storages.remove(name);
       }
       return false;

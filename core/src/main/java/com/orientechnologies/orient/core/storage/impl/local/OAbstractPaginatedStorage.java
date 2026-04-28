@@ -21,6 +21,8 @@
 package com.orientechnologies.orient.core.storage.impl.local;
 
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_TRANSACTION_SEQUENCE_SET_SIZE;
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.FILE_DELETE_DELAY;
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.FILE_DELETE_RETRY;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
@@ -136,6 +138,7 @@ import com.orientechnologies.orient.core.storage.cache.local.OBackgroundExceptio
 import com.orientechnologies.orient.core.storage.cluster.OOfflineCluster;
 import com.orientechnologies.orient.core.storage.cluster.OPaginatedCluster;
 import com.orientechnologies.orient.core.storage.config.OClusterBasedStorageConfiguration;
+import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OInternalStorageTransaction;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.ORecordSerializationContext;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.AtomicOperationsTable;
@@ -5215,9 +5218,17 @@ public abstract class OAbstractPaginatedStorage
           charset, serverLocale, locale, contextConfiguration, aesKey, stream, true);
 
       postProcessIncrementalRestore(contextConfiguration);
-    } catch (IOException e) {
+    } catch (Exception e) {
+      try {
+        delete();
+      } catch (Exception ed) {
+        logger.warn("Error while deleting storage %s on failed sync ", ed, name);
+      }
+      OLocalPaginatedStorage.deleteFilesFromDisc(
+          name, FILE_DELETE_RETRY.getValueAsInteger(), FILE_DELETE_DELAY.getValueAsInteger(), name);
       throw OException.wrapException(
           new OStorageException("Error during restore from incremental backup"), e);
+
     } finally {
       stateLock.writeLock().unlock();
     }

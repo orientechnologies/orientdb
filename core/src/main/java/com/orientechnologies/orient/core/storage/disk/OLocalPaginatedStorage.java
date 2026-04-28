@@ -20,6 +20,8 @@
 
 package com.orientechnologies.orient.core.storage.disk;
 
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.FILE_DELETE_DELAY;
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.FILE_DELETE_RETRY;
 import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog.MASTER_RECORD_EXTENSION;
 import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog.WAL_SEGMENT_EXTENSION;
 
@@ -325,6 +327,27 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
       throw logAndPrepareForRethrow(t, false);
     } finally {
       stateLock.readLock().unlock();
+    }
+  }
+
+  @Override
+  public void restoreNetwork(InputStream in) {
+    try {
+      stateLock.writeLock().lock();
+      restore(in, null, null);
+    } catch (Exception e) {
+      try {
+        delete();
+      } catch (Exception ed) {
+        logger.warn("Error while deleting storage %s on failed sync ", ed, name);
+      }
+      OLocalPaginatedStorage.deleteFilesFromDisc(
+          name, FILE_DELETE_RETRY.getValueAsInteger(), FILE_DELETE_DELAY.getValueAsInteger(), name);
+      throw OException.wrapException(
+          new OStorageException("Error during restore from incremental backup"), e);
+
+    } finally {
+      stateLock.writeLock().unlock();
     }
   }
 
