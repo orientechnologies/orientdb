@@ -1818,4 +1818,14 @@ public class OrientDBDistributed extends OrientDBEmbedded
 
     return nodeCfg;
   }
+
+  @Override
+  public ONetworkMessage newNetworkMessageRequest() {
+    return new ONetworkRequestMessage(this);
+  }
+
+  @Override
+  public ONetworkMessage newNetworkMessageResponse() {
+    return new ONetworkResponseMessage(this);
+  }
 }

@@ -67,9 +67,6 @@ import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OConnectionBinaryExecutor;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
-import com.orientechnologies.orient.server.distributed.ODistributedException;
-import com.orientechnologies.orient.server.distributed.ODistributedRequest;
-import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
@@ -652,28 +649,14 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
     checkServerAccess("server.replication", connection);
 
-    final ODistributedServerManager manager = server.getDistributedManager();
-    final ODistributedRequest req = new ODistributedRequest(manager);
+    ONetworkMessage message = server.getDatabases().newNetworkMessageRequest();
 
-    req.fromStream(channel.getDataInput());
-
-    final String dbName = req.getDatabaseName();
-    ODistributedDatabase ddb = null;
-    if (dbName != null) {
-      ddb = manager.getDatabase(dbName);
-      if (ddb == null && req.getTask().isNodeOnlineRequired())
-        throw new ODistributedException(
-            "Database configuration not found for database '" + req.getDatabaseName() + "'");
-    }
-
-    if (ddb != null) ddb.processRequest(req, true);
-    else {
-      manager.executeOnLocalNodeFromRemote(req);
-    }
+    message.deserialize(channel.getDataInput());
+    message.execute();
   }
 
   private void executeDistributedMessage(OClientConnection connection) throws IOException {
-    setDataCommandInfo(connection, "Distributed request");
+    setDataCommandInfo(connection, "Distributed message");
 
     checkServerAccess("server.replication", connection);
 
@@ -687,13 +670,10 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     setDataCommandInfo(connection, "Distributed response");
 
     checkServerAccess("server.replication", connection);
+    ONetworkMessage message = server.getDatabases().newNetworkMessageResponse();
 
-    final ODistributedServerManager manager = server.getDistributedManager();
-    final ODistributedResponse response = new ODistributedResponse();
-
-    response.fromStream(channel.getDataInput());
-
-    manager.getMessageService().dispatchResponseToThread(response);
+    message.deserialize(channel.getDataInput());
+    message.execute();
   }
 
   protected void sendError(

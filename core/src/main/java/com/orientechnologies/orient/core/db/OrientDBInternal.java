@@ -414,4 +414,12 @@ public interface OrientDBInternal extends AutoCloseable, OSchedulerInternal {
   default boolean isDistributedOnline() {
     return false;
   }
+
+  default ONetworkMessage newNetworkMessageRequest() {
+    throw new UnsupportedOperationException();
+  }
+
+  default ONetworkMessage newNetworkMessageResponse() {
+    throw new UnsupportedOperationException();
+  }
 }

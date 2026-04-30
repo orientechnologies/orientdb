@@ -1,0 +1,62 @@
+package com.orientechnologies.orient.distributed.db;
+
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
+import com.orientechnologies.orient.core.db.ONetworkMessage;
+import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
+import com.orientechnologies.orient.server.distributed.ODistributedRequest;
+import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+
+public class ONetworkRequestMessage implements ONetworkMessage {
+
+  private static final OLogger logger = OLogManager.instance().logger(ONetworkRequestMessage.class);
+  private final OrientDBDistributed ctx;
+  private final ODistributedRequest req;
+
+  public ONetworkRequestMessage(OrientDBDistributed ctx) {
+    this.ctx = ctx;
+    final ODistributedServerManager manager = ctx.getDistributedManager();
+    req = new ODistributedRequest(manager);
+  }
+
+  @Override
+  public void execute() {
+    final ODistributedServerManager manager = ctx.getDistributedManager();
+    final String dbName = req.getDatabaseName();
+    ODistributedDatabase ddb = null;
+    if (dbName != null) {
+      try {
+        ctx.waitOnline(dbName);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+      }
+      if (req.getTask().isNodeOnlineRequired()) {
+        ddb = manager.getDatabase(dbName);
+        if (ddb == null) {
+          logger.warn(
+              "Message %s require online database, but offline, dropping execution",
+              req.toString());
+          return;
+        }
+      }
+    }
+    if (ddb != null) {
+      ddb.processRequest(req, true);
+    } else {
+      manager.executeOnLocalNodeFromRemote(req);
+    }
+  }
+
+  @Override
+  public void deserialize(DataInput input) throws IOException {
+    req.fromStream(input);
+  }
+
+  @Override
+  public void serialize(DataOutput out) throws IOException {
+    throw new UnsupportedOperationException("not needed so far");
+  }
+}
