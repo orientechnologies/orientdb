@@ -120,7 +120,6 @@ import com.orientechnologies.orient.core.serialization.serializer.binary.impl.in
 import com.orientechnologies.orient.core.sharding.auto.OAutoShardingIndexEngine;
 import com.orientechnologies.orient.core.storage.OAllocationTransaction;
 import com.orientechnologies.orient.core.storage.OCluster;
-import com.orientechnologies.orient.core.storage.OIdentifiableStorage;
 import com.orientechnologies.orient.core.storage.OPhysicalPosition;
 import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.ORecordMetadata;
@@ -248,7 +247,6 @@ import javax.crypto.spec.SecretKeySpec;
  */
 public abstract class OAbstractPaginatedStorage
     implements OCheckpointRequestListener,
-        OIdentifiableStorage,
         OBackgroundExceptionListener,
         OFreezableStorageComponent,
         OPageIsBrokenListener,
@@ -1385,7 +1383,6 @@ public abstract class OAbstractPaginatedStorage
         "Cluster with name `" + clusterName + "` does not exist inside of storage " + name);
   }
 
-  @Override
   public final int getId() {
     return id;
   }
