@@ -7,11 +7,12 @@ import java.io.OutputStream;
 public class OutputStreamMessages extends OutputStream {
 
   public interface MessageSender {
-    void sendBuffer(OSyncState state, byte[] data, boolean finished);
+    void sendBuffer(OSyncState state, byte[] data, long seq, boolean finished);
   }
 
   private OSyncState state;
   private MessageSender sender;
+  private long counter;
 
   public OutputStreamMessages(MessageSender sender, OSyncState state) {
     this.state = state;
@@ -28,12 +29,14 @@ public class OutputStreamMessages extends OutputStream {
     // Copy every time the data because of multi-threading
     byte[] data = new byte[len];
     System.arraycopy(b, off, data, 0, len);
-    this.sender.sendBuffer(state, data, false);
+    var seq = counter++;
+    this.sender.sendBuffer(state, data, seq, false);
   }
 
   @Override
   public void close() throws IOException {
-    this.sender.sendBuffer(state, new byte[] {}, true);
+    var seq = counter++;
+    this.sender.sendBuffer(state, new byte[] {}, seq, true);
     state.close();
   }
 }

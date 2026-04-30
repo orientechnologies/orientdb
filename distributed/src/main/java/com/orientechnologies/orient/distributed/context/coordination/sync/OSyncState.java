@@ -82,9 +82,10 @@ public class OSyncState {
     return OSyncMode.IncrementalBackup.equals(this.mode);
   }
 
-  public synchronized void receiveData(byte[] data, boolean finished) {
-    logger.debug("receiving buffer size %d finished %b", data.length, finished);
-    receiverStream.receive(data, finished);
+  public synchronized void receiveData(byte[] data, long sequential, boolean finished) {
+    logger.debug(
+        "receiving buffer size %d sequential %d finished %b", data.length, sequential, finished);
+    receiverStream.receive(data, sequential, finished);
     if (finished) {
       this.close = true;
       this.finished.complete(true);

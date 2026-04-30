@@ -76,10 +76,10 @@ public class SyncOpsTest {
     }
 
     @Override
-    public void sendBuffer(OSyncState state, byte[] data, boolean finished) {
+    public void sendBuffer(OSyncState state, byte[] data, long sequential, boolean finished) {
       logger.debug("sending data from sender size:%s finished:%b", data.length, finished);
 
-      this.receiver.receiveData(data, finished);
+      this.receiver.receiveData(data, sequential, finished);
       state.transaferd(data.length);
       if (!finished) {
         try {
@@ -100,9 +100,9 @@ public class SyncOpsTest {
     }
 
     @Override
-    public void sendBuffer(OSyncState state, byte[] data, boolean finished) {
+    public void sendBuffer(OSyncState state, byte[] data, long sequential, boolean finished) {
       if (this.failCount > 0) {
-        super.sendBuffer(state, data, finished);
+        super.sendBuffer(state, data, sequential, finished);
       } else {
         this.receiver.close();
       }

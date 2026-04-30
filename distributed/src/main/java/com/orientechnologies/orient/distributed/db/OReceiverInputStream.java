@@ -6,13 +6,15 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncState;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Comparator;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
 public class OReceiverInputStream extends InputStream {
 
-  private record Buffer(byte[] content, boolean finished) {}
+  private record Buffer(byte[] content, long sequential, boolean finished) {}
 
   public interface RequestNext {
     void requestNext(OSyncState state, boolean b);
@@ -21,9 +23,13 @@ public class OReceiverInputStream extends InputStream {
   private byte[] buffer = new byte[] {};
   private int cursor = 0;
   private final BlockingQueue<Buffer> buffers = new ArrayBlockingQueue<Buffer>(10);
+  private final PriorityBlockingQueue<Buffer> outOfOrder =
+      new PriorityBlockingQueue<>(10, Comparator.comparing(Buffer::sequential));
   private final RequestNext ctx;
   private final OSyncState state;
   private volatile boolean finished = false;
+  private long receiveSequential = -1;
+  private long readingSequential = -1;
 
   public OReceiverInputStream(RequestNext ctx, OSyncState state) {
     this.ctx = ctx;
@@ -38,10 +44,19 @@ public class OReceiverInputStream extends InputStream {
         return -1;
       }
       try {
-        Buffer bi = buffers.poll(5, TimeUnit.MINUTES);
+        Buffer bi = null;
+        if (!outOfOrder.isEmpty()) {
+          if (readingSequential + 1 == outOfOrder.peek().sequential()) {
+            bi = outOfOrder.poll();
+          }
+        }
+        if (bi == null) {
+          bi = buffers.poll(5, TimeUnit.MINUTES);
+        }
         if (bi == null) {
           throw new OTimeoutException("Timeout waiting for sync data");
         }
+        readingSequential = bi.sequential;
         buffer = bi.content;
         cursor = 0;
         if (bi.finished) {
@@ -65,11 +80,19 @@ public class OReceiverInputStream extends InputStream {
     return buffer.length - cursor;
   }
 
-  public void receive(byte[] buffer, boolean finished) {
+  public void receive(byte[] buffer, long sequential, boolean finished) {
     try {
-      var offered = this.buffers.offer(new Buffer(buffer, finished), 5, TimeUnit.MINUTES);
-      if (!offered) {
-        throw new OTimeoutException("Timeout waiting for sync data");
+      var received = new Buffer(buffer, sequential, finished);
+      if (this.receiveSequential + 1 == received.sequential()) {
+        this.receiveSequential = received.sequential();
+        var offered = this.buffers.offer(received, 5, TimeUnit.MINUTES);
+        if (!offered) {
+          throw new OTimeoutException("Timeout waiting for sync data");
+        }
+      } else if (this.readingSequential + 1 > received.sequential()) {
+        // ignore
+      } else {
+        outOfOrder.add(received);
       }
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
@@ -82,7 +105,8 @@ public class OReceiverInputStream extends InputStream {
     if (!finished) {
       ctx.requestNext(state, true);
       // Close the state
-      receive(new byte[] {}, true);
+      // TODO: check sequential
+      receive(new byte[] {}, receiveSequential + 1, true);
     }
   }
 }

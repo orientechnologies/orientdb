@@ -203,11 +203,12 @@ public class CoordinationMessagesSerializationTest {
     ODatabaseId dbId = newDatabaseId();
     OSyncId syncId = new OSyncId(dbId, nodeId);
     var data = new byte[] {0, 1, 2};
-    OSyncData syncReq = new OSyncData(syncId, data, true);
+    OSyncData syncReq = new OSyncData(syncId, data, 10, true);
 
     OSyncData read = writeRead(syncReq);
 
     assertEquals(read.getSyncId(), syncId);
+    assertEquals(read.getSequential(), 10);
     assertArrayEquals(read.getData(), data);
     assertTrue(syncReq.isFinished());
   }

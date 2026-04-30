@@ -1193,7 +1193,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
     return this.getNodeState().getDatabaseTopology().getDatabaseName(dbId);
   }
 
-  public void sendBuffer(OSyncState state, byte[] data, boolean finished) {
+  public void sendBuffer(OSyncState state, byte[] data, long sequential, boolean finished) {
     logger.debug(
         "Sending buffer %s syncId %s sender %s receiver %s",
         state.getDbId(), state.getSyncId(), state.getSender(), state.getReceiver());
@@ -1202,7 +1202,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
       // receiver sent close, drop the data.
       return;
     }
-    sendMessage(state.getReceiver(), new OSyncData(state.getSyncId(), data, finished));
+    sendMessage(state.getReceiver(), new OSyncData(state.getSyncId(), data, sequential, finished));
     state.transaferd(data.length);
     if (!finished) {
       try {
@@ -1213,13 +1213,13 @@ public class OrientDBDistributed extends OrientDBEmbedded
     }
   }
 
-  public void receiveSyncData(OSyncId syncId, byte[] data, boolean finished) {
+  public void receiveSyncData(OSyncId syncId, byte[] data, long sequential, boolean finished) {
     var state = this.getNodeState().getOps().getSyncState(syncId);
     if (state != null) {
       logger.debug(
           "Receiving buffer %s syncId %s sender %s receiver %s",
           state.getDbId(), state.getSyncId(), state.getSender(), state.getReceiver());
-      state.receiveData(data, finished);
+      state.receiveData(data, sequential, finished);
     } else {
       logger.warn("Receiving buffer syncId %s finished:%s no sync state", syncId, finished);
     }
