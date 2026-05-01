@@ -17,8 +17,8 @@ public class ONodeDatabaseState {
   }
 
   public ONodeDatabaseState(ODatabaseNodeStore store) {
-    this.id = store.getId();
-    this.role = store.getRole();
+    this.id = store.id();
+    this.role = store.role();
     this.state = ODatabaseState.Offline;
   }
 

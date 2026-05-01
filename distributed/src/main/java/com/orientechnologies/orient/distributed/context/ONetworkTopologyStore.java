@@ -5,48 +5,14 @@ import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.transaction.OGroupId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
+import com.orientechnologies.orient.distributed.context.coordination.OVersion;
 import com.orientechnologies.orient.distributed.context.coordination.topology.OTopologyState;
 import java.util.Collection;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-public class ONetworkTopologyStore {
-
-  private final OGroupId groupId;
-  private final OTopologyState state;
-  private final Set<ONodeId> members;
-  private final long version;
-  private final int quorum;
-
-  public ONetworkTopologyStore(
-      OGroupId groupId, OTopologyState state, Set<ONodeId> members, int quorum, long version) {
-    super();
-    this.groupId = groupId;
-    this.state = state;
-    this.members = members;
-    this.quorum = quorum;
-    this.version = version;
-  }
-
-  public OGroupId getGroupId() {
-    return groupId;
-  }
-
-  public OTopologyState getState() {
-    return state;
-  }
-
-  public Set<ONodeId> getMembers() {
-    return members;
-  }
-
-  public long getVersion() {
-    return version;
-  }
-
-  public int getQuorum() {
-    return quorum;
-  }
+public record ONetworkTopologyStore(
+    OGroupId groupId, OTopologyState state, Set<ONodeId> members, int quorum, OVersion version) {
 
   public static ONetworkTopologyStore fromResult(OResult d) {
     assert (int) d.getProperty("serializationVersion") == 1;
@@ -55,7 +21,7 @@ public class ONetworkTopologyStore {
     Set<ONodeId> members =
         ((Collection<OResult>) d.getProperty("members"))
             .stream().map((e) -> ONodeId.readResult(e)).collect(Collectors.toSet());
-    long version = d.getProperty("version");
+    var version = OVersion.fromResult(d);
     int quorum = d.getProperty("quorum");
     return new ONetworkTopologyStore(networkId, state, members, quorum, version);
   }
@@ -69,6 +35,6 @@ public class ONetworkTopologyStore {
         "members",
         this.members.stream().map((x) -> x.toDocument()).collect(Collectors.toList()),
         OType.EMBEDDEDLIST);
-    el.setProperty("version", version);
+    this.version.toElement(el);
   }
 }

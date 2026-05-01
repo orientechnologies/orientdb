@@ -462,7 +462,7 @@ public class ODatabasesTopologyState extends OWatcher implements ODatabasesTopol
 
   public synchronized void load(ODatabasesTopologyStore store) {
     var dbs =
-        store.getDatabases().stream()
+        store.databases().stream()
             .map(x -> new ODatabaseTopologyState(listener, x, current))
             .toList();
     for (var db : dbs) {

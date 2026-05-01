@@ -223,15 +223,15 @@ public class OTopologyManager extends OWatcher implements OTopologyEvents, ONetw
   }
 
   public synchronized void load(ONetworkTopologyStore nodeStateStore) {
-    this.groupId = nodeStateStore.getGroupId();
-    this.state = nodeStateStore.getState();
-    this.versionPromise.loadVersion(new OVersion(nodeStateStore.getVersion()));
-    this.quorum = nodeStateStore.getQuorum();
-    this.setMember(nodeStateStore.getMembers());
+    this.groupId = nodeStateStore.groupId();
+    this.state = nodeStateStore.state();
+    this.versionPromise.loadVersion(nodeStateStore.version());
+    this.quorum = nodeStateStore.quorum();
+    this.setMember(nodeStateStore.members());
   }
 
   public synchronized ONetworkTopologyStore getStore() {
-    return new ONetworkTopologyStore(groupId, state, this.members, quorum, getVersion().getValue());
+    return new ONetworkTopologyStore(groupId, state, this.members, quorum, getVersion());
   }
 
   public synchronized void cancelRegisterPromise(OTransactionIdPromise promise) {

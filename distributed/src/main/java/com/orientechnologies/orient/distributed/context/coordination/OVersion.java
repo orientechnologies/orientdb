@@ -1,5 +1,8 @@
 package com.orientechnologies.orient.distributed.context.coordination;
 
+import com.orientechnologies.orient.core.record.OElement;
+import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -60,6 +63,21 @@ public class OVersion {
 
   public static OVersion readNetwork(DataInput input) throws IOException {
     long version = input.readLong();
+    return new OVersion(version);
+  }
+
+  public void toElement(OElement el) {
+    el.setProperty("version", version);
+  }
+
+  public ODocument toDocument() {
+    ODocument doc = new ODocument();
+    toElement(doc);
+    return doc;
+  }
+
+  public static OVersion fromResult(OResult input) {
+    long version = input.getProperty("version");
     return new OVersion(version);
   }
 }

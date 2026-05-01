@@ -5,14 +5,7 @@ import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ONodeRole;
 
-public class ODatabaseNodeStore {
-  private final ONodeId id;
-  private final ONodeRole role;
-
-  public ODatabaseNodeStore(ONodeId id, ONodeRole role) {
-    this.id = id;
-    this.role = role;
-  }
+public record ODatabaseNodeStore(ONodeId id, ONodeRole role) {
 
   public static ODatabaseNodeStore fromResult(OResult d) {
     ONodeId nodeId = ONodeId.readResult(d.getProperty("node"));
@@ -25,13 +18,5 @@ public class ODatabaseNodeStore {
     doc.setProperty("node", id.toDocument());
     doc.setProperty("role", role.name());
     return doc;
-  }
-
-  public ONodeId getId() {
-    return id;
-  }
-
-  public ONodeRole getRole() {
-    return role;
   }
 }

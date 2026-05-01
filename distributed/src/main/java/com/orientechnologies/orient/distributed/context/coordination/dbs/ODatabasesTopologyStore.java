@@ -5,17 +5,7 @@ import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import java.util.List;
 
-public class ODatabasesTopologyStore {
-
-  private final List<ODatabaseTopologyStore> databases;
-
-  public ODatabasesTopologyStore(List<ODatabaseTopologyStore> databases) {
-    this.databases = databases;
-  }
-
-  public List<ODatabaseTopologyStore> getDatabases() {
-    return databases;
-  }
+public record ODatabasesTopologyStore(List<ODatabaseTopologyStore> databases) {
 
   public static ODatabasesTopologyStore fromResult(OResult res) {
     assert (int) res.getProperty("serializationVersion") == 1;
