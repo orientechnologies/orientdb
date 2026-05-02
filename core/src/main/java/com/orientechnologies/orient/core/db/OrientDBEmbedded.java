@@ -832,6 +832,10 @@ public class OrientDBEmbedded implements OrientDBInternal {
       scriptManager.closeAll();
       internalClose();
     }
+    for (OStorageEngine engine : this.engines.values()) {
+      engine.shutdown();
+    }
+    threadsGroup.interrupt();
     if (ioExecutor != null) {
       try {
         ioExecutor.shutdown();
@@ -844,9 +848,6 @@ public class OrientDBEmbedded implements OrientDBInternal {
       }
     }
     allGroups.interrupt();
-    for (OStorageEngine engine : this.engines.values()) {
-      engine.shutdown();
-    }
     removeShutdownHook();
   }
 
