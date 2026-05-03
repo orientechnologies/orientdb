@@ -571,14 +571,10 @@ public class OrientDBEmbedded implements OrientDBInternal {
           context.close();
         }
         storage = storages.get(name);
-        if (storage != null) {
-          dbCount.decrementAndGet();
-          storage.close();
+        if (storage == null) {
+          storage = getDefaultEngine().createForRestoreLocal(this, databaseId, name, config);
+          storages.put(name, storage);
         }
-
-        storage = getDefaultEngine().createForRestoreLocal(this, databaseId, name, config);
-
-        storages.put(name, storage);
       }
       storage.restoreNetwork(in);
       dbCount.incrementAndGet();

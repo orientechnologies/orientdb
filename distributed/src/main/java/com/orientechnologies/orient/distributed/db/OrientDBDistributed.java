@@ -8,7 +8,6 @@ import com.orientechnologies.common.thread.OSourceTraceExecutorService;
 import com.orientechnologies.common.thread.OThreadPoolExecutors;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentEmbeddedPooled;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -384,7 +383,6 @@ public class OrientDBDistributed extends OrientDBEmbedded
     OStorage storage = null;
     ODatabaseDocumentEmbedded embedded;
 
-    OContextConfiguration cc = getConfigurations().getConfigurations();
     if (!isOpen()) {
       return false;
     }
@@ -392,24 +390,12 @@ public class OrientDBDistributed extends OrientDBEmbedded
       synchronized (this) {
         storage = storages.get(name);
 
-        if (storage != null) {
-          // The underlying storage instance will be closed so no need to closed it
-          ODatabaseDocumentEmbedded deleteInstance = newSessionInstance(storage, config);
-          OSharedContext context = sharedContexts.remove(name);
-          dbCount.decrementAndGet();
-          context.close();
-          dropStorageFiles(storage);
-
-          storage.delete();
-          storages.remove(name);
-          ODatabaseRecordThreadLocal.instance().remove();
+        if (storage == null) {
+          storage =
+              getDefaultEngine()
+                  .createForRestoreLocal(this, databaseId, name, config.getConfigurations());
+          storages.put(name, storage);
         }
-
-        storage =
-            getDefaultEngine()
-                .createForRestoreLocal(this, databaseId, name, config.getConfigurations());
-
-        storages.put(name, storage);
       }
       storage.restoreFullIncrementalBackup(backupStream);
       synchronized (this) {

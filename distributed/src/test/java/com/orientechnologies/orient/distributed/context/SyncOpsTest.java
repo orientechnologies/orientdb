@@ -149,6 +149,21 @@ public class SyncOpsTest {
     }
   }
 
+  private void testRawSyncTwice(OSyncMode mode) {
+    testRawSync(mode);
+    testRawSync(mode);
+  }
+
+  @Test
+  public void testRawSyncTwiceBackup() {
+    testRawSyncTwice(OSyncMode.StandardBackup);
+  }
+
+  @Test
+  public void testRawSyncTwiceIncremental() {
+    testRawSyncTwice(OSyncMode.IncrementalBackup);
+  }
+
   @Test
   public void testRawSyncBackup() {
     testRawSync(OSyncMode.StandardBackup);
