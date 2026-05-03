@@ -596,8 +596,8 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   }
 
   @Override
-  public void completeSync(OSyncId syncId) {
-    this.databaseTopology.completeSync(syncId);
+  public void completeSync(OSyncId syncId, boolean success) {
+    this.databaseTopology.completeSync(syncId, success);
   }
 
   public synchronized ONodeStateStore getStore() {

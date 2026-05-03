@@ -23,7 +23,6 @@ import com.orientechnologies.orient.distributed.db.OutputStreamMessages;
 import com.orientechnologies.orient.distributed.db.OutputStreamMessages.MessageSender;
 import java.io.OutputStream;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
@@ -116,11 +115,9 @@ public class SyncOpsTest {
     var syncId = new OSyncId(dbId, nodeTo);
 
     var sender =
-        new OSyncState(
-            dbId, syncId, nodeFrom, nodeTo, mode, Optional.empty(), new CompletableFuture<>());
+        new OSyncState(dbId, syncId, nodeFrom, nodeTo, mode, Optional.empty(), (res) -> {});
     var receiver =
-        new OSyncState(
-            dbId, syncId, nodeFrom, nodeTo, mode, Optional.empty(), new CompletableFuture<>());
+        new OSyncState(dbId, syncId, nodeFrom, nodeTo, mode, Optional.empty(), (res) -> {});
     var pass = new PassTrough(sender, receiver);
 
     OutputStream out = new OutputStreamMessages(pass, sender);
@@ -190,11 +187,9 @@ public class SyncOpsTest {
     var syncId = new OSyncId(dbId, nodeTo);
 
     var sender =
-        new OSyncState(
-            dbId, syncId, nodeFrom, nodeTo, mode, Optional.empty(), new CompletableFuture<>());
+        new OSyncState(dbId, syncId, nodeFrom, nodeTo, mode, Optional.empty(), (res) -> {});
     var receiver =
-        new OSyncState(
-            dbId, syncId, nodeFrom, nodeTo, mode, Optional.empty(), new CompletableFuture<>());
+        new OSyncState(dbId, syncId, nodeFrom, nodeTo, mode, Optional.empty(), (res) -> {});
     var pass = new FailPassTrough(sender, receiver, 5);
 
     OutputStream out = new OutputStreamMessages(pass, sender);

@@ -3,12 +3,13 @@ package com.orientechnologies.orient.distributed.context.coordination.sync;
 import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
+import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncState.SyncComplete;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 
-public class OSyncSession {
+public class OSyncSession implements SyncComplete {
   private final OSyncId syncId;
   private final ODatabaseId dbId;
   private Set<ONodeId> nodes;
@@ -30,7 +31,7 @@ public class OSyncSession {
       Optional<OTransactionSequenceStatus> sequenceStatus) {
     this.syncId = syncId;
     this.dbId = dbId;
-    this.state = new OSyncState(dbId, syncId, from, to, mode, sequenceStatus, finished);
+    this.state = new OSyncState(dbId, syncId, from, to, mode, sequenceStatus, this);
   }
 
   public OSyncId getSyncId() {
@@ -46,7 +47,7 @@ public class OSyncSession {
       Optional<OTransactionSequenceStatus> sequenceStatus) {
     assert this.syncId.equals(syncId);
     if (canSync && this.state == null) {
-      this.state = new OSyncState(dbId, syncId, sender, receiver, mode, sequenceStatus, finished);
+      this.state = new OSyncState(dbId, syncId, sender, receiver, mode, sequenceStatus, this);
       return Optional.of(this.state);
     } else {
       nodes.remove(sender);
@@ -92,7 +93,16 @@ public class OSyncSession {
       }
     } else {
       nodes.remove(node);
-      return nodes.isEmpty();
+      if (nodes.isEmpty()) {
+        this.complete(false);
+        return true;
+      } else {
+        return false;
+      }
     }
+  }
+
+  public void complete(boolean success) {
+    this.finished.complete(success);
   }
 }

@@ -9,7 +9,6 @@ import com.orientechnologies.orient.distributed.db.OReceiverInputStream;
 import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
 import java.io.IOException;
 import java.util.Optional;
-import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeUnit;
 
 public class OSyncState {
@@ -21,12 +20,16 @@ public class OSyncState {
   private final ONodeId receiver;
   private final OSyncMode mode;
   private final Optional<OTransactionSequenceStatus> sequenceStatus;
-  private final CompletableFuture<Boolean> finished;
+  private final SyncComplete finished;
   private volatile int messageCount = 0;
   private volatile long totalsize = 0;
   private volatile OReceiverInputStream receiverStream;
   private volatile boolean canNext = false;
   private volatile boolean close = false;
+
+  public interface SyncComplete {
+    void complete(boolean succes);
+  }
 
   public OSyncState(
       ODatabaseId dbId,
@@ -35,7 +38,7 @@ public class OSyncState {
       ONodeId receiver,
       OSyncMode mode,
       Optional<OTransactionSequenceStatus> sequenceStatus,
-      CompletableFuture<Boolean> finished) {
+      SyncComplete finished) {
     this.dbId = dbId;
     this.syncId = syncId;
     this.sender = sender;
@@ -130,7 +133,7 @@ public class OSyncState {
   public synchronized void close() {
     if (!this.close) {
       this.close = true;
-      this.finished.complete(true);
+      this.finished.complete(false);
       if (this.receiverStream != null) {
         try {
           this.receiverStream.close();

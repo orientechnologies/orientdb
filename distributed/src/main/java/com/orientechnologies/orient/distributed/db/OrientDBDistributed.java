@@ -1103,8 +1103,9 @@ public class OrientDBDistributed extends OrientDBEmbedded
 
   public boolean receiveSync(
       String dbName, OSyncState state, InputStream inputStream, OrientDBConfig conf) {
+    boolean success = false;
     try (InputStream input = inputStream) {
-      boolean success =
+      success =
           switch (state.getMode()) {
             case IncrementalBackup -> {
               yield nonBlockingSync(dbName, state.getDbId(), input, conf);
@@ -1125,7 +1126,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
       return false;
     } finally {
       logger.debug("Completing sync %s", state.getSyncId());
-      getNodeState().getOps().completeSync(state.getSyncId());
+      getNodeState().getOps().completeSync(state.getSyncId(), success);
     }
   }
 
@@ -1150,6 +1151,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   public void syncBackup(String name, OSyncState state, OutputStream output) {
+    boolean success = false;
     try (OutputStream out = new BufferedOutputStream(output, 8096)) {
       ODatabaseDocumentEmbedded db = openNoAuthorization(name);
       OStorage storage = db.getStorage();
@@ -1168,10 +1170,11 @@ public class OrientDBDistributed extends OrientDBEmbedded
           db.deltaBackup(out, transactions);
         }
       }
+      success = true;
     } catch (IOException e) {
       logger.info("exception while sending backup data", e);
     } finally {
-      getNodeState().getOps().completeSync(state.getSyncId());
+      getNodeState().getOps().completeSync(state.getSyncId(), success);
     }
   }
 

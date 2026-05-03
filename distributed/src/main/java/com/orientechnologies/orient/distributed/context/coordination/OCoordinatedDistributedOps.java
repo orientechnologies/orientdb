@@ -179,7 +179,7 @@ public interface OCoordinatedDistributedOps {
 
   OSyncState getSyncState(OSyncId syncId);
 
-  void completeSync(OSyncId syncId);
+  void completeSync(OSyncId syncId, boolean success);
 
   // State Reading
   ODatabasesTopology getDatabaseTopology();

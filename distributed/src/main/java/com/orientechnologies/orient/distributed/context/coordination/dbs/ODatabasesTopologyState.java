@@ -448,10 +448,10 @@ public class ODatabasesTopologyState extends OWatcher implements ODatabasesTopol
     }
   }
 
-  public synchronized void completeSync(OSyncId syncId) {
+  public synchronized void completeSync(OSyncId syncId, boolean success) {
     ODatabaseTopologyState db = getDb(syncId.getDbId());
     if (db != null) {
-      db.completeSync(syncId);
+      db.completeSync(syncId, success);
     }
   }
 

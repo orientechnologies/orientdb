@@ -353,8 +353,11 @@ public class ODatabaseTopologyState extends OWatcher {
     }
   }
 
-  public synchronized void completeSync(OSyncId syncId) {
-    syncSessions.remove(syncId);
+  public synchronized void completeSync(OSyncId syncId, boolean success) {
+    var session = syncSessions.remove(syncId);
+    if (session != null) {
+      session.complete(success);
+    }
   }
 
   public synchronized ODatabaseTopologyStore getStore() {
