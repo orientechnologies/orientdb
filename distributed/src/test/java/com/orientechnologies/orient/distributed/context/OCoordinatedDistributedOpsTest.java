@@ -94,7 +94,8 @@ public class OCoordinatedDistributedOpsTest
   }
 
   private ONetworkTopologyStore bootStoreState(OGroupId groupId) {
-    return new ONetworkTopologyStore(groupId, OTopologyState.BOOT, new HashSet<>(), 0, 0);
+    return new ONetworkTopologyStore(
+        groupId, OTopologyState.BOOT, new HashSet<>(), 0, new OVersion(0));
   }
 
   private ONodeStateNetwork networkState(OTopologyStateNetwork topology) {
@@ -444,7 +445,8 @@ public class OCoordinatedDistributedOpsTest
     ONodeId nodeId3 = newRandomNodeId();
     var gid = newRandomGroupId();
     ONetworkTopologyStore initial =
-        new ONetworkTopologyStore(gid, OTopologyState.ESTABLISHED, Set.of(nodeId1, nodeId2), 2, 2);
+        new ONetworkTopologyStore(
+            gid, OTopologyState.ESTABLISHED, Set.of(nodeId1, nodeId2), 2, new OVersion(2));
     node1.load(new ONodeStateStore(Optional.empty(), Optional.of(initial), Optional.empty()));
     node1.discoverNode(nodeId1);
     assertEquals(node1.getNetworkTopology().getMembers().size(), 2);
@@ -473,7 +475,11 @@ public class OCoordinatedDistributedOpsTest
     ONodeId nodeId3 = newRandomNodeId();
     ONetworkTopologyStore initial =
         new ONetworkTopologyStore(
-            groupId, OTopologyState.ESTABLISHED, Set.of(nodeId1, nodeId2, nodeId3), 2, 3);
+            groupId,
+            OTopologyState.ESTABLISHED,
+            Set.of(nodeId1, nodeId2, nodeId3),
+            2,
+            new OVersion(3));
     node1.load(new ONodeStateStore(Optional.empty(), Optional.of(initial), Optional.empty()));
     node1.discoverNode(nodeId1);
     assertEquals(node1.getNetworkTopology().getMembers().size(), 3);
@@ -498,7 +504,7 @@ public class OCoordinatedDistributedOpsTest
     ONodeId nodeId3 = newRandomNodeId();
     ONetworkTopologyStore initial =
         new ONetworkTopologyStore(
-            groupId, OTopologyState.ESTABLISHED, Set.of(nodeId1, nodeId2), 2, 3);
+            groupId, OTopologyState.ESTABLISHED, Set.of(nodeId1, nodeId2), 2, new OVersion(3));
     node1.load(new ONodeStateStore(Optional.empty(), Optional.of(initial), Optional.empty()));
     node1.discoverNode(nodeId1);
     assertEquals(node1.getNetworkTopology().getMembers().size(), 2);
