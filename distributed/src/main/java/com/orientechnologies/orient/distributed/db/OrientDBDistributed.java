@@ -50,6 +50,7 @@ import com.orientechnologies.orient.distributed.context.coordination.dbs.ODataba
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabasesTopology;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ONodeRole;
 import com.orientechnologies.orient.distributed.context.coordination.message.OCanSync;
+import com.orientechnologies.orient.distributed.context.coordination.message.OCanSyncAccept;
 import com.orientechnologies.orient.distributed.context.coordination.message.OMergeRequest;
 import com.orientechnologies.orient.distributed.context.coordination.message.OMergeResult;
 import com.orientechnologies.orient.distributed.context.coordination.message.ONextBuffer;
@@ -71,6 +72,8 @@ import com.orientechnologies.orient.distributed.context.coordination.result.ONoT
 import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncId;
 import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncInfo;
 import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncMode;
+import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncMode.Delta;
+import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncMode.NonBlockingBackup;
 import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncState;
 import com.orientechnologies.orient.distributed.context.coordination.topology.ODiscoverAction;
 import com.orientechnologies.orient.distributed.context.retryable.OAddDatabaseMembersRetryOperation;
@@ -1024,12 +1027,12 @@ public class OrientDBDistributed extends OrientDBEmbedded
           dbId, sync.get().targets(), sync.get().syncId(), getNodeId());
       OSyncMode mode;
       if (tx.isPresent()) {
-        mode = OSyncMode.Delta;
+        mode = new OSyncMode.Delta(tx.get());
       } else {
         // TODO: here should check if it support the incremental, also that at the receiving side.
-        mode = OSyncMode.StandardBackup;
+        mode = new OSyncMode.BlockingBackup();
       }
-      var req = new OSyncRequest(getNodeId(), dbId, sync.get().syncId(), mode, tx);
+      var req = new OSyncRequest(getNodeId(), dbId, sync.get().syncId(), mode);
       sendMessage(sync.get().targets(), req);
       return Optional.of(sync.get().finished());
     } else {
@@ -1042,53 +1045,50 @@ public class OrientDBDistributed extends OrientDBEmbedded
     getNodeState().getOps().cancelDeclareDatabase(promise, dbId, database);
   }
 
-  public void acceptSync(
-      ONodeId receiver,
-      ODatabaseId dbId,
-      OSyncId syncId,
-      OSyncMode mode,
-      Optional<OTransactionSequenceStatus> sequenceStatus) {
-    // TODO check syncMode Accept
+  public void acceptSync(ONodeId receiver, ODatabaseId dbId, OSyncId syncId, OSyncMode mode) {
     OCoordinatedDistributedOps ops = getNodeState().getOps();
     boolean accepted = ops.acceptSync(getNodeState().getNodeId(), receiver, dbId, syncId);
+    OCanSyncAccept accept;
+    String dbName = ops.getDatabaseTopology().getDatabaseName(dbId);
     if (accepted) {
       logger.debug(
           "Accepted sync %s syncI: %s sender %s receiver %s", dbId, syncId, getNodeId(), receiver);
-    }
-    String dbName = ops.getDatabaseTopology().getDatabaseName(dbId);
-    if (OSyncMode.Delta.equals(mode) && sequenceStatus.isPresent()) {
-      List<OTransactionId> missing = getDatabase(dbName).missingTransactions(sequenceStatus.get());
-      if (missing.isEmpty()) {
-        accepted = false;
-      }
-    }
-    if (OSyncMode.IncrementalBackup.equals(mode)) {
-      OStorage storage = getStorage(dbName);
-      if (storage != null) {
-        if (!storage.supportIncremental()) {
-          mode = OSyncMode.StandardBackup;
+
+      if (mode instanceof NonBlockingBackup) {
+        OStorage storage = getStorage(dbName);
+        if (storage != null && !storage.supportIncremental()) {
+          accept = new OCanSyncAccept.BlockingSync();
+        } else {
+          // TODO: check with the engine
+          accept = new OCanSyncAccept.NonBlockingSync();
         }
+      } else if (mode instanceof Delta d) {
+        List<OTransactionId> missing = getDatabase(dbName).missingTransactions(d.status());
+        if (missing.isEmpty()) {
+          accept = new OCanSyncAccept.NotAccepted();
+        } else {
+          accept = new OCanSyncAccept.DeltaSync(d.status());
+        }
+      } else {
+        // Default not instanceof...
+        accept = new OCanSyncAccept.BlockingSync();
       }
+    } else {
+      accept = new OCanSyncAccept.NotAccepted();
     }
-    sendMessage(receiver, new OCanSync(getNodeId(), dbId, syncId, mode, sequenceStatus, accepted));
+
+    sendMessage(receiver, new OCanSync(getNodeId(), dbId, syncId, accept));
   }
 
-  public void canSync(
-      ONodeId sender,
-      ODatabaseId dbId,
-      OSyncId syncId,
-      boolean canSync,
-      OSyncMode mode,
-      Optional<OTransactionSequenceStatus> sequenceStatus) {
+  public void canSync(ONodeId sender, ODatabaseId dbId, OSyncId syncId, OCanSyncAccept canSync) {
     OCoordinatedDistributedOps ops = getNodeState().getOps();
-    Optional<OSyncState> state =
-        ops.canSync(sender, getNodeId(), dbId, syncId, canSync, mode, sequenceStatus);
+    Optional<OSyncState> state = ops.canSync(sender, getNodeId(), dbId, syncId, canSync);
 
     if (state.isPresent()) {
       logger.debug(
           "Receiving sync %s syncId %s sender %s receiver %s", dbId, syncId, sender, getNodeId());
       OSyncState st = state.get();
-      sendMessage(sender, new OStartSync(getNodeId(), dbId, syncId, mode, sequenceStatus));
+      sendMessage(sender, new OStartSync(getNodeId(), dbId, syncId, canSync));
       String dbName = getDbName(dbId);
       OReceiverInputStream input = new OReceiverInputStream(this::requestNext, st);
       st.setReceiverStream(input);
@@ -1105,18 +1105,14 @@ public class OrientDBDistributed extends OrientDBEmbedded
       String dbName, OSyncState state, InputStream inputStream, OrientDBConfig conf) {
     boolean success = false;
     try (InputStream input = inputStream) {
-      success =
-          switch (state.getMode()) {
-            case IncrementalBackup -> {
-              yield nonBlockingSync(dbName, state.getDbId(), input, conf);
-            }
-            case StandardBackup -> {
-              yield networkRestore(dbName, state.getDbId(), input);
-            }
-            case Delta -> {
-              yield deltaSync(dbName, input, conf);
-            }
-          };
+      if (state.getAcceptMode() instanceof OCanSyncAccept.NonBlockingSync) {
+        success = nonBlockingSync(dbName, state.getDbId(), input, conf);
+      } else if (state.getAcceptMode() instanceof OCanSyncAccept.BlockingSync) {
+        success = networkRestore(dbName, state.getDbId(), input);
+      } else if (state.getAcceptMode() instanceof OCanSyncAccept.DeltaSync) {
+        success = deltaSync(dbName, input, conf);
+      }
+
       if (success) {
         setDatabaseState(state.getDbId(), state.getReceiver(), ODatabaseState.Online);
       }
@@ -1131,17 +1127,11 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   public void sendDatabase(
-      ONodeId receiver,
-      ODatabaseId dbId,
-      OSyncId syncId,
-      OSyncMode mode,
-      Optional<OTransactionSequenceStatus> sequenceStatus) {
+      ONodeId receiver, ODatabaseId dbId, OSyncId syncId, OCanSyncAccept mode) {
     logger.debug(
         "Sending sync %s syncId %s sender %s receiver %s", dbId, syncId, getNodeId(), receiver);
     OSyncState state =
-        getNodeState()
-            .getOps()
-            .startSend(receiver, getNodeState().getNodeId(), dbId, syncId, mode, sequenceStatus);
+        getNodeState().getOps().startSend(receiver, getNodeState().getNodeId(), dbId, syncId, mode);
     String name = getDbName(state.getDbId());
 
     runOnThread(
@@ -1156,19 +1146,14 @@ public class OrientDBDistributed extends OrientDBEmbedded
       ODatabaseDocumentEmbedded db = openNoAuthorization(name);
       OStorage storage = db.getStorage();
 
-      switch (state.getMode()) {
-        case IncrementalBackup -> {
-          storage.incrementalSync(out, null);
-        }
-        case StandardBackup -> {
-          int compression =
-              getIntConfig(OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION);
-          storage.backup(out, null, null, null, compression, 0);
-        }
-        case Delta -> {
-          var transactions = getDatabase(name).missingTransactions(state.getSequenceStatus().get());
-          db.deltaBackup(out, transactions);
-        }
+      if (state.getAcceptMode() instanceof OCanSyncAccept.NonBlockingSync) {
+        storage.incrementalSync(out, null);
+      } else if (state.getAcceptMode() instanceof OCanSyncAccept.BlockingSync) {
+        int compression = getIntConfig(OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION);
+        storage.backup(out, null, null, null, compression, 0);
+      } else if (state.getAcceptMode() instanceof OCanSyncAccept.DeltaSync d) {
+        var transactions = getDatabase(name).missingTransactions(d.status());
+        db.deltaBackup(out, transactions);
       }
       success = true;
     } catch (IOException e) {

@@ -3,9 +3,9 @@ package com.orientechnologies.orient.distributed.context.coordination.dbs;
 import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
-import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import com.orientechnologies.orient.distributed.context.coordination.OVersion;
 import com.orientechnologies.orient.distributed.context.coordination.OVersionPromise;
+import com.orientechnologies.orient.distributed.context.coordination.message.OCanSyncAccept;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OAddNodeInfo;
 import com.orientechnologies.orient.distributed.context.coordination.message.state.ODatabaseMemberNetwork;
 import com.orientechnologies.orient.distributed.context.coordination.message.state.ODatabaseStateNetwork;
@@ -17,7 +17,6 @@ import com.orientechnologies.orient.distributed.context.coordination.result.OQuo
 import com.orientechnologies.orient.distributed.context.coordination.result.OQuormuTooSmall;
 import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncId;
 import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncInfo;
-import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncMode;
 import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncSession;
 import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncState;
 import java.util.ArrayList;
@@ -188,15 +187,9 @@ public class ODatabaseTopologyState extends OWatcher {
   }
 
   public synchronized Optional<OSyncState> canSync(
-      ONodeId sender,
-      ONodeId receiver,
-      OSyncId syncId,
-      boolean canSync,
-      OSyncMode mode,
-      Optional<OTransactionSequenceStatus> sequenceStatus) {
+      ONodeId sender, ONodeId receiver, OSyncId syncId, OCanSyncAccept canSync) {
     OSyncSession session = this.syncSessions.get(syncId);
-    Optional<OSyncState> result =
-        session.canSync(sender, receiver, syncId, canSync, mode, sequenceStatus);
+    Optional<OSyncState> result = session.canSync(sender, receiver, syncId, canSync);
     if (result.isEmpty() && session.isFinished()) {
       this.syncSessions.remove(syncId);
     }
@@ -204,12 +197,8 @@ public class ODatabaseTopologyState extends OWatcher {
   }
 
   public synchronized OSyncState startSend(
-      ONodeId from,
-      ONodeId to,
-      OSyncId syncId,
-      OSyncMode mode,
-      Optional<OTransactionSequenceStatus> sequenceStatus) {
-    OSyncSession session = new OSyncSession(getId(), syncId, from, to, mode, sequenceStatus);
+      ONodeId from, ONodeId to, OSyncId syncId, OCanSyncAccept mode) {
+    OSyncSession session = new OSyncSession(getId(), syncId, from, to, mode);
     this.syncSessions.put(syncId, session);
     return session.getState();
   }

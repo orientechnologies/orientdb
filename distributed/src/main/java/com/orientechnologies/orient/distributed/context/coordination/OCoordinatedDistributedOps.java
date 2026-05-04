@@ -12,13 +12,13 @@ import com.orientechnologies.orient.distributed.context.coordination.dbs.ODataba
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabasesTopology;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ONodeRole;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ONotificationAction;
+import com.orientechnologies.orient.distributed.context.coordination.message.OCanSyncAccept;
 import com.orientechnologies.orient.distributed.context.coordination.message.ODistributedMessage;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OAddNodeInfo;
 import com.orientechnologies.orient.distributed.context.coordination.message.state.ONodeStateNetwork;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncId;
 import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncInfo;
-import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncMode;
 import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncState;
 import com.orientechnologies.orient.distributed.context.coordination.topology.ODiscoverAction;
 import java.util.List;
@@ -161,21 +161,10 @@ public interface OCoordinatedDistributedOps {
   boolean acceptSync(ONodeId sender, ONodeId receiver, ODatabaseId dbId, OSyncId syncId);
 
   Optional<OSyncState> canSync(
-      ONodeId sender,
-      ONodeId receiver,
-      ODatabaseId dbId,
-      OSyncId syncId,
-      boolean canSync,
-      OSyncMode mode,
-      Optional<OTransactionSequenceStatus> sequenceStatus);
+      ONodeId sender, ONodeId receiver, ODatabaseId dbId, OSyncId syncId, OCanSyncAccept canSync);
 
   OSyncState startSend(
-      ONodeId to,
-      ONodeId from,
-      ODatabaseId dbId,
-      OSyncId syncId,
-      OSyncMode mode,
-      Optional<OTransactionSequenceStatus> sequenceStatus);
+      ONodeId to, ONodeId from, ODatabaseId dbId, OSyncId syncId, OCanSyncAccept mode);
 
   OSyncState getSyncState(OSyncId syncId);
 

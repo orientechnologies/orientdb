@@ -14,13 +14,13 @@ import com.orientechnologies.orient.distributed.context.coordination.dbs.ODataba
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabaseStateChangeListener;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabasesTopologyState;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ONodeRole;
+import com.orientechnologies.orient.distributed.context.coordination.message.OCanSyncAccept;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OAddNodeInfo;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAlreadyPromised;
 import com.orientechnologies.orient.distributed.context.coordination.result.ONodeAlreadyPresent;
 import com.orientechnologies.orient.distributed.context.coordination.result.OOutdatedVersion;
 import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncInfo;
-import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncMode;
 import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncState;
 import java.util.HashSet;
 import java.util.List;
@@ -325,26 +325,18 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
     boolean canSync = state.acceptSync(nodeId, node1, dbId, syncInfo.syncId());
     assertTrue(canSync);
     Optional<OSyncState> receiverStateOp =
-        state1.canSync(
-            nodeId,
-            node1,
-            dbId,
-            syncInfo.syncId(),
-            canSync,
-            OSyncMode.StandardBackup,
-            Optional.empty());
+        state1.canSync(nodeId, node1, dbId, syncInfo.syncId(), new OCanSyncAccept.BlockingSync());
     assertTrue(receiverStateOp.isPresent());
     OSyncState receiverState = receiverStateOp.get();
 
     OSyncState senderState =
-        state.startSend(
-            node1, nodeId, dbId, syncInfo.syncId(), OSyncMode.StandardBackup, Optional.empty());
+        state.startSend(node1, nodeId, dbId, syncInfo.syncId(), new OCanSyncAccept.BlockingSync());
 
     assertEquals(receiverState.getSender(), senderState.getSender());
     assertEquals(receiverState.getReceiver(), senderState.getReceiver());
     assertEquals(receiverState.getSyncId(), senderState.getSyncId());
     assertEquals(receiverState.getDbId(), senderState.getDbId());
-    assertEquals(receiverState.getMode(), senderState.getMode());
+    assertEquals(receiverState.getAcceptMode(), senderState.getAcceptMode());
 
     OSyncState ss = state.getSyncState(senderState.getSyncId());
     assertSame(senderState, ss);
@@ -403,26 +395,18 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
     boolean canSync = state.acceptSync(nodeId, node1, dbId, syncInfo.syncId());
     assertTrue(canSync);
     Optional<OSyncState> receiverStateOp =
-        state1.canSync(
-            nodeId,
-            node1,
-            dbId,
-            syncInfo.syncId(),
-            canSync,
-            OSyncMode.StandardBackup,
-            Optional.empty());
+        state1.canSync(nodeId, node1, dbId, syncInfo.syncId(), new OCanSyncAccept.BlockingSync());
     assertTrue(receiverStateOp.isPresent());
     OSyncState receiverState = receiverStateOp.get();
 
     OSyncState senderState =
-        state.startSend(
-            node1, nodeId, dbId, syncInfo.syncId(), OSyncMode.StandardBackup, Optional.empty());
+        state.startSend(node1, nodeId, dbId, syncInfo.syncId(), new OCanSyncAccept.BlockingSync());
 
     assertEquals(receiverState.getSender(), senderState.getSender());
     assertEquals(receiverState.getReceiver(), senderState.getReceiver());
     assertEquals(receiverState.getSyncId(), senderState.getSyncId());
     assertEquals(receiverState.getDbId(), senderState.getDbId());
-    assertEquals(receiverState.getMode(), senderState.getMode());
+    assertEquals(receiverState.getAcceptMode(), senderState.getAcceptMode());
 
     OSyncState ss = state.getSyncState(senderState.getSyncId());
     assertSame(senderState, ss);

@@ -150,16 +150,14 @@ public class CoordinationMessagesSerializationTest {
     ONodeId nodeId = newNodeId();
     ODatabaseId dbId = newDatabaseId();
     OSyncId syncId = new OSyncId(dbId, nodeId);
-    OSyncRequest syncReq =
-        new OSyncRequest(nodeId, dbId, syncId, OSyncMode.StandardBackup, Optional.empty());
+    OSyncRequest syncReq = new OSyncRequest(nodeId, dbId, syncId, new OSyncMode.BlockingBackup());
 
     OSyncRequest read = writeRead(syncReq);
     assertEquals(read.getFrom(), nodeId);
     assertEquals(read.getDbId(), dbId);
 
     assertEquals(read.getSyncId(), syncId);
-    assertEquals(read.getMode(), OSyncMode.StandardBackup);
-    assertTrue(read.getSequenceStatus().isEmpty());
+    assertEquals(read.getMode(), new OSyncMode.BlockingBackup());
   }
 
   @Test
@@ -167,17 +165,14 @@ public class CoordinationMessagesSerializationTest {
     ONodeId nodeId = newNodeId();
     ODatabaseId dbId = newDatabaseId();
     OSyncId syncId = new OSyncId(dbId, nodeId);
-    OCanSync syncReq =
-        new OCanSync(nodeId, dbId, syncId, OSyncMode.StandardBackup, Optional.empty(), true);
+    OCanSync syncReq = new OCanSync(nodeId, dbId, syncId, new OCanSyncAccept.BlockingSync());
 
     OCanSync read = writeRead(syncReq);
     assertEquals(read.getSender(), nodeId);
     assertEquals(read.getDbId(), dbId);
 
     assertEquals(read.getSyncId(), syncId);
-    assertEquals(read.getMode(), OSyncMode.StandardBackup);
-    assertTrue(read.isCanSync());
-    assertTrue(read.getSequenceStatus().isEmpty());
+    assertEquals(read.getCanSync(), new OCanSyncAccept.BlockingSync());
   }
 
   @Test
@@ -185,16 +180,14 @@ public class CoordinationMessagesSerializationTest {
     ONodeId nodeId = newNodeId();
     ODatabaseId dbId = newDatabaseId();
     OSyncId syncId = new OSyncId(dbId, nodeId);
-    OStartSync syncReq =
-        new OStartSync(nodeId, dbId, syncId, OSyncMode.StandardBackup, Optional.empty());
+    OStartSync syncReq = new OStartSync(nodeId, dbId, syncId, new OCanSyncAccept.BlockingSync());
 
     OStartSync read = writeRead(syncReq);
     assertEquals(read.getReceiver(), nodeId);
     assertEquals(read.getDbId(), dbId);
 
     assertEquals(read.getSyncId(), syncId);
-    assertEquals(read.getMode(), OSyncMode.StandardBackup);
-    assertTrue(read.getSequenceStatus().isEmpty());
+    assertEquals(read.getMode(), new OCanSyncAccept.BlockingSync());
   }
 
   @Test

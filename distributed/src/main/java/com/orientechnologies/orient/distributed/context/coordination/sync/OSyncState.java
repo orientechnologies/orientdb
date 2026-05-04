@@ -4,11 +4,10 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
-import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
+import com.orientechnologies.orient.distributed.context.coordination.message.OCanSyncAccept;
 import com.orientechnologies.orient.distributed.db.OReceiverInputStream;
 import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
 import java.io.IOException;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 public class OSyncState {
@@ -18,9 +17,8 @@ public class OSyncState {
   private final OSyncId syncId;
   private final ONodeId sender;
   private final ONodeId receiver;
-  private final OSyncMode mode;
-  private final Optional<OTransactionSequenceStatus> sequenceStatus;
   private final SyncComplete finished;
+  private final OCanSyncAccept acceptMode;
   private volatile int messageCount = 0;
   private volatile long totalsize = 0;
   private volatile OReceiverInputStream receiverStream;
@@ -36,15 +34,13 @@ public class OSyncState {
       OSyncId syncId,
       ONodeId sender,
       ONodeId receiver,
-      OSyncMode mode,
-      Optional<OTransactionSequenceStatus> sequenceStatus,
+      OCanSyncAccept acceptMode,
       SyncComplete finished) {
     this.dbId = dbId;
     this.syncId = syncId;
     this.sender = sender;
     this.receiver = receiver;
-    this.mode = mode;
-    this.sequenceStatus = sequenceStatus;
+    this.acceptMode = acceptMode;
     this.finished = finished;
   }
 
@@ -73,16 +69,16 @@ public class OSyncState {
     return receiver;
   }
 
-  public OSyncMode getMode() {
-    return mode;
-  }
-
   public OSyncId getSyncId() {
     return syncId;
   }
 
-  public boolean isIncremental() {
-    return OSyncMode.IncrementalBackup.equals(this.mode);
+  public boolean isNonBlocking() {
+    return acceptMode.isNonBlocking();
+  }
+
+  public OCanSyncAccept getAcceptMode() {
+    return acceptMode;
   }
 
   public synchronized void receiveData(byte[] data, long sequential, boolean finished) {
@@ -124,10 +120,6 @@ public class OSyncState {
       this.finished.complete(true);
     }
     this.notifyAll();
-  }
-
-  public Optional<OTransactionSequenceStatus> getSequenceStatus() {
-    return sequenceStatus;
   }
 
   public synchronized void close() {

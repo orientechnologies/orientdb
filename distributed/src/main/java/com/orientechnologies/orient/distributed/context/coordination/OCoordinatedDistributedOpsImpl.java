@@ -18,6 +18,7 @@ import com.orientechnologies.orient.distributed.context.coordination.dbs.ODataba
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabasesTopologyState;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ONodeRole;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ONotificationAction;
+import com.orientechnologies.orient.distributed.context.coordination.message.OCanSyncAccept;
 import com.orientechnologies.orient.distributed.context.coordination.message.ODistributedMessage;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OAddNodeInfo;
 import com.orientechnologies.orient.distributed.context.coordination.message.state.ODatabaseMemberNetwork;
@@ -33,7 +34,6 @@ import com.orientechnologies.orient.distributed.context.coordination.result.OMis
 import com.orientechnologies.orient.distributed.context.coordination.result.OOutdatedVersion;
 import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncId;
 import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncInfo;
-import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncMode;
 import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncState;
 import com.orientechnologies.orient.distributed.context.coordination.topology.ODiscoverAction;
 import com.orientechnologies.orient.distributed.context.coordination.topology.OTopologyManager;
@@ -542,26 +542,14 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
 
   @Override
   public Optional<OSyncState> canSync(
-      ONodeId sender,
-      ONodeId receiver,
-      ODatabaseId dbId,
-      OSyncId syncId,
-      boolean canSync,
-      OSyncMode mode,
-      Optional<OTransactionSequenceStatus> sequenceStatus) {
-    return this.databaseTopology.canSync(
-        sender, receiver, dbId, syncId, canSync, mode, sequenceStatus);
+      ONodeId sender, ONodeId receiver, ODatabaseId dbId, OSyncId syncId, OCanSyncAccept canSync) {
+    return this.databaseTopology.canSync(sender, receiver, dbId, syncId, canSync);
   }
 
   @Override
   public OSyncState startSend(
-      ONodeId to,
-      ONodeId from,
-      ODatabaseId dbId,
-      OSyncId syncId,
-      OSyncMode mode,
-      Optional<OTransactionSequenceStatus> sequenceStatus) {
-    return this.databaseTopology.startSend(to, from, dbId, syncId, mode, sequenceStatus);
+      ONodeId to, ONodeId from, ODatabaseId dbId, OSyncId syncId, OCanSyncAccept mode) {
+    return this.databaseTopology.startSend(to, from, dbId, syncId, mode);
   }
 
   @Override

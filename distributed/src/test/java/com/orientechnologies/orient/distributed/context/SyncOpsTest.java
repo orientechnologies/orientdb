@@ -13,8 +13,8 @@ import com.orientechnologies.orient.core.db.OrientDBConfigBuilder;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
+import com.orientechnologies.orient.distributed.context.coordination.message.OCanSyncAccept;
 import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncId;
-import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncMode;
 import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncState;
 import com.orientechnologies.orient.distributed.db.OReceiverInputStream;
 import com.orientechnologies.orient.distributed.db.OReceiverInputStream.RequestNext;
@@ -109,15 +109,13 @@ public class SyncOpsTest {
     }
   }
 
-  private void testRawSync(OSyncMode mode) {
+  private void testRawSync(OCanSyncAccept mode) {
     var nodeFrom = new ONodeId("node1");
     var nodeTo = new ONodeId("node2");
     var syncId = new OSyncId(dbId, nodeTo);
 
-    var sender =
-        new OSyncState(dbId, syncId, nodeFrom, nodeTo, mode, Optional.empty(), (res) -> {});
-    var receiver =
-        new OSyncState(dbId, syncId, nodeFrom, nodeTo, mode, Optional.empty(), (res) -> {});
+    var sender = new OSyncState(dbId, syncId, nodeFrom, nodeTo, mode, (res) -> {});
+    var receiver = new OSyncState(dbId, syncId, nodeFrom, nodeTo, mode, (res) -> {});
     var pass = new PassTrough(sender, receiver);
 
     OutputStream out = new OutputStreamMessages(pass, sender);
@@ -146,50 +144,48 @@ public class SyncOpsTest {
     }
   }
 
-  private void testRawSyncTwice(OSyncMode mode) {
+  private void testRawSyncTwice(OCanSyncAccept mode) {
     testRawSync(mode);
     testRawSync(mode);
   }
 
   @Test
   public void testRawSyncTwiceBackup() {
-    testRawSyncTwice(OSyncMode.StandardBackup);
+    testRawSyncTwice(new OCanSyncAccept.BlockingSync());
   }
 
   @Test
   public void testRawSyncTwiceIncremental() {
-    testRawSyncTwice(OSyncMode.IncrementalBackup);
+    testRawSyncTwice(new OCanSyncAccept.NonBlockingSync());
   }
 
   @Test
   public void testRawSyncBackup() {
-    testRawSync(OSyncMode.StandardBackup);
+    testRawSync(new OCanSyncAccept.BlockingSync());
   }
 
   @Test
   public void testRawSyncIncremental() {
-    testRawSync(OSyncMode.IncrementalBackup);
+    testRawSync(new OCanSyncAccept.NonBlockingSync());
   }
 
   @Test
   public void testFailRawSyncIncremental() {
-    testFailRawSync(OSyncMode.IncrementalBackup);
+    testFailRawSync(new OCanSyncAccept.NonBlockingSync());
   }
 
   @Test
   public void testFailRawSyncBackup() {
-    testFailRawSync(OSyncMode.StandardBackup);
+    testFailRawSync(new OCanSyncAccept.BlockingSync());
   }
 
-  public void testFailRawSync(OSyncMode mode) {
+  public void testFailRawSync(OCanSyncAccept mode) {
     var nodeFrom = new ONodeId("node1");
     var nodeTo = new ONodeId("node2");
     var syncId = new OSyncId(dbId, nodeTo);
 
-    var sender =
-        new OSyncState(dbId, syncId, nodeFrom, nodeTo, mode, Optional.empty(), (res) -> {});
-    var receiver =
-        new OSyncState(dbId, syncId, nodeFrom, nodeTo, mode, Optional.empty(), (res) -> {});
+    var sender = new OSyncState(dbId, syncId, nodeFrom, nodeTo, mode, (res) -> {});
+    var receiver = new OSyncState(dbId, syncId, nodeFrom, nodeTo, mode, (res) -> {});
     var pass = new FailPassTrough(sender, receiver, 5);
 
     OutputStream out = new OutputStreamMessages(pass, sender);

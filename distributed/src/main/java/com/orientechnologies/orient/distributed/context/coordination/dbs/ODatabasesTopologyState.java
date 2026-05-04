@@ -4,9 +4,9 @@ import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
-import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import com.orientechnologies.orient.distributed.context.coordination.OVersion;
 import com.orientechnologies.orient.distributed.context.coordination.OVersionPromise;
+import com.orientechnologies.orient.distributed.context.coordination.message.OCanSyncAccept;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OAddNodeInfo;
 import com.orientechnologies.orient.distributed.context.coordination.message.state.ODatabaseStateNetwork;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
@@ -14,7 +14,6 @@ import com.orientechnologies.orient.distributed.context.coordination.result.ODat
 import com.orientechnologies.orient.distributed.context.coordination.result.ODatabaseNameUsed;
 import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncId;
 import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncInfo;
-import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncMode;
 import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncState;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -250,33 +249,23 @@ public class ODatabasesTopologyState extends OWatcher implements ODatabasesTopol
   }
 
   public synchronized Optional<OSyncState> canSync(
-      ONodeId sender,
-      ONodeId receiver,
-      ODatabaseId dbId,
-      OSyncId syncId,
-      boolean canSync,
-      OSyncMode mode,
-      Optional<OTransactionSequenceStatus> sequenceStatus) {
+      ONodeId sender, ONodeId receiver, ODatabaseId dbId, OSyncId syncId, OCanSyncAccept canSync) {
     ODatabaseTopologyState db = getDb(dbId);
     if (db == null) {
       return Optional.empty();
     }
-    var state = db.canSync(sender, receiver, syncId, canSync, mode, sequenceStatus);
+    var state = db.canSync(sender, receiver, syncId, canSync);
     return state;
   }
 
   public synchronized OSyncState startSend(
-      ONodeId to,
-      ONodeId from,
-      ODatabaseId dbId,
-      OSyncId syncId,
-      OSyncMode mode,
-      Optional<OTransactionSequenceStatus> sequenceStatus) {
+      ONodeId to, ONodeId from, ODatabaseId dbId, OSyncId syncId, OCanSyncAccept mode) {
     ODatabaseTopologyState db = getDb(dbId);
     if (db == null) {
+      // TODO: do something better .... no nullpointers!
       throw new NullPointerException("missing database definition");
     }
-    return db.startSend(from, to, syncId, mode, sequenceStatus);
+    return db.startSend(from, to, syncId, mode);
   }
 
   public synchronized OSyncState getSyncState(OSyncId syncId) {
