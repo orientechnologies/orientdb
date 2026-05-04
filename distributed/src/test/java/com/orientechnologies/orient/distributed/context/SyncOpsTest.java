@@ -114,8 +114,8 @@ public class SyncOpsTest {
     var nodeTo = new ONodeId("node2");
     var syncId = new OSyncId(dbId, nodeTo);
 
-    var sender = new OSyncState(dbId, syncId, nodeFrom, nodeTo, mode, (res) -> {});
-    var receiver = new OSyncState(dbId, syncId, nodeFrom, nodeTo, mode, (res) -> {});
+    var sender = new OSyncState(dbId, syncId, nodeFrom, nodeTo, mode);
+    var receiver = new OSyncState(dbId, syncId, nodeFrom, nodeTo, mode);
     var pass = new PassTrough(sender, receiver);
 
     OutputStream out = new OutputStreamMessages(pass, sender);
@@ -184,8 +184,8 @@ public class SyncOpsTest {
     var nodeTo = new ONodeId("node2");
     var syncId = new OSyncId(dbId, nodeTo);
 
-    var sender = new OSyncState(dbId, syncId, nodeFrom, nodeTo, mode, (res) -> {});
-    var receiver = new OSyncState(dbId, syncId, nodeFrom, nodeTo, mode, (res) -> {});
+    var sender = new OSyncState(dbId, syncId, nodeFrom, nodeTo, mode);
+    var receiver = new OSyncState(dbId, syncId, nodeFrom, nodeTo, mode);
     var pass = new FailPassTrough(sender, receiver, 5);
 
     OutputStream out = new OutputStreamMessages(pass, sender);

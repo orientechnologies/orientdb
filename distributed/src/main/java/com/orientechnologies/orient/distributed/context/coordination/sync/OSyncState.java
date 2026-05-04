@@ -17,7 +17,6 @@ public class OSyncState {
   private final OSyncId syncId;
   private final ONodeId sender;
   private final ONodeId receiver;
-  private final SyncComplete finished;
   private final OCanSyncAccept acceptMode;
   private volatile int messageCount = 0;
   private volatile long totalsize = 0;
@@ -25,23 +24,17 @@ public class OSyncState {
   private volatile boolean canNext = false;
   private volatile boolean close = false;
 
-  public interface SyncComplete {
-    void complete(boolean succes);
-  }
-
   public OSyncState(
       ODatabaseId dbId,
       OSyncId syncId,
       ONodeId sender,
       ONodeId receiver,
-      OCanSyncAccept acceptMode,
-      SyncComplete finished) {
+      OCanSyncAccept acceptMode) {
     this.dbId = dbId;
     this.syncId = syncId;
     this.sender = sender;
     this.receiver = receiver;
     this.acceptMode = acceptMode;
-    this.finished = finished;
   }
 
   public synchronized void transaferd(long size) {
@@ -87,7 +80,6 @@ public class OSyncState {
     receiverStream.receive(data, sequential, finished);
     if (finished) {
       this.close = true;
-      this.finished.complete(true);
     }
   }
 
@@ -117,7 +109,6 @@ public class OSyncState {
     canNext = true;
     if (close) {
       this.close = close;
-      this.finished.complete(true);
     }
     this.notifyAll();
   }
@@ -125,7 +116,6 @@ public class OSyncState {
   public synchronized void close() {
     if (!this.close) {
       this.close = true;
-      this.finished.complete(false);
       if (this.receiverStream != null) {
         try {
           this.receiverStream.close();

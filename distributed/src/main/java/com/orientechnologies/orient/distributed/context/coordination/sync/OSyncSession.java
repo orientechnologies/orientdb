@@ -3,13 +3,12 @@ package com.orientechnologies.orient.distributed.context.coordination.sync;
 import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.distributed.context.coordination.message.OCanSyncAccept;
-import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncState.SyncComplete;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 
-public class OSyncSession implements SyncComplete {
+public class OSyncSession {
   private final OSyncId syncId;
   private final ODatabaseId dbId;
   private Set<ONodeId> nodes;
@@ -26,7 +25,7 @@ public class OSyncSession implements SyncComplete {
       ODatabaseId dbId, OSyncId syncId, ONodeId from, ONodeId to, OCanSyncAccept mode) {
     this.syncId = syncId;
     this.dbId = dbId;
-    this.state = new OSyncState(dbId, syncId, from, to, mode, this);
+    this.state = new OSyncState(dbId, syncId, from, to, mode);
   }
 
   public OSyncId getSyncId() {
@@ -37,7 +36,7 @@ public class OSyncSession implements SyncComplete {
       ONodeId sender, ONodeId receiver, OSyncId syncId, OCanSyncAccept canSync) {
     assert this.syncId.equals(syncId);
     if (canSync.isSync() && this.state == null) {
-      this.state = new OSyncState(dbId, syncId, sender, receiver, canSync, this);
+      this.state = new OSyncState(dbId, syncId, sender, receiver, canSync);
       return Optional.of(this.state);
     } else {
       nodes.remove(sender);
