@@ -1,39 +1,44 @@
 package com.orientechnologies.orient.distributed.context.retryable;
 
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import java.text.MessageFormat;
 import java.util.Optional;
 import java.util.Random;
 
 public class ORetryInfo {
+  private static final OLogger logger = OLogManager.instance().logger(ORetryInfo.class);
+  private final int maxRetry;
+  private int retryCount = 0;
+  private final int delay;
+  private final Random random = new Random();
 
-  private int retryCountDown;
-  private int delay;
-  private Random random = new Random();
-
-  public ORetryInfo(int retryCountDown, int delay) {
-    this.retryCountDown = retryCountDown;
+  public ORetryInfo(int maxRetry, int delay) {
+    if (maxRetry <= 0) {
+      logger.warn("Retry configured with an invalid value:%s assuming 1", maxRetry);
+      maxRetry = 1;
+    }
+    this.maxRetry = maxRetry;
     this.delay = delay;
   }
 
   public Optional<Integer> nextRetry() {
-    if (this.retryCountDown > 0) {
-      this.retryCountDown--;
-      int delay = random.nextInt(this.delay);
-      // Next retry will have longer dalay
-      this.delay = this.delay + delay;
-      return Optional.of(delay);
-    } else {
+    if (isFinished()) {
       return Optional.empty();
+    } else {
+      this.retryCount++;
+      int delay = random.nextInt(this.delay * retryCount);
+      return Optional.of(delay);
     }
   }
 
   public boolean isFinished() {
-    return this.retryCountDown == 0;
+    return this.retryCount >= this.maxRetry;
   }
 
   @Override
   public String toString() {
     return MessageFormat.format(
-        "current delay {0} remaining retry {1}", this.delay, this.retryCountDown);
+        "current delay {0} remaining retry {1}", this.delay, this.maxRetry - this.retryCount);
   }
 }
