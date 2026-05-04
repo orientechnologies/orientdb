@@ -968,6 +968,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         }
       }
     }
+    getContext().execute(this::forceRsync);
     throw new ODistributedOperationException("Reached number of retry to execute ddl");
   }
 
@@ -1068,7 +1069,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     final class HoldResponseManager {
       ODistributedTxResponseManagerImpl responseManager;
     }
-    ;
 
     final HoldResponseManager holder = new HoldResponseManager();
     ((ODistributedPlugin) dManager)

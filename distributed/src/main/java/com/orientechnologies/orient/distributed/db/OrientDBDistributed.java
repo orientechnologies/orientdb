@@ -1321,7 +1321,14 @@ public class OrientDBDistributed extends OrientDBEmbedded
       boolean iStartup, String databaseName, boolean forceDeployment, boolean tryWithDeltaFirst) {
     Optional<ODatabaseId> id = getNodeState().getDatabaseTopology().getDatabaseId(databaseName);
     if (id.isPresent()) {
-      var res = sync(id.get(), Optional.empty());
+      Optional<OTransactionSequenceStatus> deltaInfo = Optional.empty();
+      if (tryWithDeltaFirst) {
+        var dbContext = getDatabase(databaseName);
+        if (dbContext != null) {
+          deltaInfo = dbContext.status();
+        }
+      }
+      var res = sync(id.get(), deltaInfo);
       if (res.isPresent()) {
         try {
           return res.get().get();
