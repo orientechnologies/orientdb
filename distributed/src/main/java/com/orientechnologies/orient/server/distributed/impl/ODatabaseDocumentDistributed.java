@@ -69,6 +69,7 @@ import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.core.tx.OTxMetadataHolder;
 import com.orientechnologies.orient.core.tx.ValidationResult;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabasesTopology;
+import com.orientechnologies.orient.distributed.context.retryable.ORetryInfo;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
@@ -937,93 +938,106 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       super.command(command, new Object[] {}).close();
       return;
     }
-    waitQuorumOnline();
     getContext().checkNodeIsMaster(getLocalNodeId(), getName(), "Command '" + command + "'");
+    waitQuorumOnline();
     ODistributedDatabase local = getDistributedShared();
     // The plus 1 is for make sure it runs once even if retry is 0
     int nretry =
         getConfiguration()
-                .getValueAsInteger(OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY)
-            + 1;
+            .getValueAsInteger(OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY);
     int retryDelay =
         this.getConfiguration()
             .getValueAsInteger(OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_AUTORETRY_DELAY);
 
-    retry:
-    for (int i = 0; i < nretry; i++) {
-      Optional<ORawPair<OTransactionIdPromise, OTransactionIdPromise>> ids;
-      do {
-        ids = local.nextDDLId();
-        if (ids.isEmpty()) {
-          i++;
+    var retryInfo = new ORetryInfo(nretry, retryDelay);
+
+    while (!retryInfo.isFinished()) {
+      var ids = local.nextDDLId();
+      if (ids.isPresent()) {
+        if (coordinateTwoPhaseDDL(command, ids.get(), retryInfo.isFinished())) {
+          return;
+        }
+      } else {
+        var delay = retryInfo.nextRetry();
+        if (delay.isPresent()) {
           try {
-            Thread.sleep(new Random().nextInt(retryDelay));
+            Thread.sleep(delay.get());
           } catch (InterruptedException e) {
             OException.wrapException(new OInterruptedException(e.getMessage()), e);
           }
         }
-      } while (ids.isEmpty() && i < nretry);
-      if (i >= nretry) {
-        break;
       }
-      OSQLCommandTaskFirstPhase task =
-          new OSQLCommandTaskFirstPhase(command, ids.get().getFirst(), ids.get().getSecond());
-      ODistributedServerManager dManager = getDistributedManager();
-      Set<String> nodes = getContext().getAvailableNodeNames(getName());
+    }
+    throw new ODistributedOperationException("Reached number of retry to execute ddl");
+  }
 
-      ODistributedRequestId reqId = dManager.nextRequestId();
-      ODistributedTxResponseManagerImpl responseManager = sendTask(nodes, task, null, reqId);
+  private boolean coordinateTwoPhaseDDL(
+      String command,
+      ORawPair<OTransactionIdPromise, OTransactionIdPromise> ids,
+      boolean excpetionOnFail) {
+    OSQLCommandTaskFirstPhase task =
+        new OSQLCommandTaskFirstPhase(command, ids.getFirst(), ids.getSecond());
+    logger.debugNode(
+        getLocalNodeId(),
+        "Starting two phase ddl '%s' before:%s after:%s",
+        command,
+        ids.getFirst(),
+        ids.getSecond());
+    ODistributedServerManager dManager = getDistributedManager();
+    Set<String> nodes = getContext().getAvailableNodeNames(getName());
 
-      if (responseManager.isQuorumReached()) {
-        Optional<OTransactionResultPayload> results =
-            responseManager.getDistributedTxFinalResponse();
-        assert results.isPresent();
-        OTransactionResultPayload resultPayload = results.get();
-        switch (resultPayload.getResponseType()) {
+    ODistributedRequestId reqId = dManager.nextRequestId();
+    ODistributedTxResponseManagerImpl responseManager = sendTask(nodes, task, null, reqId);
+
+    if (responseManager.isQuorumReached()) {
+      var results = responseManager.getDistributedTxFinalResponse();
+      assert results.isPresent();
+      OTransactionResultPayload resultPayload = results.get();
+      switch (resultPayload.getResponseType()) {
+        case OTxSuccess.ID:
+          // Success send ok
+          confirmPhase2DDL(nodes, reqId, true);
+          return true;
+        case OTxException.ID:
+          // Exception send ko and throws the exception
+          confirmPhase2DDL(nodes, reqId, false);
+          throw ((OTxException) resultPayload).getException();
+        case OTxInvalidSequential.ID:
+          confirmPhase2DDL(nodes, reqId, false);
+          return false;
+      }
+
+      for (OTransactionResultPayload result : responseManager.getAllResponses()) {
+        if (result.getResponseType() == OTxException.ID) {
+          logger.warn("One node on error", ((OTxException) result).getException());
+        }
+      }
+      return false;
+    } else {
+      confirmPhase2DDL(nodes, reqId, false);
+      List<OTransactionResultPayload> results = responseManager.getAllResponses();
+      // If quorum is not reached is enough on a Lock timeout to trigger a deadlock retry.
+      List<Exception> exceptions = new ArrayList<>();
+      List<String> messages = new ArrayList<>();
+      for (OTransactionResultPayload result : results) {
+        String node = responseManager.getNodeNameFromPayload(result);
+        switch (result.getResponseType()) {
           case OTxSuccess.ID:
-            // Success send ok
-            confirmPhase2DDL(nodes, reqId, true);
-            return;
+            messages.add("node: " + node + " success");
+            break;
           case OTxException.ID:
-            // Exception send ko and throws the exception
-            confirmPhase2DDL(nodes, reqId, false);
-            throw ((OTxException) resultPayload).getException();
+            exceptions.add(((OTxException) result).getException());
+            logger.debug("distributed exception", ((OTxException) result).getException());
+            messages.add(
+                String.format(
+                    "exception (node " + node + "): '%s'",
+                    ((OTxException) result).getException().getMessage()));
+            break;
           case OTxInvalidSequential.ID:
-            confirmPhase2DDL(nodes, reqId, false);
-            continue retry;
+            return false;
         }
-
-        for (OTransactionResultPayload result : responseManager.getAllResponses()) {
-          if (result.getResponseType() == OTxException.ID) {
-            logger.warn("One node on error", ((OTxException) result).getException());
-          }
-        }
-      } else {
-        List<OTransactionResultPayload> results = responseManager.getAllResponses();
-        // If quorum is not reached is enough on a Lock timeout to trigger a deadlock retry.
-        List<Exception> exceptions = new ArrayList<>();
-        List<String> messages = new ArrayList<>();
-        for (OTransactionResultPayload result : results) {
-          String node = responseManager.getNodeNameFromPayload(result);
-          switch (result.getResponseType()) {
-            case OTxSuccess.ID:
-              messages.add("node: " + node + " success");
-              break;
-            case OTxException.ID:
-              exceptions.add(((OTxException) result).getException());
-              logger.debug("distributed exception", ((OTxException) result).getException());
-              messages.add(
-                  String.format(
-                      "exception (node " + node + "): '%s'",
-                      ((OTxException) result).getException().getMessage()));
-              break;
-            case OTxInvalidSequential.ID:
-              confirmPhase2DDL(nodes, reqId, false);
-              continue retry;
-          }
-        }
-        confirmPhase2DDL(nodes, reqId, false);
-
+      }
+      if (!excpetionOnFail) {
         ODistributedOperationException ex =
             new ODistributedOperationException(
                 String.format(
@@ -1032,12 +1046,11 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         for (Exception e : exceptions) {
           ex.addSuppressed(e);
         }
-        if (i == nretry) {
-          throw ex;
-        }
+        throw ex;
+      } else {
+        return false;
       }
     }
-    throw new ODistributedOperationException("Reached number of retry to execute ddl");
   }
 
   private void confirmPhase2DDL(Set<String> nodes, ODistributedRequestId messageId, boolean apply) {
