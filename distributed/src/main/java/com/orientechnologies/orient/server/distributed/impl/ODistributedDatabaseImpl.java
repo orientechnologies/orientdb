@@ -757,7 +757,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   private void runReverseSync() {
-    context.installDatabase(false, databaseName, true, true);
+    context.installDatabase(databaseName, true, true);
   }
 
   @Override

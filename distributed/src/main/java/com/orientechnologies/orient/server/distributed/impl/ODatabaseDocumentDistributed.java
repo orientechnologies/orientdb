@@ -185,7 +185,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
     final String databaseName = getName();
 
-    return getContext().installDatabase(true, databaseName, forceDeployment, tryWithDelta);
+    return getContext().installDatabase(databaseName, forceDeployment, tryWithDelta);
   }
 
   @Override
@@ -629,7 +629,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         } catch (RuntimeException | Error e) {
           txContext.destroy();
           localDistributedDatabase.popTxContext(transactionId);
-          getContext().execute(this::forceRsync);
+          getContext().execute(this::maybeRsync);
           throw e;
         } finally {
           OLiveQueryHook.removePendingDatabaseOps(this);
@@ -688,7 +688,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           } catch (RuntimeException | Error e) {
             txContext.destroy();
             localDistributedDatabase.popTxContext(transactionId);
-            getContext().execute(this::forceRsync);
+            getContext().execute(this::maybeRsync);
 
             throw e;
           } finally {
@@ -704,7 +704,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
                     logger.warn(
                         "Reached limit of retry for commit tx:%s forcing database re-install",
                         transactionId);
-                    forceRsync();
+                    maybeRsync();
                   });
           return true;
         }
@@ -713,8 +713,8 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     return false;
   }
 
-  public void forceRsync() {
-    getContext().installDatabase(false, this.getName(), true, true);
+  public void maybeRsync() {
+    getContext().installDatabase(this.getName(), false, true);
   }
 
   public boolean rollback2pc(ODistributedRequestId transactionId) {
@@ -968,7 +968,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         }
       }
     }
-    getContext().execute(this::forceRsync);
+    getContext().execute(this::maybeRsync);
     throw new ODistributedOperationException("Reached number of retry to execute ddl");
   }
 
@@ -1254,7 +1254,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
                     getLocalNodeName(),
                     "Missing DDL operation, forcing database '%s' re-install",
                     getName());
-                forceRsync();
+                maybeRsync();
               });
       return new OTxInvalidSequential();
     } else if (first == ValidationResult.ALREADY_PRESENT
@@ -1328,7 +1328,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
                   return null;
                 });
           } catch (RuntimeException | Error e) {
-            getContext().execute(this::forceRsync);
+            getContext().execute(this::maybeRsync);
 
             throw e;
           }
@@ -1339,7 +1339,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
                   () -> {
                     logger.warn(
                         "Reached limit of retry for commit tx:%s forcing database re-install", id);
-                    forceRsync();
+                    maybeRsync();
                   });
         }
       }

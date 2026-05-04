@@ -79,7 +79,7 @@ public class ReinstallDatabaseTestIT {
             () -> {
               try {
                 ((OrientDBDistributed) server2Instance.getDatabases())
-                    .installDatabase(false, DATABASE_NAME, true, true);
+                    .installDatabase(DATABASE_NAME, true, true);
               } catch (RuntimeException e) {
                 logger.error(" error on install database", e);
               }

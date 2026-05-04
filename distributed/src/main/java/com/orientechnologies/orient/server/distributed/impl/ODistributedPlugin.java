@@ -1130,7 +1130,7 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
 
       try {
 
-        if (!context.installDatabase(true, databaseName, false, true)) {
+        if (!context.installDatabase(databaseName, false, true)) {
           context.setDatabaseStatus(
               new ONodeId(getLocalNodeName()), databaseName, DB_STATUS.NOT_AVAILABLE);
         }

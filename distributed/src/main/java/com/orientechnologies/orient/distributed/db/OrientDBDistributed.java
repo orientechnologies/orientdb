@@ -1317,8 +1317,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
     return localMessageIdCounter.getAndIncrement();
   }
 
-  public boolean installDatabase(
-      boolean iStartup, String databaseName, boolean forceDeployment, boolean tryWithDeltaFirst) {
+  public boolean installDatabase(String databaseName, boolean force, boolean tryWithDeltaFirst) {
     Optional<ODatabaseId> id = getNodeState().getDatabaseTopology().getDatabaseId(databaseName);
     if (id.isPresent()) {
       Optional<OTransactionSequenceStatus> deltaInfo = Optional.empty();
@@ -1342,8 +1341,6 @@ public class OrientDBDistributed extends OrientDBEmbedded
     } else {
       return false;
     }
-    //     return plugin.installDatabase(iStartup, databaseName, forceDeployment,
-    // tryWithDeltaFirst);
   }
 
   public Set<String> getAvailableNodeNotLocalNames(String name) {

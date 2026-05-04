@@ -188,7 +188,7 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
       throw new OCommandExecutionException("OrientDB is not started in distributed mode");
 
     boolean installDatabase =
-        ((OrientDBDistributed) context).installDatabase(true, database, false, true);
+        ((OrientDBDistributed) context).installDatabase(database, false, true);
 
     ODocument document = new ODocument().field("result", installDatabase);
     iResponse.send(
