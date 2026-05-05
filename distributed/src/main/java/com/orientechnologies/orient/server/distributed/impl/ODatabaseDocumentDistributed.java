@@ -119,6 +119,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       OLoggerDistributed.logger(ODatabaseDocumentDistributed.class);
 
   private final ODistributedPlugin distributedManager;
+  private boolean neverWaited = true;
 
   public ODatabaseDocumentDistributed(
       OStorage storage, OSharedContext sharedContext, ODistributedPlugin distributedPlugin) {
@@ -554,14 +555,20 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   }
 
   private void waitQuorumOnline() {
-    long waitTime =
-        getConfiguration()
-            .getValueAsLong(OGlobalConfiguration.DISTRIBUTED_DATABASE_ONLINE_GRACE_PERIOD);
+    if (this.neverWaited) {
+      long waitTime =
+          getConfiguration()
+              .getValueAsLong(OGlobalConfiguration.DISTRIBUTED_DATABASE_ONLINE_GRACE_PERIOD);
 
-    try {
-      getContext().getNodeState().getOps().waitOnlineQuorum(getDatabaseId(), Optional.of(waitTime));
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
+      try {
+        getContext()
+            .getNodeState()
+            .getOps()
+            .waitOnlineQuorum(getDatabaseId(), Optional.of(waitTime));
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+      }
+      this.neverWaited = false;
     }
   }
 
