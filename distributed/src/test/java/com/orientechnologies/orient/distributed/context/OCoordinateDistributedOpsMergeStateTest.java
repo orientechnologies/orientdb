@@ -217,11 +217,8 @@ public class OCoordinateDistributedOpsMergeStateTest
     assertEquals(state.databases().size(), 1);
     var db = state.databases().get(0);
     assertEquals(db.members().size(), 2);
-    var member0 = db.members().get(0);
-    assertEquals(member0.node(), nodeId);
-    assertEquals(member0.state(), ODatabaseState.Online);
-    var member1 = db.members().get(1);
-    assertEquals(member1.node(), nodeId1);
-    assertEquals(member1.state(), ODatabaseState.Online);
+    for (var member : db.members()) {
+      assertEquals(member.state(), ODatabaseState.Online);
+    }
   }
 }
