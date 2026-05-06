@@ -101,8 +101,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import sun.misc.Signal;
 
@@ -133,7 +131,6 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
   protected ORemoteTaskFactoryManager taskFactoryManager = new ORemoteTaskFactoryManagerImpl(this);
 
   private volatile String lastServerDump = "";
-  protected CountDownLatch serverStarted = new CountDownLatch(1);
 
   private OCancellableTimer haStatsTask = null;
   private OCancellableTimer healthCheckerTask = null;
@@ -143,22 +140,6 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
 
   public ODistributedPlugin() {
     clusterManager = new OHazelcastClusterMetadataManager(this);
-  }
-
-  public void waitUntilNodeOnline() throws InterruptedException {
-    serverStarted.await(2, TimeUnit.MINUTES);
-  }
-
-  public void waitUntilNodeOnline(final String nodeName, final String databaseName)
-      throws InterruptedException {
-    OrientDBDistributed context = (OrientDBDistributed) serverInstance.getDatabases();
-    long waitTill = System.currentTimeMillis() + 600000;
-    while (!context.isNodeOnline(nodeName, databaseName)) {
-      if (waitTill <= System.currentTimeMillis()) {
-        throw new ODatabaseException("Failed to wait for node online");
-      }
-      Thread.sleep(100);
-    }
   }
 
   @Override
@@ -1102,49 +1083,6 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
       }
     }
     return listenUrl;
-  }
-
-  /** Initializes all the available server's databases as distributed. */
-  public void loadLocalDatabases() {}
-
-  public void installNewDatabasesFromCluster() {
-    if (getActiveServers().size() <= 1) {
-      // NO OTHER NODES WHERE ALIGN
-      return;
-    }
-
-    OrientDBDistributed context = (OrientDBDistributed) serverInstance.getDatabases();
-    ODatabasesTopology databaseTopology = context.getNodeState().getOps().getDatabaseTopology();
-    var dbIds = databaseTopology.getDatabases();
-    final List<String> dbs =
-        new ArrayList<>(
-            dbIds.stream().map((dbId) -> databaseTopology.getDatabaseName(dbId)).toList());
-    Collections.sort(dbs);
-    for (String databaseName : dbs) {
-      final Set<String> availableServers = context.getAvailableNodeNames(databaseName);
-      if (availableServers.isEmpty())
-        // NO NODE HAS THIS DATABASE AVAILABLE
-        continue;
-
-      try {
-
-        if (!context.installDatabase(databaseName, false, true)) {
-          context.setDatabaseStatus(
-              new ONodeId(getLocalNodeName()), databaseName, DB_STATUS.NOT_AVAILABLE);
-        }
-      } catch (Exception e) {
-        logger.errorNode(
-            getLocalNodeName(),
-            "Error on installing database '%s' on local node (error=%s)",
-            e,
-            databaseName,
-            e.toString());
-      }
-    }
-  }
-
-  public void notifyStarted() {
-    serverStarted.countDown();
   }
 
   protected void dumpStats() {

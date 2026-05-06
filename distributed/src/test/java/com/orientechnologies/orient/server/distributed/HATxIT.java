@@ -49,12 +49,6 @@ public class HATxIT extends AbstractHARemoveNode {
     serverInstance
         .get(SERVERS - 1)
         .startServer(getDistributedServerConfiguration(serverInstance.get(SERVERS - 1)));
-    if (serverInstance.get(SERVERS - 1).getServerInstance().getDistributedManager() != null)
-      serverInstance
-          .get(SERVERS - 1)
-          .getServerInstance()
-          .getDistributedManager()
-          .waitUntilNodeOnline();
 
     lastNodeIsUp.set(true);
 

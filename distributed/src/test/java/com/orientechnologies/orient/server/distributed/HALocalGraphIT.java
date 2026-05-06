@@ -105,17 +105,6 @@ public class HALocalGraphIT extends AbstractServerClusterTxTest {
                                   getDistributedServerConfiguration(
                                       serverInstance.get(SERVERS - 1)));
 
-                          if (serverInstance
-                                  .get(SERVERS - 1)
-                                  .getServerInstance()
-                                  .getDistributedManager()
-                              != null)
-                            serverInstance
-                                .get(SERVERS - 1)
-                                .getServerInstance()
-                                .getDistributedManager()
-                                .waitUntilNodeOnline();
-
                           sleep = 0;
 
                           serverRestarted.set(true);

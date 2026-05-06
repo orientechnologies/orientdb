@@ -66,10 +66,6 @@ public interface ODistributedServerManager {
     BACKUP
   }
 
-  void waitUntilNodeOnline() throws InterruptedException;
-
-  void waitUntilNodeOnline(String nodeName, String databaseName) throws InterruptedException;
-
   OServer getServerInstance();
 
   boolean isEnabled();

@@ -204,12 +204,6 @@ public class OHazelcastClusterMetadataManager
         configurationMap.getHazelcastMap().addEntryListener(this, true);
     membershipListenerRegistration = hazelcastInstance.getCluster().addMembershipListener(this);
     OrientDBInternal ctx = serverInstance.getDatabases();
-    ctx.execute(
-        () -> {
-          distributedPlugin.installNewDatabasesFromCluster();
-          distributedPlugin.loadLocalDatabases();
-          distributedPlugin.notifyStarted();
-        });
 
     // REGISTER CURRENT MEMBERS
     setNodeStatus(NODE_STATUS.ONLINE);

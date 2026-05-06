@@ -88,12 +88,6 @@ public class HARemoveNodeFromCfgIT extends AbstractServerClusterTxTest {
     serverInstance
         .get(SERVERS - 1)
         .startServer(getDistributedServerConfiguration(serverInstance.get(SERVERS - 1)));
-    if (serverInstance.get(SERVERS - 1).getServerInstance().getDistributedManager() != null)
-      serverInstance
-          .get(SERVERS - 1)
-          .getServerInstance()
-          .getDistributedManager()
-          .waitUntilNodeOnline();
 
     lastNodeIsUp.set(true);
 

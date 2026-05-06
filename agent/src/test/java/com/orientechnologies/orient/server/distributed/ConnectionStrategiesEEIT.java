@@ -108,7 +108,6 @@ public class ConnectionStrategiesEEIT {
             .getContextClassLoader()
             .getResourceAsStream("orientdb-simple-dserver-config-1.xml"));
     server1.activate();
-    server1.getDistributedManager().waitUntilNodeOnline();
     server1.getDatabases().waitOnline("ConnectionStrategiesEEIT.class.getSimpleName()");
 
     for (int i = 0; i < 10; i++) {
