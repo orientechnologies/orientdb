@@ -48,11 +48,7 @@ public class HARemoveNodeFromCfgIT extends AbstractServerClusterTxTest {
   @Override
   protected void onAfterExecution() throws Exception {
     final String removedServer =
-        serverInstance
-            .get(SERVERS - 1)
-            .getServerInstance()
-            .getDistributedManager()
-            .getLocalNodeName();
+        serverInstance.get(SERVERS - 1).getServerInstance().getNodeId().getNode();
     var dbt =
         ((OrientDBDistributed) serverInstance.get(0).getServerInstance().getDatabases())
             .getNodeState()

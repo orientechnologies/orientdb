@@ -54,13 +54,13 @@ public class DistributedSchedulerIT extends AbstractServerClusterTest {
 
     waitForDatabaseIsOnline(
         0,
-        serverInstance.get(1).getServerInstance().getDistributedManager().getLocalNodeName(),
+        serverInstance.get(1).getServerInstance().getNodeId().getNode(),
         getDatabaseName(),
         20000);
 
     waitForDatabaseIsOnline(
         1,
-        serverInstance.get(0).getServerInstance().getDistributedManager().getLocalNodeName(),
+        serverInstance.get(0).getServerInstance().getNodeId().getNode(),
         getDatabaseName(),
         20000);
 

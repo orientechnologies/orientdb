@@ -30,7 +30,6 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.server.distributed.impl.ODistributedPlugin;
 import java.util.List;
 import java.util.stream.Collectors;
 import org.junit.Ignore;
@@ -61,9 +60,6 @@ public class BasicShardingNoReplicaScenarioIT extends AbstractShardingScenarioTe
   @Override
   public void executeTest() throws Exception {
 
-    ODistributedPlugin manager1 =
-        (ODistributedPlugin) serverInstance.get(0).getServerInstance().getDistributedManager();
-
     ODatabaseDocumentInternal graphNoTx = null;
     try {
       OrientDB orientDB = serverInstance.get(0).getServerInstance().getContext();
@@ -81,8 +77,7 @@ public class BasicShardingNoReplicaScenarioIT extends AbstractShardingScenarioTe
       OClass clientType = schema.getClass("Client");
 
       for (int i = 0; i < serverInstance.size(); ++i) {
-        final String serverName =
-            serverInstance.get(i).getServerInstance().getDistributedManager().getLocalNodeName();
+        final String serverName = serverInstance.get(i).getServerInstance().getNodeId().getNode();
         clientType.addCluster("client_" + serverName);
         graphNoTx
             .command(
@@ -115,11 +110,7 @@ public class BasicShardingNoReplicaScenarioIT extends AbstractShardingScenarioTe
       assertFalse(serverInstance.get(2).isActive());
 
       waitForDatabaseIsOffline(
-          executeTestsOnServers
-              .get(2)
-              .getServerInstance()
-              .getDistributedManager()
-              .getLocalNodeName(),
+          executeTestsOnServers.get(2).getServerInstance().getNodeId().getNode(),
           getDatabaseName(),
           10000);
 
@@ -163,7 +154,7 @@ public class BasicShardingNoReplicaScenarioIT extends AbstractShardingScenarioTe
 
       waitForDatabaseIsOnline(
           0,
-          serverInstance.get(2).getServerInstance().getDistributedManager().getLocalNodeName(),
+          serverInstance.get(2).getServerInstance().getNodeId().getNode(),
           getDatabaseName(),
           10000);
 

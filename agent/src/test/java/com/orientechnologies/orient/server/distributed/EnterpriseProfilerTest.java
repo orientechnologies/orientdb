@@ -37,7 +37,7 @@ public class EnterpriseProfilerTest extends AbstractServerClusterTest {
     // kill first node
     ServerRun serverRun = serverInstance.get(0);
 
-    String name = serverRun.getServerInstance().getDistributedManager().getLocalNodeName();
+    String name = serverRun.getServerInstance().getNodeId().getNode();
 
     serverRun.crashServer();
 

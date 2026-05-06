@@ -18,7 +18,6 @@
 
 package com.orientechnologies.agent.http.command;
 
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedServerAbstract;
 
@@ -31,13 +30,10 @@ public abstract class OServerCommandDistributedAuthenticated
   }
 
   protected boolean isLocalNode(OHttpRequest iRequest) {
-
-    ODistributedServerManager distributedManager = server.getDistributedManager();
     String node = iRequest.getParameter("node");
-
-    if (node == null || distributedManager == null) {
+    if (node == null) {
       return true;
     }
-    return distributedManager.getLocalNodeName().equalsIgnoreCase(node);
+    return server.getNodeId().getNode().equalsIgnoreCase(node);
   }
 }

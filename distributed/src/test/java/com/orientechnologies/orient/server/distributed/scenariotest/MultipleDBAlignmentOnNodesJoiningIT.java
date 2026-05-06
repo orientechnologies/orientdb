@@ -209,8 +209,7 @@ public class MultipleDBAlignmentOnNodesJoiningIT extends AbstractScenarioTest {
     for (ServerRun server : checkConsistencyOnServers) {
       try {
         dbs.add(server.getServerInstance().openDatabase(databaseName, "admin", "adminpwd"));
-        checkOnServer +=
-            server.getServerInstance().getDistributedManager().getLocalNodeName() + ",";
+        checkOnServer += server.getServerInstance().getNodeId().getNode() + ",";
       } catch (Exception e) {
         fail(databaseName + " is not present on server" + server.getServerId());
       }

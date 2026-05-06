@@ -132,8 +132,7 @@ public class ReplicaServerIT extends AbstractServerClusterTest {
         serverInstance.get(0).getServerInstance().openDatabase(getDatabaseName());
 
     for (int s = 1; s < SERVERS; ++s) {
-      String nodeName =
-          serverInstance.get(s).getServerInstance().getDistributedManager().getLocalNodeName();
+      String nodeName = serverInstance.get(s).getServerInstance().getNodeId().getNode();
       for (OClass cl : db.getMetadata().getSchema().getClasses()) {
         OClassAllocation allocation = cl.getAllocation();
         if (allocation != null) {

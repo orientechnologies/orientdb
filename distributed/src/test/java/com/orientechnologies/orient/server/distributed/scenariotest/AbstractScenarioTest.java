@@ -194,13 +194,13 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
 
     String checkOnServer = "";
     for (ServerRun server : checkConsistencyOnServers) {
-      checkOnServer += server.getServerInstance().getDistributedManager().getLocalNodeName() + ",";
+      checkOnServer += server.getServerInstance().getNodeId().getNode() + ",";
     }
     checkOnServer = checkOnServer.substring(0, checkOnServer.length() - 1);
 
     String writtenServer = "";
     for (ServerRun server : writerServer) {
-      writtenServer += server.getServerInstance().getDistributedManager().getLocalNodeName() + ",";
+      writtenServer += server.getServerInstance().getNodeId().getNode() + ",";
     }
     writtenServer = writtenServer.substring(0, writtenServer.length() - 1);
 
@@ -225,8 +225,7 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
     serverIndex = 0;
 
     for (ServerRun server : writerServer) {
-      serverIndex2serverName.put(
-          serverIndex, server.getServerInstance().getDistributedManager().getLocalNodeName());
+      serverIndex2serverName.put(serverIndex, server.getServerInstance().getNodeId().getNode());
       serverIndex++;
     }
 

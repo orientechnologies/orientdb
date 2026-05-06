@@ -88,12 +88,12 @@ public class DistributedListenerIT extends AbstractServerClusterTxTest {
 
     waitForDatabaseIsOnline(
         0,
-        serverInstance.get(0).getServerInstance().getDistributedManager().getLocalNodeName(),
+        serverInstance.get(0).getServerInstance().getNodeId().getNode(),
         getDatabaseName(),
         30000);
     waitForDatabaseIsOnline(
         1,
-        serverInstance.get(1).getServerInstance().getDistributedManager().getLocalNodeName(),
+        serverInstance.get(1).getServerInstance().getNodeId().getNode(),
         getDatabaseName(),
         30000);
 

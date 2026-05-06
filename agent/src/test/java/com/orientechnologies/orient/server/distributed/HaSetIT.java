@@ -51,9 +51,6 @@ public class HaSetIT extends AbstractServerClusterTest {
   protected void executeTest() {
     ServerRun firstServer = serverInstance.get(0);
 
-    ODistributedServerManager distributedManager =
-        firstServer.getServerInstance().getDistributedManager();
-
     ODatabaseSession db = firstServer.getServerInstance().openDatabase(getDatabaseName());
 
     OrientDBDistributed ctx = (OrientDBDistributed) firstServer.getServerInstance().getDatabases();

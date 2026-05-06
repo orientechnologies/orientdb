@@ -684,13 +684,9 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
         for (ODocument rec : database.browseClass(className)) {
           StringBuilder servers = records.get(rec);
           if (servers == null) {
-            servers =
-                new StringBuilder(
-                    server.getServerInstance().getDistributedManager().getLocalNodeName());
+            servers = new StringBuilder(server.getServerInstance().getNodeId().getNode());
             records.put(rec, servers);
-          } else
-            servers.append(
-                "," + server.getServerInstance().getDistributedManager().getLocalNodeName());
+          } else servers.append("," + server.getServerInstance().getNodeId().getNode());
         }
 
       } finally {

@@ -127,11 +127,7 @@ public class StopNodeIT extends AbstractServerClusterTxTest {
                                         .get(0)
                                         .getServerInstance()
                                         .getDistributedManager())
-                                .stopNode(
-                                    server
-                                        .getServerInstance()
-                                        .getDistributedManager()
-                                        .getLocalNodeName());
+                                .stopNode(server.getServerInstance().getNodeId().getNode());
 
                             return null;
                           }

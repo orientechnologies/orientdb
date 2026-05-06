@@ -262,7 +262,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract
   }
 
   public String getNodeName() {
-    return isDistributed() ? server.getDistributedManager().getLocalNodeName() : "orientdb";
+    return isDistributed() ? server.getNodeId().getNode() : "orientdb";
   }
 
   @Override

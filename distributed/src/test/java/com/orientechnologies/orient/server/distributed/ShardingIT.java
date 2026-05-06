@@ -105,8 +105,7 @@ public class ShardingIT extends AbstractServerClusterTest {
       vertices = new OVertex[serverInstance.size()];
 
       for (int i = 0; i < vertices.length; ++i) {
-        final String nodeName =
-            serverInstance.get(i).getServerInstance().getDistributedManager().getLocalNodeName();
+        final String nodeName = serverInstance.get(i).getServerInstance().getNodeId().getNode();
 
         graph =
             serverInstance
@@ -228,12 +227,7 @@ public class ShardingIT extends AbstractServerClusterTest {
 
         try {
           for (int i = 0; i < vertices.length; ++i) {
-            final String nodeName =
-                serverInstance
-                    .get(i)
-                    .getServerInstance()
-                    .getDistributedManager()
-                    .getLocalNodeName();
+            final String nodeName = serverInstance.get(i).getServerInstance().getNodeId().getNode();
 
             String clusterName = "client-Type";
             clusterName += "_" + nodeName;

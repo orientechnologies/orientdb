@@ -55,8 +55,7 @@ public class HaRemoveServerIT extends AbstractServerClusterTest {
 
     ServerRun firstServer = serverInstance.get(0);
 
-    final String offlineNodeName =
-        serverInstance.get(1).getServerInstance().getDistributedManager().getLocalNodeName();
+    final String offlineNodeName = serverInstance.get(1).getServerInstance().getNodeId().getNode();
 
     ODistributedServerManager distributedManager =
         firstServer.getServerInstance().getDistributedManager();

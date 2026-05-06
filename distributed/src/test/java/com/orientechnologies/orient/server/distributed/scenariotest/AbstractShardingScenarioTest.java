@@ -103,7 +103,7 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
     List<Callable<Void>> writerWorkers = new ArrayList<Callable<Void>>();
     for (ServerRun server : executeOnServers) {
       if (server.isActive()) {
-        shardName += server.getServerInstance().getDistributedManager().getLocalNodeName();
+        shardName += server.getServerInstance().getNodeId().getNode();
         for (int j = 0; j < writerCount; j++) {
           Callable writer = null;
           if (storageType.equals("plocal")) {
@@ -167,14 +167,13 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
         graph = orientDB1.open(getDatabaseName(), "admin", "adminpwd");
         try {
           String sqlCommand =
-              "select from cluster:client_"
-                  + server.getServerInstance().getDistributedManager().getLocalNodeName();
+              "select from cluster:client_" + server.getServerInstance().getNodeId().getNode();
           OResultSet result = graph.query(sqlCommand);
           assertEquals(count * writerCount, result.stream().count());
 
           sqlCommand =
               "select count(*) as count from cluster:client_"
-                  + server.getServerInstance().getDistributedManager().getLocalNodeName();
+                  + server.getServerInstance().getNodeId().getNode();
 
           try (OResultSet res = graph.query(sqlCommand)) {
             int total = ((Number) res.next().getProperty("count")).intValue();
@@ -196,13 +195,13 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
 
     String checkOnServer = "";
     for (ServerRun server : checkConsistencyOnServers) {
-      checkOnServer += server.getServerInstance().getDistributedManager().getLocalNodeName() + ",";
+      checkOnServer += server.getServerInstance().getNodeId().getNode() + ",";
     }
     checkOnServer = checkOnServer.substring(0, checkOnServer.length() - 1);
 
     String writtenServer = "";
     for (ServerRun server : writerServer) {
-      writtenServer += server.getServerInstance().getDistributedManager().getLocalNodeName() + ",";
+      writtenServer += server.getServerInstance().getNodeId().getNode() + ",";
     }
     writtenServer = writtenServer.substring(0, writtenServer.length() - 1);
 
@@ -235,8 +234,7 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
     serverIndex = 0;
 
     for (ServerRun server : writerServer) {
-      serverIndex2serverName.put(
-          serverIndex, server.getServerInstance().getDistributedManager().getLocalNodeName());
+      serverIndex2serverName.put(serverIndex, server.getServerInstance().getNodeId().getNode());
       serverIndex++;
     }
 

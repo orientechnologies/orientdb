@@ -24,7 +24,6 @@ import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
-import com.orientechnologies.orient.server.distributed.config.OClusterConfiguration;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -33,7 +32,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.atomic.AtomicLong;
 import org.apache.tinkerpop.gremlin.orientdb.OrientGraph;
 import org.apache.tinkerpop.gremlin.orientdb.OrientGraphFactory;
-import org.junit.Assert;
 
 /**
  * Test class that creates and executes distributed operations against a cluster of servers created
@@ -141,13 +139,6 @@ public abstract class AbstractServerClusterTest {
           Thread.sleep(delayServerAlign * serverInstance.size());
         } catch (InterruptedException e) {
         }
-
-      for (ServerRun server : serverInstance) {
-        final ODistributedServerManager mgr = server.getServerInstance().getDistributedManager();
-        Assert.assertNotNull(mgr);
-        OClusterConfiguration cfg = mgr.getClusterConfiguration();
-        Assert.assertNotNull(cfg);
-      }
 
       banner("Executing test...");
 

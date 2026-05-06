@@ -51,7 +51,7 @@ public class ServerRun {
 
   @Override
   public String toString() {
-    return server.getDistributedManager().getLocalNodeName() + "(" + serverId + ")";
+    return server.getNodeId().getNode() + "(" + serverId + ")";
   }
 
   public OServer getServerInstance() {
@@ -98,9 +98,9 @@ public class ServerRun {
             ((ODistributedPlugin) server.getDistributedManager()).getHazelcastInstance());
     for (ServerRun s : serverIds) {
       ((ODistributedPlugin) server.getDistributedManager())
-          .closeRemoteServer(s.server.getDistributedManager().getLocalNodeName());
+          .closeRemoteServer(s.server.getNodeId().getNode());
       ((ODistributedPlugin) s.server.getDistributedManager())
-          .closeRemoteServer(server.getDistributedManager().getLocalNodeName());
+          .closeRemoteServer(server.getNodeId().getNode());
 
       final Node otherNode =
           getHazelcastNode(

@@ -48,7 +48,7 @@ public class ServerRun {
 
   @Override
   public String toString() {
-    return server.getDistributedManager().getLocalNodeName() + "(" + serverId + ")";
+    return server.getNodeId().getNode() + "(" + serverId + ")";
   }
 
   public OServer getServerInstance() {
@@ -181,6 +181,6 @@ public class ServerRun {
   }
 
   public String getNodeName() {
-    return server.getDistributedManager().getLocalNodeName();
+    return server.getNodeId().getNode();
   }
 }

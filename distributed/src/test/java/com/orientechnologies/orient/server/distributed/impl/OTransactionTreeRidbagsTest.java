@@ -19,7 +19,6 @@ import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPhase1Task;
 import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPhase1TaskResult;
 import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPhase2Task;
@@ -136,8 +135,7 @@ public class OTransactionTreeRidbagsTest {
   private OTransactionPhase1Task createFirstPhase(ODocument doc, ODatabaseSession session) {
     List<ORecordOperation> operations = new ArrayList<>();
     operations.add(new ORecordOperation(doc, ORecordOperation.UPDATED));
-    ODistributedServerManager dm = server.getDistributedManager();
-    ODistributedDatabase dd = dm.getDatabase(session.getName());
+    ODistributedDatabase dd = ((ODatabaseDocumentDistributed) session).getDistributedShared();
     OTransactionIdPromise txId = dd.nextId().get();
     dd.rollback(txId);
     return new OTransactionPhase1Task(operations, txId, new TreeSet<>());
