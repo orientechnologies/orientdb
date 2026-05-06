@@ -264,6 +264,8 @@ public class OrientDBDistributed extends OrientDBEmbedded
           if (this.nodeState.getDatabaseTopology().getDatabaseId(databaseName).isEmpty()) {
             declareDatabaseFlow(databaseName, db.getStorage().getDatabaseId()).get();
             setDatabaseState(db.getStorage().getDatabaseId(), getNodeId(), ODatabaseState.Online);
+          } else {
+            setDatabaseState(db.getStorage().getDatabaseId(), getNodeId(), ODatabaseState.Online);
           }
           db.close();
         } catch (Exception e) {
@@ -671,7 +673,8 @@ public class OrientDBDistributed extends OrientDBEmbedded
       try {
         Optional<ODatabaseId> dbID = getNodeState().getDatabaseTopology().getDatabaseId(dbName);
         if (dbID.isPresent()) {
-          setDatabaseState(dbID.get(), getNodeId(), ODatabaseState.NotAvailable);
+          setDatabaseState(dbID.get(), getNodeId(), ODatabaseState.Offline)
+              .get(1, TimeUnit.MINUTES);
         }
         //        setDatabaseStatus(dbName, DB_STATUS.NOT_AVAILABLE);
       } catch (Exception t) {
@@ -773,8 +776,18 @@ public class OrientDBDistributed extends OrientDBEmbedded
     return retryOperation(new OSetDatabaseStateRetryOperation(node, dbId, state));
   }
 
-  private ODatabaseState getDatabaseState(ODatabaseId dbId, ONodeId node) {
+  public ODatabaseState getDatabaseState(ODatabaseId dbId, ONodeId node) {
     return this.getNodeState().getDatabaseTopology().getState(dbId, node);
+  }
+
+  public boolean isDatabaseOnline(String dbName) {
+    ODatabasesTopology dbTopology = getNodeState().getDatabaseTopology();
+    Optional<ODatabaseId> dbID = dbTopology.getDatabaseId(dbName);
+    if (dbID.isPresent()) {
+      return dbTopology.isOnline(dbID.get(), getNodeId());
+    } else {
+      return false;
+    }
   }
 
   public void distributedSetOnline(String database) {
