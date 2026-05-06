@@ -962,6 +962,10 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
     return this.topology.waitForEnstablished(timeout);
   }
 
+  public void executeOnEnstablish(ONotificationAction action) {
+    this.topology.executeOnEnstablish(action);
+  }
+
   public Optional<OAcceptResult> validateSetDatabaseQuorum(
       ODatabaseId db, int quorum, OVersion version, OTransactionIdPromise promise) {
     return this.databaseTopology.validateSetDatabaseQuorum(db, quorum, version, promise);

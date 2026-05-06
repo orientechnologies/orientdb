@@ -53,7 +53,11 @@ public class OWatcher {
     if (notifications == null) {
       notifications = new ArrayList<>();
     }
-    this.notifications.add(new ONotificationActionData(cond, execute));
+    if (cond.match()) {
+      execute.execute();
+    } else {
+      this.notifications.add(new ONotificationActionData(cond, execute));
+    }
   }
 
   protected synchronized void notifyChange() {

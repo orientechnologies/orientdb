@@ -205,6 +205,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
     action.execute(this, null, newExectution(new OInitRetryOperation(action)));
 
     reconciliateState();
+    this.nodeState.getOps().executeOnEnstablish(() -> execute(this::loadAllDatabases));
 
     var period = getLongConfig(OGlobalConfiguration.DISTRIBUTED_CHECK_HEALTH_EVERY);
     periodicExecute(this::sendTopologyPing, period);
@@ -736,13 +737,16 @@ public class OrientDBDistributed extends OrientDBEmbedded
       ODatabaseId dbId,
       OrientDBConfig config,
       ODatabaseTask<Void> createOps) {
-    declareDatabaseFlow(name, dbId);
-    super.create(name, user, password, type, dbId, config, createOps);
-    setDatabaseState(dbId, getNodeState().getNodeId(), ODatabaseState.Online);
     try {
+      declareDatabaseFlow(name, dbId).get(10, TimeUnit.MINUTES);
+      super.create(name, user, password, type, dbId, config, createOps);
+      setDatabaseState(dbId, getNodeState().getNodeId(), ODatabaseState.Online);
       getNodeState().getOps().waitOnlineQuorum(dbId, Optional.of(10 * 60 * 1000L));
     } catch (InterruptedException e) {
       throw OException.wrapException(new OInterruptedException("wait for online interrupted"), e);
+    } catch (ExecutionException | TimeoutException e) {
+      throw OException.wrapException(
+          new ODatabaseException("Failed execution of declare database"), e);
     }
   }
 

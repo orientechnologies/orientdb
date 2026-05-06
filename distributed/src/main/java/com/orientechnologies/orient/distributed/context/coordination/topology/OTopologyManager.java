@@ -7,6 +7,7 @@ import com.orientechnologies.orient.distributed.context.ONetworkTopologyStore;
 import com.orientechnologies.orient.distributed.context.coordination.ONetworkTopology;
 import com.orientechnologies.orient.distributed.context.coordination.OVersion;
 import com.orientechnologies.orient.distributed.context.coordination.OVersionPromise;
+import com.orientechnologies.orient.distributed.context.coordination.dbs.ONotificationAction;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.OWatcher;
 import com.orientechnologies.orient.distributed.context.coordination.message.state.ONodeStateNetwork;
 import com.orientechnologies.orient.distributed.context.coordination.message.state.OTopologyStateNetwork;
@@ -304,6 +305,10 @@ public class OTopologyManager extends OWatcher implements OTopologyEvents, ONetw
   @Override
   public boolean isSelfEnstablished() {
     return OTopologyState.ESTABLISHED.equals(this.state);
+  }
+
+  public void executeOnEnstablish(ONotificationAction action) {
+    executeOn(this::isSelfEnstablished, action);
   }
 
   @Override

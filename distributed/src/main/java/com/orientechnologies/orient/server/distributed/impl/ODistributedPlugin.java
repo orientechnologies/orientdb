@@ -1105,9 +1105,7 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
   }
 
   /** Initializes all the available server's databases as distributed. */
-  public void loadLocalDatabases() {
-    ((OrientDBDistributed) serverInstance.getDatabases()).loadAllDatabases();
-  }
+  public void loadLocalDatabases() {}
 
   public void installNewDatabasesFromCluster() {
     if (getActiveServers().size() <= 1) {

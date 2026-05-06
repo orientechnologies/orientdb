@@ -264,6 +264,8 @@ public interface OCoordinatedDistributedOps {
 
   boolean waitForEnstablish(Optional<Long> timeout) throws InterruptedException;
 
+  void executeOnEnstablish(ONotificationAction action);
+
   Optional<OAcceptResult> validateSetDatabaseQuorum(
       ODatabaseId db, int quorum, OVersion version, OTransactionIdPromise promise);
 
