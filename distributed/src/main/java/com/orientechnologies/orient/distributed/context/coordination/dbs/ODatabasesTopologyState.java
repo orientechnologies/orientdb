@@ -158,8 +158,14 @@ public class ODatabasesTopologyState extends OWatcher implements ODatabasesTopol
     }
   }
 
-  public synchronized boolean waitOnline(ODatabaseId dbId, ONodeId nodeId) {
-    return false;
+  @Override
+  public synchronized boolean isQuorumOnline(ODatabaseId dbId) {
+    ODatabaseTopologyState db = getDb(dbId);
+    if (db != null) {
+      return db.isQuorumOnline();
+    } else {
+      return false;
+    }
   }
 
   public boolean waitOnlineQuorum(ODatabaseId dbId, Optional<Long> timeout)
@@ -212,13 +218,14 @@ public class ODatabasesTopologyState extends OWatcher implements ODatabasesTopol
     return false;
   }
 
-  public boolean waitOnlineOne(ODatabaseId dbId) {
+  public boolean waitOnlineOne(ODatabaseId dbId, Optional<Long> timeout)
+      throws InterruptedException {
     ODatabaseTopologyState db;
     synchronized (this) {
       db = getDb(dbId);
     }
     if (db != null) {
-      return db.waitOnlineOne();
+      return db.waitOnlineOne(timeout);
     }
     return false;
   }

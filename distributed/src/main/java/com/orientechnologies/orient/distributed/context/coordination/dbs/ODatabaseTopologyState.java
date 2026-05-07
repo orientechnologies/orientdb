@@ -130,8 +130,7 @@ public class ODatabaseTopologyState extends OWatcher {
   }
 
   private boolean isOneOnline() {
-    long online = this.nodeStatus.values().stream().filter((x) -> x.isOnline()).count();
-    return online > 0;
+    return this.nodeStatus.values().stream().anyMatch((x) -> x.isOnline());
   }
 
   private boolean isSelfOnline() {
@@ -143,13 +142,13 @@ public class ODatabaseTopologyState extends OWatcher {
     }
   }
 
-  private boolean isQuorumOnline() {
+  public synchronized boolean isQuorumOnline() {
     long online = this.nodeStatus.values().stream().filter((x) -> x.isOnline()).count();
     return online >= quorum;
   }
 
-  public boolean waitOnlineOne() {
-    return false;
+  public synchronized boolean waitOnlineOne(Optional<Long> timeout) throws InterruptedException {
+    return waitFor(timeout, this::isOneOnline);
   }
 
   public synchronized boolean waitSelfOnline(Optional<Long> timeout) throws InterruptedException {

@@ -38,15 +38,11 @@ import com.orientechnologies.orient.core.command.OCommandDistributedReplicateReq
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.OCancellableTimer;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
-import com.orientechnologies.orient.core.metadata.schema.OClass;
-import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.transaction.ONodeId;
@@ -78,7 +74,6 @@ import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
 import com.orientechnologies.orient.server.distributed.ORemoteServerController;
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactoryManager;
 import com.orientechnologies.orient.server.distributed.config.OClusterConfiguration;
-import com.orientechnologies.orient.server.distributed.impl.metadata.OClassDistributed;
 import com.orientechnologies.orient.server.distributed.impl.task.ORemoteTaskFactoryManagerImpl;
 import com.orientechnologies.orient.server.distributed.impl.task.ORestartServerTask;
 import com.orientechnologies.orient.server.distributed.impl.task.OStopServerTask;
@@ -721,45 +716,6 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
 
   public String getLocalNodeName() {
     return nodeName;
-  }
-
-  @Override
-  public void reassignClustersOwnership(
-      final String iNode, final String databaseName, final boolean canCreateNewClusters) {
-    OrientDBDistributed ctx = (OrientDBDistributed) serverInstance.getDatabases();
-
-    if (!ctx.isNodeMaster(iNode, databaseName))
-      // NO MASTER, DON'T CREATE LOCAL CLUSTERS
-      return;
-
-    ODatabaseDocumentInternal current = ODatabaseRecordThreadLocal.instance().getIfDefined();
-    try (ODatabaseDocumentInternal iDatabase = getServerInstance().openDatabase(databaseName)) {
-
-      logger.infoNode(
-          nodeName, "Reassigning ownership of clusters for database %s...", iDatabase.getName());
-      final Set<String> availableNodes = ctx.getAvailableNodeNames(iDatabase.getName());
-
-      // FILTER OUT NON MASTER SERVER
-      for (Iterator<String> it = availableNodes.iterator(); it.hasNext(); ) {
-        final String node = it.next();
-        if (ctx.isNodeMaster(node, databaseName)) it.remove();
-      }
-      iDatabase.activateOnCurrentThread();
-      final OSchema schema = iDatabase.getDatabaseOwner().getMetadata().getSchema();
-
-      for (final OClass clazz : schema.getClasses()) {
-        ((OClassDistributed) clazz)
-            .autoAssignClusterOwnership(iDatabase, availableNodes, canCreateNewClusters);
-      }
-
-      logger.infoNode(
-          nodeName,
-          "Reassignment of clusters for database '%s' completed (classes=%d)",
-          iDatabase.getName(),
-          schema.getClasses().size());
-    } finally {
-      ODatabaseRecordThreadLocal.instance().set(current);
-    }
   }
 
   @Override

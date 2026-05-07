@@ -19,7 +19,6 @@ import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OStorage;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -911,8 +910,6 @@ public class OClassEmbedded extends OClassImpl {
 
     // RE-BALANCE THE CLUSTER BASED ON AN AVERAGE OF NUMBER OF NODES
     reassignClusters(db, availableNodes, clusterNames);
-
-    Collection<String> allClusterNames = db.getClusterNames();
   }
 
   public void internalAddCluster(final ODatabaseInternal db, final String newClusterName) {

@@ -35,4 +35,6 @@ public interface ODatabasesTopology {
   Set<ONodeId> getMembers(ODatabaseId databaseId);
 
   int getQuorum(ODatabaseId databaseId);
+
+  boolean isQuorumOnline(ODatabaseId dbId);
 }

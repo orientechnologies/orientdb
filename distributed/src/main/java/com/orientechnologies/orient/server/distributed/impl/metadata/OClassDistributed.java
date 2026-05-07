@@ -575,12 +575,16 @@ public class OClassDistributed extends OClassEmbedded {
 
     ODistributedConfiguration cfg = manager.getDatabaseConfiguration(db.getName());
 
-    List<String> bestClusters =
-        cfg.getOwnedClustersByServer(clusterNames, manager.getLocalNodeName());
+    List<String> bestClusters = cfg.getOwnedClustersByServer(clusterNames, db.getLocalNodeName());
     if (bestClusters.isEmpty()) {
       // REBALANCE THE CLUSTERS
       final OModifiableDistributedConfiguration modifiableCfg = cfg.modify();
-      manager.reassignClustersOwnership(manager.getLocalNodeName(), db.getName(), true);
+      // TODO: maybe this should run on a background thread ... instead of here
+      OrientDBDistributed ctx = db.getContext();
+      var future = ctx.autoAssignAllocation(db.getDatabaseId());
+      if (future.isPresent()) {
+        future.get();
+      }
 
       cfg = modifiableCfg;
 
@@ -591,7 +595,7 @@ public class OClassDistributed extends OClassEmbedded {
       for (int c : clusterIds)
         clusterNames.add(db.getClusterNameById(c).toLowerCase(Locale.ENGLISH));
 
-      bestClusters = cfg.getOwnedClustersByServer(clusterNames, manager.getLocalNodeName());
+      bestClusters = cfg.getOwnedClustersByServer(clusterNames, db.getLocalNodeName());
 
       if (bestClusters.isEmpty()) {
         // FILL THE MAP CLUSTER/SERVERS
@@ -606,7 +610,7 @@ public class OClassDistributed extends OClassEmbedded {
         }
 
         logger.warnNode(
-            manager.getLocalNodeName(),
+            db.getLocalNodeName(),
             "Cannot find best cluster for class '%s'. Configured servers for clusters %s are %s"
                 + " (dCfgVersion=%d)",
             getName(),
@@ -618,7 +622,7 @@ public class OClassDistributed extends OClassEmbedded {
             "Cannot find best cluster for class '"
                 + getName()
                 + "' on server '"
-                + manager.getLocalNodeName()
+                + db.getLocalNodeName()
                 + "' (clusterStrategy="
                 + getName()
                 + " dCfgVersion="

@@ -41,6 +41,7 @@ import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassAllocation;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
+import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OView;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
@@ -103,6 +104,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -1404,5 +1406,34 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         new ODistributedDatabaseInfo(name, id, mi, topology.getQuorum(id), ai);
 
     return info.toLegacyResult();
+  }
+
+  @Override
+  public void autoAssignAllocations(boolean canCreateNewClusters) {
+    if (!getContext().isNodeMaster(getLocalNodeName(), getName()))
+      // NO MASTER, DON'T CREATE LOCAL CLUSTERS
+      return;
+
+    logger.infoNode(
+        getLocalNodeId(), "Reassigning ownership of clusters for database %s...", getName());
+    final Set<String> availableNodes = getContext().getAvailableNodeNames(getName());
+
+    // FILTER OUT NON MASTER SERVER
+    for (Iterator<String> it = availableNodes.iterator(); it.hasNext(); ) {
+      final String node = it.next();
+      if (getContext().isNodeMaster(node, getName())) it.remove();
+    }
+    final OSchema schema = getMetadata().getSchema();
+
+    for (final OClass clazz : schema.getClasses()) {
+      ((OClassDistributed) clazz)
+          .autoAssignClusterOwnership(this, availableNodes, canCreateNewClusters);
+    }
+
+    logger.infoNode(
+        getLocalNodeId(),
+        "Reassignment of clusters for database '%s' completed (classes=%d)",
+        getName(),
+        schema.getClasses().size());
   }
 }

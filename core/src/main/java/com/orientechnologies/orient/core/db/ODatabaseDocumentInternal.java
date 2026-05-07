@@ -319,6 +319,8 @@ public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseIn
     throw new UnsupportedOperationException();
   }
 
+  default void autoAssignAllocations(boolean canCreateNewClusters) {}
+
   OPhysicalPosition[] higherPhysicalPositions(int clusterId, OPhysicalPosition physicalPosition);
 
   OPhysicalPosition[] lowerPhysicalPositions(int clusterId, OPhysicalPosition physicalPosition);

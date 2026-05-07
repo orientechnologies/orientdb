@@ -95,8 +95,6 @@ public interface ODistributedServerManager {
 
   void updateLastClusterChange();
 
-  void reassignClustersOwnership(String iNode, String databaseName, boolean canCreateNewClusters);
-
   int getLocalNodeId();
 
   String getLocalNodeName();
