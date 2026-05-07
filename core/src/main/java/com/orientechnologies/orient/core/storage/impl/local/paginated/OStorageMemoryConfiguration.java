@@ -32,7 +32,6 @@ import java.nio.charset.Charset;
  * @since 7/15/14
  */
 public class OStorageMemoryConfiguration extends OStorageConfigurationImpl {
-  private static final long serialVersionUID = 7001342008735208586L;
 
   private byte[] serializedContent;
 

@@ -16,6 +16,10 @@
 package com.orientechnologies.orient.jdbc;
 
 import com.orientechnologies.orient.core.id.ORID;
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutput;
+import java.io.DataOutputStream;
+import java.io.IOException;
 import java.sql.RowId;
 
 public class OrientRowId implements RowId {
@@ -28,7 +32,16 @@ public class OrientRowId implements RowId {
 
   @Override
   public byte[] getBytes() {
-    return rid.toStream();
+    try {
+      var stream = new ByteArrayOutputStream(12);
+      DataOutput out = new DataOutputStream(stream);
+      out.writeInt(rid.getClusterId());
+      out.writeLong(rid.getClusterPosition());
+      return stream.toByteArray();
+    } catch (IOException e) {
+      // This should never happen
+      throw new RuntimeException(e);
+    }
   }
 
   @Override

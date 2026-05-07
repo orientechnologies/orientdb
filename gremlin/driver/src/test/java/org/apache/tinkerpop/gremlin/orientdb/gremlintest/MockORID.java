@@ -1,10 +1,8 @@
 package org.apache.tinkerpop.gremlin.orientdb.gremlintest;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
@@ -35,16 +33,6 @@ public class MockORID implements ORID {
 
   @Override
   public int compare(OIdentifiable o1, OIdentifiable o2) {
-    throw new IllegalArgumentException(errorText);
-  }
-
-  @Override
-  public byte[] toStream() throws OSerializationException {
-    throw new IllegalArgumentException(errorText);
-  }
-
-  @Override
-  public OSerializableStream fromStream(byte[] iStream) throws OSerializationException {
     throw new IllegalArgumentException(errorText);
   }
 

@@ -19,20 +19,12 @@
  */
 package com.orientechnologies.orient.core.storage;
 
-import com.orientechnologies.orient.core.exception.OSerializationException;
-import com.orientechnologies.orient.core.serialization.OBinaryProtocol;
-import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import java.io.Externalizable;
 import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 
-public class OPhysicalPosition implements OSerializableStream, Externalizable {
-  private static final int binarySize =
-      OBinaryProtocol.SIZE_LONG
-          + OBinaryProtocol.SIZE_BYTE
-          + OBinaryProtocol.SIZE_INT
-          + OBinaryProtocol.SIZE_INT;
+public class OPhysicalPosition implements Externalizable {
   public long clusterPosition;
   public byte recordType;
   public int recordVersion = 0;
@@ -75,42 +67,6 @@ public class OPhysicalPosition implements OSerializableStream, Externalizable {
         + " v:"
         + recordVersion
         + ")";
-  }
-
-  @Override
-  public OSerializableStream fromStream(final byte[] iStream) throws OSerializationException {
-    int pos = 0;
-
-    clusterPosition = OBinaryProtocol.bytes2long(iStream);
-    pos += OBinaryProtocol.SIZE_LONG;
-
-    recordType = iStream[pos];
-    pos += OBinaryProtocol.SIZE_BYTE;
-
-    recordSize = OBinaryProtocol.bytes2int(iStream, pos);
-    pos += OBinaryProtocol.SIZE_INT;
-
-    recordVersion = OBinaryProtocol.bytes2int(iStream, pos);
-
-    return this;
-  }
-
-  @Override
-  public byte[] toStream() throws OSerializationException {
-    final byte[] buffer = new byte[binarySize];
-    int pos = 0;
-
-    OBinaryProtocol.long2bytes(clusterPosition, buffer, pos);
-    pos += OBinaryProtocol.SIZE_LONG;
-
-    buffer[pos] = recordType;
-    pos += OBinaryProtocol.SIZE_BYTE;
-
-    OBinaryProtocol.int2bytes(recordSize, buffer, pos);
-    pos += OBinaryProtocol.SIZE_INT;
-
-    OBinaryProtocol.int2bytes(recordVersion, buffer, pos);
-    return buffer;
   }
 
   @Override

@@ -20,9 +20,9 @@
 package com.orientechnologies.orient.core.id;
 
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.io.Serializable;
 
 /**
  * RecordID interface that represents a recordid in database. RecordID are made of 2 numbers:
@@ -31,7 +31,7 @@ import java.io.OutputStream;
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-public interface ORID extends OIdentifiable, OSerializableStream {
+public interface ORID extends OIdentifiable, Serializable {
   char PREFIX = '#';
   char SEPARATOR = ':';
   int CLUSTER_MAX = 32767;

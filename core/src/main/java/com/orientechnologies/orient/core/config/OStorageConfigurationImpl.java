@@ -29,7 +29,6 @@ import com.orientechnologies.orient.core.id.OImmutableRecordId;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.OBlob;
-import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
@@ -72,7 +71,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 @SuppressWarnings("serial")
-public class OStorageConfigurationImpl implements OSerializableStream, OStorageConfiguration {
+public class OStorageConfigurationImpl implements OStorageConfiguration {
   private static final OLogger logger =
       OLogManager.instance().logger(OStorageConfigurationImpl.class);
 
@@ -655,23 +654,6 @@ public class OStorageConfigurationImpl implements OSerializableStream, OStorageC
     } finally {
       lock.writeLock().unlock();
     }
-  }
-
-  /**
-   * @deprecated because method uses native encoding use {@link #fromStream(byte[], int, int,
-   *     Charset)} instead.
-   */
-  @Override
-  @Deprecated
-  public OSerializableStream fromStream(final byte[] iStream) throws OSerializationException {
-    fromStream(iStream, 0, iStream.length, Charset.defaultCharset());
-    return this;
-  }
-
-  /** @deprecated because method uses native encoding use {@link #toStream(Charset)} instead. */
-  @Override
-  public byte[] toStream() throws OSerializationException {
-    return toStream(Integer.MAX_VALUE, Charset.defaultCharset());
   }
 
   public byte[] toStream(Charset charset) throws OSerializationException {
