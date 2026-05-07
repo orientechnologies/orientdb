@@ -517,7 +517,7 @@ public class OResultInternal implements OResult, Comparable<OResultInternal> {
       ORecord cached = db.getLocalCache().findRecord(rec.getIdentity());
       if (cached != null) {
         if (!cached.isDirty()) {
-          cached.fromStream(rec.toStream());
+          ORecordInternal.copyContent(cached, rec, db);
         }
         ORecordInternal.setVersion(cached, rec.getVersion());
         element = cached;

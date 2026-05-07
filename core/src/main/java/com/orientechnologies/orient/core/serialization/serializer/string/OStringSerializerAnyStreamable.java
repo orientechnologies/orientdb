@@ -43,27 +43,27 @@ public class OStringSerializerAnyStreamable implements OStringSerializer {
       // NULL VALUE
       return null;
 
-    OSerializableStream instance = null;
-
     int propertyPos = iStream.indexOf(':');
     int pos = iStream.indexOf(OStringSerializerEmbedded.SEPARATOR);
     if (pos < 0 || propertyPos > -1 && pos > propertyPos) {
-      instance = new ODocument();
+      ODocument instance = new ODocument();
+      instance.fromStream(Base64.getDecoder().decode(iStream.substring(pos + 1)));
       pos = -1;
+      return instance;
     } else {
       final String className = iStream.substring(0, pos);
       try {
+        OSerializableStream instance = null;
         final Class<?> clazz = Class.forName(className);
         instance = (OSerializableStream) clazz.newInstance();
+        instance.fromStream(Base64.getDecoder().decode(iStream.substring(pos + 1)));
+        return instance;
       } catch (Exception e) {
         final String message = "Error on unmarshalling content. Class: " + className;
         logger.error("%s", e, message);
         throw OException.wrapException(new OSerializationException(message), e);
       }
     }
-
-    instance.fromStream(Base64.getDecoder().decode(iStream.substring(pos + 1)));
-    return instance;
   }
 
   /**

@@ -784,7 +784,7 @@ public class ODocumentHelper {
         } else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_FIELDS))
           return ((ODocument) iCurrent.getRecord()).fieldNames();
         else if (iFieldName.equalsIgnoreCase(ATTRIBUTE_RAW))
-          return new String(iCurrent.getRecord().toStream());
+          return new String(ORecordInternal.getBytes(iCurrent.getRecord()));
       }
     }
     if (iCurrent == null) return null;

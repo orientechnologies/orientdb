@@ -486,7 +486,7 @@ public class OrientJdbcResultSet implements ResultSet {
       } else {
         if (value instanceof OBlob) {
           lastReadWasNull = false;
-          return ((OBlob) value).toStream();
+          return ((OBlob) value).getBytes();
         }
         byte[] r = result.getProperty(columnLabel);
         lastReadWasNull = r == null;

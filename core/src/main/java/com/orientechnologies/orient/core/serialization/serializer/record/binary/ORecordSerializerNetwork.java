@@ -27,6 +27,7 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
@@ -69,7 +70,7 @@ public class ORecordSerializerNetwork implements ORecordSerializer {
     if (iSource == null || iSource.length == 0) return iRecord;
     if (iRecord == null) iRecord = new ODocument();
     else if (iRecord instanceof OBlob) {
-      iRecord.fromStream(iSource);
+      ((OBlob) iRecord).setBytes(iSource);
       return iRecord;
     }
 
@@ -92,7 +93,7 @@ public class ORecordSerializerNetwork implements ORecordSerializer {
   @Override
   public byte[] toStream(ORecord iSource, OSerializationContext ctx) {
     if (iSource instanceof OBlob) {
-      return iSource.toStream();
+      return ORecordInternal.getBytes(iSource);
     } else {
       final BytesContainer container = new BytesContainer();
 

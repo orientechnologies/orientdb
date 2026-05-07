@@ -2232,7 +2232,7 @@ public class CRUDObjectPhysicalTestSchemaFull extends ObjectDBBaseTest {
     media.setContent(testRecord);
     media = database.save(media);
 
-    Assert.assertEquals(new String(media.getContent().toStream()), "This is a test");
+    Assert.assertEquals(new String(media.getContent().getBytes()), "This is a test");
 
     // try to delete
     database.delete(media);
@@ -2245,7 +2245,7 @@ public class CRUDObjectPhysicalTestSchemaFull extends ObjectDBBaseTest {
     media.setContent(testRecord);
     media = database.save(media);
 
-    Assert.assertEquals(new String(media.getContent().toStream()), "This is a test");
+    Assert.assertEquals(new String(media.getContent().getBytes()), "This is a test");
 
     // try to delete
     database.delete(media);

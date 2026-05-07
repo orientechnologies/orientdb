@@ -3536,7 +3536,7 @@ public class OConsoleDatabaseApp extends OConsoleApplication
           "\n"
               + "+-------------------------------------------------------------------------------------------------+");
 
-      final byte[] value = rec.toStream();
+      final byte[] value = rec.getBytes();
       final int max =
           Math.min(
               Integer.parseInt(properties.get(OConsoleProperties.MAX_BINARY_DISPLAY)),

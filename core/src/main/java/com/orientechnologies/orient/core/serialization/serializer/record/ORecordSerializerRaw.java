@@ -24,6 +24,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ORecordBytes;
@@ -61,7 +62,7 @@ public class ORecordSerializerRaw implements ORecordSerializer {
       final byte[] iSource, final ORecord iRecord, String[] iFields, OSerializationContext ctx) {
     final OBlob record = (OBlob) iRecord;
     record.reset();
-    record.fromStream(iSource);
+    record.setBytes(iSource);
 
     return record;
   }
@@ -69,7 +70,7 @@ public class ORecordSerializerRaw implements ORecordSerializer {
   @Override
   public byte[] toStream(final ORecord iSource, OSerializationContext ctx) {
     try {
-      return iSource.toStream();
+      return ORecordInternal.getBytes(iSource);
     } catch (Exception e) {
       final String message =
           "Error on unmarshalling object in binary format: " + iSource.getIdentity();

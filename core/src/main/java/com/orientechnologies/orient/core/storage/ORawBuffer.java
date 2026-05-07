@@ -43,7 +43,7 @@ public class ORawBuffer extends OBuffer {
 
   /** Creates a new object by the record received. */
   public ORawBuffer(final ORecord iRecord) {
-    this.buffer = iRecord.toStream();
+    this.buffer = ORecordInternal.getBytes(iRecord);
     this.version = iRecord.getVersion();
     this.recordType = ORecordInternal.getRecordType(iRecord);
   }

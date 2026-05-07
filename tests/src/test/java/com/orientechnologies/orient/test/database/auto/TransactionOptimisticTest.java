@@ -96,12 +96,12 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
       OBlob record2 = db2.load(record1.getIdentity());
 
       record2.setDirty();
-      record2.fromStream("This is the second version".getBytes());
+      record2.setBytes("This is the second version".getBytes());
       db2.save(record2);
 
       ODatabaseRecordThreadLocal.instance().set(database);
       record1.setDirty();
-      record1.fromStream("This is the third version".getBytes());
+      record1.setBytes("This is the third version".getBytes());
       database.save(record1);
 
       database.commit();
@@ -135,13 +135,13 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
       record = database.load(record);
       int v1 = record.getVersion();
       record.setDirty();
-      record.fromStream("This is the second version".getBytes());
+      record.setBytes("This is the second version".getBytes());
       database.save(record);
       database.commit();
 
       database.reload(record, null, true, true);
       Assert.assertEquals(record.getVersion(), v1 + 1);
-      Assert.assertTrue(new String(record.toStream()).contains("second"));
+      Assert.assertTrue(new String(record.getBytes()).contains("second"));
     } finally {
       database.close();
     }
@@ -164,7 +164,7 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
       record1 = database.load(record1);
       int v1 = record1.getVersion();
       record1.setDirty();
-      record1.fromStream("This is the second version".getBytes());
+      record1.setBytes("This is the second version".getBytes());
       database.save(record1);
 
       database.commit();
@@ -173,7 +173,7 @@ public class TransactionOptimisticTest extends DocumentDBBaseTest {
 
       OBlob record2 = db2.load(record1.getIdentity(), "*:-1", true);
       Assert.assertEquals(record2.getVersion(), v1 + 1);
-      Assert.assertTrue(new String(record2.toStream()).contains("second"));
+      Assert.assertTrue(new String(record2.getBytes()).contains("second"));
 
     } finally {
 

@@ -266,10 +266,11 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
       return;
     } else if (fieldName.equals("value") && !(record instanceof ODocument)) {
       // RECORD VALUE(S)
-      if ("null".equals(fieldValue)) record.fromStream(OCommonConst.EMPTY_BYTE_ARRAY);
+      if ("null".equals(fieldValue))
+        ORecordInternal.fromStream(record, OCommonConst.EMPTY_BYTE_ARRAY, null);
       else if (record instanceof OBlob) {
         // BYTES
-        record.fromStream(Base64.getDecoder().decode(fieldValueAsString));
+        ((OBlob) record).setBytes(Base64.getDecoder().decode(fieldValueAsString));
       } else if (record instanceof ORecordStringable) {
         ((ORecordStringable) record).value(fieldValueAsString);
       } else throw new IllegalArgumentException("unsupported type of record");
@@ -377,7 +378,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
             settings.indentLevel,
             true,
             "value",
-            Base64.getEncoder().encodeToString(record.toStream()));
+            Base64.getEncoder().encodeToString(record.getBytes()));
       } else
         throw new OSerializationException(
             "Error on marshalling record of type '"
@@ -422,7 +423,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
             settings.indentLevel,
             true,
             "value",
-            Base64.getEncoder().encodeToString(recordBlob.toStream()));
+            Base64.getEncoder().encodeToString(recordBlob.getBytes()));
       } else {
         throw new OSerializationException(
             "Error on marshalling record of type '"

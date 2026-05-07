@@ -29,7 +29,6 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
-import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -39,7 +38,6 @@ import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.OVertex;
-import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -450,16 +448,6 @@ public class OVertexDelegate implements OVertex {
   @Override
   public ORecordElement getOwner() {
     return element.getOwner();
-  }
-
-  @Override
-  public byte[] toStream() throws OSerializationException {
-    return element.toStream();
-  }
-
-  @Override
-  public OSerializableStream fromStream(byte[] iStream) throws OSerializationException {
-    return element.fromStream(iStream);
   }
 
   @Override

@@ -711,7 +711,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
         currentTx.reloadRecord(record.getIdentity(), record, fetchPlan, ignoreCache, force);
 
     if (loadedRecord != null && record != loadedRecord) {
-      record.fromStream(loadedRecord.toStream());
+      ORecordInternal.copyContent(record, loadedRecord, this);
       ORecordInternal.setVersion(record, loadedRecord.getVersion());
     } else if (loadedRecord == null) {
       throw new ORecordNotFoundException(record.getIdentity());

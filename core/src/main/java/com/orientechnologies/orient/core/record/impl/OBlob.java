@@ -14,4 +14,8 @@ public interface OBlob extends ORecord {
   int fromInputStream(final InputStream in, final int maxSize) throws IOException;
 
   void toOutputStream(final OutputStream out) throws IOException;
+
+  byte[] getBytes();
+
+  void setBytes(byte[] bytes);
 }

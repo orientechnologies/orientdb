@@ -179,4 +179,14 @@ public class ORecordBytes extends ORecordAbstract implements OBlob {
       out.write(source);
     }
   }
+
+  @Override
+  public byte[] getBytes() {
+    return source;
+  }
+
+  @Override
+  public void setBytes(byte[] bytes) {
+    this.source = bytes;
+  }
 }

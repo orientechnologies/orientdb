@@ -871,7 +871,7 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
     if (iRecord == null) {
       iRecord = new ODocument();
     } else if (iRecord instanceof OBlob) {
-      iRecord.fromStream(iSource);
+      ((OBlob) iRecord).setBytes(iSource);
       return iRecord;
     }
     ORecordInternal.setRecordSerializer(iRecord, this);
@@ -893,7 +893,7 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
   @Override
   public byte[] toStream(ORecord iSource, OSerializationContext ctx) {
     if (iSource instanceof OBlob) {
-      return iSource.toStream();
+      return ORecordInternal.getBytes(iSource);
     } else {
       final BytesContainer container = new BytesContainer();
 

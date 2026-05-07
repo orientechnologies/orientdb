@@ -56,7 +56,7 @@ public class OSQLFunctionEncode extends OSQLFunctionAbstract {
     } else if (candidate instanceof ORecordId) {
       final ORecord rec = ((ORecordId) candidate).getRecord();
       if (rec instanceof OBlob) {
-        data = ((OBlob) rec).toStream();
+        data = ((OBlob) rec).getBytes();
       }
     } else if (candidate instanceof OSerializableStream) {
       data = ((OSerializableStream) candidate).toStream();

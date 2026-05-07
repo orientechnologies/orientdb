@@ -25,6 +25,7 @@ import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.OBlob;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
@@ -92,7 +93,7 @@ public class ORecordSerializerBinary implements ORecordSerializer {
     if (iSource == null || iSource.length == 0) return iRecord;
     if (iRecord == null) iRecord = new ODocument();
     else if (iRecord instanceof OBlob) {
-      iRecord.fromStream(iSource);
+      ((OBlob) iRecord).setBytes(iSource);
       return iRecord;
     }
 
@@ -115,7 +116,7 @@ public class ORecordSerializerBinary implements ORecordSerializer {
   @Override
   public byte[] toStream(ORecord record, OSerializationContext ctx) {
     if (record instanceof OBlob) {
-      return record.toStream();
+      return ORecordInternal.getBytes(record);
     } else {
       ODocument documentToSerialize = (ODocument) record;
 

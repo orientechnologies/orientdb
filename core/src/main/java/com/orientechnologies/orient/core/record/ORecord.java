@@ -22,7 +22,6 @@ package com.orientechnologies.orient.core.record;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.id.ORID;
-import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import java.io.Serializable;
 
@@ -30,7 +29,7 @@ import java.io.Serializable;
  * Generic record representation. The object can be reused across multiple calls to the database by
  * using the {@link #reset()} method.
  */
-public interface ORecord extends ORecordElement, OIdentifiable, Serializable, OSerializableStream {
+public interface ORecord extends ORecordElement, OIdentifiable, Serializable {
   /**
    * Removes all the dependencies with other records. All the relationships remain in form of
    * RecordID. If some links contain dirty records, the detach cannot be complete and this method

@@ -55,7 +55,7 @@ public class BinaryTest extends DocumentDBBaseTest {
   public void testBasicReadExternal() {
     OBlob record = database.load(rid);
 
-    Assert.assertEquals("This is a test", new String(record.toStream()));
+    Assert.assertEquals("This is a test", new String(record.getBytes()));
   }
 
   @Test(dependsOnMethods = "testBasicReadExternal")
@@ -72,6 +72,6 @@ public class BinaryTest extends DocumentDBBaseTest {
     ODocument doc = new ODocument(rid);
     database.reload(doc);
 
-    Assert.assertEquals("Binary data", new String(((OBlob) doc.field("binary")).toStream()));
+    Assert.assertEquals("Binary data", new String(((OBlob) doc.field("binary")).getBytes()));
   }
 }

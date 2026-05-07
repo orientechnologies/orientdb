@@ -176,4 +176,16 @@ public class ORecordInternal {
   public static ORecordSerializer getRecordSerializer(ORecord iRecord) {
     return ((ORecordAbstract) iRecord).recordFormat;
   }
+
+  public static byte[] getBytes(ORecord record) {
+    return ((ORecordAbstract) record).toStream();
+  }
+
+  public static void copyContent(ORecord dest, ORecord source) {
+    ((ORecordAbstract) dest).fromStream(((ORecordAbstract) source).toStream());
+  }
+
+  public static void copyContent(ORecord dest, ORecord source, ODatabaseDocumentInternal db) {
+    fromStream(dest, ((ORecordAbstract) source).toStream(), db);
+  }
 }

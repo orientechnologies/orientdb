@@ -269,12 +269,12 @@ public class OTableFormatter {
       value = iRecord.getIdentity().toString();
     else if (iRecord instanceof ODocument) value = ((ODocument) iRecord).getProperty(iColumnName);
     else if (iRecord instanceof OBlob)
-      value = "<binary> (size=" + ((OBlob) iRecord).toStream().length + " bytes)";
+      value = "<binary> (size=" + ((OBlob) iRecord).getBytes().length + " bytes)";
     else if (iRecord instanceof OIdentifiable) {
       final ORecord rec = iRecord.getRecord();
       if (rec instanceof ODocument) value = ((ODocument) rec).getProperty(iColumnName);
       else if (rec instanceof OBlob)
-        value = "<binary> (size=" + ((OBlob) rec).toStream().length + " bytes)";
+        value = "<binary> (size=" + ((OBlob) rec).getBytes().length + " bytes)";
     }
 
     return getPrettyFieldValue(value, maxMultiValueEntries);

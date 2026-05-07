@@ -620,7 +620,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
 
       if (record != null) {
         if (iRecord != null && iRecord != record) {
-          ORecordInternal.fromStream(iRecord, record.toStream(), this);
+          ORecordInternal.copyContent(iRecord, record);
           ORecordInternal.setVersion(iRecord, record.getVersion());
           record = iRecord;
         }

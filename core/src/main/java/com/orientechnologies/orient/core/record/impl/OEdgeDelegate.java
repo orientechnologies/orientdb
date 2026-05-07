@@ -24,7 +24,6 @@ import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
-import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
@@ -33,7 +32,6 @@ import com.orientechnologies.orient.core.record.OEdge;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.OVertex;
-import com.orientechnologies.orient.core.serialization.OSerializableStream;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import java.util.Collections;
 import java.util.HashSet;
@@ -298,18 +296,6 @@ public class OEdgeDelegate implements OEdge {
   @Override
   public ORecordElement getOwner() {
     if (element != null) return element.getOwner();
-    return null;
-  }
-
-  @Override
-  public byte[] toStream() throws OSerializationException {
-    if (element != null) return element.toStream();
-    return null;
-  }
-
-  @Override
-  public OSerializableStream fromStream(byte[] iStream) throws OSerializationException {
-    if (element != null) return element.fromStream(iStream);
     return null;
   }
 

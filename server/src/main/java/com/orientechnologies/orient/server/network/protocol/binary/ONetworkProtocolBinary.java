@@ -920,7 +920,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       ORecordSerializer ser = ORecordSerializerFactory.instance().getFormat(name);
       stream = ser.toStream(iRecord);
     } else {
-      stream = iRecord.toStream();
+      stream = ORecordInternal.getBytes(iRecord);
     }
 
     return stream;

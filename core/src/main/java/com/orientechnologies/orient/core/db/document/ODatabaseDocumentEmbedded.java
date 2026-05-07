@@ -1373,7 +1373,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
       }
       if (record != null) {
         if (iRecord != null && iRecord != record) {
-          ORecordInternal.fromStream(iRecord, record.toStream(), this);
+          ORecordInternal.fromStream(iRecord, ORecordInternal.getBytes(record), this);
           ORecordInternal.setVersion(iRecord, record.getVersion());
           record = iRecord;
         }

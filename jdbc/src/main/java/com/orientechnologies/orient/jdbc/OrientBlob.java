@@ -54,7 +54,7 @@ public class OrientBlob implements Blob {
         throw new IllegalArgumentException("The binary data chunks list cannot hold empty chunks");
       } else {
 
-        this.binaryDataChunks.add(binaryDataChunk.toStream());
+        this.binaryDataChunks.add(binaryDataChunk.getBytes());
       }
     }
     this.length = calculateLength();

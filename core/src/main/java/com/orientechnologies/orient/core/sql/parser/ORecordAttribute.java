@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.ORecord;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import java.util.Map;
@@ -115,7 +116,7 @@ public class ORecordAttribute extends SimpleNode {
     } else if (name.equalsIgnoreCase("@raw")) {
       return iCurrentRecord
           .getRecord()
-          .map(r -> r.toStream())
+          .map(ORecordInternal::getBytes)
           .orElseGet(
               () -> {
                 return iCurrentRecord.getProperty(name);

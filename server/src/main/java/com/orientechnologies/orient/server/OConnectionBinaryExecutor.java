@@ -1222,7 +1222,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
       ((ODocument) iRecord).deserializeFields();
       ORecordSerializer ser = ORecordSerializerFactory.instance().getFormat(name);
       stream = ser.toStream(iRecord);
-    } else stream = iRecord.toStream();
+    } else stream = ORecordInternal.getBytes(iRecord);
 
     return stream;
   }

@@ -41,6 +41,7 @@ import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordAbstract;
+import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.OJSONWriter;
 import com.orientechnologies.orient.core.serialization.serializer.record.string.ORecordSerializerJSON;
@@ -258,7 +259,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
           throw e;
         } catch (Exception t) {
           if (rec != null) {
-            final byte[] buffer = rec.toStream();
+            final byte[] buffer = ORecordInternal.getBytes(rec);
 
             logger.error(
                 "\n"
@@ -665,7 +666,7 @@ public class ODatabaseExport extends ODatabaseImpExpAbstract {
           brokenRids.add(rid);
         }
 
-        final byte[] buffer = rec.toStream();
+        final byte[] buffer = ORecordInternal.getBytes(rec);
 
         logger.error(
             "\n"

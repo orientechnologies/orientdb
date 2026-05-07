@@ -124,7 +124,7 @@ public class Account {
     if (iDocument.containsField("externalPhoto")) {
       // READ THE PHOTO FROM AN EXTERNAL RECORD AS PURE BINARY
       OBlob extRecord = iDocument.field("externalPhoto");
-      photo = extRecord.toStream();
+      photo = extRecord.getBytes();
     }
   }
 
