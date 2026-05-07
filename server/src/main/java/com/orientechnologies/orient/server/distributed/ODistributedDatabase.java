@@ -79,8 +79,6 @@ public interface ODistributedDatabase {
 
   ODistributedTxContext getTxContext(ODistributedRequestId requestId);
 
-  ODistributedServerManager getManager();
-
   ODatabaseDocumentInternal getDatabaseInstance();
 
   long getReceivedRequests();

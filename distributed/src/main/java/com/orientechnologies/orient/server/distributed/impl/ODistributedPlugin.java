@@ -41,7 +41,6 @@ import com.orientechnologies.orient.core.db.OCancellableTimer;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -718,66 +717,6 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
       }
     }
     return waitLocalNode;
-  }
-
-  @Override
-  public void executeOnLocalNodeFromRemote(ODistributedRequest request) {
-    Object response = executeOnLocalNode(request.getId(), request.getTask(), null);
-    ODistributedDatabaseImpl.sendResponseBack(this, this, request.getId(), response);
-  }
-
-  /** Executes the request on local node. In case of error returns the Exception itself */
-  @Override
-  public Object executeOnLocalNode(
-      final ODistributedRequestId reqId,
-      final ORemoteTask task,
-      final ODatabaseDocumentInternal database) {
-
-    return OScenarioThreadLocal.executeAsDistributed(
-        () -> {
-          return localInternalExecute(reqId, task, database);
-        });
-  }
-
-  private Object localInternalExecute(
-      final ODistributedRequestId reqId,
-      final ORemoteTask task,
-      final ODatabaseDocumentInternal database) {
-    try {
-      final Object result = task.execute(reqId, serverInstance, database);
-
-      if (result instanceof Throwable && !(result instanceof OException))
-        // EXCEPTION
-        logger.debugNode(
-            nodeName,
-            "Error on executing request %d (%s) on local node: ",
-            (Throwable) result,
-            reqId,
-            task);
-
-      return result;
-
-    } catch (InterruptedException e) {
-      // IGNORE IT
-      logger.debugNode(
-          nodeName,
-          "Interrupted execution on executing distributed request %s on local node: %s",
-          e,
-          reqId,
-          task);
-      return e;
-
-    } catch (Exception e) {
-      if (!(e instanceof OException))
-        logger.errorNode(
-            nodeName,
-            "Error on executing distributed request %s on local node: %s",
-            e,
-            reqId,
-            task);
-
-      return e;
-    }
   }
 
   public String getLocalNodeName() {

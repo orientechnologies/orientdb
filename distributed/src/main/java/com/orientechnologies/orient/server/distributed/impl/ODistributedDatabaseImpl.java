@@ -20,9 +20,11 @@
 package com.orientechnologies.orient.server.distributed.impl;
 
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_TRANSACTION_SEQUENCE_SET_SIZE;
+import static com.orientechnologies.orient.core.db.OScenarioThreadLocal.executeAsDistributed;
 
 import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.thread.OSourceTraceExecutorService;
 import com.orientechnologies.common.thread.OThreadPoolExecutors;
@@ -42,12 +44,12 @@ import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import com.orientechnologies.orient.core.tx.OTxMetadataHolder;
 import com.orientechnologies.orient.core.tx.ValidationResult;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
+import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedResponse;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.DB_STATUS;
 import com.orientechnologies.orient.server.distributed.ODistributedTxContext;
 import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
@@ -176,19 +178,58 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
         "distributed.db.*.recordLocks");
   }
 
+  public static void executeNoDb(ODistributedRequest request, OrientDBDistributed ctx) {
+    Object response = executeAsDistributed(() -> localExecute(request, ctx.getServer(), null));
+    ODistributedDatabaseImpl.sendResponseBack(request.getId(), response, ctx);
+  }
+
+  private static Object localExecute(
+      ODistributedRequest request, OServer serverInstance, ODatabaseDocumentInternal database) {
+    ODistributedRequestId reqId = request.getId();
+    ORemoteTask task = request.getTask();
+    var nodeId = serverInstance.getNodeId();
+    try {
+      final Object result = task.execute(reqId, serverInstance, database);
+      if (result instanceof Throwable && !(result instanceof OException))
+        // EXCEPTION
+        logger.debugNode(
+            nodeId,
+            "Error on executing request %d (%s) on local node: ",
+            (Throwable) result,
+            reqId,
+            task);
+
+      return result;
+
+    } catch (InterruptedException e) {
+      // IGNORE IT
+      logger.debugNode(
+          nodeId,
+          "Interrupted execution on executing distributed request %s on local node: %s",
+          e,
+          reqId,
+          task);
+      return e;
+
+    } catch (Exception e) {
+      if (!(e instanceof OException))
+        logger.errorNode(
+            nodeId, "Error on executing distributed request %s on local node: %s", e, reqId, task);
+
+      return e;
+    }
+  }
+
   public static boolean sendResponseBack(
-      final Object current,
-      final ODistributedServerManager manager,
-      final ODistributedRequestId iRequestId,
-      Object responsePayload) {
+      final ODistributedRequestId iRequestId, Object responsePayload, OrientDBDistributed ctx) {
 
     if (iRequestId.getMessageId() < 0)
       // INTERNAL MSG
       return true;
 
-    final String local = manager.getLocalNodeName();
+    final String local = ctx.getNodeId().getNode();
 
-    final String sender = manager.getNodeNameById(iRequestId.getNodeId());
+    final String sender = ctx.getDistributedManager().getNodeNameById(iRequestId.getNodeId());
 
     final ODistributedResponse response =
         new ODistributedResponse(null, iRequestId, local, sender, responsePayload);
@@ -197,7 +238,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     //    if (!senderNodeName.equalsIgnoreCase(manager.getLocalNodeName()))
     try {
       // GET THE SENDER'S RESPONSE QUEUE
-      final ORemoteServerController remoteSenderServer = manager.getRemoteServer(sender);
+      final ORemoteServerController remoteSenderServer = ctx.getRemoteServer(sender);
 
       remoteSenderServer.sendResponse(response);
 
@@ -269,7 +310,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
           @Override
           public void run() {
             processRequest(
-                new ODistributedRequest(getManager(), requestId, databaseName, payload), false);
+                new ODistributedRequest(manager, requestId, databaseName, payload), false);
           }
         },
         autoRetryDelay * retryCount);
@@ -360,13 +401,13 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       Object response;
       if (task.isUsingDatabase()) {
         try (ODatabaseDocumentInternal db = context.openNoAuthorization(databaseName)) {
-          response = this.manager.executeOnLocalNode(request.getId(), task, db);
+          response = executeAsDistributed(() -> localExecute(request, context.getServer(), db));
         }
       } else {
-        response = this.manager.executeOnLocalNode(request.getId(), task, null);
+        response = executeAsDistributed(() -> localExecute(request, context.getServer(), null));
       }
       if (task.hasResponse()) {
-        sendResponseBack(this, this.manager, request.getId(), response);
+        sendResponseBack(request.getId(), response, context);
       }
     } finally {
       task.finished(this);
@@ -479,11 +520,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   public ODistributedTxContext getTxContext(final ODistributedRequestId requestId) {
     final ODistributedTxContext ctx = activeTxContexts.get(requestId);
     return ctx;
-  }
-
-  @Override
-  public ODistributedServerManager getManager() {
-    return manager;
   }
 
   public boolean exists() {

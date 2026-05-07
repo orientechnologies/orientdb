@@ -32,6 +32,7 @@ import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.core.tx.ValidationResult;
+import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
@@ -416,10 +417,9 @@ public class OTransactionPhase1Task extends OAbstractRemoteTask implements OLock
               () -> {
                 if (!finished) {
                   ODistributedDatabaseImpl.sendResponseBack(
-                      this,
-                      distributedDatabase.getManager(),
                       request.getId(),
-                      new OTransactionPhase1TaskResult(new OTxStillRunning()));
+                      new OTransactionPhase1TaskResult(new OTxStillRunning()),
+                      (OrientDBDistributed) databases);
                 }
               },
               getDistributedTimeout());

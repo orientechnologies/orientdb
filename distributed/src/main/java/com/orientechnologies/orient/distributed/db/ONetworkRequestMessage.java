@@ -1,18 +1,19 @@
 package com.orientechnologies.orient.distributed.db;
 
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.db.ONetworkMessage;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
+import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseImpl;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
 public class ONetworkRequestMessage implements ONetworkMessage {
 
-  private static final OLogger logger = OLogManager.instance().logger(ONetworkRequestMessage.class);
+  private static final OLoggerDistributed logger =
+      OLoggerDistributed.logger(ONetworkRequestMessage.class);
   private final OrientDBDistributed ctx;
   private final ODistributedRequest req;
 
@@ -24,7 +25,6 @@ public class ONetworkRequestMessage implements ONetworkMessage {
 
   @Override
   public void execute() {
-    final ODistributedServerManager manager = ctx.getDistributedManager();
     final String dbName = req.getDatabaseName();
     ODistributedDatabase ddb = null;
     if (dbName != null) {
@@ -34,9 +34,10 @@ public class ONetworkRequestMessage implements ONetworkMessage {
         Thread.currentThread().interrupt();
       }
       if (req.getTask().isNodeOnlineRequired()) {
-        ddb = manager.getDatabase(dbName);
+        ddb = ctx.getDatabase(dbName);
         if (ddb == null) {
-          logger.warn(
+          logger.warnNode(
+              ctx.getNodeId(),
               "Message %s require online database, but offline, dropping execution",
               req.toString());
           return;
@@ -46,7 +47,7 @@ public class ONetworkRequestMessage implements ONetworkMessage {
     if (ddb != null) {
       ddb.processRequest(req, true);
     } else {
-      manager.executeOnLocalNodeFromRemote(req);
+      ODistributedDatabaseImpl.executeNoDb(req, ctx);
     }
   }
 

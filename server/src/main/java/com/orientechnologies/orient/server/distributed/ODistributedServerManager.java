@@ -19,7 +19,6 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.distributed.ONodeConfig;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.config.OClusterConfiguration;
@@ -73,11 +72,6 @@ public interface ODistributedServerManager {
   ODistributedServerManager registerLifecycleListener(ODistributedLifecycleListener iListener);
 
   ODistributedServerManager unregisterLifecycleListener(ODistributedLifecycleListener iListener);
-
-  Object executeOnLocalNode(
-      ODistributedRequestId reqId, ORemoteTask task, ODatabaseDocumentInternal database);
-
-  void executeOnLocalNodeFromRemote(ODistributedRequest request);
 
   ORemoteServerController getRemoteServer(String nodeName) throws IOException;
 
