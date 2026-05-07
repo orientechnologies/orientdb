@@ -1080,8 +1080,13 @@ public class OrientDBDistributed extends OrientDBEmbedded
           accept = new OCanSyncAccept.NonBlockingSync();
         }
       } else if (mode instanceof Delta d) {
-        List<OTransactionId> missing = getDatabase(dbName).missingTransactions(d.status());
-        if (missing.isEmpty()) {
+        var dbCtx = getDatabase(dbName);
+
+        List<OTransactionId> missing = null;
+        if (dbCtx != null) {
+          missing = dbCtx.missingTransactions(d.status());
+        }
+        if (missing == null || missing.isEmpty()) {
           accept = new OCanSyncAccept.NotAccepted();
         } else {
           accept = new OCanSyncAccept.DeltaSync(d.status());
