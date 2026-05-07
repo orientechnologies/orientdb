@@ -79,6 +79,7 @@ import java.io.InputStream;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -104,7 +105,7 @@ public class OServer {
       new HashMap<String, Class<? extends ONetworkProtocol>>();
   protected Map<String, OServerSocketFactory> networkSocketFactories =
       new HashMap<String, OServerSocketFactory>();
-  protected List<OServerNetworkListener> networkListeners = new ArrayList<OServerNetworkListener>();
+  protected List<OServerNetworkListener> networkListeners = Collections.emptyList();
   protected List<OServerLifecycleListener> lifecycleListeners =
       new ArrayList<OServerLifecycleListener>();
   protected OServerPluginManager pluginManager;
@@ -451,8 +452,9 @@ public class OServer {
               p.name, (Class<? extends ONetworkProtocol>) loadClass(p.implementation));
 
         // STARTUP LISTENERS
-        for (OServerNetworkListenerConfiguration l : configuration.network.listeners)
-          networkListeners.add(
+        List<OServerNetworkListener> listener = new ArrayList<>();
+        for (OServerNetworkListenerConfiguration l : configuration.network.listeners) {
+          listener.add(
               new OServerNetworkListener(
                   this,
                   networkSocketFactories.get(l.socket),
@@ -462,6 +464,8 @@ public class OServer {
                   networkProtocols.get(l.protocol),
                   l.parameters,
                   l.commands));
+        }
+        this.networkListeners = listener;
 
       } else logger.warn("Network configuration was not found");
 
