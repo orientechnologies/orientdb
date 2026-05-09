@@ -405,7 +405,9 @@ public interface OrientDBInternal extends AutoCloseable, OSchedulerInternal {
     throw new UnsupportedOperationException();
   }
 
-  default void waitOnline(String database) throws InterruptedException {}
+  default boolean waitOnline(String database) throws InterruptedException {
+    return true;
+  }
 
   default void gracefulWaitFullStartup() throws InterruptedException {}
 

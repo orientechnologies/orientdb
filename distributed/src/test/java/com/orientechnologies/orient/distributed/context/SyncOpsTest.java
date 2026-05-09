@@ -2,6 +2,7 @@ package com.orientechnologies.orient.distributed.context;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -137,6 +138,7 @@ public class SyncOpsTest {
     OrientDBDistributed ctx1 = (OrientDBDistributed) OrientDBInternal.extract(context1);
     var result = ctx1.receiveSync("test", receiver, input, OrientDBConfig.defaultConfig());
     assertTrue(result);
+    assertNotNull(ctx.getDatabase("test"));
     try (var session = context1.open("test", "admin", "adminpwd")) {
       // if it can open is good, it restored the right password
       assertEquals(senderStatus, ctx1.getDatabase("test").status());

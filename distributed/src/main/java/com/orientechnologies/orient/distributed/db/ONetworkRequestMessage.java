@@ -27,13 +27,18 @@ public class ONetworkRequestMessage implements ONetworkMessage {
   public void execute() {
     final String dbName = req.getDatabaseName();
     ODistributedDatabase ddb = null;
+    boolean online = false;
     if (dbName != null) {
       try {
-        ctx.waitOnline(dbName);
+        online = ctx.waitOnline(dbName);
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
       }
       if (req.getTask().isNodeOnlineRequired()) {
+        ddb = ctx.getDatabase(dbName);
+        if (online && ddb == null) {
+          ctx.openNoAuthorization(dbName);
+        }
         ddb = ctx.getDatabase(dbName);
         if (ddb == null) {
           logger.warnNode(

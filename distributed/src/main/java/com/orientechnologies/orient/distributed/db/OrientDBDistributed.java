@@ -1686,10 +1686,9 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   @Override
-  public void waitOnline(String database) throws InterruptedException {
+  public boolean waitOnline(String database) throws InterruptedException {
     long waitTime = getLongConfig(OGlobalConfiguration.DISTRIBUTED_DATABASE_ONLINE_GRACE_PERIOD);
-    getNodeState().getOps().waitSelfOnline(database, Optional.of(waitTime));
-    //    server.getDistributedManager().waitUntilNodeOnline(getNodeName(), database);
+    return getNodeState().getOps().waitSelfOnline(database, Optional.of(waitTime));
   }
 
   public void mergeNode(
