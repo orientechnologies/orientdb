@@ -104,6 +104,8 @@ public interface OStorage extends OStorageInfo {
 
   boolean isClosed();
 
+  boolean isOpen();
+
   ORawBuffer readRecord(ORecordId iRid);
 
   ORawBuffer readRecordIfVersionIsNotLatest(ORecordId rid, int recordVersion)

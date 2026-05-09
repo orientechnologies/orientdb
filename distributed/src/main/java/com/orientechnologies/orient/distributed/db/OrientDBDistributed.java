@@ -365,7 +365,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
         checkOpen();
         OStorage storage = storages.get(name);
         OSharedContext sharedContext = sharedContexts.get(name);
-        if (storage != null && sharedContext != null) {
+        if (storage != null && storage.isOpen() && sharedContext != null) {
           if (isDistributedDisabled(storage.getName())) {
             embedded = new ODatabaseDocumentEmbedded(storage, sharedContext);
           } else {

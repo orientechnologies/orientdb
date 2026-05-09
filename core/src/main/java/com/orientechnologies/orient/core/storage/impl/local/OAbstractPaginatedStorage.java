@@ -1035,6 +1035,24 @@ public abstract class OAbstractPaginatedStorage
     }
   }
 
+  @Override
+  public final boolean isOpen() {
+    try {
+      stateLock.readLock().lock();
+      try {
+        return status == STATUS.OPEN;
+      } finally {
+        stateLock.readLock().unlock();
+      }
+    } catch (final RuntimeException ee) {
+      throw logAndPrepareForRethrow(ee);
+    } catch (final Error ee) {
+      throw logAndPrepareForRethrow(ee, false);
+    } catch (final Throwable t) {
+      throw logAndPrepareForRethrow(t, false);
+    }
+  }
+
   protected final boolean isClosedInternal() {
     return status == STATUS.CLOSED;
   }
