@@ -2140,8 +2140,6 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
   }
 
   public void deltaBackup(OutputStream out, List<OTransactionId> missing) {
-    if (!missing.isEmpty()) {
-      getStorage().backupTransactions(out, missing);
-    }
+    getStorage().backupTransactions(out, missing);
   }
 }

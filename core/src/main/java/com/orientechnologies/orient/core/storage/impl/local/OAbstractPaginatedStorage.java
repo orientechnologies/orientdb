@@ -1637,19 +1637,20 @@ public abstract class OAbstractPaginatedStorage
   @Override
   public void backupTransactions(
       OutputStream outputStream, List<OTransactionId> transactionsMetadata) {
-    Optional<List<OTransactionData>> txData = readTransactionsFromWal(transactionsMetadata);
-    if (txData.isPresent()) {
-      try {
-        DataOutput output = new DataOutputStream(outputStream);
-        for (OTransactionData transaction : txData.get()) {
-          output.writeBoolean(true);
-          transaction.write(output);
+    try {
+      DataOutput output = new DataOutputStream(outputStream);
+      if (!transactionsMetadata.isEmpty()) {
+        Optional<List<OTransactionData>> txData = readTransactionsFromWal(transactionsMetadata);
+        if (txData.isPresent()) {
+          for (OTransactionData transaction : txData.get()) {
+            output.writeBoolean(true);
+            transaction.write(output);
+          }
         }
-        output.writeBoolean(false);
-      } catch (IOException e) {
-        throw OException.wrapException(
-            new ODatabaseException("Error sending delta transactions"), e);
       }
+      output.writeBoolean(false);
+    } catch (IOException e) {
+      throw OException.wrapException(new ODatabaseException("Error sending delta transactions"), e);
     }
   }
 
