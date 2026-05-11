@@ -270,4 +270,20 @@ public class CoordinationMessagesSerializationTest {
     assertTrue(read.getOp() instanceof ODropDbMessage);
     assertEquals(read.getPromise(), promise);
   }
+
+  @Test
+  public void mergeConfirmOp() throws IOException {
+    var promise = newPromiseId();
+    var operation = new OMergeConfirmOp(promise);
+    OMergeConfirmOp read = writeRead(operation);
+    assertEquals(read.getPromise(), promise);
+  }
+
+  @Test
+  public void mergeFailOp() throws IOException {
+    var promise = newPromiseId();
+    var operation = new OMergeFailOp(promise);
+    OMergeFailOp read = writeRead(operation);
+    assertEquals(read.getPromise(), promise);
+  }
 }

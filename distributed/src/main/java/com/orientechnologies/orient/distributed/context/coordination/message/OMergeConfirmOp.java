@@ -38,4 +38,8 @@ public class OMergeConfirmOp implements OStructuralMessage {
   public String toString() {
     return "OMergeConfirmOp [promise=" + promise + "]";
   }
+
+  public OTransactionIdPromise getPromise() {
+    return promise;
+  }
 }
