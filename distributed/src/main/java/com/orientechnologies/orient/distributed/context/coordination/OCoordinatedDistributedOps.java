@@ -274,4 +274,6 @@ public interface OCoordinatedDistributedOps {
 
   void cancelSetDatabaseQuorum(
       ODatabaseId db, int quorum, OVersion version, OTransactionIdPromise promise);
+
+  void checkTimeoutSync(long timeOutSync);
 }

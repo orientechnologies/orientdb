@@ -23,6 +23,7 @@ public class OSyncState {
   private volatile OReceiverInputStream receiverStream;
   private volatile boolean canNext = false;
   private volatile boolean close = false;
+  private volatile long lastTimeMessageReceived;
 
   public OSyncState(
       ODatabaseId dbId,
@@ -35,6 +36,7 @@ public class OSyncState {
     this.sender = sender;
     this.receiver = receiver;
     this.acceptMode = acceptMode;
+    refreshMessageTime();
   }
 
   public synchronized void transaferd(long size) {
@@ -81,6 +83,11 @@ public class OSyncState {
     if (finished) {
       this.close = true;
     }
+    refreshMessageTime();
+  }
+
+  private synchronized void refreshMessageTime() {
+    this.lastTimeMessageReceived = System.nanoTime();
   }
 
   public synchronized void setReceiverStream(OReceiverInputStream receiver) {
@@ -125,5 +132,9 @@ public class OSyncState {
       }
     }
     this.notifyAll();
+  }
+
+  public synchronized long getLastTimeMessageReceived() {
+    return lastTimeMessageReceived;
   }
 }

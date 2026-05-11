@@ -15,6 +15,7 @@ import com.orientechnologies.orient.distributed.context.coordination.result.ODat
 import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncId;
 import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncInfo;
 import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncState;
+import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -26,7 +27,8 @@ import java.util.Optional;
 import java.util.Set;
 
 public class ODatabasesTopologyState extends OWatcher implements ODatabasesTopology {
-
+  private static final OLoggerDistributed logger =
+      OLoggerDistributed.logger(ODatabasesTopologyState.class);
   private final ONodeId current;
   private final Map<ODatabaseId, ODatabaseTopologyState> databases = new HashMap<>();
   private final Map<String, ODatabaseTopologyState> databasesByName = new HashMap<>();
@@ -250,6 +252,7 @@ public class ODatabasesTopologyState extends OWatcher implements ODatabasesTopol
   public synchronized Optional<OSyncInfo> newSync(ODatabaseId dbId) {
     ODatabaseTopologyState db = getDb(dbId);
     if (db == null) {
+      logger.debugNode(current, "Cannot create sync, missing db {}", dbId);
       return Optional.empty();
     }
     return db.newSync();
@@ -681,5 +684,11 @@ public class ODatabasesTopologyState extends OWatcher implements ODatabasesTopol
     }
 
     return Optional.empty();
+  }
+
+  public synchronized void checkTimeoutSync(long timeOutSync) {
+    for (var database : this.databases.values()) {
+      database.checkTimeoutSync(timeOutSync);
+    }
   }
 }

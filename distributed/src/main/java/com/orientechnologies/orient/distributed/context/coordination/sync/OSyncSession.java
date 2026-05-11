@@ -14,6 +14,7 @@ public class OSyncSession {
   private Set<ONodeId> nodes;
   private OSyncState state;
   private CompletableFuture<Boolean> finished = new CompletableFuture<Boolean>();
+  private long start = System.nanoTime();
 
   public OSyncSession(ODatabaseId dbId, ONodeId current, Set<ONodeId> nodes) {
     this.dbId = dbId;
@@ -93,5 +94,21 @@ public class OSyncSession {
 
   public void complete(boolean success) {
     this.finished.complete(success);
+  }
+
+  public boolean checkTimeout(long timeOutSync) {
+    long lastOp;
+    if (state != null) {
+      lastOp = state.getLastTimeMessageReceived();
+    } else {
+      lastOp = start;
+    }
+    var now = System.nanoTime();
+    if ((lastOp - now) / 1000 > timeOutSync) {
+      state.close();
+      complete(false);
+      return true;
+    }
+    return false;
   }
 }

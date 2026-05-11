@@ -19,6 +19,7 @@ import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncI
 import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncInfo;
 import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncSession;
 import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncState;
+import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -29,6 +30,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class ODatabaseTopologyState extends OWatcher {
+  private static final OLoggerDistributed logger =
+      OLoggerDistributed.logger(ODatabaseTopologyState.class);
   private final ODatabaseId id;
   private final ONodeId current;
   private final String name;
@@ -173,11 +176,13 @@ public class ODatabaseTopologyState extends OWatcher {
 
   public synchronized Optional<OSyncInfo> newSync() {
     if (!syncSessions.isEmpty()) {
+      logger.debugNode(current, "Cannot create new sync, one already present %s", syncSessions);
       return Optional.empty();
     }
     Set<ONodeId> onlineNodes = new HashSet<>(getOnlineNodes());
     onlineNodes.remove(current);
     if (onlineNodes.isEmpty()) {
+      logger.debugNode(current, "Cannot create new sync for db %s, no online nodes", getId());
       return Optional.empty();
     }
     OSyncSession session = new OSyncSession(getId(), current, onlineNodes);
@@ -470,5 +475,15 @@ public class ODatabaseTopologyState extends OWatcher {
 
   public Set<ONodeId> getMembers() {
     return this.nodeStatus.keySet();
+  }
+
+  public synchronized void checkTimeoutSync(long timeOutSync) {
+    var iter = this.syncSessions.values().iterator();
+    while (iter.hasNext()) {
+      var sync = iter.next();
+      if (sync.checkTimeout(timeOutSync)) {
+        iter.remove();
+      }
+    }
   }
 }

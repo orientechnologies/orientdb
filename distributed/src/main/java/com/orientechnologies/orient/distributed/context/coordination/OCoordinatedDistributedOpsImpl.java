@@ -980,4 +980,9 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
       ODatabaseId db, int quorum, OVersion version, OTransactionIdPromise promise) {
     this.databaseTopology.cancelSetDatabaseQuorum(db, quorum, version, promise);
   }
+
+  @Override
+  public void checkTimeoutSync(long timeOutSync) {
+    this.databaseTopology.checkTimeoutSync(timeOutSync);
+  }
 }

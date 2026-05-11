@@ -210,6 +210,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
     var period = getLongConfig(OGlobalConfiguration.DISTRIBUTED_CHECK_HEALTH_EVERY);
     periodicExecute(this::sendTopologyPing, period);
     periodicExecute(this::checkDisconnectedNodes, period);
+    periodicExecute(this::checkOperationsTimeout, period);
   }
 
   public void reconciliateState() {
@@ -1070,7 +1071,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
       sendMessage(sync.get().targets(), req);
       return Optional.of(sync.get().finished());
     } else {
-      logger.warn("cannot sync missing or already synching db  %s", dbId);
+      logger.warn("Failed to start database sync  %s", dbId);
       return Optional.empty();
     }
   }
@@ -1615,6 +1616,11 @@ public class OrientDBDistributed extends OrientDBEmbedded
       var action = getNodeState().getOps().nodeDisconnected(offlineNode);
       action.execute(this);
     }
+  }
+
+  private void checkOperationsTimeout() {
+    var timeOutSync = getLongConfig(OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_SYNCH_TIMEOUT);
+    getNodeState().getOps().checkTimeoutSync(timeOutSync);
   }
 
   public void checkNodeIsMaster(ONodeId localNodeId, String name, String operation) {
