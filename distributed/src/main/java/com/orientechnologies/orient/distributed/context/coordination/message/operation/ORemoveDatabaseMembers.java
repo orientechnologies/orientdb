@@ -67,4 +67,16 @@ public class ORemoveDatabaseMembers implements OOperationMessage {
     OVersion version = OVersion.readNetwork(input);
     return new ORemoveDatabaseMembers(dbId, nodes, version);
   }
+
+  public List<ONodeId> getNodes() {
+    return nodes;
+  }
+
+  public ODatabaseId getDatabase() {
+    return database;
+  }
+
+  public OVersion getVersion() {
+    return version;
+  }
 }

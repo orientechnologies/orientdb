@@ -57,4 +57,16 @@ public class OSetDatabaseQuorum implements OOperationMessage {
     var version = OVersion.readNetwork(input);
     return new OSetDatabaseQuorum(db, quorum, version);
   }
+
+  public ODatabaseId getDb() {
+    return db;
+  }
+
+  public int getQuorum() {
+    return quorum;
+  }
+
+  public OVersion getVersion() {
+    return version;
+  }
 }

@@ -57,7 +57,7 @@ public class OSetDatabaseMemberRole implements OOperationMessage {
 
   @Override
   public short getType() {
-    return 10;
+    return 11;
   }
 
   public static OSetDatabaseMemberRole readNetwork(DataInput input) throws IOException {
@@ -66,5 +66,21 @@ public class OSetDatabaseMemberRole implements OOperationMessage {
     var role = ONodeRole.readNetwork(input);
     var version = OVersion.readNetwork(input);
     return new OSetDatabaseMemberRole(db, node, role, version);
+  }
+
+  public ODatabaseId getDb() {
+    return db;
+  }
+
+  public ONodeId getNode() {
+    return node;
+  }
+
+  public ONodeRole getRole() {
+    return role;
+  }
+
+  public OVersion getVersion() {
+    return version;
   }
 }

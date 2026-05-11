@@ -56,4 +56,12 @@ public class ORemoveTopologyMember implements OOperationMessage {
   public String toString() {
     return "ORemoveTopologyMember [node=" + node + ", version=" + version + "]";
   }
+
+  public ONodeId getNode() {
+    return node;
+  }
+
+  public OVersion getVersion() {
+    return version;
+  }
 }

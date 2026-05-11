@@ -8,6 +8,7 @@ import com.orientechnologies.orient.core.transaction.OGroupId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
+import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import com.orientechnologies.orient.distributed.context.coordination.OVersion;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabaseState;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ONodeRole;
@@ -17,8 +18,16 @@ import com.orientechnologies.orient.distributed.context.coordination.message.ope
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.ODeclareDbMessage;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.ODropDbMessage;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OEstablishTopology;
+import com.orientechnologies.orient.distributed.context.coordination.message.operation.OMergeNode;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OOperationMessage;
+import com.orientechnologies.orient.distributed.context.coordination.message.operation.ORemoveDatabaseMembers;
+import com.orientechnologies.orient.distributed.context.coordination.message.operation.ORemoveTopologyMember;
+import com.orientechnologies.orient.distributed.context.coordination.message.operation.OSetDatabaseMemberRole;
+import com.orientechnologies.orient.distributed.context.coordination.message.operation.OSetDatabaseQuorum;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OSetDatabaseState;
+import com.orientechnologies.orient.distributed.context.coordination.message.state.ONodeStateNetwork;
+import com.orientechnologies.orient.distributed.context.coordination.message.state.OTopologyStateNetwork;
+import com.orientechnologies.orient.distributed.context.coordination.topology.OTopologyState;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInput;
@@ -26,6 +35,7 @@ import java.io.DataInputStream;
 import java.io.DataOutput;
 import java.io.DataOutputStream;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -92,6 +102,29 @@ public class OOperationMessageTest {
     assertTrue(operation.getGroupId().equals(groupId));
   }
 
+  private ONodeStateNetwork newNetworkState(Set<ONodeId> nodes, OGroupId groupId) {
+    OTopologyStateNetwork topology =
+        new OTopologyStateNetwork(groupId, OTopologyState.ESTABLISHED, nodes, 1, new OVersion(1));
+    OTransactionSequenceStatus status = new OTransactionSequenceStatus(new long[] {});
+    return new ONodeStateNetwork(topology, Collections.emptyList(), status);
+  }
+
+  @Test
+  public void mergeNode() throws IOException {
+
+    ONodeId nodeId1 = newNodeId();
+    ONodeId nodeId2 = newNodeId();
+    var original = newNetworkState(Set.of(nodeId1), new OGroupId("abc"));
+    var merge = newNetworkState(Set.of(nodeId1, nodeId2), new OGroupId("abc"));
+
+    OMergeNode toTest = new OMergeNode(nodeId1, merge, original);
+    OMergeNode operation = writeRead(toTest);
+
+    assertEquals(operation.getNode(), nodeId1);
+    assertEquals(operation.getOriginal(), original);
+    assertEquals(operation.getState(), merge);
+  }
+
   @Test
   public void setDatabaseSetState() throws IOException {
 
@@ -105,6 +138,58 @@ public class OOperationMessageTest {
     assertEquals(operation.getDbId(), dbId);
     assertEquals(operation.getNodeId(), nodeId1);
     assertEquals(operation.getState(), ODatabaseState.Online);
+    assertEquals(operation.getVersion(), new OVersion(1));
+  }
+
+  @Test
+  public void setDatabaseMemberRole() throws IOException {
+
+    ODatabaseId dbId = newDatabaseId();
+    ONodeId nodeId1 = newNodeId();
+
+    OSetDatabaseMemberRole toTest =
+        new OSetDatabaseMemberRole(dbId, nodeId1, ONodeRole.Main, new OVersion(1));
+    OSetDatabaseMemberRole operation = writeRead(toTest);
+
+    assertEquals(operation.getDb(), dbId);
+    assertEquals(operation.getNode(), nodeId1);
+    assertEquals(operation.getRole(), ONodeRole.Main);
+    assertEquals(operation.getVersion(), new OVersion(1));
+  }
+
+  @Test
+  public void removeTopologyMember() throws IOException {
+
+    ONodeId node = newNodeId();
+
+    ORemoveTopologyMember toTest = new ORemoveTopologyMember(node, new OVersion(1));
+    ORemoveTopologyMember operation = writeRead(toTest);
+
+    assertEquals(operation.getNode(), node);
+    assertEquals(operation.getVersion(), new OVersion(1));
+  }
+
+  @Test
+  public void removeDatabaseMembers() throws IOException {
+    ODatabaseId dbId = newDatabaseId();
+    List<ONodeId> nodes = List.of(newNodeId());
+
+    ORemoveDatabaseMembers toTest = new ORemoveDatabaseMembers(dbId, nodes, new OVersion(1));
+    ORemoveDatabaseMembers operation = writeRead(toTest);
+
+    assertEquals(operation.getDatabase(), dbId);
+    assertEquals(operation.getNodes(), nodes);
+    assertEquals(operation.getVersion(), new OVersion(1));
+  }
+
+  @Test
+  public void setDatabaseSetQuorum() throws IOException {
+    ODatabaseId dbId = newDatabaseId();
+    OSetDatabaseQuorum toTest = new OSetDatabaseQuorum(dbId, 2, new OVersion(1));
+    OSetDatabaseQuorum operation = writeRead(toTest);
+
+    assertEquals(operation.getDb(), dbId);
+    assertEquals(operation.getQuorum(), 2);
     assertEquals(operation.getVersion(), new OVersion(1));
   }
 

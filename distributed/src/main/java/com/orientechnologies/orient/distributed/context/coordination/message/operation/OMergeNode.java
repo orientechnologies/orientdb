@@ -62,4 +62,16 @@ public class OMergeNode implements OOperationMessage {
   public String toString() {
     return "OMergeNode [node=" + node + ", state=" + state + ", original=" + original + "]";
   }
+
+  public ONodeId getNode() {
+    return node;
+  }
+
+  public ONodeStateNetwork getOriginal() {
+    return original;
+  }
+
+  public ONodeStateNetwork getState() {
+    return state;
+  }
 }
