@@ -1,15 +1,20 @@
 package com.orientechnologies.orient.core.sql.functions;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import java.math.BigDecimal;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.List;
 import org.junit.Test;
 
@@ -119,5 +124,34 @@ public class OSQLFunctionConvertTest extends BaseMemoryDatabase {
     assertNotNull(results);
     assertEquals(results.size(), 1);
     assertEquals(results.get(0).field("convert"), "Jay");
+  }
+
+  @Test
+  public void testAsDateTruncatesAfternoonTimestampsToMidnight() {
+    db.command("create class TestAsDate").close();
+
+    Date input = dateAt(2024, Calendar.JANUARY, 2, 15, 30, 45, 123);
+    db.command("insert into TestAsDate set date = ?, millis = ?", input, input.getTime()).close();
+
+    Date expected = dateAt(2024, Calendar.JANUARY, 2, 0, 0, 0, 0);
+
+    try (OResultSet results =
+        db.query(
+            "select date.asDate() as dateConvert, millis.asDate() as millisConvert from"
+                + " TestAsDate")) {
+      OResult result = results.next();
+      assertEquals(expected, result.getProperty("dateConvert"));
+      assertEquals(expected, result.getProperty("millisConvert"));
+      assertFalse(results.hasNext());
+    }
+  }
+
+  private static Date dateAt(
+      int year, int month, int day, int hour, int minute, int second, int millisecond) {
+    Calendar calendar = new GregorianCalendar();
+    calendar.clear();
+    calendar.set(year, month, day, hour, minute, second);
+    calendar.set(Calendar.MILLISECOND, millisecond);
+    return calendar.getTime();
   }
 }
