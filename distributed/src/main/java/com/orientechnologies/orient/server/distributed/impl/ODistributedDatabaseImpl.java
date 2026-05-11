@@ -510,6 +510,10 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     return sequenceManager.missingTransactions(lastState);
   }
 
+  public boolean missingDDL(OTransactionSequenceStatus lastState) {
+    return sequenceManager.missingDDL(lastState);
+  }
+
   @Override
   public ODistributedTxContext popTxContext(final ODistributedRequestId requestId) {
     final ODistributedTxContext ctx = activeTxContexts.remove(requestId);

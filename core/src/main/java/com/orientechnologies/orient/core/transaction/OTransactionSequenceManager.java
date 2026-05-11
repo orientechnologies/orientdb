@@ -171,6 +171,15 @@ public class OTransactionSequenceManager {
     return missing;
   }
 
+  public synchronized boolean checkOtherStatusDDL(OTransactionSequenceStatus sequenceStatus) {
+    long[] status = sequenceStatus.getStatus();
+    if (this.sequentials[0] > status[0] || this.sequentials[1] > status[1]) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
   public synchronized boolean notifyFailure(OTransactionIdPromise promise) {
     OTransactionId id = promise.getId();
     OTransactionIdPromise promised = this.promisedSequential[id.getPosition()];

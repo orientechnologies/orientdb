@@ -67,6 +67,10 @@ public class ODistributedSynchronizedSequence {
     return sequenceManager.checkOtherStatus(lastState);
   }
 
+  public boolean missingDDL(OTransactionSequenceStatus lastState) {
+    return sequenceManager.checkOtherStatusDDL(lastState);
+  }
+
   public void fill(Optional<byte[]> lastMetadata) {
     lastMetadata.ifPresent(
         (data) -> sequenceManager.fill(OTxMetadataHolderImpl.read(data).getStatus()));

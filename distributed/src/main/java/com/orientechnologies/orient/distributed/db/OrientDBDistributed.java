@@ -1102,22 +1102,32 @@ public class OrientDBDistributed extends OrientDBEmbedded
 
         List<OTransactionId> missing = null;
         if (dbCtx != null) {
-          missing = dbCtx.missingTransactions(d.status());
-        }
-        if (missing == null || missing.isEmpty()) {
-          accept = new OCanSyncAccept.NotAccepted();
+          if (dbCtx.missingDDL(d.status())) {
+            accept = defaultFullSync();
+          } else {
+            missing = dbCtx.missingTransactions(d.status());
+            if (missing == null || missing.isEmpty()) {
+              accept = new OCanSyncAccept.NotAccepted();
+            } else {
+              accept = new OCanSyncAccept.DeltaSync(d.status());
+            }
+          }
         } else {
-          accept = new OCanSyncAccept.DeltaSync(d.status());
+          accept = new OCanSyncAccept.NotAccepted();
         }
       } else {
         // Default not instanceof...
-        accept = new OCanSyncAccept.BlockingSync();
+        accept = defaultFullSync();
       }
     } else {
       accept = new OCanSyncAccept.NotAccepted();
     }
 
     sendMessage(receiver, new OCanSync(getNodeId(), dbId, syncId, accept));
+  }
+
+  private OCanSyncAccept defaultFullSync() {
+    return new OCanSyncAccept.BlockingSync();
   }
 
   public void canSync(ONodeId sender, ODatabaseId dbId, OSyncId syncId, OCanSyncAccept canSync) {
