@@ -4,7 +4,6 @@ import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.distributed.context.coordination.message.state.ONodeStateNetwork;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
-import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -23,19 +22,19 @@ public class OMergeNode implements OOperationMessage {
   }
 
   @Override
-  public Optional<OAcceptResult> validate(OrientDBDistributed ctx, OTransactionIdPromise promise) {
+  public Optional<OAcceptResult> validate(OOperationContext ctx, OTransactionIdPromise promise) {
     return ctx.getNodeState()
         .getOps()
         .validateMergeNode(this.node, this.state, this.original, promise);
   }
 
   @Override
-  public void apply(OrientDBDistributed ctx, OTransactionIdPromise promise) {
+  public void apply(OOperationContext ctx, OTransactionIdPromise promise) {
     ctx.mergeNode(this.node, this.state, this.original, promise);
   }
 
   @Override
-  public void cancel(OrientDBDistributed ctx, OTransactionIdPromise promise) {
+  public void cancel(OOperationContext ctx, OTransactionIdPromise promise) {
     ctx.getNodeState().getOps().cancelMergeNode(this.node, this.state, this.original, promise);
   }
 

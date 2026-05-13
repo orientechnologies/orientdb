@@ -3,7 +3,6 @@ package com.orientechnologies.orient.distributed.context.coordination.message.op
 import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
-import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -27,17 +26,17 @@ public class ODeclareDbMessage implements OOperationMessage {
   }
 
   @Override
-  public Optional<OAcceptResult> validate(OrientDBDistributed ctx, OTransactionIdPromise promise) {
+  public Optional<OAcceptResult> validate(OOperationContext ctx, OTransactionIdPromise promise) {
     return ctx.promiseDeclare(promise, id, name, partecipants, this.minimumQuorum);
   }
 
   @Override
-  public void apply(OrientDBDistributed ctx, OTransactionIdPromise promise) {
+  public void apply(OOperationContext ctx, OTransactionIdPromise promise) {
     ctx.declareDatabase(promise, id, name, partecipants, minimumQuorum);
   }
 
   @Override
-  public void cancel(OrientDBDistributed ctx, OTransactionIdPromise promise) {
+  public void cancel(OOperationContext ctx, OTransactionIdPromise promise) {
     ctx.cancelDeclare(promise, id, name);
   }
 

@@ -6,7 +6,6 @@ import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.distributed.context.coordination.OVersion;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ONodeRole;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
-import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -27,21 +26,21 @@ public class OSetDatabaseMemberRole implements OOperationMessage {
   }
 
   @Override
-  public Optional<OAcceptResult> validate(OrientDBDistributed ctx, OTransactionIdPromise promise) {
+  public Optional<OAcceptResult> validate(OOperationContext ctx, OTransactionIdPromise promise) {
     return ctx.getNodeState()
         .getOps()
         .validateSetDatabaseNodeRole(this.db, this.node, this.role, this.version, promise);
   }
 
   @Override
-  public void apply(OrientDBDistributed ctx, OTransactionIdPromise promise) {
+  public void apply(OOperationContext ctx, OTransactionIdPromise promise) {
     ctx.getNodeState()
         .getOps()
         .setDatabaseNodeRole(this.db, this.node, this.role, this.version, promise);
   }
 
   @Override
-  public void cancel(OrientDBDistributed ctx, OTransactionIdPromise promise) {
+  public void cancel(OOperationContext ctx, OTransactionIdPromise promise) {
     ctx.getNodeState()
         .getOps()
         .cancelSetDatabaseNodeRole(this.db, this.node, this.role, this.version, promise);

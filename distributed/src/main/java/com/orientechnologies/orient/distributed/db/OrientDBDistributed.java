@@ -65,6 +65,7 @@ import com.orientechnologies.orient.distributed.context.coordination.message.OTo
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OAddNodeInfo;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OEstablishTopology;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OMergeNode;
+import com.orientechnologies.orient.distributed.context.coordination.message.operation.OOperationContext;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OOperationMessage;
 import com.orientechnologies.orient.distributed.context.coordination.message.state.ONodeStateNetwork;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
@@ -136,7 +137,7 @@ import java.util.stream.Collectors;
 
 /** Created by tglman on 08/08/17. */
 public class OrientDBDistributed extends OrientDBEmbedded
-    implements OServerAware, ODatabaseStateChangeListener {
+    implements OServerAware, ODatabaseStateChangeListener, OOperationContext {
   private static final OLoggerDistributed logger =
       OLoggerDistributed.logger(OrientDBDistributed.class);
   private volatile OServer server;
