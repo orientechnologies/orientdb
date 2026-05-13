@@ -26,19 +26,17 @@ public class ORemoveDatabaseMembers implements OOperationMessage {
 
   @Override
   public Optional<OAcceptResult> validate(OOperationContext ctx, OTransactionIdPromise promise) {
-    return ctx.getNodeState()
-        .getOps()
-        .validateRemoveDatabaseMembers(database, nodes, version, promise);
+    return ctx.getOps().validateRemoveDatabaseMembers(database, nodes, version, promise);
   }
 
   @Override
   public void apply(OOperationContext ctx, OTransactionIdPromise promise) {
-    ctx.getNodeState().getOps().removeDatabaseMembers(database, nodes, version, promise);
+    ctx.getOps().removeDatabaseMembers(database, nodes, version, promise);
   }
 
   @Override
   public void cancel(OOperationContext ctx, OTransactionIdPromise promise) {
-    ctx.getNodeState().getOps().cancelRemoveDatabaseMembers(database, nodes, promise);
+    ctx.getOps().cancelRemoveDatabaseMembers(database, nodes, promise);
   }
 
   @Override

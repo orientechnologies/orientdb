@@ -21,7 +21,7 @@ public class OAddTopologyMember implements OOperationMessage {
 
   @Override
   public Optional<OAcceptResult> validate(OOperationContext ctx, OTransactionIdPromise promise) {
-    return ctx.getNodeState().getOps().validateRegisterNode(node, version, promise);
+    return ctx.getOps().validateRegisterNode(node, version, promise);
   }
 
   @Override
@@ -31,7 +31,7 @@ public class OAddTopologyMember implements OOperationMessage {
 
   @Override
   public void cancel(OOperationContext ctx, OTransactionIdPromise promise) {
-    ctx.cancelRegisterPromise(promise);
+    ctx.getOps().cancelRegisterNode(promise);
   }
 
   @Override

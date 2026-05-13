@@ -25,17 +25,17 @@ public class OAddDatabaseMembers implements OOperationMessage {
 
   @Override
   public Optional<OAcceptResult> validate(OOperationContext ctx, OTransactionIdPromise promise) {
-    return ctx.getNodeState().getOps().validateAddDatabaseMember(dbId, nodes, version, promise);
+    return ctx.getOps().validateAddDatabaseMember(dbId, nodes, version, promise);
   }
 
   @Override
   public void apply(OOperationContext ctx, OTransactionIdPromise promise) {
-    ctx.getNodeState().getOps().addDatabaseMember(dbId, nodes, version, promise);
+    ctx.getOps().addDatabaseMember(dbId, nodes, version, promise);
   }
 
   @Override
   public void cancel(OOperationContext ctx, OTransactionIdPromise promise) {
-    ctx.getNodeState().getOps().cancelAddDatabaseMember(dbId, nodes, promise);
+    ctx.getOps().cancelAddDatabaseMember(dbId, nodes, promise);
   }
 
   @Override

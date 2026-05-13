@@ -24,7 +24,7 @@ public class ODropDbMessage implements OOperationMessage {
   }
 
   public Optional<OAcceptResult> validate(OOperationContext ctx, OTransactionIdPromise promise) {
-    return ctx.validateDropDatabase(this.dbId, this.version, promise);
+    return ctx.getOps().validateDropDatabase(dbId, version, promise);
   }
 
   public static ODropDbMessage readNetwork(DataInput input) throws IOException {
@@ -35,7 +35,7 @@ public class ODropDbMessage implements OOperationMessage {
 
   @Override
   public void cancel(OOperationContext ctx, OTransactionIdPromise promise) {
-    ctx.cancelDropDatabase(this.dbId, this.version, promise);
+    ctx.getOps().cancelDropDatabase(dbId, version, promise);
   }
 
   @Override

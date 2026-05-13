@@ -28,12 +28,12 @@ public class OEstablishTopology implements OOperationMessage {
 
   @Override
   public Optional<OAcceptResult> validate(OOperationContext ctx, OTransactionIdPromise promise) {
-    return ctx.getNodeState().getOps().validateEstablish(groupId, candidates, promise);
+    return ctx.getOps().validateEstablish(groupId, candidates, promise);
   }
 
   @Override
   public void cancel(OOperationContext ctx, OTransactionIdPromise promise) {
-    ctx.getNodeState().getOps().cancelEstablish(promise);
+    ctx.getOps().cancelEstablish(promise);
   }
 
   public static OEstablishTopology readNetwork(DataInput input) throws IOException {

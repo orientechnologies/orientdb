@@ -23,19 +23,17 @@ public class OSetDatabaseQuorum implements OOperationMessage {
 
   @Override
   public Optional<OAcceptResult> validate(OOperationContext ctx, OTransactionIdPromise promise) {
-    return ctx.getNodeState()
-        .getOps()
-        .validateSetDatabaseQuorum(this.db, quorum, this.version, promise);
+    return ctx.getOps().validateSetDatabaseQuorum(this.db, quorum, this.version, promise);
   }
 
   @Override
   public void apply(OOperationContext ctx, OTransactionIdPromise promise) {
-    ctx.getNodeState().getOps().setDatabaseQuorum(this.db, quorum, this.version, promise);
+    ctx.getOps().setDatabaseQuorum(this.db, quorum, this.version, promise);
   }
 
   @Override
   public void cancel(OOperationContext ctx, OTransactionIdPromise promise) {
-    ctx.getNodeState().getOps().cancelSetDatabaseQuorum(this.db, quorum, this.version, promise);
+    ctx.getOps().cancelSetDatabaseQuorum(this.db, quorum, this.version, promise);
   }
 
   @Override

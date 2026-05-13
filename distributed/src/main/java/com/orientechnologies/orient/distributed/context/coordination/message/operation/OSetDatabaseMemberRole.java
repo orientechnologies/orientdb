@@ -27,23 +27,18 @@ public class OSetDatabaseMemberRole implements OOperationMessage {
 
   @Override
   public Optional<OAcceptResult> validate(OOperationContext ctx, OTransactionIdPromise promise) {
-    return ctx.getNodeState()
-        .getOps()
+    return ctx.getOps()
         .validateSetDatabaseNodeRole(this.db, this.node, this.role, this.version, promise);
   }
 
   @Override
   public void apply(OOperationContext ctx, OTransactionIdPromise promise) {
-    ctx.getNodeState()
-        .getOps()
-        .setDatabaseNodeRole(this.db, this.node, this.role, this.version, promise);
+    ctx.getOps().setDatabaseNodeRole(this.db, this.node, this.role, this.version, promise);
   }
 
   @Override
   public void cancel(OOperationContext ctx, OTransactionIdPromise promise) {
-    ctx.getNodeState()
-        .getOps()
-        .cancelSetDatabaseNodeRole(this.db, this.node, this.role, this.version, promise);
+    ctx.getOps().cancelSetDatabaseNodeRole(this.db, this.node, this.role, this.version, promise);
   }
 
   @Override

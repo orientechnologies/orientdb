@@ -23,9 +23,7 @@ public class OMergeNode implements OOperationMessage {
 
   @Override
   public Optional<OAcceptResult> validate(OOperationContext ctx, OTransactionIdPromise promise) {
-    return ctx.getNodeState()
-        .getOps()
-        .validateMergeNode(this.node, this.state, this.original, promise);
+    return ctx.getOps().validateMergeNode(this.node, this.state, this.original, promise);
   }
 
   @Override
@@ -35,7 +33,7 @@ public class OMergeNode implements OOperationMessage {
 
   @Override
   public void cancel(OOperationContext ctx, OTransactionIdPromise promise) {
-    ctx.getNodeState().getOps().cancelMergeNode(this.node, this.state, this.original, promise);
+    ctx.getOps().cancelMergeNode(this.node, this.state, this.original, promise);
   }
 
   @Override

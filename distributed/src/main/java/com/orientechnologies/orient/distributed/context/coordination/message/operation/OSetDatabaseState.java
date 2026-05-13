@@ -28,19 +28,17 @@ public class OSetDatabaseState implements OOperationMessage {
 
   @Override
   public Optional<OAcceptResult> validate(OOperationContext ctx, OTransactionIdPromise promise) {
-    return ctx.getNodeState()
-        .getOps()
-        .validateSetState(this.dbId, this.nodeId, this.state, this.version, promise);
+    return ctx.getOps().validateSetState(this.dbId, this.nodeId, this.state, this.version, promise);
   }
 
   @Override
   public void apply(OOperationContext ctx, OTransactionIdPromise promise) {
-    ctx.getNodeState().getOps().setState(this.dbId, this.nodeId, this.state, this.version, promise);
+    ctx.getOps().setState(this.dbId, this.nodeId, this.state, this.version, promise);
   }
 
   @Override
   public void cancel(OOperationContext ctx, OTransactionIdPromise promise) {
-    ctx.getNodeState().getOps().cancelSetState(dbId, nodeId, version, promise);
+    ctx.getOps().cancelSetState(dbId, nodeId, version, promise);
   }
 
   @Override

@@ -27,7 +27,7 @@ public class ODeclareDbMessage implements OOperationMessage {
 
   @Override
   public Optional<OAcceptResult> validate(OOperationContext ctx, OTransactionIdPromise promise) {
-    return ctx.promiseDeclare(promise, id, name, partecipants, this.minimumQuorum);
+    return ctx.getOps().validateDeclareDatabase(promise, id, name, partecipants, minimumQuorum);
   }
 
   @Override
@@ -37,7 +37,7 @@ public class ODeclareDbMessage implements OOperationMessage {
 
   @Override
   public void cancel(OOperationContext ctx, OTransactionIdPromise promise) {
-    ctx.cancelDeclare(promise, id, name);
+    ctx.getOps().cancelDeclareDatabase(promise, id, name);
   }
 
   @Override

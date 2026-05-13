@@ -21,17 +21,17 @@ public class ORemoveTopologyMember implements OOperationMessage {
 
   @Override
   public Optional<OAcceptResult> validate(OOperationContext ctx, OTransactionIdPromise promise) {
-    return ctx.getNodeState().getOps().validateUnregisterNode(node, version, promise);
+    return ctx.getOps().validateUnregisterNode(node, version, promise);
   }
 
   @Override
   public void apply(OOperationContext ctx, OTransactionIdPromise promise) {
-    ctx.getNodeState().getOps().unregisterNode(node, version, promise);
+    ctx.getOps().unregisterNode(node, version, promise);
   }
 
   @Override
   public void cancel(OOperationContext ctx, OTransactionIdPromise promise) {
-    ctx.getNodeState().getOps().cancelUnregisterNode(promise);
+    ctx.getOps().cancelUnregisterNode(promise);
   }
 
   @Override

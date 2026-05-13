@@ -994,6 +994,10 @@ public class OrientDBDistributed extends OrientDBEmbedded
     return this.nodeState;
   }
 
+  public OCoordinatedDistributedOps getOps() {
+    return getNodeState().getOps();
+  }
+
   @Override
   public ONetworkMessage newNetworkMessage() {
     return new ONetworkMessageStructural(this);
@@ -1029,21 +1033,6 @@ public class OrientDBDistributed extends OrientDBEmbedded
     dumpNodeInfo();
   }
 
-  public void cancelRegisterPromise(OTransactionIdPromise promise) {
-    getNodeState().getOps().cancelRegisterNode(promise);
-  }
-
-  public Optional<OAcceptResult> promiseDeclare(
-      OTransactionIdPromise promise,
-      ODatabaseId databaseId,
-      String database,
-      Set<OAddNodeInfo> partecipants,
-      int minimumQuorum) {
-    return getNodeState()
-        .getOps()
-        .validateDeclareDatabase(promise, databaseId, database, partecipants, minimumQuorum);
-  }
-
   public void declareDatabase(
       OTransactionIdPromise promise,
       ODatabaseId dbId,
@@ -1075,10 +1064,6 @@ public class OrientDBDistributed extends OrientDBEmbedded
       logger.warn("Failed to start database sync  %s", dbId);
       return Optional.empty();
     }
-  }
-
-  public void cancelDeclare(OTransactionIdPromise promise, ODatabaseId dbId, String database) {
-    getNodeState().getOps().cancelDeclareDatabase(promise, dbId, database);
   }
 
   public void acceptSync(ONodeId receiver, ODatabaseId dbId, OSyncId syncId, OSyncMode mode) {
@@ -1687,19 +1672,9 @@ public class OrientDBDistributed extends OrientDBEmbedded
     }
   }
 
-  public Optional<OAcceptResult> validateDropDatabase(
-      ODatabaseId dbId, OVersion version, OTransactionIdPromise promise) {
-    return this.getNodeState().getOps().validateDropDatabase(dbId, version, promise);
-  }
-
   public void distributedDrop(ODatabaseId dbId, OVersion version, OTransactionIdPromise promise) {
     this.internalDrop(getDbName(dbId));
     this.getNodeState().getOps().dropDatabase(dbId, version, promise);
-  }
-
-  public void cancelDropDatabase(
-      ODatabaseId dbId, OVersion version, OTransactionIdPromise promise) {
-    this.getNodeState().getOps().cancelDropDatabase(dbId, version, promise);
   }
 
   @Override
