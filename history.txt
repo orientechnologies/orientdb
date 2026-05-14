@@ -27,6 +27,14 @@
 This document contains the last changes of OrientDB Community Edition.
 
 -----------------------------------------------------------------------------------------------------------------------------------
+version 3.2.52 - (May, 16 2025)
+
+# Core
+- Truncate asDate timestamps with 24-hour clock
+- Avoid to use index when using order by with nested property issue #10732
+- Dependencies updateds
+
+-----------------------------------------------------------------------------------------------------------------------------------
 version 3.2.51 - (March, 31 2025)
 
 # Core
