@@ -21,6 +21,14 @@ public sealed interface ODiscoverAction
   public void execute(
       OrientDBDistributed context, ONodeStateNetwork state, OCompleteExecution execution);
 
+  default boolean loadDatabasesData() {
+    return false;
+  }
+
+  default boolean loadSequenceData() {
+    return false;
+  }
+
   public record ORequestMergeAction(ONodeId requestToMerge) implements ODiscoverAction {
 
     @Override
@@ -81,6 +89,14 @@ public sealed interface ODiscoverAction
     @Override
     public void execute(
         OrientDBDistributed context, ONodeStateNetwork state, OCompleteExecution execution) {}
+
+    public boolean loadDatabasesData() {
+      return true;
+    }
+
+    public boolean loadSequenceData() {
+      return true;
+    }
   }
 
   record OApplySequenceAction() implements ODiscoverAction {
@@ -88,5 +104,9 @@ public sealed interface ODiscoverAction
     @Override
     public void execute(
         OrientDBDistributed context, ONodeStateNetwork state, OCompleteExecution execution) {}
+
+    public boolean loadSequenceData() {
+      return true;
+    }
   }
 }

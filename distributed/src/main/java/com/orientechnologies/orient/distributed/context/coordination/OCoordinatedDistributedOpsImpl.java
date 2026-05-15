@@ -395,7 +395,15 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   @Override
   public synchronized ODiscoverAction nodeJoinStart(
       ONodeId node, ONodeStateNetwork state, boolean merge) {
-    return this.topology.nodeJoinStart(node, state.topology(), merge);
+    var action = this.topology.nodeJoinStart(node, state.topology(), merge);
+    if (action.loadDatabasesData()) {
+      this.databaseTopology.receiverNetworkState(state.databases());
+    }
+    if (action.loadSequenceData()) {
+      this.sequenceManager.fill(state.sequenceStatus());
+    }
+
+    return action;
   }
 
   @Override
