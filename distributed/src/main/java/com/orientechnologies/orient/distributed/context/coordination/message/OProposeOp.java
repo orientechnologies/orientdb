@@ -3,6 +3,7 @@ package com.orientechnologies.orient.distributed.context.coordination.message;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.distributed.context.ONodeState;
+import com.orientechnologies.orient.distributed.context.coordination.message.operation.OOperationContext;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OOperationMessage;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
@@ -26,7 +27,7 @@ public class OProposeOp implements OStructuralMessage, ODistributedMessage {
     ONodeId coordinator = promise.getCoordinator();
     Optional<OAcceptResult> result = nodeState.receive(this);
     if (result.isEmpty()) {
-      Optional<OAcceptResult> res = op.validate(ctx, promise);
+      Optional<OAcceptResult> res = validate(ctx);
       if (res.isPresent()) {
         // This is canceling the promise right away because is not accepted by the data
         nodeState.cancelPromise(promise);
@@ -43,18 +44,23 @@ public class OProposeOp implements OStructuralMessage, ODistributedMessage {
   }
 
   @Override
-  public void apply(OrientDBDistributed ctx) {
+  public void apply(OOperationContext ctx) {
     this.op.apply(ctx, promise);
   }
 
   @Override
-  public void cancel(OrientDBDistributed ctx) {
+  public void cancel(OOperationContext ctx) {
     this.op.cancel(ctx, promise);
   }
 
   @Override
-  public void recoordinate(OrientDBDistributed ctx) {
+  public void recoordinate(OOperationContext ctx) {
     ctx.recoordinateOperation(promise, op);
+  }
+
+  @Override
+  public Optional<OAcceptResult> validate(OOperationContext ctx) {
+    return op.validate(ctx, promise);
   }
 
   @Override

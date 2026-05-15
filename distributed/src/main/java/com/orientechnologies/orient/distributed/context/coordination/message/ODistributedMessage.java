@@ -1,14 +1,18 @@
 package com.orientechnologies.orient.distributed.context.coordination.message;
 
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
-import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
+import com.orientechnologies.orient.distributed.context.coordination.message.operation.OOperationContext;
+import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
+import java.util.Optional;
 
 public interface ODistributedMessage {
   OTransactionIdPromise getPromiseId();
 
-  void apply(OrientDBDistributed ctx);
+  Optional<OAcceptResult> validate(OOperationContext ctx);
 
-  void cancel(OrientDBDistributed ctx);
+  void apply(OOperationContext ctx);
 
-  void recoordinate(OrientDBDistributed ctx);
+  void cancel(OOperationContext ctx);
+
+  void recoordinate(OOperationContext ctx);
 }

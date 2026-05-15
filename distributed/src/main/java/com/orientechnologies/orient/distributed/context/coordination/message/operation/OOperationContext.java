@@ -31,4 +31,6 @@ public interface OOperationContext {
       int minimumQuorum);
 
   void registerNode(ONodeId node, OVersion version, OTransactionIdPromise promise);
+
+  void recoordinateOperation(OTransactionIdPromise promise, OOperationMessage op);
 }
