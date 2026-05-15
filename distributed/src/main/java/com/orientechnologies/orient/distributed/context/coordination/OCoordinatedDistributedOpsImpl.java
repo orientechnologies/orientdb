@@ -506,11 +506,15 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
 
   @Override
   public void removeDatabaseMembers(
-      ODatabaseId dbId, List<ONodeId> nodes, OVersion version, OTransactionIdPromise promise) {}
+      ODatabaseId dbId, List<ONodeId> nodes, OVersion version, OTransactionIdPromise promise) {
+    this.databaseTopology.removeDatabaseMembers(dbId, nodes, version, promise);
+  }
 
   @Override
   public void cancelRemoveDatabaseMembers(
-      ODatabaseId dbId, List<ONodeId> nodes, OTransactionIdPromise promise) {}
+      ODatabaseId dbId, List<ONodeId> nodes, OTransactionIdPromise promise) {
+    this.databaseTopology.cancelRemoveDatabaseMembers(dbId, promise);
+  }
 
   @Override
   public Optional<OAcceptResult> validateSetState(

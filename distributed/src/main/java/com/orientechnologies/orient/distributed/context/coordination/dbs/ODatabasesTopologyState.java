@@ -440,10 +440,10 @@ public class ODatabasesTopologyState extends OWatcher implements ODatabasesTopol
   }
 
   public synchronized void cancelRemoveDatabaseMembers(
-      ODatabaseId dbId, List<OAddNodeInfo> nodes, OTransactionIdPromise promise) {
+      ODatabaseId dbId, OTransactionIdPromise promise) {
     ODatabaseTopologyState db = getDb(dbId);
     if (db != null) {
-      db.cancelRemoveMemer(nodes, promise);
+      db.cancelRemoveMemer(promise);
     }
   }
 

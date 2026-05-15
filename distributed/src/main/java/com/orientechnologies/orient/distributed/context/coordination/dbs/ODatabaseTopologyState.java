@@ -314,8 +314,7 @@ public class ODatabaseTopologyState extends OWatcher {
     this.versionPromise.accept(promise, version);
   }
 
-  public synchronized void cancelRemoveMemer(
-      List<OAddNodeInfo> nodes, OTransactionIdPromise promise) {
+  public synchronized void cancelRemoveMemer(OTransactionIdPromise promise) {
     this.versionPromise.cancel(promise);
   }
 
