@@ -14,6 +14,8 @@ import com.orientechnologies.orient.distributed.context.coordination.message.sta
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAlreadyEstablishedTopologyState;
 import com.orientechnologies.orient.distributed.context.coordination.result.ONotQuorumOneMerge;
+import com.orientechnologies.orient.distributed.context.coordination.result.OQuormuTooBig;
+import com.orientechnologies.orient.distributed.context.coordination.result.OQuormuTooSmall;
 import com.orientechnologies.orient.distributed.context.coordination.topology.ODiscoverAction.OAddNodeAction;
 import com.orientechnologies.orient.distributed.context.coordination.topology.ODiscoverAction.OEstablishAction;
 import com.orientechnologies.orient.distributed.context.coordination.topology.ODiscoverAction.OMergeNodeAction;
@@ -341,5 +343,26 @@ public class OTopologyManager extends OWatcher implements OTopologyEvents, ONetw
       this.nodesInfo.put(node, new ONodeInfo());
     }
     this.versionPromise.forceVersion(version);
+  }
+
+  public synchronized Optional<OAcceptResult> validateSetQuorum(
+      int quorumToSet, OVersion version, OTransactionIdPromise promise) {
+    if (quorumToSet > members.size()) {
+      return Optional.of(new OQuormuTooBig());
+    } else if (quorumToSet < members.size() / 2) {
+      return Optional.of(new OQuormuTooSmall());
+    } else {
+      return this.versionPromise.promise(promise, version);
+    }
+  }
+
+  public synchronized void setQuorum(
+      int quorumToSet, OVersion version, OTransactionIdPromise promise) {
+    this.versionPromise.accept(promise, version);
+    this.quorum = quorumToSet;
+  }
+
+  public void cancelSetQuorum(int quorumToSet, OVersion version, OTransactionIdPromise promise) {
+    this.versionPromise.cancel(promise);
   }
 }

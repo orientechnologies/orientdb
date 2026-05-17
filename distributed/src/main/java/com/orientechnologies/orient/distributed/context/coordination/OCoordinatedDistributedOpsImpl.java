@@ -517,6 +517,22 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   }
 
   @Override
+  public Optional<OAcceptResult> validateSetTopologyQuorum(
+      int quorum, OVersion version, OTransactionIdPromise promise) {
+    return this.topology.validateSetQuorum(quorum, version, promise);
+  }
+
+  @Override
+  public void setTopologyQuorum(int quorum, OVersion version, OTransactionIdPromise promise) {
+    this.topology.setQuorum(quorum, version, promise);
+  }
+
+  @Override
+  public void cancelSetTopologyQuorum(int quorum, OVersion version, OTransactionIdPromise promise) {
+    this.topology.cancelSetQuorum(quorum, version, promise);
+  }
+
+  @Override
   public Optional<OAcceptResult> validateSetState(
       ODatabaseId dbId,
       ONodeId nodeId,

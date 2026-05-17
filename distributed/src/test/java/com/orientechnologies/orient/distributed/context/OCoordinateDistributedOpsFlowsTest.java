@@ -12,6 +12,7 @@ import com.orientechnologies.orient.distributed.context.coordination.message.ope
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.ORemoveTopologyMember;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OSetDatabaseMemberRole;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OSetDatabaseQuorum;
+import com.orientechnologies.orient.distributed.context.coordination.message.operation.OSetTopologyQuorum;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -107,6 +108,30 @@ public class OCoordinateDistributedOpsFlowsTest {
     assertTrue(result.isEmpty());
     for (var c : flow.getContexts().values()) {
       var quormu = c.getOps().getDatabaseTopology().getQuorum(dbId);
+      assertEquals(3, quormu);
+    }
+  }
+
+  @Test
+  public void testSetTopologyQuorum() {
+    OFlowSimulator flow = new OFlowSimulator(2);
+    var node1 = flow.bootNode();
+    var node2 = flow.bootNode();
+    var node3 = flow.bootNode();
+    var networkNodes = Set.of(node1, node2, node3);
+    var pertecipants =
+        networkNodes.stream()
+            .map((x) -> new OAddNodeInfo(x, ONodeRole.Main))
+            .collect(Collectors.toSet());
+    ODatabaseId dbId = new ODatabaseId("test");
+    flow.execute(new ODeclareDbMessage("test", dbId, pertecipants, 2));
+
+    var version = flow.getContexts().get(node1).getOps().getNetworkTopology().getVersion();
+    var result = flow.execute(new OSetTopologyQuorum(3, version.next()));
+
+    assertTrue(result.isEmpty());
+    for (var c : flow.getContexts().values()) {
+      var quormu = c.getOps().getNetworkTopology().getQuorum();
       assertEquals(3, quormu);
     }
   }

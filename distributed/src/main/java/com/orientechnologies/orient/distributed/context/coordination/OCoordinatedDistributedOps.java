@@ -276,4 +276,11 @@ public interface OCoordinatedDistributedOps {
       ODatabaseId db, int quorum, OVersion version, OTransactionIdPromise promise);
 
   void checkTimeoutSync(long timeOutSync);
+
+  Optional<OAcceptResult> validateSetTopologyQuorum(
+      int quorum, OVersion version, OTransactionIdPromise promise);
+
+  void setTopologyQuorum(int quorum, OVersion version, OTransactionIdPromise promise);
+
+  void cancelSetTopologyQuorum(int quorum, OVersion version, OTransactionIdPromise promise);
 }
