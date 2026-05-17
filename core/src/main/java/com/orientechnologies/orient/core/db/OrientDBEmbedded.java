@@ -558,6 +558,8 @@ public class OrientDBEmbedded implements OrientDBInternal {
     ODatabaseRecordThreadLocal.instance().remove();
   }
 
+  protected void distributedSetOnline(OStorage database) {}
+
   @Override
   public boolean networkRestore(String name, ODatabaseId databaseId, InputStream in) {
     checkDatabaseName(name);
@@ -578,7 +580,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
       }
       storage.restoreNetwork(in);
       dbCount.incrementAndGet();
-      distributedSetOnline(name);
+      distributedSetOnline(storage);
       return true;
     } catch (OModificationOperationProhibitedException e) {
       throw e;

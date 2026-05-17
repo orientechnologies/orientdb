@@ -427,7 +427,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
         embedded = newSessionInstance(storage, config);
       }
       embedded.getSharedContext().reInit(storage, embedded);
-      distributedSetOnline(name);
+      distributedSetOnline(storage);
       ODatabaseRecordThreadLocal.instance().remove();
       return true;
     } catch (OModificationOperationProhibitedException e) {
@@ -813,11 +813,9 @@ public class OrientDBDistributed extends OrientDBEmbedded
     }
   }
 
-  public void distributedSetOnline(String database) {
-    ODistributedDatabaseImpl distribDatabase = getDatabase(database);
-    if (distribDatabase != null) {
-      distribDatabase.setOnline();
-    }
+  public void distributedSetOnline(OStorage storage) {
+    OSharedContextDistributed ctx = (OSharedContextDistributed) getOrCreateSharedContext(storage);
+    ctx.getDistributedContext().setOnline();
   }
 
   public void distributedPauseDatabase(String database) {
