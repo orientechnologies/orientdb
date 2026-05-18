@@ -43,6 +43,7 @@ import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabase
 import com.orientechnologies.orient.server.distributed.impl.OInvalidSequentialException;
 import com.orientechnologies.orient.server.distributed.impl.ONewDistributedTxContextImpl;
 import com.orientechnologies.orient.server.distributed.impl.OTransactionOptimisticDistributed;
+import com.orientechnologies.orient.server.distributed.impl.metadata.OSharedContextDistributed;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTransactionResultPayload;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTransactionUniqueKey;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxConcurrentCreation;
@@ -197,20 +198,20 @@ public class OTransactionPhase1Task extends OAbstractRemoteTask implements OLock
     OTransactionResultPayload payload;
     try {
       if (!isCoordinator) {
-        ODistributedDatabase localDistributedDatabase = database.getDistributedShared();
-        ValidationResult result = localDistributedDatabase.validate(id);
+        OSharedContextDistributed sharedContext = database.getSharedContext();
+        var transactionSequence = sharedContext.getTransactionSequence();
+        ODistributedDatabase localDistributedDatabase = sharedContext.getDistributedContext();
+        ValidationResult result = transactionSequence.validate(id);
         if (result == ValidationResult.ALREADY_PROMISED
             || result == ValidationResult.MISSING_PREVIOUS) {
           ONewDistributedTxContextImpl txContext =
-              new ONewDistributedTxContextImpl(
-                  (ODistributedDatabaseImpl) localDistributedDatabase, requestId, tx, id);
+              new ONewDistributedTxContextImpl(sharedContext, requestId, tx, id);
           txContext.setStatus(TIMEDOUT);
           database.register(requestId, localDistributedDatabase, txContext);
           return new OTxInvalidSequential();
         } else if (result == ValidationResult.ALREADY_PRESENT) {
           ONewDistributedTxContextImpl txContext =
-              new ONewDistributedTxContextImpl(
-                  (ODistributedDatabaseImpl) localDistributedDatabase, requestId, tx, id);
+              new ONewDistributedTxContextImpl(sharedContext, requestId, tx, id);
           txContext.setStatus(TIMEDOUT);
           database.register(requestId, localDistributedDatabase, txContext);
           return new OTxInvalidSequential();

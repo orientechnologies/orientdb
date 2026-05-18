@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.server.distributed.impl.metadata;
 
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_TRANSACTION_SEQUENCE_SET_SIZE;
+
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
@@ -20,6 +22,7 @@ import com.orientechnologies.orient.core.sql.executor.OQueryStats;
 import com.orientechnologies.orient.core.sql.parser.OExecutionPlanCache;
 import com.orientechnologies.orient.core.sql.parser.OStatementCache;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.transaction.ODistributedSynchronizedSequence;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseImpl;
 import java.util.HashMap;
@@ -67,6 +70,13 @@ public class OSharedContextDistributed extends OSharedContextEmbedded {
     activeDistributedQueries = new HashMap<>();
 
     this.viewManager = new ViewManager(orientDB, storage.getName());
+    int sequenceSize =
+        orientDB
+            .getConfigurations()
+            .getConfigurations()
+            .getValueAsInteger(DISTRIBUTED_TRANSACTION_SEQUENCE_SET_SIZE);
+
+    transactionSequence = new ODistributedSynchronizedSequence(orientDB.getNodeId(), sequenceSize);
     this.distributedContext = new ODistributedDatabaseImpl((OrientDBDistributed) orientDB, storage);
   }
 

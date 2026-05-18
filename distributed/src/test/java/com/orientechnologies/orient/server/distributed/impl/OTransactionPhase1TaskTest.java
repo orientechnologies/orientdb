@@ -18,11 +18,15 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPhase1Task;
 import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPhase1TaskResult;
-import com.orientechnologies.orient.server.distributed.impl.task.transaction.*;
+import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTransactionUniqueKey;
+import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxConcurrentModification;
+import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxSuccess;
+import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxUniqueIndex;
 import java.io.IOException;
-import java.util.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.SortedSet;
+import java.util.TreeSet;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -72,9 +76,10 @@ public class OTransactionPhase1TaskTest {
     operations.add(new ORecordOperation(rec1, ORecordOperation.UPDATED));
     operations.add(new ORecordOperation(id1.getIdentity(), ORecordOperation.DELETED));
     operations.add(new ORecordOperation(rec2, ORecordOperation.CREATED));
-    OTransactionIdPromise txId =
-        server.getDistributedManager().getDatabase(session.getName()).nextId().get();
-    server.getDistributedManager().getDatabase(session.getName()).rollback(txId);
+    var transactionSequence =
+        ((ODatabaseDocumentDistributed) session).getSharedContext().getTransactionSequence();
+    OTransactionIdPromise txId = transactionSequence.next().get();
+    transactionSequence.notifyFailure(txId);
 
     OTransactionPhase1Task task = new OTransactionPhase1Task(operations, txId, new TreeSet<>());
     OTransactionPhase1TaskResult res =
@@ -99,10 +104,10 @@ public class OTransactionPhase1TaskTest {
     old.field("first", "three");
     final List<ORecordOperation> operations = new ArrayList<>();
     operations.add(new ORecordOperation(old, ORecordOperation.UPDATED));
-
-    OTransactionIdPromise id =
-        server.getDistributedManager().getDatabase(session.getName()).nextId().get();
-    server.getDistributedManager().getDatabase(session.getName()).rollback(id);
+    var transactionSequence =
+        ((ODatabaseDocumentDistributed) session).getSharedContext().getTransactionSequence();
+    OTransactionIdPromise id = transactionSequence.next().get();
+    transactionSequence.notifyFailure(id);
     OTransactionPhase1Task task = new OTransactionPhase1Task(operations, id, new TreeSet<>());
     OTransactionPhase1TaskResult res =
         (OTransactionPhase1TaskResult)
@@ -127,10 +132,10 @@ public class OTransactionPhase1TaskTest {
 
     final List<ORecordOperation> operations = new ArrayList<>();
     operations.add(new ORecordOperation(old, ORecordOperation.DELETED));
-
-    OTransactionIdPromise id =
-        server.getDistributedManager().getDatabase(session.getName()).nextId().get();
-    server.getDistributedManager().getDatabase(session.getName()).rollback(id);
+    var transactionSequence =
+        ((ODatabaseDocumentDistributed) session).getSharedContext().getTransactionSequence();
+    OTransactionIdPromise id = transactionSequence.next().get();
+    transactionSequence.notifyFailure(id);
 
     OTransactionPhase1Task task = new OTransactionPhase1Task(operations, id, new TreeSet<>());
     OTransactionPhase1TaskResult res =
@@ -159,9 +164,10 @@ public class OTransactionPhase1TaskTest {
     final SortedSet<OTransactionUniqueKey> uniqueIndexKeys = new TreeSet<OTransactionUniqueKey>();
     uniqueIndexKeys.add(new OTransactionUniqueKey("TestClassInd.one", "value", 0));
 
-    OTransactionIdPromise id =
-        server.getDistributedManager().getDatabase(session.getName()).nextId().get();
-    server.getDistributedManager().getDatabase(session.getName()).rollback(id);
+    var transactionSequence =
+        ((ODatabaseDocumentDistributed) session).getSharedContext().getTransactionSequence();
+    OTransactionIdPromise id = transactionSequence.next().get();
+    transactionSequence.notifyFailure(id);
 
     OTransactionPhase1Task task = new OTransactionPhase1Task(operations, id, uniqueIndexKeys);
     OTransactionPhase1TaskResult res =

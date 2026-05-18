@@ -27,7 +27,6 @@ public class ONewDeltaSyncImporter {
               logger.infoIn(
                   nodeName, targetNode, "Started import of delta for database '%s'", databaseName);
               final ODatabaseDocumentInternal db = context.openNoAuthorization(databaseName);
-              ((ODatabaseDocumentDistributed) db).getDistributedShared().fillStatus();
               DataInput dataInput = new DataInputStream(in);
               while (dataInput.readBoolean()) {
                 OTransactionData transaction = OTransactionData.read(dataInput);

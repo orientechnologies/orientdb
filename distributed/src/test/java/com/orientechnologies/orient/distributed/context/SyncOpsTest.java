@@ -124,7 +124,8 @@ public class SyncOpsTest {
     receiver.setReceiverStream(input);
 
     OrientDBDistributed ctx = (OrientDBDistributed) OrientDBInternal.extract(context);
-    var senderStatus = ctx.getDatabase("test").status();
+    var senderStatus =
+        ctx.getSharedDatabasecontext("test").map((x) -> x.getTransactionSequence().currentStatus());
     new Thread(
             () -> {
               try {
@@ -141,7 +142,11 @@ public class SyncOpsTest {
     assertNotNull(ctx.getDatabase("test"));
     try (var session = context1.open("test", "admin", "adminpwd")) {
       // if it can open is good, it restored the right password
-      assertEquals(senderStatus, ctx1.getDatabase("test").status());
+      var status =
+          ctx1.getSharedDatabasecontext("test")
+              .map((x) -> x.getTransactionSequence().currentStatus());
+
+      assertEquals(senderStatus, status);
       assertTrue(true);
     }
   }

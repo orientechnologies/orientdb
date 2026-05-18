@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.tx.OTransactionDataChange;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.server.OServer;
+import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInputStream;
@@ -182,15 +183,17 @@ public class OTransactionDataTest {
         }
         db.commit();
       }
-      OTransactionIdPromise id =
-          server0.getDistributedManager().getDatabase("test1").nextId().get();
-      server0.getDistributedManager().getDatabase("test1").rollback(id);
-      OTransactionData data = new OTransactionData(id.getId());
-      for (byte[] change : changes) {
-        data.addRecord(change);
-      }
       try (final ODatabaseSession db =
           orientDB.open("test1", "admin", OCreateDatabaseUtil.NEW_ADMIN_PASSWORD)) {
+        var transactionSequence =
+            ((ODatabaseDocumentDistributed) db).getSharedContext().getTransactionSequence();
+
+        OTransactionIdPromise id = transactionSequence.next().get();
+        transactionSequence.notifyFailure(id);
+        OTransactionData data = new OTransactionData(id.getId());
+        for (byte[] change : changes) {
+          data.addRecord(change);
+        }
         ((ODatabaseDocumentInternal) db).syncCommit(data);
         assertEquals(2, db.countClass("test"));
         try (OResultSet r = db.query("select count(*) as count from test where field='value3'")) {

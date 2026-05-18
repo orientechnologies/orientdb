@@ -15,10 +15,11 @@ import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import com.orientechnologies.orient.core.tx.OTxMetadataHolder;
-import java.io.ByteArrayOutputStream;
+import com.orientechnologies.orient.core.tx.OTxMetadataHolderImpl;
 import java.io.File;
 import java.io.IOException;
 import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -41,14 +42,18 @@ public class TransactionMetadataTest {
   @Test
   public void testBackupRestore() throws IOException {
     db.begin();
-    byte[] metadata = new byte[] {1, 2, 4};
+    var holder =
+        new OTxMetadataHolderImpl(
+            new CountDownLatch(1),
+            new OTransactionId(1, 10),
+            new OTransactionSequenceStatus(new long[] {0, 10, 10}));
+    byte[] metadata = holder.metadata();
     ((OTransactionInternal) db.getTransaction())
         .setMetadataHolder(Optional.of(new TestMetadataHolder(metadata)));
     OVertex v = db.newVertex("V");
     v.setProperty("name", "Foo");
     db.save(v);
     db.commit();
-    ByteArrayOutputStream out = new ByteArrayOutputStream();
     db.incrementalBackup("target/backup_metadata");
     db.close();
     OrientDBInternal.extract(orientDB)

@@ -19,17 +19,9 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
-import com.orientechnologies.orient.core.transaction.OTransactionId;
-import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
-import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
-import com.orientechnologies.orient.core.tx.OTxMetadataHolder;
-import com.orientechnologies.orient.core.tx.ValidationResult;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
-import java.util.List;
-import java.util.Optional;
 
 /**
  * Generic Distributed Database interface.
@@ -64,14 +56,6 @@ public interface ODistributedDatabase {
 
   void processRequest(ODistributedRequest request, boolean waitForAcceptingRequests);
 
-  ValidationResult validate(OTransactionIdPromise id);
-
-  Optional<OTransactionSequenceStatus> status();
-
-  void rollback(OTransactionIdPromise id);
-
-  OTxMetadataHolder commit(OTransactionIdPromise id);
-
   ODistributedTxContext registerTxContext(
       final ODistributedRequestId reqId, ODistributedTxContext ctx);
 
@@ -84,16 +68,6 @@ public interface ODistributedDatabase {
   long getReceivedRequests();
 
   long getProcessedRequests();
-
-  Optional<OTransactionIdPromise> nextId();
-
-  Optional<ORawPair<OTransactionIdPromise, OTransactionIdPromise>> nextDDLId();
-
-  List<OTransactionId> missingTransactions(OTransactionSequenceStatus lastState);
-
-  void validateStatus(OTransactionSequenceStatus status);
-
-  void checkReverseSync(OTransactionSequenceStatus lastState);
 
   void fillStatus();
 

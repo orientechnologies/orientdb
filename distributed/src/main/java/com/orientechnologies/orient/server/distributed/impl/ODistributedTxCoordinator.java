@@ -92,8 +92,9 @@ public class ODistributedTxCoordinator {
     do {
       final ODistributedRequestId requestId = dManager.nextRequestId();
       localDistributedDatabase.startOperation();
+      var transactionSequence = database.getSharedContext().getTransactionSequence();
       try {
-        Optional<OTransactionIdPromise> genId = localDistributedDatabase.nextId();
+        Optional<OTransactionIdPromise> genId = transactionSequence.next();
         if (genId.isPresent()) {
           OTransactionIdPromise txId = genId.get();
           tryCommit(database, iTx, txId, requestId);

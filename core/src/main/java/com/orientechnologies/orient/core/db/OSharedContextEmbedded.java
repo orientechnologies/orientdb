@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.core.db;
 
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_TRANSACTION_SEQUENCE_SET_SIZE;
+
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.viewmanager.ViewManager;
 import com.orientechnologies.orient.core.id.ORID;
@@ -23,6 +25,7 @@ import com.orientechnologies.orient.core.sql.executor.OQueryStats;
 import com.orientechnologies.orient.core.sql.parser.OExecutionPlanCache;
 import com.orientechnologies.orient.core.sql.parser.OStatementCache;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.transaction.ODistributedSynchronizedSequence;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -31,6 +34,7 @@ public class OSharedContextEmbedded extends OSharedContext {
 
   protected Map<String, DistributedQueryContext> activeDistributedQueries;
   protected ViewManager viewManager;
+  protected ODistributedSynchronizedSequence transactionSequence;
 
   public OSharedContextEmbedded(OStorage storage, OrientDBEmbedded orientDB) {
     this.orientDB = orientDB;
@@ -72,11 +76,18 @@ public class OSharedContextEmbedded extends OSharedContext {
                 .getConfigurations()
                 .getConfigurations()
                 .getValueAsInteger(OGlobalConfiguration.STATEMENT_CACHE_SIZE));
-    this.registerListener(executionPlanCache);
+    registerListener(executionPlanCache);
 
     queryStats = new OQueryStats();
     activeDistributedQueries = new HashMap<>();
-    this.viewManager = new ViewManager(orientDB, storage.getName());
+    viewManager = new ViewManager(orientDB, storage.getName());
+    int sequenceSize =
+        orientDB
+            .getConfigurations()
+            .getConfigurations()
+            .getValueAsInteger(DISTRIBUTED_TRANSACTION_SEQUENCE_SET_SIZE);
+
+    transactionSequence = new ODistributedSynchronizedSequence(orientDB.getNodeId(), sequenceSize);
   }
 
   public synchronized void load(ODatabaseDocumentInternal database) {
@@ -96,6 +107,7 @@ public class OSharedContextEmbedded extends OSharedContext {
         sequenceLibrary.load(database);
         schema.onPostIndexManagement();
         viewManager.load();
+        transactionSequence.fill(getStorage().getLastMetadata());
         loaded = true;
       }
     } finally {
@@ -135,6 +147,7 @@ public class OSharedContextEmbedded extends OSharedContext {
     functionLibrary.load(database);
     sequenceLibrary.load(database);
     scheduler.load(database);
+    transactionSequence.fill(getStorage().getLastMetadata());
   }
 
   public synchronized void create(ODatabaseDocumentInternal database) {
@@ -162,6 +175,7 @@ public class OSharedContextEmbedded extends OSharedContext {
     }
 
     viewManager.create();
+    transactionSequence.fill(getStorage().getLastMetadata());
     loaded = true;
   }
 
@@ -230,5 +244,14 @@ public class OSharedContextEmbedded extends OSharedContext {
 
   public ODocument loadDistributedConfig(ODatabaseSession session) {
     return loadConfig(session, "ditributedConfig");
+  }
+
+  @Override
+  public OStorage getStorage() {
+    return (OStorage) super.getStorage();
+  }
+
+  public ODistributedSynchronizedSequence getTransactionSequence() {
+    return transactionSequence;
   }
 }

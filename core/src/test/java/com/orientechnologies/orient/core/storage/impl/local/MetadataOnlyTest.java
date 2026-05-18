@@ -9,7 +9,11 @@ import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
+import com.orientechnologies.orient.core.transaction.OTransactionId;
+import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
+import com.orientechnologies.orient.core.tx.OTxMetadataHolderImpl;
 import java.util.Optional;
+import java.util.concurrent.CountDownLatch;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -33,10 +37,13 @@ public class MetadataOnlyTest {
   @Test
   public void test() {
     ODatabaseSession db = orientDb.open("testMetadataOnly", "admin", "admin");
-    byte[] blob =
-        new byte[] {
-          1, 2, 3, 4, 5, 6,
-        };
+
+    var holder =
+        new OTxMetadataHolderImpl(
+            new CountDownLatch(1),
+            new OTransactionId(1, 10),
+            new OTransactionSequenceStatus(new long[] {0, 10, 10}));
+    byte[] blob = holder.metadata();
     ((ODatabaseDocumentInternal) db).getStorage().metadataOnly(blob);
     db.close();
     OrientDBInternal.extract(orientDb).forceDatabaseClose("testMetadataOnly");

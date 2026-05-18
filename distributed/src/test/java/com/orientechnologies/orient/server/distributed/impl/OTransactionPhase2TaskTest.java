@@ -5,6 +5,7 @@ import static org.junit.Assert.assertTrue;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.OSharedContextEmbedded;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
@@ -12,7 +13,6 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
-import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPhase1Task;
@@ -54,8 +54,8 @@ public class OTransactionPhase2TaskTest {
     OElement element = session.save(new ODocument("TestClass"));
     ODatabaseDocumentInternal internal = (ODatabaseDocumentInternal) session;
     internal.getLocalCache().clear();
-    ODistributedDatabaseImpl distributed =
-        ((OrientDBDistributed) server.getDatabases()).getDatabase(session.getName());
+    var transactionSequence =
+        ((OSharedContextEmbedded) internal.getSharedContext()).getTransactionSequence();
 
     ORID id = element.getIdentity();
     int pre_version = element.getVersion();
@@ -67,7 +67,7 @@ public class OTransactionPhase2TaskTest {
     ids.add(rec1.getIdentity());
     operations.add(new ORecordOperation(rec1, ORecordOperation.UPDATED));
     SortedSet<OTransactionUniqueKey> uniqueIndexKeys = new TreeSet<>();
-    OTransactionIdPromise transactionId = distributed.nextId().get();
+    OTransactionIdPromise transactionId = transactionSequence.next().get();
     OTransactionPhase1Task task =
         new OTransactionPhase1Task(operations, transactionId, new TreeSet<>());
     ODistributedRequestId firstPhaseId = new ODistributedRequestId(10, 20);
@@ -83,8 +83,8 @@ public class OTransactionPhase2TaskTest {
   public void testSecondPhaseForcePromiseDespiteCompetingSuccessfulFirstPhase() throws Exception {
     ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) session;
     OIdentifiable id = session.save(new ODocument("TestClass"));
-    ODistributedDatabaseImpl distributed =
-        ((OrientDBDistributed) server.getDatabases()).getDatabase(session.getName());
+    var transactionSequence =
+        ((OSharedContextEmbedded) db.getSharedContext()).getTransactionSequence();
     OElement doc1 = db.load(id.getIdentity());
     doc1.setProperty("value", "1");
     List<ORecordOperation> doc1Ops = new ArrayList<>();
@@ -102,14 +102,14 @@ public class OTransactionPhase2TaskTest {
     doc2UniqueIndexKeys.add(new OTransactionUniqueKey("TestClass.value", "2", doc2.getVersion()));
 
     ODistributedRequestId tx1p1Id = new ODistributedRequestId(10, 20);
-    OTransactionIdPromise tx1Id = distributed.nextId().get();
+    OTransactionIdPromise tx1Id = transactionSequence.next().get();
     OTransactionPhase1Task tx1p1 = new OTransactionPhase1Task(doc1Ops, tx1Id, doc1UniqueIndexKeys);
     OTransactionPhase1TaskResult tx1p1Result =
         (OTransactionPhase1TaskResult) tx1p1.execute(tx1p1Id, server, db);
     assertTrue(tx1p1Result.getResultPayload() instanceof OTxSuccess);
 
     ODistributedRequestId tx2p1Id = new ODistributedRequestId(10, 21);
-    OTransactionIdPromise tx2Id = distributed.nextId().get();
+    OTransactionIdPromise tx2Id = transactionSequence.next().get();
     OTransactionPhase1Task tx2p1 = new OTransactionPhase1Task(doc2Ops, tx2Id, doc2UniqueIndexKeys);
     OTransactionPhase1TaskResult tx2p1Result =
         (OTransactionPhase1TaskResult) tx2p1.execute(tx2p1Id, server, db);

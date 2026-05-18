@@ -34,6 +34,7 @@ import com.orientechnologies.orient.core.exception.OLowDiskSpaceException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.exception.OTransactionAlreadyPresentException;
 import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -81,7 +82,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
 import com.orientechnologies.orient.server.distributed.ODistributedTxContext;
 import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
 import com.orientechnologies.orient.server.distributed.exception.ODistributedTxPromiseRequestIsOldException;
-import com.orientechnologies.orient.server.distributed.exception.OTransactionAlreadyPresentException;
 import com.orientechnologies.orient.server.distributed.impl.lock.OTxPromise;
 import com.orientechnologies.orient.server.distributed.impl.metadata.OClassDistributed;
 import com.orientechnologies.orient.server.distributed.impl.metadata.OSharedContextDistributed;
@@ -486,8 +486,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       int retryCount) {
     final ODistributedDatabase localDistributedDatabase = getDistributedShared();
     final ONewDistributedTxContextImpl txContext =
-        new ONewDistributedTxContextImpl(
-            (ODistributedDatabaseImpl) localDistributedDatabase, requestId, tx, id);
+        new ONewDistributedTxContextImpl(getSharedContext(), requestId, tx, id);
     try {
       internalBegin2pc(txContext, isCoordinator);
       txContext.setStatus(SUCCESS);
@@ -605,6 +604,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         (ODistributedDatabaseImpl) getDistributedShared();
     localDistributedDatabase.resetLastValidBackup();
 
+    var transactionSequence = getSharedContext().getTransactionSequence();
     ONewDistributedTxContextImpl txContext =
         (ONewDistributedTxContextImpl) localDistributedDatabase.getTxContext(transactionId);
 
@@ -659,8 +659,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
                 OException.wrapException(new OInterruptedException(e.getMessage()), e);
               }
             }
-            ValidationResult validateResult =
-                localDistributedDatabase.validate(txContext.getPromise());
+            ValidationResult validateResult = transactionSequence.validate(txContext.getPromise());
 
             if (validateResult == ValidationResult.ALREADY_PRESENT) {
               // Already present do nothing.
@@ -949,7 +948,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     }
     getContext().checkNodeIsMaster(getLocalNodeId(), getName(), "Command '" + command + "'");
     waitQuorumOnline();
-    ODistributedDatabase local = getDistributedShared();
+    var transactionSequence = getSharedContext().getTransactionSequence();
     // The plus 1 is for make sure it runs once even if retry is 0
     int nretry =
         getConfiguration()
@@ -961,7 +960,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     var retryInfo = new ORetryInfo(nretry, retryDelay);
 
     while (!retryInfo.isFinished()) {
-      var ids = local.nextDDLId();
+      var ids = transactionSequence.nextDDL();
       if (ids.isPresent()) {
         if (coordinateTwoPhaseDDL(command, ids.get(), retryInfo.isFinished())) {
           return;
@@ -1226,13 +1225,16 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           assert !this.getTransaction().isActive();
           OTransactionOptimistic tx = new OTransactionOptimistic(this);
           data.fill(tx, this);
-          ODistributedDatabaseImpl ddb = (ODistributedDatabaseImpl) getDistributedShared();
           ONodeId nodeId = getLocalNodeId();
+
           OTransactionIdPromise primise =
               new OTransactionIdPromise(nodeId, data.getTransactionId());
           ONewDistributedTxContextImpl txContext =
-              new ONewDistributedTxContextImpl(ddb, new ODistributedRequestId(-1, -1), tx, primise);
-          ddb.validate(primise);
+              new ONewDistributedTxContextImpl(
+                  getSharedContext(), new ODistributedRequestId(-1, -1), tx, primise);
+
+          var transactionSequence = getSharedContext().getTransactionSequence();
+          transactionSequence.validate(primise);
           getStorage().preallocateRids(tx);
           txContext.commit(this);
           return null;
@@ -1244,12 +1246,14 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       OTransactionIdPromise preChangeId,
       OTransactionIdPromise afterChangeId,
       ODistributedRequestId requestId) {
+    OSharedContextDistributed distributedSharedContext = getSharedContext();
+    var transactionSequence = distributedSharedContext.getTransactionSequence();
     ODistributedDatabase localDistributedDatabase = getDistributedShared();
     ODDLContextImpl ddlContext =
-        new ODDLContextImpl(localDistributedDatabase, query, preChangeId, afterChangeId, requestId);
+        new ODDLContextImpl(distributedSharedContext, query, preChangeId, afterChangeId, requestId);
     register(requestId, localDistributedDatabase, ddlContext);
-    ValidationResult first = localDistributedDatabase.validate(preChangeId);
-    ValidationResult second = localDistributedDatabase.validate(afterChangeId);
+    ValidationResult first = transactionSequence.validate(preChangeId);
+    ValidationResult second = transactionSequence.validate(afterChangeId);
     if (first == ValidationResult.ALREADY_PROMISED || second == ValidationResult.ALREADY_PROMISED) {
       ddlContext.setStatus(TIMEDOUT);
       return new OTxInvalidSequential();
@@ -1279,12 +1283,13 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     ODistributedDatabase localDistributedDatabase = getDistributedShared();
     ODDLContextImpl context =
         (ODDLContextImpl) localDistributedDatabase.popTxContext(confirmSentRequest);
+    var transactionSequence = getSharedContext().getTransactionSequence();
     OStorage storage = getStorage();
     if (apply) {
       ((ODistributedDatabaseImpl) localDistributedDatabase).resetLastValidBackup();
       if (context.getStatus() == SUCCESS) {
         OTxMetadataHolder preMetadata =
-            localDistributedDatabase.commit(context.getPreChangePromise());
+            transactionSequence.notifySuccess(context.getPreChangePromise());
 
         storage.metadataOnly(preMetadata.metadata());
         preMetadata.notifyMetadataRead();
@@ -1296,7 +1301,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
             });
 
         OTxMetadataHolder afterMetadata =
-            localDistributedDatabase.commit(context.getAfterChangePromise());
+            transactionSequence.notifySuccess(context.getAfterChangePromise());
         storage.metadataOnly(afterMetadata.metadata());
         afterMetadata.notifyMetadataRead();
       } else {
@@ -1353,8 +1358,8 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         }
       }
     } else if (context != null) {
-      localDistributedDatabase.rollback(context.getPreChangePromise());
-      localDistributedDatabase.rollback(context.getAfterChangePromise());
+      transactionSequence.notifyFailure(context.getPreChangePromise());
+      transactionSequence.notifyFailure(context.getAfterChangePromise());
     }
   }
 

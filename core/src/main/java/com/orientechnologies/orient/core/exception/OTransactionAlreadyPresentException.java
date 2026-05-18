@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.server.distributed.exception;
+package com.orientechnologies.orient.core.exception;
 
 import com.orientechnologies.common.exception.OException;
 

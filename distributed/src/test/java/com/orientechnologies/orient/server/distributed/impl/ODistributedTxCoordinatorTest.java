@@ -8,11 +8,13 @@ import static org.mockito.Mockito.inOrder;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import com.orientechnologies.orient.core.transaction.ODistributedSynchronizedSequence;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.server.distributed.impl.metadata.OSharedContextDistributed;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxSuccess;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -30,12 +32,14 @@ public class ODistributedTxCoordinatorTest {
   private ODistributedDatabaseImpl distributedDatabase;
   private ODatabaseDocumentDistributed databaseDocument;
   private OrientDBDistributed context;
+  private OSharedContextDistributed sharedContext;
 
   @Before
   public void setup() {
     serverManager = mock(ODistributedServerManager.class);
     distributedDatabase = mock(ODistributedDatabaseImpl.class);
     databaseDocument = mock(ODatabaseDocumentDistributed.class);
+    sharedContext = mock(OSharedContextDistributed.class);
     context = mock(OrientDBDistributed.class);
   }
 
@@ -58,14 +62,13 @@ public class ODistributedTxCoordinatorTest {
     when(context.getAvailableNodeNotLocalNames(any())).thenReturn(new HashSet<>(remoteNodes));
     when(databaseDocument.getName()).thenReturn(dbName);
     when(databaseDocument.getContext()).thenReturn(context);
+    when(databaseDocument.getSharedContext()).thenReturn(sharedContext);
     when(tx.getIndexOperations()).thenReturn(new HashMap<>());
-    when(distributedDatabase.nextId()).thenReturn(seq.next());
+    when(sharedContext.getTransactionSequence()).thenReturn(seq);
     when(serverManager.nextRequestId()).thenReturn(new ODistributedRequestId());
     when(responseManager.isQuorumReached()).thenReturn(true);
     when(databaseDocument.beginDistributedTx(any(), any(), eq(tx), eq(true), anyInt()))
         .thenReturn(true);
-    //    when(serverManager.getAvailableNodeNotLocalNames(any())).thenReturn(new
-    // HashSet<>(remoteNodes));
     when(responseManager.getDistributedTxFinalResponse()).thenReturn(Optional.of(new OTxSuccess()));
 
     coordinator.commit(databaseDocument, tx);

@@ -712,6 +712,10 @@ public class OrientDBDistributed extends OrientDBEmbedded
     }
   }
 
+  public Optional<OSharedContextDistributed> getSharedDatabasecontext(String database) {
+    return Optional.ofNullable((OSharedContextDistributed) sharedContexts.get(database));
+  }
+
   public ODistributedDatabaseImpl unregisterDatabase(final String iDatabaseName) {
     final ODistributedDatabaseImpl db = getDatabase(iDatabaseName);
     if (db != null) {
@@ -1082,14 +1086,14 @@ public class OrientDBDistributed extends OrientDBEmbedded
           accept = new OCanSyncAccept.NonBlockingSync();
         }
       } else if (mode instanceof Delta d) {
-        var dbCtx = getDatabase(dbName);
+        var dbCtx = (OSharedContextDistributed) sharedContexts.get(dbName);
 
         List<OTransactionId> missing = null;
         if (dbCtx != null) {
-          if (dbCtx.missingDDL(d.status())) {
+          if (dbCtx.getTransactionSequence().missingDDL(d.status())) {
             accept = defaultFullSync();
           } else {
-            missing = dbCtx.missingTransactions(d.status());
+            missing = dbCtx.getTransactionSequence().missingTransactions(d.status());
             if (missing == null || missing.isEmpty()) {
               accept = new OCanSyncAccept.NotAccepted();
             } else {
@@ -1186,7 +1190,13 @@ public class OrientDBDistributed extends OrientDBEmbedded
         int compression = getIntConfig(OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION);
         storage.backup(out, null, null, null, compression, 0);
       } else if (state.getAcceptMode() instanceof OCanSyncAccept.DeltaSync d) {
-        var transactions = getDatabase(name).missingTransactions(d.status());
+        var context = (OSharedContextDistributed) sharedContexts.get(name);
+        List<OTransactionId> transactions;
+        if (context != null) {
+          transactions = context.getTransactionSequence().missingTransactions(d.status());
+        } else {
+          transactions = List.of();
+        }
         db.deltaBackup(out, transactions);
       }
       success = true;
@@ -1245,7 +1255,11 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   public ONodeId getNodeId() {
-    return getNodeState().getNodeId();
+    if (nodeState != null) {
+      return nodeState.getNodeId();
+    } else {
+      return super.getNodeId();
+    }
   }
 
   public void closeRemoteServer(String node) {
@@ -1341,9 +1355,11 @@ public class OrientDBDistributed extends OrientDBEmbedded
     if (id.isPresent()) {
       Optional<OTransactionSequenceStatus> deltaInfo = Optional.empty();
       if (tryWithDeltaFirst) {
-        var dbContext = getDatabase(databaseName);
+        var dbContext = this.sharedContexts.get(databaseName);
         if (dbContext != null) {
-          deltaInfo = dbContext.status();
+          var transactionSequence =
+              ((OSharedContextDistributed) dbContext).getTransactionSequence();
+          deltaInfo = Optional.of(transactionSequence.currentStatus());
         }
       }
       var res = sync(id.get(), deltaInfo);
@@ -1833,5 +1849,19 @@ public class OrientDBDistributed extends OrientDBEmbedded
   @Override
   public ONetworkMessage newNetworkMessageResponse() {
     return new ONetworkResponseMessage(this);
+  }
+
+  public void validateDatabaseStatus(String databaseName, OTransactionSequenceStatus status) {
+    var context = getSharedDatabasecontext(databaseName);
+    if (context.isPresent()) {
+      List<OTransactionId> res = context.get().getTransactionSequence().checkSelfStatus(status);
+      context.get().getDistributedContext().removeRunning(res);
+      if (!res.isEmpty()) {
+        execute(
+            () -> {
+              installDatabase(databaseName, true, true);
+            });
+      }
+    }
   }
 }

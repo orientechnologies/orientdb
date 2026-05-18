@@ -1,15 +1,11 @@
-package com.orientechnologies.orient.server.distributed.impl;
+package com.orientechnologies.orient.core.transaction;
 
 import com.orientechnologies.common.util.ORawPair;
-import com.orientechnologies.orient.core.transaction.ONodeId;
-import com.orientechnologies.orient.core.transaction.OTransactionId;
-import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
-import com.orientechnologies.orient.core.transaction.OTransactionSequenceManager;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.exception.OTransactionAlreadyPresentException;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import com.orientechnologies.orient.core.tx.OTxMetadataHolderImpl;
 import com.orientechnologies.orient.core.tx.ValidationResult;
-import com.orientechnologies.orient.server.distributed.ODistributedException;
-import com.orientechnologies.orient.server.distributed.exception.OTransactionAlreadyPresentException;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
@@ -59,7 +55,7 @@ public class ODistributedSynchronizedSequence {
       request = new CountDownLatch(1);
       return new OTxMetadataHolderImpl(request, id.getId(), sequenceManager.currentStatus());
     } else {
-      throw new ODistributedException("Failed transaction sequence need a reinstall");
+      throw new ODatabaseException("Failed transaction sequence need a reinstall");
     }
   }
 

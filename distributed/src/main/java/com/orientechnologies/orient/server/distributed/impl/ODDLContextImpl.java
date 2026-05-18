@@ -5,9 +5,9 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
-import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedTxContext;
+import com.orientechnologies.orient.server.distributed.impl.metadata.OSharedContextDistributed;
 
 public class ODDLContextImpl implements ODistributedTxContext {
 
@@ -16,11 +16,11 @@ public class ODDLContextImpl implements ODistributedTxContext {
   private OTransactionIdPromise afterChangeId;
   private ODistributedRequestId requestId;
   private TxContextStatus status;
-  private ODistributedDatabase shared;
+  private OSharedContextDistributed shared;
   private long startedOn;
 
   public ODDLContextImpl(
-      ODistributedDatabase shared,
+      OSharedContextDistributed shared,
       String query,
       OTransactionIdPromise preChangeId,
       OTransactionIdPromise afterChangeId,
@@ -43,8 +43,8 @@ public class ODDLContextImpl implements ODistributedTxContext {
 
   @Override
   public void destroy() {
-    shared.rollback(this.preChangeId);
-    shared.rollback(this.afterChangeId);
+    shared.getTransactionSequence().notifyFailure(this.preChangeId);
+    shared.getTransactionSequence().notifyFailure(this.afterChangeId);
   }
 
   @Override

@@ -19,7 +19,6 @@
  */
 package com.orientechnologies.orient.server.distributed.impl;
 
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_TRANSACTION_SEQUENCE_SET_SIZE;
 import static com.orientechnologies.orient.core.db.OScenarioThreadLocal.executeAsDistributed;
 
 import com.orientechnologies.common.concur.OOfflineNodeException;
@@ -28,7 +27,6 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.thread.OSourceTraceExecutorService;
 import com.orientechnologies.common.thread.OThreadPoolExecutors;
-import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.OCancellableTimer;
@@ -39,10 +37,6 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OSyncSource;
 import com.orientechnologies.orient.core.transaction.OTransactionId;
-import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
-import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
-import com.orientechnologies.orient.core.tx.OTxMetadataHolder;
-import com.orientechnologies.orient.core.tx.ValidationResult;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
@@ -68,7 +62,6 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TimerTask;
@@ -103,7 +96,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   private volatile boolean running = true;
   private volatile boolean parsing = false;
   private AtomicLong operationsRunnig = new AtomicLong(0);
-  private ODistributedSynchronizedSequence sequenceManager;
   private ExecutorService requestExecutor;
   private OLockManager lockManager = new OLockManagerImpl();
   private Set<OTransactionId> inQueue = Collections.newSetFromMap(new ConcurrentHashMap<>());
@@ -111,12 +103,10 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   private volatile DB_STATUS freezePrevStatus;
   private OFreezeGuard freezeGuard;
   private final OrientDBDistributed context;
-  private final OStorage storage;
 
   public ODistributedDatabaseImpl(OrientDBDistributed context, final OStorage storage) {
     this.context = context;
     this.manager = context.getPlugin();
-    this.storage = storage;
     this.databaseName = storage.getName();
     this.localNodeName = context.getNodeName();
 
@@ -125,13 +115,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       indexKeyPromiseManager = null;
       return;
     }
-
-    int sequenceSize =
-        context
-            .getConfigurations()
-            .getConfigurations()
-            .getValueAsInteger(DISTRIBUTED_TRANSACTION_SEQUENCE_SET_SIZE);
-    sequenceManager = new ODistributedSynchronizedSequence(context.getNodeId(), sequenceSize);
 
     fillStatus();
     initExecutor();
@@ -443,11 +426,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     resume();
   }
 
-  public void fillStatus() {
-    if (storage != null) {
-      sequenceManager.fill(storage.getLastMetadata());
-    }
-  }
+  public void fillStatus() {}
 
   @Override
   public void unlockResourcesOfServer(
@@ -473,21 +452,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     }
   }
 
-  public ValidationResult validate(OTransactionIdPromise id) {
-    // this check should happen only of destination nodes
-    return sequenceManager.validate(id);
-  }
-
-  @Override
-  public OTxMetadataHolder commit(OTransactionIdPromise id) {
-    return sequenceManager.notifySuccess(id);
-  }
-
-  @Override
-  public void rollback(OTransactionIdPromise id) {
-    sequenceManager.notifyFailure(id);
-  }
-
   @Override
   public ODistributedTxContext registerTxContext(
       final ODistributedRequestId reqId, ODistributedTxContext ctx) {
@@ -496,24 +460,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       prevCtx.destroy();
     }
     return ctx;
-  }
-
-  @Override
-  public Optional<OTransactionIdPromise> nextId() {
-    return sequenceManager.next();
-  }
-
-  public Optional<ORawPair<OTransactionIdPromise, OTransactionIdPromise>> nextDDLId() {
-    return sequenceManager.nextDDL();
-  }
-
-  @Override
-  public List<OTransactionId> missingTransactions(OTransactionSequenceStatus lastState) {
-    return sequenceManager.missingTransactions(lastState);
-  }
-
-  public boolean missingDDL(OTransactionSequenceStatus lastState) {
-    return sequenceManager.missingDDL(lastState);
   }
 
   @Override
@@ -607,10 +553,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   public void initFirstOpen(ODatabaseDocumentInternal session) {
-    OStorage storage = session.getStorage();
-    if (storage != null) {
-      sequenceManager.fill(storage.getLastMetadata());
-    }
     resume();
   }
 
@@ -780,36 +722,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     return activeTxContexts;
   }
 
-  @Override
-  public void validateStatus(OTransactionSequenceStatus status) {
-    List<OTransactionId> res = sequenceManager.checkSelfStatus(status);
-    res.removeAll(this.inQueue);
-    if (!res.isEmpty()) {
-      context.execute(this::runReverseSync);
-    }
-  }
-
-  @Override
-  public Optional<OTransactionSequenceStatus> status() {
-    if (sequenceManager == null) {
-      return Optional.empty();
-    } else {
-      return Optional.of(sequenceManager.currentStatus());
-    }
-  }
-
-  private void runReverseSync() {
-    context.installDatabase(databaseName, true, true);
-  }
-
-  @Override
-  public void checkReverseSync(OTransactionSequenceStatus lastState) {
-    List<OTransactionId> res = sequenceManager.checkSelfStatus(lastState);
-    if (!res.isEmpty()) {
-      context.execute(this::runReverseSync);
-    }
-  }
-
   public List<OLockGuard> localLock(OLockKeySource keySource) {
     SortedSet<ORID> rids = keySource.getRids();
     SortedSet<OTransactionUniqueKey> uniqueKeys = keySource.getUniqueKeys();
@@ -877,5 +789,9 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
   public OrientDBDistributed getContext() {
     return context;
+  }
+
+  public void removeRunning(List<OTransactionId> res) {
+    res.removeAll(this.inQueue);
   }
 }

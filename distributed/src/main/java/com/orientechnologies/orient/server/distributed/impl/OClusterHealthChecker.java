@@ -103,7 +103,10 @@ public class OClusterHealthChecker implements Runnable {
       try {
         ODistributedDatabase sharedDb = manager.getDatabase(dbName);
         if (sharedDb != null) {
-          Optional<OTransactionSequenceStatus> status = sharedDb.status();
+          Optional<OTransactionSequenceStatus> status =
+              context
+                  .getSharedDatabasecontext(dbName)
+                  .map((x) -> x.getTransactionSequence().currentStatus());
           if (status.isPresent()) {
             ORemoteTask task = new OUpdateDatabaseSequenceStatusTask(dbName, status.get());
 
