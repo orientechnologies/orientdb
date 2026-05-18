@@ -122,6 +122,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
     OClusterBasedStorageConfiguration.DATA_FILE_EXTENSION,
     OClusterBasedStorageConfiguration.TREE_DATA_FILE_EXTENSION,
     OClusterBasedStorageConfiguration.TREE_NULL_FILE_EXTENSION,
+    OClusterBasedStorageConfiguration.FREE_MAP_FILE_EXTENSION,
     OCellBTreeMultiValueIndexEngine.DATA_FILE_EXTENSION,
     OCellBTreeMultiValueIndexEngine.M_CONTAINER_EXTENSION,
     DoubleWriteLogGL.EXTENSION,
