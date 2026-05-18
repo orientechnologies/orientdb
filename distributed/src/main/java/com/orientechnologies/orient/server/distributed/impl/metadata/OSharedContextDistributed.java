@@ -67,8 +67,7 @@ public class OSharedContextDistributed extends OSharedContextEmbedded {
     activeDistributedQueries = new HashMap<>();
 
     this.viewManager = new ViewManager(orientDB, storage.getName());
-    this.distributedContext =
-        new ODistributedDatabaseImpl((OrientDBDistributed) orientDB, storage.getName());
+    this.distributedContext = new ODistributedDatabaseImpl((OrientDBDistributed) orientDB, storage);
   }
 
   public synchronized void load(ODatabaseDocumentInternal database) {

@@ -111,33 +111,37 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   private volatile DB_STATUS freezePrevStatus;
   private OFreezeGuard freezeGuard;
   private final OrientDBDistributed context;
+  private final OStorage storage;
 
-  public ODistributedDatabaseImpl(OrientDBDistributed context, final String iDatabaseName) {
+  public ODistributedDatabaseImpl(OrientDBDistributed context, final OStorage storage) {
     this.context = context;
     this.manager = context.getPlugin();
-    this.databaseName = iDatabaseName;
+    this.storage = storage;
+    this.databaseName = storage.getName();
     this.localNodeName = context.getNodeName();
 
-    initExecutor();
-
-    if (iDatabaseName.equals(OSystemDatabase.SYSTEM_DB_NAME)) {
+    if (databaseName.equals(OSystemDatabase.SYSTEM_DB_NAME)) {
       recordPromiseManager = null;
       indexKeyPromiseManager = null;
       return;
     }
-
-    startTxTimeoutTimerTask();
-
-    initProfilerHooks();
 
     int sequenceSize =
         context
             .getConfigurations()
             .getConfigurations()
             .getValueAsInteger(DISTRIBUTED_TRANSACTION_SEQUENCE_SET_SIZE);
+    sequenceManager = new ODistributedSynchronizedSequence(context.getNodeId(), sequenceSize);
+
+    fillStatus();
+    initExecutor();
+
+    startTxTimeoutTimerTask();
+
+    initProfilerHooks();
+
     recordPromiseManager = new OTxPromiseManager<>();
     indexKeyPromiseManager = new OTxPromiseManager<>();
-    sequenceManager = new ODistributedSynchronizedSequence(context.getNodeId(), sequenceSize);
   }
 
   public void initProfilerHooks() {
@@ -440,8 +444,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   public void fillStatus() {
-    OStorage storage = context.getStorage(databaseName);
-
     if (storage != null) {
       sequenceManager.fill(storage.getLastMetadata());
     }
