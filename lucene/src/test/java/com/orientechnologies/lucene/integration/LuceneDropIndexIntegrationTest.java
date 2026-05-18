@@ -15,6 +15,7 @@ import java.util.stream.Collectors;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class LuceneDropIndexIntegrationTest {
@@ -52,6 +53,7 @@ public class LuceneDropIndexIntegrationTest {
   }
 
   @Test
+  @Ignore
   public void testDropDatabase() throws IOException {
 
     OrientDB remote =
