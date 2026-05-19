@@ -116,7 +116,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       return;
     }
 
-    fillStatus();
     initExecutor();
 
     startTxTimeoutTimerTask();
@@ -422,11 +421,8 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
   @Override
   public void setOnline() {
-    fillStatus();
     resume();
   }
-
-  public void fillStatus() {}
 
   @Override
   public void unlockResourcesOfServer(

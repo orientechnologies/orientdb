@@ -69,8 +69,6 @@ public interface ODistributedDatabase {
 
   long getProcessedRequests();
 
-  void fillStatus();
-
   void startOperation();
 
   void endOperation();
