@@ -1214,14 +1214,12 @@ public enum OGlobalConfiguration { // ENVIRONMENT
       15,
       true),
 
-  /** @Since 2.1 */
-  @OApi(maturity = OApi.MATURITY.NEW)
   DISTRIBUTED_CONCURRENT_TX_AUTORETRY_DELAY(
       "distributed.concurrentTxAutoRetryDelay",
       "Delay (in ms) between attempts on executing a distributed transaction, which had failed"
           + " because of locked records. (0=no delay)",
       Integer.class,
-      10,
+      50,
       true),
 
   DISTRIBUTED_TRANSACTION_SEQUENCE_SET_SIZE(

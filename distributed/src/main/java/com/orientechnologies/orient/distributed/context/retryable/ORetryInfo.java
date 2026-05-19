@@ -18,7 +18,12 @@ public class ORetryInfo {
       logger.warn("Retry configured with an invalid value:%s assuming 1", maxRetry);
       maxRetry = 1;
     }
-    this.maxRetry = maxRetry;
+    // Add a random extra retry to increase the likeness of one reaching the success.
+    int extra = 0;
+    if (maxRetry / 2 > 0) {
+      extra = random.nextInt(maxRetry / 2);
+    }
+    this.maxRetry = maxRetry + extra;
     this.delay = delay;
   }
 
