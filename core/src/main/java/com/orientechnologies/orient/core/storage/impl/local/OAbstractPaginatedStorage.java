@@ -2644,7 +2644,11 @@ public abstract class OAbstractPaginatedStorage
     assert indexId == engine.getId();
     Object result = ((OIndexEngine) engine).get(key);
     if (result != null) {
-      return ((Collection<ORID>) result).stream();
+      if (result instanceof ORID) {
+        return Stream.of((ORID) result);
+      } else {
+        return ((Collection<ORID>) result).stream();
+      }
     } else {
       return Stream.empty();
     }
