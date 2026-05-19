@@ -95,19 +95,7 @@ public class OSharedContextEmbedded extends OSharedContext {
 
     try {
       if (!loaded) {
-        schema.load(database);
-        schema.forceSnapshot(database);
-        indexManager.load(database);
-        // The Immutable snapshot should be after index and schema that require and before
-        // everything else that use it
-        schema.forceSnapshot(database);
-        security.load(database);
-        functionLibrary.load(database);
-        scheduler.load(database);
-        sequenceLibrary.load(database);
-        schema.onPostIndexManagement();
-        viewManager.load();
-        transactionSequence.fill(getStorage().getLastMetadata());
+        internalLoad(database);
         loaded = true;
       }
     } finally {
@@ -119,8 +107,29 @@ public class OSharedContextEmbedded extends OSharedContext {
     }
   }
 
+  protected void internalLoad(ODatabaseDocumentInternal database) {
+    transactionSequence.fill(getStorage().getLastMetadata());
+    schema.load(database);
+    schema.forceSnapshot(database);
+    indexManager.load(database);
+    // The Immutable snapshot should be after index and schema that require and before
+    // everything else that use it
+    schema.forceSnapshot(database);
+    security.load(database);
+    functionLibrary.load(database);
+    scheduler.load(database);
+    sequenceLibrary.load(database);
+    schema.onPostIndexManagement();
+    viewManager.load();
+  }
+
   @Override
   public synchronized void close() {
+    internalClose();
+    loaded = false;
+  }
+
+  protected void internalClose() {
     stringCache.close();
     viewManager.close();
     schema.close();
@@ -134,10 +143,14 @@ public class OSharedContextEmbedded extends OSharedContext {
     liveQueryOps.close();
     liveQueryOpsV2.close();
     activeDistributedQueries.values().forEach(x -> x.close());
-    loaded = false;
   }
 
   public synchronized void reload(ODatabaseDocumentInternal database) {
+    internalReload(database);
+  }
+
+  protected void internalReload(ODatabaseDocumentInternal database) {
+    transactionSequence.fill(getStorage().getLastMetadata());
     schema.reload(database);
     indexManager.reload(database);
     // The Immutable snapshot should be after index and schema that require and before everything
@@ -147,10 +160,15 @@ public class OSharedContextEmbedded extends OSharedContext {
     functionLibrary.load(database);
     sequenceLibrary.load(database);
     scheduler.load(database);
-    transactionSequence.fill(getStorage().getLastMetadata());
   }
 
   public synchronized void create(ODatabaseDocumentInternal database) {
+    internalCreate(database);
+    loaded = true;
+  }
+
+  protected void internalCreate(ODatabaseDocumentInternal database) {
+    transactionSequence.fill(getStorage().getLastMetadata());
     schema.create(database);
     indexManager.create(database);
     security.create(database);
@@ -175,8 +193,6 @@ public class OSharedContextEmbedded extends OSharedContext {
     }
 
     viewManager.create();
-    transactionSequence.fill(getStorage().getLastMetadata());
-    loaded = true;
   }
 
   public Map<String, DistributedQueryContext> getActiveDistributedQueries() {
