@@ -2632,35 +2632,7 @@ public abstract class OAbstractPaginatedStorage
     }
   }
 
-  public Object getIndexValue(int indexId, final Object key) throws OInvalidIndexEngineIdException {
-    indexId = extractInternalId(indexId);
-
-    try {
-      if (transaction.get() != null) {
-        return doGetIndexValue(indexId, key);
-      }
-
-      stateLock.readLock().lock();
-      try {
-
-        checkOpennessAndMigration();
-
-        return doGetIndexValue(indexId, key);
-      } finally {
-        stateLock.readLock().unlock();
-      }
-    } catch (final OInvalidIndexEngineIdException ie) {
-      throw logAndPrepareForRethrow(ie);
-    } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
-    } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee, false);
-    } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t, false);
-    }
-  }
-
-  private Object doGetIndexValue(final int indexId, final Object key)
+  private Stream<ORID> doGetIndexValue(final int indexId, final Object key)
       throws OInvalidIndexEngineIdException {
     final int engineAPIVersion = extractEngineAPIVersion(indexId);
     if (engineAPIVersion != 0) {
@@ -2670,30 +2642,42 @@ public abstract class OAbstractPaginatedStorage
     checkIndexId(indexId);
     final OBaseIndexEngine engine = indexEngines.get(indexId);
     assert indexId == engine.getId();
-    return ((OIndexEngine) engine).get(key);
+    Object result = ((OIndexEngine) engine).get(key);
+    if (result != null) {
+      return ((Collection<ORID>) result).stream();
+    } else {
+      return Stream.empty();
+    }
   }
 
   public Stream<ORID> getIndexValues(int indexId, final Object key)
       throws OInvalidIndexEngineIdException {
     final int engineAPIVersion = extractEngineAPIVersion(indexId);
-    if (engineAPIVersion != 1) {
-      throw new IllegalStateException(
-          "Unsupported version of index engine API. Required 1 but found " + engineAPIVersion);
-    }
 
     indexId = extractInternalId(indexId);
 
     try {
 
       if (transaction.get() != null) {
-        return doGetIndexValues(indexId, key);
+        if (engineAPIVersion == 0) {
+          return doGetIndexValue(indexId, key);
+        } else if (engineAPIVersion == 1) {
+          return doGetIndexValues(indexId, key);
+        } else {
+          throw new IllegalStateException("Unknown version of index API " + engineAPIVersion);
+        }
       }
 
       stateLock.readLock().lock();
       try {
         checkOpennessAndMigration();
-
-        return doGetIndexValues(indexId, key);
+        if (engineAPIVersion == 0) {
+          return doGetIndexValue(indexId, key);
+        } else if (engineAPIVersion == 1) {
+          return doGetIndexValues(indexId, key);
+        } else {
+          throw new IllegalStateException("Unknown version of index API " + engineAPIVersion);
+        }
       } finally {
         stateLock.readLock().unlock();
       }

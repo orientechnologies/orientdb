@@ -41,7 +41,6 @@ import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.apache.lucene.document.Document;
@@ -208,10 +207,7 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
   public Stream<ORID> getRidsIgnoreTx(Object key) {
     while (true) {
       try {
-        @SuppressWarnings("unchecked")
-        Set<OIdentifiable> result = (Set<OIdentifiable>) storage.getIndexValue(indexId, key);
-        //noinspection resource
-        return result.stream().map(OIdentifiable::getIdentity);
+        return storage.getIndexValues(indexId, key);
         // TODO filter these results based on security
         //          return new HashSet(OIndexInternal.securityFilterOnRead(this, result));
       } catch (OInvalidIndexEngineIdException e) {
@@ -245,10 +241,7 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
     } else {
       while (true) {
         try {
-          @SuppressWarnings("unchecked")
-          Set<OIdentifiable> result = (Set<OIdentifiable>) storage.getIndexValue(indexId, key);
-          //noinspection resource
-          return result.stream().map(OIdentifiable::getIdentity);
+          return storage.getIndexValues(indexId, key);
           // TODO filter these results based on security
           //          return new HashSet(OIndexInternal.securityFilterOnRead(this, result));
         } catch (OInvalidIndexEngineIdException e) {

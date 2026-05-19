@@ -79,7 +79,6 @@ public abstract class OIndexAbstract implements OIndexInternal {
   private final ReentrantReadWriteLock rwLock = new ReentrantReadWriteLock();
 
   protected volatile int indexId = -1;
-  protected volatile int apiVersion = -1;
 
   protected OIndexMetadata im;
 
@@ -202,14 +201,6 @@ public abstract class OIndexAbstract implements OIndexInternal {
     try {
       Set<String> clustersToIndex = indexMetadata.getClustersToIndex();
 
-      // do not remove this, it is needed to remove index garbage if such one exists
-      try {
-        if (apiVersion == 0) {
-          removeValuesContainer();
-        }
-      } catch (Exception e) {
-        logger.error("Error during deletion of index '%s'", e, im.getName());
-      }
       Map<String, String> engineProperties = new HashMap<>();
       // this property is used for autosharded index
       if (im.getMetadata() != null && im.getMetadata().containsField("partitions")) {
@@ -219,10 +210,8 @@ public abstract class OIndexAbstract implements OIndexInternal {
       }
       indexMetadata.setVersion(im.getVersion());
       indexId = storage.addIndexEngine(indexMetadata, engineProperties);
-      apiVersion = storage.getIndexApiVersion(indexId);
 
       assert indexId >= 0;
-      assert apiVersion >= 0;
 
       if (rebuild) fillIndex(progressListener, false);
 
@@ -243,7 +232,6 @@ public abstract class OIndexAbstract implements OIndexInternal {
 
   protected void doReloadIndexEngine() {
     indexId = storage.loadIndexEngine(im);
-    apiVersion = storage.getIndexApiVersion(indexId);
 
     if (indexId < 0) {
       throw new IllegalStateException("Index " + im.getName() + " can not be loaded");
@@ -259,7 +247,6 @@ public abstract class OIndexAbstract implements OIndexInternal {
 
       try {
         indexId = storage.loadIndexEngine(im);
-        apiVersion = storage.getIndexApiVersion(indexId);
         if (indexId == -1) {
           return false;
         }
@@ -450,7 +437,6 @@ public abstract class OIndexAbstract implements OIndexInternal {
         engineProperties.put("partitions", Integer.toString(im.getClustersToIndex().size()));
       }
       indexId = storage.addIndexEngine(indexMetadata, engineProperties);
-      apiVersion = storage.getIndexApiVersion(indexId);
 
     } catch (Exception e) {
       try {

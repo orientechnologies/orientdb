@@ -82,20 +82,7 @@ public abstract class OIndexOneValue extends OIndexAbstract {
     try {
       while (true)
         try {
-          if (apiVersion == 0) {
-            final ORID rid = (ORID) storage.getIndexValue(indexId, key);
-            if (rid == null) {
-              stream = Stream.empty();
-            } else {
-              //noinspection resource
-              stream = Stream.of(rid);
-            }
-          } else if (apiVersion == 1) {
-            //noinspection resource
-            stream = storage.getIndexValues(indexId, key);
-          } else {
-            throw new IllegalStateException("Unknown version of index API " + apiVersion);
-          }
+          stream = storage.getIndexValues(indexId, key);
           stream = IndexStreamSecurityDecorator.decorateRidStream(this, stream);
           break;
         } catch (OInvalidIndexEngineIdException ignore) {
@@ -160,21 +147,9 @@ public abstract class OIndexOneValue extends OIndexAbstract {
                       try {
                         while (true) {
                           try {
-                            if (apiVersion == 0) {
-                              final ORID rid = (ORID) storage.getIndexValue(indexId, collatedKey);
-                              if (rid == null) {
-                                return Stream.empty();
-                              }
-                              return Stream.of(new ORawPair<>(collatedKey, rid));
-                            } else if (apiVersion == 1) {
-                              //noinspection resource
-                              return storage
-                                  .getIndexValues(indexId, collatedKey)
-                                  .map((rid) -> new ORawPair<>(collatedKey, rid));
-                            } else {
-                              throw new IllegalStateException(
-                                  "Invalid version of index API - " + apiVersion);
-                            }
+                            return storage
+                                .getIndexValues(indexId, collatedKey)
+                                .map((rid) -> new ORawPair<>(collatedKey, rid));
                           } catch (OInvalidIndexEngineIdException ignore) {
                             doReloadIndexEngine();
                           }

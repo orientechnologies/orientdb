@@ -45,7 +45,6 @@ import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -78,26 +77,9 @@ public abstract class OIndexMultiValues extends OIndexAbstract {
     Stream<ORID> backedStream;
     acquireSharedLock();
     try {
-      Stream<ORID> stream;
       while (true) {
         try {
-          if (apiVersion == 0) {
-            //noinspection unchecked
-            final Collection<ORID> values =
-                (Collection<ORID>) storage.getIndexValue(indexId, collatedKey);
-            if (values != null) {
-              //noinspection resource
-              stream = values.stream();
-            } else {
-              //noinspection resource
-              stream = Stream.empty();
-            }
-          } else if (apiVersion == 1) {
-            //noinspection resource
-            stream = storage.getIndexValues(indexId, collatedKey);
-          } else {
-            throw new IllegalStateException("Invalid version of index API - " + apiVersion);
-          }
+          Stream<ORID> stream = storage.getIndexValues(indexId, collatedKey);
           backedStream = IndexStreamSecurityDecorator.decorateRidStream(this, stream);
           break;
         } catch (OInvalidIndexEngineIdException ignore) {
@@ -422,17 +404,7 @@ public abstract class OIndexMultiValues extends OIndexAbstract {
     try {
       while (true) {
         try {
-          if (apiVersion == 0) {
-            //noinspection unchecked,resource
-            return Optional.ofNullable((Collection<ORID>) storage.getIndexValue(indexId, key))
-                .map((rids) -> rids.stream().map((rid) -> new ORawPair<>(entryKey, rid)))
-                .orElse(Stream.empty());
-          } else if (apiVersion == 1) {
-            //noinspection resource
-            return storage.getIndexValues(indexId, key).map((rid) -> new ORawPair<>(entryKey, rid));
-          } else {
-            throw new IllegalStateException("Invalid version of index API - " + apiVersion);
-          }
+          return storage.getIndexValues(indexId, key).map((rid) -> new ORawPair<>(entryKey, rid));
         } catch (OInvalidIndexEngineIdException ignore) {
           doReloadIndexEngine();
         }
