@@ -178,16 +178,6 @@ public class OIndexManagerRemote implements OIndexManagerAbstract {
     return new ODictionary<>(idx);
   }
 
-  public ODocument getConfiguration() {
-    acquireSharedLock();
-
-    try {
-      return getDocument();
-    } finally {
-      releaseSharedLock();
-    }
-  }
-
   @Override
   public void close() {
     indexes.clear();
@@ -245,10 +235,13 @@ public class OIndexManagerRemote implements OIndexManagerAbstract {
       ODatabaseDocumentInternal database,
       final String className,
       final Collection<OIndex> indexes) {
-    getClassRawIndexes(className, indexes);
+    getClassRawIndexes(database, className, indexes);
   }
 
-  public void getClassRawIndexes(final String className, final Collection<OIndex> indexes) {
+  public void getClassRawIndexes(
+      ODatabaseDocumentInternal database,
+      final String className,
+      final Collection<OIndex> indexes) {
     final Map<OMultiKey, Set<OIndex>> propertyIndex = getIndexOnProperty(className);
 
     if (propertyIndex == null) return;
@@ -473,8 +466,8 @@ public class OIndexManagerRemote implements OIndexManagerAbstract {
     }
   }
 
-  public ODocument toStream() {
-    throw new UnsupportedOperationException("Remote index cannot be streamed");
+  public ODocument toStream(ODatabaseDocumentInternal database) {
+    throw new UnsupportedOperationException("Remote index configuration cannot be serialized");
   }
 
   public void recreateIndexes() {
@@ -497,7 +490,7 @@ public class OIndexManagerRemote implements OIndexManagerAbstract {
     return false;
   }
 
-  public void removeClassPropertyIndex(OIndex idx) {}
+  public void removeClassPropertyIndex(ODatabaseDocumentInternal database, OIndex idx) {}
 
   protected OIndex getRemoteIndexInstance(
       boolean isMultiValueIndex,

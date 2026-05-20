@@ -94,7 +94,7 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
 
   public void load(ODatabaseDocumentInternal database) {
     if (!autoRecreateIndexesAfterCrash(database)) {
-      acquireExclusiveLock();
+      acquireExclusiveLock(database);
       try {
         if (database.getStorageInfo().getConfiguration().getIndexMgrRecordId() == null)
           // @COMPATIBILITY: CREATE THE INDEX MGR
@@ -103,26 +103,26 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
             new ORecordId(database.getStorageInfo().getConfiguration().getIndexMgrRecordId());
         // RELOAD IT
         ODocument document = database.load(identity, "*:-1 index:0", true);
-        boolean migrated = fromStream(document);
+        boolean migrated = fromStream(document, database);
         if (migrated) {
           save(database);
         }
       } finally {
-        releaseExclusiveLock();
+        releaseExclusiveLock(database);
       }
     }
   }
 
   public void reload(ODatabaseDocumentInternal database) {
-    acquireExclusiveLock();
+    acquireExclusiveLock(database);
     try {
       ODocument document = database.load(identity, "*:-1 index:0", true);
-      boolean migrated = fromStream(document);
+      boolean migrated = fromStream(document, database);
       if (migrated) {
         save(database);
       }
     } finally {
-      releaseExclusiveLock();
+      releaseExclusiveLock(database);
     }
   }
 
@@ -130,14 +130,14 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
 
     OScenarioThreadLocal.executeAsDistributed(
         () -> {
-          acquireExclusiveLock();
+          acquireExclusiveLock(database);
 
           try {
             internalSave(database);
             return null;
 
           } finally {
-            releaseExclusiveLock();
+            releaseExclusiveLock(database);
           }
         });
   }
@@ -153,7 +153,7 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
     } finally {
       releaseSharedLock();
     }
-    acquireExclusiveLock();
+    acquireExclusiveLock(database);
     try {
       final OIndex index = indexes.get(indexName);
       if (index == null)
@@ -181,7 +181,7 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
     } finally {
       releaseSharedLock();
     }
-    acquireExclusiveLock();
+    acquireExclusiveLock(database);
     try {
       final OIndex index = indexes.get(indexName);
       if (index == null)
@@ -193,13 +193,13 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
   }
 
   public void create(ODatabaseDocumentInternal database) {
-    acquireExclusiveLock();
+    acquireExclusiveLock(database);
     try {
       ODocument document = database.save(new ODocument(), OSessionMetadata.CLUSTER_INTERNAL_NAME);
       identity = document.getIdentity();
       database.getStorage().setIndexMgrRecordId(document.getIdentity().toString());
     } finally {
-      releaseExclusiveLock();
+      releaseExclusiveLock(database);
     }
   }
 
@@ -233,11 +233,11 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
 
   public void setDefaultClusterName(
       ODatabaseDocumentInternal database, final String defaultClusterName) {
-    acquireExclusiveLock();
+    acquireExclusiveLock(database);
     try {
       this.defaultClusterName = defaultClusterName;
     } finally {
-      releaseExclusiveLock();
+      releaseExclusiveLock(database);
     }
   }
 
@@ -254,16 +254,6 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
       idx = createDictionaryIfNeeded(database);
     }
     return new ODictionary<>(idx);
-  }
-
-  public ODocument getConfiguration() {
-    acquireSharedLock();
-
-    try {
-      return getDocument();
-    } finally {
-      releaseSharedLock();
-    }
   }
 
   @Override
@@ -331,7 +321,10 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
       for (final OIndex index : propertyIndexes) indexes.add(index);
   }
 
-  public void getClassRawIndexes(final String className, final Collection<OIndex> indexes) {
+  public void getClassRawIndexes(
+      ODatabaseDocumentInternal database,
+      final String className,
+      final Collection<OIndex> indexes) {
     final Map<OMultiKey, Set<OIndex>> propertyIndex = getIndexOnProperty(className);
 
     if (propertyIndex == null) return;
@@ -385,24 +378,22 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
     lock.readLock().unlock();
   }
 
-  protected void acquireExclusiveLock() {
-    internalAcquireExclusiveLock();
+  protected void acquireExclusiveLock(ODatabaseDocumentInternal database) {
+    internalAcquireExclusiveLock(database);
     writeLockNesting.incrementAndGet();
   }
 
-  void internalAcquireExclusiveLock() {
-    final ODatabaseDocumentInternal databaseRecord = getDatabaseIfDefined();
-    if (databaseRecord != null && !databaseRecord.isClosed()) {
-      final OMetadataInternal metadata = (OMetadataInternal) databaseRecord.getMetadata();
+  void internalAcquireExclusiveLock(ODatabaseDocumentInternal database) {
+    if (database != null && !database.isClosed()) {
+      final OMetadataInternal metadata = database.getMetadata();
       if (metadata != null) metadata.makeThreadLocalSchemaSnapshot();
-      databaseRecord.startEsclusiveMetadataChange();
+      database.startEsclusiveMetadataChange();
     }
 
     lock.writeLock().lock();
   }
 
-  protected void releaseExclusiveLock() {
-    ODatabaseDocumentInternal database = getDatabaseIfDefined();
+  protected void releaseExclusiveLock(ODatabaseDocumentInternal database) {
     releaseExclusiveLock(database, false);
   }
 
@@ -419,7 +410,7 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
         }
       }
     } finally {
-      internalReleaseExclusiveLock();
+      internalReleaseExclusiveLock(database);
     }
     if (val == 0 && database != null) {
       database
@@ -433,37 +424,32 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
     }
   }
 
-  void internalReleaseExclusiveLock() {
+  void internalReleaseExclusiveLock(ODatabaseDocumentInternal database) {
     lock.writeLock().unlock();
 
-    final ODatabaseDocumentInternal databaseRecord = getDatabaseIfDefined();
-    if (databaseRecord != null && !databaseRecord.isClosed()) {
-      databaseRecord.endEsclusiveMetadataChange();
-      final OMetadata metadata = databaseRecord.getMetadata();
+    if (database != null && !database.isClosed()) {
+      database.endEsclusiveMetadataChange();
+      final OMetadata metadata = database.getMetadata();
       if (metadata != null) ((OMetadataInternal) metadata).clearThreadLocalSchemaSnapshot();
     }
   }
 
-  void clearMetadata() {
-    acquireExclusiveLock();
+  void clearMetadata(ODatabaseDocumentInternal database) {
+    acquireExclusiveLock(database);
     try {
       indexes.clear();
       classPropertyIndex.clear();
     } finally {
-      releaseExclusiveLock();
+      releaseExclusiveLock(database);
     }
   }
 
-  private static ODatabaseDocumentInternal getDatabaseIfDefined() {
-    return ODatabaseRecordThreadLocal.instance().getIfDefined();
-  }
-
-  void addIndexInternal(final OIndex index) {
-    acquireExclusiveLock();
+  void addIndexInternal(ODatabaseDocumentInternal database, final OIndex index) {
+    acquireExclusiveLock(database);
     try {
       addIndexInternalNoLock(index);
     } finally {
-      releaseExclusiveLock();
+      releaseExclusiveLock(database);
     }
   }
 
@@ -515,7 +501,7 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
   }
 
   private OIndex createDictionaryIfNeeded(ODatabaseDocumentInternal database) {
-    acquireExclusiveLock();
+    acquireExclusiveLock(database);
     try {
       OIndex idx = getIndex(database, DICTIONARY_NAME);
       return idx != null ? idx : createDictionary(database);
@@ -629,7 +615,7 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
     final String valueContainerAlgorithm = chooseContainerAlgorithm(type);
 
     final OIndexInternal index;
-    acquireExclusiveLock();
+    acquireExclusiveLock(database);
     try {
 
       if (indexes.containsKey(iName))
@@ -671,7 +657,7 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
 
       index = createIndexFromMetadata(storage, im, progressListener);
 
-      addIndexInternal(index);
+      addIndexInternal(database, index);
 
     } finally {
       releaseExclusiveLock(database, true);
@@ -793,7 +779,7 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
 
     int[] clusterIdsToIndex = null;
 
-    acquireExclusiveLock();
+    acquireExclusiveLock(database);
 
     OIndex idx;
     try {
@@ -808,7 +794,7 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
           }
         }
 
-        removeClassPropertyIndex(idx);
+        removeClassPropertyIndex(database, idx);
 
         idx.delete();
         indexes.remove(iIndexName);
@@ -820,8 +806,8 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
   }
 
   /** Binds POJO to ODocument. */
-  public ODocument toStream() {
-    internalAcquireExclusiveLock();
+  public ODocument toStream(ODatabaseDocumentInternal database) {
+    internalAcquireExclusiveLock(database);
     try {
       ODocument document = new ODocument(identity);
       document.setTrackingChanges(false);
@@ -835,13 +821,13 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
 
       return document;
     } finally {
-      internalReleaseExclusiveLock();
+      internalReleaseExclusiveLock(database);
     }
   }
 
   @Override
   public void recreateIndexes(ODatabaseDocumentInternal database) {
-    acquireExclusiveLock();
+    acquireExclusiveLock(database);
     try {
       if (recreateIndexesThread != null && recreateIndexesThread.isAlive())
         // BUILDING ALREADY IN PROGRESS
@@ -852,7 +838,7 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
       recreateIndexesThread.setUncaughtExceptionHandler(new OUncaughtExceptionHandler());
       recreateIndexesThread.start();
     } finally {
-      releaseExclusiveLock();
+      releaseExclusiveLock(database);
     }
 
     if (database
@@ -891,11 +877,11 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
     return false;
   }
 
-  protected boolean fromStream(ODocument document) {
+  protected boolean fromStream(ODocument document, ODatabaseDocumentInternal database) {
     boolean configUpdated = false;
     final Map<String, OIndex> oldIndexes = new HashMap<>(indexes);
 
-    clearMetadata();
+    clearMetadata(database);
     final Collection<ODocument> indexDocuments = document.field(CONFIG_INDEXES);
 
     if (indexDocuments != null) {
@@ -959,8 +945,8 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
     return configUpdated;
   }
 
-  public void removeClassPropertyIndex(final OIndex idx) {
-    acquireExclusiveLock();
+  public void removeClassPropertyIndex(ODatabaseDocumentInternal database, final OIndex idx) {
+    acquireExclusiveLock(database);
     try {
       final OIndexDefinition indexDefinition = idx.getDefinition();
       if (indexDefinition == null || indexDefinition.getClassName() == null) return;
@@ -998,13 +984,13 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
         classPropertyIndex.put(indexDefinition.getClassName().toLowerCase(), copyPropertyMap(map));
 
     } finally {
-      releaseExclusiveLock();
+      releaseExclusiveLock(database);
     }
   }
 
   public ODocument toNetworkStream() {
     ODocument document = new ODocument();
-    internalAcquireExclusiveLock();
+    lock.writeLock().lock();
     try {
       document.setTrackingChanges(false);
       final OTrackedSet<ODocument> indexes = new OTrackedSet<>(document);
@@ -1016,7 +1002,7 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
 
       return document;
     } finally {
-      internalReleaseExclusiveLock();
+      lock.writeLock().unlock();
     }
   }
 
@@ -1028,16 +1014,12 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
     return storage;
   }
 
-  public ODocument getDocument() {
-    return toStream();
-  }
-
   private void internalSave(ODatabaseDocumentInternal database) {
     boolean saved = false;
     for (int retry = 0; retry < 10; retry++)
       try {
 
-        ODocument document = toStream();
+        ODocument document = toStream(database);
         database.save(document);
         saved = true;
         break;

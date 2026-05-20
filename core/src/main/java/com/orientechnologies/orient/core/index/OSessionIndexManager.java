@@ -91,22 +91,9 @@ public class OSessionIndexManager extends OProxedResource<OIndexManagerAbstract>
         algorithm);
   }
 
-  @Deprecated
-  public ODocument getConfiguration() {
-    return delegate.getConfiguration();
-  }
-
   public OIndexManager dropIndex(final String iIndexName) {
     delegate.dropIndex(database, iIndexName);
     return this;
-  }
-
-  public String getDefaultClusterName() {
-    return delegate.getDefaultClusterName();
-  }
-
-  public void setDefaultClusterName(final String defaultClusterName) {
-    delegate.setDefaultClusterName(database, defaultClusterName);
   }
 
   public ODictionary<ORecord> getDictionary() {
@@ -178,12 +165,11 @@ public class OSessionIndexManager extends OProxedResource<OIndexManagerAbstract>
   }
 
   public void removeClassPropertyIndex(final OIndex idx) {
-    //noinspection deprecation
-    delegate.removeClassPropertyIndex(idx);
+    delegate.removeClassPropertyIndex(database, idx);
   }
 
   public void getClassRawIndexes(String name, Collection<OIndex> indexes) {
-    delegate.getClassRawIndexes(name, indexes);
+    delegate.getClassRawIndexes(database, name, indexes);
   }
 
   public OIndexManagerAbstract delegate() {

@@ -36,10 +36,10 @@ public class ORecreateIndexesTask implements Runnable {
       newDb.internalOpen("admin", "nopass", false);
 
       final Collection<ODocument> indexesToRebuild;
-      indexManager.acquireExclusiveLock();
+      indexManager.acquireExclusiveLock(newDb);
       try {
         final Collection<ODocument> knownIndexes =
-            indexManager.getDocument().field(OIndexManagerShared.CONFIG_INDEXES);
+            indexManager.toStream(newDb).field(OIndexManagerShared.CONFIG_INDEXES);
         if (knownIndexes == null) {
           logger.warn("List of indexes is empty");
           indexesToRebuild = Collections.emptyList();
@@ -49,7 +49,7 @@ public class ORecreateIndexesTask implements Runnable {
             indexesToRebuild.add(index.copy()); // make copies to safely iterate them later
         }
       } finally {
-        indexManager.releaseExclusiveLock();
+        indexManager.releaseExclusiveLock(newDb);
       }
 
       try {
@@ -109,7 +109,7 @@ public class ORecreateIndexesTask implements Runnable {
         logger.info(
             "Index '%s' is a non-durable automatic index and must be rebuilt",
             indexMetadata.getName());
-        rebuildNonDurableAutomaticIndex(indexDocument, index, indexMetadata, indexDefinition);
+        rebuildNonDurableAutomaticIndex(indexDocument, index, indexMetadata, indexDefinition, db);
       }
     } else {
       if (durable) {
@@ -132,7 +132,8 @@ public class ORecreateIndexesTask implements Runnable {
       ODocument indexDocument,
       OIndexInternal index,
       OIndexMetadata indexMetadata,
-      OIndexDefinition indexDefinition) {
+      OIndexDefinition indexDefinition,
+      ODatabaseDocumentEmbedded db) {
     index.loadFromConfiguration(indexDocument);
     index.delete();
 
@@ -144,7 +145,7 @@ public class ORecreateIndexesTask implements Runnable {
       logger.info("Start creation of index '%s'", indexName);
       index.create(indexMetadata, false, new OIndexRebuildOutputListener(index));
 
-      indexManager.addIndexInternal(index);
+      indexManager.addIndexInternal(db, index);
 
       logger.info(
           "Index '%s' was successfully created and rebuild is going to be started", indexName);
@@ -166,7 +167,7 @@ public class ORecreateIndexesTask implements Runnable {
   private void addIndexAsIs(
       ODocument indexDocument, OIndexInternal index, ODatabaseDocumentEmbedded database) {
     if (index.loadFromConfiguration(indexDocument)) {
-      indexManager.addIndexInternal(index);
+      indexManager.addIndexInternal(database, index);
 
       ok++;
       logger.info("Index '%s' was added in DB index list", index.getName());

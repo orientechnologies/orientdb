@@ -135,24 +135,6 @@ public interface OIndexManager {
   OIndexManager dropIndex(final String iIndexName);
 
   /**
-   * IMPORTANT! Only for internal usage.
-   *
-   * @return name of default cluster.
-   */
-  @Deprecated
-  String getDefaultClusterName();
-
-  /**
-   * Sets the new default cluster.
-   *
-   * <p>IMPORTANT! Only for internal usage.
-   *
-   * @param defaultClusterName name of new default cluster
-   */
-  @Deprecated
-  void setDefaultClusterName(String defaultClusterName);
-
-  /**
    * Return a dictionary index. Could be helpful to store different kinds of configurations.
    *
    * @return a dictionary
@@ -160,16 +142,6 @@ public interface OIndexManager {
    */
   @Deprecated
   ODictionary<ORecord> getDictionary();
-
-  /**
-   * Returns a record where configurations are saved.
-   *
-   * <p>IMPORTANT! Only for internal usage.
-   *
-   * @return a document that used to store index configurations.
-   */
-  @Deprecated
-  ODocument getConfiguration();
 
   /**
    * Returns list of indexes that contain passed in fields names as their first keys. Order of

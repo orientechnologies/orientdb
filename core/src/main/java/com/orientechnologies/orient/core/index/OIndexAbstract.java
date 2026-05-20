@@ -561,7 +561,10 @@ public abstract class OIndexAbstract implements OIndexInternal {
       doDelete();
       // REMOVE THE INDEX ALSO FROM CLASS MAP
       if (getDatabase().getMetadata() != null)
-        getDatabase().getMetadata().getIndexManagerInternal().removeClassPropertyIndex(this);
+        getDatabase()
+            .getMetadata()
+            .getIndexManagerInternal()
+            .removeClassPropertyIndex(getDatabase(), this);
 
       return this;
     } finally {

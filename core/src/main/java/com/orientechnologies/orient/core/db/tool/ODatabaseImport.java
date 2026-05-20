@@ -1163,7 +1163,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
 
     if (recreateManualIndex) {
       database.addCluster(OSessionMetadata.CLUSTER_MANUAL_INDEX_NAME);
-      database.getMetadata().getIndexManagerInternal().create();
+      database.getMetadata().getIndexManagerInternal().create(database);
 
       listener.onMessage("\nManual index cluster was recreated.");
     }

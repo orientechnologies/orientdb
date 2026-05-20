@@ -68,7 +68,10 @@ public class ORemotePushMessagesTest {
     orientDB.execute("create database test memory users (admin identified by 'admin' role admin)");
     ODatabaseSession session = orientDB.open("test", "admin", "admin");
     ODocument schema =
-        ((ODatabaseDocumentInternal) session).getSharedContext().getIndexManager().toStream();
+        ((ODatabaseDocumentInternal) session)
+            .getSharedContext()
+            .getIndexManager()
+            .toStream((ODatabaseDocumentInternal) session);
     session.close();
     orientDB.close();
     MockChannel channel = new MockChannel();

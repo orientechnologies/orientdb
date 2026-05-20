@@ -699,7 +699,10 @@ public class OImmutableClass implements OClass {
   }
 
   public void getRawClassIndexes(final Collection<OIndex> indexes) {
-    getDatabase().getMetadata().getIndexManagerInternal().getClassRawIndexes(name, indexes);
+    getDatabase()
+        .getMetadata()
+        .getIndexManagerInternal()
+        .getClassRawIndexes(getDatabase(), name, indexes);
   }
 
   @Override

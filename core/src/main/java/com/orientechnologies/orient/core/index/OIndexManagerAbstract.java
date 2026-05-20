@@ -39,10 +39,6 @@ public interface OIndexManagerAbstract extends OCloseable {
 
   void recreateIndexes(ODatabaseDocumentInternal database);
 
-  default void create() {
-    throw new UnsupportedOperationException();
-  }
-
   boolean autoRecreateIndexesAfterCrash(ODatabaseDocumentInternal database);
 
   OIndex createIndex(
@@ -66,7 +62,7 @@ public interface OIndexManagerAbstract extends OCloseable {
 
   void waitTillIndexRestore();
 
-  void removeClassPropertyIndex(OIndex idx);
+  void removeClassPropertyIndex(ODatabaseDocumentInternal database, OIndex idx);
 
   void dropIndex(ODatabaseDocumentInternal database, String iIndexName);
 
@@ -81,13 +77,8 @@ public interface OIndexManagerAbstract extends OCloseable {
 
   void save(ODatabaseDocumentInternal database);
 
-  void getClassRawIndexes(String name, Collection<OIndex> indexes2);
-
-  ODocument getConfiguration();
-
-  String getDefaultClusterName();
-
-  void setDefaultClusterName(ODatabaseDocumentInternal database, String defaultClusterName2);
+  void getClassRawIndexes(
+      ODatabaseDocumentInternal database, String name, Collection<OIndex> indexes2);
 
   ODictionary<ORecord> getDictionary(ODatabaseDocumentInternal database);
 
@@ -120,9 +111,7 @@ public interface OIndexManagerAbstract extends OCloseable {
 
   boolean existsIndex(String iName);
 
-  ODocument getDocument();
-
-  ODocument toStream();
+  ODocument toStream(ODatabaseDocumentInternal database);
 
   OIndex getRawIndex(String indexName);
 
