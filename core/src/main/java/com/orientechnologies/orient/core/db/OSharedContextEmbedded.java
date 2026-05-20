@@ -26,8 +26,11 @@ import com.orientechnologies.orient.core.sql.parser.OExecutionPlanCache;
 import com.orientechnologies.orient.core.sql.parser.OStatementCache;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.transaction.ODistributedSynchronizedSequence;
+import com.orientechnologies.orient.core.transaction.OTransactionId;
+import com.orientechnologies.orient.core.tx.OTxMetadataHolderImpl;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
 
 /** Created by tglman on 13/06/17. */
 public class OSharedContextEmbedded extends OSharedContext {
@@ -168,7 +171,10 @@ public class OSharedContextEmbedded extends OSharedContext {
   }
 
   protected void internalCreate(ODatabaseDocumentInternal database) {
-    transactionSequence.fill(getStorage().getLastMetadata());
+    var status = transactionSequence.currentStatus();
+    var metadata =
+        new OTxMetadataHolderImpl(new CountDownLatch(1), new OTransactionId(0, 0), status);
+    getStorage().metadataOnly(metadata.metadata());
     schema.create(database);
     indexManager.create(database);
     security.create(database);
