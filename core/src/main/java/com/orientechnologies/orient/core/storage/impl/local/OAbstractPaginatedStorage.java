@@ -1095,7 +1095,7 @@ public abstract class OAbstractPaginatedStorage
   }
 
   @Override
-  public final int addCluster(final String clusterName, final Object... parameters) {
+  public final int addCluster(final String clusterName) {
     try {
       checkBackupRunning();
       stateLock.writeLock().lock();

@@ -214,9 +214,9 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabaseInternal, T>
     return underlying.addCluster(iClusterName, iRequestedId);
   }
 
-  public int addCluster(final String iClusterName, final Object... iParameters) {
+  public int addCluster(final String iClusterName) {
     checkOpenness();
-    return underlying.addCluster(iClusterName, iParameters);
+    return underlying.addCluster(iClusterName);
   }
 
   public boolean dropCluster(final String iClusterName) {

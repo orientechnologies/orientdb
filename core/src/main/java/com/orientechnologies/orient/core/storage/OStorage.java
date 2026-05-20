@@ -127,7 +127,7 @@ public interface OStorage extends OStorageInfo {
    *
    * @param iClusterName name of the cluster
    */
-  int addCluster(String iClusterName, Object... iParameters);
+  int addCluster(String iClusterName);
 
   /**
    * Add a new cluster into the storage.

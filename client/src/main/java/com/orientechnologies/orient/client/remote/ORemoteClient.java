@@ -1074,8 +1074,7 @@ public class ORemoteClient implements OStorageInfo {
     this.defaultClusterId = defaultClusterId;
   }
 
-  public int addCluster(
-      ORemoteClientSession session, final String iClusterName, final Object... iArguments) {
+  public int addCluster(ORemoteClientSession session, final String iClusterName) {
     return addCluster(session, iClusterName, -1);
   }
 

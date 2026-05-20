@@ -456,7 +456,7 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
   }
 
   @Override
-  public int addBlobCluster(final String iClusterName, final Object... iParameters) {
+  public int addBlobCluster(final String iClusterName) {
     int id;
     try (OResultSet resultSet = command("create blob cluster :1", iClusterName)) {
       assert resultSet.hasNext();
@@ -805,9 +805,9 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
   }
 
   @Override
-  public int addCluster(final String iClusterName, final Object... iParameters) {
+  public int addCluster(final String iClusterName) {
     checkIfActive();
-    return getRemoteClient().addCluster(getSession(), iClusterName, iParameters);
+    return getRemoteClient().addCluster(getSession(), iClusterName);
   }
 
   @Override

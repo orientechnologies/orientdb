@@ -1134,7 +1134,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   }
 
   @Override
-  public int addCluster(String iClusterName, Object... iParameters) {
+  public int addCluster(String iClusterName) {
     if (!isLocalEnv()) {
       final StringBuilder cmd = new StringBuilder("create cluster `");
       cmd.append(iClusterName);
@@ -1142,7 +1142,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       sendDDLCommand(cmd.toString(), false);
       return getClusterIdByName(iClusterName);
     } else {
-      return super.addCluster(iClusterName, iParameters);
+      return super.addCluster(iClusterName);
     }
   }
 

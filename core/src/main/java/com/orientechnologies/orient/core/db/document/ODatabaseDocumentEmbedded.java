@@ -875,10 +875,10 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
   }
 
   @Override
-  public int addBlobCluster(final String iClusterName, final Object... iParameters) {
+  public int addBlobCluster(final String iClusterName) {
     int id;
     if (!existsCluster(iClusterName)) {
-      id = addCluster(iClusterName, iParameters);
+      id = addCluster(iClusterName);
     } else {
       id = getClusterIdByName(iClusterName);
     }
@@ -1575,9 +1575,9 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
   }
 
   @Override
-  public int addCluster(final String iClusterName, final Object... iParameters) {
+  public int addCluster(final String iClusterName) {
     checkIfActive();
-    return getStorage().addCluster(iClusterName, iParameters);
+    return getStorage().addCluster(iClusterName);
   }
 
   @Override

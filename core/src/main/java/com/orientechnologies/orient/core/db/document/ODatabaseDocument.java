@@ -259,10 +259,9 @@ public interface ODatabaseDocument extends ODatabase<ORecord> {
    * Add a cluster for blob records.
    *
    * @param iClusterName Cluster name
-   * @param iParameters Additional parameters to pass to the factories
    * @return Cluster id
    */
-  int addBlobCluster(String iClusterName, Object... iParameters);
+  int addBlobCluster(String iClusterName);
 
   OElement newElement();
 
