@@ -343,8 +343,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
       }
       OLocalPaginatedStorage.deleteFilesFromDisc(
           name, FILE_DELETE_RETRY.getValueAsInteger(), FILE_DELETE_DELAY.getValueAsInteger(), name);
-      throw OException.wrapException(
-          new OStorageException("Error during restore from incremental backup"), e);
+      throw OException.wrapException(new OStorageException("Error during restore from backup"), e);
 
     } finally {
       stateLock.writeLock().unlock();
