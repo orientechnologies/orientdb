@@ -1013,4 +1013,9 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   public void checkTimeoutSync(long timeOutSync) {
     this.databaseTopology.checkTimeoutSync(timeOutSync);
   }
+
+  @Override
+  public boolean waitNodeJoined(ONodeId dbId, Optional<Long> timeout) throws InterruptedException {
+    return this.topology.waitNodeJoined(dbId, timeout);
+  }
 }

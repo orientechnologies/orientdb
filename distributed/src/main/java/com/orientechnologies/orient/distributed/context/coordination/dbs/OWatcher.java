@@ -20,7 +20,7 @@ public class OWatcher {
 
   /** Wait for a condition, it returns true if the condition is matched false
    *  in case of timeout.
-   * @param timeout
+   * @param timeout in millis
    * @param cond
    * @return
    * @throws InterruptedException

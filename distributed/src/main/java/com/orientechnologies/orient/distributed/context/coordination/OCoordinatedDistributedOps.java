@@ -196,6 +196,8 @@ public interface OCoordinatedDistributedOps {
   public boolean waitSelfOnline(ODatabaseId dbId, Optional<Long> timeout)
       throws InterruptedException;
 
+  public boolean waitNodeJoined(ONodeId dbId, Optional<Long> timeout) throws InterruptedException;
+
   // Network events
 
   ODisconnectAction nodeDisconnected(ONodeId node);

@@ -98,6 +98,7 @@ public class OTopologyManager extends OWatcher implements OTopologyEvents, ONetw
       this.nodesInfo.put(toRegister, new ONodeInfo());
     }
     this.versionPromise.accept(promise, version);
+    this.notifyChange();
   }
 
   public synchronized boolean enoughNodes() {
@@ -117,6 +118,7 @@ public class OTopologyManager extends OWatcher implements OTopologyEvents, ONetw
       this.nodesInfo.remove(node);
     }
     this.versionPromise.accept(promise, version);
+    this.notifyChange();
   }
 
   public synchronized int getQuorum() {
@@ -161,6 +163,7 @@ public class OTopologyManager extends OWatcher implements OTopologyEvents, ONetw
       newNodesInfo.put(member, info);
     }
     this.nodesInfo = newNodesInfo;
+    this.notifyChange();
   }
 
   public synchronized Optional<OAcceptResult> validateEstablish(
@@ -323,11 +326,17 @@ public class OTopologyManager extends OWatcher implements OTopologyEvents, ONetw
     this.members = Collections.unmodifiableSet(topology.members());
     this.quorum = topology.quorum();
     this.versionPromise.forceVersion(topology.version());
+    this.notifyChange();
   }
 
   public synchronized boolean waitForEnstablished(Optional<Long> timeout)
       throws InterruptedException {
     return waitFor(timeout, this::isSelfEnstablished);
+  }
+
+  public synchronized boolean waitNodeJoined(ONodeId node, Optional<Long> timeout)
+      throws InterruptedException {
+    return waitFor(timeout, () -> this.members.contains(node));
   }
 
   public void mergeNode(ONodeId node, OVersion version, OTransactionIdPromise promise) {
@@ -343,6 +352,7 @@ public class OTopologyManager extends OWatcher implements OTopologyEvents, ONetw
       this.nodesInfo.put(node, new ONodeInfo());
     }
     this.versionPromise.forceVersion(version);
+    this.notifyChange();
   }
 
   public synchronized Optional<OAcceptResult> validateSetQuorum(
@@ -360,6 +370,7 @@ public class OTopologyManager extends OWatcher implements OTopologyEvents, ONetw
       int quorumToSet, OVersion version, OTransactionIdPromise promise) {
     this.versionPromise.accept(promise, version);
     this.quorum = quorumToSet;
+    this.notifyChange();
   }
 
   public void cancelSetQuorum(int quorumToSet, OVersion version, OTransactionIdPromise promise) {
