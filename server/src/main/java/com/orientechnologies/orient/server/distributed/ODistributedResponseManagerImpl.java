@@ -660,7 +660,7 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
         }
       }
 
-      return new ODistributedOperationException(composeConflictMessage());
+      return null;
     }
   }
 
