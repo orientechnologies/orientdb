@@ -1,11 +1,21 @@
 package com.orientechnologies.orient.setup;
 
 import com.hazelcast.core.Hazelcast;
+import com.orientechnologies.common.concur.lock.OInterruptedException;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
+import com.orientechnologies.orient.core.transaction.ONodeId;
+import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpDb;
-import java.util.*;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 public class LocalTestSetup implements TestSetup {
   private final Map<String, ServerRun> servers = new HashMap<>();
@@ -50,6 +60,19 @@ public class LocalTestSetup implements TestSetup {
   public void setup() {
     for (String serverId : config.getServerIds()) {
       startServer(serverId);
+    }
+    List<ONodeId> nodeIds =
+        servers.values().stream().map((s) -> s.getServerInstance().getNodeId()).toList();
+    for (ServerRun server : servers.values()) {
+      var ctx = ((OrientDBDistributed) server.getServerInstance().getDatabases());
+      var timeout = Optional.of(TimeUnit.MILLISECONDS.convert(5, TimeUnit.MINUTES));
+      try {
+        for (var node : nodeIds) {
+          ctx.getNodeState().getOps().waitNodeJoined(node, timeout);
+        }
+      } catch (InterruptedException e) {
+        throw OException.wrapException(new OInterruptedException("Interrupted"), e);
+      }
     }
   }
 
