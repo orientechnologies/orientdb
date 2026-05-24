@@ -268,7 +268,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
                   OZIPCompressionUtil.compressDirectory(
                       storagePath.toString(),
                       zos,
-                      new String[] {".fl", ".lock", DoubleWriteLogGL.EXTENSION},
+                      new String[] {".fl", ".flb", ".lock", DoubleWriteLogGL.EXTENSION},
                       iOutput);
               startupMetadata.addFileToArchive(zos, "dirty.fl");
               names.add("dirty.fl");
