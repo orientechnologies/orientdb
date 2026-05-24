@@ -373,6 +373,7 @@ public abstract class OAbstractPaginatedStorage
   private volatile int backupRunning = 0;
   private volatile int ddlRunning = 0;
   private OStorageConfigurationUpdateListener configurationUpdateListener;
+  private AtomicInteger freezeEntry = new AtomicInteger(0);
 
   public OAbstractPaginatedStorage(
       final String name,
@@ -3306,10 +3307,15 @@ public abstract class OAbstractPaginatedStorage
   @Override
   public final void freeze(final boolean throwException) {
     try {
-      stateLock.readLock().lock();
+      stateLock.writeLock().lock();
       try {
 
         checkOpennessAndMigration();
+        var freezeCount = freezeEntry.getAndIncrement();
+        logger.debug("freeze count %d", freezeCount);
+        if (freezeCount > 0) {
+          return;
+        }
 
         if (throwException) {
           atomicOperationsManager.freezeAtomicOperations(
@@ -3339,7 +3345,7 @@ public abstract class OAbstractPaginatedStorage
 
         synch();
       } finally {
-        stateLock.readLock().unlock();
+        stateLock.writeLock().unlock();
       }
     } catch (final RuntimeException ee) {
       throw logAndPrepareForRethrow(ee);
@@ -3352,6 +3358,12 @@ public abstract class OAbstractPaginatedStorage
 
   @Override
   public final void release() {
+
+    var freezeCount = freezeEntry.decrementAndGet();
+    logger.debug("release count %d", freezeCount);
+    if (freezeCount > 0) {
+      return;
+    }
     try {
       for (final OBaseIndexEngine indexEngine : indexEngines) {
         if (indexEngine instanceof OFreezableStorageComponent) {

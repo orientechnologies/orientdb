@@ -273,13 +273,13 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
       final OCommandOutputListener iOutput,
       final int compressionLevel,
       final int bufferSize) {
+    if (out == null) {
+      throw new IllegalArgumentException("Backup output is null");
+    }
+    freeze(false);
     stateLock.readLock().lock();
     try {
-      if (out == null) {
-        throw new IllegalArgumentException("Backup output is null");
-      }
 
-      freeze(false);
       try {
         if (callable != null) {
           try {
