@@ -3307,15 +3307,15 @@ public abstract class OAbstractPaginatedStorage
   @Override
   public final void freeze(final boolean throwException) {
     try {
+      var freezeCount = freezeEntry.getAndIncrement();
+      logger.debug("freeze count %d", freezeCount);
+      if (freezeCount > 0) {
+        return;
+      }
       stateLock.writeLock().lock();
       try {
 
         checkOpennessAndMigration();
-        var freezeCount = freezeEntry.getAndIncrement();
-        logger.debug("freeze count %d", freezeCount);
-        if (freezeCount > 0) {
-          return;
-        }
 
         if (throwException) {
           atomicOperationsManager.freezeAtomicOperations(
