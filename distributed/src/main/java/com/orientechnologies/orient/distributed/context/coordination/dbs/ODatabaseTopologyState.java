@@ -193,11 +193,15 @@ public class ODatabaseTopologyState extends OWatcher {
   public synchronized Optional<OSyncState> canSync(
       ONodeId sender, ONodeId receiver, OSyncId syncId, OCanSyncAccept canSync) {
     OSyncSession session = this.syncSessions.get(syncId);
-    Optional<OSyncState> result = session.canSync(sender, receiver, syncId, canSync);
-    if (result.isEmpty() && session.isFinished()) {
-      this.syncSessions.remove(syncId);
+    if (session != null) {
+      Optional<OSyncState> result = session.canSync(sender, receiver, syncId, canSync);
+      if (result.isEmpty() && session.isFinished()) {
+        this.syncSessions.remove(syncId);
+      }
+      return result;
+    } else {
+      return Optional.empty();
     }
-    return result;
   }
 
   public synchronized OSyncState startSend(

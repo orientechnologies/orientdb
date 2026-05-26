@@ -1346,7 +1346,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
         return status.toSatus();
       }
     }
-    return null;
+    return DB_STATUS.NOT_AVAILABLE;
 
     //    return plugin.getDatabaseStatus(nodeId.getNode(), dbName);
   }
@@ -1715,7 +1715,10 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   public void distributedDrop(ODatabaseId dbId, OVersion version, OTransactionIdPromise promise) {
-    this.internalDrop(getDbName(dbId));
+    String dbName = getDbName(dbId);
+    if (dbName != null) {
+      this.internalDrop(dbName);
+    }
     this.getNodeState().getOps().dropDatabase(dbId, version, promise);
   }
 
