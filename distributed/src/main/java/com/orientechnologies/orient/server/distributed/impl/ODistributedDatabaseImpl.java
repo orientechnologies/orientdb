@@ -309,10 +309,10 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   public void processRequest(
       final ODistributedRequest request, final boolean waitForAcceptingRequests) {
     if (!running) {
-      throw new ODistributedException(
-          "Server is going down or is removing the database:'"
-              + getDatabaseName()
-              + "' discarding");
+      logger.info(
+          "Server is going down or is removing the database:'%s' discarding request %s",
+          getDatabaseName(), request);
+      return;
     }
 
     final ORemoteTask task = request.getTask();

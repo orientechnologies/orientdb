@@ -75,7 +75,6 @@ public class OHazelcastClusterMetadataManager
   protected ConcurrentMap<String, String> activeNodesUuidByName = new ConcurrentHashMap<>();
   protected final List<String> registeredNodeById = new CopyOnWriteArrayList<>();
   protected final ConcurrentMap<String, Integer> registeredNodeByName = new ConcurrentHashMap<>();
-  protected ConcurrentMap<String, Long> autoRemovalOfServers = new ConcurrentHashMap<>();
 
   protected OCancellableTimer publishLocalNodeConfigurationTask = null;
 
@@ -89,8 +88,6 @@ public class OHazelcastClusterMetadataManager
   private OServer serverInstance;
 
   private final ODistributedPlugin distributedPlugin;
-
-  public static final String DEPLOYDB = "deploydb.";
 
   public OHazelcastClusterMetadataManager(ODistributedPlugin distributedPlugin) {
     this.distributedPlugin = distributedPlugin;
@@ -577,19 +574,7 @@ public class OHazelcastClusterMetadataManager
   /** Removes the node map entry. */
   @Override
   public void memberRemoved(final MembershipEvent iEvent) {
-    OrientDBInternal ctx = serverInstance.getDatabases();
-    ctx.execute(
-        () -> {
-          if (hazelcastInstance == null || !hazelcastInstance.getLifecycleService().isRunning())
-            return;
-
-          updateLastClusterChange();
-
-          if (iEvent.getMember() == null) return;
-
-          final String nodeLeftName = getNodeName(iEvent.getMember(), true);
-          if (nodeLeftName == null) return;
-        });
+    updateLastClusterChange();
   }
 
   @Override
@@ -606,9 +591,6 @@ public class OHazelcastClusterMetadataManager
               nodeName, "Added new node id=%s name=%s", iEvent.getMember(), addedNodeName);
 
           registerNode(iEvent.getMember(), addedNodeName);
-
-          // REMOVE THE NODE FROM AUTO REMOVAL
-          autoRemovalOfServers.remove(addedNodeName);
         });
   }
 
