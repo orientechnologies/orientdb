@@ -43,7 +43,6 @@ public class DistributedLifecycleListenerIT extends AbstractServerClusterTest
       OLogManager.instance().logger(DistributedLifecycleListenerIT.class);
   private static final int SERVERS = 2;
 
-  private final AtomicLong beforeNodeJoin = new AtomicLong();
   private final AtomicLong afterNodeJoin = new AtomicLong();
   private final AtomicLong nodeLeft = new AtomicLong();
   private final List<OPair<String, ODistributedServerManager.DB_STATUS>> changeStatus =
@@ -51,12 +50,6 @@ public class DistributedLifecycleListenerIT extends AbstractServerClusterTest
           new ArrayList<OPair<String, ODistributedServerManager.DB_STATUS>>());
   private final CountDownLatch started = new CountDownLatch(SERVERS - 1);
   private final CountDownLatch ended = new CountDownLatch(SERVERS - 1);
-
-  @Override
-  public boolean onNodeJoining(String iNode) {
-    beforeNodeJoin.incrementAndGet();
-    return true;
-  }
 
   @Override
   public void onNodeJoined(String iNode) {
@@ -104,7 +97,6 @@ public class DistributedLifecycleListenerIT extends AbstractServerClusterTest
 
   @Override
   protected void onTestEnded() {
-    Assert.assertEquals(SERVERS - 1, beforeNodeJoin.get());
     Assert.assertEquals(SERVERS - 1, afterNodeJoin.get());
 
     try {

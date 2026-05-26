@@ -730,19 +730,6 @@ public class OHazelcastClusterMetadataManager
         return;
       }
 
-      if (!distributedPlugin.onNodeJoining(joinedNodeName)) {
-        // DENY JOIN
-        logger.infoIn(
-            nodeName,
-            getNodeName(member, true),
-            "Denied node to join the cluster id=%s name=%s",
-            member,
-            getNodeName(member, true));
-
-        activeNodes.remove(joinedNodeName);
-        return;
-      }
-
       activeNodesNamesByUuid.put(member.getUuid(), joinedNodeName);
       activeNodesUuidByName.put(joinedNodeName, member.getUuid());
 

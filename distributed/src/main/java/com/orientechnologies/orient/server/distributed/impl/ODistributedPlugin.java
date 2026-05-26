@@ -786,16 +786,15 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
   public void onDatabaseEvent(
       final String nodeName, final String databaseName, final DB_STATUS status) {
     notifyClients(databaseName);
-    updateLastClusterChange();
-    dumpServersStatus();
+    invokeOnDatabaseStatusChange(nodeName, databaseName, status);
   }
 
   public void invokeOnDatabaseStatusChange(
-      final String iNode, final String iDatabaseName, final DB_STATUS iStatus) {
+      final String node, final String databaseName, final DB_STATUS status) {
     // NOTIFY DB/NODE IS CHANGING STATUS
     for (ODistributedLifecycleListener l : listeners) {
       try {
-        l.onDatabaseChangeStatus(iNode, iDatabaseName, iStatus);
+        l.onDatabaseChangeStatus(node, databaseName, status);
       } catch (Exception e) {
         // IGNORE IT
       }
@@ -1104,10 +1103,18 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
         getActiveServers().size());
 
     // NOTIFY NODE WAS ADDED SUCCESSFULLY
-    for (ODistributedLifecycleListener l : listeners) l.onNodeJoined(joinedNodeName);
+    notifyNodeJoined(joinedNodeName);
 
     // FORCE THE ALIGNMENT FOR ALL THE ONLINE DATABASES AFTER THE JOIN ONLY IF AUTO-DEPLOY IS SET
     dumpServersStatus();
+  }
+
+  public void notifyNodeJoined(String joinedNodeName) {
+    for (ODistributedLifecycleListener l : listeners) l.onNodeJoined(joinedNodeName);
+  }
+
+  public void notifyNodeLeft(String joinedNodeName) {
+    for (ODistributedLifecycleListener l : listeners) l.onNodeLeft(joinedNodeName);
   }
 
   // This is used only during startup and gets called by the cluster metadata manager
@@ -1138,17 +1145,6 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
           sendRequest(
               databaseName, servers, new OUpdateDatabaseConfigurationTask(databaseName, config));
     }
-  }
-
-  public boolean onNodeJoining(final String joinedNodeName) {
-    // NOTIFY NODE IS GOING TO BE ADDED. IS EVERYBODY OK?
-    for (ODistributedLifecycleListener l : listeners) {
-      if (!l.onNodeJoining(joinedNodeName)) {
-        return false;
-      }
-    }
-
-    return true;
   }
 
   @Override

@@ -67,10 +67,6 @@ public class OneNodeBackupIT extends AbstractServerClusterTxTest {
           .getDistributedManager()
           .registerLifecycleListener(
               new ODistributedLifecycleListener() {
-                @Override
-                public boolean onNodeJoining(String iNode) {
-                  return true;
-                }
 
                 @Override
                 public void onNodeJoined(String iNode) {}

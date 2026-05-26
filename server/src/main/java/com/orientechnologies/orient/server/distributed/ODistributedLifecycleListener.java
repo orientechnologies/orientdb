@@ -25,17 +25,6 @@ package com.orientechnologies.orient.server.distributed;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public interface ODistributedLifecycleListener {
-
-  /**
-   * Called when a node is joining the cluster. Return false to deny the join.
-   *
-   * @param iNode Node name that is joining
-   * @return true to allow the join, otherwise false
-   */
-  default boolean onNodeJoining(String iNode) {
-    return true;
-  }
-
   /**
    * Called right after a node joined the cluster.
    *

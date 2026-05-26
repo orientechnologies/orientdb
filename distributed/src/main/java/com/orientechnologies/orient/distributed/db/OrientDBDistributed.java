@@ -39,7 +39,6 @@ import com.orientechnologies.orient.distributed.ONodeConfig;
 import com.orientechnologies.orient.distributed.ONodeListenerConfig;
 import com.orientechnologies.orient.distributed.context.ONodeState;
 import com.orientechnologies.orient.distributed.context.coordination.OCoordinatedDistributedOps;
-import com.orientechnologies.orient.distributed.context.coordination.ODisconnectAction;
 import com.orientechnologies.orient.distributed.context.coordination.OVersion;
 import com.orientechnologies.orient.distributed.context.coordination.action.OCompleteAction;
 import com.orientechnologies.orient.distributed.context.coordination.action.OMergeCompleteAction;
@@ -192,7 +191,9 @@ public class OrientDBDistributed extends OrientDBEmbedded
         new ORemoteServerAvailabilityCheck() {
 
           @Override
-          public void nodeDisconnected(ONodeId node) {}
+          public void nodeDisconnected(ONodeId node) {
+            disconnected(nodeId);
+          }
 
           @Override
           public boolean isNodeAvailable(ONodeId node) {
@@ -236,6 +237,16 @@ public class OrientDBDistributed extends OrientDBEmbedded
     syncIfNeeded(dbId);
     autoAssignAllocation(dbId);
     dumpNodeInfo();
+    notifyLegacyStateListener(dbId, nodeId, state);
+  }
+
+  private void notifyLegacyStateListener(ODatabaseId dbId, ONodeId nodeId, ODatabaseState state) {
+    String node = nodeId.getNode();
+    String db = getNodeState().getOps().getDatabaseTopology().getDatabaseName(dbId);
+    execute(
+        () -> {
+          plugin.onDatabaseEvent(node, db, state.toSatus());
+        });
   }
 
   public void dumpNodeInfo() {
@@ -1033,6 +1044,23 @@ public class OrientDBDistributed extends OrientDBEmbedded
     sendFirstConnect(node);
     autoDeployIfNeed();
     dumpNodeInfo();
+    notifyLegacyNodeJoinListener(node);
+  }
+
+  private void notifyLegacyNodeJoinListener(ONodeId node) {
+    String nodeName = node.getNode();
+    execute(
+        () -> {
+          plugin.notifyNodeJoined(nodeName);
+        });
+  }
+
+  private void notifyLegacyNodeLeftListener(ONodeId node) {
+    String nodeName = node.getNode();
+    execute(
+        () -> {
+          plugin.notifyNodeLeft(nodeName);
+        });
   }
 
   public void declareDatabase(
@@ -1587,7 +1615,8 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   public void disconnected(ONodeId node) {
-    ODisconnectAction action = getNodeState().getOps().nodeDisconnected(node);
+    notifyLegacyNodeLeftListener(node);
+    var action = getNodeState().getOps().nodeDisconnected(node);
     action.execute(this);
   }
 
@@ -1623,8 +1652,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
     var time = getLongConfig(OGlobalConfiguration.DISTRIBUTED_HEARTBEAT_TIMEOUT);
     var offlineNodes = getNodeState().getOps().checkOffline(time);
     for (var offlineNode : offlineNodes) {
-      var action = getNodeState().getOps().nodeDisconnected(offlineNode);
-      action.execute(this);
+      disconnected(offlineNode);
     }
   }
 
