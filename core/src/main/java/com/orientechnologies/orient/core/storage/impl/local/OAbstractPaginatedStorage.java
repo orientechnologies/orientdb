@@ -3188,14 +3188,14 @@ public abstract class OAbstractPaginatedStorage
 
           if (!isInError()) {
             for (final OBaseIndexEngine indexEngine : indexEngines) {
-              try {
-                if (indexEngine != null) {
+              if (indexEngine != null) {
+                try {
                   indexEngine.flush();
+                } catch (final Throwable t) {
+                  logger.error(
+                      "Error while flushing index via index engine of class %s.",
+                      t, indexEngine.getClass().getSimpleName());
                 }
-              } catch (final Throwable t) {
-                logger.error(
-                    "Error while flushing index via index engine of class %s.",
-                    t, indexEngine.getClass().getSimpleName());
               }
             }
 
