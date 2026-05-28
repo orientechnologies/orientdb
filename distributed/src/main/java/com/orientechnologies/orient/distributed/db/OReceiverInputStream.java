@@ -1,13 +1,12 @@
 package com.orientechnologies.orient.distributed.db;
 
 import com.orientechnologies.common.concur.OTimeoutException;
-import com.orientechnologies.common.concur.lock.OInterruptedException;
-import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncState;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.channels.InterruptedByTimeoutException;
 import java.util.Comparator;
 import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -68,12 +67,12 @@ public class OReceiverInputStream extends InputStream {
               // Duplicate drop
               bi = buffers.poll();
             } else if (!condition.await(5, TimeUnit.MINUTES)) {
-              throw new OTimeoutException("Timeout waiting for sync data");
+              throw new InterruptedByTimeoutException();
             }
           }
         } catch (InterruptedException e) {
           Thread.currentThread().interrupt();
-          throw OException.wrapException(new OInterruptedException("Receive sync interrupted"), e);
+          throw new java.io.InterruptedIOException();
         }
       }
       byte b = buffer[cursor];
