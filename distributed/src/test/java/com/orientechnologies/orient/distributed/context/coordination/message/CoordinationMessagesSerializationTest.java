@@ -4,6 +4,7 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.OGroupId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
@@ -27,6 +28,7 @@ import java.io.DataOutputStream;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -120,7 +122,14 @@ public class CoordinationMessagesSerializationTest {
     var sequenceStatus = new OTransactionSequenceStatus(new long[] {10, 20, 30});
 
     ONodeStateNetwork network = new ONodeStateNetwork(net, Collections.emptyList(), sequenceStatus);
-    ONodeFirstConnect succ = new ONodeFirstConnect(nodeId, network, false);
+    ONodeInfo info =
+        new ONodeInfo(
+            OConstants.getRawVersion(),
+            List.of(new ONodeInfoListener("binary", "127.0.0.1:24242")),
+            10,
+            20,
+            30);
+    ONodeFirstConnect succ = new ONodeFirstConnect(nodeId, info, network, false);
 
     ONodeFirstConnect read = writeRead(succ);
 
@@ -133,7 +142,7 @@ public class CoordinationMessagesSerializationTest {
     net =
         new OTopologyStateNetwork(groupId, OTopologyState.ESTABLISHED, nodes, 2, new OVersion(10));
     network = new ONodeStateNetwork(net, Collections.emptyList(), sequenceStatus);
-    succ = new ONodeFirstConnect(nodeId, network, false);
+    succ = new ONodeFirstConnect(nodeId, info, network, false);
 
     read = writeRead(succ);
 

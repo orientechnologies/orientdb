@@ -54,6 +54,8 @@ import com.orientechnologies.orient.distributed.context.coordination.message.OMe
 import com.orientechnologies.orient.distributed.context.coordination.message.OMergeResult;
 import com.orientechnologies.orient.distributed.context.coordination.message.ONextBuffer;
 import com.orientechnologies.orient.distributed.context.coordination.message.ONodeFirstConnect;
+import com.orientechnologies.orient.distributed.context.coordination.message.ONodeInfo;
+import com.orientechnologies.orient.distributed.context.coordination.message.ONodeInfoListener;
 import com.orientechnologies.orient.distributed.context.coordination.message.OProposeOp;
 import com.orientechnologies.orient.distributed.context.coordination.message.ORetryProposeOp;
 import com.orientechnologies.orient.distributed.context.coordination.message.OStartSync;
@@ -1451,7 +1453,9 @@ public class OrientDBDistributed extends OrientDBEmbedded
 
   public void sendFirstConnects(Set<ONodeId> nodes) {
     ONodeStateNetwork st = getNodeState().getNetworkState();
-    this.sendMessage(nodes, new ONodeFirstConnect(getNodeState().getNodeId(), st, false));
+    ONodeFirstConnect msg =
+        new ONodeFirstConnect(getNodeState().getNodeId(), getNodeInfo(), st, false);
+    this.sendMessage(nodes, msg);
   }
 
   public List<String> getOnlineNodesNotLocal(String dbName) {
@@ -1505,7 +1509,9 @@ public class OrientDBDistributed extends OrientDBEmbedded
 
   public void sendMergeOperation(ONodeId requestToMerge, OCompleteExecution execution) {
     ONodeState ns = getNodeState();
-    sendMessage(requestToMerge, new ONodeFirstConnect(ns.getNodeId(), ns.getNetworkState(), true));
+    ONodeFirstConnect msg =
+        new ONodeFirstConnect(ns.getNodeId(), getNodeInfo(), ns.getNetworkState(), true);
+    sendMessage(requestToMerge, msg);
   }
 
   public void autoDeployIfNeed() {
@@ -1767,6 +1773,21 @@ public class OrientDBDistributed extends OrientDBEmbedded
     }
   }
 
+  public ONodeInfo getNodeInfo() {
+    final long maxMem = Runtime.getRuntime().maxMemory();
+    final long totMem = Runtime.getRuntime().totalMemory();
+    final long freeMem = Runtime.getRuntime().freeMemory();
+    final long usedMem = totMem - freeMem;
+    List<ONodeInfoListener> listeners = new ArrayList<>();
+    for (OServerNetworkListener listener : server.getNetworkListeners()) {
+      listeners.add(
+          new ONodeInfoListener(
+              listener.getProtocolType().getSimpleName(), listener.getListeningAddress(true)));
+    }
+
+    return new ONodeInfo(OConstants.getRawVersion(), listeners, usedMem, freeMem, maxMem);
+  }
+
   public OClusterConfiguration getClusterConfiguration() {
     OClusterConfiguration cc = new OClusterConfiguration();
     cc.setLocalName(getNodeName());
@@ -1817,7 +1838,9 @@ public class OrientDBDistributed extends OrientDBEmbedded
 
   public ONodeConfig getLocalNodeConfiguration() {
     ONodeConfig nodeCfg = new ONodeConfig();
-
+    if (plugin != null) {
+      nodeCfg.setId(plugin.getLocalNodeId());
+    }
     nodeCfg.setUuid(getSystemDatabase().getServerId());
     nodeCfg.setName(nodeName);
     nodeCfg.setVersion(OConstants.getRawVersion());

@@ -11,10 +11,12 @@ public class ONodeFirstConnect implements OStructuralMessage {
 
   private final ONodeId nodeId;
   private final ONodeStateNetwork state;
+  private final ONodeInfo info;
   private final boolean merge;
 
-  public ONodeFirstConnect(ONodeId nodeId, ONodeStateNetwork state, boolean merge) {
+  public ONodeFirstConnect(ONodeId nodeId, ONodeInfo info, ONodeStateNetwork state, boolean merge) {
     this.nodeId = nodeId;
+    this.info = info;
     this.state = state;
     this.merge = merge;
   }
@@ -27,15 +29,17 @@ public class ONodeFirstConnect implements OStructuralMessage {
   @Override
   public void serialize(DataOutput out) throws IOException {
     nodeId.writeNetwork(out);
+    info.writeNetwork(out);
     state.writeNetwork(out);
     out.writeBoolean(merge);
   }
 
   public static ONodeFirstConnect fromNetwork(DataInput input) throws IOException {
     ONodeId nodeId = ONodeId.readNetwork(input);
+    ONodeInfo info = ONodeInfo.fromNetwork(input);
     ONodeStateNetwork state = ONodeStateNetwork.fromNetwork(input);
     boolean merge = input.readBoolean();
-    return new ONodeFirstConnect(nodeId, state, merge);
+    return new ONodeFirstConnect(nodeId, info, state, merge);
   }
 
   @Override
