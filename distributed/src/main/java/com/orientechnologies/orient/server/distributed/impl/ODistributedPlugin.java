@@ -31,19 +31,16 @@ import com.orientechnologies.common.log.OAnsiCode;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.util.OArrays;
-import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.OSignalHandler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.OCancellableTimer;
-import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
-import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.distributed.ONodeConfig;
@@ -81,7 +78,6 @@ import com.orientechnologies.orient.server.distributed.impl.task.OUpdateDatabase
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastClusterMetadataManager;
-import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 import java.io.File;
 import java.io.IOException;
@@ -91,11 +87,9 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 import sun.misc.Signal;
 
 /**
@@ -272,62 +266,7 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
 
   @Override
   public ONodeConfig getLocalNodeConfiguration() {
-    ONodeConfig nodeCfg = new ONodeConfig();
-
-    nodeCfg.setId(getLocalNodeId());
-    nodeCfg.setUuid(clusterManager.getLocalNodeUuid());
-    nodeCfg.setName(nodeName);
-    nodeCfg.setVersion(OConstants.getRawVersion());
-    nodeCfg.setPublicAddress(clusterManager.getPublicAddress());
-    nodeCfg.setStartedOn(startedOn);
-    nodeCfg.setStatus(getNodeStatus().toString());
-    nodeCfg.setConnections(serverInstance.getClientConnectionManager().getTotal());
-
-    List<ONodeListenerConfig> listeners = new ArrayList<>();
-    for (OServerNetworkListener listener : serverInstance.getNetworkListeners()) {
-      listeners.add(
-          new ONodeListenerConfig(
-              listener.getProtocolType().getSimpleName(), listener.getListeningAddress(true)));
-    }
-    nodeCfg.setListeners(listeners);
-
-    // STORE THE TEMP USER/PASSWD USED FOR REPLICATION
-    final OSecurityUser user = serverInstance.getSecurity().getUser(REPLICATOR_USER);
-    if (user != null)
-      nodeCfg.setReplicator(serverInstance.getSecurity().getUser(REPLICATOR_USER).getPassword());
-
-    if (((OrientDBDistributed) serverInstance.getDatabases()).getNodeState() != null) {
-      ODatabasesTopology databaseTopology =
-          ((OrientDBDistributed) serverInstance.getDatabases())
-              .getNodeState()
-              .getDatabaseTopology();
-      var dbIds = databaseTopology.getDatabases();
-      var dbs =
-          dbIds.stream()
-              .map((id) -> databaseTopology.getDatabaseName(id))
-              .collect(Collectors.toSet());
-      nodeCfg.setDatabases(dbs);
-    }
-
-    final long maxMem = Runtime.getRuntime().maxMemory();
-    final long totMem = Runtime.getRuntime().totalMemory();
-    final long freeMem = Runtime.getRuntime().freeMemory();
-    final long usedMem = totMem - freeMem;
-
-    nodeCfg.setUsedMemory(usedMem);
-    nodeCfg.setFreeMemory(freeMem);
-    nodeCfg.setMaxMemory(maxMem);
-
-    nodeCfg.setLatencies("latencies", getMessageService().getLatencies());
-    nodeCfg.setMessages("messages", getMessageService().getMessageStats());
-
-    for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners();
-        it.hasNext(); ) {
-      final ODatabaseLifecycleListener listener = it.next();
-      if (listener != null) listener.onLocalNodeConfigurationRequest(nodeCfg);
-    }
-
-    return nodeCfg;
+    return ((OrientDBDistributed) serverInstance.getDatabases()).getLocalNodeConfiguration();
   }
 
   @Override
