@@ -152,18 +152,12 @@ public class ORemoteServerChannel {
   }
 
   private <T> void executeNetworkOperation(
-      final byte operationId,
-      final ORemoteClientOperation<T> operation,
-      final String errorMessage,
-      final int maxRetry,
-      final boolean autoReconnect) {
+      byte operationId, ORemoteClientOperation<T> operation, String errorMessage) {
     try {
       executor.execute(
           () -> {
-            if (autoReconnect) {
-              checkReconnect();
-            }
-            networkOperation(operationId, operation, errorMessage, maxRetry, autoReconnect);
+            checkReconnect();
+            networkOperation(operationId, operation, errorMessage, MAX_RETRY, true);
           });
     } catch (RejectedExecutionException e) {
       check.nodeDisconnected(server);
@@ -178,9 +172,7 @@ public class ORemoteServerChannel {
           channel.flush();
           return null;
         },
-        "Cannot send distributed request " + message.getClass(),
-        MAX_RETRY,
-        true);
+        "Cannot send distributed request " + message.getClass());
   }
 
   public void sendRequest(final ODistributedRequest request) {
@@ -191,9 +183,7 @@ public class ORemoteServerChannel {
           channel.flush();
           return null;
         },
-        "Cannot send distributed request " + request.getClass(),
-        MAX_RETRY,
-        true);
+        "Cannot send distributed request " + request.getClass());
   }
 
   public void sendResponse(final ODistributedResponse response) {
@@ -209,9 +199,7 @@ public class ORemoteServerChannel {
         "Cannot send response back to the sender node '"
             + response.getSenderNodeName()
             + "' "
-            + response.getClass(),
-        MAX_RETRY,
-        true);
+            + response.getClass());
   }
 
   public void connect() throws IOException {
