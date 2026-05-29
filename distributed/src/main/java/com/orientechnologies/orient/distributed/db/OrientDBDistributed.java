@@ -194,6 +194,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
 
           @Override
           public void nodeDisconnected(ONodeId node) {
+            closeRemoteServer(node);
             disconnected(nodeId);
           }
 
@@ -1293,8 +1294,12 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   public void closeRemoteServer(String node) {
+    closeRemoteServer(new ONodeId(node));
+  }
+
+  public void closeRemoteServer(ONodeId node) {
     if (remoteServerManager != null) {
-      remoteServerManager.closeRemoteServer(new ONodeId(node));
+      remoteServerManager.closeRemoteServer(node);
     }
   }
 
