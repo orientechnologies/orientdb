@@ -264,6 +264,10 @@ public class OResultSerializerNetwork {
         try {
           String className = readString(bytes);
           Class<?> clazz = Class.forName(className);
+          if (!OSerializableStream.class.isAssignableFrom(clazz)) {
+            throw new OSerializationException(
+                "Refused to deserialize class not implementing OSerializableStream: " + className);
+          }
           OSerializableStream stream = (OSerializableStream) clazz.newInstance();
           stream.fromStream(readBinary(bytes));
           if (stream instanceof OSerializableWrapper)

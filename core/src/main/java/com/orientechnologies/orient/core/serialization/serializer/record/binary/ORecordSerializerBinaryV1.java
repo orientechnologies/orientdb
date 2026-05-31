@@ -883,6 +883,10 @@ public class ORecordSerializerBinaryV1 implements ODocumentSerializer {
         try {
           String className = readString(bytes);
           Class<?> clazz = Class.forName(className);
+          if (!OSerializableStream.class.isAssignableFrom(clazz)) {
+            throw new OSerializationException(
+                "Refused to deserialize class not implementing OSerializableStream: " + className);
+          }
           OSerializableStream stream = (OSerializableStream) clazz.newInstance();
           byte[] bytesRepresentation = readBinary(bytes);
           if (embeddedAsDocument) {
