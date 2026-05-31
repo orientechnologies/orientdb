@@ -1276,6 +1276,11 @@ public class ODocumentSerializerDelta {
           String className = ((ODocument) value).field(ODocumentSerializable.CLASS_NAME);
           try {
             Class<?> clazz = Class.forName(className);
+            if (!ODocumentSerializable.class.isAssignableFrom(clazz)) {
+              throw new OSerializationException(
+                  "Refused to deserialize class not implementing ODocumentSerializable: "
+                      + className);
+            }
             ODocumentSerializable newValue = (ODocumentSerializable) clazz.newInstance();
             newValue.fromDocument((ODocument) value);
             value = newValue;
