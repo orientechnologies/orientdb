@@ -281,8 +281,19 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
         if (((ODocument) value).containsField(ODocumentSerializable.CLASS_NAME)) {
           String className = ((ODocument) value).field(ODocumentSerializable.CLASS_NAME);
           try {
-            Class<?> clazz = Class.forName(className);
-            ODocumentSerializable newValue = (ODocumentSerializable) clazz.newInstance();
+            // SECURITY: resolve the class without running its static initializer and
+            // verify type membership BEFORE instantiation, so an attacker-supplied
+            // class name from the wire cannot trigger arbitrary static-init / no-arg
+            // constructor side effects (CWE-470 unsafe reflection).
+            Class<?> clazz =
+                Class.forName(className, false, ORecordSerializerNetworkV37.class.getClassLoader());
+            if (!ODocumentSerializable.class.isAssignableFrom(clazz)) {
+              throw new OSerializationException(
+                  "Refused to deserialize class not implementing ODocumentSerializable: "
+                      + className);
+            }
+            ODocumentSerializable newValue =
+                (ODocumentSerializable) clazz.getDeclaredConstructor().newInstance();
             newValue.fromDocument((ODocument) value);
             value = newValue;
           } catch (Exception e) {
@@ -329,8 +340,17 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
       case CUSTOM:
         try {
           String className = readString(bytes);
-          Class<?> clazz = Class.forName(className);
-          OSerializableStream stream = (OSerializableStream) clazz.newInstance();
+          // SECURITY: resolve the class without running its static initializer and
+          // verify type membership BEFORE instantiation, so an attacker-supplied
+          // class name from the wire cannot trigger arbitrary static-init / no-arg
+          // constructor side effects (CWE-470 unsafe reflection).
+          Class<?> clazz =
+              Class.forName(className, false, ORecordSerializerNetworkV37.class.getClassLoader());
+          if (!OSerializableStream.class.isAssignableFrom(clazz)) {
+            throw new OSerializationException(
+                "Refused to deserialize class not implementing OSerializableStream: " + className);
+          }
+          OSerializableStream stream = (OSerializableStream) clazz.getDeclaredConstructor().newInstance();
           stream.fromStream(readBinary(bytes));
           if (stream instanceof OSerializableWrapper)
             value = ((OSerializableWrapper) stream).getSerializable();
