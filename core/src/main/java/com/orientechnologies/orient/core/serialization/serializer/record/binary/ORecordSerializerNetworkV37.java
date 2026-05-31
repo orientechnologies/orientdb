@@ -347,7 +347,8 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
             throw new OSerializationException(
                 "Refused to deserialize class not implementing OSerializableStream: " + className);
           }
-          OSerializableStream stream = (OSerializableStream) clazz.getDeclaredConstructor().newInstance();
+          OSerializableStream stream =
+              (OSerializableStream) clazz.getDeclaredConstructor().newInstance();
           stream.fromStream(readBinary(bytes));
           if (stream instanceof OSerializableWrapper)
             value = ((OSerializableWrapper) stream).getSerializable();
