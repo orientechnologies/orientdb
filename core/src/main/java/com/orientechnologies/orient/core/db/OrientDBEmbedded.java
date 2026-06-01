@@ -77,7 +77,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 /** Created by tglman on 08/04/16. */
@@ -106,7 +105,6 @@ public class OrientDBEmbedded implements OrientDBInternal {
   private final ODefaultSecuritySystem securitySystem;
   private final OCommandTimeoutChecker timeoutChecker;
   private final Map<String, OStorageEngine> engines = new HashMap<>();
-  protected final AtomicInteger dbCount = new AtomicInteger(0);
 
   public OrientDBEmbedded(String directoryPath, OrientDBConfig configurations, Orient orient) {
     super();
@@ -579,7 +577,6 @@ public class OrientDBEmbedded implements OrientDBInternal {
         }
       }
       storage.restoreNetwork(in);
-      dbCount.incrementAndGet();
       distributedSetOnline(storage);
       return true;
     } catch (OModificationOperationProhibitedException e) {
@@ -587,7 +584,6 @@ public class OrientDBEmbedded implements OrientDBInternal {
     } catch (Exception e) {
       logger.warn("failed blocking sync of database %s", e, name);
       synchronized (this) {
-        dbCount.decrementAndGet();
         storages.remove(name);
       }
       return false;
@@ -636,7 +632,6 @@ public class OrientDBEmbedded implements OrientDBInternal {
       OCommandOutputListener iListener) {
     checkDatabaseName(name);
     synchronized (this) {
-      dbCount.decrementAndGet();
       OSharedContext context = sharedContexts.remove(name);
       if (context != null) {
         context.close();
@@ -652,13 +647,11 @@ public class OrientDBEmbedded implements OrientDBInternal {
       storage =
           getDefaultEngine().createForRestoreLocal(this, new ODatabaseId("mock"), name, config);
       storages.put(name, storage);
-      dbCount.incrementAndGet();
     }
     try {
       storage.restore(in, options, iListener);
     } catch (Exception e) {
       synchronized (this) {
-        dbCount.decrementAndGet();
         storage.delete();
         OLocalPaginatedStorage.deleteFilesFromDisc(
             name,
@@ -680,7 +673,6 @@ public class OrientDBEmbedded implements OrientDBInternal {
     OSharedContext result = sharedContexts.get(storage.getName());
     if (result == null) {
       result = createSharedContext(storage);
-      dbCount.incrementAndGet();
       sharedContexts.put(storage.getName(), result);
     }
     return result;
@@ -737,7 +729,6 @@ public class OrientDBEmbedded implements OrientDBInternal {
           }
           storage.delete();
           storages.remove(name);
-          dbCount.decrementAndGet();
           sharedContexts.remove(name);
         }
       }
@@ -878,7 +869,6 @@ public class OrientDBEmbedded implements OrientDBInternal {
         throw e;
       }
     }
-    dbCount.set(0);
     this.sharedContexts.clear();
     storages.clear();
     orient.onEmbeddedFactoryClose(this);
@@ -950,7 +940,6 @@ public class OrientDBEmbedded implements OrientDBInternal {
     OStorage storage = storages.remove(iDatabaseName);
     if (storage != null) {
       OSharedContext ctx = sharedContexts.remove(iDatabaseName);
-      dbCount.decrementAndGet();
       if (ctx != null) {
         ctx.getViewManager().close();
         ctx.close();

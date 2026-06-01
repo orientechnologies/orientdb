@@ -449,7 +449,6 @@ public class OrientDBDistributed extends OrientDBEmbedded
     } catch (Exception e) {
       logger.warnNode(getNodeId(), "failed non blocking sync of database %s", e, name);
       synchronized (this) {
-        dbCount.decrementAndGet();
         storages.remove(name);
       }
       return false;
@@ -963,7 +962,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   public int getActiveDatabaseCount() {
-    return this.dbCount.get();
+    return this.sharedContexts.size();
   }
 
   public ODistributedMessageService getMessageService() {
