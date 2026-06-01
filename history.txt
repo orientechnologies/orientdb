@@ -26,8 +26,19 @@
 
 This document contains the last changes of OrientDB Community Edition.
 
+
 -----------------------------------------------------------------------------------------------------------------------------------
-version 3.2.52 - (May, 16 2025)
+version 3.2.53 - (June, 2 2026)
+
+# Core
+- Made sure to list config free map in the database file type list for correct file delete
+- Make sure to not include temporary storage config file from backups
+
+# Remote
+- Add check for correct type when deserializing data java object from network
+
+-----------------------------------------------------------------------------------------------------------------------------------
+version 3.2.52 - (May, 16 2026)
 
 # Core
 - Truncate asDate timestamps with 24-hour clock
@@ -35,7 +46,7 @@ version 3.2.52 - (May, 16 2025)
 - Dependencies updateds
 
 -----------------------------------------------------------------------------------------------------------------------------------
-version 3.2.51 - (March, 31 2025)
+version 3.2.51 - (March, 31 2026)
 
 # Core
 - Fix order by for nested properties, issue 
@@ -45,7 +56,7 @@ version 3.2.51 - (March, 31 2025)
 - Fix store of settings for scheduled backups
 
 -----------------------------------------------------------------------------------------------------------------------------------
-version 3.2.50 - (February, 24 2025)
+version 3.2.50 - (February, 24 2026)
 
 # Core
 - Dependency updates 
@@ -55,7 +66,7 @@ version 3.2.50 - (February, 24 2025)
 - Fix loop re-scheduling of backup in case of backup failure
 
 -----------------------------------------------------------------------------------------------------------------------------------
-version 3.2.49 - (Jennaury, 27 2025)
+version 3.2.49 - (Jennaury, 27 2026)
 
 # Core
 - Dependency updates 
