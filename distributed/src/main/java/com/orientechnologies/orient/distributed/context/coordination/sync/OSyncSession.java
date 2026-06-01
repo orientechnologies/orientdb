@@ -111,4 +111,17 @@ public class OSyncSession {
     }
     return false;
   }
+
+  @Override
+  public String toString() {
+    return "OSyncSession [syncId="
+        + syncId
+        + ", start="
+        + start
+        + ", transfering="
+        + isTransferingData()
+        + ", terminated="
+        + isFinished()
+        + " ]";
+  }
 }
