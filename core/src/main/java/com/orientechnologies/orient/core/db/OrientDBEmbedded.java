@@ -568,7 +568,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
       synchronized (this) {
         context = sharedContexts.get(name);
         if (context != null) {
-          context.closePreRestore();
+          context.unload();
         }
         storage = storages.get(name);
         if (storage == null) {

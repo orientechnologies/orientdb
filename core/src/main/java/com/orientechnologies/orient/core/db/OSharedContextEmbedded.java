@@ -148,6 +148,27 @@ public class OSharedContextEmbedded extends OSharedContext {
     activeDistributedQueries.values().forEach(x -> x.close());
   }
 
+  @Override
+  public void unload() {
+    internalUnload();
+  }
+
+  protected void internalUnload() {
+    stringCache.close();
+    viewManager.close();
+    schema.close();
+    security.close();
+    indexManager.close();
+    functionLibrary.close();
+    scheduler.close();
+    sequenceLibrary.close();
+    statementCache.clear();
+    executionPlanCache.invalidate();
+    liveQueryOps.close();
+    liveQueryOpsV2.close();
+    activeDistributedQueries.values().forEach(x -> x.close());
+  }
+
   public synchronized void reload(ODatabaseDocumentInternal database) {
     internalReload(database);
   }
@@ -275,26 +296,5 @@ public class OSharedContextEmbedded extends OSharedContext {
 
   public ODistributedSynchronizedSequence getTransactionSequence() {
     return transactionSequence;
-  }
-
-  public synchronized void closePreRestore() {
-    internalClosePreRestore();
-    this.loaded = false;
-  }
-
-  protected void internalClosePreRestore() {
-    stringCache.close();
-    viewManager.close();
-    schema.close();
-    security.close();
-    indexManager.close();
-    functionLibrary.close();
-    scheduler.close();
-    sequenceLibrary.close();
-    statementCache.clear();
-    executionPlanCache.invalidate();
-    liveQueryOps.close();
-    liveQueryOpsV2.close();
-    activeDistributedQueries.values().forEach(x -> x.close());
   }
 }

@@ -99,6 +99,8 @@ public abstract class OSharedContext extends OListenerManger<OMetadataUpdateList
 
   public abstract void reload(ODatabaseDocumentInternal database);
 
+  public abstract void unload();
+
   public abstract void close();
 
   public OStorageInfo getStorage() {

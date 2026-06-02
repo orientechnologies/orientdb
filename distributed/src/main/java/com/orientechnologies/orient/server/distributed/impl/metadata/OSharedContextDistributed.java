@@ -96,10 +96,10 @@ public class OSharedContextDistributed extends OSharedContextEmbedded {
   }
 
   @Override
-  protected void internalClosePreRestore() {
+  public void unload() {
     OScenarioThreadLocal.executeAsDistributed(
         () -> {
-          super.internalClosePreRestore();
+          super.internalUnload();
           distributedContext.suspend();
           return null;
         });

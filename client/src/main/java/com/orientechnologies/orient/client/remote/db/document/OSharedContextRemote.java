@@ -74,6 +74,11 @@ public class OSharedContextRemote extends OSharedContext {
     getClient().shutdown();
   }
 
+  @Override
+  public void unload() {
+    close();
+  }
+
   public synchronized void reload(ODatabaseDocumentInternal database) {
     schema.reload(database);
     indexManager.reload(database);
