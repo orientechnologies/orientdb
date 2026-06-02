@@ -167,7 +167,7 @@
         <!--<license.location>https://github.com/orientechnologies/orientdb/raw/develop/ODB-ASL-LICENSE.txt</license.location>-->
         <heapSize>2048m</heapSize>
         <javaassist.version>3.31.0-GA</javaassist.version>
-        <jaxb.version>4.0.8</jaxb.version>
+        <jaxb.version>4.0.9</jaxb.version>
         <jackson.version>2.21.4</jackson.version>
         <project.rootdir>${project.basedir}/</project.rootdir>
         <graalvm.version>24.2.2</graalvm.version>
