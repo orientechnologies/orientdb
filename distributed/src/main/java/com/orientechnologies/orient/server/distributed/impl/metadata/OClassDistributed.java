@@ -581,10 +581,7 @@ public class OClassDistributed extends OClassEmbedded {
       final OModifiableDistributedConfiguration modifiableCfg = cfg.modify();
       // TODO: maybe this should run on a background thread ... instead of here
       OrientDBDistributed ctx = db.getContext();
-      var future = ctx.autoAssignAllocation(db.getDatabaseId());
-      if (future.isPresent()) {
-        future.get();
-      }
+      ctx.autoAssignAllocation(db.getDatabaseId());
 
       cfg = modifiableCfg;
 

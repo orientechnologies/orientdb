@@ -70,6 +70,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabasePoolImpl;
 import com.orientechnologies.orient.core.db.ODatabasePoolInternal;
 import com.orientechnologies.orient.core.db.ODatabaseTask;
+import com.orientechnologies.orient.core.db.ODatabaseTaskNoResult;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OSharedContext;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
@@ -556,7 +557,7 @@ public class OrientDBRemote implements OrientDBInternal {
   }
 
   @Override
-  public <X> Future<X> executeNoAuthorizationOnActive(String database, ODatabaseTask<X> task) {
+  public void executeNoAuthorizationOnActive(String database, ODatabaseTaskNoResult task) {
     throw new UnsupportedOperationException("execute with no session not available in remote");
   }
 

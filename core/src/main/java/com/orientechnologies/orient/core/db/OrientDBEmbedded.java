@@ -1044,21 +1044,18 @@ public class OrientDBEmbedded implements OrientDBInternal {
   }
 
   @Override
-  public <X> Future<X> executeNoAuthorizationOnActive(String database, ODatabaseTask<X> task) {
-    return executor.submit(
+  public void executeNoAuthorizationOnActive(String database, ODatabaseTaskNoResult task) {
+    executor.execute(
         () -> {
           if (isOpen()) {
             ODatabaseSession sess = onlyOpenNoAuthorization(database);
             if (sess != null) {
               try (ODatabaseSession session = sess) {
-                return task.call(session);
+                task.call(session);
               }
-            } else {
-              return null;
             }
           } else {
             logger.warn(" Cancelled execution of task, OrientDB instance is closed");
-            return null;
           }
         });
   }

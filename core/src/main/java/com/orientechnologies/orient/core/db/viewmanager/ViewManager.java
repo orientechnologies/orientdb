@@ -5,6 +5,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.collate.OCollate;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
+import com.orientechnologies.orient.core.db.OCancellableTimer;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.OLiveQueryResultListener;
@@ -47,7 +48,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
-import java.util.TimerTask;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -85,7 +85,7 @@ public class ViewManager {
   private final ConcurrentMap<String, Long> lastChangePerClass = new ConcurrentHashMap<>();
   private final Set<String> refreshing = Collections.synchronizedSet(new HashSet<>());
 
-  private volatile TimerTask timerTask;
+  private volatile OCancellableTimer cancellableTimer;
   private volatile boolean closed = false;
 
   public ViewManager(OrientDBInternal orientDb, String dbName) {
@@ -101,7 +101,6 @@ public class ViewManager {
           // context.
           // you just don't need the db passed as a param here
           registerLiveUpdates(db);
-          return null;
         });
   }
 
@@ -144,23 +143,16 @@ public class ViewManager {
   }
 
   private void schedule() {
-    this.timerTask =
-        new TimerTask() {
-          @Override
-          public void run() {
-            if (closed) return;
-            orientDB.executeNoAuthorizationOnActive(
-                dbName,
-                (db) -> {
-                  ViewManager.this.updateViews((ODatabaseDocumentInternal) db);
-                  return null;
-                });
-          }
-        };
-    this.orientDB.schedule(timerTask, 1000, 1000);
+    this.cancellableTimer = this.orientDB.periodicExecute(this::runUpdateViews, 1000);
   }
 
-  private void updateViews(ODatabaseDocumentInternal db) {
+  protected void runUpdateViews() {
+    if (closed) return;
+    orientDB.executeNoAuthorizationOnActive(dbName, this::updateViews);
+  }
+
+  private void updateViews(ODatabaseSession session) {
+    var db = (ODatabaseDocumentInternal) session;
     try {
       OView view;
       do {
@@ -179,8 +171,8 @@ public class ViewManager {
 
   public void close() {
     closed = true;
-    if (timerTask != null) {
-      timerTask.cancel();
+    if (cancellableTimer != null) {
+      cancellableTimer.cancel();
     }
   }
 
@@ -515,22 +507,18 @@ public class ViewManager {
   public void updateViewAsync(String name, ViewCreationListener listener) {
     orientDB.executeNoAuthorizationOnActive(
         dbName,
-        (databaseSession) -> {
-          if (!buildOnThisNode(
-              (ODatabaseDocumentInternal) databaseSession,
-              ((ODatabaseDocumentInternal) databaseSession)
-                  .getMetadata()
-                  .getSchema()
-                  .getView(name))) {
-            return null;
+        (session) -> {
+          var db = (ODatabaseDocumentInternal) session;
+          OView view = session.getMetadata().getSchema().getView(name);
+          if (!buildOnThisNode(db, view)) {
+            return;
           }
           try {
-            OView view = databaseSession.getMetadata().getSchema().getView(name);
             if (view != null) {
-              updateView(view, (ODatabaseDocumentInternal) databaseSession);
+              updateView(view, db);
             }
             if (listener != null) {
-              listener.afterCreate(databaseSession, name);
+              listener.afterCreate(session, name);
             }
           } catch (Exception e) {
             if (listener != null) {
@@ -538,7 +526,6 @@ public class ViewManager {
             }
             logger.warn("Failed to update views", e);
           }
-          return null;
         });
   }
 
