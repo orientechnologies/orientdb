@@ -320,10 +320,9 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       waitIsReady(task);
 
       if (!running) {
-        throw new ODistributedException(
-            "Server is going down or is removing the database:'"
-                + getDatabaseName()
-                + "' discarding");
+        logger.warn(
+            "Server is going down or is removing the database:'%s' discarding", getDatabaseName());
+        return;
       }
     }
     synchronized (this) {
