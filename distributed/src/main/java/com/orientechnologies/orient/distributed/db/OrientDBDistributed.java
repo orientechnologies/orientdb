@@ -322,7 +322,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
     return plugin;
   }
 
-  protected OSharedContext createSharedContext(OStorage storage) {
+  protected OSharedContextEmbedded createSharedContext(OStorage storage) {
     if (isDistributedDisabled(storage.getName())) {
       return new OSharedContextEmbedded(storage, this);
     }

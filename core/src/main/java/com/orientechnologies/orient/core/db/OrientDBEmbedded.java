@@ -88,7 +88,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
   protected ThreadGroup threadsGroup;
 
   protected final Map<String, OStorage> storages = new ConcurrentHashMap<>();
-  protected final Map<String, OSharedContext> sharedContexts = new ConcurrentHashMap<>();
+  protected final Map<String, OSharedContextEmbedded> sharedContexts = new ConcurrentHashMap<>();
   protected final Set<ODatabasePoolInternal> pools =
       Collections.newSetFromMap(new ConcurrentHashMap<>());
   protected final OrientDBConfig configurations;
@@ -564,11 +564,11 @@ public class OrientDBEmbedded implements OrientDBInternal {
     OStorage storage = null;
     OContextConfiguration config = getConfigurations().getConfigurations();
     try {
-      OSharedContext context;
+      OSharedContextEmbedded context;
       synchronized (this) {
         context = sharedContexts.get(name);
         if (context != null) {
-          context.close();
+          context.closePreRestore();
         }
         storage = storages.get(name);
         if (storage == null) {
@@ -670,7 +670,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
   }
 
   protected synchronized OSharedContext getOrCreateSharedContext(OStorage storage) {
-    OSharedContext result = sharedContexts.get(storage.getName());
+    OSharedContextEmbedded result = sharedContexts.get(storage.getName());
     if (result == null) {
       result = createSharedContext(storage);
       sharedContexts.put(storage.getName(), result);
@@ -678,7 +678,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
     return result;
   }
 
-  protected OSharedContext createSharedContext(OStorage storage) {
+  protected OSharedContextEmbedded createSharedContext(OStorage storage) {
     return new OSharedContextEmbedded(storage, this);
   }
 
