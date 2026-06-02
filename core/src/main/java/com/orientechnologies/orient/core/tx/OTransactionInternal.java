@@ -108,7 +108,7 @@ public interface OTransactionInternal
     return Optional.empty();
   }
 
-  void setMetadataHolder(Optional<OTxMetadataHolder> metadata);
+  void setMetadataHolder(OTxMetadataHolder metadata);
 
   default void startedStorageTransaction() {}
 

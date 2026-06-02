@@ -1896,7 +1896,13 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
   }
 
   @Override
+  public OSharedContextEmbedded getSharedContext() {
+    return (OSharedContextEmbedded) super.getSharedContext();
+  }
+
+  @Override
   public void internalCommit(OTransactionInternal transaction) {
+    transaction.setMetadataHolder(getSharedContext().getTransactionSequence().localSuccess());
     this.getStorage().commit(transaction);
   }
 

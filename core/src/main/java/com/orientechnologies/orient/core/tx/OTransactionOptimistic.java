@@ -1240,8 +1240,8 @@ public class OTransactionOptimistic extends OTransactionAbstract implements OTra
   }
 
   @Override
-  public void setMetadataHolder(Optional<OTxMetadataHolder> metadata) {
-    this.metadata = metadata;
+  public void setMetadataHolder(OTxMetadataHolder metadata) {
+    this.metadata = Optional.of(metadata);
   }
 
   @Override

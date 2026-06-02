@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.tx;
 
 import com.orientechnologies.orient.core.transaction.OTransactionId;
+import com.orientechnologies.orient.core.transaction.OTxMetadataHolderLocal;
 
 public interface OTxMetadataHolder {
 
@@ -11,4 +12,8 @@ public interface OTxMetadataHolder {
   OTransactionId getId();
 
   OTransactionSequenceStatus getStatus();
+
+  static OTxMetadataHolder read(byte[] data) {
+    return OTxMetadataHolderLocal.read(data);
+  }
 }

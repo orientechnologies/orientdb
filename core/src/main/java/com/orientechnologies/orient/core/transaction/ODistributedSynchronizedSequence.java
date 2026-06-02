@@ -4,7 +4,8 @@ import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OTransactionAlreadyPresentException;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
-import com.orientechnologies.orient.core.tx.OTxMetadataHolderImpl;
+import com.orientechnologies.orient.core.tx.OTxMetadataHolder;
+import com.orientechnologies.orient.core.tx.OTxMetadataHolderSyncOrder;
 import com.orientechnologies.orient.core.tx.ValidationResult;
 import java.util.List;
 import java.util.Optional;
@@ -42,7 +43,7 @@ public class ODistributedSynchronizedSequence {
    * @param id
    * @return
    */
-  public synchronized OTxMetadataHolderImpl notifySuccess(OTransactionIdPromise id) {
+  public synchronized OTxMetadataHolder notifySuccess(OTransactionIdPromise id) {
     try {
       request.await();
     } catch (InterruptedException e) {
@@ -53,7 +54,7 @@ public class ODistributedSynchronizedSequence {
       throw new OTransactionAlreadyPresentException("Tx Already present in the current context");
     } else if (status == ValidationResult.VALID) {
       request = new CountDownLatch(1);
-      return new OTxMetadataHolderImpl(request, id.getId(), sequenceManager.currentStatus());
+      return new OTxMetadataHolderSyncOrder(request, id.getId(), sequenceManager.currentStatus());
     } else {
       throw new ODatabaseException("Failed transaction sequence need a reinstall");
     }
@@ -69,7 +70,7 @@ public class ODistributedSynchronizedSequence {
 
   public void fill(Optional<byte[]> lastMetadata) {
     lastMetadata.ifPresent(
-        (data) -> sequenceManager.fill(OTxMetadataHolderImpl.read(data).getStatus()));
+        (data) -> sequenceManager.fill(OTxMetadataHolder.read(data).getStatus()));
   }
 
   public OTransactionSequenceStatus currentStatus() {
@@ -78,5 +79,17 @@ public class ODistributedSynchronizedSequence {
 
   public List<OTransactionId> checkSelfStatus(OTransactionSequenceStatus status) {
     return sequenceManager.checkSelfStatus(status);
+  }
+
+  public long debugStatus(int position) {
+    return sequenceManager.debugGetSequence(position);
+  }
+
+  public OTxMetadataHolder localSuccess() {
+    var next = sequenceManager.next();
+    // TODO: make it not looping blocking forever
+    while (next.isEmpty()) next = sequenceManager.next();
+    sequenceManager.notifySuccess(next.get());
+    return new OTxMetadataHolderLocal(next.get().getId(), sequenceManager.currentStatus());
   }
 }

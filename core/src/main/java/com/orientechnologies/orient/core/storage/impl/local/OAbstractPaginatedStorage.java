@@ -178,7 +178,6 @@ import com.orientechnologies.orient.core.transaction.OTransactionSequenceManager
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTransactionData;
 import com.orientechnologies.orient.core.tx.OTxMetadataHolder;
-import com.orientechnologies.orient.core.tx.OTxMetadataHolderImpl;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.DataOutput;
@@ -1570,7 +1569,7 @@ public abstract class OAbstractPaginatedStorage
 
             if (record instanceof OAtomicUnitStartMetadataRecord) {
               byte[] meta = ((OAtomicUnitStartMetadataRecord) record).getMetadata();
-              OTxMetadataHolder data = OTxMetadataHolderImpl.read(meta);
+              OTxMetadataHolder data = OTxMetadataHolder.read(meta);
               // This will not be a byte to byte compare, but should compare only the tx id not all
               // status
               //noinspection ConstantConditions

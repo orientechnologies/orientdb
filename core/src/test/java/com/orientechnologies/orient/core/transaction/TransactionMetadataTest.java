@@ -13,7 +13,7 @@ import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import com.orientechnologies.orient.core.tx.OTxMetadataHolder;
-import com.orientechnologies.orient.core.tx.OTxMetadataHolderImpl;
+import com.orientechnologies.orient.core.tx.OTxMetadataHolderSyncOrder;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -41,13 +41,13 @@ public class TransactionMetadataTest {
   public void test() {
     db.begin();
     var holder =
-        new OTxMetadataHolderImpl(
+        new OTxMetadataHolderSyncOrder(
             new CountDownLatch(1),
             new OTransactionId(1, 10),
             new OTransactionSequenceStatus(new long[] {0, 10, 10}));
     byte[] metadata = holder.metadata();
     ((OTransactionInternal) db.getTransaction())
-        .setMetadataHolder(Optional.of(new TestMetadataHolder(metadata)));
+        .setMetadataHolder(new TestMetadataHolder(metadata));
     OVertex v = db.newVertex("V");
     v.setProperty("name", "Foo");
     db.save(v);
@@ -72,13 +72,13 @@ public class TransactionMetadataTest {
   public void testBackupRestore() throws IOException {
     db.begin();
     var holder =
-        new OTxMetadataHolderImpl(
+        new OTxMetadataHolderSyncOrder(
             new CountDownLatch(1),
             new OTransactionId(1, 10),
             new OTransactionSequenceStatus(new long[] {0, 10, 10}));
     byte[] metadata = holder.metadata();
     ((OTransactionInternal) db.getTransaction())
-        .setMetadataHolder(Optional.of(new TestMetadataHolder(metadata)));
+        .setMetadataHolder(new TestMetadataHolder(metadata));
     OVertex v = db.newVertex("V");
     v.setProperty("name", "Foo");
     db.save(v);

@@ -11,7 +11,7 @@ import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
-import com.orientechnologies.orient.core.tx.OTxMetadataHolderImpl;
+import com.orientechnologies.orient.core.tx.OTxMetadataHolderSyncOrder;
 import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import org.junit.After;
@@ -39,7 +39,7 @@ public class MetadataOnlyTest {
     ODatabaseSession db = orientDb.open("testMetadataOnly", "admin", "admin");
 
     var holder =
-        new OTxMetadataHolderImpl(
+        new OTxMetadataHolderSyncOrder(
             new CountDownLatch(1),
             new OTransactionId(1, 10),
             new OTransactionSequenceStatus(new long[] {0, 10, 10}));

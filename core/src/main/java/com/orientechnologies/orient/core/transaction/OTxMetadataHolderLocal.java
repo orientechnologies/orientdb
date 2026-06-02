@@ -1,6 +1,7 @@
-package com.orientechnologies.orient.core.tx;
+package com.orientechnologies.orient.core.transaction;
 
-import com.orientechnologies.orient.core.transaction.OTransactionId;
+import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
+import com.orientechnologies.orient.core.tx.OTxMetadataHolder;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataInput;
@@ -8,16 +9,13 @@ import java.io.DataInputStream;
 import java.io.DataOutput;
 import java.io.DataOutputStream;
 import java.io.IOException;
-import java.util.concurrent.CountDownLatch;
 
-public class OTxMetadataHolderImpl implements OTxMetadataHolder {
-  private final CountDownLatch request;
+public class OTxMetadataHolderLocal implements OTxMetadataHolder {
+
   private final OTransactionSequenceStatus status;
   private final OTransactionId id;
 
-  public OTxMetadataHolderImpl(
-      CountDownLatch request, OTransactionId id, OTransactionSequenceStatus status) {
-    this.request = request;
+  public OTxMetadataHolderLocal(OTransactionId id, OTransactionSequenceStatus status) {
     this.id = id;
     this.status = status;
   }
@@ -45,8 +43,7 @@ public class OTxMetadataHolderImpl implements OTxMetadataHolder {
       int size = input.readInt();
       byte[] status = new byte[size];
       input.readFully(status);
-      return new OTxMetadataHolderImpl(
-          new CountDownLatch(0), txId, OTransactionSequenceStatus.read(status));
+      return new OTxMetadataHolderLocal(txId, OTransactionSequenceStatus.read(status));
     } catch (IOException e) {
       e.printStackTrace();
     }
@@ -55,10 +52,9 @@ public class OTxMetadataHolderImpl implements OTxMetadataHolder {
   }
 
   @Override
-  public void notifyMetadataRead() {
-    request.countDown();
-  }
+  public void notifyMetadataRead() {}
 
+  @Override
   public OTransactionId getId() {
     return id;
   }
