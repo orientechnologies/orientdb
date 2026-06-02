@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.core.transaction;
 
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OTransactionAlreadyPresentException;
@@ -12,6 +14,7 @@ import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 
 public class ODistributedSynchronizedSequence {
+  private OLogger logger = OLogManager.instance().logger(ODistributedSynchronizedSequence.class);
   private final OTransactionSequenceManager sequenceManager;
   private volatile CountDownLatch request;
 
@@ -69,6 +72,7 @@ public class ODistributedSynchronizedSequence {
   }
 
   public void fill(Optional<byte[]> lastMetadata) {
+    logger.debug("fill called has metadata: %s", lastMetadata.isPresent());
     lastMetadata.ifPresent(
         (data) -> sequenceManager.fill(OTxMetadataHolder.read(data).getStatus()));
   }

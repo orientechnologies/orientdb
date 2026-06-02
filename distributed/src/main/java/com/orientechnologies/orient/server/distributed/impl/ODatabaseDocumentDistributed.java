@@ -1259,14 +1259,23 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       return new OTxInvalidSequential();
     } else if (first == ValidationResult.MISSING_PREVIOUS
         || second == ValidationResult.MISSING_PREVIOUS) {
+      var preC = transactionSequence.debugStatus(preChangeId.getId().getPosition());
+      var afterC = transactionSequence.debugStatus(afterChangeId.getId().getPosition());
       ddlContext.setStatus(TIMEDOUT);
       getContext()
           .execute(
               () -> {
                 logger.warnNode(
                     getLocalNodeName(),
-                    "Missing DDL operation, forcing database '%s' re-install",
-                    getName());
+                    "Missing DDL operation pre:%d!=%d after %d!=%d, forcing database '%s'"
+                        + " re-install, operation '%s'",
+                    preC,
+                    preChangeId.getId().getSequence(),
+                    afterC,
+                    afterChangeId.getId().getSequence(),
+                    getName(),
+                    query);
+
                 maybeRsync();
               });
       return new OTxInvalidSequential();

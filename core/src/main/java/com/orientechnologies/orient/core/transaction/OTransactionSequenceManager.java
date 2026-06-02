@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.core.transaction;
 
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
@@ -12,6 +14,7 @@ import java.util.Optional;
 import java.util.Random;
 
 public class OTransactionSequenceManager {
+  private OLogger logger = OLogManager.instance().logger(OTransactionSequenceManager.class);
 
   private volatile long[] sequentials;
   private volatile OTransactionIdPromise[] promisedSequential;
@@ -36,6 +39,7 @@ public class OTransactionSequenceManager {
   public synchronized void fill(OTransactionSequenceStatus data) {
     this.sequentials = data.getStatus();
     this.promisedSequential = new OTransactionIdPromise[this.sequentials.length];
+    logger.debug("loaded sequence status %s", data);
   }
 
   public synchronized Optional<OTransactionIdPromise> next() {

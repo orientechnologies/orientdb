@@ -1243,8 +1243,8 @@ public class OrientDBDistributed extends OrientDBEmbedded
 
   public void sendBuffer(OSyncState state, byte[] data, long sequential, boolean finished) {
     logger.debug(
-        "Sending buffer %s syncId %s sender %s receiver %s",
-        state.getDbId(), state.getSyncId(), state.getSender(), state.getReceiver());
+        "Sending buffer %s syncId %s sender %s receiver %s finished %b",
+        state.getDbId(), state.getSyncId(), state.getSender(), state.getReceiver(), finished);
 
     if (state.isClose()) {
       // receiver sent close, drop the data.

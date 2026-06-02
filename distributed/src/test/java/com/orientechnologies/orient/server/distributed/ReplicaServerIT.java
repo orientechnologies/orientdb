@@ -67,7 +67,7 @@ public class ReplicaServerIT extends AbstractServerClusterTest {
         Assert.assertTrue(s == 0);
 
       } catch (Exception e) {
-        Assert.assertTrue(s > 0);
+        Assert.assertTrue(e.getMessage(), s > 0);
       } finally {
         g.close();
       }
