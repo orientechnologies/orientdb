@@ -662,14 +662,6 @@ public class OrientDBDistributed extends OrientDBEmbedded
           }
         }
 
-        final File dCfg2 =
-            new File(p + "/" + ODistributedDatabaseImpl.DISTRIBUTED_SYNC_JSON_FILENAME);
-        if (dCfg2.exists()) {
-          for (int i = 0; i < 10; ++i) {
-            if (dCfg2.delete()) break;
-            Thread.sleep(100);
-          }
-        }
       } catch (InterruptedException e) {
         Thread.currentThread().interrupt();
       }

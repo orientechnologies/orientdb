@@ -82,7 +82,6 @@ import java.util.concurrent.atomic.AtomicLong;
 public class ODistributedDatabaseImpl implements ODistributedDatabase {
   private static final OLoggerDistributed logger =
       OLoggerDistributed.logger(ODistributedDatabaseImpl.class);
-  public static final String DISTRIBUTED_SYNC_JSON_FILENAME = "distributed-sync.json";
   protected final ODistributedPlugin manager;
   protected final String databaseName;
   private final String localNodeName;
