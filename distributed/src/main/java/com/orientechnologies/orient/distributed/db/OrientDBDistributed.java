@@ -244,11 +244,14 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   private void notifyLegacyStateListener(ODatabaseId dbId, ONodeId nodeId, ODatabaseState state) {
+    if (plugin == null) return;
     String node = nodeId.getNode();
     String db = getNodeState().getOps().getDatabaseTopology().getDatabaseName(dbId);
     execute(
         () -> {
-          plugin.onDatabaseEvent(node, db, state.toSatus());
+          if (plugin != null) {
+            plugin.onDatabaseEvent(node, db, state.toSatus());
+          }
         });
   }
 
@@ -1041,18 +1044,24 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   private void notifyLegacyNodeJoinListener(ONodeId node) {
+    if (plugin == null) return;
     String nodeName = node.getNode();
     execute(
         () -> {
-          plugin.notifyNodeJoined(nodeName);
+          if (plugin != null) {
+            plugin.notifyNodeJoined(nodeName);
+          }
         });
   }
 
   private void notifyLegacyNodeLeftListener(ONodeId node) {
+    if (plugin == null) return;
     String nodeName = node.getNode();
     execute(
         () -> {
-          plugin.notifyNodeLeft(nodeName);
+          if (plugin != null) {
+            plugin.notifyNodeLeft(nodeName);
+          }
         });
   }
 
