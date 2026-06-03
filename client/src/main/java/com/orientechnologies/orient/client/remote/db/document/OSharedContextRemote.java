@@ -75,7 +75,7 @@ public class OSharedContextRemote extends OSharedContext {
   }
 
   @Override
-  public void unload() {
+  public synchronized void unload() {
     close();
   }
 

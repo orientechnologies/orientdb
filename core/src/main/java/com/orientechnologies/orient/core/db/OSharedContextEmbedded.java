@@ -149,8 +149,9 @@ public class OSharedContextEmbedded extends OSharedContext {
   }
 
   @Override
-  public void unload() {
+  public synchronized void unload() {
     internalUnload();
+    loaded = false;
   }
 
   protected void internalUnload() {

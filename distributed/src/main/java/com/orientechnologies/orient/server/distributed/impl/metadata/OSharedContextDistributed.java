@@ -96,7 +96,7 @@ public class OSharedContextDistributed extends OSharedContextEmbedded {
   }
 
   @Override
-  public void unload() {
+  public void internalUnload() {
     OScenarioThreadLocal.executeAsDistributed(
         () -> {
           super.internalUnload();
