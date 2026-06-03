@@ -231,7 +231,7 @@ public class OSharedContextEmbedded extends OSharedContext {
   }
 
   public synchronized void reInit(OStorage storage, ODatabaseDocumentInternal database) {
-    this.close();
+    this.unload();
     this.storage = storage;
     this.init(storage);
     ((OSessionMetadata) database.getMetadata()).init(this);
