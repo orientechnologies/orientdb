@@ -1,9 +1,11 @@
 package com.orientechnologies.orient.server.distributed.impl;
 
 import com.orientechnologies.orient.core.transaction.ONodeId;
+import com.orientechnologies.orient.distributed.context.coordination.message.ONodeInfoListener;
 import com.orientechnologies.orient.server.distributed.ORemoteServerAvailabilityCheck;
 import com.orientechnologies.orient.server.distributed.ORemoteServerController;
 import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
@@ -12,6 +14,7 @@ public class ORemoteServerManager {
 
   private final ConcurrentMap<ONodeId, ORemoteServerController> remoteServers =
       new ConcurrentHashMap<>();
+  private final ConcurrentMap<ONodeId, ORemoteAddress> remoteAddresses = new ConcurrentHashMap<>();
   private final ONodeId local;
   private final ORemoteServerAvailabilityCheck check;
   private final ExecutorService executor;
@@ -48,5 +51,9 @@ public class ORemoteServerManager {
   public void closeAll() {
     for (ORemoteServerController server : remoteServers.values()) server.close();
     remoteServers.clear();
+  }
+
+  public void registerRemoteAddresses(ONodeId nodeId, List<ONodeInfoListener> listeners) {
+    remoteAddresses.computeIfAbsent(nodeId, (k) -> new ORemoteAddress()).addAddresses(listeners);
   }
 }

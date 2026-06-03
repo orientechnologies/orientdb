@@ -23,7 +23,7 @@ public class ONodeFirstConnect implements OStructuralMessage {
 
   @Override
   public void execute(OrientDBDistributed ctx) {
-    ctx.firstConnect(nodeId, state, merge);
+    ctx.firstConnect(nodeId, state, merge, info);
   }
 
   @Override

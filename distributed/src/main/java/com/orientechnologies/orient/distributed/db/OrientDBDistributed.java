@@ -1006,9 +1006,12 @@ public class OrientDBDistributed extends OrientDBEmbedded
     return new ONetworkMessageStructural(this);
   }
 
-  public void firstConnect(ONodeId nodeId, ONodeStateNetwork state, boolean merge) {
+  public void firstConnect(ONodeId nodeId, ONodeStateNetwork state, boolean merge, ONodeInfo info) {
     if (nodeId.equals(getNodeId())) {
       return;
+    }
+    if (this.remoteServerManager != null) {
+      this.remoteServerManager.registerRemoteAddresses(nodeId, info.listeners());
     }
     ODiscoverAction action = getNodeState().getOps().nodeJoinStart(nodeId, state, merge);
     logger.debugNode(getNodeId(), "executing node join action %s", action);
