@@ -131,7 +131,7 @@ public class OCoordinateDistributedOpsMergeStateTest
 
     OCoordinatedDistributedOps ops1 = quorum1Env(nodeId1, groupId);
 
-    var state = ops.createMergedState(ops1.getNetworkState());
+    var state = ops.createMergedState(ops1.getNetworkState()).get();
 
     assertTrue(state.topology().members().contains(nodeId));
     assertTrue(state.topology().members().contains(nodeId1));
@@ -150,7 +150,7 @@ public class OCoordinateDistributedOpsMergeStateTest
     declareDatabase(ops, new ODatabaseId("testId"), "test");
 
     OCoordinatedDistributedOps ops1 = quorum1Env(nodeId1, groupId);
-    var state = ops.createMergedState(ops1.getNetworkState());
+    var state = ops.createMergedState(ops1.getNetworkState()).get();
 
     assertTrue(state.topology().members().contains(nodeId));
     assertTrue(state.topology().members().contains(nodeId1));
@@ -179,7 +179,7 @@ public class OCoordinateDistributedOpsMergeStateTest
     setDatabaseState(ops, dbId, nodeId, ODatabaseState.Online);
 
     OCoordinatedDistributedOps ops1 = quorum1Env(nodeId1, groupId);
-    var state = ops.createMergedState(ops1.getNetworkState());
+    var state = ops.createMergedState(ops1.getNetworkState()).get();
 
     assertTrue(state.topology().members().contains(nodeId));
     assertTrue(state.topology().members().contains(nodeId1));
@@ -210,7 +210,7 @@ public class OCoordinateDistributedOpsMergeStateTest
     OCoordinatedDistributedOps ops1 = quorum1Env(nodeId1, groupId);
     declareDatabase(ops1, dbId, "test");
     setDatabaseState(ops1, dbId, nodeId1, ODatabaseState.Online);
-    var state = ops.createMergedState(ops1.getNetworkState());
+    var state = ops.createMergedState(ops1.getNetworkState()).get();
 
     assertTrue(state.topology().members().contains(nodeId));
     assertTrue(state.topology().members().contains(nodeId1));
@@ -220,5 +220,26 @@ public class OCoordinateDistributedOpsMergeStateTest
     for (var member : db.members()) {
       assertEquals(member.state(), ODatabaseState.Online);
     }
+  }
+
+  @Test
+  public void twoNodesWithDifferentDatabaseOnline() {
+
+    ONodeId nodeId = newRandomNodeId();
+    OGroupId groupId = newRandomGroupId();
+    OCoordinatedDistributedOps ops = quorum1Env(nodeId, groupId);
+
+    ONodeId nodeId1 = newRandomNodeId();
+
+    ODatabaseId dbId = new ODatabaseId("testId");
+    declareDatabase(ops, dbId, "test");
+    setDatabaseState(ops, dbId, nodeId, ODatabaseState.Online);
+
+    ODatabaseId dbId1 = new ODatabaseId("testId1");
+    OCoordinatedDistributedOps ops1 = quorum1Env(nodeId1, groupId);
+    declareDatabase(ops1, dbId1, "test");
+    setDatabaseState(ops1, dbId1, nodeId1, ODatabaseState.Online);
+    var merged = ops.createMergedState(ops1.getNetworkState());
+    assertTrue(merged.isEmpty());
   }
 }

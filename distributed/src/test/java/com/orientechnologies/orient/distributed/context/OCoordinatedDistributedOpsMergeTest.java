@@ -138,7 +138,7 @@ public class OCoordinatedDistributedOpsMergeTest
     var promise = first.start(new TestAction(toMerge.getCurrent())).get().promise();
     ONodeStateNetwork toMergeOriginalState = toMerge.getNetworkState();
     var originalState = first.getNetworkState();
-    var mergedState = first.createMergedState(toMergeOriginalState);
+    var mergedState = first.createMergedState(toMergeOriginalState).get();
     for (var node : network) {
       var validate1 =
           node.validateMergeNode(toMerge.getCurrent(), mergedState, originalState, promise);
@@ -232,7 +232,7 @@ public class OCoordinatedDistributedOpsMergeTest
     var promise = ops1.start(action).get().promise();
     ONodeStateNetwork toMergeOriginalState = ops4.getNetworkState();
     var originalState = ops1.getNetworkState();
-    var mergedState = ops1.createMergedState(toMergeOriginalState);
+    var mergedState = ops1.createMergedState(toMergeOriginalState).get();
 
     var validate2 =
         ops4.validateMergeToNetwork(ops1.getGroupId(), mergedState, toMergeOriginalState, promise);
@@ -284,7 +284,7 @@ public class OCoordinatedDistributedOpsMergeTest
     var promise = ops1.start(action).get().promise();
     ONodeStateNetwork toMergeOriginalState = ops4.getNetworkState();
     var originalState = ops1.getNetworkState();
-    var mergedState = ops1.createMergedState(toMergeOriginalState);
+    var mergedState = ops1.createMergedState(toMergeOriginalState).get();
 
     var validate2 =
         ops4.validateMergeToNetwork(ops1.getGroupId(), mergedState, toMergeOriginalState, promise);
@@ -410,7 +410,7 @@ public class OCoordinatedDistributedOpsMergeTest
 
     var promise = newPromiseId(nodeId1);
     ONodeStateNetwork ops2Original = ops2.getNetworkState();
-    var mergedState = ops1.createMergedState(ops2Original);
+    var mergedState = ops1.createMergedState(ops2Original).get();
     var validate1 = ops1.validateMergeNode(nodeId2, mergedState, ops1.getNetworkState(), promise);
 
     assertTrue(validate1.isEmpty());
@@ -446,7 +446,7 @@ public class OCoordinatedDistributedOpsMergeTest
 
     var promise = newPromiseId(nodeId1);
     ONodeStateNetwork ops2Original = ops2.getNetworkState();
-    var mergedState = ops1.createMergedState(ops2Original);
+    var mergedState = ops1.createMergedState(ops2Original).get();
     ONodeStateNetwork ops1Original = ops1.getNetworkState();
     var validate1 = ops1.validateMergeNode(nodeId2, mergedState, ops1Original, promise);
 
@@ -463,7 +463,7 @@ public class OCoordinatedDistributedOpsMergeTest
     OCoordinatedDistributedOps ops3 = quorum1Env(nodeId3, groupId);
 
     ONodeStateNetwork ops3Original = ops3.getNetworkState();
-    var secMergedState = ops2.createMergedState(ops3Original);
+    var secMergedState = ops2.createMergedState(ops3Original).get();
     var secPromise = newPromiseId(nodeId2);
     ONodeStateNetwork ops2Original1 = ops2.getNetworkState();
     var secValidate = ops2.validateMergeNode(nodeId3, secMergedState, ops2Original1, secPromise);
@@ -502,7 +502,7 @@ public class OCoordinatedDistributedOpsMergeTest
 
     var promise = ops1.start(new TestAction(null)).get().promise();
     ONodeStateNetwork ops2Original = ops2.getNetworkState();
-    var mergedState = ops1.createMergedState(ops2Original);
+    var mergedState = ops1.createMergedState(ops2Original).get();
     ONodeStateNetwork ops1Original = ops1.getNetworkState();
     var validate1 = ops1.validateMergeNode(nodeId2, mergedState, ops1Original, promise);
 
@@ -532,7 +532,7 @@ public class OCoordinatedDistributedOpsMergeTest
     ops3.declareDatabase(declarePromise, dbId, databaseName, parts, minQuo);
 
     ONodeStateNetwork ops3Original = ops3.getNetworkState();
-    var secMergedState = ops2.createMergedState(ops3Original);
+    var secMergedState = ops2.createMergedState(ops3Original).get();
     var secPromise = ops2.start(new TestAction(null)).get().promise();
     var ops2Original1 = ops2.getNetworkState();
     var secValidate = ops2.validateMergeNode(nodeId3, secMergedState, ops2Original1, secPromise);
@@ -557,7 +557,7 @@ public class OCoordinatedDistributedOpsMergeTest
     // Restart second round
     var newState = ((OCannotMerge) secValidate2.get()).currentState();
 
-    var secMergedState1 = ops2.createMergedState(newState);
+    var secMergedState1 = ops2.createMergedState(newState).get();
     var secPromise1 = newPromiseId(nodeId2);
     var ops2Original2 = ops2.getNetworkState();
     var secValidate1_1 =

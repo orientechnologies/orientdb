@@ -239,7 +239,7 @@ public interface OCoordinatedDistributedOps {
       ONodeStateNetwork original,
       OTransactionIdPromise promise);
 
-  ONodeStateNetwork createMergedState(ONodeStateNetwork state);
+  Optional<ONodeStateNetwork> createMergedState(ONodeStateNetwork state);
 
   Optional<OAcceptResult> validateSetDatabaseNodeRole(
       ODatabaseId db,

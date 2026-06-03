@@ -1551,11 +1551,16 @@ public class OrientDBDistributed extends OrientDBEmbedded
       return;
     }
     var mergedState = ops.createMergedState(state);
-    var operation = new OMergeNode(node, mergedState, ops.getNetworkState());
-    OCompleteAction action =
-        new OMergeCompleteAction(this, operation, mergedState, state, execution, node);
-    logger.debugNode(getNodeId(), "starting operation %s", operation);
-    sendMergeOperationMessages(node, mergedState, state, operation, action);
+    if (mergedState.isPresent()) {
+      var newState = mergedState.get();
+      var operation = new OMergeNode(node, newState, ops.getNetworkState());
+      OCompleteAction action =
+          new OMergeCompleteAction(this, operation, newState, state, execution, node);
+      logger.debugNode(getNodeId(), "starting operation %s", operation);
+      sendMergeOperationMessages(node, newState, state, operation, action);
+    } else {
+      logger.debugNode(getNodeId(), "incompatible network cannot merge with node %s", node);
+    }
   }
 
   public void retryMergeOperationMessages(

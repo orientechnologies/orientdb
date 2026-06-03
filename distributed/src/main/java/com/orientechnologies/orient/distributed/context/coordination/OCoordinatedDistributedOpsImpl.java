@@ -798,15 +798,19 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   }
 
   @Override
-  public synchronized ONodeStateNetwork createMergedState(ONodeStateNetwork state) {
+  public synchronized Optional<ONodeStateNetwork> createMergedState(ONodeStateNetwork state) {
     return mergeState(state, getNetworkState());
   }
 
-  private ONodeStateNetwork mergeState(ONodeStateNetwork state, ONodeStateNetwork networkState) {
+  private Optional<ONodeStateNetwork> mergeState(
+      ONodeStateNetwork state, ONodeStateNetwork networkState) {
     var topology = mergeTopology(state.topology(), networkState.topology());
     var databases = mergeDatabases(state.databases(), networkState.databases(), topology.members());
+    if (databases.isEmpty()) {
+      return Optional.empty();
+    }
     var sequence = mergeSequence(state.sequenceStatus(), networkState.sequenceStatus());
-    return new ONodeStateNetwork(topology, databases, sequence);
+    return Optional.of(new ONodeStateNetwork(topology, databases.get(), sequence));
   }
 
   private OTransactionSequenceStatus mergeSequence(
@@ -831,7 +835,7 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
     return new OTransactionSequenceStatus(newStatus);
   }
 
-  private List<ODatabaseStateNetwork> mergeDatabases(
+  private Optional<List<ODatabaseStateNetwork>> mergeDatabases(
       List<ODatabaseStateNetwork> databases,
       List<ODatabaseStateNetwork> databases2,
       Set<ONodeId> allNetwork) {
@@ -845,6 +849,8 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
       var db1 = dbs.get(db.id());
       if (db1 != null) {
         dbs.put(db.id(), mergeDatabase(db1, db, allNetwork));
+      } else if (dbNames.containsKey(db.name())) {
+        return Optional.empty();
       } else {
         var members = new ArrayList<>(db.members());
         for (ONodeId node : allNetwork) {
@@ -864,7 +870,7 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
             new ODatabaseStateNetwork(db.id(), db.name(), newQuorum, db.version().next(), members));
       }
     }
-    return new ArrayList<>(dbs.values());
+    return Optional.of(new ArrayList<>(dbs.values()));
   }
 
   private ODatabaseStateNetwork mergeDatabase(
