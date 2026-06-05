@@ -177,11 +177,11 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
 
     checkOpennessAndMigration();
 
-    stateLock.readLock().lock();
+    freeze(false);
     try {
 
       checkOpennessAndMigration();
-      freeze(false);
+      stateLock.readLock().lock();
 
       try {
         final ZipOutputStream zipOutputStream =
@@ -218,10 +218,10 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
           }
         }
       } finally {
-        release();
+        stateLock.readLock().unlock();
       }
     } finally {
-      stateLock.readLock().unlock();
+      release();
     }
     return new ArrayList<>();
   }
