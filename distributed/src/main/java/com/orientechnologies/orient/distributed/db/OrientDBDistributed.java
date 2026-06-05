@@ -376,22 +376,23 @@ public class OrientDBDistributed extends OrientDBEmbedded
     checkDatabaseName(name);
     try {
       final ODatabaseDocumentEmbedded embedded;
-      synchronized (this) {
-        checkOpen();
-        OStorage storage = storages.get(name);
-        OSharedContext sharedContext = sharedContexts.get(name);
-        if (storage != null && storage.isOpen() && sharedContext != null) {
-          if (isDistributedDisabled(storage.getName())) {
-            embedded = new ODatabaseDocumentEmbedded(storage, sharedContext);
-          } else {
-            embedded = new ODatabaseDocumentDistributed(storage, sharedContext, plugin);
-          }
-          OrientDBConfig config = solveConfig(null);
-          embedded.init(config);
-          return embedded;
+      checkOpen();
+      OStorage storage = storages.get(name);
+      OSharedContext sharedContext = sharedContexts.get(name);
+      if (storage != null
+          && storage.isOpen()
+          && sharedContext != null
+          && sharedContext.isLoaded()) {
+        if (isDistributedDisabled(storage.getName())) {
+          embedded = new ODatabaseDocumentEmbedded(storage, sharedContext);
         } else {
-          return null;
+          embedded = new ODatabaseDocumentDistributed(storage, sharedContext, plugin);
         }
+        OrientDBConfig config = solveConfig(null);
+        embedded.init(config);
+        return embedded;
+      } else {
+        return null;
       }
     } catch (Exception e) {
       throw OException.wrapException(

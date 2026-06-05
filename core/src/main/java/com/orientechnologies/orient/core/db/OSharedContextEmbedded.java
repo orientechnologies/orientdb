@@ -298,4 +298,9 @@ public class OSharedContextEmbedded extends OSharedContext {
   public ODistributedSynchronizedSequence getTransactionSequence() {
     return transactionSequence;
   }
+
+  @Override
+  public boolean isLoaded() {
+    return loaded;
+  }
 }

@@ -165,4 +165,6 @@ public abstract class OSharedContext extends OListenerManger<OMetadataUpdateList
   public long getLastCloseTime() {
     return lastCloseTime;
   }
+
+  public abstract boolean isLoaded();
 }

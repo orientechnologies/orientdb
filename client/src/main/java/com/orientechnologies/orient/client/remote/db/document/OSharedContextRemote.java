@@ -94,4 +94,9 @@ public class OSharedContextRemote extends OSharedContext {
   public ORemoteClient getClient() {
     return (ORemoteClient) storage;
   }
+
+  @Override
+  public boolean isLoaded() {
+    return loaded;
+  }
 }

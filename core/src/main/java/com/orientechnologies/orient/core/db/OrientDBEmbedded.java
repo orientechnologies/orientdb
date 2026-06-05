@@ -344,18 +344,19 @@ public class OrientDBEmbedded implements OrientDBInternal {
     checkDatabaseName(name);
     try {
       final ODatabaseDocumentEmbedded embedded;
-      synchronized (this) {
-        checkOpen();
-        OStorage storage = storages.get(name);
-        OSharedContext sharedContext = sharedContexts.get(name);
-        if (storage != null && sharedContext != null) {
-          embedded = new ODatabaseDocumentEmbedded(storage, sharedContext);
-          OrientDBConfig config = solveConfig(null);
-          embedded.init(config);
-          return embedded;
-        } else {
-          return null;
-        }
+      checkOpen();
+      OStorage storage = storages.get(name);
+      OSharedContext sharedContext = sharedContexts.get(name);
+      if (storage != null
+          && storage.isOpen()
+          && sharedContext != null
+          && sharedContext.isLoaded()) {
+        embedded = new ODatabaseDocumentEmbedded(storage, sharedContext);
+        OrientDBConfig config = solveConfig(null);
+        embedded.init(config);
+        return embedded;
+      } else {
+        return null;
       }
     } catch (Exception e) {
       throw OException.wrapException(
