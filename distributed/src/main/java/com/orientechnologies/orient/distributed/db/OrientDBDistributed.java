@@ -1105,13 +1105,13 @@ public class OrientDBDistributed extends OrientDBEmbedded
     boolean accepted = ops.acceptSync(getNodeState().getNodeId(), receiver, dbId, syncId);
     OCanSyncAccept accept;
     String dbName = ops.getDatabaseTopology().getDatabaseName(dbId);
-    if (accepted) {
+    if (accepted && exists(dbName, null, null)) {
       logger.debug(
           "Accepted sync %s syncI: %s sender %s receiver %s", dbId, syncId, getNodeId(), receiver);
 
       if (mode instanceof NonBlockingBackup) {
         OStorage storage = getStorage(dbName);
-        if (storage != null && !storage.supportIncremental()) {
+        if (!storage.supportIncremental()) {
           accept = new OCanSyncAccept.BlockingSync();
         } else {
           // TODO: check with the engine
@@ -1185,6 +1185,8 @@ public class OrientDBDistributed extends OrientDBEmbedded
 
       if (success) {
         setDatabaseState(state.getDbId(), state.getReceiver(), ODatabaseState.Online);
+      } else {
+        setDatabaseState(state.getDbId(), state.getReceiver(), ODatabaseState.Offline);
       }
       return success;
     } catch (IOException e) {
