@@ -188,7 +188,11 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
     final String databaseName = getName();
 
-    return getContext().installDatabase(databaseName, forceDeployment, tryWithDelta);
+    try {
+      return getContext().installDatabase(databaseName, forceDeployment, tryWithDelta).get();
+    } catch (InterruptedException | ExecutionException e) {
+      return false;
+    }
   }
 
   @Override

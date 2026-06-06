@@ -4,6 +4,7 @@ import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.thread.OCompletedFuture;
 import com.orientechnologies.common.thread.OSourceTraceExecutorService;
 import com.orientechnologies.common.thread.OThreadPoolExecutors;
 import com.orientechnologies.orient.core.OConstants;
@@ -1385,31 +1386,26 @@ public class OrientDBDistributed extends OrientDBEmbedded
     return localMessageIdCounter.getAndIncrement();
   }
 
-  public boolean installDatabase(String databaseName, boolean force, boolean tryWithDeltaFirst) {
+  public Future<Boolean> installDatabase(
+      String databaseName, boolean force, boolean tryWithDeltaFirst) {
     Optional<ODatabaseId> id = getNodeState().getDatabaseTopology().getDatabaseId(databaseName);
     if (id.isPresent()) {
       Optional<OTransactionSequenceStatus> deltaInfo = Optional.empty();
-      if (tryWithDeltaFirst) {
+      if (tryWithDeltaFirst && exists(databaseName, null, null)) {
         var dbContext = this.sharedContexts.get(databaseName);
         if (dbContext != null) {
-          var transactionSequence =
-              ((OSharedContextDistributed) dbContext).getTransactionSequence();
+          var transactionSequence = dbContext.getTransactionSequence();
           deltaInfo = Optional.of(transactionSequence.currentStatus());
         }
       }
       var res = sync(id.get(), deltaInfo);
       if (res.isPresent()) {
-        try {
-          return res.get().get();
-        } catch (InterruptedException | ExecutionException e) {
-          logger.warn("Error waiting synchronize", e);
-          return false;
-        }
+        return res.get();
       } else {
-        return false;
+        return new OCompletedFuture<Boolean>(false);
       }
     } else {
-      return false;
+      return new OCompletedFuture<Boolean>(false);
     }
   }
 

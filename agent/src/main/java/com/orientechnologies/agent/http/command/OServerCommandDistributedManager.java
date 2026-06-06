@@ -52,6 +52,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ExecutionException;
 
 public class OServerCommandDistributedManager extends OServerCommandDistributedScope {
   private static final OLogger logger =
@@ -187,8 +188,13 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
     if (dManager == null || !dManager.isEnabled())
       throw new OCommandExecutionException("OrientDB is not started in distributed mode");
 
-    boolean installDatabase =
-        ((OrientDBDistributed) context).installDatabase(database, false, true);
+    boolean installDatabase;
+    try {
+      installDatabase =
+          ((OrientDBDistributed) context).installDatabase(database, false, true).get();
+    } catch (InterruptedException | ExecutionException e) {
+      installDatabase = false;
+    }
 
     ODocument document = new ODocument().field("result", installDatabase);
     iResponse.send(
