@@ -100,7 +100,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   private Set<OTransactionId> inQueue = Collections.newSetFromMap(new ConcurrentHashMap<>());
   private OSyncSource lastValidBackup;
   private volatile DB_STATUS freezePrevStatus;
-  private OFreezeGuard freezeGuard;
+  private volatile OFreezeGuard freezeGuard;
   private final OrientDBDistributed context;
 
   public ODistributedDatabaseImpl(OrientDBDistributed context, final OStorage storage) {

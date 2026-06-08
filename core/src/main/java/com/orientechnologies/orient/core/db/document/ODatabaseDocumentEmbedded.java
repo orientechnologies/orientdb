@@ -34,7 +34,6 @@ import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.OScriptExecutor;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.ODatabase;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -493,8 +492,8 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
    * Returns a copy of current database if it's open. The returned instance can be used by another
    * thread without affecting current instance. The database copy is not set in thread local.
    */
-  public ODatabaseDocumentInternal copy() {
-    var storage = (OStorage) getSharedContext().getStorage();
+  public ODatabaseDocumentEmbedded copy() {
+    var storage = getSharedContext().getStorage();
     storage.open(config.getConfigurations());
     ODatabaseDocumentEmbedded database = new ODatabaseDocumentEmbedded(storage, this.sharedContext);
     database.init(config);
@@ -534,12 +533,6 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
   @Override
   public OStorageInfo getStorageInfo() {
     return storage;
-  }
-
-  @Override
-  public void replaceStorage(OStorage iNewStorage) {
-    this.getSharedContext().setStorage(iNewStorage);
-    storage = iNewStorage;
   }
 
   private String newQueryId() {
@@ -813,9 +806,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
       OBasicCommandContext ctx = new OBasicCommandContext(this);
       ctx.setInputParameters(params);
 
-      OResultSetInternal result =
-          new OExecutionResultSet(
-              ((OInternalExecutionPlan) plan).start(ctx), ctx, (OInternalExecutionPlan) plan);
+      OResultSetInternal result = new OExecutionResultSet(plan.start(ctx), ctx, plan);
 
       return attachQuery(result);
     } finally {
@@ -825,14 +816,14 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
   }
 
   public void queryStartUsingViewCluster(int clusterId) {
-    OSharedContext sharedContext = getSharedContext();
+    OSharedContextEmbedded sharedContext = getSharedContext();
     ViewManager viewManager = sharedContext.getViewManager();
     viewManager.startUsingViewCluster(clusterId);
     this.queryState.peekFirst().addViewUseCluster(clusterId);
   }
 
   public void queryStartUsingViewIndex(String index) {
-    OSharedContext sharedContext = getSharedContext();
+    OSharedContextEmbedded sharedContext = getSharedContext();
     ViewManager viewManager = sharedContext.getViewManager();
     viewManager.startUsingViewIndex(index);
     this.queryState.peekFirst().addViewUseIndex(index);
@@ -853,7 +844,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
     checkIfActive();
 
     OLiveQueryListenerV2 queryListener = new LiveQueryListenerImpl(listener, query, this, args);
-    ODatabaseDocumentInternal dbCopy = this.copy();
+    ODatabaseDocumentEmbedded dbCopy = this.copy();
     this.activateOnCurrentThread();
     OLiveQueryMonitor monitor = new OLiveQueryMonitorEmbedded(queryListener.getToken(), dbCopy);
     return monitor;
@@ -867,7 +858,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
 
     OLiveQueryListenerV2 queryListener =
         new LiveQueryListenerImpl(listener, query, this, (Map) args);
-    ODatabaseDocumentInternal dbCopy = this.copy();
+    ODatabaseDocumentEmbedded dbCopy = this.copy();
     this.activateOnCurrentThread();
     OLiveQueryMonitor monitor = new OLiveQueryMonitorEmbedded(queryListener.getToken(), dbCopy);
     return monitor;

@@ -18,7 +18,6 @@ import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.OSharedContext;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
@@ -166,7 +165,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   }
 
   @Override
-  public ODatabaseDocumentInternal copy() {
+  public ODatabaseDocumentDistributed copy() {
     ODatabaseDocumentDistributed database =
         new ODatabaseDocumentDistributed(getStorage(), getSharedContext(), distributedManager);
     database.init(getConfig());

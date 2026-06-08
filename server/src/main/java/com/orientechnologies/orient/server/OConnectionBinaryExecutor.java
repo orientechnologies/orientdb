@@ -23,6 +23,7 @@ import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OLiveQueryMonitor;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
@@ -1633,7 +1634,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
 
   @Override
   public OBinaryResponse executeUnsubscribeLiveQuery(OUnsubscribeLiveQueryRequest request) {
-    ODatabaseDocumentInternal database = connection.getDatabase();
+    ODatabaseDocumentEmbedded database = (ODatabaseDocumentEmbedded) connection.getDatabase();
     OLiveQueryHookV2.unsubscribe(request.getMonitorId(), database);
     return new OUnsubscribLiveQueryResponse();
   }
@@ -1642,7 +1643,8 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
   public OBinaryResponse executeSubscribeLiveQuery(OSubscribeLiveQueryRequest request) {
     ONetworkProtocolBinary protocol = (ONetworkProtocolBinary) connection.getProtocol();
     OServerLiveQueryResultListener listener =
-        new OServerLiveQueryResultListener(protocol, connection.getDatabase().getSharedContext());
+        new OServerLiveQueryResultListener(
+            protocol, ((ODatabaseDocumentEmbedded) connection.getDatabase()).getSharedContext());
     OLiveQueryMonitor monitor =
         connection.getDatabase().live(request.getQuery(), listener, request.getParams());
     listener.setMonitorId(monitor.getMonitorId());

@@ -24,6 +24,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.db.document.RecordReader;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
@@ -224,7 +225,7 @@ public class OTransactionOptimistic extends OTransactionAbstract implements OTra
     }
 
     if (database.isRemote()) {
-      ((ODatabaseDocumentInternal) database).remoteRollback(OTransactionOptimistic.this);
+      database.remoteRollback(OTransactionOptimistic.this);
     }
     internalRollback();
   }
@@ -686,8 +687,9 @@ public class OTransactionOptimistic extends OTransactionAbstract implements OTra
       case ORecordOperation.CREATED:
         {
           final ODocument doc = (ODocument) change.getRecord();
-          OLiveQueryHook.addOp(doc, ORecordOperation.CREATED, database);
-          OLiveQueryHookV2.addOp(doc, ORecordOperation.CREATED, database);
+          OLiveQueryHook.addOp(doc, ORecordOperation.CREATED, (ODatabaseDocumentEmbedded) database);
+          OLiveQueryHookV2.addOp(
+              doc, ORecordOperation.CREATED, (ODatabaseDocumentEmbedded) database);
           final OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(doc);
           if (clazz != null) {
             OClassIndexManager.processIndexOnCreate(database, rec);
@@ -710,8 +712,10 @@ public class OTransactionOptimistic extends OTransactionAbstract implements OTra
           final OIdentifiable updateRecord = change.getRecord();
           if (updateRecord instanceof ODocument) {
             final ODocument updateDoc = (ODocument) updateRecord;
-            OLiveQueryHook.addOp(updateDoc, ORecordOperation.UPDATED, database);
-            OLiveQueryHookV2.addOp(updateDoc, ORecordOperation.UPDATED, database);
+            OLiveQueryHook.addOp(
+                updateDoc, ORecordOperation.UPDATED, (ODatabaseDocumentEmbedded) database);
+            OLiveQueryHookV2.addOp(
+                updateDoc, ORecordOperation.UPDATED, (ODatabaseDocumentEmbedded) database);
             final OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(updateDoc);
             if (clazz != null) {
               OClassIndexManager.processIndexOnUpdate(database, updateDoc);
@@ -751,8 +755,9 @@ public class OTransactionOptimistic extends OTransactionAbstract implements OTra
               database.getSharedContext().getScheduler().removeEventInternal(eventName);
             }
           }
-          OLiveQueryHook.addOp(doc, ORecordOperation.DELETED, database);
-          OLiveQueryHookV2.addOp(doc, ORecordOperation.DELETED, database);
+          OLiveQueryHook.addOp(doc, ORecordOperation.DELETED, (ODatabaseDocumentEmbedded) database);
+          OLiveQueryHookV2.addOp(
+              doc, ORecordOperation.DELETED, (ODatabaseDocumentEmbedded) database);
         }
         break;
       case ORecordOperation.LOADED:

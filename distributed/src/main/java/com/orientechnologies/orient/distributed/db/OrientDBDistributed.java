@@ -472,7 +472,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
       checkOpen();
       // This is a temporary fix for distributed drop that avoid scheduled view update to re-open
       // the distributed database while is dropped
-      OSharedContext sharedContext = sharedContexts.get(name);
+      OSharedContextEmbedded sharedContext = sharedContexts.get(name);
       if (sharedContext != null) {
         sharedContext.getViewManager().close();
       }

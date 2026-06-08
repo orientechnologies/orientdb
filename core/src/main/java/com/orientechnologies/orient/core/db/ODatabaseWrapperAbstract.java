@@ -121,10 +121,6 @@ public abstract class ODatabaseWrapperAbstract<DB extends ODatabaseInternal, T>
     underlying.close();
   }
 
-  public void replaceStorage(OStorage iNewStorage) {
-    underlying.replaceStorage(iNewStorage);
-  }
-
   public STATUS getStatus() {
     return underlying.getStatus();
   }

@@ -24,8 +24,8 @@ import static com.orientechnologies.orient.core.config.OGlobalConfiguration.QUER
 import com.orientechnologies.common.concur.resource.OCloseable;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
-import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
@@ -122,12 +122,12 @@ public class OLiveQueryHookV2 {
     }
   }
 
-  public static OLiveQueryOps getOpsReference(ODatabaseInternal db) {
+  public static OLiveQueryOps getOpsReference(ODatabaseDocumentEmbedded db) {
     return db.getSharedContext().getLiveQueryOpsV2();
   }
 
   public static Integer subscribe(
-      Integer token, OLiveQueryListenerV2 iListener, ODatabaseInternal db) {
+      Integer token, OLiveQueryListenerV2 iListener, ODatabaseDocumentEmbedded db) {
     if (Boolean.FALSE.equals(db.getConfiguration().getValue(QUERY_LIVE_SUPPORT))) {
       logger.warn(
           "Live query support is disabled impossible to subscribe a listener, set '%s' to true"
@@ -146,7 +146,7 @@ public class OLiveQueryHookV2 {
     return ops.subscribe(token, iListener);
   }
 
-  public static void unsubscribe(Integer id, ODatabaseInternal db) {
+  public static void unsubscribe(Integer id, ODatabaseDocumentEmbedded db) {
     if (Boolean.FALSE.equals(db.getConfiguration().getValue(QUERY_LIVE_SUPPORT))) {
       logger.warn(
           "Live query support is disabled impossible to unsubscribe a listener, set '%s' to"
@@ -164,8 +164,8 @@ public class OLiveQueryHookV2 {
     }
   }
 
-  public static void notifyForTxChanges(ODatabaseDocument database) {
-    OLiveQueryOps ops = getOpsReference((ODatabaseInternal) database);
+  public static void notifyForTxChanges(ODatabaseDocumentEmbedded database) {
+    OLiveQueryOps ops = getOpsReference(database);
     if (ops.pendingOps.isEmpty()) {
       return;
     }
@@ -183,11 +183,11 @@ public class OLiveQueryHookV2 {
     }
   }
 
-  public static void removePendingDatabaseOps(ODatabaseDocument database) {
+  public static void removePendingDatabaseOps(ODatabaseDocumentEmbedded database) {
     try {
       if (database.isClosed()
           || Boolean.FALSE.equals(database.getConfiguration().getValue(QUERY_LIVE_SUPPORT))) return;
-      OLiveQueryOps ops = getOpsReference((ODatabaseInternal) database);
+      OLiveQueryOps ops = getOpsReference(database);
       synchronized (ops.pendingOps) {
         ops.pendingOps.remove(database);
       }
@@ -197,9 +197,9 @@ public class OLiveQueryHookV2 {
     }
   }
 
-  public static void addOp(ODocument iDocument, byte iType, ODatabaseDocument database) {
+  public static void addOp(ODocument iDocument, byte iType, ODatabaseDocumentEmbedded database) {
     ODatabaseDocument db = database;
-    OLiveQueryOps ops = getOpsReference((ODatabaseInternal) db);
+    OLiveQueryOps ops = getOpsReference(database);
     if (!ops.hasListeners()) return;
     if (Boolean.FALSE.equals(database.getConfiguration().getValue(QUERY_LIVE_SUPPORT))) return;
 

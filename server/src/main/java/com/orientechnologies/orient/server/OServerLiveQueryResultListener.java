@@ -5,8 +5,9 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.client.remote.message.OLiveQueryPushRequest;
 import com.orientechnologies.orient.client.remote.message.live.OLiveQueryResult;
 import com.orientechnologies.orient.core.db.OLiveQueryBatchResultListener;
-import com.orientechnologies.orient.core.db.OSharedContext;
+import com.orientechnologies.orient.core.db.OSharedContextEmbedded;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.exception.OCoreException;
 import com.orientechnologies.orient.core.exception.OLiveQueryInterruptedException;
 import com.orientechnologies.orient.core.sql.executor.OResult;
@@ -19,13 +20,13 @@ import java.util.List;
 /** Created by tglman on 19/06/17. */
 class OServerLiveQueryResultListener implements OLiveQueryBatchResultListener {
   private final ONetworkProtocolBinary protocol;
-  private final OSharedContext sharedContext;
+  private final OSharedContextEmbedded sharedContext;
   private int monitorId;
 
   List<OLiveQueryResult> toSend = new ArrayList<>();
 
   public OServerLiveQueryResultListener(
-      ONetworkProtocolBinary protocol, OSharedContext sharedContext) {
+      ONetworkProtocolBinary protocol, OSharedContextEmbedded sharedContext) {
     this.protocol = protocol;
     this.sharedContext = sharedContext;
   }
@@ -82,11 +83,11 @@ class OServerLiveQueryResultListener implements OLiveQueryBatchResultListener {
   }
 
   @Override
-  public void onBatchEnd(ODatabaseDocument database) {
+  public void onBatchEnd(ODatabaseDocumentEmbedded database) {
     sendEvents(database);
   }
 
-  private synchronized void sendEvents(ODatabaseDocument database) {
+  private synchronized void sendEvents(ODatabaseDocumentEmbedded database) {
     if (toSend.isEmpty()) {
       return;
     }

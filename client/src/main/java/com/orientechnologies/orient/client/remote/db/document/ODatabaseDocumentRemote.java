@@ -334,11 +334,6 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
     return client;
   }
 
-  @Override
-  public void replaceStorage(OStorage iNewStorage) {
-    throw new UnsupportedOperationException("unsupported replace of storage for remote database");
-  }
-
   private void checkAndSendTransaction() {
     if (this.currentTx.isActive() && ((OTransactionOptimistic) this.currentTx).isChanged()) {
       if (((OTransactionOptimistic) this.getTransaction()).isAlreadyCleared())

@@ -37,7 +37,7 @@ public class OQueryDatabaseState {
     if (database.isRemote()) {
       return;
     }
-    ViewManager views = database.getSharedContext().getViewManager();
+    ViewManager views = ((ODatabaseDocumentEmbedded) database).getSharedContext().getViewManager();
     for (int cluster : this.usedClusters) {
       views.endUsingViewCluster(cluster);
     }

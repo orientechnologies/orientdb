@@ -6,6 +6,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OMetadataUpdateListener;
+import com.orientechnologies.orient.core.db.OSharedContextEmbedded;
 import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
 import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
@@ -43,7 +44,8 @@ public class OExecutionPlanCache implements OMetadataUpdateListener {
       throw new IllegalArgumentException("DB cannot be null");
     }
 
-    OExecutionPlanCache resource = db.getSharedContext().getExecutionPlanCache();
+    OExecutionPlanCache resource =
+        ((OSharedContextEmbedded) db.getSharedContext()).getExecutionPlanCache();
     synchronized (resource) {
       return resource.lastInvalidation;
     }
@@ -80,7 +82,8 @@ public class OExecutionPlanCache implements OMetadataUpdateListener {
       return null;
     }
 
-    OExecutionPlanCache resource = db.getSharedContext().getExecutionPlanCache();
+    OExecutionPlanCache resource =
+        ((OSharedContextEmbedded) db.getSharedContext()).getExecutionPlanCache();
     OInternalExecutionPlan result = resource.getInternal(statement, ctx, db);
     return result;
   }
@@ -94,7 +97,8 @@ public class OExecutionPlanCache implements OMetadataUpdateListener {
       return;
     }
 
-    OExecutionPlanCache resource = db.getSharedContext().getExecutionPlanCache();
+    OExecutionPlanCache resource =
+        ((OSharedContextEmbedded) db.getSharedContext()).getExecutionPlanCache();
     resource.putInternal(statement, plan, db);
   }
 
@@ -194,7 +198,8 @@ public class OExecutionPlanCache implements OMetadataUpdateListener {
       throw new IllegalArgumentException("DB cannot be null");
     }
 
-    OExecutionPlanCache resource = db.getSharedContext().getExecutionPlanCache();
+    OExecutionPlanCache resource =
+        ((OSharedContextEmbedded) db.getSharedContext()).getExecutionPlanCache();
     return resource;
   }
 }

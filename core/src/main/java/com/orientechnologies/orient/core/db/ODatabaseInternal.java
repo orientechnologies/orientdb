@@ -45,14 +45,6 @@ public interface ODatabaseInternal<T> extends ODatabase<T> {
   /** Set user for current database instance. */
   void setUser(OSecurityUser user);
 
-  /**
-   * Internal only: replace the storage with a new one.
-   *
-   * @param iNewStorage The new storage to use. Usually it's a wrapped instance of the current
-   *     cluster.
-   */
-  void replaceStorage(OStorage iNewStorage);
-
   void resetInitialization();
 
   /**

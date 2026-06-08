@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.OSharedContextEmbedded;
 import com.orientechnologies.orient.core.index.OIndex;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -18,7 +19,7 @@ public class OQueryStats {
   public Map<String, Long> stats = new ConcurrentHashMap<>();
 
   public static OQueryStats get(ODatabaseDocumentInternal db) {
-    return db.getSharedContext().getQueryStats();
+    return ((OSharedContextEmbedded) db.getSharedContext()).getQueryStats();
   }
 
   public long getIndexStats(

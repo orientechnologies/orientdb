@@ -46,8 +46,8 @@ public class ODatabaseDocumentEmbeddedPooled extends ODatabaseDocumentEmbedded {
   }
 
   @Override
-  public ODatabaseDocumentInternal copy() {
-    return (ODatabaseDocumentInternal) pool.acquire();
+  public ODatabaseDocumentEmbedded copy() {
+    return (ODatabaseDocumentEmbedded) pool.acquire();
   }
 
   public void realClose() {

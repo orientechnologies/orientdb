@@ -1,101 +1,39 @@
 package com.orientechnologies.orient.core.db;
 
-import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.listener.OListenerManger;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.viewmanager.ViewManager;
-import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import com.orientechnologies.orient.core.metadata.function.OFunctionLibraryImpl;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
 import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibraryImpl;
-import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
-import com.orientechnologies.orient.core.query.live.OLiveQueryHookV2;
 import com.orientechnologies.orient.core.schedule.OSchedulerImpl;
-import com.orientechnologies.orient.core.sql.executor.OQueryStats;
-import com.orientechnologies.orient.core.sql.parser.OExecutionPlanCache;
-import com.orientechnologies.orient.core.sql.parser.OStatementCache;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageInfo;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.concurrent.Callable;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /** Created by tglman on 15/06/16. */
 public abstract class OSharedContext extends OListenerManger<OMetadataUpdateListener> {
   protected static final OProfiler PROFILER = Orient.instance().getProfiler();
 
-  protected OrientDBInternal orientDB;
-  protected OStorageInfo storage;
-  protected OSchemaShared schema;
-  protected OSecurityInternal security;
-  protected OIndexManagerAbstract indexManager;
-  protected OFunctionLibraryImpl functionLibrary;
-  protected OSchedulerImpl scheduler;
-  protected OSequenceLibraryImpl sequenceLibrary;
-  protected OLiveQueryHook.OLiveQueryOps liveQueryOps;
-  protected OLiveQueryHookV2.OLiveQueryOps liveQueryOpsV2;
-  protected OStatementCache statementCache;
-  protected OExecutionPlanCache executionPlanCache;
-  protected OQueryStats queryStats;
-  protected volatile boolean loaded = false;
-  protected Map<String, Object> resources;
-  protected OStringCache stringCache;
-  private final AtomicInteger sessionCount = new AtomicInteger(0);
-  private volatile long lastCloseTime = System.currentTimeMillis();
-
   public OSharedContext() {
     super(true);
   }
 
-  public OSchemaShared getSchema() {
-    return schema;
-  }
+  public abstract OSchemaShared getSchema();
 
-  public OSecurityInternal getSecurity() {
-    return security;
-  }
+  public abstract OSecurityInternal getSecurity();
 
-  public OIndexManagerAbstract getIndexManager() {
-    return indexManager;
-  }
+  public abstract OIndexManagerAbstract getIndexManager();
 
-  public OFunctionLibraryImpl getFunctionLibrary() {
-    return functionLibrary;
-  }
+  public abstract OFunctionLibraryImpl getFunctionLibrary();
 
-  public OSchedulerImpl getScheduler() {
-    return scheduler;
-  }
+  public abstract OSchedulerImpl getScheduler();
 
-  public OSequenceLibraryImpl getSequenceLibrary() {
-    return sequenceLibrary;
-  }
+  public abstract OSequenceLibraryImpl getSequenceLibrary();
 
-  public OLiveQueryHook.OLiveQueryOps getLiveQueryOps() {
-    return liveQueryOps;
-  }
-
-  public OLiveQueryHookV2.OLiveQueryOps getLiveQueryOpsV2() {
-    return liveQueryOpsV2;
-  }
-
-  public OStatementCache getStatementCache() {
-    return statementCache;
-  }
-
-  public OExecutionPlanCache getExecutionPlanCache() {
-    return executionPlanCache;
-  }
-
-  public OQueryStats getQueryStats() {
-    return queryStats;
-  }
-
-  public abstract void load(ODatabaseDocumentInternal oDatabaseDocumentInternal);
+  public abstract void load(ODatabaseDocumentInternal database);
 
   public abstract void reload(ODatabaseDocumentInternal database);
 
@@ -103,68 +41,23 @@ public abstract class OSharedContext extends OListenerManger<OMetadataUpdateList
 
   public abstract void close();
 
-  public OStorageInfo getStorage() {
-    return storage;
-  }
+  public abstract OStorageInfo getStorage();
 
-  public OrientDBInternal getOrientDB() {
-    return orientDB;
-  }
+  public abstract OrientDBInternal getOrientDB();
 
-  public void setStorage(OStorage storage) {
-    this.storage = storage;
-  }
+  public abstract <T> T getResource(final String name, final Callable<T> factory);
 
-  public ViewManager getViewManager() {
-    throw new UnsupportedOperationException();
-  }
+  public abstract void reInit(OStorage storage, ODatabaseDocumentInternal database);
 
-  public synchronized <T> T getResource(final String name, final Callable<T> factory) {
-    if (resources == null) {
-      resources = new HashMap<String, Object>();
-    }
-    @SuppressWarnings("unchecked")
-    T resource = (T) resources.get(name);
-    if (resource == null) {
-      try {
-        resource = factory.call();
-      } catch (Exception e) {
-        OException.wrapException(
-            new ODatabaseException(String.format("instance creation for '%s' failed", name)), e);
-      }
-      resources.put(name, resource);
-    }
-    return resource;
-  }
+  public abstract OStringCache getStringCache();
 
-  public synchronized void reInit(OStorage storage, ODatabaseDocumentInternal database) {
-    throw new UnsupportedOperationException();
-  }
+  public abstract void startSession();
 
-  public OStringCache getStringCache() {
-    return this.stringCache;
-  }
+  public abstract void endSession();
 
-  public void startSession() {
-    sessionCount.incrementAndGet();
-  }
+  public abstract int getSessionCount();
 
-  public void endSession() {
-    int count = sessionCount.decrementAndGet();
-    assert count >= 0
-        : "Amount of closed sessions in database "
-            + storage.getName()
-            + " is bigger than amount of open sessions";
-    lastCloseTime = System.currentTimeMillis();
-  }
-
-  public int getSessionCount() {
-    return sessionCount.get();
-  }
-
-  public long getLastCloseTime() {
-    return lastCloseTime;
-  }
+  public abstract long getLastCloseTime();
 
   public abstract boolean isLoaded();
 }

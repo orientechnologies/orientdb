@@ -2,18 +2,25 @@ package com.orientechnologies.orient.core.db;
 
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_TRANSACTION_SEQUENCE_SET_SIZE;
 
+import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.profiler.OProfiler;
+import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.viewmanager.ViewManager;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.OIndexFactory;
+import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
 import com.orientechnologies.orient.core.index.OIndexManagerShared;
 import com.orientechnologies.orient.core.index.OIndexes;
 import com.orientechnologies.orient.core.metadata.OSessionMetadata;
 import com.orientechnologies.orient.core.metadata.function.OFunctionLibraryImpl;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaEmbedded;
+import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
+import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibraryImpl;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHookV2;
@@ -30,11 +37,32 @@ import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.tx.OTxMetadataHolderSyncOrder;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.atomic.AtomicInteger;
 
 /** Created by tglman on 13/06/17. */
 public class OSharedContextEmbedded extends OSharedContext {
+  protected static final OProfiler PROFILER = Orient.instance().getProfiler();
 
+  protected OrientDBEmbedded orientDB;
+  protected OStorage storage;
+  protected OSchemaShared schema;
+  protected OSecurityInternal security;
+  protected OIndexManagerAbstract indexManager;
+  protected OFunctionLibraryImpl functionLibrary;
+  protected OSchedulerImpl scheduler;
+  protected OSequenceLibraryImpl sequenceLibrary;
+  protected OLiveQueryHook.OLiveQueryOps liveQueryOps;
+  protected OLiveQueryHookV2.OLiveQueryOps liveQueryOpsV2;
+  protected OStatementCache statementCache;
+  protected OExecutionPlanCache executionPlanCache;
+  protected OQueryStats queryStats;
+  protected volatile boolean loaded = false;
+  protected Map<String, Object> resources;
+  protected OStringCache stringCache;
+  private final AtomicInteger sessionCount = new AtomicInteger(0);
+  private volatile long lastCloseTime = System.currentTimeMillis();
   protected Map<String, DistributedQueryContext> activeDistributedQueries;
   protected ViewManager viewManager;
   protected ODistributedSynchronizedSequence transactionSequence;
@@ -280,7 +308,7 @@ public class OSharedContextEmbedded extends OSharedContext {
             session.save(value, "internal");
           } else {
             ORID recordId = session.save(value, "internal").getIdentity();
-            ((OStorage) storage).setProperty(propertyName, recordId.toString());
+            storage.setProperty(propertyName, recordId.toString());
           }
           return null;
         });
@@ -290,11 +318,6 @@ public class OSharedContextEmbedded extends OSharedContext {
     return loadConfig(session, "ditributedConfig");
   }
 
-  @Override
-  public OStorage getStorage() {
-    return (OStorage) super.getStorage();
-  }
-
   public ODistributedSynchronizedSequence getTransactionSequence() {
     return transactionSequence;
   }
@@ -302,5 +325,100 @@ public class OSharedContextEmbedded extends OSharedContext {
   @Override
   public boolean isLoaded() {
     return loaded;
+  }
+
+  public OSchemaShared getSchema() {
+    return schema;
+  }
+
+  public OSecurityInternal getSecurity() {
+    return security;
+  }
+
+  public OIndexManagerAbstract getIndexManager() {
+    return indexManager;
+  }
+
+  public OFunctionLibraryImpl getFunctionLibrary() {
+    return functionLibrary;
+  }
+
+  public OSchedulerImpl getScheduler() {
+    return scheduler;
+  }
+
+  public OSequenceLibraryImpl getSequenceLibrary() {
+    return sequenceLibrary;
+  }
+
+  public OLiveQueryHook.OLiveQueryOps getLiveQueryOps() {
+    return liveQueryOps;
+  }
+
+  public OLiveQueryHookV2.OLiveQueryOps getLiveQueryOpsV2() {
+    return liveQueryOpsV2;
+  }
+
+  public OStatementCache getStatementCache() {
+    return statementCache;
+  }
+
+  public OExecutionPlanCache getExecutionPlanCache() {
+    return executionPlanCache;
+  }
+
+  public OQueryStats getQueryStats() {
+    return queryStats;
+  }
+
+  public OStorage getStorage() {
+    return storage;
+  }
+
+  public OrientDBInternal getOrientDB() {
+    return orientDB;
+  }
+
+  public synchronized <T> T getResource(final String name, final Callable<T> factory) {
+    if (resources == null) {
+      resources = new HashMap<String, Object>();
+    }
+    @SuppressWarnings("unchecked")
+    T resource = (T) resources.get(name);
+    if (resource == null) {
+      try {
+        resource = factory.call();
+      } catch (Exception e) {
+        OException.wrapException(
+            new ODatabaseException(String.format("instance creation for '%s' failed", name)), e);
+      }
+      resources.put(name, resource);
+    }
+    return resource;
+  }
+
+  public OStringCache getStringCache() {
+    return this.stringCache;
+  }
+
+  public void startSession() {
+    sessionCount.incrementAndGet();
+  }
+
+  public void endSession() {
+    int count = sessionCount.decrementAndGet();
+    assert count >= 0
+        : "Amount of closed sessions in database "
+            + storage.getName()
+            + " is bigger than amount of open sessions";
+    lastCloseTime = System.currentTimeMillis();
+  }
+
+  public int getSessionCount() {
+    return sessionCount.get();
+  }
+
+  public long getLastCloseTime() {
+    return lastCloseTime;
   }
 }

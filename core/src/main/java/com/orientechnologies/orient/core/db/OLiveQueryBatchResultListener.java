@@ -1,6 +1,6 @@
 package com.orientechnologies.orient.core.db;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 
 /**
  * Designed to allow live query result listeners to be optimised for batch elaboration. The normal
@@ -15,5 +15,5 @@ public interface OLiveQueryBatchResultListener extends OLiveQueryResultListener 
    * @param database the instance of the active datatabase connection where the live query operation
    *     is being performed
    */
-  void onBatchEnd(ODatabaseDocument database);
+  void onBatchEnd(ODatabaseDocumentEmbedded database);
 }

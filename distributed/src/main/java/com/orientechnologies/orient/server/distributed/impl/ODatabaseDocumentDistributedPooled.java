@@ -28,8 +28,8 @@ public class ODatabaseDocumentDistributedPooled extends ODatabaseDocumentDistrib
   }
 
   @Override
-  public ODatabaseDocumentInternal copy() {
-    return (ODatabaseDocumentInternal) pool.acquire();
+  public ODatabaseDocumentDistributed copy() {
+    return (ODatabaseDocumentDistributed) pool.acquire();
   }
 
   public void reuse() {

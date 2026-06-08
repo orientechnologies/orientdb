@@ -4,6 +4,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.OSharedContextEmbedded;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import java.io.ByteArrayInputStream;
@@ -63,7 +64,7 @@ public class OStatementCache {
       return parse(statement, db);
     }
 
-    OStatementCache resource = db.getSharedContext().getStatementCache();
+    OStatementCache resource = ((OSharedContextEmbedded) db.getSharedContext()).getStatementCache();
     return resource.getStatement(statement, db);
   }
 

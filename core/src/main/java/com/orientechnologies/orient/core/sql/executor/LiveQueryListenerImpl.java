@@ -3,8 +3,12 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.*;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.OLiveQueryBatchResultListener;
+import com.orientechnologies.orient.core.db.OLiveQueryResultListener;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -26,7 +30,7 @@ public class LiveQueryListenerImpl implements OLiveQueryListenerV2 {
 
   public static final String BEFORE_METADATA_KEY = "$$before$$";
   private final OLiveQueryResultListener clientListener;
-  private ODatabaseDocument execDb;
+  private ODatabaseDocumentEmbedded execDb;
 
   private final OSelectStatement statement;
   private String className;
@@ -38,14 +42,17 @@ public class LiveQueryListenerImpl implements OLiveQueryListenerV2 {
   private static final Random random = new Random();
 
   public LiveQueryListenerImpl(
-      OLiveQueryResultListener clientListener, String query, ODatabaseDocument db, Object[] iArgs) {
+      OLiveQueryResultListener clientListener,
+      String query,
+      ODatabaseDocumentEmbedded db,
+      Object[] iArgs) {
     this(clientListener, query, db, toPositionalParams(iArgs));
   }
 
   public LiveQueryListenerImpl(
       OLiveQueryResultListener clientListener,
       String query,
-      ODatabaseDocument db,
+      ODatabaseDocumentEmbedded db,
       Map<Object, Object> iArgs) {
     this.clientListener = clientListener;
     this.params = iArgs;
@@ -53,7 +60,7 @@ public class LiveQueryListenerImpl implements OLiveQueryListenerV2 {
     if (query.trim().toLowerCase().startsWith("live ")) {
       query = query.trim().substring(5);
     }
-    OStatement stm = OSQLEngine.parse(query, (ODatabaseDocumentInternal) db);
+    OStatement stm = OSQLEngine.parse(query, db);
     if (!(stm instanceof OSelectStatement)) {
       throw new OCommandExecutionException(
           "Only SELECT statement can be used as a live query: " + query);
@@ -62,10 +69,7 @@ public class LiveQueryListenerImpl implements OLiveQueryListenerV2 {
     validateStatement(statement);
     if (statement.getTarget().getItem().getIdentifier() != null) {
       this.className = statement.getTarget().getItem().getIdentifier().getStringValue();
-      if (!((ODatabaseDocumentInternal) db)
-          .getMetadata()
-          .getImmutableSchemaSnapshot()
-          .existsClass(className)) {
+      if (!db.getMetadata().getImmutableSchemaSnapshot().existsClass(className)) {
         throw new OCommandExecutionException(
             "Class " + className + " not found in the schema: " + query);
       }
@@ -82,14 +86,14 @@ public class LiveQueryListenerImpl implements OLiveQueryListenerV2 {
         new OCallable() {
           @Override
           public Object call(Object iArgument) {
-            return execDb = ((ODatabaseDocumentInternal) db).copy();
+            return execDb = db.copy();
           }
         });
 
     synchronized (random) {
       token = random.nextInt(); // TODO do something better ;-)!
     }
-    OLiveQueryHookV2.subscribe(token, this, (ODatabaseInternal) db);
+    OLiveQueryHookV2.subscribe(token, this, db);
 
     OCommandContext ctx = new OBasicCommandContext();
     if (iArgs != null)
@@ -149,7 +153,7 @@ public class LiveQueryListenerImpl implements OLiveQueryListenerV2 {
         switch (iRecord.type) {
           case ORecordOperation.DELETED:
             record.setMetadata(BEFORE_METADATA_KEY, null);
-            clientListener.onDelete(execDb, applyProjections((ODatabaseSession) execDb, record));
+            clientListener.onDelete(execDb, applyProjections(execDb, record));
             break;
           case ORecordOperation.UPDATED:
             OResult before =
@@ -157,11 +161,10 @@ public class LiveQueryListenerImpl implements OLiveQueryListenerV2 {
                     (ODatabaseSession) execDb,
                     (OResultInternal) record.getMetadata(BEFORE_METADATA_KEY));
             record.setMetadata(BEFORE_METADATA_KEY, null);
-            clientListener.onUpdate(
-                execDb, before, applyProjections((ODatabaseSession) execDb, record));
+            clientListener.onUpdate(execDb, before, applyProjections(execDb, record));
             break;
           case ORecordOperation.CREATED:
-            clientListener.onCreate(execDb, applyProjections((ODatabaseSession) execDb, record));
+            clientListener.onCreate(execDb, applyProjections(execDb, record));
             break;
         }
       }
@@ -190,10 +193,7 @@ public class LiveQueryListenerImpl implements OLiveQueryListenerV2 {
         return false;
       } else if (!(className.equalsIgnoreCase(recordClassName))) {
         OClass recordClass =
-            ((ODatabaseDocumentInternal) this.execDb)
-                .getMetadata()
-                .getImmutableSchemaSnapshot()
-                .getClass(recordClassName);
+            this.execDb.getMetadata().getImmutableSchemaSnapshot().getClass(recordClassName);
         if (recordClass == null) {
           return false;
         }
