@@ -686,15 +686,16 @@ public class OrientDBEmbedded implements OrientDBInternal {
   @Override
   public synchronized boolean exists(String name, String user, String password) {
     checkOpen();
-    OStorage storage = storages.get(name);
-    if (storage == null) {
+    OSharedContextEmbedded context = sharedContexts.get(name);
+    if (context == null) {
       if (basePath != null) {
         return getDefaultEngine().exists(name);
       } else {
         return false;
       }
+    } else {
+      return context.getStorage().exists();
     }
-    return storage.exists();
   }
 
   @Override
@@ -750,7 +751,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
     if (basePath != null) {
       scanDatabaseDirectory(new File(basePath), databases::add);
     }
-    databases.addAll(this.storages.keySet());
+    databases.addAll(this.sharedContexts.keySet());
     // TODO: Verify validity this generic permission on guest
     if (!securitySystem.isAuthorized("guest", "server.listDatabases.system")) {
       databases.remove(OSystemDatabase.SYSTEM_DB_NAME);
@@ -950,9 +951,9 @@ public class OrientDBEmbedded implements OrientDBInternal {
   }
 
   public String getDatabasePath(String iDatabaseName) {
-    OStorage storage = storages.get(iDatabaseName);
-    if (storage != null) {
-      Optional<Path> path = storage.getPath();
+    OSharedContextEmbedded db = sharedContexts.get(iDatabaseName);
+    if (db != null) {
+      Optional<Path> path = db.getStorage().getPath();
       if (path.isPresent()) {
         return path.get().toString();
       }
@@ -1144,7 +1145,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
   public Set<String> listLodadedDatabases() {
     Set<String> dbs;
     synchronized (this) {
-      dbs = new HashSet<String>(storages.keySet());
+      dbs = new HashSet<String>(sharedContexts.keySet());
     }
     dbs.remove(OSystemDatabase.SYSTEM_DB_NAME);
     return dbs;
