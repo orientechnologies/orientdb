@@ -19,7 +19,6 @@ import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.ODatabaseTask;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.ONetworkMessage;
-import com.orientechnologies.orient.core.db.OSharedContext;
 import com.orientechnologies.orient.core.db.OSharedContextEmbedded;
 import com.orientechnologies.orient.core.db.OSystemDatabase;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
@@ -331,13 +330,13 @@ public class OrientDBDistributed extends OrientDBEmbedded
 
   protected ODatabaseDocumentEmbedded newSessionInstance(String database, OrientDBConfig config) {
     ODatabaseDocumentEmbedded embedded;
-    OStorage storage = getAndOpenStorage(database, config);
-    OSharedContext sharedContext = getOrCreateSharedContext(storage);
-    if (isDistributedDisabled(storage.getName())) {
-      embedded = new ODatabaseDocumentEmbedded(storage, sharedContext);
+    OSharedContextEmbedded sharedContext =
+        getOrCreateSharedContext(database, config.getConfigurations());
+    if (isDistributedDisabled(database)) {
+      embedded = new ODatabaseDocumentEmbedded(sharedContext);
       embedded.init(config);
     } else {
-      embedded = new ODatabaseDocumentDistributed(storage, sharedContext, plugin);
+      embedded = new ODatabaseDocumentDistributed(sharedContext, plugin);
       embedded.init(config);
     }
     return embedded;
@@ -362,12 +361,13 @@ public class OrientDBDistributed extends OrientDBEmbedded
       OStorage storage, OrientDBConfig config) {
     ODatabaseDocumentEmbedded embedded;
 
-    OSharedContext sharedContext = getOrCreateSharedContext(storage);
+    OSharedContextEmbedded sharedContext =
+        sharedContexts.computeIfAbsent(storage.getName(), (k) -> createSharedContext(storage));
     if (isDistributedDisabled(storage.getName())) {
-      embedded = new ODatabaseDocumentEmbedded(storage, sharedContext);
+      embedded = new ODatabaseDocumentEmbedded(sharedContext);
       embedded.internalCreate(config, sharedContext);
     } else {
-      embedded = new ODatabaseDocumentDistributed(storage, sharedContext, plugin);
+      embedded = new ODatabaseDocumentDistributed(sharedContext, plugin);
       embedded.internalCreate(config, sharedContext);
       // getOrInitDistributedConfiguration(storage.getName());
     }
@@ -379,16 +379,14 @@ public class OrientDBDistributed extends OrientDBEmbedded
     try {
       final ODatabaseDocumentEmbedded embedded;
       checkOpen();
-      OStorage storage = storages.get(name);
-      OSharedContext sharedContext = sharedContexts.get(name);
-      if (storage != null
-          && storage.isOpen()
-          && sharedContext != null
-          && sharedContext.isLoaded()) {
-        if (isDistributedDisabled(storage.getName())) {
-          embedded = new ODatabaseDocumentEmbedded(storage, sharedContext);
+      OSharedContextEmbedded sharedContext = sharedContexts.get(name);
+      if (sharedContext != null
+          && sharedContext.isLoaded()
+          && sharedContext.getStorage().isOpen()) {
+        if (isDistributedDisabled(sharedContext.getStorage().getName())) {
+          embedded = new ODatabaseDocumentEmbedded(sharedContext);
         } else {
-          embedded = new ODatabaseDocumentDistributed(storage, sharedContext, plugin);
+          embedded = new ODatabaseDocumentDistributed(sharedContext, plugin);
         }
         OrientDBConfig config = solveConfig(null);
         embedded.init(config);
@@ -404,14 +402,14 @@ public class OrientDBDistributed extends OrientDBEmbedded
 
   protected ODatabaseDocumentEmbedded newPooledSessionInstance(
       ODatabasePoolInternal pool, String name) {
-    OStorage storage = getAndOpenStorage(name, pool.getConfig());
-    OSharedContext sharedContext = getOrCreateSharedContext(storage);
+    OSharedContextEmbedded sharedContext =
+        getOrCreateSharedContext(name, getConfigurations().getConfigurations());
     ODatabaseDocumentEmbedded embedded;
-    if (isDistributedDisabled(storage.getName())) {
-      embedded = new ODatabaseDocumentEmbeddedPooled(pool, storage, sharedContext);
+    if (isDistributedDisabled(name)) {
+      embedded = new ODatabaseDocumentEmbeddedPooled(pool, sharedContext);
       embedded.init(pool.getConfig());
     } else {
-      embedded = new ODatabaseDocumentDistributedPooled(pool, storage, sharedContext, plugin);
+      embedded = new ODatabaseDocumentDistributedPooled(pool, sharedContext, plugin);
       embedded.init(pool.getConfig());
     }
     return embedded;
@@ -423,28 +421,28 @@ public class OrientDBDistributed extends OrientDBEmbedded
 
   public boolean nonBlockingSync(
       String name, ODatabaseId databaseId, InputStream backupStream, OrientDBConfig config) {
-    OStorage storage = null;
     ODatabaseDocumentEmbedded embedded;
 
     if (!isOpen()) {
       return false;
     }
     try {
-      synchronized (this) {
-        storage = storages.get(name);
-
-        if (storage == null) {
-          storage =
-              getDefaultEngine()
-                  .createForRestoreLocal(this, databaseId, name, config.getConfigurations());
-          storages.put(name, storage);
-        }
-      }
-      storage.restoreFullIncrementalBackup(backupStream);
+      OSharedContextEmbedded context =
+          sharedContexts.computeIfAbsent(
+              name,
+              (k) -> {
+                var storage =
+                    getDefaultEngine()
+                        .createForRestoreLocal(
+                            OrientDBDistributed.this, databaseId, k, config.getConfigurations());
+                return createSharedContext(storage);
+              });
+      context.unload();
+      context.getStorage().restoreFullIncrementalBackup(backupStream);
       synchronized (this) {
         embedded = newSessionInstance(name, config);
       }
-      embedded.getSharedContext().reInit(storage, embedded);
+      embedded.getSharedContext().reInit(context.getStorage(), embedded);
       distributedSetOnline(embedded.getSharedContext());
       ODatabaseRecordThreadLocal.instance().remove();
       return true;
@@ -453,7 +451,6 @@ public class OrientDBDistributed extends OrientDBEmbedded
     } catch (Exception e) {
       logger.warnNode(getNodeId(), "failed non blocking sync of database %s", e, name);
       synchronized (this) {
-        storages.remove(name);
         sharedContexts.remove(name);
       }
       return false;
@@ -500,14 +497,11 @@ public class OrientDBDistributed extends OrientDBEmbedded
     unregisterDatabase(name);
     synchronized (this) {
       if (exists(name, null, null)) {
-        OStorage storage = getAndOpenStorage(name, getConfigurations());
-        OSharedContext sharedContext = sharedContexts.get(name);
-        if (sharedContext != null) {
-          sharedContext.close();
-        }
-        dropStorageFiles(storage);
-        storage.delete();
-        storages.remove(name);
+        OSharedContextEmbedded sharedContext =
+            getOrCreateSharedContext(name, getConfigurations().getConfigurations());
+        sharedContext.close();
+        sharedContext.getStorage().delete();
+        dropStorageFiles(sharedContext.getStorage());
         sharedContexts.remove(name);
       }
     }

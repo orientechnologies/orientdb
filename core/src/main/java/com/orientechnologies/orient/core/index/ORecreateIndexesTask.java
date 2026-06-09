@@ -3,9 +3,9 @@ package com.orientechnologies.orient.core.index;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.db.OSharedContext;
+import com.orientechnologies.orient.core.db.OSharedContextEmbedded;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.storage.OStorage;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -30,7 +30,7 @@ public class ORecreateIndexesTask implements Runnable {
   public void run() {
     try {
       final ODatabaseDocumentEmbedded newDb =
-          new ODatabaseDocumentEmbedded((OStorage) ctx.getStorage(), ctx);
+          new ODatabaseDocumentEmbedded((OSharedContextEmbedded) ctx);
       newDb.activateOnCurrentThread();
       newDb.init(null);
       newDb.internalOpen("admin", "nopass", false);

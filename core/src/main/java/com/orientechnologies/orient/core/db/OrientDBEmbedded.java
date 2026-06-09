@@ -58,14 +58,12 @@ import java.io.File;
 import java.io.InputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
-import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -78,6 +76,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 /** Created by tglman on 08/04/16. */
 public class OrientDBEmbedded implements OrientDBInternal {
@@ -87,7 +86,6 @@ public class OrientDBEmbedded implements OrientDBInternal {
   protected ThreadGroup allGroups;
   protected ThreadGroup threadsGroup;
 
-  protected final Map<String, OStorage> storages = new ConcurrentHashMap<>();
   protected final Map<String, OSharedContextEmbedded> sharedContexts = new ConcurrentHashMap<>();
   protected final Set<ODatabasePoolInternal> pools =
       Collections.newSetFromMap(new ConcurrentHashMap<>());
@@ -325,17 +323,18 @@ public class OrientDBEmbedded implements OrientDBInternal {
   }
 
   protected ODatabaseDocumentEmbedded newSessionInstance(String database, OrientDBConfig config) {
-    OStorage storage = getAndOpenStorage(database, config);
-    OSharedContext sharedContext = getOrCreateSharedContext(storage);
-    ODatabaseDocumentEmbedded embedded = new ODatabaseDocumentEmbedded(storage, sharedContext);
+    OSharedContextEmbedded sharedContext =
+        getOrCreateSharedContext(database, config.getConfigurations());
+    ODatabaseDocumentEmbedded embedded = new ODatabaseDocumentEmbedded(sharedContext);
     embedded.init(config);
     return embedded;
   }
 
   protected ODatabaseDocumentEmbedded newCreateSessionInstance(
       OStorage storage, OrientDBConfig config) {
-    OSharedContext sharedContext = getOrCreateSharedContext(storage);
-    ODatabaseDocumentEmbedded embedded = new ODatabaseDocumentEmbedded(storage, sharedContext);
+    OSharedContextEmbedded sharedContext =
+        sharedContexts.computeIfAbsent(storage.getName(), (k) -> createSharedContext(storage));
+    ODatabaseDocumentEmbedded embedded = new ODatabaseDocumentEmbedded(sharedContext);
     embedded.internalCreate(config, sharedContext);
     return embedded;
   }
@@ -345,13 +344,11 @@ public class OrientDBEmbedded implements OrientDBInternal {
     try {
       final ODatabaseDocumentEmbedded embedded;
       checkOpen();
-      OStorage storage = storages.get(name);
-      OSharedContext sharedContext = sharedContexts.get(name);
-      if (storage != null
-          && storage.isOpen()
-          && sharedContext != null
-          && sharedContext.isLoaded()) {
-        embedded = new ODatabaseDocumentEmbedded(storage, sharedContext);
+      OSharedContextEmbedded sharedContext = sharedContexts.get(name);
+      if (sharedContext != null
+          && sharedContext.isLoaded()
+          && sharedContext.getStorage().isOpen()) {
+        embedded = new ODatabaseDocumentEmbedded(sharedContext);
         OrientDBConfig config = solveConfig(null);
         embedded.init(config);
         return embedded;
@@ -429,17 +426,6 @@ public class OrientDBEmbedded implements OrientDBInternal {
     }
   }
 
-  protected OStorage getAndOpenStorage(String name, OrientDBConfig config) {
-    OStorage storage = storages.get(name);
-    if (storage == null) {
-      storage = getDefaultEngine().openLocal(this, name, config.getConfigurations());
-      if (storage.exists()) {
-        storages.put(name, storage);
-      }
-    }
-    return storage;
-  }
-
   private void checkDefaultPassword(String database, String user, String password) {
     if ((("admin".equals(user) && "admin".equals(password))
             || ("reader".equals(user) && "reader".equals(password))
@@ -481,16 +467,21 @@ public class OrientDBEmbedded implements OrientDBInternal {
 
   protected ODatabaseDocumentEmbedded newPooledSessionInstance(
       ODatabasePoolInternal pool, String name) {
-    OStorage storage = getAndOpenStorage(name, pool.getConfig());
-    OSharedContext sharedContext = getOrCreateSharedContext(storage);
+    OSharedContextEmbedded sharedContext =
+        getOrCreateSharedContext(name, pool.getConfig().getConfigurations());
     ODatabaseDocumentEmbeddedPooled embedded =
-        new ODatabaseDocumentEmbeddedPooled(pool, storage, sharedContext);
+        new ODatabaseDocumentEmbeddedPooled(pool, sharedContext);
     embedded.init(pool.getConfig());
     return embedded;
   }
 
   public synchronized OStorage getStorage(String name) {
-    return storages.get(name);
+    OSharedContextEmbedded ctx = sharedContexts.get(name);
+    if (ctx != null) {
+      return ctx.getStorage();
+    } else {
+      return null;
+    }
   }
 
   protected String buildName(String name) {
@@ -532,7 +523,6 @@ public class OrientDBEmbedded implements OrientDBInternal {
           } else {
             storage = getDefaultEngine().createLocal(this, id, name, config.getConfigurations());
           }
-          storages.put(name, storage);
           embedded = internalCreate(config, storage);
           if (createOps != null) {
             OScenarioThreadLocal.executeAsDistributed(
@@ -559,20 +549,17 @@ public class OrientDBEmbedded implements OrientDBInternal {
   @Override
   public boolean networkRestore(String name, ODatabaseId databaseId, InputStream in) {
     checkDatabaseName(name);
-    OStorage storage = null;
     OContextConfiguration config = getConfigurations().getConfigurations();
     try {
-      OSharedContextEmbedded context;
-      synchronized (this) {
-        storage = storages.get(name);
-        if (storage == null) {
-          storage = getDefaultEngine().createForRestoreLocal(this, databaseId, name, config);
-          storages.put(name, storage);
-        }
-        context = getOrCreateSharedContext(storage);
-        context.unload();
-      }
-      storage.restoreNetwork(in);
+      OSharedContextEmbedded context =
+          sharedContexts.computeIfAbsent(
+              name,
+              (k) -> {
+                var storage = getDefaultEngine().createForRestoreLocal(this, databaseId, k, config);
+                return createSharedContext(storage);
+              });
+      context.unload();
+      context.getStorage().restoreNetwork(in);
       distributedSetOnline(context);
       return true;
     } catch (OModificationOperationProhibitedException e) {
@@ -580,7 +567,6 @@ public class OrientDBEmbedded implements OrientDBInternal {
     } catch (Exception e) {
       logger.warn("failed blocking sync of database %s", e, name);
       synchronized (this) {
-        storages.remove(name);
         sharedContexts.remove(name);
       }
       return false;
@@ -605,7 +591,6 @@ public class OrientDBEmbedded implements OrientDBInternal {
               getDefaultEngine()
                   .createLocal(this, new ODatabaseId(), name, config.getConfigurations());
           embedded = internalCreate(config, storage);
-          storages.put(name, storage);
         } catch (Exception e) {
           throw OException.wrapException(
               new ODatabaseException("Cannot restore database '" + name + "'"), e);
@@ -626,36 +611,31 @@ public class OrientDBEmbedded implements OrientDBInternal {
       InputStream in,
       Map<String, Object> options,
       Callable<Object> callable,
-      OCommandOutputListener iListener) {
+      OCommandOutputListener listener) {
     checkDatabaseName(name);
-    synchronized (this) {
-      OSharedContext context = sharedContexts.remove(name);
-      if (context != null) {
-        context.unload();
-      }
-      OStorage storage = storages.get(name);
-      if (storage != null) {
-        storage.close();
-      }
-    }
+
     OContextConfiguration config = getConfigurations().getConfigurations();
-    OStorage storage;
-    synchronized (this) {
-      storage =
-          getDefaultEngine().createForRestoreLocal(this, new ODatabaseId("mock"), name, config);
-      storages.put(name, storage);
-    }
+    OSharedContextEmbedded context =
+        sharedContexts.computeIfAbsent(
+            name,
+            (k) -> {
+              var storage =
+                  getDefaultEngine()
+                      .createForRestoreLocal(this, new ODatabaseId("mock"), k, config);
+              return createSharedContext(storage);
+            });
+    context.unload();
     try {
-      storage.restore(in, options, iListener);
+      context.getStorage().restore(in, options, listener);
     } catch (Exception e) {
       synchronized (this) {
-        storage.delete();
+        context.close();
+        context.getStorage().delete();
         OLocalPaginatedStorage.deleteFilesFromDisc(
             name,
             config.getValueAsInteger(FILE_DELETE_RETRY),
             config.getValueAsInteger(FILE_DELETE_DELAY),
             name);
-        storages.remove(name);
         sharedContexts.remove(name);
       }
       throw OException.wrapException(
@@ -667,13 +647,14 @@ public class OrientDBEmbedded implements OrientDBInternal {
     return newCreateSessionInstance(storage, config);
   }
 
-  protected synchronized OSharedContextEmbedded getOrCreateSharedContext(OStorage storage) {
-    OSharedContextEmbedded result = sharedContexts.get(storage.getName());
-    if (result == null) {
-      result = createSharedContext(storage);
-      sharedContexts.put(storage.getName(), result);
-    }
-    return result;
+  protected OSharedContextEmbedded getOrCreateSharedContext(
+      String name, OContextConfiguration config) {
+    return sharedContexts.computeIfAbsent(name, (n) -> createSharedContext(name, config));
+  }
+
+  protected OSharedContextEmbedded createSharedContext(String name, OContextConfiguration config) {
+    var storage = getDefaultEngine().openLocal(this, name, config);
+    return createSharedContext(storage);
   }
 
   protected OSharedContextEmbedded createSharedContext(OStorage storage) {
@@ -721,13 +702,10 @@ public class OrientDBEmbedded implements OrientDBInternal {
       ODatabaseRecordThreadLocal.instance().set(current);
       synchronized (this) {
         if (exists(name, user, password)) {
-          OStorage storage = getAndOpenStorage(name, getConfigurations());
-          OSharedContext sharedContext = sharedContexts.get(name);
-          if (sharedContext != null) {
-            sharedContext.close();
-          }
-          storage.delete();
-          storages.remove(name);
+          OSharedContextEmbedded sharedContext =
+              getOrCreateSharedContext(name, getConfigurations().getConfigurations());
+          sharedContext.close();
+          sharedContext.getStorage().delete();
           sharedContexts.remove(name);
         }
       }
@@ -761,8 +739,8 @@ public class OrientDBEmbedded implements OrientDBInternal {
       scanDatabaseDirectory(
           new File(basePath),
           (name) -> {
-            if (!storages.containsKey(name)) {
-              getAndOpenStorage(name, getConfigurations());
+            if (!sharedContexts.containsKey(name)) {
+              getOrCreateSharedContext(name, getConfigurations().getConfigurations());
             }
           });
     }
@@ -851,33 +829,33 @@ public class OrientDBEmbedded implements OrientDBInternal {
       return;
     }
     open = false;
-    this.sharedContexts.values().forEach(x -> x.close());
-    final List<OStorage> storagesCopy = new ArrayList<>(storages.values());
+    AtomicReference<Exception> storageException = new AtomicReference<>();
+    this.sharedContexts
+        .values()
+        .forEach(
+            (ctx) -> {
+              ctx.close();
+              try {
+                logger.info("- shutdown storage: %s ...", ctx.getStorage().getName());
+                ctx.getStorage().shutdown();
+              } catch (Exception e) {
+                logger.warn("-- error on shutdown storage", e);
+                storageException.set(e);
+              } catch (Error e) {
+                logger.warn("-- error on shutdown storage", e);
+                throw e;
+              }
+            });
 
-    Exception storageException = null;
-
-    for (OStorage stg : storagesCopy) {
-      try {
-        logger.info("- shutdown storage: %s ...", stg.getName());
-        stg.shutdown();
-      } catch (Exception e) {
-        logger.warn("-- error on shutdown storage", e);
-        storageException = e;
-      } catch (Error e) {
-        logger.warn("-- error on shutdown storage", e);
-        throw e;
-      }
-    }
     this.sharedContexts.clear();
-    storages.clear();
     orient.onEmbeddedFactoryClose(this);
     if (autoCloseTimer != null) {
       autoCloseTimer.cancel();
     }
 
-    if (storageException != null) {
+    if (storageException.get() != null) {
       throw OException.wrapException(
-          new OStorageException("Error during closing the storages"), storageException);
+          new OStorageException("Error during closing the storages"), storageException.get());
     }
   }
 
@@ -917,8 +895,6 @@ public class OrientDBEmbedded implements OrientDBInternal {
       Path p = Paths.get(path);
       RegisterResult registerd =
           getDefaultEngine().registerLocal(this, name, p, getConfigurations().getConfigurations());
-      // TODO: Add Creation settings and parameters
-      storages.put(name, registerd.storage());
       if (registerd.created()) {
         newCreateSessionInstance(registerd.storage(), configurations);
       } else {
@@ -932,18 +908,15 @@ public class OrientDBEmbedded implements OrientDBInternal {
   }
 
   public synchronized Collection<OStorage> getStorages() {
-    return storages.values();
+    return sharedContexts.values().stream().map((c) -> c.getStorage()).toList();
   }
 
   public synchronized void forceDatabaseClose(String iDatabaseName) {
-    OStorage storage = storages.remove(iDatabaseName);
-    if (storage != null) {
-      OSharedContextEmbedded ctx = sharedContexts.remove(iDatabaseName);
-      if (ctx != null) {
-        ctx.getViewManager().close();
-        ctx.close();
-      }
-      storage.shutdown();
+    OSharedContextEmbedded ctx = sharedContexts.remove(iDatabaseName);
+    if (ctx != null) {
+      ctx.getViewManager().close();
+      ctx.close();
+      ctx.getStorage().shutdown();
     }
   }
 

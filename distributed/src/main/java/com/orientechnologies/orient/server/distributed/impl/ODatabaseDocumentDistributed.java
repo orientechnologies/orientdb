@@ -20,6 +20,7 @@ import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.OSharedContext;
+import com.orientechnologies.orient.core.db.OSharedContextEmbedded;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -123,8 +124,8 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   private boolean neverWaited = true;
 
   public ODatabaseDocumentDistributed(
-      OStorage storage, OSharedContext sharedContext, ODistributedPlugin distributedPlugin) {
-    super(storage, sharedContext);
+      OSharedContextEmbedded sharedContext, ODistributedPlugin distributedPlugin) {
+    super(sharedContext);
     this.distributedManager = distributedPlugin;
   }
 
@@ -167,7 +168,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   @Override
   public ODatabaseDocumentDistributed copy() {
     ODatabaseDocumentDistributed database =
-        new ODatabaseDocumentDistributed(getStorage(), getSharedContext(), distributedManager);
+        new ODatabaseDocumentDistributed(getSharedContext(), distributedManager);
     database.init(getConfig());
     String user;
     if (getUser() != null) {

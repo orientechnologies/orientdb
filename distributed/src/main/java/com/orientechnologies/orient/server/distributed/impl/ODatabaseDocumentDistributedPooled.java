@@ -3,8 +3,7 @@ package com.orientechnologies.orient.server.distributed.impl;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabasePoolInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.OSharedContext;
-import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.db.OSharedContextEmbedded;
 
 /** Created by tglman on 30/03/17. */
 public class ODatabaseDocumentDistributedPooled extends ODatabaseDocumentDistributed {
@@ -13,10 +12,9 @@ public class ODatabaseDocumentDistributedPooled extends ODatabaseDocumentDistrib
 
   public ODatabaseDocumentDistributedPooled(
       ODatabasePoolInternal pool,
-      OStorage storage,
-      OSharedContext sharedContext,
+      OSharedContextEmbedded sharedContext,
       ODistributedPlugin distributedPlugin) {
-    super(storage, sharedContext, distributedPlugin);
+    super(sharedContext, distributedPlugin);
     this.pool = pool;
   }
 

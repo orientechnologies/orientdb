@@ -150,7 +150,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
   private OrientDBConfig config;
   private OStorage storage;
 
-  public ODatabaseDocumentEmbedded(final OStorage storage, OSharedContext sharedContext) {
+  public ODatabaseDocumentEmbedded(OSharedContextEmbedded sharedContext) {
     super(sharedContext);
     activateOnCurrentThread();
 
@@ -158,8 +158,8 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
       status = STATUS.CLOSED;
 
       // OVERWRITE THE URL
+      this.storage = sharedContext.getStorage();
       url = storage.getURL();
-      this.storage = storage;
       this.componentsFactory = storage.getComponentsFactory();
 
       unmodifiableHooks = Collections.unmodifiableMap(hooks);
@@ -495,7 +495,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
   public ODatabaseDocumentEmbedded copy() {
     var storage = getSharedContext().getStorage();
     storage.open(config.getConfigurations());
-    ODatabaseDocumentEmbedded database = new ODatabaseDocumentEmbedded(storage, this.sharedContext);
+    ODatabaseDocumentEmbedded database = new ODatabaseDocumentEmbedded(getSharedContext());
     database.init(config);
     String user;
     if (getUser() != null) {
