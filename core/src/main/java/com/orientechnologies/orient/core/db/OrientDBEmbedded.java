@@ -312,8 +312,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
       OrientDBConfig config = solveConfig(null);
       synchronized (this) {
         checkOpen();
-        OStorage storage = getAndOpenStorage(name, config);
-        embedded = newSessionInstance(storage, config);
+        embedded = newSessionInstance(name, config);
       }
       embedded.rebuildIndexes();
       embedded.internalOpen(user, "nopwd", false);
@@ -325,7 +324,8 @@ public class OrientDBEmbedded implements OrientDBInternal {
     }
   }
 
-  protected ODatabaseDocumentEmbedded newSessionInstance(OStorage storage, OrientDBConfig config) {
+  protected ODatabaseDocumentEmbedded newSessionInstance(String database, OrientDBConfig config) {
+    OStorage storage = getAndOpenStorage(database, config);
     OSharedContext sharedContext = getOrCreateSharedContext(storage);
     ODatabaseDocumentEmbedded embedded = new ODatabaseDocumentEmbedded(storage, sharedContext);
     embedded.init(config);
@@ -371,8 +371,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
       OrientDBConfig config = solveConfig(null);
       synchronized (this) {
         checkOpen();
-        OStorage storage = getAndOpenStorage(name, config);
-        embedded = newSessionInstance(storage, config);
+        embedded = newSessionInstance(name, config);
       }
       embedded.rebuildIndexes();
       embedded.callOnOpenListeners();
@@ -393,9 +392,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
       synchronized (this) {
         checkOpen();
         config = solveConfig(config);
-        OStorage storage = getAndOpenStorage(name, config);
-
-        embedded = newSessionInstance(storage, config);
+        embedded = newSessionInstance(name, config);
       }
       embedded.rebuildIndexes();
       embedded.internalOpen(user, password);
@@ -419,8 +416,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
           throw new OSecurityException("Authentication info do not contain the database");
         }
         String database = authenticationInfo.getDatabase().get();
-        OStorage storage = getAndOpenStorage(database, config);
-        embedded = newSessionInstance(storage, config);
+        embedded = newSessionInstance(database, config);
       }
       embedded.rebuildIndexes();
       embedded.internalOpen(authenticationInfo);
@@ -475,8 +471,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
     final ODatabaseDocumentEmbedded embedded;
     synchronized (this) {
       checkOpen();
-      OStorage storage = getAndOpenStorage(name, pool.getConfig());
-      embedded = newPooledSessionInstance(pool, storage, getOrCreateSharedContext(storage));
+      embedded = newPooledSessionInstance(pool, name);
     }
     embedded.rebuildIndexes();
     embedded.internalOpen(user, password);
@@ -485,7 +480,9 @@ public class OrientDBEmbedded implements OrientDBInternal {
   }
 
   protected ODatabaseDocumentEmbedded newPooledSessionInstance(
-      ODatabasePoolInternal pool, OStorage storage, OSharedContext sharedContext) {
+      ODatabasePoolInternal pool, String name) {
+    OStorage storage = getAndOpenStorage(name, pool.getConfig());
+    OSharedContext sharedContext = getOrCreateSharedContext(storage);
     ODatabaseDocumentEmbeddedPooled embedded =
         new ODatabaseDocumentEmbeddedPooled(pool, storage, sharedContext);
     embedded.init(pool.getConfig());
@@ -557,7 +554,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
     ODatabaseRecordThreadLocal.instance().remove();
   }
 
-  protected void distributedSetOnline(OStorage database) {}
+  protected void distributedSetOnline(OSharedContextEmbedded context) {}
 
   @Override
   public boolean networkRestore(String name, ODatabaseId databaseId, InputStream in) {
@@ -567,18 +564,16 @@ public class OrientDBEmbedded implements OrientDBInternal {
     try {
       OSharedContextEmbedded context;
       synchronized (this) {
-        context = sharedContexts.get(name);
-        if (context != null) {
-          context.unload();
-        }
         storage = storages.get(name);
         if (storage == null) {
           storage = getDefaultEngine().createForRestoreLocal(this, databaseId, name, config);
           storages.put(name, storage);
         }
+        context = getOrCreateSharedContext(storage);
+        context.unload();
       }
       storage.restoreNetwork(in);
-      distributedSetOnline(storage);
+      distributedSetOnline(context);
       return true;
     } catch (OModificationOperationProhibitedException e) {
       throw e;
@@ -586,6 +581,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
       logger.warn("failed blocking sync of database %s", e, name);
       synchronized (this) {
         storages.remove(name);
+        sharedContexts.remove(name);
       }
       return false;
     }
@@ -660,6 +656,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
             config.getValueAsInteger(FILE_DELETE_DELAY),
             name);
         storages.remove(name);
+        sharedContexts.remove(name);
       }
       throw OException.wrapException(
           new ODatabaseException("Cannot create database '" + name + "'"), e);
@@ -670,7 +667,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
     return newCreateSessionInstance(storage, config);
   }
 
-  protected synchronized OSharedContext getOrCreateSharedContext(OStorage storage) {
+  protected synchronized OSharedContextEmbedded getOrCreateSharedContext(OStorage storage) {
     OSharedContextEmbedded result = sharedContexts.get(storage.getName());
     if (result == null) {
       result = createSharedContext(storage);
@@ -925,7 +922,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
       if (registerd.created()) {
         newCreateSessionInstance(registerd.storage(), configurations);
       } else {
-        newSessionInstance(registerd.storage(), configurations).close();
+        newSessionInstance(name, configurations).close();
       }
     }
   }
