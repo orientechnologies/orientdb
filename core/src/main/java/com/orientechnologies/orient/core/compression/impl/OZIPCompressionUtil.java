@@ -63,11 +63,11 @@ public class OZIPCompressionUtil {
   }
 
   /** * Extract zipfile to outdir with complete directory structure */
-  public static void uncompressDirectory(
+  public static boolean uncompressDirectory(
       final InputStream in, final String out, final OCommandOutputListener iListener)
       throws IOException {
     final Path outdir = Path.of(out).toAbsolutePath();
-
+    boolean atLeastOneFile = false;
     try (ZipInputStream zin = new ZipInputStream(in)) {
       ZipEntry entry;
       String name;
@@ -94,10 +94,11 @@ public class OZIPCompressionUtil {
          */
         dir = getDirectoryPart(name);
         if (dir != null) mkdirs(outdir, dir);
-
+        atLeastOneFile = true;
         extractFile(zin, outdir, name, iListener);
       }
     }
+    return atLeastOneFile;
   }
 
   private static void extractFile(

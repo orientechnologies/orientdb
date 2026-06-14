@@ -361,18 +361,17 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
           doShutdown();
         }
 
-        final java.io.File dbDir =
-            new java.io.File(
+        final File dbDir =
+            new File(
                 OIOUtils.getPathFromDatabaseName(
                     OSystemVariableResolver.resolveSystemVariables(url)));
-        final java.io.File[] storageFiles = dbDir.listFiles();
+        final File[] storageFiles = dbDir.listFiles();
         if (storageFiles != null) {
           // TRY TO DELETE ALL THE FILES
-          for (final java.io.File f : storageFiles) {
+          for (final File f : storageFiles) {
             // DELETE ONLY THE SUPPORTED FILES
             for (final String ext : ALL_FILE_EXTENSIONS) {
               if (f.getPath().endsWith(ext)) {
-                //noinspection ResultOfMethodCallIgnored
                 f.delete();
                 break;
               }
@@ -380,12 +379,14 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
           }
         }
         Files.createDirectories(Paths.get(storagePath.toString()));
-        OZIPCompressionUtil.uncompressDirectory(in, storagePath.toString(), iListener);
+        if (!OZIPCompressionUtil.uncompressDirectory(in, storagePath.toString(), iListener)) {
+          throw new OStorageException("Empty archive no files restored");
+        }
 
-        final java.io.File[] newStorageFiles = dbDir.listFiles();
+        final File[] newStorageFiles = dbDir.listFiles();
+        // Rename files with the database name to the current database name
         if (newStorageFiles != null) {
-          // TRY TO DELETE ALL THE FILES
-          for (final java.io.File f : newStorageFiles) {
+          for (final File f : newStorageFiles) {
             if (f.getPath().endsWith(MASTER_RECORD_EXTENSION)) {
               final boolean renamed =
                   f.renameTo(new File(f.getParent(), getName() + MASTER_RECORD_EXTENSION));
