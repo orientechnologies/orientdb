@@ -1010,12 +1010,23 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         case OTxSuccess.ID:
           // Success send ok
           confirmPhase2DDL(nodes, reqId, true);
+          logger.debugNode(getLocalNodeId(), "Success of two phase ddl '%s' ", command);
           return true;
         case OTxException.ID:
           // Exception send ko and throws the exception
           confirmPhase2DDL(nodes, reqId, false);
+          logger.debugNode(
+              getLocalNodeId(),
+              "Quorum exception of two phase ddl '%s' '%s' ",
+              command,
+              resultPayload);
           throw ((OTxException) resultPayload).getException();
         case OTxInvalidSequential.ID:
+          logger.debugNode(
+              getLocalNodeId(),
+              "Quorum invalid sequentiona of two phase ddl '%s' ",
+              command,
+              resultPayload);
           confirmPhase2DDL(nodes, reqId, false);
           return false;
       }
@@ -1047,9 +1058,22 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
                     ((OTxException) result).getException().getMessage()));
             break;
           case OTxInvalidSequential.ID:
+            logger.debugNode(
+                getLocalNodeId(),
+                "Failed two phase ddl '%s' before:%s after:%s, Invalid sequential",
+                command,
+                ids.getFirst(),
+                ids.getSecond());
             return false;
         }
       }
+      logger.debugNode(
+          getLocalNodeId(),
+          "Failed two phase ddl '%s' before:%s after:%s, reason: %s",
+          command,
+          ids.getFirst(),
+          ids.getSecond(),
+          messages);
       if (!excpetionOnFail) {
         ODistributedOperationException ex =
             new ODistributedOperationException(

@@ -1078,9 +1078,13 @@ public class OrientDBDistributed extends OrientDBEmbedded
       ODatabaseId dbId, Optional<OTransactionSequenceStatus> tx) {
     Optional<OSyncInfo> sync = getNodeState().getOps().newSync(dbId);
     if (sync.isPresent()) {
-      logger.debug(
+      logger.debugNode(
+          getNodeId(),
           "Requesting sync of %s to %s syncId %s receiver %s",
-          dbId, sync.get().targets(), sync.get().syncId(), getNodeId());
+          dbId,
+          sync.get().targets(),
+          sync.get().syncId(),
+          getNodeId());
       OSyncMode mode;
       if (tx.isPresent()) {
         mode = new OSyncMode.Delta(tx.get());
@@ -1092,7 +1096,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
       sendMessage(sync.get().targets(), req);
       return Optional.of(sync.get().finished());
     } else {
-      logger.warn("Failed to start database sync  %s", dbId);
+      logger.warnNode(getNodeId(), "Failed to start database sync  %s", dbId);
       return Optional.empty();
     }
   }
@@ -1103,8 +1107,13 @@ public class OrientDBDistributed extends OrientDBEmbedded
     OCanSyncAccept accept;
     String dbName = ops.getDatabaseTopology().getDatabaseName(dbId);
     if (accepted && exists(dbName, null, null)) {
-      logger.debug(
-          "Accepted sync %s syncI: %s sender %s receiver %s", dbId, syncId, getNodeId(), receiver);
+      logger.debugNode(
+          getNodeId(),
+          "Accepted sync %s syncI: %s sender %s receiver %s",
+          dbId,
+          syncId,
+          getNodeId(),
+          receiver);
 
       if (mode instanceof NonBlockingBackup) {
         OStorage storage = getStorage(dbName);
@@ -1152,8 +1161,13 @@ public class OrientDBDistributed extends OrientDBEmbedded
     Optional<OSyncState> state = ops.canSync(sender, getNodeId(), dbId, syncId, canSync);
 
     if (state.isPresent()) {
-      logger.debug(
-          "Receiving sync %s syncId %s sender %s receiver %s", dbId, syncId, sender, getNodeId());
+      logger.debugNode(
+          getNodeId(),
+          "Receiving sync %s syncId %s sender %s receiver %s",
+          dbId,
+          syncId,
+          sender,
+          getNodeId());
       OSyncState st = state.get();
       sendMessage(sender, new OStartSync(getNodeId(), dbId, syncId, canSync));
       String dbName = getDbName(dbId);
@@ -1164,7 +1178,11 @@ public class OrientDBDistributed extends OrientDBEmbedded
             receiveSync(dbName, st, input, getConfigurations());
           });
     } else {
-      logger.info("Not starting sync %s from %s missing database or already syncing", dbId, sender);
+      logger.infoNode(
+          getNodeId(),
+          "Not starting sync %s from %s missing database or already syncing",
+          dbId,
+          sender);
     }
   }
 
@@ -1187,10 +1205,10 @@ public class OrientDBDistributed extends OrientDBEmbedded
       }
       return success;
     } catch (IOException e) {
-      logger.debug("Error on close of sync", e);
+      logger.debugNode(getNodeId(), "Error on close of sync", e);
       return false;
     } finally {
-      logger.debug("Completing sync %s", state.getSyncId());
+      logger.debugNode(getNodeId(), "Completing sync %s", state.getSyncId());
       getNodeState().getOps().completeSync(state.getSyncId(), success);
     }
   }
