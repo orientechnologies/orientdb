@@ -600,6 +600,12 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   }
 
   @Override
+  public boolean waitOnlineAll(ODatabaseId dbId, Optional<Long> timeout)
+      throws InterruptedException {
+    return this.databaseTopology.waitOnlineAll(dbId, timeout);
+  }
+
+  @Override
   public boolean waitSelfOnline(ODatabaseId dbId, Optional<Long> timeout)
       throws InterruptedException {
     return this.databaseTopology.waitSelfOnline(dbId, timeout);

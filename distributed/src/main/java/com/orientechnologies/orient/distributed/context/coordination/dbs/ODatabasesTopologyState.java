@@ -182,6 +182,18 @@ public class ODatabasesTopologyState extends OWatcher implements ODatabasesTopol
     return false;
   }
 
+  public boolean waitOnlineAll(ODatabaseId dbId, Optional<Long> timeout)
+      throws InterruptedException {
+    ODatabaseTopologyState db;
+    synchronized (this) {
+      db = getDb(dbId);
+    }
+    if (db != null) {
+      return db.waitOnlineAll(timeout);
+    }
+    return false;
+  }
+
   private synchronized ODatabaseTopologyState getDb(ODatabaseId dbId) {
     return this.databases.get(dbId);
   }
