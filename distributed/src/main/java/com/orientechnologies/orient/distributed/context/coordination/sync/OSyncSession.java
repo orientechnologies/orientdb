@@ -4,6 +4,7 @@ import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.OCanSyncResult;
 import com.orientechnologies.orient.distributed.context.coordination.message.OCanSyncAccept;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
@@ -12,21 +13,19 @@ import java.util.concurrent.Future;
 
 public class OSyncSession {
   private final OSyncId syncId;
-  private final ODatabaseId dbId;
-  private Set<ONodeId> nodes;
+  private final Set<ONodeId> nodes;
   private Optional<OSyncState> state = Optional.empty();
-  private CompletableFuture<Boolean> finished = new CompletableFuture<Boolean>();
-  private long start = System.nanoTime();
+  private final CompletableFuture<Boolean> finished = new CompletableFuture<Boolean>();
+  private final long start = System.nanoTime();
 
   public OSyncSession(ODatabaseId dbId, ONodeId current, Set<ONodeId> nodes) {
-    this.dbId = dbId;
     this.syncId = new OSyncId(dbId, current);
     this.nodes = nodes;
   }
 
-  public OSyncSession(ODatabaseId dbId, OSyncId syncId) {
+  public OSyncSession(OSyncId syncId) {
     this.syncId = syncId;
-    this.dbId = dbId;
+    this.nodes = Collections.emptySet();
   }
 
   public OSyncId getSyncId() {
@@ -52,7 +51,9 @@ public class OSyncSession {
     if (canSync.isSync()) {
       if (this.state.isEmpty()) {
         this.state = Optional.of(new OSyncState(syncId, sender, canSync));
-        return Optional.of(new OCanSyncResult(this.state.get(), new HashSet<>(this.nodes)));
+        Set<ONodeId> others = new HashSet<>(this.nodes);
+        others.remove(sender);
+        return Optional.of(new OCanSyncResult(this.state.get(), others));
       } else {
         return Optional.empty();
       }

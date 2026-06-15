@@ -229,7 +229,7 @@ public class ODatabaseTopologyState extends OWatcher {
       }
     }
     if (this.nodeStatus.get(sender).isOnline()) {
-      OSyncSession session = new OSyncSession(getId(), syncId);
+      OSyncSession session = new OSyncSession(syncId);
       this.syncSessions.put(syncId, session);
       return true;
     } else {
