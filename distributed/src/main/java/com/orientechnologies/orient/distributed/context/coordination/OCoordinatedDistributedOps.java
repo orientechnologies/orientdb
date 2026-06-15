@@ -8,6 +8,7 @@ import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import com.orientechnologies.orient.distributed.context.ONodeStateStore;
 import com.orientechnologies.orient.distributed.context.coordination.action.OCompleteAction;
+import com.orientechnologies.orient.distributed.context.coordination.dbs.OCanSyncResult;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabaseState;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabasesTopology;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ONodeRole;
@@ -160,13 +161,15 @@ public interface OCoordinatedDistributedOps {
 
   boolean acceptSync(ONodeId sender, ONodeId receiver, ODatabaseId dbId, OSyncId syncId);
 
-  Optional<OSyncState> canSync(
+  Optional<OCanSyncResult> canSync(
       ONodeId sender, ONodeId receiver, ODatabaseId dbId, OSyncId syncId, OCanSyncAccept canSync);
 
   Optional<OSyncState> startSend(
       ONodeId to, ONodeId from, ODatabaseId dbId, OSyncId syncId, OCanSyncAccept mode);
 
-  OSyncState getSyncState(OSyncId syncId);
+  Optional<OSyncState> getSyncState(OSyncId syncId);
+
+  void requestNext(OSyncId syncId, boolean close);
 
   void completeSync(OSyncId syncId, boolean success);
 

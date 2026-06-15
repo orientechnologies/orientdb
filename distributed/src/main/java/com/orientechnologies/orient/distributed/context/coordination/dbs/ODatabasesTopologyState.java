@@ -258,14 +258,13 @@ public class ODatabasesTopologyState extends OWatcher implements ODatabasesTopol
     return db.newSync();
   }
 
-  public synchronized Optional<OSyncState> canSync(
+  public synchronized Optional<OCanSyncResult> canSync(
       ONodeId sender, ONodeId receiver, ODatabaseId dbId, OSyncId syncId, OCanSyncAccept canSync) {
     ODatabaseTopologyState db = getDb(dbId);
     if (db == null) {
       return Optional.empty();
     }
-    var state = db.canSync(sender, receiver, syncId, canSync);
-    return state;
+    return db.canSync(sender, receiver, syncId, canSync);
   }
 
   public synchronized Optional<OSyncState> startSend(
@@ -278,12 +277,22 @@ public class ODatabasesTopologyState extends OWatcher implements ODatabasesTopol
     return db.startSend(from, to, syncId, mode);
   }
 
-  public synchronized OSyncState getSyncState(OSyncId syncId) {
+  public synchronized void requestNext(OSyncId syncId, boolean close) {
+    ODatabaseTopologyState db = getDb(syncId.getDbId());
+    if (db != null) {
+      db.requestNext(syncId, close);
+    } else {
+      logger.warnNode(
+          current, "Received next request for %s but missing database, closed:%b", syncId, close);
+    }
+  }
+
+  public synchronized Optional<OSyncState> getSyncState(OSyncId syncId) {
     ODatabaseTopologyState db = getDb(syncId.getDbId());
     if (db != null) {
       return db.getSyncState(syncId);
     } else {
-      return null;
+      return Optional.empty();
     }
   }
 

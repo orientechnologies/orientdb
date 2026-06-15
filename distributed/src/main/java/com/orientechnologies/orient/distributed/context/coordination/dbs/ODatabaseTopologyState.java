@@ -190,11 +190,11 @@ public class ODatabaseTopologyState extends OWatcher {
     return Optional.of(new OSyncInfo(session.getSyncId(), onlineNodes, session.getFinished()));
   }
 
-  public synchronized Optional<OSyncState> canSync(
+  public synchronized Optional<OCanSyncResult> canSync(
       ONodeId sender, ONodeId receiver, OSyncId syncId, OCanSyncAccept canSync) {
     OSyncSession session = this.syncSessions.get(syncId);
     if (session != null) {
-      Optional<OSyncState> result = session.canSync(sender, receiver, syncId, canSync);
+      Optional<OCanSyncResult> result = session.canSync(sender, receiver, syncId, canSync);
       if (result.isEmpty() && session.isFinished()) {
         this.syncSessions.remove(syncId);
       }
@@ -226,6 +226,30 @@ public class ODatabaseTopologyState extends OWatcher {
       return true;
     } else {
       return false;
+    }
+  }
+
+  public synchronized void requestNext(OSyncId syncId, boolean close) {
+    var sync = this.syncSessions.get(syncId);
+    if (sync != null) {
+      Optional<OSyncState> state = sync.getState();
+      if (state.isPresent()) {
+        state.get().requestNext(close);
+      } else if (close) {
+        this.syncSessions.remove(syncId);
+      } else {
+        logger.warnNode(
+            current,
+            "Received next request for %s but missing sync state, closed:%b",
+            syncId,
+            close);
+      }
+    } else {
+      logger.warnNode(
+          current,
+          "Received next request for %s but missing sync session, closed:%b",
+          syncId,
+          close);
     }
   }
 
@@ -390,21 +414,18 @@ public class ODatabaseTopologyState extends OWatcher {
     this.versionPromise.cancel(promise);
   }
 
-  public synchronized OSyncState getSyncState(OSyncId syncId) {
+  public synchronized Optional<OSyncState> getSyncState(OSyncId syncId) {
     OSyncSession session = this.syncSessions.get(syncId);
     if (session != null) {
       return session.getState();
     }
-    return null;
+    return Optional.empty();
   }
 
   public synchronized Set<OSyncState> getSyncs() {
     var syncs = new HashSet<OSyncState>();
     for (var session : this.syncSessions.values()) {
-      var state = session.getState();
-      if (state != null) {
-        syncs.add(state);
-      }
+      session.getState().ifPresent(syncs::add);
     }
     return syncs;
   }

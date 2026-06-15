@@ -13,6 +13,7 @@ import com.orientechnologies.orient.distributed.context.ONodeStateStore;
 import com.orientechnologies.orient.distributed.context.ONodeStateUpdated;
 import com.orientechnologies.orient.distributed.context.coordination.OResponseCollector.CompleteInfo;
 import com.orientechnologies.orient.distributed.context.coordination.action.OCompleteAction;
+import com.orientechnologies.orient.distributed.context.coordination.dbs.OCanSyncResult;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabaseState;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabaseStateChangeListener;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabasesTopologyState;
@@ -569,7 +570,7 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   }
 
   @Override
-  public Optional<OSyncState> canSync(
+  public Optional<OCanSyncResult> canSync(
       ONodeId sender, ONodeId receiver, ODatabaseId dbId, OSyncId syncId, OCanSyncAccept canSync) {
     return this.databaseTopology.canSync(sender, receiver, dbId, syncId, canSync);
   }
@@ -581,7 +582,12 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   }
 
   @Override
-  public OSyncState getSyncState(OSyncId syncId) {
+  public void requestNext(OSyncId syncId, boolean close) {
+    this.databaseTopology.requestNext(syncId, close);
+  }
+
+  @Override
+  public Optional<OSyncState> getSyncState(OSyncId syncId) {
     return this.databaseTopology.getSyncState(syncId);
   }
 

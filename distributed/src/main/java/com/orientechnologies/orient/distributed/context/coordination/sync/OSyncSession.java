@@ -2,7 +2,9 @@ package com.orientechnologies.orient.distributed.context.coordination.sync;
 
 import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
+import com.orientechnologies.orient.distributed.context.coordination.dbs.OCanSyncResult;
 import com.orientechnologies.orient.distributed.context.coordination.message.OCanSyncAccept;
+import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
@@ -12,7 +14,7 @@ public class OSyncSession {
   private final OSyncId syncId;
   private final ODatabaseId dbId;
   private Set<ONodeId> nodes;
-  private OSyncState state;
+  private Optional<OSyncState> state = Optional.empty();
   private CompletableFuture<Boolean> finished = new CompletableFuture<Boolean>();
   private long start = System.nanoTime();
 
@@ -20,13 +22,6 @@ public class OSyncSession {
     this.dbId = dbId;
     this.syncId = new OSyncId(dbId, current);
     this.nodes = nodes;
-  }
-
-  public OSyncSession(
-      ODatabaseId dbId, OSyncId syncId, ONodeId from, ONodeId to, OCanSyncAccept mode) {
-    this.syncId = syncId;
-    this.dbId = dbId;
-    this.state = new OSyncState(dbId, syncId, from, to, mode);
   }
 
   public OSyncSession(ODatabaseId dbId, OSyncId syncId) {
@@ -41,12 +36,11 @@ public class OSyncSession {
   public Optional<OSyncState> startSync(
       ONodeId sender, ONodeId receiver, OSyncId syncId, OCanSyncAccept canSync) {
     assert this.syncId.equals(syncId);
-    if (canSync.isSync() && this.state == null) {
-      this.state = new OSyncState(dbId, syncId, sender, receiver, canSync);
-      return Optional.of(this.state);
+    if (canSync.isSync() && this.state.isEmpty()) {
+      this.state = Optional.of(new OSyncState(dbId, syncId, sender, receiver, canSync));
+      return this.state;
     } else {
       nodes.remove(sender);
-      // TODO: if reach remove also from the sync session map
       if (nodes.isEmpty()) {
         this.finished.complete(false);
       }
@@ -54,15 +48,18 @@ public class OSyncSession {
     }
   }
 
-  public Optional<OSyncState> canSync(
+  public Optional<OCanSyncResult> canSync(
       ONodeId sender, ONodeId receiver, OSyncId syncId, OCanSyncAccept canSync) {
     assert this.syncId.equals(syncId);
-    if (canSync.isSync() && this.state == null) {
-      this.state = new OSyncState(dbId, syncId, sender, receiver, canSync);
-      return Optional.of(this.state);
+    if (canSync.isSync()) {
+      if (this.state.isEmpty()) {
+        this.state = Optional.of(new OSyncState(dbId, syncId, sender, receiver, canSync));
+        return Optional.of(new OCanSyncResult(this.state.get(), new HashSet<>(this.nodes)));
+      } else {
+        return Optional.empty();
+      }
     } else {
       nodes.remove(sender);
-      // TODO: if reach remove also from the sync session map
       if (nodes.isEmpty()) {
         this.finished.complete(false);
       }
@@ -71,22 +68,14 @@ public class OSyncSession {
   }
 
   public boolean isTransferingData() {
-    if (this.state != null) {
-      return !this.state.isClose();
-    } else {
-      return false;
-    }
+    return this.state.map(OSyncState::isClose).map(v -> !v).orElse(false);
   }
 
   public boolean isFinished() {
-    if (this.state != null) {
-      return this.state.isClose();
-    } else {
-      return nodes.isEmpty();
-    }
+    return this.state.map(OSyncState::isClose).orElse(nodes.isEmpty());
   }
 
-  public OSyncState getState() {
+  public Optional<OSyncState> getState() {
     return state;
   }
 
@@ -95,9 +84,10 @@ public class OSyncSession {
   }
 
   public boolean nodeDisconnected(ONodeId node) {
-    if (state != null) {
-      if (node.equals(state.getSender()) || node.equals(state.getReceiver())) {
-        state.close();
+    if (state.isPresent()) {
+      var st = state.get();
+      if (node.equals(st.getSender()) || node.equals(st.getReceiver())) {
+        st.close();
         return true;
       } else {
         return false;
@@ -118,15 +108,10 @@ public class OSyncSession {
   }
 
   public boolean checkTimeout(long timeOutSync) {
-    long lastOp;
-    if (state != null) {
-      lastOp = state.getLastTimeMessageReceived();
-    } else {
-      lastOp = start;
-    }
+    long lastOp = state.map(OSyncState::getLastTimeMessageReceived).orElse(start);
     var now = System.nanoTime();
     if ((lastOp - now) / 1000 > timeOutSync) {
-      state.close();
+      state.ifPresent(OSyncState::close);
       complete(false);
       return true;
     }

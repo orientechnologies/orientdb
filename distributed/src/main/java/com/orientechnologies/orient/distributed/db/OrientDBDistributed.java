@@ -44,6 +44,7 @@ import com.orientechnologies.orient.distributed.context.coordination.action.OCom
 import com.orientechnologies.orient.distributed.context.coordination.action.OMergeCompleteAction;
 import com.orientechnologies.orient.distributed.context.coordination.action.ORecoordinateCompleteAction;
 import com.orientechnologies.orient.distributed.context.coordination.action.OStandardCompleteAction;
+import com.orientechnologies.orient.distributed.context.coordination.dbs.OCanSyncResult;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabaseState;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabaseStateChangeListener;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabasesTopology;
@@ -1158,7 +1159,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
 
   public void canSync(ONodeId sender, ODatabaseId dbId, OSyncId syncId, OCanSyncAccept canSync) {
     OCoordinatedDistributedOps ops = getNodeState().getOps();
-    Optional<OSyncState> state = ops.canSync(sender, getNodeId(), dbId, syncId, canSync);
+    Optional<OCanSyncResult> state = ops.canSync(sender, getNodeId(), dbId, syncId, canSync);
 
     if (state.isPresent()) {
       logger.debugNode(
@@ -1168,8 +1169,12 @@ public class OrientDBDistributed extends OrientDBEmbedded
           syncId,
           sender,
           getNodeId());
-      OSyncState st = state.get();
+      // Send a close to the other nodes in case they accepted the sync
+      sendMessage(state.get().others(), new ONextBuffer(syncId, true));
+
+      OSyncState st = state.get().state();
       sendMessage(sender, new OStartSync(getNodeId(), dbId, syncId, canSync));
+
       String dbName = getDbName(dbId);
       OReceiverInputStream input = new OReceiverInputStream(this::requestNext, st);
       st.setReceiverStream(input);
@@ -1283,11 +1288,12 @@ public class OrientDBDistributed extends OrientDBEmbedded
 
   public void receiveSyncData(OSyncId syncId, byte[] data, long sequential, boolean finished) {
     var state = this.getNodeState().getOps().getSyncState(syncId);
-    if (state != null) {
+    if (state.isPresent()) {
+      var st = state.get();
       logger.debug(
           "Receiving buffer %s syncId %s sender %s receiver %s",
-          state.getDbId(), state.getSyncId(), state.getSender(), state.getReceiver());
-      state.receiveData(data, sequential, finished);
+          st.getDbId(), st.getSyncId(), st.getSender(), st.getReceiver());
+      st.receiveData(data, sequential, finished);
     } else {
       logger.warn("Receiving buffer syncId %s finished:%s no sync state", syncId, finished);
     }
@@ -1298,10 +1304,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   public void nextBuffer(OSyncId syncId, boolean close) {
-    var state = this.getNodeState().getOps().getSyncState(syncId);
-    if (state != null) {
-      state.requestNext(close);
-    }
+    this.getNodeState().getOps().requestNext(syncId, close);
   }
 
   public ONodeId getNodeId() {
