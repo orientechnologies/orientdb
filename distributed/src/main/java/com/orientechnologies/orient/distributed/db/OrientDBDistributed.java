@@ -692,19 +692,8 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   private void offlineOnShutdown() {
-    // SET ALL DATABASES TO NOT_AVAILABLE
-    for (String dbName : listLodadedDatabases()) {
-
-      try {
-        Optional<ODatabaseId> dbID = getNodeState().getDatabaseTopology().getDatabaseId(dbName);
-        if (dbID.isPresent()) {
-          setDatabaseState(dbID.get(), getNodeId(), ODatabaseState.Offline)
-              .get(1, TimeUnit.MINUTES);
-        }
-        //        setDatabaseStatus(dbName, DB_STATUS.NOT_AVAILABLE);
-      } catch (Exception t) {
-        // IGNORE IT
-      }
+    for (var db : getNodeState().getDatabaseTopology().getDatabases()) {
+      setDatabaseState(db, getNodeId(), ODatabaseState.Offline);
     }
   }
 
