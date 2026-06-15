@@ -271,10 +271,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
     if (databaseTopology.isQuorumOnline(dbId) && databaseTopology.isOnline(dbId, getNodeId())) {
       var name = databaseTopology.getDatabaseName(dbId);
       executeNoAuthorizationOnActive(
-          name,
-          (db) -> {
-            ((ODatabaseDocumentInternal) db).autoAssignAllocations(true);
-          });
+          name, db -> ((ODatabaseDocumentInternal) db).autoAssignAllocations(true));
     }
   }
 
@@ -346,12 +343,14 @@ public class OrientDBDistributed extends OrientDBEmbedded
   public boolean isDistributedDisabled(String storage) {
     if (OSystemDatabase.SYSTEM_DB_NAME.equals(storage)) {
       return true;
-    } else if (plugin == null || !plugin.isEnabled()) {
-      if (nodeState == null) {
-        return true;
-      } else {
-        return false;
-      }
+    } else {
+      return isDistributedDisabled();
+    }
+  }
+
+  protected boolean isDistributedDisabled() {
+    if (plugin == null || !plugin.isEnabled() || nodeState == null) {
+      return true;
     } else {
       return false;
     }
@@ -692,6 +691,9 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   private void offlineOnShutdown() {
+    if (isDistributedDisabled()) {
+      return;
+    }
     for (var db : getNodeState().getDatabaseTopology().getDatabases()) {
       setDatabaseState(db, getNodeId(), ODatabaseState.Offline);
     }
@@ -758,7 +760,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
       declareDatabaseFlow(name, dbId).get(10, TimeUnit.MINUTES);
       super.create(name, user, password, type, dbId, config, createOps);
       setDatabaseState(dbId, getNodeState().getNodeId(), ODatabaseState.Online);
-      getNodeState().getOps().waitOnlineQuorum(dbId, Optional.of(10 * 60 * 1000L));
+      getNodeState().getOps().waitOnlineAll(dbId, Optional.of(10 * 60 * 1000L));
     } catch (InterruptedException e) {
       throw OException.wrapException(new OInterruptedException("wait for online interrupted"), e);
     } catch (ExecutionException | TimeoutException e) {
