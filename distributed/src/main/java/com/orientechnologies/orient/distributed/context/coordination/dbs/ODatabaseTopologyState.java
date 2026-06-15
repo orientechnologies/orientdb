@@ -204,11 +204,14 @@ public class ODatabaseTopologyState extends OWatcher {
     }
   }
 
-  public synchronized OSyncState startSend(
+  public synchronized Optional<OSyncState> startSend(
       ONodeId from, ONodeId to, OSyncId syncId, OCanSyncAccept mode) {
-    OSyncSession session = new OSyncSession(getId(), syncId, from, to, mode);
-    this.syncSessions.put(syncId, session);
-    return session.getState();
+    OSyncSession session = this.syncSessions.get(syncId);
+    if (session != null) {
+      return session.startSync(from, to, syncId, mode);
+    } else {
+      return Optional.empty();
+    }
   }
 
   public synchronized boolean acceptSync(ONodeId sender, ONodeId receiver, OSyncId syncId) {
@@ -217,7 +220,13 @@ public class ODatabaseTopologyState extends OWatcher {
         return false;
       }
     }
-    return this.nodeStatus.get(sender).isOnline();
+    if (this.nodeStatus.get(sender).isOnline()) {
+      OSyncSession session = new OSyncSession(getId(), syncId);
+      this.syncSessions.put(syncId, session);
+      return true;
+    } else {
+      return false;
+    }
   }
 
   public boolean isMain(ONodeId nodeId) {

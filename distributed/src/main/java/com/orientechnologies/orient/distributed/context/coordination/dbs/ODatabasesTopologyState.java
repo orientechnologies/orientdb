@@ -268,7 +268,7 @@ public class ODatabasesTopologyState extends OWatcher implements ODatabasesTopol
     return state;
   }
 
-  public synchronized OSyncState startSend(
+  public synchronized Optional<OSyncState> startSend(
       ONodeId to, ONodeId from, ODatabaseId dbId, OSyncId syncId, OCanSyncAccept mode) {
     ODatabaseTopologyState db = getDb(dbId);
     if (db == null) {

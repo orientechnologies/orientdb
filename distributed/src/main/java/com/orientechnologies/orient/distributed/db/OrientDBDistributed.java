@@ -1217,14 +1217,15 @@ public class OrientDBDistributed extends OrientDBEmbedded
       ONodeId receiver, ODatabaseId dbId, OSyncId syncId, OCanSyncAccept mode) {
     logger.debug(
         "Sending sync %s syncId %s sender %s receiver %s", dbId, syncId, getNodeId(), receiver);
-    OSyncState state =
+    Optional<OSyncState> state =
         getNodeState().getOps().startSend(receiver, getNodeState().getNodeId(), dbId, syncId, mode);
-    String name = getDbName(state.getDbId());
-
-    runOnThread(
-        () -> {
-          syncBackup(name, state, new OutputStreamMessages(this::sendBuffer, state));
-        });
+    if (state.isPresent()) {
+      var st = state.get();
+      String name = getDbName(st.getDbId());
+      runOnThread(() -> syncBackup(name, st, new OutputStreamMessages(this::sendBuffer, st)));
+    } else {
+      sendMessage(receiver, new OSyncData(syncId, new byte[] {}, 0, true));
+    }
   }
 
   public void syncBackup(String name, OSyncState state, OutputStream output) {

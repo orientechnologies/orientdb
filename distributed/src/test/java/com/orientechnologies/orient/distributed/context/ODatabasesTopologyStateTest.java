@@ -43,6 +43,10 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
     return new OTransactionIdPromise(newNodeId(), new OTransactionId(10, 20));
   }
 
+  private OTransactionIdPromise newPromiseId(ONodeId node) {
+    return new OTransactionIdPromise(node, new OTransactionId(10, 20));
+  }
+
   @Override
   public void onStateChange(ODatabaseId dbId, ONodeId nodeId, ODatabaseState state) {}
 
@@ -330,7 +334,9 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
     OSyncState receiverState = receiverStateOp.get();
 
     OSyncState senderState =
-        state.startSend(node1, nodeId, dbId, syncInfo.syncId(), new OCanSyncAccept.BlockingSync());
+        state
+            .startSend(node1, nodeId, dbId, syncInfo.syncId(), new OCanSyncAccept.BlockingSync())
+            .get();
 
     assertEquals(receiverState.getSender(), senderState.getSender());
     assertEquals(receiverState.getReceiver(), senderState.getReceiver());
@@ -348,14 +354,15 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
   @Test
   public void testRequestSyncFailAlreadySendings() {
 
-    ODatabasesTopologyState state = new ODatabasesTopologyState(this, newNodeId());
-    ODatabasesTopologyState state1 = new ODatabasesTopologyState(this, newNodeId());
-    ODatabasesTopologyState state2 = new ODatabasesTopologyState(this, newNodeId());
-
-    var promiseId = newPromiseId();
-    ONodeId nodeId = promiseId.getCoordinator();
+    ONodeId nodeId = newNodeId();
     ONodeId node1 = newNodeId();
     ONodeId node2 = newNodeId();
+
+    ODatabasesTopologyState state = new ODatabasesTopologyState(this, nodeId);
+    ODatabasesTopologyState state1 = new ODatabasesTopologyState(this, node1);
+    ODatabasesTopologyState state2 = new ODatabasesTopologyState(this, node2);
+
+    var promiseId = newPromiseId(nodeId);
 
     Set<OAddNodeInfo> partecipants = partecipants(nodeId, node1, node2);
     var dbId = newDbId();
@@ -400,7 +407,9 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
     OSyncState receiverState = receiverStateOp.get();
 
     OSyncState senderState =
-        state.startSend(node1, nodeId, dbId, syncInfo.syncId(), new OCanSyncAccept.BlockingSync());
+        state
+            .startSend(node1, nodeId, dbId, syncInfo.syncId(), new OCanSyncAccept.BlockingSync())
+            .get();
 
     assertEquals(receiverState.getSender(), senderState.getSender());
     assertEquals(receiverState.getReceiver(), senderState.getReceiver());

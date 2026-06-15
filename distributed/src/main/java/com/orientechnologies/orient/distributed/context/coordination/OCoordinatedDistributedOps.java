@@ -163,7 +163,7 @@ public interface OCoordinatedDistributedOps {
   Optional<OSyncState> canSync(
       ONodeId sender, ONodeId receiver, ODatabaseId dbId, OSyncId syncId, OCanSyncAccept canSync);
 
-  OSyncState startSend(
+  Optional<OSyncState> startSend(
       ONodeId to, ONodeId from, ODatabaseId dbId, OSyncId syncId, OCanSyncAccept mode);
 
   OSyncState getSyncState(OSyncId syncId);

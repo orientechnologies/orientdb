@@ -575,7 +575,7 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   }
 
   @Override
-  public OSyncState startSend(
+  public Optional<OSyncState> startSend(
       ONodeId to, ONodeId from, ODatabaseId dbId, OSyncId syncId, OCanSyncAccept mode) {
     return this.databaseTopology.startSend(to, from, dbId, syncId, mode);
   }

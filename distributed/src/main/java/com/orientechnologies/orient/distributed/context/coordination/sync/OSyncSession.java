@@ -29,8 +29,29 @@ public class OSyncSession {
     this.state = new OSyncState(dbId, syncId, from, to, mode);
   }
 
+  public OSyncSession(ODatabaseId dbId, OSyncId syncId) {
+    this.syncId = syncId;
+    this.dbId = dbId;
+  }
+
   public OSyncId getSyncId() {
     return syncId;
+  }
+
+  public Optional<OSyncState> startSync(
+      ONodeId sender, ONodeId receiver, OSyncId syncId, OCanSyncAccept canSync) {
+    assert this.syncId.equals(syncId);
+    if (canSync.isSync() && this.state == null) {
+      this.state = new OSyncState(dbId, syncId, sender, receiver, canSync);
+      return Optional.of(this.state);
+    } else {
+      nodes.remove(sender);
+      // TODO: if reach remove also from the sync session map
+      if (nodes.isEmpty()) {
+        this.finished.complete(false);
+      }
+      return Optional.empty();
+    }
   }
 
   public Optional<OSyncState> canSync(
