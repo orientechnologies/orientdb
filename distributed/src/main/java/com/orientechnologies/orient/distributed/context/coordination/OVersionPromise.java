@@ -10,13 +10,15 @@ import java.util.Optional;
 
 public class OVersionPromise {
   private static final OLoggerDistributed logger = OLoggerDistributed.logger(OVersionPromise.class);
+  private final String context;
   private final ONodeId current;
   private OVersion version;
   private Optional<OTransactionIdPromise> promise = Optional.empty();
 
-  public OVersionPromise(OVersion version, ONodeId current) {
+  public OVersionPromise(OVersion version, ONodeId current, String context) {
     this.version = version;
     this.current = current;
+    this.context = context;
   }
 
   public synchronized Optional<OAcceptResult> promise(
@@ -33,16 +35,22 @@ public class OVersionPromise {
       var promised = this.promise.get();
       if (promised.nextAccept(promise)) {
         if (this.version.promise(version)) {
-          logger.debugNode(current, "version promising %s", promise);
+          logger.debugNode(current, "%s version promising %s", context, promise);
           this.promise = Optional.of(promise);
           return Optional.empty();
         } else {
           logger.debugNode(
-              current, "outdated version %s~%s on promising %s", this.version, version, promise);
+              current,
+              "%s outdated version %s~%s on promising %s",
+              context,
+              this.version,
+              version,
+              promise);
           return Optional.of(new OOutdatedVersion(version.getValue(), this.version.getValue()));
         }
       } else {
-        logger.debugNode(current, "already promised %s on promising %s", this.promise, promise);
+        logger.debugNode(
+            current, "%s already promised %s on promising %s", context, this.promise, promise);
         return Optional.of(new OAlreadyPromised(this.promise.get().getCoordinator()));
       }
     }
@@ -57,7 +65,7 @@ public class OVersionPromise {
 
   public synchronized void cancel(OTransactionIdPromise promise) {
     if (this.promise.isPresent() && this.promise.get().equals(promise)) {
-      logger.debugNode(current, "canceling version promise %s", this.promise.get());
+      logger.debugNode(current, "%s canceling version promise %s", context, this.promise.get());
       this.promise = Optional.empty();
     }
   }

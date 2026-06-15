@@ -46,7 +46,7 @@ public class OTopologyManager extends OWatcher implements OTopologyEvents, ONetw
     this.current = current;
     this.groupId = groupId;
     this.minimumQuorum = minimumQuorum;
-    this.versionPromise = new OVersionPromise(new OVersion(0), current);
+    this.versionPromise = new OVersionPromise(new OVersion(0), current, "Topology");
   }
 
   @Override

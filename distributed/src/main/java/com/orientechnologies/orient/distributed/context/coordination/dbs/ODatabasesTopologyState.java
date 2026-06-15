@@ -71,7 +71,7 @@ public class ODatabasesTopologyState extends OWatcher implements ODatabasesTopol
         }
         var declared =
             new ODatabaseTopologyState(db, name, partecipants, minimumQuorum, listener, current);
-        var version = new OVersionPromise(new OVersion(0), current);
+        var version = new OVersionPromise(new OVersion(0), current, db.toString());
         version.promise(promise, new OVersion(1));
         this.promised.put(
             db, new ORawPair<OVersionPromise, ODatabaseTopologyState>(version, declared));

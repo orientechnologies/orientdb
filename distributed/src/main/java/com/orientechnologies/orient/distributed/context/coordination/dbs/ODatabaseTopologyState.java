@@ -53,7 +53,7 @@ public class ODatabaseTopologyState extends OWatcher {
     for (OAddNodeInfo p : partecipants) {
       nodeStatus.put(p.node(), new ONodeDatabaseState(p.node(), p.role(), ODatabaseState.Offline));
     }
-    this.versionPromise = new OVersionPromise(new OVersion(1), current);
+    this.versionPromise = new OVersionPromise(new OVersion(1), current, db.toString());
     this.quorum = quorum;
     this.stateListener = stateListener;
     this.current = current;
@@ -64,7 +64,7 @@ public class ODatabaseTopologyState extends OWatcher {
     this.id = state.id();
     this.name = state.name();
     this.stateListener = stateListener;
-    this.versionPromise = new OVersionPromise(new OVersion(0), current);
+    this.versionPromise = new OVersionPromise(new OVersion(0), current, id.toString());
     this.current = current;
     this.receiveState(state, false);
   }
@@ -76,7 +76,7 @@ public class ODatabaseTopologyState extends OWatcher {
     this.name = store.name();
     this.quorum = store.quorum();
     this.current = current;
-    this.versionPromise = new OVersionPromise(store.version(), current);
+    this.versionPromise = new OVersionPromise(store.version(), current, this.id.toString());
     var nodes = store.nodes().stream().map((x) -> new ONodeDatabaseState(x)).toList();
     for (var node : nodes) {
       this.nodeStatus.put(node.getId(), node);
