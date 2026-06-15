@@ -35,7 +35,6 @@ import java.io.IOException;
 import java.util.Date;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionException;
-import java.util.concurrent.TimeUnit;
 
 /**
  * Remote server channel.
@@ -241,12 +240,6 @@ public class ORemoteServerChannel {
   }
 
   public void close() {
-    executor.shutdown();
-    try {
-      executor.awaitTermination(1, TimeUnit.MINUTES);
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-    }
     networkClose();
   }
 
