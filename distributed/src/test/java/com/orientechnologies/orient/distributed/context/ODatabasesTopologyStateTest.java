@@ -327,17 +327,15 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
 
     OSyncInfo syncInfo = state1.newSync(dbId).get();
     assertTrue(syncInfo.targets().contains(nodeId));
-    boolean canSync = state.acceptSync(nodeId, node1, dbId, syncInfo.syncId());
+    boolean canSync = state.acceptSync(nodeId, syncInfo.syncId());
     assertTrue(canSync);
     Optional<OCanSyncResult> receiverStateOp =
-        state1.canSync(nodeId, node1, dbId, syncInfo.syncId(), new OCanSyncAccept.BlockingSync());
+        state1.canSync(nodeId, syncInfo.syncId(), new OCanSyncAccept.BlockingSync());
     assertTrue(receiverStateOp.isPresent());
     OSyncState receiverState = receiverStateOp.get().state();
 
     OSyncState senderState =
-        state
-            .startSend(node1, nodeId, dbId, syncInfo.syncId(), new OCanSyncAccept.BlockingSync())
-            .get();
+        state.startSend(nodeId, syncInfo.syncId(), new OCanSyncAccept.BlockingSync()).get();
 
     assertEquals(receiverState.getSender(), senderState.getSender());
     assertEquals(receiverState.getReceiver(), senderState.getReceiver());
@@ -400,17 +398,15 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
 
     OSyncInfo syncInfo = state1.newSync(dbId).get();
     assertTrue(syncInfo.targets().contains(nodeId));
-    boolean canSync = state.acceptSync(nodeId, node1, dbId, syncInfo.syncId());
+    boolean canSync = state.acceptSync(nodeId, syncInfo.syncId());
     assertTrue(canSync);
     Optional<OCanSyncResult> receiverStateOp =
-        state1.canSync(nodeId, node1, dbId, syncInfo.syncId(), new OCanSyncAccept.BlockingSync());
+        state1.canSync(nodeId, syncInfo.syncId(), new OCanSyncAccept.BlockingSync());
     assertTrue(receiverStateOp.isPresent());
     OSyncState receiverState = receiverStateOp.get().state();
 
     OSyncState senderState =
-        state
-            .startSend(node1, nodeId, dbId, syncInfo.syncId(), new OCanSyncAccept.BlockingSync())
-            .get();
+        state.startSend(nodeId, syncInfo.syncId(), new OCanSyncAccept.BlockingSync()).get();
 
     assertEquals(receiverState.getSender(), senderState.getSender());
     assertEquals(receiverState.getReceiver(), senderState.getReceiver());
@@ -426,7 +422,7 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
 
     OSyncInfo syncInfo2 = state2.newSync(dbId).get();
     assertTrue(syncInfo2.targets().contains(nodeId));
-    boolean canSync2 = state.acceptSync(nodeId, node2, dbId, syncInfo.syncId());
+    boolean canSync2 = state.acceptSync(nodeId, syncInfo.syncId());
     assertFalse(canSync2);
   }
 

@@ -1093,7 +1093,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
         // TODO: here should check if it support the incremental, also that at the receiving side.
         mode = new OSyncMode.BlockingBackup();
       }
-      var req = new OSyncRequest(getNodeId(), dbId, sync.get().syncId(), mode);
+      var req = new OSyncRequest(sync.get().syncId(), mode);
       sendMessage(sync.get().targets(), req);
       return Optional.of(sync.get().finished());
     } else {
@@ -1102,19 +1102,13 @@ public class OrientDBDistributed extends OrientDBEmbedded
     }
   }
 
-  public void acceptSync(ONodeId receiver, ODatabaseId dbId, OSyncId syncId, OSyncMode mode) {
+  public void acceptSync(OSyncId syncId, OSyncMode mode) {
     OCoordinatedDistributedOps ops = getNodeState().getOps();
-    boolean accepted = ops.acceptSync(getNodeState().getNodeId(), receiver, dbId, syncId);
+    boolean accepted = ops.acceptSync(getNodeState().getNodeId(), syncId);
     OCanSyncAccept accept;
-    String dbName = ops.getDatabaseTopology().getDatabaseName(dbId);
+    String dbName = ops.getDatabaseTopology().getDatabaseName(syncId.getDbId());
     if (accepted && exists(dbName, null, null)) {
-      logger.debugNode(
-          getNodeId(),
-          "Accepted sync %s syncI: %s sender %s receiver %s",
-          dbId,
-          syncId,
-          getNodeId(),
-          receiver);
+      logger.debugNode(getNodeId(), "Accepted sync %s sender %s ", syncId, getNodeId());
 
       if (mode instanceof NonBlockingBackup) {
         OStorage storage = getStorage(dbName);
@@ -1150,43 +1144,34 @@ public class OrientDBDistributed extends OrientDBEmbedded
       accept = new OCanSyncAccept.NotAccepted();
     }
 
-    sendMessage(receiver, new OCanSync(getNodeId(), dbId, syncId, accept));
+    sendMessage(syncId.getReceiver(), new OCanSync(getNodeId(), syncId, accept));
   }
 
   private OCanSyncAccept defaultFullSync() {
     return new OCanSyncAccept.BlockingSync();
   }
 
-  public void canSync(ONodeId sender, ODatabaseId dbId, OSyncId syncId, OCanSyncAccept canSync) {
+  public void canSync(ONodeId sender, OSyncId syncId, OCanSyncAccept canSync) {
     OCoordinatedDistributedOps ops = getNodeState().getOps();
-    Optional<OCanSyncResult> state = ops.canSync(sender, getNodeId(), dbId, syncId, canSync);
+    Optional<OCanSyncResult> state = ops.canSync(sender, syncId, canSync);
 
     if (state.isPresent()) {
-      logger.debugNode(
-          getNodeId(),
-          "Receiving sync %s syncId %s sender %s receiver %s",
-          dbId,
-          syncId,
-          sender,
-          getNodeId());
+      logger.debugNode(getNodeId(), "Receiving sync %s sender %s ", syncId, sender);
       // Send a close to the other nodes in case they accepted the sync
       sendMessage(state.get().others(), new ONextBuffer(syncId, true));
 
       OSyncState st = state.get().state();
-      sendMessage(sender, new OStartSync(getNodeId(), dbId, syncId, canSync));
+      sendMessage(sender, new OStartSync(syncId, canSync));
 
-      String dbName = getDbName(dbId);
+      String dbName = getDbName(syncId.getDbId());
       OReceiverInputStream input = new OReceiverInputStream(this::requestNext, st);
       st.setReceiverStream(input);
-      runOnThread(
-          () -> {
-            receiveSync(dbName, st, input, getConfigurations());
-          });
+      runOnThread(() -> receiveSync(dbName, st, input, getConfigurations()));
     } else {
       logger.infoNode(
           getNodeId(),
           "Not starting sync %s from %s missing database or already syncing",
-          dbId,
+          syncId.getDbId(),
           sender);
     }
   }
@@ -1218,18 +1203,17 @@ public class OrientDBDistributed extends OrientDBEmbedded
     }
   }
 
-  public void sendDatabase(
-      ONodeId receiver, ODatabaseId dbId, OSyncId syncId, OCanSyncAccept mode) {
-    logger.debug(
-        "Sending sync %s syncId %s sender %s receiver %s", dbId, syncId, getNodeId(), receiver);
+  public void sendDatabase(OSyncId syncId, OCanSyncAccept mode) {
+    logger.debugNode(getNodeId(), "Sending sync %s sender %s ", syncId, getNodeId());
     Optional<OSyncState> state =
-        getNodeState().getOps().startSend(receiver, getNodeState().getNodeId(), dbId, syncId, mode);
+        getNodeState().getOps().startSend(getNodeState().getNodeId(), syncId, mode);
     if (state.isPresent()) {
       var st = state.get();
       String name = getDbName(st.getDbId());
       runOnThread(() -> syncBackup(name, st, new OutputStreamMessages(this::sendBuffer, st)));
     } else {
-      sendMessage(receiver, new OSyncData(syncId, new byte[] {}, 0, true));
+      logger.debugNode(getNodeId(), "No sync %s present, closing ", syncId);
+      sendMessage(syncId.getReceiver(), new OSyncData(syncId, new byte[] {}, 0, true));
     }
   }
 

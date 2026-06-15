@@ -33,11 +33,10 @@ public class OSyncSession {
     return syncId;
   }
 
-  public Optional<OSyncState> startSync(
-      ONodeId sender, ONodeId receiver, OSyncId syncId, OCanSyncAccept canSync) {
+  public Optional<OSyncState> startSync(ONodeId sender, OSyncId syncId, OCanSyncAccept canSync) {
     assert this.syncId.equals(syncId);
     if (canSync.isSync() && this.state.isEmpty()) {
-      this.state = Optional.of(new OSyncState(dbId, syncId, sender, receiver, canSync));
+      this.state = Optional.of(new OSyncState(syncId, sender, canSync));
       return this.state;
     } else {
       nodes.remove(sender);
@@ -48,12 +47,11 @@ public class OSyncSession {
     }
   }
 
-  public Optional<OCanSyncResult> canSync(
-      ONodeId sender, ONodeId receiver, OSyncId syncId, OCanSyncAccept canSync) {
+  public Optional<OCanSyncResult> canSync(ONodeId sender, OSyncId syncId, OCanSyncAccept canSync) {
     assert this.syncId.equals(syncId);
     if (canSync.isSync()) {
       if (this.state.isEmpty()) {
-        this.state = Optional.of(new OSyncState(dbId, syncId, sender, receiver, canSync));
+        this.state = Optional.of(new OSyncState(syncId, sender, canSync));
         return Optional.of(new OCanSyncResult(this.state.get(), new HashSet<>(this.nodes)));
       } else {
         return Optional.empty();

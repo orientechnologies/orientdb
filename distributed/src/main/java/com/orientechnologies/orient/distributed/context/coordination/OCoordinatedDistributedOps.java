@@ -159,13 +159,11 @@ public interface OCoordinatedDistributedOps {
 
   Optional<OSyncInfo> newSync(ODatabaseId dbId);
 
-  boolean acceptSync(ONodeId sender, ONodeId receiver, ODatabaseId dbId, OSyncId syncId);
+  boolean acceptSync(ONodeId sender, OSyncId syncId);
 
-  Optional<OCanSyncResult> canSync(
-      ONodeId sender, ONodeId receiver, ODatabaseId dbId, OSyncId syncId, OCanSyncAccept canSync);
+  Optional<OCanSyncResult> canSync(ONodeId sender, OSyncId syncId, OCanSyncAccept canSync);
 
-  Optional<OSyncState> startSend(
-      ONodeId to, ONodeId from, ODatabaseId dbId, OSyncId syncId, OCanSyncAccept mode);
+  Optional<OSyncState> startSend(ONodeId from, OSyncId syncId, OCanSyncAccept mode);
 
   Optional<OSyncState> getSyncState(OSyncId syncId);
 

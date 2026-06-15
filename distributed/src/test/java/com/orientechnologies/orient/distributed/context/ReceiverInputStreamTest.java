@@ -15,7 +15,7 @@ public class ReceiverInputStreamTest {
 
   @Test
   public void testReceive() throws IOException, InterruptedException, ExecutionException {
-    OSyncState sync = new OSyncState(null, null, null, null, null);
+    OSyncState sync = new OSyncState(null, null, null);
     OReceiverInputStream stream = new OReceiverInputStream((a, b) -> {}, sync);
     var future = backgroundReceiver(stream);
     var orig = new byte[10];
@@ -29,7 +29,7 @@ public class ReceiverInputStreamTest {
 
   @Test
   public void testReceiveDuplicate() throws IOException, InterruptedException, ExecutionException {
-    OSyncState sync = new OSyncState(null, null, null, null, null);
+    OSyncState sync = new OSyncState(null, null, null);
     OReceiverInputStream stream = new OReceiverInputStream((a, b) -> {}, sync);
     var future = backgroundReceiver(stream);
     var orig = new byte[10];
@@ -46,7 +46,7 @@ public class ReceiverInputStreamTest {
 
   @Test
   public void testJumpingReceive() throws IOException, InterruptedException, ExecutionException {
-    OSyncState sync = new OSyncState(null, null, null, null, null);
+    OSyncState sync = new OSyncState(null, null, null);
     OReceiverInputStream stream = new OReceiverInputStream((a, b) -> {}, sync);
     var future = backgroundReceiver(stream);
     var orig = new byte[10];
@@ -64,7 +64,7 @@ public class ReceiverInputStreamTest {
 
   @Test
   public void testMissOneReceive() throws IOException, InterruptedException, ExecutionException {
-    OSyncState sync = new OSyncState(null, null, null, null, null);
+    OSyncState sync = new OSyncState(null, null, null);
     OReceiverInputStream stream = new OReceiverInputStream((a, b) -> {}, sync);
     var future = backgroundReceiver(stream);
     var orig = new byte[10];
@@ -83,7 +83,7 @@ public class ReceiverInputStreamTest {
 
   @Test
   public void testMissInverted() throws IOException, InterruptedException, ExecutionException {
-    OSyncState sync = new OSyncState(null, null, null, null, null);
+    OSyncState sync = new OSyncState(null, null, null);
     OReceiverInputStream stream = new OReceiverInputStream((a, b) -> {}, sync);
     var future = backgroundReceiver(stream);
     var orig = new byte[10];

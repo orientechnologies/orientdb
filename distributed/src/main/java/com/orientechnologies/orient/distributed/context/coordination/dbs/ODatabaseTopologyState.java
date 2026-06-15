@@ -191,10 +191,10 @@ public class ODatabaseTopologyState extends OWatcher {
   }
 
   public synchronized Optional<OCanSyncResult> canSync(
-      ONodeId sender, ONodeId receiver, OSyncId syncId, OCanSyncAccept canSync) {
+      ONodeId sender, OSyncId syncId, OCanSyncAccept canSync) {
     OSyncSession session = this.syncSessions.get(syncId);
     if (session != null) {
-      Optional<OCanSyncResult> result = session.canSync(sender, receiver, syncId, canSync);
+      Optional<OCanSyncResult> result = session.canSync(sender, syncId, canSync);
       if (result.isEmpty() && session.isFinished()) {
         this.syncSessions.remove(syncId);
       }
@@ -205,16 +205,16 @@ public class ODatabaseTopologyState extends OWatcher {
   }
 
   public synchronized Optional<OSyncState> startSend(
-      ONodeId from, ONodeId to, OSyncId syncId, OCanSyncAccept mode) {
+      ONodeId from, OSyncId syncId, OCanSyncAccept mode) {
     OSyncSession session = this.syncSessions.get(syncId);
     if (session != null) {
-      return session.startSync(from, to, syncId, mode);
+      return session.startSync(from, syncId, mode);
     } else {
       return Optional.empty();
     }
   }
 
-  public synchronized boolean acceptSync(ONodeId sender, ONodeId receiver, OSyncId syncId) {
+  public synchronized boolean acceptSync(ONodeId sender, OSyncId syncId) {
     for (OSyncSession session : this.syncSessions.values()) {
       if (session.isTransferingData()) {
         return false;

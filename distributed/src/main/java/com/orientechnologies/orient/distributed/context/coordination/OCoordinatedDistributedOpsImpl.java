@@ -565,20 +565,18 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   }
 
   @Override
-  public boolean acceptSync(ONodeId sender, ONodeId receiver, ODatabaseId dbId, OSyncId syncId) {
-    return this.databaseTopology.acceptSync(sender, receiver, dbId, syncId);
+  public boolean acceptSync(ONodeId sender, OSyncId syncId) {
+    return this.databaseTopology.acceptSync(sender, syncId);
   }
 
   @Override
-  public Optional<OCanSyncResult> canSync(
-      ONodeId sender, ONodeId receiver, ODatabaseId dbId, OSyncId syncId, OCanSyncAccept canSync) {
-    return this.databaseTopology.canSync(sender, receiver, dbId, syncId, canSync);
+  public Optional<OCanSyncResult> canSync(ONodeId sender, OSyncId syncId, OCanSyncAccept canSync) {
+    return this.databaseTopology.canSync(sender, syncId, canSync);
   }
 
   @Override
-  public Optional<OSyncState> startSend(
-      ONodeId to, ONodeId from, ODatabaseId dbId, OSyncId syncId, OCanSyncAccept mode) {
-    return this.databaseTopology.startSend(to, from, dbId, syncId, mode);
+  public Optional<OSyncState> startSend(ONodeId from, OSyncId syncId, OCanSyncAccept mode) {
+    return this.databaseTopology.startSend(from, syncId, mode);
   }
 
   @Override

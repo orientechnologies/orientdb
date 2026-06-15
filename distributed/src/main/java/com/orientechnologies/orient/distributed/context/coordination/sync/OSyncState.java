@@ -13,10 +13,8 @@ import java.util.concurrent.TimeUnit;
 public class OSyncState {
   private static final OLoggerDistributed logger = OLoggerDistributed.logger(OSyncState.class);
 
-  private final ODatabaseId dbId;
   private final OSyncId syncId;
   private final ONodeId sender;
-  private final ONodeId receiver;
   private final OCanSyncAccept acceptMode;
   private volatile int messageCount = 0;
   private volatile long totalsize = 0;
@@ -25,16 +23,9 @@ public class OSyncState {
   private volatile boolean close = false;
   private volatile long lastTimeMessageReceived;
 
-  public OSyncState(
-      ODatabaseId dbId,
-      OSyncId syncId,
-      ONodeId sender,
-      ONodeId receiver,
-      OCanSyncAccept acceptMode) {
-    this.dbId = dbId;
+  public OSyncState(OSyncId syncId, ONodeId sender, OCanSyncAccept acceptMode) {
     this.syncId = syncId;
     this.sender = sender;
-    this.receiver = receiver;
     this.acceptMode = acceptMode;
     refreshMessageTime();
   }
@@ -53,7 +44,7 @@ public class OSyncState {
   }
 
   public ODatabaseId getDbId() {
-    return dbId;
+    return syncId.getDbId();
   }
 
   public ONodeId getSender() {
@@ -61,7 +52,7 @@ public class OSyncState {
   }
 
   public ONodeId getReceiver() {
-    return receiver;
+    return syncId.getReceiver();
   }
 
   public OSyncId getSyncId() {

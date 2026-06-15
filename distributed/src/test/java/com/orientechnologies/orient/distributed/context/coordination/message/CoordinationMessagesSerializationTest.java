@@ -159,11 +159,9 @@ public class CoordinationMessagesSerializationTest {
     ONodeId nodeId = newNodeId();
     ODatabaseId dbId = newDatabaseId();
     OSyncId syncId = new OSyncId(dbId, nodeId);
-    OSyncRequest syncReq = new OSyncRequest(nodeId, dbId, syncId, new OSyncMode.BlockingBackup());
+    OSyncRequest syncReq = new OSyncRequest(syncId, new OSyncMode.BlockingBackup());
 
     OSyncRequest read = writeRead(syncReq);
-    assertEquals(read.getFrom(), nodeId);
-    assertEquals(read.getDbId(), dbId);
 
     assertEquals(read.getSyncId(), syncId);
     assertEquals(read.getMode(), new OSyncMode.BlockingBackup());
@@ -174,11 +172,10 @@ public class CoordinationMessagesSerializationTest {
     ONodeId nodeId = newNodeId();
     ODatabaseId dbId = newDatabaseId();
     OSyncId syncId = new OSyncId(dbId, nodeId);
-    OCanSync syncReq = new OCanSync(nodeId, dbId, syncId, new OCanSyncAccept.BlockingSync());
+    OCanSync syncReq = new OCanSync(nodeId, syncId, new OCanSyncAccept.BlockingSync());
 
     OCanSync read = writeRead(syncReq);
     assertEquals(read.getSender(), nodeId);
-    assertEquals(read.getDbId(), dbId);
 
     assertEquals(read.getSyncId(), syncId);
     assertEquals(read.getCanSync(), new OCanSyncAccept.BlockingSync());
@@ -189,11 +186,9 @@ public class CoordinationMessagesSerializationTest {
     ONodeId nodeId = newNodeId();
     ODatabaseId dbId = newDatabaseId();
     OSyncId syncId = new OSyncId(dbId, nodeId);
-    OStartSync syncReq = new OStartSync(nodeId, dbId, syncId, new OCanSyncAccept.BlockingSync());
+    OStartSync syncReq = new OStartSync(syncId, new OCanSyncAccept.BlockingSync());
 
     OStartSync read = writeRead(syncReq);
-    assertEquals(read.getReceiver(), nodeId);
-    assertEquals(read.getDbId(), dbId);
 
     assertEquals(read.getSyncId(), syncId);
     assertEquals(read.getMode(), new OCanSyncAccept.BlockingSync());

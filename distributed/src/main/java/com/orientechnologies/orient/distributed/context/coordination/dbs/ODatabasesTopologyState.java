@@ -259,22 +259,21 @@ public class ODatabasesTopologyState extends OWatcher implements ODatabasesTopol
   }
 
   public synchronized Optional<OCanSyncResult> canSync(
-      ONodeId sender, ONodeId receiver, ODatabaseId dbId, OSyncId syncId, OCanSyncAccept canSync) {
-    ODatabaseTopologyState db = getDb(dbId);
+      ONodeId sender, OSyncId syncId, OCanSyncAccept canSync) {
+    ODatabaseTopologyState db = getDb(syncId.getDbId());
     if (db == null) {
       return Optional.empty();
     }
-    return db.canSync(sender, receiver, syncId, canSync);
+    return db.canSync(sender, syncId, canSync);
   }
 
   public synchronized Optional<OSyncState> startSend(
-      ONodeId to, ONodeId from, ODatabaseId dbId, OSyncId syncId, OCanSyncAccept mode) {
-    ODatabaseTopologyState db = getDb(dbId);
+      ONodeId from, OSyncId syncId, OCanSyncAccept mode) {
+    ODatabaseTopologyState db = getDb(syncId.getDbId());
     if (db == null) {
-      // TODO: do something better .... no nullpointers!
-      throw new NullPointerException("missing database definition");
+      return Optional.empty();
     }
-    return db.startSend(from, to, syncId, mode);
+    return db.startSend(from, syncId, mode);
   }
 
   public synchronized void requestNext(OSyncId syncId, boolean close) {
@@ -304,11 +303,10 @@ public class ODatabasesTopologyState extends OWatcher implements ODatabasesTopol
     return null;
   }
 
-  public synchronized boolean acceptSync(
-      ONodeId sender, ONodeId receiver, ODatabaseId dbId, OSyncId syncId) {
-    ODatabaseTopologyState db = getDb(dbId);
+  public synchronized boolean acceptSync(ONodeId sender, OSyncId syncId) {
+    ODatabaseTopologyState db = getDb(syncId.getDbId());
     if (db != null) {
-      return db.acceptSync(sender, receiver, syncId);
+      return db.acceptSync(sender, syncId);
     }
     return false;
   }
