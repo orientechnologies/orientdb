@@ -649,7 +649,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
 
   protected OSharedContextEmbedded getOrCreateSharedContext(
       String name, OContextConfiguration config) {
-    return sharedContexts.computeIfAbsent(name, (n) -> createSharedContext(name, config));
+    return sharedContexts.computeIfAbsent(name, n -> createSharedContext(n, config));
   }
 
   protected OSharedContextEmbedded createSharedContext(String name, OContextConfiguration config) {
@@ -833,7 +833,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
     this.sharedContexts
         .values()
         .forEach(
-            (ctx) -> {
+            ctx -> {
               ctx.close();
               try {
                 logger.info("- shutdown storage: %s ...", ctx.getStorage().getName());
@@ -1051,6 +1051,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
     return executor.submit(callable);
   }
 
+  @Override
   public OScriptManager getScriptManager() {
     return scriptManager;
   }
@@ -1059,6 +1060,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
     return "" + System.currentTimeMillis() + "_" + queryCounter.incrementAndGet();
   }
 
+  @Override
   public OResultSet executeServerStatement(
       String script, String username, String pw, Map<String, Object> args) {
     OServerStatement statement = OSQLEngine.parseServerStatement(script, this);
@@ -1073,6 +1075,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
     return result;
   }
 
+  @Override
   public OResultSet executeServerStatement(
       String script, String username, String pw, Object... args) {
     OServerStatement statement = OSQLEngine.parseServerStatement(script, this);
@@ -1101,6 +1104,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
     return basePath;
   }
 
+  @Override
   public boolean isMemoryOnly() {
     return basePath == null;
   }
@@ -1112,19 +1116,22 @@ public class OrientDBEmbedded implements OrientDBInternal {
     }
   }
 
+  @Override
   public Set<String> listLodadedDatabases() {
     Set<String> dbs;
     synchronized (this) {
-      dbs = new HashSet<String>(sharedContexts.keySet());
+      dbs = new HashSet<>(sharedContexts.keySet());
     }
     dbs.remove(OSystemDatabase.SYSTEM_DB_NAME);
     return dbs;
   }
 
+  @Override
   public void startCommand(Optional<Long> timeout) {
     timeoutChecker.startCommand(timeout);
   }
 
+  @Override
   public void endCommand() {
     timeoutChecker.endCommand();
   }
