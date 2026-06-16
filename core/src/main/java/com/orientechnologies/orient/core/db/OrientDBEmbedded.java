@@ -421,7 +421,9 @@ public class OrientDBEmbedded implements OrientDBInternal {
   private void checkDefaultPassword(String database, String user, String password) {
     if ((("admin".equals(user) && "admin".equals(password))
             || ("reader".equals(user) && "reader".equals(password))
-            || ("writer".equals(user) && "writer".equals(password)))
+            || ("writer".equals(user) && "writer".equals(password))
+            || ("root".equals(user) && "root".equals(password))
+            || ("orientdb".equals(user) && "orientdb".equals(password)))
         && WARNING_DEFAULT_USERS.getValueAsBoolean()) {
       logger.warnNoDb(
           String.format(
