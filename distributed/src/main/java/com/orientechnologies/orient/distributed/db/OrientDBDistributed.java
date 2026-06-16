@@ -1210,9 +1210,10 @@ public class OrientDBDistributed extends OrientDBEmbedded
 
   public void syncBackup(String name, OSyncState state, OutputStream output) {
     boolean success = false;
-    try (OutputStream out = new BufferedOutputStream(output, 8096)) {
-      ODatabaseDocumentEmbedded db = openNoAuthorization(name);
-      OStorage storage = db.getStorage();
+    try (OutputStream out = new BufferedOutputStream(output, 8096);
+        var db = openNoAuthorization(name)) {
+      var context = (OSharedContextDistributed) sharedContexts.get(name);
+      OStorage storage = context.getStorage();
 
       if (state.getAcceptMode() instanceof OCanSyncAccept.NonBlockingSync) {
         storage.incrementalSync(out, null);
@@ -1220,18 +1221,13 @@ public class OrientDBDistributed extends OrientDBEmbedded
         int compression = getIntConfig(OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION);
         storage.backup(out, null, null, null, compression, 0);
       } else if (state.getAcceptMode() instanceof OCanSyncAccept.DeltaSync d) {
-        var context = (OSharedContextDistributed) sharedContexts.get(name);
-        List<OTransactionId> transactions;
-        if (context != null) {
-          transactions = context.getTransactionSequence().missingTransactions(d.status());
-        } else {
-          transactions = List.of();
-        }
-        db.deltaBackup(out, transactions);
+        List<OTransactionId> transactions =
+            context.getTransactionSequence().missingTransactions(d.status());
+        storage.backupTransactions(out, transactions);
       }
       success = true;
     } catch (IOException e) {
-      logger.info("exception while sending backup data", e);
+      logger.infoNode(getNodeId(), "exception while sending backup data", e);
     } finally {
       getNodeState().getOps().completeSync(state.getSyncId(), success);
     }

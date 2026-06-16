@@ -116,7 +116,6 @@ import com.orientechnologies.orient.core.storage.cluster.OOfflineClusterExceptio
 import com.orientechnologies.orient.core.storage.impl.local.OFreezableStorageComponent;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
-import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
@@ -2134,9 +2133,5 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
   public ORawBuffer readIfVersionIsNotLatest(
       ORecordId rid, String fetchPlan, boolean ignoreCache, int recordVersion) {
     return getStorage().readRecordIfVersionIsNotLatest(rid, recordVersion);
-  }
-
-  public void deltaBackup(OutputStream out, List<OTransactionId> missing) {
-    getStorage().backupTransactions(out, missing);
   }
 }

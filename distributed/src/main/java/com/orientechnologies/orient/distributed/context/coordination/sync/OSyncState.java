@@ -103,7 +103,7 @@ public class OSyncState {
   }
 
   public synchronized void requestNext(boolean close) {
-    logger.debug("requesting next buffer");
+    logger.debug("requesting next buffer for %s", syncId);
     canNext = true;
     if (close) {
       this.close = close;
@@ -112,7 +112,7 @@ public class OSyncState {
   }
 
   public synchronized void close() {
-    logger.debug("closed sync %s", syncId);
+    logger.debug("closed sync %s sender %s", syncId, this.sender);
     if (!this.close) {
       this.close = true;
       if (this.receiverStream != null) {
