@@ -321,21 +321,20 @@ public class OrientDBDistributed extends OrientDBEmbedded
     }
   }
 
+  @Override
   public void loadAllDatabases() {
-    List<String> dbs = new ArrayList<String>(this.listDatabases(null, null));
+    List<String> dbs = new ArrayList<>(this.listDatabases(null, null));
     Collections.sort(dbs);
     for (final String databaseName : dbs) {
       if (!OSystemDatabase.SYSTEM_DB_NAME.equals(databaseName)) {
-        try {
+        try (ODatabaseDocumentEmbedded db = openNoAuthorization(databaseName)) {
           logger.infoNode(getNodeName(), "Opening database '%s'...", databaseName);
-          ODatabaseDocumentEmbedded db = openNoAuthorization(databaseName);
           if (this.nodeState.getDatabaseTopology().getDatabaseId(databaseName).isEmpty()) {
             declareDatabaseFlow(databaseName, db.getStorage().getDatabaseId()).get();
             setDatabaseState(db.getStorage().getDatabaseId(), getNodeId(), ODatabaseState.Online);
           } else {
             setDatabaseState(db.getStorage().getDatabaseId(), getNodeId(), ODatabaseState.Online);
           }
-          db.close();
         } catch (Exception e) {
           logger.warn("Exception on first inizialization of database '%s'", e, databaseName);
         }
@@ -356,6 +355,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
     return plugin;
   }
 
+  @Override
   protected OSharedContextEmbedded createSharedContext(OStorage storage) {
     if (isDistributedDisabled(storage.getName())) {
       return new OSharedContextEmbedded(storage, this);
@@ -363,6 +363,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
     return new OSharedContextDistributed(storage, this);
   }
 
+  @Override
   protected ODatabaseDocumentEmbedded newSessionInstance(String database, OrientDBConfig config) {
     ODatabaseDocumentEmbedded embedded;
     OSharedContextEmbedded sharedContext =
@@ -399,7 +400,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
     ODatabaseDocumentEmbedded embedded;
 
     OSharedContextEmbedded sharedContext =
-        sharedContexts.computeIfAbsent(storage.getName(), (k) -> createSharedContext(storage));
+        sharedContexts.computeIfAbsent(storage.getName(), k -> createSharedContext(storage));
     if (isDistributedDisabled(storage.getName())) {
       embedded = new ODatabaseDocumentEmbedded(sharedContext);
       embedded.internalCreate(config, sharedContext);
@@ -410,6 +411,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
     return embedded;
   }
 
+  @Override
   protected ODatabaseDocumentEmbedded onlyOpenNoAuthorization(String name) {
     checkDatabaseName(name);
     try {
@@ -436,6 +438,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
     }
   }
 
+  @Override
   protected ODatabaseDocumentEmbedded newPooledSessionInstance(
       ODatabasePoolInternal pool, String name) {
     OSharedContextEmbedded sharedContext =
@@ -494,13 +497,6 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   @Override
-  public ODatabaseDocumentInternal poolOpen(
-      String name, String user, String password, ODatabasePoolInternal pool) {
-    ODatabaseDocumentInternal session = super.poolOpen(name, user, password, pool);
-    return session;
-  }
-
-  @Override
   public void internalDrop(String name) {
     if (!exists(name, null, null)) {
       return;
@@ -516,14 +512,13 @@ public class OrientDBDistributed extends OrientDBEmbedded
     }
 
     ODatabaseDocumentInternal current = ODatabaseRecordThreadLocal.instance().getIfDefined();
-    try {
-      ODatabaseDocumentInternal db = openNoAuthenticate(name, null);
+    try (ODatabaseDocumentInternal db = openNoAuthenticate(name, null)) {
+
       for (Iterator<ODatabaseLifecycleListener> it = orient.getDbLifecycleListeners();
           it.hasNext(); ) {
         it.next().onDrop(db);
       }
       db.callOnDropListeners();
-      db.close();
     } catch (OStorageException | ODatabaseException e) {
       logger.warnNoDb("Error opening %s for drop hook call ", name, e);
     } finally {
@@ -545,20 +540,6 @@ public class OrientDBDistributed extends OrientDBEmbedded
 
   @Override
   public void drop(String name, String user, String password) {
-    //    if (getPlugin() != null && getPlugin().isEnabled()) {
-    //      plugin.executeInDistributedDatabaseLock(
-    //          name,
-    //          20000,
-    //          () -> {
-    //            plugin.dropOnAllServers(name);
-    //            return null;
-    //          });
-    //      // dropFlow(name);
-    //      plugin.dropConfig(name);
-    //    } else {
-    //      super.drop(name, user, password);
-    //    }
-
     if (isDistributedDisabled(name)) {
       super.drop(name, user, password);
     } else {
@@ -637,26 +618,6 @@ public class OrientDBDistributed extends OrientDBEmbedded
     } catch (InterruptedException e) {
       return false;
     }
-    //    if (!checkDbAvailable(name)) {
-    //      long waitTime =
-    // getLongConfig(OGlobalConfiguration.DISTRIBUTED_DATABASE_ONLINE_GRACE_PERIOD);
-    //      if (waitTime != 0) {
-    //        long retry = waitTime / 500;
-    //        // TODO: when there will be proper node online event this should attach to that with a
-    //        // notification instead of sleep
-    //        for (long i = 0; i < retry; i++) {
-    //          try {
-    //            Thread.sleep(500);
-    //          } catch (InterruptedException e) {
-    //            e.printStackTrace();
-    //          }
-    //          if (checkDbAvailable(name)) {
-    //            return true;
-    //          }
-    //        }
-    //      }
-    //    }
-    //    return false;
   }
 
   @Override
@@ -765,17 +726,6 @@ public class OrientDBDistributed extends OrientDBEmbedded
       ODatabaseId id,
       OrientDBConfig config,
       ODatabaseTask<Void> createOps) {
-    //    super.create(name, user, password, type, id, config, createOps);
-    //    if (!isDistributedDisabled(name)) {
-    //      Set<String> nodes = plugin.getActiveServers();
-    //      for (String node : nodes) {
-    //        try {
-    //          plugin.waitUntilNodeOnline(node, name);
-    //        } catch (InterruptedException e) {
-    //          break;
-    //        }
-    //      }
-    //    }
 
     if (isDistributedDisabled(name)) {
       super.create(name, user, password, type, id, config, createOps);
@@ -811,10 +761,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
 
   public Future<Optional<OAcceptResult>> retryOperation(ORetryOperation operation) {
     OStandardCompleteExecution exec = newExectution(operation);
-    execute(
-        () -> {
-          operation.execute(this, exec, Optional.empty());
-        });
+    execute(() -> operation.execute(this, exec, Optional.empty()));
     return exec.getResult();
   }
 
@@ -823,11 +770,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
       OCompleteExecution exec,
       int delay,
       Optional<OAcceptResult> result) {
-    delayExecute(
-        () -> {
-          operation.execute(this, exec, result);
-        },
-        delay);
+    delayExecute(() -> operation.execute(this, exec, result), delay);
   }
 
   private Future<Optional<OAcceptResult>> setDatabaseState(
@@ -849,6 +792,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
     }
   }
 
+  @Override
   public void distributedSetOnline(OSharedContextEmbedded ctx) {
     ((OSharedContextDistributed) ctx).getDistributedContext().setOnline();
   }
@@ -866,7 +810,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
 
   public Collection<ODistributedDatabaseImpl> getDistributedDatabases() {
     return this.sharedContexts.values().stream()
-        .map((x) -> ((OSharedContextDistributed) x).getDistributedContext())
+        .map(x -> ((OSharedContextDistributed) x).getDistributedContext())
         .toList();
   }
 
@@ -876,10 +820,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
 
   public ODistributedConfigurationManager getOrInitConfigurationManager(String database) {
     return configurations.computeIfAbsent(
-        database,
-        (key) -> {
-          return new ODistributedConfigurationManager(this, plugin, key);
-        });
+        database, key -> new ODistributedConfigurationManager(this, plugin, key));
   }
 
   public ODistributedConfigurationManager getConfigurationManager(String database) {
@@ -942,7 +883,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
         database,
         (m, s) -> {
           m.setDistributedConfiguration(s, distributedConfiguration);
-          return (Void) null;
+          return null;
         });
   }
 
@@ -953,7 +894,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
         database,
         (m, s) -> {
           m.saveDatabaseConfiguration(s);
-          return (Void) null;
+          return null;
         });
   }
 
@@ -1356,8 +1297,6 @@ public class OrientDBDistributed extends OrientDBEmbedded
     } else {
       logger.warn("setting database status to %s, for not defined db %s", status, dbName);
     }
-
-    // plugin.setDatabaseStatus(nodeId.getNode(), dbName, status);
   }
 
   public void setDatabaseStatus(String dbName, DB_STATUS status) {
@@ -1371,7 +1310,6 @@ public class OrientDBDistributed extends OrientDBEmbedded
     } else {
       logger.warn("setting database status to %s, for not defined db %s", status, dbName);
     }
-    // plugin.setDatabaseStatus(getNodeId().getNode(), dbName, status);
   }
 
   public DB_STATUS getDatabaseStatus(ONodeId nodeId, String dbName) {
@@ -1383,8 +1321,6 @@ public class OrientDBDistributed extends OrientDBEmbedded
       }
     }
     return DB_STATUS.NOT_AVAILABLE;
-
-    //    return plugin.getDatabaseStatus(nodeId.getNode(), dbName);
   }
 
   public DB_STATUS getDatabaseStatus(String node, String dbName) {
@@ -1403,7 +1339,6 @@ public class OrientDBDistributed extends OrientDBEmbedded
     } else {
       return null;
     }
-    // return plugin.getDatabaseStatus(getNodeId().getNode(), dbName);
   }
 
   public OServer getServer() {
@@ -1430,10 +1365,10 @@ public class OrientDBDistributed extends OrientDBEmbedded
       if (res.isPresent()) {
         return res.get();
       } else {
-        return new OCompletedFuture<Boolean>(false);
+        return new OCompletedFuture<>(false);
       }
     } else {
-      return new OCompletedFuture<Boolean>(false);
+      return new OCompletedFuture<>(false);
     }
   }
 
@@ -1441,21 +1376,19 @@ public class OrientDBDistributed extends OrientDBEmbedded
     Set<String> nodes = getAvailableNodeNames(name);
     nodes.remove(getNodeName());
     return nodes;
-    //    return plugin.getAvailableNodeNotLocalNames(name);
   }
 
   public Set<String> getAvailableNodeNames(String name) {
     Optional<ODatabaseId> id = getNodeState().getDatabaseTopology().getDatabaseId(name);
     if (id.isPresent()) {
       return getNodeState().getDatabaseTopology().getOnlineNodes(id.get()).stream()
-          .map((x) -> x.getNode())
+          .map(ONodeId::getNode)
           .collect(Collectors.toSet());
     } else {
       return getNodeState().getNetworkMembers().stream()
-          .map((x) -> x.getNode())
+          .map(ONodeId::getNode)
           .collect(Collectors.toSet());
     }
-    //    return plugin.getAvailableNodeNames(name);
   }
 
   public int getOnlineMasters(String databaseName) {
@@ -1469,7 +1402,6 @@ public class OrientDBDistributed extends OrientDBEmbedded
     } else {
       return 0;
     }
-    //    return plugin.getAvailableNodes(databaseName);
   }
 
   public void establish(OGroupId groupId, Set<ONodeId> candidates, OTransactionIdPromise promise) {
@@ -1493,17 +1425,16 @@ public class OrientDBDistributed extends OrientDBEmbedded
     if (id.isPresent()) {
       result =
           getNodeState().getDatabaseTopology().getOnlineNodes(id.get()).stream()
-              .map((x) -> x.getNode())
+              .map(ONodeId::getNode)
               .collect(Collectors.toList());
     } else {
       result =
           getNodeState().getNetworkMembers().stream()
-              .map((x) -> x.getNode())
+              .map(ONodeId::getNode)
               .collect(Collectors.toList());
     }
     result.remove(getNodeName());
     return result;
-    //    return plugin.getOnlineNodesNotLocal(dbName);
   }
 
   /** Returns the nodes with the requested status. */
@@ -1522,12 +1453,10 @@ public class OrientDBDistributed extends OrientDBEmbedded
       if (!matchState) it.remove();
     }
     return iNodes.size();
-
-    //    return plugin.getNodesWithStatus(iNodes, databaseName, statuses);
   }
 
   public boolean isNodeOnline(String targetNode, String databaseName) {
-    return DB_STATUS.ONLINE.equals(getDatabaseStatus(nodeName, databaseName));
+    return DB_STATUS.ONLINE.equals(getDatabaseStatus(targetNode, databaseName));
   }
 
   public boolean isNodeAvailable(String targetNode, String databaseName) {
@@ -1549,7 +1478,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
     Collection<ODatabaseId> dbs = databaseTopology.getDatabases();
     for (ODatabaseId id : dbs) {
       // TODO: check autodeploy setting
-      List<OAddNodeInfo> nodes = new ArrayList<OAddNodeInfo>();
+      List<OAddNodeInfo> nodes = new ArrayList<>();
       for (ONodeId node : members) {
         ODatabaseState state = databaseTopology.getState(id, node);
         if (ODatabaseState.NotAvailable.equals(state)) {
@@ -1605,9 +1534,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
       OCompleteAction action,
       int delay) {
     delayExecute(
-        () -> {
-          sendMergeOperationMessages(mergeNode, mergedState, original, operation, action);
-        },
+        () -> sendMergeOperationMessages(mergeNode, mergedState, original, operation, action),
         delay);
   }
 
@@ -1709,13 +1636,6 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   public void checkNodeIsMaster(ONodeId localNodeId, String name, String operation) {
-    //    var localNodeName = localNodeId.getNode();
-    //    final ODistributedConfiguration.ROLES nodeRole =
-    // getDistributedConfiguration(name).getServerRole(localNodeName);
-    //    if (nodeRole != ODistributedConfiguration.ROLES.MASTER)
-    //      throw new OWriteOperationNotPermittedException(
-    //          "Cannot execute write operation (" + operation + ") on node '" + localNodeName + "'
-    // because is non a master");
     Optional<ODatabaseId> dbID = getNodeState().getDatabaseTopology().getDatabaseId(name);
     if (dbID.isPresent()) {
 
@@ -1745,9 +1665,6 @@ public class OrientDBDistributed extends OrientDBEmbedded
     } else {
       return false;
     }
-    //    final ODistributedConfiguration cfg = getDistributedConfiguration(databaseName);
-    //    final ODistributedConfiguration.ROLES role = cfg.getServerRole(node);
-    //    return role == ODistributedConfiguration.ROLES.MASTER;
   }
 
   public boolean removeDatabaseMember(ODatabaseId databaseId, ONodeId node) {
@@ -1799,7 +1716,6 @@ public class OrientDBDistributed extends OrientDBEmbedded
   @Override
   public void gracefulWaitFullStartup() throws InterruptedException {
     long waitTime = getLongConfig(OGlobalConfiguration.DISTRIBUTED_DATABASE_ONLINE_GRACE_PERIOD);
-    // TODO: actually wait for node state to be online
     if (nodeState != null) {
       this.nodeState.getOps().waitForEnstablish(Optional.of(waitTime));
     }
@@ -1841,9 +1757,6 @@ public class OrientDBDistributed extends OrientDBEmbedded
     // INSERT MEMBERS
     for (var member : networkTopology.getMembers()) {
       ONodeConfig nodeConfig = getNodeConfiguration(member);
-      if (nodeConfig == null) {
-        continue;
-      }
       final String nodeName = member.getNode();
       final Map<String, String> dbStatus = new HashMap<>();
       for (var db : databaseTopology.getDatabases()) {
@@ -1866,10 +1779,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
     if (getNodeState() != null) {
       ODatabasesTopology databaseTopology = getNodeState().getDatabaseTopology();
       var dbIds = databaseTopology.getDatabases();
-      var dbs =
-          dbIds.stream()
-              .map((id) -> databaseTopology.getDatabaseName(id))
-              .collect(Collectors.toSet());
+      var dbs = dbIds.stream().map(databaseTopology::getDatabaseName).collect(Collectors.toSet());
       nodeCfg.setDatabases(dbs);
     }
 
@@ -1910,10 +1820,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
     if (getNodeState() != null) {
       ODatabasesTopology databaseTopology = getNodeState().getDatabaseTopology();
       var dbIds = databaseTopology.getDatabases();
-      var dbs =
-          dbIds.stream()
-              .map((id) -> databaseTopology.getDatabaseName(id))
-              .collect(Collectors.toSet());
+      var dbs = dbIds.stream().map(databaseTopology::getDatabaseName).collect(Collectors.toSet());
       nodeCfg.setDatabases(dbs);
     }
 
@@ -1926,8 +1833,8 @@ public class OrientDBDistributed extends OrientDBEmbedded
     nodeCfg.setFreeMemory(freeMem);
     nodeCfg.setMaxMemory(maxMem);
 
-    nodeCfg.setLatencies("latencies", getMessageService().getLatencies());
-    nodeCfg.setMessages("messages", getMessageService().getMessageStats());
+    nodeCfg.setLatencies(getMessageService().getLatencies());
+    nodeCfg.setMessages(getMessageService().getMessageStats());
 
     for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners();
         it.hasNext(); ) {

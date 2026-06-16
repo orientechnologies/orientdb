@@ -360,8 +360,8 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
       doc = manager.getClusterConfiguration();
 
       final Collection<ONodeConfig> documents = doc.getMembers();
-      List<String> servers = new ArrayList<String>(documents.size());
-      for (ONodeConfig document : documents) servers.add((String) document.getName());
+      List<String> servers = new ArrayList<>(documents.size());
+      for (ONodeConfig document : documents) servers.add(document.getName());
 
       final ODistributedResponse dResponse =
           manager.sendRequest(
@@ -375,7 +375,7 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
 
       if (payload != null && payload instanceof Map) {
         for (ONodeConfig document : documents) {
-          final String serverName = (String) document.getName();
+          final String serverName = document.getName();
           Object stats = ((Map<String, Object>) payload).get(serverName);
           if (stats instanceof ODocument) {
             final ODocument dStat = (ODocument) stats;

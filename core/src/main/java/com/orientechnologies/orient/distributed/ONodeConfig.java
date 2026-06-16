@@ -117,18 +117,20 @@ public class ONodeConfig {
 
   public void setListeners(List<ONodeListenerConfig> listeners) {
     config.setProperty(
-        "listeners", listeners.stream().map((x) -> x.toMap()).toList(), OType.EMBEDDEDLIST);
+        "listeners",
+        listeners.stream().map(ONodeListenerConfig::toMap).toList(),
+        OType.EMBEDDEDLIST);
   }
 
   public List<ONodeListenerConfig> getListeners() {
     List<Map<String, String>> listeners = config.getProperty("listeners");
     if (listeners != null) {
-      return listeners.stream().map((x) -> new ONodeListenerConfig(x)).toList();
+      return listeners.stream().map(ONodeListenerConfig::new).toList();
     }
     return null;
   }
 
-  public void setLatencies(String string, ODocument latencies) {
+  public void setLatencies(ODocument latencies) {
     config.setProperty("latencies", latencies, OType.EMBEDDED);
   }
 
@@ -136,7 +138,7 @@ public class ONodeConfig {
     return config.getProperty("latencies");
   }
 
-  public void setMessages(String string, ODocument messageStats) {
+  public void setMessages(ODocument messageStats) {
     config.setProperty("messages", messageStats, OType.EMBEDDED);
   }
 

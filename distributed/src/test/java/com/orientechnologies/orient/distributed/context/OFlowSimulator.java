@@ -48,16 +48,10 @@ public class OFlowSimulator implements ODatabaseStateChangeListener, ONodeStateU
   }
 
   @Override
-  public void onStateChange(ODatabaseId dbId, ONodeId nodeId, ODatabaseState state) {
-    // TODO Auto-generated method stub
-
-  }
+  public void onStateChange(ODatabaseId dbId, ONodeId nodeId, ODatabaseState state) {}
 
   @Override
-  public void update(ONodeStateStore newState) {
-    // TODO Auto-generated method stub
-
-  }
+  public void update(ONodeStateStore newState) {}
 
   private class TestAction implements OCompleteAction {
     private boolean success = false;
