@@ -121,6 +121,11 @@ public class OFlowSimulator implements ODatabaseStateChangeListener, ONodeStateU
     }
 
     @Override
+    public OOperationMessage getOp() {
+      return message;
+    }
+
+    @Override
     public void recoordinate(OOperationContext ctx) {
       ctx.recoordinateOperation(promise, message);
     }

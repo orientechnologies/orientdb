@@ -51,6 +51,8 @@ import com.orientechnologies.orient.distributed.context.coordination.dbs.ODataba
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ONodeRole;
 import com.orientechnologies.orient.distributed.context.coordination.message.OCanSync;
 import com.orientechnologies.orient.distributed.context.coordination.message.OCanSyncAccept;
+import com.orientechnologies.orient.distributed.context.coordination.message.OConfirmedOps;
+import com.orientechnologies.orient.distributed.context.coordination.message.OConfirmedRetryOp;
 import com.orientechnologies.orient.distributed.context.coordination.message.OMergeRequest;
 import com.orientechnologies.orient.distributed.context.coordination.message.OMergeResult;
 import com.orientechnologies.orient.distributed.context.coordination.message.ONextBuffer;
@@ -59,6 +61,7 @@ import com.orientechnologies.orient.distributed.context.coordination.message.ONo
 import com.orientechnologies.orient.distributed.context.coordination.message.ONodeInfoListener;
 import com.orientechnologies.orient.distributed.context.coordination.message.OProposeOp;
 import com.orientechnologies.orient.distributed.context.coordination.message.ORetryProposeOp;
+import com.orientechnologies.orient.distributed.context.coordination.message.OSendTransactions;
 import com.orientechnologies.orient.distributed.context.coordination.message.OStartSync;
 import com.orientechnologies.orient.distributed.context.coordination.message.OStructuralMessage;
 import com.orientechnologies.orient.distributed.context.coordination.message.OSyncData;
@@ -149,10 +152,9 @@ public class OrientDBDistributed extends OrientDBEmbedded
   private volatile OServer server;
   private volatile ODistributedPlugin plugin;
   private final ConcurrentHashMap<String, ODistributedConfigurationManager> configurations =
-      new ConcurrentHashMap<String, ODistributedConfigurationManager>();
+      new ConcurrentHashMap<>();
 
   private final ODistributedMessageServiceImpl messageService;
-  // TODO: this require the node name to be instantiate.
   private ONodeState nodeState = null;
   private String nodeName;
   private ORemoteServerManager remoteServerManager;
@@ -404,7 +406,6 @@ public class OrientDBDistributed extends OrientDBEmbedded
     } else {
       embedded = new ODatabaseDocumentDistributed(sharedContext, plugin);
       embedded.internalCreate(config, sharedContext);
-      // getOrInitDistributedConfiguration(storage.getName());
     }
     return embedded;
   }
@@ -1684,7 +1685,14 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   public void receivePing(ONodeId nodeId, OTransactionSequenceStatus status) {
-    getNodeState().getOps().receivePing(nodeId, status);
+    var transactions = getNodeState().getOps().receivePing(nodeId, status);
+    if (!transactions.isEmpty()) {
+      requestTransactions(nodeId, transactions);
+    }
+  }
+
+  private void requestTransactions(ONodeId nodeId, List<OTransactionId> transactions) {
+    sendMessage(nodeId, new OSendTransactions(getNodeId(), transactions));
   }
 
   private void checkDisconnectedNodes() {
@@ -1944,11 +1952,19 @@ public class OrientDBDistributed extends OrientDBEmbedded
       List<OTransactionId> res = context.get().getTransactionSequence().checkSelfStatus(status);
       context.get().getDistributedContext().removeRunning(res);
       if (!res.isEmpty()) {
-        execute(
-            () -> {
-              installDatabase(databaseName, true, true);
-            });
+        execute(() -> installDatabase(databaseName, true, true));
       }
     }
+  }
+
+  public void sendTopologyTransactions(ONodeId nodeId, List<OTransactionId> transactions) {
+    var messages = this.getNodeState().recover(transactions);
+    var ops =
+        messages.stream().map(m -> new OConfirmedRetryOp(m.getPromiseId(), m.getOp())).toList();
+    sendMessage(nodeId, new OConfirmedOps(ops));
+  }
+
+  public void receiveRecovery(List<OConfirmedRetryOp> ops) {
+    this.getNodeState().recover(ops, this);
   }
 }

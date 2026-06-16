@@ -730,10 +730,10 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   }
 
   @Override
-  public synchronized void receivePing(ONodeId nodeId, OTransactionSequenceStatus status) {
+  public synchronized List<OTransactionId> receivePing(
+      ONodeId nodeId, OTransactionSequenceStatus status) {
     this.topology.ping(nodeId);
-    // TODO: potentially initiate a sync checking if the current status is outdated compared to
-    // the received
+    return this.sequenceManager.checkSelfStatus(status);
   }
 
   @Override

@@ -210,7 +210,7 @@ public interface OCoordinatedDistributedOps {
 
   OTransactionSequenceStatus getTransactionSequenceState();
 
-  void receivePing(ONodeId nodeId, OTransactionSequenceStatus status);
+  List<OTransactionId> receivePing(ONodeId nodeId, OTransactionSequenceStatus status);
 
   Set<ONodeId> checkOffline(long time);
 

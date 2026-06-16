@@ -31,6 +31,8 @@ public interface OStructuralMessage {
       case 15 -> OMergeFailOp.fromNetwork(input);
       case 16 -> ORetryProposeOp.fromNetwork(input);
       case 17 -> OTopologyPing.fromNetwork(input);
+      case 18 -> OSendTransactions.fromNetwork(input);
+      case 19 -> OConfirmedOps.fromNetwork(input);
       default -> throw new ODistributedException("wrong structural message type from network");
     };
   }

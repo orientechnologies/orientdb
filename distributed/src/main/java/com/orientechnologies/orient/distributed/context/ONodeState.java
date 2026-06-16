@@ -12,10 +12,12 @@ import com.orientechnologies.orient.distributed.context.coordination.dbs.ODataba
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabasesTopology;
 import com.orientechnologies.orient.distributed.context.coordination.log.ODistributedMessageLog;
 import com.orientechnologies.orient.distributed.context.coordination.log.ODistributedMessageLogMemory;
+import com.orientechnologies.orient.distributed.context.coordination.message.OConfirmedRetryOp;
 import com.orientechnologies.orient.distributed.context.coordination.message.ODistributedMessage;
 import com.orientechnologies.orient.distributed.context.coordination.message.state.ONodeStateNetwork;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import com.orientechnologies.orient.distributed.context.coordination.topology.ODiscoverAction;
+import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -62,12 +64,19 @@ public class ONodeState {
     this.coordinated.nodeFailure(node, promise, acceptResult);
   }
 
-  public Optional<OAcceptResult> receive(ODistributedMessage message) {
+  public Optional<OAcceptResult> receive(ODistributedMessage message, OrientDBDistributed ctx) {
     var result = this.coordinated.receive(message);
     if (result.isEmpty()) {
-      this.log.log(message);
+      Optional<OAcceptResult> res = message.getOp().validate(ctx, message.getPromiseId());
+      if (res.isEmpty()) {
+        this.log.log(message);
+      } else {
+        this.coordinated.cancelPromise(message.getPromiseId());
+      }
+      return res;
+    } else {
+      return result;
     }
-    return result;
   }
 
   public Optional<ODistributedMessage> receiveFailure(OTransactionIdPromise promise) {
@@ -121,5 +130,16 @@ public class ONodeState {
 
   public void cancelPromise(OTransactionIdPromise promise) {
     coordinated.cancelPromise(promise);
+  }
+
+  public void recover(List<OConfirmedRetryOp> ops, OrientDBDistributed context) {
+    for (var op : ops) {
+      var result = this.coordinated.receive(op);
+      assert result.isEmpty();
+      var res = op.validate(context);
+      assert res.isEmpty();
+      this.log.log(op);
+      op.apply(context);
+    }
   }
 }

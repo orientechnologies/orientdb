@@ -25,18 +25,10 @@ public class OProposeOp implements OStructuralMessage, ODistributedMessage {
   public void execute(OrientDBDistributed ctx) {
     ONodeState nodeState = ctx.getNodeState();
     ONodeId coordinator = promise.getCoordinator();
-    Optional<OAcceptResult> result = nodeState.receive(this);
+    Optional<OAcceptResult> result = nodeState.receive(this, ctx);
     if (result.isEmpty()) {
-      Optional<OAcceptResult> res = validate(ctx);
-      if (res.isPresent()) {
-        // This is canceling the promise right away because is not accepted by the data
-        nodeState.cancelPromise(promise);
-        var failure = new OFailPropose(nodeState.getNodeId(), promise, res.get());
-        ctx.sendMessage(coordinator, failure);
-      } else {
-        var success = new OSuccessPropose(nodeState.getNodeId(), promise);
-        ctx.sendMessage(coordinator, success);
-      }
+      var success = new OSuccessPropose(nodeState.getNodeId(), promise);
+      ctx.sendMessage(coordinator, success);
     } else {
       var failure = new OFailPropose(nodeState.getNodeId(), promise, result.get());
       ctx.sendMessage(coordinator, failure);
