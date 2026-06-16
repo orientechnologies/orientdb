@@ -231,7 +231,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   private void sendDatabasesPing() {
-    if (!getOps().getNetworkTopology().isSelfEnstablished() || isDistributedDisabled()) return;
+    if (isDistributedDisabled() || !getOps().getNetworkTopology().isSelfEnstablished()) return;
     execute(
         () -> {
           var dbTopology = getOps().getDatabaseTopology();
@@ -241,7 +241,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
             var dbName = dbTopology.getDatabaseName(dbId);
             try {
               var status =
-                  getSharedDatabasecontext(dbName)
+                  getSharedDatabaseContext(dbName)
                       .map(x -> x.getTransactionSequence().currentStatus());
               if (status.isPresent()) {
                 ORemoteTask task = new OUpdateDatabaseSequenceStatusTask(dbName, status.get());
@@ -386,8 +386,8 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   protected boolean isDistributedDisabled() {
-    if (plugin == null || !plugin.isEnabled() || nodeState == null) {
-      return true;
+    if (plugin == null || !plugin.isEnabled()) {
+      return nodeState == null;
     } else {
       return false;
     }
@@ -744,8 +744,8 @@ public class OrientDBDistributed extends OrientDBEmbedded
     }
   }
 
-  public Optional<OSharedContextDistributed> getSharedDatabasecontext(String database) {
-    return Optional.ofNullable((OSharedContextDistributed) sharedContexts.get(database));
+  public Optional<OSharedContextEmbedded> getSharedDatabaseContext(String database) {
+    return Optional.ofNullable(sharedContexts.get(database));
   }
 
   public ODistributedDatabaseImpl unregisterDatabase(final String iDatabaseName) {
@@ -1248,7 +1248,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
     boolean success = false;
     try (OutputStream out = new BufferedOutputStream(output, 8096);
         var db = openNoAuthorization(name)) {
-      var context = (OSharedContextDistributed) sharedContexts.get(name);
+      var context = sharedContexts.get(name);
       OStorage storage = context.getStorage();
 
       if (state.getAcceptMode() instanceof OCanSyncAccept.NonBlockingSync) {
@@ -1820,10 +1820,12 @@ public class OrientDBDistributed extends OrientDBEmbedded
     final long freeMem = Runtime.getRuntime().freeMemory();
     final long usedMem = totMem - freeMem;
     List<ONodeInfoListener> listeners = new ArrayList<>();
-    for (OServerNetworkListener listener : server.getNetworkListeners()) {
-      listeners.add(
-          new ONodeInfoListener(
-              listener.getProtocolType().getSimpleName(), listener.getListeningAddress(true)));
+    if (server != null) {
+      for (OServerNetworkListener listener : server.getNetworkListeners()) {
+        listeners.add(
+            new ONodeInfoListener(
+                listener.getProtocolType().getSimpleName(), listener.getListeningAddress(true)));
+      }
     }
 
     return new ONodeInfo(OConstants.getRawVersion(), listeners, usedMem, freeMem, maxMem);
@@ -1947,10 +1949,10 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   public void validateDatabaseStatus(String databaseName, OTransactionSequenceStatus status) {
-    var context = getSharedDatabasecontext(databaseName);
+    var context = getSharedDatabaseContext(databaseName);
     if (context.isPresent()) {
       List<OTransactionId> res = context.get().getTransactionSequence().checkSelfStatus(status);
-      context.get().getDistributedContext().removeRunning(res);
+      ((OSharedContextDistributed) context.get()).getDistributedContext().removeRunning(res);
       if (!res.isEmpty()) {
         execute(() -> installDatabase(databaseName, true, true));
       }
