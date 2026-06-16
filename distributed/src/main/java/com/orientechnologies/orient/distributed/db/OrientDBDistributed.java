@@ -93,6 +93,7 @@ import com.orientechnologies.orient.distributed.context.retryable.OSetDatabaseSt
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerAware;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
+import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedMessageService;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.DB_STATUS;
@@ -112,6 +113,9 @@ import com.orientechnologies.orient.server.distributed.impl.ODistributedPlugin;
 import com.orientechnologies.orient.server.distributed.impl.ONewDeltaSyncImporter;
 import com.orientechnologies.orient.server.distributed.impl.ORemoteServerManager;
 import com.orientechnologies.orient.server.distributed.impl.metadata.OSharedContextDistributed;
+import com.orientechnologies.orient.server.distributed.impl.task.OUpdateDatabaseSequenceStatusTask;
+import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
+import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import java.io.BufferedOutputStream;
 import java.io.File;
@@ -214,9 +218,40 @@ public class OrientDBDistributed extends OrientDBEmbedded
     this.nodeState.getOps().executeOnEnstablish(() -> execute(this::loadAllDatabases));
 
     var period = getLongConfig(OGlobalConfiguration.DISTRIBUTED_CHECK_HEALTH_EVERY);
+    if (period >= 0) {
+      logger.warn("invalid value for health check period using default value");
+      period = 10000l;
+    }
     periodicExecute(this::sendTopologyPing, period);
+    periodicExecute(this::sendDatabasesPing, period);
     periodicExecute(this::checkDisconnectedNodes, period);
     periodicExecute(this::checkOperationsTimeout, period);
+  }
+
+  private void sendDatabasesPing() {
+    if (!getOps().getNetworkTopology().isSelfEnstablished() || isDistributedDisabled()) return;
+    execute(
+        () -> {
+          var dbTopology = getOps().getDatabaseTopology();
+
+          for (var dbId : dbTopology.getDatabases()) {
+            if (dbTopology.isOnline(dbId, getNodeId())) continue;
+            var dbName = dbTopology.getDatabaseName(dbId);
+            try {
+              var status =
+                  getSharedDatabasecontext(dbName)
+                      .map(x -> x.getTransactionSequence().currentStatus());
+              if (status.isPresent()) {
+                ORemoteTask task = new OUpdateDatabaseSequenceStatusTask(dbName, status.get());
+
+                final List<String> servers = getOnlineNodesNotLocal(dbName);
+                plugin.sendRequest(dbName, servers, task);
+              }
+            } catch (ODistributedException | ODistributedOperationException e) {
+              logger.debugNode(getNodeId(), "Error on sending request for cluster health check", e);
+            }
+          }
+        });
   }
 
   public void reconciliateState() {

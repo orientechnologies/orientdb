@@ -121,7 +121,6 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
   private volatile String lastServerDump = "";
 
   private OCancellableTimer haStatsTask = null;
-  private OCancellableTimer healthCheckerTask = null;
   protected OSignalHandler.OSignalListener signalListener;
 
   private final OHazelcastClusterMetadataManager clusterManager;
@@ -187,13 +186,6 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
         haStatsTask = databases.periodicExecute(this::dumpStats, statsDelay);
       }
 
-      final long healthChecker =
-          ctx.getValueAsLong(OGlobalConfiguration.DISTRIBUTED_CHECK_HEALTH_EVERY);
-      if (healthChecker > 0) {
-        OClusterHealthChecker checkTask = new OClusterHealthChecker(this, healthChecker);
-        healthCheckerTask = databases.periodicExecute(checkTask, healthChecker);
-      }
-
       signalListener =
           new OSignalHandler.OSignalListener() {
             @Override
@@ -239,7 +231,6 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
 
     clusterManager.prepareHazelcastPluginShutdown();
     try {
-      if (healthCheckerTask != null) healthCheckerTask.cancel();
       if (haStatsTask != null) haStatsTask.cancel();
 
       setNodeStatus(NODE_STATUS.OFFLINE);
