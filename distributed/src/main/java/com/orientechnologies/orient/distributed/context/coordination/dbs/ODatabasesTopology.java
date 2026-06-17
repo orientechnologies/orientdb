@@ -37,4 +37,6 @@ public interface ODatabasesTopology {
   int getQuorum(ODatabaseId databaseId);
 
   boolean isQuorumOnline(ODatabaseId dbId);
+
+  boolean isAllOnline(ODatabaseId dbId);
 }

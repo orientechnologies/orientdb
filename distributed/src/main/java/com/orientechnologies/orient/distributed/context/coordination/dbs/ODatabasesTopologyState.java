@@ -170,6 +170,16 @@ public class ODatabasesTopologyState extends OWatcher implements ODatabasesTopol
     }
   }
 
+  @Override
+  public synchronized boolean isAllOnline(ODatabaseId dbId) {
+    ODatabaseTopologyState db = getDb(dbId);
+    if (db != null) {
+      return db.isAllOnline();
+    } else {
+      return false;
+    }
+  }
+
   public boolean waitOnlineQuorum(ODatabaseId dbId, Optional<Long> timeout)
       throws InterruptedException {
     ODatabaseTopologyState db;
