@@ -37,7 +37,7 @@ public class OSQLCommandTaskFirstPhase extends OAbstractRemoteTask {
 
   @Override
   public OCommandDistributedReplicateRequest.QUORUM_TYPE getQuorumType() {
-    return OCommandDistributedReplicateRequest.QUORUM_TYPE.ALL;
+    return OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE;
   }
 
   @Override
