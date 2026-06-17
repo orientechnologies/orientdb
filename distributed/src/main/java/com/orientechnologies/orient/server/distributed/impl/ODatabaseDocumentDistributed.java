@@ -969,6 +969,9 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         if (coordinateTwoPhaseDDL(command, ids.get(), retryInfo.isFinished())) {
           return;
         }
+        if (retryInfo.isFinished()) {
+          getContext().execute(this::maybeSync);
+        }
       } else {
         var delay = retryInfo.nextRetry();
         if (delay.isPresent()) {
@@ -980,7 +983,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         }
       }
     }
-    getContext().execute(this::maybeSync);
     throw new ODistributedOperationException("Reached number of retry to execute ddl");
   }
 
