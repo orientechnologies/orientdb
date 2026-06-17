@@ -112,8 +112,8 @@ public class OSyncState {
   }
 
   public synchronized void close() {
-    logger.debug("closed sync %s sender %s", syncId, this.sender);
     if (!this.close) {
+      logger.debug("closing sync %s sender %s", syncId, this.sender);
       this.close = true;
       if (this.receiverStream != null) {
         try {

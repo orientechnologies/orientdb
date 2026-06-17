@@ -1200,6 +1200,8 @@ public class OrientDBDistributed extends OrientDBEmbedded
         List<OTransactionId> transactions =
             context.getTransactionSequence().missingTransactions(d.status());
         storage.backupTransactions(out, transactions);
+      } else {
+        throw new ODatabaseException("Cannot start sync with mode " + state.getAcceptMode());
       }
       success = true;
     } catch (IOException e) {

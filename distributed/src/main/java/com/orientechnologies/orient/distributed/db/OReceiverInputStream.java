@@ -26,12 +26,13 @@ public class OReceiverInputStream extends InputStream {
   private volatile byte[] buffer = new byte[] {};
   private volatile int cursor = 0;
   private final PriorityBlockingQueue<Buffer> buffers =
-      new PriorityBlockingQueue<Buffer>(100, Comparator.comparing(Buffer::sequential));
+      new PriorityBlockingQueue<>(100, Comparator.comparing(Buffer::sequential));
   private final RequestNext ctx;
   private final OSyncState state;
   private volatile boolean finished = false;
   private volatile long readingSequential = -1;
   private volatile long receivingSequential = -1;
+  private volatile boolean receivedClose = false;
   private final Lock readMonitor = new ReentrantLock();
   private final Condition condition = readMonitor.newCondition();
 
@@ -62,14 +63,14 @@ public class OReceiverInputStream extends InputStream {
             } else {
               ctx.requestNext(state, false);
             }
-          } else {
-            if (bi != null && bi.sequential() <= readingSequential) {
-              // Duplicate drop
-              bi = buffers.poll();
-            } else if (!condition.await(5, TimeUnit.MINUTES)) {
-              throw new InterruptedByTimeoutException();
-            }
+          } else if (bi != null && bi.sequential() <= readingSequential) {
+            // Duplicate queued message drop
+            buffers.poll();
+          } else if (!condition.await(5, TimeUnit.MINUTES)) {
+            // Failed to wait for a buffer, interrupt
+            throw new InterruptedByTimeoutException();
           }
+
         } catch (InterruptedException e) {
           Thread.currentThread().interrupt();
           throw new java.io.InterruptedIOException();
@@ -93,6 +94,9 @@ public class OReceiverInputStream extends InputStream {
     if (receivingSequential < sequential) {
       receivingSequential = sequential;
     }
+    if (finished) {
+      receivedClose = true;
+    }
     var offered = this.buffers.offer(received, 5, TimeUnit.MINUTES);
     if (!offered) {
       throw new OTimeoutException("Timeout waiting for sync data");
@@ -107,10 +111,10 @@ public class OReceiverInputStream extends InputStream {
 
   @Override
   public void close() throws IOException {
-    if (!finished) {
+    if (!receivedClose) {
+      // Send a close to the sender
       ctx.requestNext(state, true);
-      // Close the state
-      // TODO: check sequential
+      // Queue a close state
       receive(new byte[] {}, receivingSequential + 1, true);
     }
   }

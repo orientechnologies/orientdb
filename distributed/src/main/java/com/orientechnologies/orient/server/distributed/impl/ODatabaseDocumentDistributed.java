@@ -1026,7 +1026,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         case OTxInvalidSequential.ID:
           logger.debugNode(
               getLocalNodeId(),
-              "Quorum invalid sequentiona of two phase ddl '%s' ",
+              "Quorum invalid sequential of two phase ddl '%s' ",
               command,
               resultPayload);
           confirmPhase2DDL(nodes, reqId, false);
@@ -1056,8 +1056,8 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
             logger.debug("distributed exception", ((OTxException) result).getException());
             messages.add(
                 String.format(
-                    "exception (node " + node + "): '%s'",
-                    ((OTxException) result).getException().getMessage()));
+                    "exception (node %s ): '%s'",
+                    node, ((OTxException) result).getException().getMessage()));
             break;
           case OTxInvalidSequential.ID:
             logger.debugNode(
@@ -1080,8 +1080,8 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         ODistributedOperationException ex =
             new ODistributedOperationException(
                 String.format(
-                    "Request `%s` didn't reach the quorum of '%d', responses: [%s]",
-                    reqId, responseManager.getQuorum(), String.join(",", messages)));
+                    "Command `%s` didn't reach the quorum of '%d', responses: [%s]",
+                    command, responseManager.getQuorum(), String.join(",", messages)));
         for (Exception e : exceptions) {
           ex.addSuppressed(e);
         }
