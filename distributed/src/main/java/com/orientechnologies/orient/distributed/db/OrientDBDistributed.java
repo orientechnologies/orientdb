@@ -243,10 +243,9 @@ public class OrientDBDistributed extends OrientDBEmbedded
               var status =
                   getSharedDatabaseContext(dbName)
                       .map(x -> x.getTransactionSequence().currentStatus());
-              if (status.isPresent()) {
+              final List<String> servers = getOnlineNodesNotLocal(dbName);
+              if (status.isPresent() && !servers.isEmpty()) {
                 ORemoteTask task = new OUpdateDatabaseSequenceStatusTask(dbName, status.get());
-
-                final List<String> servers = getOnlineNodesNotLocal(dbName);
                 plugin.sendRequest(dbName, servers, task);
               }
             } catch (ODistributedException | ODistributedOperationException e) {
