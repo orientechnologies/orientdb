@@ -99,6 +99,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
   private long requests = 0;
   private HandshakeInfo handshakeInfo;
   private volatile OBinaryPushResponse expectedPushResponse;
+  private boolean onceAuthenticated = false;
   private BlockingQueue<OBinaryPushResponse> pushResponse =
       new SynchronousQueue<OBinaryPushResponse>();
 
@@ -301,8 +302,19 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
             connection.getData().commandInfo = request.getDescription();
             connection.setProtocol(this); // This is need for the request command
           }
+          onceAuthenticated = true;
         } catch (RuntimeException | IOException ex) {
-          exception = ex;
+          if (!onceAuthenticated) {
+            try {
+              sendError(connection, clientTxId, ex);
+            } catch (IOException e) {
+              logger.error("Error while binary response serialization", e);
+            }
+            sendShutdown();
+            return;
+          } else {
+            exception = ex;
+          }
         }
         // Also in case of session validation error i read the message from the socket.
         try {
