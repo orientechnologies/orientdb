@@ -30,46 +30,41 @@ import java.util.Set;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public class OProfilerEntry {
-  public String name = null;
-  public long entries = 0;
-  public long last = 0;
-  public long min = 999999999;
-  public long max = 0;
-  public float average = 0;
-  public long total = 0;
-  public final long firstExecution;
-  public long lastExecution;
+  private String name = null;
+  private long entries = 0;
+  private long last = 0;
+  private long min = 999999999;
+  private long max = 0;
+  private long total = 0;
+  private final long firstExecution;
+  private long lastExecution;
 
-  public String payLoad;
-  public String description;
+  private String payLoad;
 
-  public long lastResetEntries = 0;
-  public long lastReset;
+  private long lastResetEntries = 0;
+  private long lastReset;
 
-  public Set<String> users = new HashSet<String>();
+  private Set<String> users;
 
-  public OProfilerEntry() {
-    firstExecution = System.currentTimeMillis();
-    lastExecution = firstExecution;
-  }
-
-  public void updateLastExecution() {
-    lastExecution = System.currentTimeMillis();
+  public OProfilerEntry(String name) {
+    this.name = name;
+    this.firstExecution = System.currentTimeMillis();
+    this.lastExecution = this.firstExecution;
   }
 
   public ODocument toDocument() {
     final ODocument doc = new ODocument();
-    doc.field("entries", entries);
-    doc.field("last", last);
-    doc.field("min", min);
-    doc.field("max", max);
-    doc.field("average", average);
-    doc.field("total", total);
-    doc.field("firstExecution", firstExecution);
-    doc.field("lastExecution", lastExecution);
-    doc.field("lastReset", lastReset);
-    doc.field("lastResetEntries", lastResetEntries);
-    if (payLoad != null) doc.field("payload", payLoad);
+    doc.field("entries", getEntries());
+    doc.field("last", getLast());
+    doc.field("min", getMin());
+    doc.field("max", getMax());
+    doc.field("average", getAverage());
+    doc.field("total", getTotal());
+    doc.field("firstExecution", getFirstExecution());
+    doc.field("lastExecution", getLastExecution());
+    doc.field("lastReset", getLastReset());
+    doc.field("lastResetEntries", getLastResetEntries());
+    if (getPayLoad() != null) doc.field("payload", getPayLoad());
     return doc;
   }
 
@@ -81,28 +76,31 @@ public class OProfilerEntry {
 
   public void toJSON(final StringBuilder buffer) {
     buffer.append('{');
-    buffer.append(String.format(Locale.ENGLISH, "\"%s\":%d,", "entries", entries));
-    buffer.append(String.format(Locale.ENGLISH, "\"%s\":%d,", "last", last));
-    buffer.append(String.format(Locale.ENGLISH, "\"%s\":%d,", "min", min));
-    buffer.append(String.format(Locale.ENGLISH, "\"%s\":%d,", "max", max));
-    buffer.append(String.format(Locale.ENGLISH, "\"%s\":%.2f,", "average", average));
-    buffer.append(String.format(Locale.ENGLISH, "\"%s\":%d,", "total", total));
-    buffer.append(String.format(Locale.ENGLISH, "\"%s\":%d,", "firstExecution", firstExecution));
-    buffer.append(String.format(Locale.ENGLISH, "\"%s\":%d,", "lastExecution", lastExecution));
-    buffer.append(String.format(Locale.ENGLISH, "\"%s\":%d,", "lastReset", lastReset));
+    buffer.append(String.format(Locale.ENGLISH, "\"%s\":%d,", "entries", getEntries()));
+    buffer.append(String.format(Locale.ENGLISH, "\"%s\":%d,", "last", getLast()));
+    buffer.append(String.format(Locale.ENGLISH, "\"%s\":%d,", "min", getMin()));
+    buffer.append(String.format(Locale.ENGLISH, "\"%s\":%d,", "max", getMax()));
+    buffer.append(String.format(Locale.ENGLISH, "\"%s\":%.2f,", "average", getAverage()));
+    buffer.append(String.format(Locale.ENGLISH, "\"%s\":%d,", "total", getTotal()));
     buffer.append(
-        String.format(Locale.ENGLISH, "\"%s\":%d,", "lastResetEntries,", lastResetEntries));
-    if (payLoad != null)
-      buffer.append(String.format(Locale.ENGLISH, "\"%s\":\"%s\"", "payload,", payLoad));
+        String.format(Locale.ENGLISH, "\"%s\":%d,", "firstExecution", getFirstExecution()));
+    buffer.append(String.format(Locale.ENGLISH, "\"%s\":%d,", "lastExecution", getLastExecution()));
+    buffer.append(String.format(Locale.ENGLISH, "\"%s\":%d,", "lastReset", getLastReset()));
+    buffer.append(
+        String.format(Locale.ENGLISH, "\"%s\":%d,", "lastResetEntries,", getLastResetEntries()));
+    if (getPayLoad() != null)
+      buffer.append(String.format(Locale.ENGLISH, "\"%s\":\"%s\"", "payload,", getPayLoad()));
     buffer.append(String.format(Locale.ENGLISH, "\"%s\": [", "users"));
 
-    String usersList = "";
-    int i = 0;
-    for (String user : users) {
-      buffer.append(String.format(Locale.ENGLISH, "%s\"%s\"", (i > 0) ? "," : "", user));
-      i++;
+    if (getUsers() != null) {
+      String usersList = "";
+      int i = 0;
+      for (String user : getUsers()) {
+        buffer.append(String.format(Locale.ENGLISH, "%s\"%s\"", (i > 0) ? "," : "", user));
+        i++;
+      }
+      buffer.append(String.format(Locale.ENGLISH, "%s", usersList));
     }
-    buffer.append(String.format(Locale.ENGLISH, "%s", usersList));
 
     buffer.append(String.format(Locale.ENGLISH, "]"));
     buffer.append('}');
@@ -112,6 +110,102 @@ public class OProfilerEntry {
   public String toString() {
     return String.format(
         "Profiler entry [%s]: total=%d, average=%.2f, items=%d, last=%d, max=%d, min=%d",
-        name, total, average, entries, last, max, min);
+        getName(), getTotal(), getAverage(), getEntries(), getLast(), getMax(), getMin());
+  }
+
+  public Set<String> getUsers() {
+    return users;
+  }
+
+  public void addUser(String user) {
+    if (users == null) {
+      users = new HashSet<>();
+    }
+    users.add(user);
+  }
+
+  public long getLastReset() {
+    return lastReset;
+  }
+
+  public long getLastResetEntries() {
+    return lastResetEntries;
+  }
+
+  public String getPayLoad() {
+    return payLoad;
+  }
+
+  public long getLastExecution() {
+    return lastExecution;
+  }
+
+  public long getFirstExecution() {
+    return firstExecution;
+  }
+
+  public long getTotal() {
+    return total;
+  }
+
+  public float getAverage() {
+    if (entries > 0) {
+      return (float) total / (float) entries;
+    } else {
+      return 0;
+    }
+  }
+
+  public long getMax() {
+    return max;
+  }
+
+  public long getMin() {
+    return min;
+  }
+
+  public long getLast() {
+    return last;
+  }
+
+  public long getEntries() {
+    return entries;
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  public void update(long value, String payload, String user) {
+    this.payLoad = payload;
+    if (user != null) addUser(user);
+    this.lastExecution = System.currentTimeMillis();
+    internalUpdate(value);
+  }
+
+  public void internalUpdate(long value) {
+    this.entries++;
+    this.lastResetEntries++;
+    this.last = value;
+    this.total += value;
+    if (value < min) min = value;
+    if (value > max) max = value;
+  }
+
+  public void resettableUpdate(long value, int resetTime) {
+    this.lastExecution = System.currentTimeMillis();
+    if (lastExecution - lastReset > resetTime) {
+      reset();
+    }
+    internalUpdate(value);
+  }
+
+  protected void reset() {
+    last = 0;
+    total = 0;
+    min = 0;
+    max = 0;
+    lastResetEntries = 0;
+    lastReset = lastExecution;
   }
 }

@@ -27,7 +27,7 @@ public class OProfilerDataTest {
     Assert.assertNull(data.getStat(null));
     Assert.assertNull(data.getStat("foobar"));
     data.updateStat("foobar", 10L);
-    Assert.assertEquals(10L, data.getStat("foobar").last);
+    Assert.assertEquals(10L, data.getStat("foobar").getLast());
   }
 
   @Test

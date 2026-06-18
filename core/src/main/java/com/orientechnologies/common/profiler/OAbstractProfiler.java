@@ -266,7 +266,8 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract
           for (String c : chronos) {
             final OProfilerEntry chrono = Orient.instance().getProfiler().getChrono(c);
             if (chrono != null) {
-              if (c.startsWith("db.") && c.contains(".command.")) lastCommands += chrono.entries;
+              if (c.startsWith("db.") && c.contains(".command."))
+                lastCommands += chrono.getEntries();
             }
           }
 

@@ -159,7 +159,7 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
   public long getCurrentLatency(final String server) {
     synchronized (latencies) {
       final OProfilerEntry l = latencies.get(server);
-      if (l != null) return (long) (l.average / 1000000);
+      if (l != null) return (long) (l.getAverage() / 1000000);
     }
     // NOT FOUND
     return 0;
@@ -169,31 +169,8 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
   public void updateLatency(final String server, final long sentOn) {
     // MANAGE THIS ASYNCHRONOUSLY
     synchronized (latencies) {
-      OProfilerEntry latency = latencies.get(server);
-      if (latency == null) {
-        latency = new OProfilerEntry();
-        latencies.put(server, latency);
-      } else latency.updateLastExecution();
-
-      latency.entries++;
-
-      if (latency.lastExecution - latency.lastReset > 30000) {
-        // RESET STATS EVERY 30 SECONDS
-        latency.last = 0;
-        latency.total = 0;
-        latency.average = 0;
-        latency.min = 0;
-        latency.max = 0;
-        latency.lastResetEntries = 0;
-        latency.lastReset = latency.lastExecution;
-      }
-
-      latency.lastResetEntries++;
-      latency.last = System.nanoTime() - sentOn;
-      latency.total += latency.last;
-      latency.average = latency.total / latency.lastResetEntries;
-      if (latency.last < latency.min) latency.min = latency.last;
-      if (latency.last > latency.max) latency.max = latency.last;
+      OProfilerEntry latency = latencies.computeIfAbsent(server, OProfilerEntry::new);
+      latency.resettableUpdate(System.nanoTime() - sentOn, 30000);
     }
   }
 

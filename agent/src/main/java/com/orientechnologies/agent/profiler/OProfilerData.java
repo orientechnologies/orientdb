@@ -509,27 +509,11 @@ public class OProfilerData {
       final String iPayload,
       String user) {
 
-    OProfilerEntry c = iValues.get(iName);
-    if (c == null) {
-      // CREATE NEW CHRONO
-      c = new OProfilerEntry();
-      final OProfilerEntry oldValue = iValues.putIfAbsent(iName, c);
-      if (oldValue != null) c = oldValue;
-    }
+    OProfilerEntry c = iValues.computeIfAbsent(iName, OProfilerEntry::new);
 
-    c.name = iName;
-    c.payLoad = iPayload;
-    c.entries++;
-    c.last = iValue;
-    c.total += c.last;
-    c.average = c.total / c.entries;
-    if (user != null) c.users.add(user);
-    if (c.last < c.min) c.min = c.last;
+    c.update(iValue, iPayload, user);
 
-    if (c.last > c.max) c.max = c.last;
-
-    c.updateLastExecution();
-    return c.last;
+    return c.getLast();
   }
 
   protected synchronized String dumpEntries(
@@ -570,19 +554,19 @@ public class OProfilerData {
         iBuffer.append(
             String.format(
                 Locale.ENGLISH,
-                "\n%-50s | %10d %10d %10d %10d %7.2f %10d |",
+                "%n%-50s | %10d %10d %10d %10d %7.2f %10d |",
                 k,
-                c.last,
-                c.total,
-                c.min,
-                c.max,
-                c.average,
-                c.entries));
+                c.getLast(),
+                c.getTotal(),
+                c.getMin(),
+                c.getMax(),
+                c.getAverage(),
+                c.getEntries()));
     }
     iBuffer.append(
         String.format(
             Locale.ENGLISH,
-            "\n%50s +-------------------------------------------------------------------+",
+            "%n%50s +-------------------------------------------------------------------+",
             ""));
     return iBuffer.toString();
   }
