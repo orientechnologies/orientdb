@@ -94,8 +94,8 @@ public class OS3DeltaUploadingStrategy implements OUploadingStrategy {
               + "to Amazon S3, but was rejected with an error response"
               + " for some reason.");
       logger.info(
-          "Error Message:    %s\nHTTP Status Code: %s\nAWS Error Code:   %s\n"
-              + "Error Type:       %s\nRequest ID:       %s",
+          "Error Message:    %s%nHTTP Status Code: %s%nAWS Error Code:   %s%n"
+              + "Error Type:       %s%nRequest ID:       %s",
           ase.getMessage(),
           ase.getStatusCode(),
           ase.getErrorCode(),

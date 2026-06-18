@@ -302,7 +302,7 @@ public class OEnterpriseProfiler extends OAbstractProfiler
     buffer.append(" secs of profiling");
     buffer.append(
         String.format(
-            "\n"
+            "%n"
                 + "Free memory: %2.2fMb (%2.2f%%) - Total memory: %2.2fMb - Max memory: %2.2fMb -"
                 + " CPUs: %d",
             freeMem,
@@ -418,14 +418,14 @@ public class OEnterpriseProfiler extends OAbstractProfiler
 
     buffer.append(
         String.format(
-            "\n%50s +-------------------------------------------------------------------+", ""));
+            "%n%50s +-------------------------------------------------------------------+", ""));
     buffer.append(
         String.format(
-            "\n%50s | Value                                                             |",
+            "%n%50s | Value                                                             |",
             "Name"));
     buffer.append(
         String.format(
-            "\n%50s +-------------------------------------------------------------------+", ""));
+            "%n%50s +-------------------------------------------------------------------+", ""));
 
     final List<String> names = new ArrayList<String>(hooks.keySet());
     Collections.sort(names);
@@ -436,13 +436,13 @@ public class OEnterpriseProfiler extends OAbstractProfiler
         final Object hookValue = v.hook.getValue();
         buffer.append(
             String.format(
-                "\n%-50s | %-65s |", k, hookValue != null ? hookValue.toString() : "null"));
+                "%n%-50s | %-65s |", k, hookValue != null ? hookValue.toString() : "null"));
       }
     }
 
     buffer.append(
         String.format(
-            "\n%50s +-------------------------------------------------------------------+", ""));
+            "%n%50s +-------------------------------------------------------------------+", ""));
     return buffer.toString();
   }
 
