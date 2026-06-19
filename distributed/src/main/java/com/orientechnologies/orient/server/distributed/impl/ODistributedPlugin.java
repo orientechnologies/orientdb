@@ -41,7 +41,6 @@ import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.distributed.ONodeConfig;
 import com.orientechnologies.orient.distributed.ONodeListenerConfig;
@@ -52,7 +51,6 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
 import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
-import com.orientechnologies.orient.server.distributed.NODE_STATUS;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedLifecycleListener;
@@ -74,7 +72,6 @@ import com.orientechnologies.orient.server.distributed.config.OClusterConfigurat
 import com.orientechnologies.orient.server.distributed.impl.task.ORemoteTaskFactoryManagerImpl;
 import com.orientechnologies.orient.server.distributed.impl.task.ORestartServerTask;
 import com.orientechnologies.orient.server.distributed.impl.task.OStopServerTask;
-import com.orientechnologies.orient.server.distributed.impl.task.OUpdateDatabaseConfigurationTask;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastClusterMetadataManager;
@@ -227,13 +224,10 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
     if (signalHandler != null) signalHandler.unregisterListener(signalListener);
 
     logger.warnNode(nodeName, "Shutting down node '%s'...", nodeName);
-    setNodeStatus(NODE_STATUS.SHUTTINGDOWN);
 
     clusterManager.prepareHazelcastPluginShutdown();
     try {
       if (haStatsTask != null) haStatsTask.cancel();
-
-      setNodeStatus(NODE_STATUS.OFFLINE);
 
     } catch (HazelcastInstanceNotActiveException e) {
       // HZ IS ALREADY DOWN, IGNORE IT
@@ -677,13 +671,6 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
     return clusterManager.getActiveServers();
   }
 
-  @Override
-  public Set<String> getActiveServerNotLocal() {
-    Set<String> res = clusterManager.getActiveServers();
-    res.remove(getLocalNodeName());
-    return res;
-  }
-
   public ODistributedStrategy getDistributedStrategy() {
     return responseManagerFactory;
   }
@@ -1005,16 +992,6 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
     return clusterManager.getLastClusterChangeOn();
   }
 
-  @Override
-  public NODE_STATUS getNodeStatus() {
-    return clusterManager.getNodeStatus();
-  }
-
-  @Override
-  public void setNodeStatus(NODE_STATUS iStatus) {
-    clusterManager.setNodeStatus(iStatus);
-  }
-
   public void onNodeJoined(String joinedNodeName, String url, String userPassword, Member member) {
     try {
       getRemoteServer(joinedNodeName);
@@ -1061,20 +1038,6 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
   // Called to notify this server, that a node has been removed from the cluster
   public void onServerRemoved(String nodeName) {
     closeRemoteServer(nodeName);
-  }
-
-  // Called when the db config has changed
-  public void onDbConfigUpdated(String databaseName, ODocument config) {
-    // SEND A DISTRIBUTED MSG TO ALL THE SERVERS
-    final Set<String> servers = new HashSet<String>(getActiveServers());
-    servers.remove(nodeName);
-
-    if (!servers.isEmpty() && getDatabase(databaseName) != null) {
-
-      final ODistributedResponse dResponse =
-          sendRequest(
-              databaseName, servers, new OUpdateDatabaseConfigurationTask(databaseName, config));
-    }
   }
 
   @Override

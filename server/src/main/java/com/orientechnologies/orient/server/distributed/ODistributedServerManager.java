@@ -77,10 +77,6 @@ public interface ODistributedServerManager {
 
   long getLastClusterChangeOn();
 
-  NODE_STATUS getNodeStatus();
-
-  void setNodeStatus(NODE_STATUS iStatus);
-
   DB_STATUS getDatabaseStatus(String iNode, String iDatabaseName);
 
   ODistributedMessageService getMessageService();
@@ -147,8 +143,6 @@ public interface ODistributedServerManager {
   ORemoteTaskFactoryManager getTaskFactoryManager();
 
   Set<String> getActiveServers();
-
-  Set<String> getActiveServerNotLocal();
 
   File getDefaultDatabaseConfigFile();
 

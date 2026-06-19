@@ -202,9 +202,6 @@ public class OHazelcastClusterMetadataManager
     membershipListenerRegistration = hazelcastInstance.getCluster().addMembershipListener(this);
     OrientDBInternal ctx = serverInstance.getDatabases();
 
-    // REGISTER CURRENT MEMBERS
-    setNodeStatus(NODE_STATUS.ONLINE);
-
     publishLocalNodeConfiguration();
 
     final long delay = OGlobalConfiguration.DISTRIBUTED_PUBLISH_NODE_STATUS_EVERY.getValueAsLong();
@@ -385,8 +382,6 @@ public class OHazelcastClusterMetadataManager
                 .removeEntryListener(membershipListenerMapRegistration);
           }
         });
-
-    setNodeStatus(NODE_STATUS.OFFLINE);
   }
 
   public Member getClusterMemberByName(final String rNodeName) {
@@ -597,8 +592,7 @@ public class OHazelcastClusterMetadataManager
   @Override
   public void stateChanged(final LifecycleEvent event) {
     final LifecycleEvent.LifecycleState state = event.getState();
-    if (state == LifecycleEvent.LifecycleState.MERGING) setNodeStatus(NODE_STATUS.MERGING);
-    else if (state == LifecycleEvent.LifecycleState.MERGED) {
+    if (state == LifecycleEvent.LifecycleState.MERGED) {
       logger.infoNode(nodeName, "Server merged the existent cluster, merging databases...");
 
       configurationMap.clearLocalCache();
@@ -617,7 +611,6 @@ public class OHazelcastClusterMetadataManager
       activeNodesUuidByName.put(nodeName, nodeUuid);
 
       publishLocalNodeConfiguration();
-      setNodeStatus(NODE_STATUS.ONLINE);
     }
   }
 
@@ -795,20 +788,6 @@ public class OHazelcastClusterMetadataManager
       final String iDatabaseName, final boolean createIfNotPresent) {
     return ((OrientDBDistributed) serverInstance.getDatabases())
         .getDistributedConfiguration(iDatabaseName);
-  }
-
-  public void setNodeStatus(final NODE_STATUS iStatus) {
-    if (status.equals(iStatus))
-      // NO CHANGE
-      return;
-
-    status = iStatus;
-
-    logger.infoNode(nodeName, "Updated node status to '%s'", status);
-  }
-
-  public NODE_STATUS getNodeStatus() {
-    return status;
   }
 
   public void updateLastClusterChange() {
