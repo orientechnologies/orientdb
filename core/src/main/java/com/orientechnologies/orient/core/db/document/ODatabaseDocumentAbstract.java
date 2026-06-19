@@ -107,6 +107,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -163,6 +164,7 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   protected ODatabaseDocumentAbstract(OSharedContext context) {
     // DO NOTHING IS FOR EXTENDED OBJECTS
     super(false);
+    Objects.nonNull(context);
     this.sharedContext = context;
   }
 

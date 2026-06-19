@@ -1012,22 +1012,20 @@ public class OrientDBDistributed extends OrientDBEmbedded
 
   private void notifyLegacyNodeJoinListener(ONodeId node) {
     if (plugin == null) return;
-    String nodeName = node.getNode();
     execute(
         () -> {
           if (plugin != null) {
-            plugin.notifyNodeJoined(nodeName);
+            plugin.notifyNodeJoined(node.getNode());
           }
         });
   }
 
   private void notifyLegacyNodeLeftListener(ONodeId node) {
     if (plugin == null) return;
-    String nodeName = node.getNode();
     execute(
         () -> {
           if (plugin != null) {
-            plugin.notifyNodeLeft(nodeName);
+            plugin.notifyNodeLeft(node.getNode());
           }
         });
   }

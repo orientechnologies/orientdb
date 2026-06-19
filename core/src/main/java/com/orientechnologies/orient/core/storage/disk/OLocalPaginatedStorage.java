@@ -380,7 +380,6 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
         }
         Files.createDirectories(Paths.get(storagePath.toString()));
         if (!OZIPCompressionUtil.uncompressDirectory(in, storagePath.toString(), iListener)) {
-          delete();
           throw new OStorageException("Empty archive no files restored");
         }
 
