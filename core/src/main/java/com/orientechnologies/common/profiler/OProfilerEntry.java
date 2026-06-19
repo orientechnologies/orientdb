@@ -68,6 +68,11 @@ public class OProfilerEntry {
     return doc;
   }
 
+  public OProfilerEntrySnapshot toSnapshot() {
+    return new OProfilerEntrySnapshot(
+        entries, last, min, max, total, firstExecution, lastExecution, lastResetEntries, lastReset);
+  }
+
   public String toJSON() {
     final StringBuilder buffer = new StringBuilder(1024);
     toJSON(buffer);
