@@ -27,7 +27,7 @@ public class OSendTransactions implements OStructuralMessage {
   @Override
   public void serialize(DataOutput out) throws IOException {
     this.nodeId.writeNetwork(out);
-    out.write(transactions.size());
+    out.writeInt(transactions.size());
     for (var tx : transactions) {
       tx.writeNetwork(out);
     }
@@ -46,5 +46,13 @@ public class OSendTransactions implements OStructuralMessage {
       transactions.add(OTransactionId.readNetwork(input));
     }
     return new OSendTransactions(nodeId, transactions);
+  }
+
+  public ONodeId getNodeId() {
+    return nodeId;
+  }
+
+  public List<OTransactionId> getTransactions() {
+    return transactions;
   }
 }

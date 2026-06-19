@@ -41,7 +41,11 @@ public class CoordinationMessagesSerializationTest {
   }
 
   private OTransactionIdPromise newPromiseId() {
-    return new OTransactionIdPromise(newNodeId(), new OTransactionId(10, 20));
+    return new OTransactionIdPromise(newNodeId(), newTxId());
+  }
+
+  private OTransactionId newTxId() {
+    return new OTransactionId(10, 20);
   }
 
   private OGroupId newGroupId() {
@@ -289,5 +293,15 @@ public class CoordinationMessagesSerializationTest {
     var operation = new OMergeFailOp(promise);
     OMergeFailOp read = writeRead(operation);
     assertEquals(read.getPromise(), promise);
+  }
+
+  @Test
+  public void sendTransactions() throws IOException {
+    var node = newNodeId();
+    var txs = List.of(newTxId());
+    var operation = new OSendTransactions(node, txs);
+    OSendTransactions read = writeRead(operation);
+    assertEquals(read.getNodeId(), node);
+    assertEquals(read.getTransactions(), txs);
   }
 }
