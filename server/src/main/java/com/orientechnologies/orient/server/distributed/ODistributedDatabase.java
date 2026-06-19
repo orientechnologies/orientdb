@@ -45,8 +45,6 @@ public interface ODistributedDatabase {
    */
   void handleUnreachableNode(String nodeName);
 
-  void waitForOnline();
-
   void reEnqueue(
       ODistributedRequestId requestId,
       final String databaseName,

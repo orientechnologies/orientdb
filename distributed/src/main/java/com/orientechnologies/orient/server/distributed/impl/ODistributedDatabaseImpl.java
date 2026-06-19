@@ -65,7 +65,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TimerTask;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
@@ -264,23 +266,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
   public void endOperation() {
     operationsRunnig.decrementAndGet();
-  }
-
-  @Override
-  public void waitForOnline() {
-    try {
-      synchronized (this) {
-        if (!this.parsing) {
-          this.wait(OGlobalConfiguration.DISTRIBUTED_MAX_STARTUP_DELAY.getValueAsLong());
-          if (!this.parsing) {
-            throw new OOfflineNodeException("Node is offline");
-          }
-        }
-      }
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-      // IGNORE IT
-    }
   }
 
   public void reEnqueue(
@@ -674,18 +659,11 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       recordPromiseManager.reset();
       indexKeyPromiseManager.reset();
     }
-    LinkedBlockingQueue<OFreezeGuard> latch = new LinkedBlockingQueue<OFreezeGuard>(1);
-    this.lockManager.freeze(
-        (guards) -> {
-          try {
-            latch.put(guards);
-          } catch (InterruptedException e) {
-            throw new OInterruptedException(e.getMessage());
-          }
-        });
+    CompletableFuture<OFreezeGuard> latch = new CompletableFuture<>();
+    this.lockManager.freeze(latch::complete);
     try {
-      this.freezeGuard = latch.take();
-    } catch (InterruptedException e) {
+      this.freezeGuard = latch.get();
+    } catch (InterruptedException | ExecutionException e) {
       throw new OInterruptedException(e.getMessage());
     }
   }
