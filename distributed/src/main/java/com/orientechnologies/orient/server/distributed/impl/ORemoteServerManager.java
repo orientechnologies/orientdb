@@ -4,8 +4,11 @@ import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.distributed.context.coordination.message.ONodeInfoListener;
 import com.orientechnologies.orient.server.distributed.ORemoteServerAvailabilityCheck;
 import com.orientechnologies.orient.server.distributed.ORemoteServerController;
+import com.orientechnologies.orient.server.distributed.impl.ORemoteAddress.OBinaryAddress;
 import java.io.IOException;
+import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.ExecutorService;
@@ -54,6 +57,12 @@ public class ORemoteServerManager {
   }
 
   public void registerRemoteAddresses(ONodeId nodeId, List<ONodeInfoListener> listeners) {
-    remoteAddresses.computeIfAbsent(nodeId, (k) -> new ORemoteAddress()).addAddresses(listeners);
+    remoteAddresses.computeIfAbsent(nodeId, k -> new ORemoteAddress()).addAddresses(listeners);
+  }
+
+  public List<OBinaryAddress> getRemoteAddresses(ONodeId node) {
+    return Optional.ofNullable(remoteAddresses.get(node))
+        .map(ORemoteAddress::getAddresses)
+        .orElseGet(Collections::emptyList);
   }
 }

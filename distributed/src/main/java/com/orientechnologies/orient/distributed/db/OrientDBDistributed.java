@@ -1774,11 +1774,29 @@ public class OrientDBDistributed extends OrientDBEmbedded
     // TODO: collect more informations
     ONodeConfig nodeCfg = new ONodeConfig();
     nodeCfg.setName(member.getNode());
+    //    nodeCfg.setUuid();
 
     if (getNodeState() != null) {
       ODatabasesTopology databaseTopology = getNodeState().getDatabaseTopology();
       var dbIds = databaseTopology.getDatabases();
       var dbs = dbIds.stream().map(databaseTopology::getDatabaseName).collect(Collectors.toSet());
+      nodeCfg.setDatabases(dbs);
+    }
+
+    List<ONodeListenerConfig> listeners = new ArrayList<>();
+    for (var listener : remoteServerManager.getRemoteAddresses(member)) {
+      listeners.add(new ONodeListenerConfig("binary", listener.address()));
+    }
+    nodeCfg.setListeners(listeners);
+
+    if (getNodeState() != null) {
+      ODatabasesTopology databaseTopology = getNodeState().getDatabaseTopology();
+      var dbIds = databaseTopology.getDatabases();
+      var dbs =
+          dbIds.stream()
+              .filter(d -> databaseTopology.getState(d, member) != ODatabaseState.NotAvailable)
+              .map(databaseTopology::getDatabaseName)
+              .collect(Collectors.toSet());
       nodeCfg.setDatabases(dbs);
     }
 
@@ -1819,7 +1837,11 @@ public class OrientDBDistributed extends OrientDBEmbedded
     if (getNodeState() != null) {
       ODatabasesTopology databaseTopology = getNodeState().getDatabaseTopology();
       var dbIds = databaseTopology.getDatabases();
-      var dbs = dbIds.stream().map(databaseTopology::getDatabaseName).collect(Collectors.toSet());
+      var dbs =
+          dbIds.stream()
+              .filter(d -> databaseTopology.getState(d, getNodeId()) != ODatabaseState.NotAvailable)
+              .map(databaseTopology::getDatabaseName)
+              .collect(Collectors.toSet());
       nodeCfg.setDatabases(dbs);
     }
 

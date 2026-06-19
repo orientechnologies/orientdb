@@ -7,10 +7,10 @@ import java.util.List;
 
 public class ORemoteAddress {
 
-  record OBinaryAddress(String address) {}
+  public record OBinaryAddress(String address) {}
   ;
 
-  public List<OBinaryAddress> addresses =
+  private List<OBinaryAddress> addresses =
       Collections.synchronizedList(new ArrayList<OBinaryAddress>());
 
   public ORemoteAddress() {}
@@ -21,5 +21,9 @@ public class ORemoteAddress {
         this.addresses.add(new OBinaryAddress(listener.address()));
       }
     }
+  }
+
+  public List<OBinaryAddress> getAddresses() {
+    return addresses;
   }
 }
