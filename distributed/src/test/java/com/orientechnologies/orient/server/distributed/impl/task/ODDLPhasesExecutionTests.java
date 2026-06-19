@@ -48,7 +48,8 @@ public class ODDLPhasesExecutionTests {
         (OTransactionPhase1TaskResult) message.execute(requestId, server, session);
     assertTrue(result.getResultPayload() instanceof OTxSuccess);
 
-    OSQLCommandTaskSecondPhase messageSecond = new OSQLCommandTaskSecondPhase(requestId, true);
+    OSQLCommandTaskSecondPhase messageSecond =
+        new OSQLCommandTaskSecondPhase(requestId, first, second, true);
     messageSecond.execute(new ODistributedRequestId(1, 11), server, session);
     assertTrue(session.existsCluster("bla"));
     session.close();

@@ -1011,12 +1011,12 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       switch (resultPayload.getResponseType()) {
         case OTxSuccess.ID:
           // Success send ok
-          confirmPhase2DDL(nodes, reqId, true);
+          confirmPhase2DDL(nodes, reqId, ids, true);
           logger.debugNode(getLocalNodeId(), "Success of two phase ddl '%s' ", command);
           return true;
         case OTxException.ID:
           // Exception send ko and throws the exception
-          confirmPhase2DDL(nodes, reqId, false);
+          confirmPhase2DDL(nodes, reqId, ids, false);
           logger.debugNode(
               getLocalNodeId(),
               "Quorum exception of two phase ddl '%s' '%s' ",
@@ -1029,7 +1029,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
               "Quorum invalid sequential of two phase ddl '%s' ",
               command,
               resultPayload);
-          confirmPhase2DDL(nodes, reqId, false);
+          confirmPhase2DDL(nodes, reqId, ids, false);
           return false;
       }
 
@@ -1040,7 +1040,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       }
       return false;
     } else {
-      confirmPhase2DDL(nodes, reqId, false);
+      confirmPhase2DDL(nodes, reqId, ids, false);
       List<OTransactionResultPayload> results = responseManager.getAllResponses();
       // If quorum is not reached is enough on a Lock timeout to trigger a deadlock retry.
       List<Exception> exceptions = new ArrayList<>();
@@ -1092,10 +1092,17 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     }
   }
 
-  private void confirmPhase2DDL(Set<String> nodes, ODistributedRequestId messageId, boolean apply) {
+  private void confirmPhase2DDL(
+      Set<String> nodes,
+      ODistributedRequestId messageId,
+      ORawPair<OTransactionIdPromise, OTransactionIdPromise> ids,
+      boolean apply) {
     ODistributedServerManager dManager = getDistributedManager();
     ODistributedResponse response =
-        dManager.sendRequest(getName(), nodes, new OSQLCommandTaskSecondPhase(messageId, apply));
+        dManager.sendRequest(
+            getName(),
+            nodes,
+            new OSQLCommandTaskSecondPhase(messageId, ids.getFirst(), ids.getSecond(), apply));
     if (response != null && response.getPayload() instanceof RuntimeException) {
       throw (RuntimeException) response.getPayload();
     }
