@@ -1,20 +1,19 @@
-package com.orientechnologies.orient.server.distributed;
+package com.orientechnologies.orient.distributed;
 
-import com.orientechnologies.orient.core.transaction.ONodeId;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
-public record ONodeMessages(ONodeId node, long messages) {
+public record ONodeMessages(String name, long messages) {
 
   public void writeNetwork(DataOutput out) throws IOException {
-    node.writeNetwork(out);
+    out.writeUTF(name);
     out.writeLong(messages);
   }
 
   public static ONodeMessages readNetwork(DataInput input) throws IOException {
-    var node = ONodeId.readNetwork(input);
+    var name = input.readUTF();
     var messages = input.readLong();
-    return new ONodeMessages(node, messages);
+    return new ONodeMessages(name, messages);
   }
 }

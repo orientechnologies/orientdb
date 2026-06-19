@@ -1877,8 +1877,8 @@ public class OrientDBDistributed extends OrientDBEmbedded
     nodeCfg.setFreeMemory(freeMem);
     nodeCfg.setMaxMemory(maxMem);
 
-    nodeCfg.setLatencies(getMessageService().getLatencies());
-    nodeCfg.setMessages(getMessageService().getMessageStats());
+    nodeCfg.setLatencies(getMessageService().getNodesLatencies());
+    nodeCfg.setMessages(getMessageService().getNodesMessages());
 
     for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners();
         it.hasNext(); ) {

@@ -1,5 +1,6 @@
 package com.orientechnologies.common.profiler;
 
+import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -14,6 +15,19 @@ public record OProfilerEntrySnapshot(
     long lastExecution,
     long lastResetEntries,
     long lastReset) {
+
+  public OProfilerEntrySnapshot(ODocument doc) {
+    this(
+        doc.getProperty("entries"),
+        doc.getProperty("last"),
+        doc.getProperty("min"),
+        doc.getProperty("max"),
+        doc.getProperty("total"),
+        doc.getProperty("firstExecution"),
+        doc.getProperty("lastExecution"),
+        doc.getProperty("lastReset"),
+        doc.getProperty("lastResetEntries"));
+  }
 
   public void writeNetwork(DataOutput out) throws IOException {
     out.writeLong(entries);
@@ -40,5 +54,28 @@ public record OProfilerEntrySnapshot(
 
     return new OProfilerEntrySnapshot(
         entries, last, min, max, total, firstExecution, lastExecution, lastResetEntries, lastReset);
+  }
+
+  public ODocument toDocument() {
+    final ODocument doc = new ODocument();
+    doc.setProperty("entries", entries());
+    doc.setProperty("last", last());
+    doc.setProperty("min", min());
+    doc.setProperty("max", max());
+    doc.setProperty("average", average());
+    doc.setProperty("total", total());
+    doc.setProperty("firstExecution", firstExecution());
+    doc.setProperty("lastExecution", lastExecution());
+    doc.setProperty("lastReset", lastReset());
+    doc.setProperty("lastResetEntries", lastResetEntries());
+    return doc;
+  }
+
+  public float average() {
+    if (entries > 0) {
+      return (float) total / (float) entries;
+    } else {
+      return 0;
+    }
   }
 }

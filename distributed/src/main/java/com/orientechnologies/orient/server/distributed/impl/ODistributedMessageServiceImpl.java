@@ -25,13 +25,13 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.transaction.ONodeId;
+import com.orientechnologies.orient.distributed.ONodeLatencies;
+import com.orientechnologies.orient.distributed.ONodeMessages;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.distributed.ODistributedMessageService;
 import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedResponseManager;
 import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
-import com.orientechnologies.orient.server.distributed.ONodeLatencies;
-import com.orientechnologies.orient.server.distributed.ONodeMessages;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -162,7 +162,7 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
     List<ONodeMessages> messages = new ArrayList<>();
     synchronized (messagesStats) {
       for (Map.Entry<String, AtomicLong> entry : messagesStats.entrySet())
-        messages.add(new ONodeMessages(new ONodeId(entry.getKey()), entry.getValue().longValue()));
+        messages.add(new ONodeMessages(entry.getKey(), entry.getValue().longValue()));
     }
     return messages;
   }

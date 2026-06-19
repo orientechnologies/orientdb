@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.server.distributed;
+package com.orientechnologies.orient.distributed;
 
 import com.orientechnologies.common.profiler.OProfilerEntrySnapshot;
 import com.orientechnologies.orient.core.transaction.ONodeId;

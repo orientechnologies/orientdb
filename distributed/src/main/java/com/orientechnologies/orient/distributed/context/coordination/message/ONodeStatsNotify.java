@@ -1,9 +1,9 @@
 package com.orientechnologies.orient.distributed.context.coordination.message;
 
 import com.orientechnologies.orient.core.transaction.ONodeId;
+import com.orientechnologies.orient.distributed.ONodeLatencies;
+import com.orientechnologies.orient.distributed.ONodeMessages;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
-import com.orientechnologies.orient.server.distributed.ONodeLatencies;
-import com.orientechnologies.orient.server.distributed.ONodeMessages;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;

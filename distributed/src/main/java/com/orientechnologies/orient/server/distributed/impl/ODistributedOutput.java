@@ -45,6 +45,7 @@ import java.util.Date;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -186,18 +187,12 @@ public class ODistributedOutput {
 
         row.field("Servers", formatServerName(manager, fromServer));
 
-        final ODocument latencies = fromMember.getLatencies();
+        var latencies = fromMember.getLatencies();
         if (latencies == null) continue;
-
-        for (String toServer : orderedServers) {
-          String value = "";
-          if (toServer != null && !toServer.equals(fromServer)) {
-            final ODocument latency = latencies.field(toServer);
-            if (latency != null) {
-              value = String.format("%.2f", ((Float) latency.field("average") / 1000000f));
-            }
-          }
-          row.field(formatServerName(manager, toServer), value);
+        Collections.sort(latencies, (x, y) -> x.node().getNode().compareTo(y.node().getNode()));
+        for (var latency : latencies) {
+          String value = String.format("%.2f", (latency.stats().average() / 1000000f));
+          row.field(formatServerName(manager, latency.node().getNode()), value);
         }
       }
     }
@@ -269,29 +264,23 @@ public class ODistributedOutput {
 
         row.field("Servers", formatServerName(manager, fromServer));
 
-        final ODocument latencies = fromMember.getLatencies();
-        if (latencies == null) continue;
-
         long total = 0;
-        for (String toServer : orderedServers) {
-          final String serverLabel = formatServerName(manager, toServer);
+        var latencies = fromMember.getLatencies();
+        if (latencies == null) continue;
+        Collections.sort(latencies, (x, y) -> x.node().getNode().compareTo(y.node().getNode()));
+        for (var latency : latencies) {
+          String serverLabel = formatServerName(manager, latency.node().getNode());
+          String value = String.format("%.2f", (latency.stats().average() / 1000000f));
+          row.field(formatServerName(manager, latency.node().getNode()), value);
+          long entries = latency.stats().entries();
+          total += entries;
 
-          if (toServer != null && !toServer.equals(fromServer)) {
-            final ODocument latency = latencies.field(toServer);
-            if (latency != null) {
-              final Long entries = (Long) latency.field("entries");
-              total += entries;
+          row.field(serverLabel, String.format("%,d", entries));
 
-              row.field(serverLabel, String.format("%,d", entries));
-
-              // AGGREGATE IN TOTALS
-              sumTotal(rowTotals, serverLabel, total);
-              continue;
-            }
-          }
-
-          row.field(serverLabel, "");
+          // AGGREGATE IN TOTALS
+          sumTotal(rowTotals, serverLabel, total);
         }
+
         row.field("TOTAL", String.format("%,d", total));
         sumTotal(rowTotals, "TOTAL", total);
       }
@@ -342,10 +331,10 @@ public class ODistributedOutput {
           orderedServers.add(serverName);
 
           // INSERT ALL THE FOUND OPERATIONS
-          final ODocument messages = fromMember.getMessages();
+          var messages = fromMember.getMessages();
           if (messages != null) {
-            for (String opName : messages.fieldNames()) {
-              operations.add(opName);
+            for (var message : messages) {
+              operations.add(message.name());
             }
           }
         }
@@ -374,23 +363,27 @@ public class ODistributedOutput {
 
         row.field("Servers", formatServerName(manager, server));
 
-        final ODocument messages = member.getMessages();
+        var messages = member.getMessages();
         if (messages == null) continue;
 
         long total = 0;
         for (String opName : operations) {
-          final Long counter = messages.field(opName);
-          if (counter == null) {
+          final Optional<Long> counter =
+              messages.stream()
+                  .filter(x -> x.name().equals(opName))
+                  .findFirst()
+                  .map(x -> x.messages());
+          if (counter.isEmpty()) {
             row.field(opName, "");
             continue;
           }
 
-          total += counter;
+          total += counter.get();
           final String value = String.format("%,d", counter);
           row.field(opName, value);
 
           // AGGREGATE IN TOTALS
-          sumTotal(rowTotals, opName, counter);
+          sumTotal(rowTotals, opName, counter.get());
 
           table.setColumnAlignment(opName, OTableFormatter.ALIGNMENT.RIGHT);
         }
