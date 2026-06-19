@@ -26,7 +26,6 @@ import java.util.HashMap;
 public class OSharedContextDistributed extends OSharedContextEmbedded {
 
   private ODistributedDatabaseImpl distributedContext;
-  private volatile boolean autoAssignRunning = false;
 
   public OSharedContextDistributed(OStorage storage, OrientDBDistributed orientDB) {
     super(storage, orientDB);
@@ -136,18 +135,5 @@ public class OSharedContextDistributed extends OSharedContextEmbedded {
   @Override
   public OrientDBDistributed getOrientDB() {
     return (OrientDBDistributed) super.getOrientDB();
-  }
-
-  public synchronized boolean startAutoAssign() {
-    if (!autoAssignRunning) {
-      autoAssignRunning = true;
-      return true;
-    } else {
-      return false;
-    }
-  }
-
-  public synchronized void endAutoAssign() {
-    autoAssignRunning = false;
   }
 }

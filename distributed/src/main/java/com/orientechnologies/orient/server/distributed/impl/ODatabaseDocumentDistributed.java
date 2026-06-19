@@ -1461,38 +1461,36 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
   @Override
   public void autoAssignAllocations(boolean canCreateNewClusters) {
+    if (!getContext().isNodeMaster(getLocalNodeName(), getName()))
+      // NO MASTER, DON'T CREATE LOCAL CLUSTERS
+      return;
     var context = getSharedContext();
-    if (context.startAutoAssign()) {
-      try {
-        if (!getContext().isNodeMaster(getLocalNodeName(), getName()))
-          // NO MASTER, DON'T CREATE LOCAL CLUSTERS
-          return;
+    context.getSchema().acquireSchemaWriteLock(this);
+    try {
+      logger.infoNode(
+          getLocalNodeId(), "Reassigning ownership of clusters for database %s...", getName());
+      final Set<String> availableNodes = getContext().getAvailableNodeNames(getName());
 
-        logger.infoNode(
-            getLocalNodeId(), "Reassigning ownership of clusters for database %s...", getName());
-        final Set<String> availableNodes = getContext().getAvailableNodeNames(getName());
-
-        // FILTER OUT NON MASTER SERVER
-        for (Iterator<String> it = availableNodes.iterator(); it.hasNext(); ) {
-          final String node = it.next();
-          if (getContext().isNodeMaster(node, getName())) it.remove();
-        }
-        final OSchema schema = getMetadata().getSchema();
-
-        for (final OClass clazz : schema.getClasses()) {
-          ((OClassDistributed) clazz)
-              .autoAssignClusterOwnership(this, availableNodes, canCreateNewClusters);
-        }
-
-        logger.infoNode(
-            getLocalNodeId(),
-            "Reassignment of clusters for database '%s' completed (classes=%d)",
-            getName(),
-            schema.getClasses().size());
-
-      } finally {
-        context.endAutoAssign();
+      final OSchema schema = getMetadata().getSchema();
+      // FILTER OUT NON MASTER SERVER
+      for (Iterator<String> it = availableNodes.iterator(); it.hasNext(); ) {
+        final String node = it.next();
+        if (getContext().isNodeMaster(node, getName())) it.remove();
       }
+
+      for (final OClass clazz : schema.getClasses()) {
+        ((OClassDistributed) clazz)
+            .autoAssignClusterOwnership(this, availableNodes, canCreateNewClusters);
+      }
+
+      logger.infoNode(
+          getLocalNodeId(),
+          "Reassignment of clusters for database '%s' completed (classes=%d)",
+          getName(),
+          schema.getClasses().size());
+
+    } finally {
+      context.getSchema().releaseSchemaWriteLock(this);
     }
   }
 }
