@@ -59,6 +59,7 @@ import com.orientechnologies.orient.distributed.context.coordination.message.ONe
 import com.orientechnologies.orient.distributed.context.coordination.message.ONodeFirstConnect;
 import com.orientechnologies.orient.distributed.context.coordination.message.ONodeInfo;
 import com.orientechnologies.orient.distributed.context.coordination.message.ONodeInfoListener;
+import com.orientechnologies.orient.distributed.context.coordination.message.ONodeStatsNotify;
 import com.orientechnologies.orient.distributed.context.coordination.message.OProposeOp;
 import com.orientechnologies.orient.distributed.context.coordination.message.ORetryProposeOp;
 import com.orientechnologies.orient.distributed.context.coordination.message.OSendTransactions;
@@ -228,6 +229,9 @@ public class OrientDBDistributed extends OrientDBEmbedded
     periodicExecute(this::sendDatabasesPing, period);
     periodicExecute(this::checkDisconnectedNodes, period);
     periodicExecute(this::checkOperationsTimeout, period);
+
+    var statsPeriod = period * 10;
+    periodicExecute(this::sendStats, statsPeriod);
   }
 
   private void sendDatabasesPing() {
@@ -253,6 +257,25 @@ public class OrientDBDistributed extends OrientDBEmbedded
             }
           }
         });
+  }
+
+  private void sendStats() {
+    final long maxMem = Runtime.getRuntime().maxMemory();
+    final long totMem = Runtime.getRuntime().totalMemory();
+    final long freeMem = Runtime.getRuntime().freeMemory();
+    final long usedMem = totMem - freeMem;
+
+    var members = getNodeState().getOps().getNetworkTopology().getMembers();
+    sendMessage(
+        members,
+        new ONodeStatsNotify(
+            getNodeId(),
+            maxMem,
+            totMem,
+            freeMem,
+            usedMem,
+            getMessageService().getNodesLatencies(),
+            getMessageService().getNodesMessages()));
   }
 
   public void reconciliateState() {

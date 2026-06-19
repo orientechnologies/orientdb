@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import java.util.List;
 
 /** @author Luca Garulli (l.garulli--at--orientdb.com) */
 public interface ODistributedMessageService {
@@ -28,7 +29,11 @@ public interface ODistributedMessageService {
 
   void updateLatency(String metricName, long sentOn);
 
+  List<ONodeLatencies> getNodesLatencies();
+
   ODocument getLatencies();
+
+  List<ONodeMessages> getNodesMessages();
 
   ODocument getMessageStats();
 
