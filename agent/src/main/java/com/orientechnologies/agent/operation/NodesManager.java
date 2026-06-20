@@ -3,22 +3,21 @@ package com.orientechnologies.agent.operation;
 import com.orientechnologies.agent.cloud.processor.tasks.request.NewEnterpriseStatsTask;
 import com.orientechnologies.agent.cloud.processor.tasks.response.EnterpriseStatsResponse;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
+import com.orientechnologies.orient.core.transaction.ONodeId;
+import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.operation.NodeOperation;
 import com.orientechnologies.orient.server.distributed.operation.NodeOperationTask;
-import java.io.IOException;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 public class NodesManager {
 
-  private ODistributedServerManager manager;
+  private OrientDBDistributed context;
 
-  public NodesManager(final ODistributedServerManager manager) {
-    this.manager = manager;
+  public NodesManager(final OrientDBDistributed manager) {
+    this.context = manager;
     initCommands();
   }
 
@@ -28,18 +27,15 @@ public class NodesManager {
   }
 
   public List<OperationResponseFromNode> sendAll(NodeOperation task) {
-    Set<String> servers = manager.getActiveServers();
+    Set<ONodeId> servers = context.getOps().getNetworkTopology().getMembers();
     OperationResponseManager responseManager = new OperationResponseManager(servers);
-    ODistributedRequestId requestId = manager.nextRequestId();
+    ODistributedRequestId requestId = context.nextRequestId();
     ODistributedRequest req =
-        new ODistributedRequest(manager, requestId, null, new NodeOperationTask(task));
-    for (String server : servers) {
-      try {
-        manager.getRemoteServer(server).sendRequest(req);
-        manager.getMessageService().registerRequest(requestId.getMessageId(), responseManager);
-      } catch (IOException e) {
-        responseManager.removeServerBecauseUnreachable(server);
-      }
+        new ODistributedRequest(
+            context.getTaskFactoryManager(), requestId, null, new NodeOperationTask(task));
+    for (ONodeId server : servers) {
+      context.getRemoteServer(server).sendRequest(req);
+      context.getMessageService().registerRequest(requestId.getMessageId(), responseManager);
     }
     try {
       responseManager.waitForSynchronousResponses();
@@ -50,20 +46,19 @@ public class NodesManager {
   }
 
   public OperationResponseFromNode send(final String nodeName, final NodeOperation task) {
-    Set<String> nodes = new HashSet<>();
-    nodes.add(nodeName);
+    var nodes = Set.of(new ONodeId(nodeName));
     OperationResponseManager responseManager = new OperationResponseManager(nodes);
-    try {
-      long requestId = manager.getNextMessageIdCounter();
-      ODistributedRequest req =
-          new ODistributedRequest(
-              manager, manager.nextRequestId(), null, new NodeOperationTask(task));
-      manager.getRemoteServer(nodeName).sendRequest(req);
+    long requestId = context.getNextMessageIdCounter();
+    ODistributedRequest req =
+        new ODistributedRequest(
+            context.getTaskFactoryManager(),
+            context.nextRequestId(),
+            null,
+            new NodeOperationTask(task));
+    context.getRemoteServer(nodeName).sendRequest(req);
 
-      manager.getMessageService().registerRequest(requestId, responseManager);
-    } catch (IOException e) {
-      responseManager.removeServerBecauseUnreachable(nodeName);
-    }
+    context.getMessageService().registerRequest(requestId, responseManager);
+
     try {
       responseManager.waitForSynchronousResponses();
     } catch (InterruptedException e) {

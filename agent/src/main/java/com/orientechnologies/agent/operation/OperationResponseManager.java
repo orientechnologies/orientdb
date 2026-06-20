@@ -1,6 +1,7 @@
 package com.orientechnologies.agent.operation;
 
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 import com.orientechnologies.orient.server.distributed.ODistributedResponseManager;
@@ -16,11 +17,11 @@ import java.util.stream.Collectors;
 public class OperationResponseManager implements ODistributedResponseManager {
 
   private final List<OperationResponseFromNode> responses = new ArrayList<>();
-  private final Set<String> servers;
+  private final Set<ONodeId> servers;
   private final CountDownLatch waitingFor;
   private final long sentOn = System.currentTimeMillis();
 
-  public OperationResponseManager(Set<String> servers) {
+  public OperationResponseManager(Set<ONodeId> servers) {
     this.servers = servers;
     this.waitingFor = new CountDownLatch(servers.size());
   }
@@ -66,12 +67,12 @@ public class OperationResponseManager implements ODistributedResponseManager {
 
   @Override
   public Set<String> getExpectedNodes() {
-    return servers;
+    return servers.stream().map(ONodeId::getNode).collect(Collectors.toSet());
   }
 
   @Override
   public List<String> getRespondingNodes() {
-    return responses.stream().map((a) -> a.getSenderNodeName()).collect(Collectors.toList());
+    return responses.stream().map(OperationResponseFromNode::getSenderNodeName).toList();
   }
 
   @Override

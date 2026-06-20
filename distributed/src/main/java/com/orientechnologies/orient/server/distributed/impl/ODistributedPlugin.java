@@ -67,11 +67,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedStartupExcept
 import com.orientechnologies.orient.server.distributed.ODistributedStrategy;
 import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
 import com.orientechnologies.orient.server.distributed.ORemoteServerController;
-import com.orientechnologies.orient.server.distributed.ORemoteTaskFactoryManager;
 import com.orientechnologies.orient.server.distributed.config.OClusterConfiguration;
-import com.orientechnologies.orient.server.distributed.impl.task.ORemoteTaskFactoryManagerImpl;
-import com.orientechnologies.orient.server.distributed.impl.task.ORestartServerTask;
-import com.orientechnologies.orient.server.distributed.impl.task.OStopServerTask;
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastClusterMetadataManager;
@@ -112,7 +108,6 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
   protected volatile ODistributedMessageServiceImpl messageService;
   protected Date startedOn = new Date();
   protected ODistributedStrategy responseManagerFactory = new ODefaultDistributedStrategy();
-  protected ORemoteTaskFactoryManager taskFactoryManager = new ORemoteTaskFactoryManagerImpl(this);
 
   private volatile String lastServerDump = "";
 
@@ -288,7 +283,12 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
       final Object localResult,
       ODistributedResponseManagerFactory responseManagerFactory) {
     final ODistributedRequest.EXECUTION_MODE iExecutionMode = EXECUTION_MODE.RESPONSE;
-    final ODistributedRequest req = new ODistributedRequest(this, reqId, iDatabaseName, iTask);
+    final ODistributedRequest req =
+        new ODistributedRequest(
+            ((OrientDBDistributed) serverInstance.getDatabases()).getTaskFactoryManager(),
+            reqId,
+            iDatabaseName,
+            iTask);
 
     if (iTargetNodes == null || iTargetNodes.isEmpty()) {
       logger.errorOut(
@@ -661,11 +661,6 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
   }
 
   @Override
-  public ORemoteTaskFactoryManager getTaskFactoryManager() {
-    return taskFactoryManager;
-  }
-
-  @Override
   public Set<String> getActiveServers() {
     return clusterManager.getActiveServers();
   }
@@ -816,36 +811,6 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
 
   public ODistributedRequestId nextRequestId() {
     return new ODistributedRequestId(getServerInstance().getNodeId(), getNextMessageIdCounter());
-  }
-
-  public void stopNode(final String iNode) throws IOException {
-    logger.warnNode(nodeName, "Sending request of stopping node '%s'...", iNode);
-
-    final ODistributedRequest request =
-        new ODistributedRequest(
-            this,
-            nextRequestId(),
-            null,
-            getTaskFactoryManager()
-                .getFactoryByServerName(iNode)
-                .createTask(OStopServerTask.FACTORYID));
-
-    getRemoteServer(iNode).sendRequest(request);
-  }
-
-  public void restartNode(final String iNode) throws IOException {
-    logger.warnNode(nodeName, "Sending request of restarting node '%s'...", iNode);
-
-    final ODistributedRequest request =
-        new ODistributedRequest(
-            this,
-            nextRequestId(),
-            null,
-            getTaskFactoryManager()
-                .getFactoryByServerName(iNode)
-                .createTask(ORestartServerTask.FACTORYID));
-
-    getRemoteServer(iNode).sendRequest(request);
   }
 
   public long getNextMessageIdCounter() {

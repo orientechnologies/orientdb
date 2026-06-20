@@ -58,7 +58,7 @@ public class ODistributedRequestId implements Comparable, OStreamable, Externali
     if (!(obj instanceof ODistributedRequestId)) return false;
 
     final ODistributedRequestId other = (ODistributedRequestId) obj;
-    return nodeId == other.nodeId && messageId == other.messageId;
+    return nodeId.equals(other.nodeId) && messageId == other.messageId;
   }
 
   @Override

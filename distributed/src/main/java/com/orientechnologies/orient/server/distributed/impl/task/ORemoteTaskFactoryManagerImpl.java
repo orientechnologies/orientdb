@@ -22,13 +22,11 @@ package com.orientechnologies.orient.server.distributed.impl.task;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.transaction.ONodeId;
-import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ORemoteServerController;
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactoryManager;
-import java.io.IOException;
+import com.orientechnologies.orient.server.distributed.impl.ORemoteServerManager;
 import java.util.Collection;
 
 /**
@@ -39,10 +37,10 @@ import java.util.Collection;
 public class ORemoteTaskFactoryManagerImpl implements ORemoteTaskFactoryManager {
   private static final OLogger logger =
       OLogManager.instance().logger(ORemoteTaskFactoryManagerImpl.class);
-  private final ODistributedServerManager dManager;
+  private final ORemoteServerManager dManager;
   private ORemoteTaskFactory[] factories = new ORemoteTaskFactory[1];
 
-  public ORemoteTaskFactoryManagerImpl(final ODistributedServerManager dManager) {
+  public ORemoteTaskFactoryManagerImpl(final ORemoteServerManager dManager) {
     this.dManager = dManager;
     factories[0] = new ODefaultRemoteTaskFactoryV3();
   }
@@ -50,9 +48,7 @@ public class ORemoteTaskFactoryManagerImpl implements ORemoteTaskFactoryManager 
   @Override
   public ORemoteTaskFactory getFactoryByServerId(ONodeId nodeId) {
     try {
-      final ORemoteServerController remoteServer =
-          ((OrientDBDistributed) dManager.getServerInstance().getDatabases())
-              .getRemoteServer(nodeId);
+      final ORemoteServerController remoteServer = dManager.getRemoteServer(nodeId);
 
       final ORemoteTaskFactory factory = getFactoryByVersion(remoteServer.getProtocolVersion());
       if (factory == null)
@@ -86,7 +82,8 @@ public class ORemoteTaskFactoryManagerImpl implements ORemoteTaskFactoryManager 
   @Override
   public ORemoteTaskFactory getFactoryByServerName(final String serverName) {
     try {
-      final ORemoteServerController remoteServer = dManager.getRemoteServer(serverName);
+      final ORemoteServerController remoteServer =
+          dManager.getRemoteServer(new ONodeId(serverName));
 
       final ORemoteTaskFactory factory = getFactoryByVersion(remoteServer.getProtocolVersion());
       if (factory == null)
@@ -98,12 +95,6 @@ public class ORemoteTaskFactoryManagerImpl implements ORemoteTaskFactoryManager 
     } catch (ODistributedException e) {
       // SERVER NOT AVAILABLE, CONSIDER CURRENT PROTOCOL FOR THE MISSING ONE
       return getFactoryByVersion(ORemoteServerController.CURRENT_PROTOCOL_VERSION);
-
-    } catch (IOException e) {
-      logger.warn(
-          "Cannot determine protocol version for server %s  error: %s",
-          e, serverName, e.getMessage());
-      return null;
     }
   }
 

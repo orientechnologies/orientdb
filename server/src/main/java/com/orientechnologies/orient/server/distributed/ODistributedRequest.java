@@ -32,7 +32,7 @@ public class ODistributedRequest {
     NO_RESPONSE
   }
 
-  private final ODistributedServerManager manager;
+  private final ORemoteTaskFactoryManager manager;
 
   private ODistributedRequestId id;
   private String databaseName;
@@ -41,12 +41,12 @@ public class ODistributedRequest {
   private ORecordId
       userRID; // KEEP ALSO THE RID TO AVOID SECURITY PROBLEM ON DELETE & RECREATE USERS
 
-  public ODistributedRequest(final ODistributedServerManager manager) {
+  public ODistributedRequest(final ORemoteTaskFactoryManager manager) {
     this.manager = manager;
   }
 
   public ODistributedRequest(
-      final ODistributedServerManager manager,
+      final ORemoteTaskFactoryManager manager,
       final ODistributedRequestId requestId,
       final String databaseName,
       final ORemoteTask payload) {
@@ -90,8 +90,7 @@ public class ODistributedRequest {
     databaseName = in.readUTF();
     if (databaseName.isEmpty()) databaseName = null;
 
-    final ORemoteTaskFactory taskFactory =
-        manager.getTaskFactoryManager().getFactoryByServerId(id.getNodeId());
+    final ORemoteTaskFactory taskFactory = manager.getFactoryByServerId(id.getNodeId());
     task = taskFactory.createTask(in.readByte());
     task.fromStream(in, taskFactory);
 

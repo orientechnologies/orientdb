@@ -17,7 +17,7 @@ public class OSQLCommandSecondPhaseTest {
 
   @Test
   public void testReadWrite() throws IOException {
-    ODistributedRequestId id = new ODistributedRequestId();
+    ODistributedRequestId id = new ODistributedRequestId(new ONodeId("one"), 1);
     OTransactionIdPromise first =
         new OTransactionIdPromise(new ONodeId("one"), new OTransactionId(10, 1));
     OTransactionIdPromise second =

@@ -99,12 +99,15 @@ import com.orientechnologies.orient.server.OServerAware;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedMessageService;
+import com.orientechnologies.orient.server.distributed.ODistributedRequest;
+import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.DB_STATUS;
 import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
 import com.orientechnologies.orient.server.distributed.OModifiableDistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ORemoteServerAvailabilityCheck;
 import com.orientechnologies.orient.server.distributed.ORemoteServerController;
+import com.orientechnologies.orient.server.distributed.ORemoteTaskFactoryManager;
 import com.orientechnologies.orient.server.distributed.OWriteOperationNotPermittedException;
 import com.orientechnologies.orient.server.distributed.config.OClusterConfiguration;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
@@ -117,6 +120,8 @@ import com.orientechnologies.orient.server.distributed.impl.ODistributedPlugin;
 import com.orientechnologies.orient.server.distributed.impl.ONewDeltaSyncImporter;
 import com.orientechnologies.orient.server.distributed.impl.ORemoteServerManager;
 import com.orientechnologies.orient.server.distributed.impl.metadata.OSharedContextDistributed;
+import com.orientechnologies.orient.server.distributed.impl.task.ORestartServerTask;
+import com.orientechnologies.orient.server.distributed.impl.task.OStopServerTask;
 import com.orientechnologies.orient.server.distributed.impl.task.OUpdateDatabaseSequenceStatusTask;
 import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
@@ -1928,5 +1933,50 @@ public class OrientDBDistributed extends OrientDBEmbedded
 
   public void receiveRecovery(List<OConfirmedRetryOp> ops) {
     this.getNodeState().recover(ops, this);
+  }
+
+  public ODistributedRequestId nextRequestId() {
+    return new ODistributedRequestId(getNodeId(), getNextMessageIdCounter());
+  }
+
+  public void stopNode(final String iNode) {
+    logger.warnNode(nodeName, "Sending request of stopping node '%s'...", iNode);
+
+    var task =
+        remoteServerManager
+            .getTaskFactoryManager()
+            .getFactoryByServerName(iNode)
+            .createTask(OStopServerTask.FACTORYID);
+    var request = new ODistributedRequest(getTaskFactoryManager(), nextRequestId(), null, task);
+    var remoteNode = getRemoteServer(iNode);
+    if (remoteNode != null) {
+      remoteNode.sendRequest(request);
+    } else {
+      logger.warnNode(
+          nodeName, "Impossible to send message '%s' to node '%s' no channel", request, iNode);
+    }
+  }
+
+  public void restartNode(final String iNode) {
+    logger.warnNode(nodeName, "Sending request of restarting node '%s'...", iNode);
+
+    var task =
+        remoteServerManager
+            .getTaskFactoryManager()
+            .getFactoryByServerName(iNode)
+            .createTask(ORestartServerTask.FACTORYID);
+    var request = new ODistributedRequest(getTaskFactoryManager(), nextRequestId(), null, task);
+
+    var remoteNode = getRemoteServer(iNode);
+    if (remoteNode != null) {
+      remoteNode.sendRequest(request);
+    } else {
+      logger.warnNode(
+          nodeName, "Impossible to send message '%s' to node '%s' no channel", request, iNode);
+    }
+  }
+
+  public ORemoteTaskFactoryManager getTaskFactoryManager() {
+    return remoteServerManager.getTaskFactoryManager();
   }
 }

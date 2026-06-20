@@ -3,7 +3,6 @@ package com.orientechnologies.orient.distributed.db;
 import com.orientechnologies.orient.core.db.ONetworkMessage;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseImpl;
 import java.io.DataInput;
@@ -19,8 +18,7 @@ public class ONetworkRequestMessage implements ONetworkMessage {
 
   public ONetworkRequestMessage(OrientDBDistributed ctx) {
     this.ctx = ctx;
-    final ODistributedServerManager manager = ctx.getDistributedManager();
-    req = new ODistributedRequest(manager);
+    req = new ODistributedRequest(ctx.getTaskFactoryManager());
   }
 
   @Override

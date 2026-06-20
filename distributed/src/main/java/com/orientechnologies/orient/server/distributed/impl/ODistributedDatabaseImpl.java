@@ -281,7 +281,9 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
           @Override
           public void run() {
             processRequest(
-                new ODistributedRequest(manager, requestId, databaseName, payload), false);
+                new ODistributedRequest(
+                    context.getTaskFactoryManager(), requestId, databaseName, payload),
+                false);
           }
         },
         autoRetryDelay * retryCount);

@@ -130,12 +130,6 @@ public interface ODistributedServerManager {
       Object localResult,
       ODistributedResponseManagerFactory responseManagerFactory);
 
-  /**
-   * Returns the task factory manager. During first connect the minor version of the protocol is
-   * used.
-   */
-  ORemoteTaskFactoryManager getTaskFactoryManager();
-
   Set<String> getActiveServers();
 
   File getDefaultDatabaseConfigFile();

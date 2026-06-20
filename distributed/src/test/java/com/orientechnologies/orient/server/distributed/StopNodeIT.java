@@ -19,7 +19,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.server.distributed.impl.ODistributedPlugin;
+import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.setup.ServerRun;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -122,11 +122,8 @@ public class StopNodeIT extends AbstractServerClusterTxTest {
 
                             banner("STOPPING SERVER " + (SERVERS - 1));
 
-                            ((ODistributedPlugin)
-                                    serverInstance
-                                        .get(0)
-                                        .getServerInstance()
-                                        .getDistributedManager())
+                            ((OrientDBDistributed)
+                                    serverInstance.get(0).getServerInstance().getDatabases())
                                 .stopNode(server.getServerInstance().getNodeId().getNode());
 
                             return null;

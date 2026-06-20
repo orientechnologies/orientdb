@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
 import com.orientechnologies.orient.core.sql.parser.OLocalResultSetLifecycleDecorator;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.OEnterpriseLocalPaginatedStorage;
+import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerLifecycleListener;
@@ -208,8 +209,9 @@ public class OEnterpriseServerImpl
   @Override
   public void onAfterActivate() {
 
-    if (server.getDistributedManager() != null) {
-      nodesManager = new NodesManager(server.getDistributedManager());
+    var databases = server.getDatabases();
+    if (databases instanceof OrientDBDistributed) {
+      nodesManager = new NodesManager((OrientDBDistributed) databases);
     }
   }
 

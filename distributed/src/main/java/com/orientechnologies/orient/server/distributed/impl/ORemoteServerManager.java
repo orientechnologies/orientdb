@@ -4,7 +4,9 @@ import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.distributed.context.coordination.message.ONodeInfoListener;
 import com.orientechnologies.orient.server.distributed.ORemoteServerAvailabilityCheck;
 import com.orientechnologies.orient.server.distributed.ORemoteServerController;
+import com.orientechnologies.orient.server.distributed.ORemoteTaskFactoryManager;
 import com.orientechnologies.orient.server.distributed.impl.ORemoteAddress.OBinaryAddress;
+import com.orientechnologies.orient.server.distributed.impl.task.ORemoteTaskFactoryManagerImpl;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
@@ -18,6 +20,8 @@ public class ORemoteServerManager {
   private final ConcurrentMap<ONodeId, ORemoteServerController> remoteServers =
       new ConcurrentHashMap<>();
   private final ConcurrentMap<ONodeId, ORemoteAddress> remoteAddresses = new ConcurrentHashMap<>();
+  protected ORemoteTaskFactoryManager taskFactoryManager = new ORemoteTaskFactoryManagerImpl(this);
+
   private final ONodeId local;
   private final ORemoteServerAvailabilityCheck check;
   private final ExecutorService executor;
@@ -72,5 +76,9 @@ public class ORemoteServerManager {
     return Optional.ofNullable(remoteAddresses.get(node))
         .map(ORemoteAddress::getAddresses)
         .orElseGet(Collections::emptyList);
+  }
+
+  public ORemoteTaskFactoryManager getTaskFactoryManager() {
+    return taskFactoryManager;
   }
 }

@@ -123,7 +123,7 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
         throw new OConfigurationException(
             "Cannot stop the server: local server is not distributed");
 
-      final ODistributedPlugin dManager = (ODistributedPlugin) server.getDistributedManager();
+      OrientDBDistributed dManager = (OrientDBDistributed) server.getDatabases();
       dManager.stopNode(parts[2]);
 
       iResponse.send(OHttpUtils.STATUS_OK_CODE, null, null, OHttpUtils.STATUS_OK_DESCRIPTION, null);
@@ -137,7 +137,7 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
         throw new OConfigurationException(
             "Cannot restart the server: local server is not distributed");
 
-      final ODistributedPlugin dManager = (ODistributedPlugin) server.getDistributedManager();
+      OrientDBDistributed dManager = (OrientDBDistributed) server.getDatabases();
       dManager.restartNode(parts[2]);
 
       iResponse.send(OHttpUtils.STATUS_OK_CODE, null, null, OHttpUtils.STATUS_OK_DESCRIPTION, null);
