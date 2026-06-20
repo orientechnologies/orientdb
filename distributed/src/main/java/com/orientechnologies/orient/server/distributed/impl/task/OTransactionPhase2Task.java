@@ -13,6 +13,7 @@ import com.orientechnologies.orient.core.serialization.serializer.record.OSerial
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationContextImpl;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkDistributed;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
+import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.server.OServer;
@@ -70,7 +71,7 @@ public class OTransactionPhase2Task extends OAbstractRemoteTask implements OLock
   @Override
   public void fromStream(DataInput in, ORemoteTaskFactory factory) throws IOException {
     this.transactionId = OTransactionIdPromise.readNetwork(in);
-    int nodeId = in.readInt();
+    var nodeId = ONodeId.readNetwork(in);
     long messageId = in.readLong();
     this.firstPhaseId = new ODistributedRequestId(nodeId, messageId);
 
@@ -99,7 +100,7 @@ public class OTransactionPhase2Task extends OAbstractRemoteTask implements OLock
   @Override
   public void toStream(DataOutput out) throws IOException {
     this.transactionId.writeNetwork(out);
-    out.writeInt(firstPhaseId.getNodeId());
+    firstPhaseId.getNodeId().writeNetwork(out);
     out.writeLong(firstPhaseId.getMessageId());
     out.writeInt(involvedRids.size());
     for (ORID id : involvedRids) {

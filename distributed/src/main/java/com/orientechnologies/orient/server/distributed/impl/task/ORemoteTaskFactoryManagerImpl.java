@@ -21,6 +21,8 @@ package com.orientechnologies.orient.server.distributed.impl.task;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
+import com.orientechnologies.orient.core.transaction.ONodeId;
+import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ORemoteServerController;
@@ -46,11 +48,23 @@ public class ORemoteTaskFactoryManagerImpl implements ORemoteTaskFactoryManager 
   }
 
   @Override
-  public ORemoteTaskFactory getFactoryByServerId(final int serverId) {
-    final String remoteNodeName = dManager.getNodeNameById(serverId);
-    if (remoteNodeName == null) throw new IllegalArgumentException("Invalid serverId " + serverId);
+  public ORemoteTaskFactory getFactoryByServerId(ONodeId nodeId) {
+    try {
+      final ORemoteServerController remoteServer =
+          ((OrientDBDistributed) dManager.getServerInstance().getDatabases())
+              .getRemoteServer(nodeId);
 
-    return getFactoryByServerName(remoteNodeName);
+      final ORemoteTaskFactory factory = getFactoryByVersion(remoteServer.getProtocolVersion());
+      if (factory == null)
+        throw new IllegalArgumentException(
+            "Cannot find a factory for remote task for server " + nodeId);
+
+      return factory;
+
+    } catch (ODistributedException e) {
+      // SERVER NOT AVAILABLE, CONSIDER CURRENT PROTOCOL FOR THE MISSING ONE
+      return getFactoryByVersion(ORemoteServerController.CURRENT_PROTOCOL_VERSION);
+    }
   }
 
   @Override

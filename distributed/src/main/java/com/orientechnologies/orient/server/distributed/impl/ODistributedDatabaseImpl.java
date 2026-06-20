@@ -36,6 +36,7 @@ import com.orientechnologies.orient.core.db.OSystemDatabase;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OSyncSource;
+import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.OServer;
@@ -216,7 +217,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
     final String local = ctx.getNodeId().getNode();
 
-    final String sender = ctx.getDistributedManager().getNodeNameById(iRequestId.getNodeId());
+    final String sender = iRequestId.getNodeId().getNode();
 
     final ODistributedResponse response =
         new ODistributedResponse(null, iRequestId, local, sender, responsePayload);
@@ -409,13 +410,12 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
   @Override
   public void unlockResourcesOfServer(
-      final ODatabaseDocumentInternal database, final String serverName) {
-    final int nodeLeftId = manager.getNodeIdByName(serverName);
+      final ODatabaseDocumentInternal database, final ONodeId nodeId) {
 
     final Iterator<ODistributedTxContext> pendingReqIterator = activeTxContexts.values().iterator();
     while (pendingReqIterator.hasNext()) {
       final ODistributedTxContext pReq = pendingReqIterator.next();
-      if (pReq != null && pReq.getReqId().getNodeId() == nodeLeftId) {
+      if (pReq != null && pReq.getReqId().getNodeId().equals(nodeId)) {
 
         try {
           pReq.destroy();
@@ -458,12 +458,12 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   @Override
-  public void handleUnreachableNode(final String nodeName) {
+  public void handleUnreachableNode(final ONodeId nodeId) {
     if (!running) {
       return;
     }
 
-    final OUnreachableServerLocalTask task = new OUnreachableServerLocalTask(nodeName);
+    final OUnreachableServerLocalTask task = new OUnreachableServerLocalTask(nodeId);
     final ODistributedRequest rollbackRequest =
         new ODistributedRequest(null, manager.nextRequestId(), null, task);
     processRequest(rollbackRequest, false);
@@ -604,7 +604,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
             try {
               ctx.cancel();
 
-              if (ctx.getReqId().getNodeId() == manager.getLocalNodeId())
+              if (ctx.getReqId().getNodeId().equals(context.getNodeId()))
                 // REQUEST WAS ORIGINATED FROM CURRENT SERVER
                 context.getMessageService().timeoutRequest(ctx.getReqId().getMessageId());
 

@@ -1297,11 +1297,15 @@ public class OrientDBDistributed extends OrientDBEmbedded
     }
   }
 
-  public ORemoteServerController getRemoteServer(String rNodeName) {
+  public ORemoteServerController getRemoteServer(ONodeId nodeId) {
     if (remoteServerManager != null) {
-      return remoteServerManager.getRemoteServer(new ONodeId(rNodeName));
+      return remoteServerManager.getRemoteServer(nodeId);
     }
     return null;
+  }
+
+  public ORemoteServerController getRemoteServer(String rNodeName) {
+    return getRemoteServer(new ONodeId(rNodeName));
   }
 
   public ORemoteServerController connectRemoteServer(

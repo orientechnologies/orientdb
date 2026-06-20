@@ -816,7 +816,7 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
   }
 
   public ODistributedRequestId nextRequestId() {
-    return new ODistributedRequestId(getLocalNodeId(), getNextMessageIdCounter());
+    return new ODistributedRequestId(getServerInstance().getNodeId(), getNextMessageIdCounter());
   }
 
   public void stopNode(final String iNode) throws IOException {

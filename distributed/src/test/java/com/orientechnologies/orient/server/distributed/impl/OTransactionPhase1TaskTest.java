@@ -13,6 +13,7 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
@@ -85,7 +86,9 @@ public class OTransactionPhase1TaskTest {
     OTransactionPhase1TaskResult res =
         (OTransactionPhase1TaskResult)
             task.execute(
-                new ODistributedRequestId(10, 20), server, (ODatabaseDocumentInternal) session);
+                new ODistributedRequestId(new ONodeId("node"), 20),
+                server,
+                (ODatabaseDocumentInternal) session);
 
     assertTrue(res.getResultPayload() instanceof OTxSuccess);
     // TODO: verify the check of the locked record if possible
@@ -112,7 +115,9 @@ public class OTransactionPhase1TaskTest {
     OTransactionPhase1TaskResult res =
         (OTransactionPhase1TaskResult)
             task.execute(
-                new ODistributedRequestId(10, 20), server, (ODatabaseDocumentInternal) session);
+                new ODistributedRequestId(new ONodeId("node"), 20),
+                server,
+                (ODatabaseDocumentInternal) session);
     assertTrue(res.getResultPayload() instanceof OTxConcurrentModification);
     assertEquals(
         ((OTxConcurrentModification) res.getResultPayload()).getRecordId(), old.getIdentity());
@@ -141,7 +146,9 @@ public class OTransactionPhase1TaskTest {
     OTransactionPhase1TaskResult res =
         (OTransactionPhase1TaskResult)
             task.execute(
-                new ODistributedRequestId(10, 20), server, (ODatabaseDocumentInternal) session);
+                new ODistributedRequestId(new ONodeId("node"), 20),
+                server,
+                (ODatabaseDocumentInternal) session);
     assertTrue(res.getResultPayload() instanceof OTxConcurrentModification);
     assertEquals(
         ((OTxConcurrentModification) res.getResultPayload()).getRecordId(), old.getIdentity());
@@ -173,7 +180,9 @@ public class OTransactionPhase1TaskTest {
     OTransactionPhase1TaskResult res =
         (OTransactionPhase1TaskResult)
             task.execute(
-                new ODistributedRequestId(10, 20), server, (ODatabaseDocumentInternal) session);
+                new ODistributedRequestId(new ONodeId("node"), 20),
+                server,
+                (ODatabaseDocumentInternal) session);
     assertTrue(res.getResultPayload() instanceof OTxUniqueIndex);
     assertEquals(((OTxUniqueIndex) res.getResultPayload()).getRecordId(), doc.getIdentity());
   }

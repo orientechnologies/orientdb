@@ -1268,7 +1268,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
               new OTransactionIdPromise(nodeId, data.getTransactionId());
           ONewDistributedTxContextImpl txContext =
               new ONewDistributedTxContextImpl(
-                  getSharedContext(), new ODistributedRequestId(-1, -1), tx, primise);
+                  getSharedContext(), new ODistributedRequestId(getLocalNodeId(), -1), tx, primise);
 
           var transactionSequence = getSharedContext().getTransactionSequence();
           transactionSequence.validate(primise);

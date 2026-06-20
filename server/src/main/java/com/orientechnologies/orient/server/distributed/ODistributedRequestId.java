@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.orient.core.serialization.OStreamable;
+import com.orientechnologies.orient.core.transaction.ONodeId;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.Externalizable;
@@ -34,12 +35,12 @@ import java.io.ObjectOutput;
  */
 public class ODistributedRequestId implements Comparable, OStreamable, Externalizable {
 
-  private int nodeId;
+  private ONodeId nodeId;
   private long messageId;
 
   public ODistributedRequestId() {}
 
-  public ODistributedRequestId(final int iNodeId, final long iMessageId) {
+  public ODistributedRequestId(final ONodeId iNodeId, final long iMessageId) {
     nodeId = iNodeId;
     messageId = iMessageId;
   }
@@ -48,7 +49,7 @@ public class ODistributedRequestId implements Comparable, OStreamable, Externali
     return messageId;
   }
 
-  public int getNodeId() {
+  public ONodeId getNodeId() {
     return nodeId;
   }
 
@@ -70,28 +71,28 @@ public class ODistributedRequestId implements Comparable, OStreamable, Externali
 
   @Override
   public int hashCode() {
-    return 31 * nodeId + 103 * (int) messageId;
+    return 31 * nodeId.hashCode() + 103 * (int) messageId;
   }
 
   public void toStream(final DataOutput out) throws IOException {
-    out.writeInt(nodeId);
+    nodeId.writeNetwork(out);
     out.writeLong(messageId);
   }
 
   public void fromStream(final DataInput in) throws IOException {
-    nodeId = in.readInt();
+    nodeId = ONodeId.readNetwork(in);
     messageId = in.readLong();
   }
 
   @Override
   public void writeExternal(final ObjectOutput out) throws IOException {
-    out.writeInt(nodeId);
+    nodeId.writeNetwork(out);
     out.writeLong(messageId);
   }
 
   @Override
   public void readExternal(final ObjectInput in) throws IOException, ClassNotFoundException {
-    nodeId = in.readInt();
+    nodeId = ONodeId.readNetwork(in);
     messageId = in.readLong();
   }
 

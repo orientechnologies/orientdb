@@ -43,14 +43,14 @@ public class ODDLPhasesExecutionTests {
     OTransactionIdPromise second = new OTransactionIdPromise(nodeId, new OTransactionId(30, 1));
 
     OSQLCommandTaskFirstPhase message = new OSQLCommandTaskFirstPhase(command, first, second);
-    ODistributedRequestId requestId = new ODistributedRequestId(1, 10);
+    ODistributedRequestId requestId = new ODistributedRequestId(nodeId, 10);
     OTransactionPhase1TaskResult result =
         (OTransactionPhase1TaskResult) message.execute(requestId, server, session);
     assertTrue(result.getResultPayload() instanceof OTxSuccess);
 
     OSQLCommandTaskSecondPhase messageSecond =
         new OSQLCommandTaskSecondPhase(requestId, first, second, true);
-    messageSecond.execute(new ODistributedRequestId(1, 11), server, session);
+    messageSecond.execute(new ODistributedRequestId(nodeId, 11), server, session);
     assertTrue(session.existsCluster("bla"));
     session.close();
   }

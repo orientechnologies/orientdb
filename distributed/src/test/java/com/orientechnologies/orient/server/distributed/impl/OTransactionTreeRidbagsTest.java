@@ -15,6 +15,7 @@ import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
@@ -162,7 +163,7 @@ public class OTransactionTreeRidbagsTest {
     OTransactionPhase1Task task = createFirstPhase(doc, session);
     session.getLocalCache().clear();
     // Start the first transaction that do not update the version and reach the quorum of two nodes.
-    ODistributedRequestId requestIdTx = new ODistributedRequestId(10, 20);
+    ODistributedRequestId requestIdTx = new ODistributedRequestId(new ONodeId("node"), 20);
     firstPhaseExecution(task, requestIdTx, session);
 
     session2.activateOnCurrentThread();
@@ -175,10 +176,14 @@ public class OTransactionTreeRidbagsTest {
 
     session.activateOnCurrentThread();
     secondPhase.execute(
-        new ODistributedRequestId(10, 21), server, (ODatabaseDocumentInternal) session);
+        new ODistributedRequestId(new ONodeId("node"), 21),
+        server,
+        (ODatabaseDocumentInternal) session);
     session2.activateOnCurrentThread();
     secondPhase.execute(
-        new ODistributedRequestId(10, 21), server, (ODatabaseDocumentInternal) session2);
+        new ODistributedRequestId(new ONodeId("node"), 21),
+        server,
+        (ODatabaseDocumentInternal) session2);
 
     // Applied the first transaction to two nodes
 
@@ -190,7 +195,7 @@ public class OTransactionTreeRidbagsTest {
 
     OTransactionPhase1Task task1 = createFirstPhase(doc1, session2);
 
-    ODistributedRequestId requestIdTx1 = new ODistributedRequestId(11, 20);
+    ODistributedRequestId requestIdTx1 = new ODistributedRequestId(new ONodeId("node1"), 20);
 
     firstPhaseExecution(task1, requestIdTx1, session2);
 
@@ -205,15 +210,21 @@ public class OTransactionTreeRidbagsTest {
     OTransactionPhase2Task secondPhase1 =
         new OTransactionPhase2Task(requestIdTx1, true, ids, new TreeSet<>(), task1.getPromise());
     secondPhase1.execute(
-        new ODistributedRequestId(11, 21), server, (ODatabaseDocumentInternal) session1);
+        new ODistributedRequestId(new ONodeId("node1"), 21),
+        server,
+        (ODatabaseDocumentInternal) session1);
 
     session.activateOnCurrentThread();
     secondPhase1.execute(
-        new ODistributedRequestId(11, 21), server, (ODatabaseDocumentInternal) session);
+        new ODistributedRequestId(new ONodeId("node1"), 21),
+        server,
+        (ODatabaseDocumentInternal) session);
 
     session2.activateOnCurrentThread();
     secondPhase1.execute(
-        new ODistributedRequestId(11, 21), server, (ODatabaseDocumentInternal) session2);
+        new ODistributedRequestId(new ONodeId("node1"), 21),
+        server,
+        (ODatabaseDocumentInternal) session2);
 
     // Completed the second transaction to all nodes.
 
@@ -222,7 +233,9 @@ public class OTransactionTreeRidbagsTest {
 
     firstPhaseExecution(task, requestIdTx, session1);
     secondPhase.execute(
-        new ODistributedRequestId(10, 21), server, (ODatabaseDocumentInternal) session1);
+        new ODistributedRequestId(new ONodeId("node1"), 21),
+        server,
+        (ODatabaseDocumentInternal) session1);
 
     assertContent(session);
     assertContent(session1);

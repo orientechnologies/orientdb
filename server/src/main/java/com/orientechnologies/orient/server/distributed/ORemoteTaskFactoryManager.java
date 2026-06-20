@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.orient.core.transaction.ONodeId;
 import java.util.Collection;
 
 /**
@@ -27,7 +28,7 @@ import java.util.Collection;
  * @author Luca Garulli
  */
 public interface ORemoteTaskFactoryManager {
-  ORemoteTaskFactory getFactoryByServerId(int serverId);
+  ORemoteTaskFactory getFactoryByServerId(ONodeId serverId);
 
   ORemoteTaskFactory getFactoryByServerName(String serverName);
 

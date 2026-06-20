@@ -22,6 +22,7 @@ package com.orientechnologies.orient.server.distributed.impl.task;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
@@ -39,9 +40,9 @@ import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 public class OUnreachableServerLocalTask extends OAbstractRemoteTask {
   public static final int FACTORYID = 28;
 
-  private String unreachableServer;
+  private ONodeId unreachableServer;
 
-  public OUnreachableServerLocalTask(final String unreachableServer) {
+  public OUnreachableServerLocalTask(final ONodeId unreachableServer) {
     this.unreachableServer = unreachableServer;
   }
 
