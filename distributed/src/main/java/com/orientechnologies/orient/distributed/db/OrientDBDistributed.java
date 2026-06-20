@@ -189,13 +189,17 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   public void initDistributed(ONodeConfiguration config) {
-    initDistributed(config.getNodeName(), config.getGroupName(), config.getQuorum());
+    initDistributed(
+        config.getNodeName(), config.getGroupName(), config.getQuorum(), config.getGroupPassword());
   }
 
-  public void initDistributed(String nodeName, String groupIdPar, int miminumQuorum) {
+  public void initDistributed(
+      String nodeName, String groupIdPar, int miminumQuorum, String password) {
     this.nodeName = nodeName;
     ONodeId nodeId = new ONodeId(nodeName);
     OGroupId groupId = new OGroupId(groupIdPar);
+
+    getSecuritySystem().addTemporaryUser(groupIdPar, password, "*");
     OSystemStateStore store = new OSystemStateStore(getSystemDatabase());
     this.nodeState = new ONodeState(nodeId, groupId, miminumQuorum, store, this);
     var check =
@@ -213,7 +217,8 @@ public class OrientDBDistributed extends OrientDBEmbedded
           }
         };
 
-    this.remoteServerManager = new ORemoteServerManager(nodeId, check, newNetIoExecutor());
+    this.remoteServerManager =
+        new ORemoteServerManager(nodeId, check, newNetIoExecutor(), groupIdPar, password);
     ODiscoverAction action = this.nodeState.initFromStore();
 
     action.execute(this, null, newExectution(new OInitRetryOperation(action)));
@@ -1013,9 +1018,9 @@ public class OrientDBDistributed extends OrientDBEmbedded
     retryOperation(new ODiscoverActionRetryOperation(action, state));
   }
 
-  public void connected(ONodeId node, String url, String user, String password) {
+  public void connected(ONodeId node, String url) {
     try {
-      connectRemoteServer(node, url, user, password);
+      connectRemoteServer(node, url);
       sendFirstConnect(node);
     } catch (IOException e) {
       logger.warn("failing to connect to remote node %s", node.getNode(), e);
@@ -1308,10 +1313,9 @@ public class OrientDBDistributed extends OrientDBEmbedded
     return getRemoteServer(new ONodeId(rNodeName));
   }
 
-  public ORemoteServerController connectRemoteServer(
-      ONodeId node, String url, String replicatorUser, String userPassword) throws IOException {
+  public ORemoteServerController connectRemoteServer(ONodeId node, String url) throws IOException {
     if (remoteServerManager != null) {
-      return remoteServerManager.connectRemoteServer(node, url, replicatorUser, userPassword);
+      return remoteServerManager.connectRemoteServer(node, url);
     } else {
       logger.warn("failed to connect server manager not initialized");
     }

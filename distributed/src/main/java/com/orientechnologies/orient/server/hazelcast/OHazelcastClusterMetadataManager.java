@@ -86,15 +86,28 @@ public class OHazelcastClusterMetadataManager
   }
 
   public void configHazelcastPlugin(
-      OServer server, OServerParameterConfiguration[] params, String nodeName) {
+      OServer server, OServerParameterConfiguration[] params, String nodeName)
+      throws FileNotFoundException {
     this.nodeName = nodeName;
     this.serverInstance = server;
     for (OServerParameterConfiguration param : params) {
       if (param.name.equalsIgnoreCase("configuration.hazelcast")) {
         hazelcastConfigFile = OSystemVariableResolver.resolveSystemVariables(param.value);
         hazelcastConfigFile = OFileUtils.getPath(hazelcastConfigFile);
+        // If hazelcastConfig is null, use the file system XML config.
+        if (hazelcastConfig == null) {
+          hazelcastConfig = new FileSystemXmlConfig(hazelcastConfigFile);
+          hazelcastConfig.setClassLoader(this.getClass().getClassLoader());
+        }
+
+        // Disabled the shudown hook of hazelcast, shutdown is managed by orient hook
+        hazelcastConfig.setProperty("hazelcast.shutdownhook.enabled", "false");
       }
     }
+  }
+
+  public Config getHazelcastConfig() {
+    return hazelcastConfig;
   }
 
   public void startupHazelcastPlugin() throws IOException, InterruptedException {
@@ -289,15 +302,6 @@ public class OHazelcastClusterMetadataManager
   }
 
   protected HazelcastInstance configureHazelcast() throws FileNotFoundException {
-
-    // If hazelcastConfig is null, use the file system XML config.
-    if (hazelcastConfig == null) {
-      hazelcastConfig = new FileSystemXmlConfig(hazelcastConfigFile);
-      hazelcastConfig.setClassLoader(this.getClass().getClassLoader());
-    }
-
-    // Disabled the shudown hook of hazelcast, shutdown is managed by orient hook
-    hazelcastConfig.setProperty("hazelcast.shutdownhook.enabled", "false");
 
     return Hazelcast.newHazelcastInstance(hazelcastConfig);
   }

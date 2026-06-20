@@ -77,6 +77,7 @@ import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastClusterMetadataManager;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.security.SecureRandom;
 import java.util.ArrayList;
@@ -148,10 +149,18 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
       }
     }
 
+    try {
+      clusterManager.configHazelcastPlugin(oServer, iParams, nodeName);
+    } catch (FileNotFoundException e) {
+      throw OException.wrapException(
+          new ODatabaseException("Error loading hazelcast configuration"), e);
+    }
+    String contextName = clusterManager.getHazelcastConfig().getGroupConfig().getName();
+    String contextPassword = clusterManager.getHazelcastConfig().getGroupConfig().getName();
     if (nodeName == null) assignNodeName();
     // TODO: get the group name from some configuration
-    ((OrientDBDistributed) serverInstance.getDatabases()).initDistributed(nodeName, "OrientDB", 1);
-    clusterManager.configHazelcastPlugin(oServer, iParams, nodeName);
+    ((OrientDBDistributed) serverInstance.getDatabases())
+        .initDistributed(nodeName, contextName, 1, contextPassword);
   }
 
   public File getDefaultDatabaseConfigFile() {
@@ -957,8 +966,7 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
 
         if (userPassword != null) {
           try {
-            remoteServer =
-                ctx.connectRemoteServer(new ONodeId(rNodeName), url, REPLICATOR_USER, userPassword);
+            remoteServer = ctx.connectRemoteServer(new ONodeId(rNodeName), url);
             break;
           } catch (ONetworkProtocolException | IOException e) {
             logger.warn("failing to connect to remote node %s", rNodeName, e);
@@ -994,7 +1002,7 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
       logger.errorOut(nodeName, joinedNodeName, "Error on connecting to node %s", joinedNodeName);
     }
     ((OrientDBDistributed) serverInstance.getDatabases())
-        .connected(new ONodeId(joinedNodeName), url, REPLICATOR_USER, userPassword);
+        .connected(new ONodeId(joinedNodeName), url);
 
     logger.infoIn(
         nodeName,

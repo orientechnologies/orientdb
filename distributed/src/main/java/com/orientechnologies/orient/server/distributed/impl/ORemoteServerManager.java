@@ -21,20 +21,28 @@ public class ORemoteServerManager {
   private final ONodeId local;
   private final ORemoteServerAvailabilityCheck check;
   private final ExecutorService executor;
+  private final String user;
+  private final String password;
 
   public ORemoteServerManager(
-      ONodeId local, ORemoteServerAvailabilityCheck check, ExecutorService executor) {
+      ONodeId local,
+      ORemoteServerAvailabilityCheck check,
+      ExecutorService executor,
+      String user,
+      String password) {
     this.local = local;
     this.check = check;
     this.executor = executor;
+    this.user = user;
+    this.password = password;
   }
 
   public ORemoteServerController getRemoteServer(final ONodeId rNodeName) {
     return remoteServers.get(rNodeName);
   }
 
-  public ORemoteServerController connectRemoteServer(
-      final ONodeId rNodeName, String host, String user, String password) throws IOException {
+  public ORemoteServerController connectRemoteServer(final ONodeId rNodeName, String host)
+      throws IOException {
     // OK
     final ORemoteServerController remoteServer =
         remoteServers.computeIfAbsent(
