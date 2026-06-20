@@ -36,7 +36,6 @@ import com.orientechnologies.orient.core.db.OSystemDatabase;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OSyncSource;
-import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.OServer;
@@ -54,9 +53,7 @@ import com.orientechnologies.orient.server.distributed.impl.lock.OLockGuard;
 import com.orientechnologies.orient.server.distributed.impl.lock.OLockManager;
 import com.orientechnologies.orient.server.distributed.impl.lock.OLockManagerImpl;
 import com.orientechnologies.orient.server.distributed.impl.lock.OTxPromiseManager;
-import com.orientechnologies.orient.server.distributed.impl.lock.OnLocksAcquired;
 import com.orientechnologies.orient.server.distributed.impl.task.OLockKeySource;
-import com.orientechnologies.orient.server.distributed.impl.task.OUnreachableServerLocalTask;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTransactionUniqueKey;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import java.util.Collections;
@@ -70,7 +67,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
@@ -85,7 +81,6 @@ import java.util.concurrent.atomic.AtomicLong;
 public class ODistributedDatabaseImpl implements ODistributedDatabase {
   private static final OLoggerDistributed logger =
       OLoggerDistributed.logger(ODistributedDatabaseImpl.class);
-  protected final ODistributedPlugin manager;
   protected final String databaseName;
   private final String localNodeName;
   private final OTxPromiseManager<ORID> recordPromiseManager;
@@ -108,7 +103,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
   public ODistributedDatabaseImpl(OrientDBDistributed context, final OStorage storage) {
     this.context = context;
-    this.manager = context.getPlugin();
     this.databaseName = storage.getName();
     this.localNodeName = context.getNodeName();
 
@@ -289,12 +283,28 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
         autoRetryDelay * retryCount);
   }
 
+  private void internalPocessRequest(ODistributedRequest request, List<OLockGuard> guards) {
+    try {
+      this.requestExecutor.submit(
+          () -> {
+            try {
+              execute(request);
+            } finally {
+              this.lockManager.unlock(guards);
+            }
+          });
+    } catch (RejectedExecutionException e) {
+      request.getTask().finished(this);
+      this.lockManager.unlock(guards);
+      throw e;
+    }
+  }
+
   /**
    * Distributed requests against the available workers by using one queue per worker. This
    * guarantee the sequence of the operations against the same record cluster.
    */
-  public void processRequest(
-      final ODistributedRequest request, final boolean waitForAcceptingRequests) {
+  public void processRequest(ODistributedRequest request, boolean waitForAcceptingRequests) {
     if (!running) {
       logger.info(
           "Server is going down or is removing the database:'%s' discarding request %s",
@@ -320,37 +330,16 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
         SortedSet<ORID> rids = ((OLockKeySource) task).getRids();
         SortedSet<OTransactionUniqueKey> uniqueKeys = ((OLockKeySource) task).getUniqueKeys();
         OTransactionId txId = ((OLockKeySource) task).getTransactionId();
-
-        OnLocksAcquired acquired =
-            (guards) -> {
-              Runnable executeTask =
-                  () -> {
-                    try {
-                      execute(request);
-                    } finally {
-                      this.lockManager.unlock(guards);
-                    }
-                  };
-              try {
-                this.requestExecutor.submit(executeTask);
-              } catch (RejectedExecutionException e) {
-                task.finished(this);
-                this.lockManager.unlock(guards);
-                throw e;
-              }
-            };
         try {
-          this.lockManager.lock(rids, uniqueKeys, txId, acquired);
+          this.lockManager.lock(
+              rids, uniqueKeys, txId, (guards) -> internalPocessRequest(request, guards));
         } catch (OOfflineNodeException e) {
           task.finished(this);
           throw e;
         }
       } else {
         try {
-          this.requestExecutor.submit(
-              () -> {
-                execute(request);
-              });
+          this.requestExecutor.submit(() -> execute(request));
         } catch (RejectedExecutionException e) {
           task.finished(this);
           throw e;
@@ -411,29 +400,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   @Override
-  public void unlockResourcesOfServer(
-      final ODatabaseDocumentInternal database, final ONodeId nodeId) {
-
-    final Iterator<ODistributedTxContext> pendingReqIterator = activeTxContexts.values().iterator();
-    while (pendingReqIterator.hasNext()) {
-      final ODistributedTxContext pReq = pendingReqIterator.next();
-      if (pReq != null && pReq.getReqId().getNodeId().equals(nodeId)) {
-
-        try {
-          pReq.destroy();
-        } catch (Exception | Error t) {
-          // IGNORE IT
-          logger.errorNode(
-              localNodeName,
-              "Distributed transaction: error on rolling back transaction (req=%s)",
-              pReq.getReqId());
-        }
-        pendingReqIterator.remove();
-      }
-    }
-  }
-
-  @Override
   public ODistributedTxContext registerTxContext(
       final ODistributedRequestId reqId, ODistributedTxContext ctx) {
     final ODistributedTxContext prevCtx = activeTxContexts.put(reqId, ctx);
@@ -457,18 +423,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
   public boolean exists() {
     return context.exists(databaseName, null, null);
-  }
-
-  @Override
-  public void handleUnreachableNode(final ONodeId nodeId) {
-    if (!running) {
-      return;
-    }
-
-    final OUnreachableServerLocalTask task = new OUnreachableServerLocalTask(nodeId);
-    final ODistributedRequest rollbackRequest =
-        new ODistributedRequest(null, manager.nextRequestId(), null, task);
-    processRequest(rollbackRequest, false);
   }
 
   @Override
@@ -700,21 +654,11 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     SortedSet<ORID> rids = keySource.getRids();
     SortedSet<OTransactionUniqueKey> uniqueKeys = keySource.getUniqueKeys();
     OTransactionId txId = keySource.getTransactionId();
-    LinkedBlockingQueue<List<OLockGuard>> latch = new LinkedBlockingQueue<List<OLockGuard>>(1);
-    this.lockManager.lock(
-        rids,
-        uniqueKeys,
-        txId,
-        (guards) -> {
-          try {
-            latch.put(guards);
-          } catch (InterruptedException e) {
-            throw new OInterruptedException(e.getMessage());
-          }
-        });
+    var latch = new CompletableFuture<List<OLockGuard>>();
+    this.lockManager.lock(rids, uniqueKeys, txId, latch::complete);
     try {
-      return latch.take();
-    } catch (InterruptedException e) {
+      return latch.get();
+    } catch (InterruptedException | ExecutionException e) {
       throw new OInterruptedException(e.getMessage());
     }
   }

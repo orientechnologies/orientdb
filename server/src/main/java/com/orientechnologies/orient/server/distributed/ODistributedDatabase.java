@@ -21,7 +21,6 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
-import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 
 /**
@@ -36,15 +35,6 @@ public interface ODistributedDatabase {
   void setOnline();
 
   String dump();
-
-  void unlockResourcesOfServer(ODatabaseDocumentInternal database, ONodeId serverName);
-
-  /**
-   * Unlocks all the record locked by node iNodeName
-   *
-   * @param nodeId node id
-   */
-  void handleUnreachableNode(ONodeId nodeId);
 
   void reEnqueue(
       ODistributedRequestId requestId,
