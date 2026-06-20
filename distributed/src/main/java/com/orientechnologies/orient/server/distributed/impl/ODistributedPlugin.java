@@ -643,11 +643,6 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
   }
 
   @Override
-  public int getLocalNodeId() {
-    return clusterManager.getLocalNodeId();
-  }
-
-  @Override
   public String toString() {
     return nodeName;
   }
@@ -1045,16 +1040,6 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
     if (!enabled) return null;
 
     return clusterManager.getClusterConfiguration();
-  }
-
-  @Override
-  public String getNodeNameById(int id) {
-    return clusterManager.getNodeNameById(id);
-  }
-
-  @Override
-  public int getNodeIdByName(String node) {
-    return clusterManager.getNodeIdByName(node);
   }
 
   @Override

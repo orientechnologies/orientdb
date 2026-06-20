@@ -91,15 +91,9 @@ public interface ODistributedServerManager {
 
   void updateLastClusterChange();
 
-  int getLocalNodeId();
-
   String getLocalNodeName();
 
   OClusterConfiguration getClusterConfiguration();
-
-  String getNodeNameById(int id);
-
-  int getNodeIdByName(String node);
 
   ONodeConfig getNodeConfigurationByUuid(String iNode, boolean useCache);
 

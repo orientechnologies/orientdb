@@ -1852,9 +1852,6 @@ public class OrientDBDistributed extends OrientDBEmbedded
 
   public ONodeConfig getLocalNodeConfiguration() {
     ONodeConfig nodeCfg = new ONodeConfig();
-    if (plugin != null) {
-      nodeCfg.setId(plugin.getLocalNodeId());
-    }
     nodeCfg.setUuid(getSystemDatabase().getServerId());
     nodeCfg.setName(nodeName);
     nodeCfg.setVersion(OConstants.getRawVersion());
