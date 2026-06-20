@@ -16,12 +16,10 @@ public class ONodeConfig {
   private String uuid;
   private String name;
   private String version;
-  private String publicAddress;
   private Date startedOn;
   private String status;
   private int connections;
   private Set<String> databases;
-  private String replicator;
   private long usedMemory;
   private long freeMemory;
   private long maxMemory;
@@ -37,12 +35,10 @@ public class ONodeConfig {
     uuid = config.getProperty("uuid");
     name = config.getProperty("name");
     version = config.getProperty("version");
-    publicAddress = config.getProperty("publicAddress");
     startedOn = config.getProperty("startedOn");
     status = config.getProperty("status");
     connections = config.getProperty("connections");
     databases = config.getProperty("databases");
-    replicator = config.getProperty("user_replicator");
     usedMemory = config.getProperty("usedMemory");
     maxMemory = config.getProperty("maxMemory");
     freeMemory = config.getProperty("freeMemory");
@@ -78,12 +74,10 @@ public class ONodeConfig {
     config.setProperty("uuid", uuid);
     config.setProperty("name", name);
     config.setProperty("version", version);
-    config.setProperty("publicAddress", publicAddress);
     config.setProperty("startedOn", startedOn);
     config.setProperty("status", status);
     config.setProperty("connections", connections);
     config.setProperty("databases", databases);
-    config.setProperty("user_replicator", replicator);
     config.setProperty("usedMemory", usedMemory);
     config.setProperty("maxMemory", maxMemory);
     config.setProperty("freeMemory", freeMemory);
@@ -142,14 +136,6 @@ public class ONodeConfig {
     this.version = version;
   }
 
-  public String getPublicAddress() {
-    return publicAddress;
-  }
-
-  public void setPublicAddress(String publicAddress) {
-    this.publicAddress = publicAddress;
-  }
-
   public Date getStartedOn() {
     return startedOn;
   }
@@ -180,14 +166,6 @@ public class ONodeConfig {
 
   public void setDatabases(Set<String> databases) {
     this.databases = databases;
-  }
-
-  public String getReplicator() {
-    return replicator;
-  }
-
-  public void setReplicator(String replicator) {
-    this.replicator = replicator;
   }
 
   public long getUsedMemory() {

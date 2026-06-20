@@ -306,10 +306,6 @@ public class OHazelcastClusterMetadataManager
     return Hazelcast.newHazelcastInstance(hazelcastConfig);
   }
 
-  public String getPublicAddress() {
-    return hazelcastConfig.getNetworkConfig().getPublicAddress();
-  }
-
   public OHazelcastDistributedMap getConfigurationMap() {
     return configurationMap;
   }
@@ -525,7 +521,6 @@ public class OHazelcastClusterMetadataManager
 
     if (activeNodes.putIfAbsent(joinedNodeName, member) == null) {
       String url = null;
-      String userPassword = null;
       for (int retry = 0; retry < 20; ++retry) {
         ONodeConfig cfg = getNodeConfigurationByUuid(member.getUuid(), false);
         if (cfg == null || cfg.getListeners() == null) {
@@ -541,9 +536,8 @@ public class OHazelcastClusterMetadataManager
         }
 
         url = ODistributedPlugin.getListeningBinaryAddress(cfg);
-        userPassword = cfg.getReplicator();
 
-        if (url != null && userPassword != null) {
+        if (url != null) {
           break;
         }
 
@@ -556,14 +550,14 @@ public class OHazelcastClusterMetadataManager
               new OInterruptedException("Cannot connect to remote server " + joinedNodeName), e);
         }
       }
-      if (url == null || userPassword == null) {
+      if (url == null) {
         return;
       }
 
       activeNodesNamesByUuid.put(member.getUuid(), joinedNodeName);
       activeNodesUuidByName.put(joinedNodeName, member.getUuid());
 
-      distributedPlugin.onNodeJoined(joinedNodeName, url, userPassword, member);
+      distributedPlugin.onNodeJoined(joinedNodeName, url, member);
     }
   }
 
@@ -636,13 +630,5 @@ public class OHazelcastClusterMetadataManager
 
   public long getLastClusterChangeOn() {
     return lastClusterChangeOn;
-  }
-
-  public String getLocalNodeUuid() {
-    return nodeUuid;
-  }
-
-  public String getLocalNodeName() {
-    return nodeName;
   }
 }

@@ -27,7 +27,6 @@ import com.orientechnologies.orient.core.db.config.ONodeConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OStorageException;
-import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.OGroupId;
@@ -1845,23 +1844,16 @@ public class OrientDBDistributed extends OrientDBEmbedded
         nodeCfg.setMessages(ns.getNodesMessages());
       }
       // TODO: handle cpu for third party, not shared and optional
-
     }
 
     return nodeCfg;
   }
-
-  // This will probably disappear soon
-  public static final String REPLICATOR_USER = "_CrossServerTempUser";
 
   public ONodeConfig getLocalNodeConfiguration() {
     ONodeConfig nodeCfg = new ONodeConfig();
     nodeCfg.setUuid(getSystemDatabase().getServerId());
     nodeCfg.setName(nodeName);
     nodeCfg.setVersion(OConstants.getRawVersion());
-    //    if(plugin != null) {
-    //      nodeCfg.setPublicAddress(plugin.getPublicAddress());
-    //    }
     nodeCfg.setStartedOn(new Date(bootTime));
     nodeCfg.setStatus(getNodeState().getOps().getNetworkTopology().getState().toString());
     nodeCfg.setConnections(server.getClientConnectionManager().getTotal());
@@ -1873,11 +1865,6 @@ public class OrientDBDistributed extends OrientDBEmbedded
               listener.getProtocolType().getSimpleName(), listener.getListeningAddress(true)));
     }
     nodeCfg.setListeners(listeners);
-
-    // STORE THE TEMP USER/PASSWD USED FOR REPLICATION
-    final OSecurityUser user = getSecuritySystem().getUser(REPLICATOR_USER);
-    if (user != null)
-      nodeCfg.setReplicator(getSecuritySystem().getUser(REPLICATOR_USER).getPassword());
 
     if (getNodeState() != null) {
       ODatabasesTopology databaseTopology = getNodeState().getDatabaseTopology();

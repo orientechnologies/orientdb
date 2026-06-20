@@ -79,7 +79,6 @@ import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -98,7 +97,6 @@ import sun.misc.Signal;
 public class ODistributedPlugin extends OServerPluginAbstract implements ODistributedServerManager {
   private static final OLoggerDistributed logger =
       OLoggerDistributed.logger(ODistributedPlugin.class);
-  public static final String REPLICATOR_USER = "_CrossServerTempUser";
 
   protected static final String PAR_DEF_DISTRIB_DB_CONFIG = "configuration.db.default";
   protected static final String NODE_NAME_ENV = "ORIENTDB_NODE_NAME";
@@ -158,7 +156,6 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
     String contextName = clusterManager.getHazelcastConfig().getGroupConfig().getName();
     String contextPassword = clusterManager.getHazelcastConfig().getGroupConfig().getName();
     if (nodeName == null) assignNodeName();
-    // TODO: get the group name from some configuration
     ((OrientDBDistributed) serverInstance.getDatabases())
         .initDistributed(nodeName, contextName, 1, contextPassword);
   }
@@ -181,8 +178,6 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
     if (databases instanceof OrientDBDistributed) ((OrientDBDistributed) databases).setPlugin(this);
 
     // REGISTER TEMPORARY USER FOR REPLICATION PURPOSE
-    serverInstance.addTemporaryUser(REPLICATOR_USER, "" + new SecureRandom().nextLong(), "*");
-
     try {
       clusterManager.startupHazelcastPlugin();
 
@@ -962,15 +957,11 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
               "Cannot connect to a remote node because the url was not found");
         }
 
-        final String userPassword = cfg.getReplicator();
-
-        if (userPassword != null) {
-          try {
-            remoteServer = ctx.connectRemoteServer(new ONodeId(rNodeName), url);
-            break;
-          } catch (ONetworkProtocolException | IOException e) {
-            logger.warn("failing to connect to remote node %s", rNodeName, e);
-          }
+        try {
+          remoteServer = ctx.connectRemoteServer(new ONodeId(rNodeName), url);
+          break;
+        } catch (ONetworkProtocolException | IOException e) {
+          logger.warn("failing to connect to remote node %s", rNodeName, e);
         }
 
         // RETRY TO GET USR+PASSWORD IN A WHILE
@@ -995,7 +986,7 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
     return clusterManager.getLastClusterChangeOn();
   }
 
-  public void onNodeJoined(String joinedNodeName, String url, String userPassword, Member member) {
+  public void onNodeJoined(String joinedNodeName, String url, Member member) {
     try {
       getRemoteServer(joinedNodeName);
     } catch (IOException e) {
