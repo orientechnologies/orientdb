@@ -30,6 +30,7 @@ public class ONodeState {
   private final ONodeId nodeId;
   private final OAppliedState state;
   private final OStateStore store;
+  private final OStatsManager stats;
 
   public ONodeState(
       ONodeId current,
@@ -43,7 +44,8 @@ public class ONodeState {
         new OCoordinatedDistributedOpsImpl(
             current, groupId, minimumQuorum, listener, this.store::save);
     this.nodeId = current;
-    this.state = new OAppliedState(3, (txId) -> this.coordinated.isApplied(txId));
+    this.state = new OAppliedState(3, this.coordinated::isApplied);
+    this.stats = new OStatsManager();
   }
 
   public ODiscoverAction initFromStore() {
@@ -126,6 +128,10 @@ public class ONodeState {
 
   public OCoordinatedDistributedOps getOps() {
     return coordinated;
+  }
+
+  public OStatsManager getStats() {
+    return stats;
   }
 
   public void cancelPromise(OTransactionIdPromise promise) {

@@ -4,6 +4,7 @@ import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import com.orientechnologies.common.profiler.OProfilerEntrySnapshot;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.OGroupId;
@@ -11,6 +12,8 @@ import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
+import com.orientechnologies.orient.distributed.ONodeLatencies;
+import com.orientechnologies.orient.distributed.ONodeMessages;
 import com.orientechnologies.orient.distributed.context.coordination.OVersion;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.ODropDbMessage;
 import com.orientechnologies.orient.distributed.context.coordination.message.state.ONodeStateNetwork;
@@ -34,7 +37,7 @@ import java.util.Set;
 import java.util.UUID;
 import org.junit.Test;
 
-public class CoordinationMessagesSerializationTest {
+public class StructuralMessagesSerializationTest {
 
   private ONodeId newNodeId() {
     return new ONodeId(UUID.randomUUID().toString());
@@ -303,5 +306,23 @@ public class CoordinationMessagesSerializationTest {
     OSendTransactions read = writeRead(operation);
     assertEquals(read.getNodeId(), node);
     assertEquals(read.getTransactions(), txs);
+  }
+
+  @Test
+  public void sendStats() throws IOException {
+    var node = newNodeId();
+    var latencies =
+        List.of(new ONodeLatencies(node, new OProfilerEntrySnapshot(1, 2, 3, 4, 5, 6, 7, 8, 9)));
+    var messages = List.of(new ONodeMessages("msg", 1));
+    var message = new ONodeStatsNotify(node, 1, 2, 3, 4, 5, latencies, messages);
+    ONodeStatsNotify read = writeRead(message);
+    assertEquals(message.getNodeId(), read.getNodeId());
+    assertEquals(message.getBootTime(), read.getBootTime());
+    assertEquals(message.getFreeMem(), read.getFreeMem());
+    assertEquals(message.getMaxMem(), read.getMaxMem());
+    assertEquals(message.getTotMem(), read.getTotMem());
+    assertEquals(message.getUsedMem(), read.getUsedMem());
+    assertEquals(message.getNodesLatencies(), read.getNodesLatencies());
+    assertEquals(message.getNodesMessages(), read.getNodesMessages());
   }
 }

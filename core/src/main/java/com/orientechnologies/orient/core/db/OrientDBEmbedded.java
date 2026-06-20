@@ -81,6 +81,7 @@ import java.util.concurrent.atomic.AtomicReference;
 /** Created by tglman on 08/04/16. */
 public class OrientDBEmbedded implements OrientDBInternal {
   private static final OLogger logger = OLogManager.instance().logger(OrientDBEmbedded.class);
+  protected static final long bootTime = System.currentTimeMillis();
 
   private static final AtomicLong queryCounter = new AtomicLong(0);
   protected ThreadGroup allGroups;

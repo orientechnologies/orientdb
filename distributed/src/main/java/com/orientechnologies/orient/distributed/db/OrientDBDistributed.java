@@ -38,6 +38,7 @@ import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import com.orientechnologies.orient.distributed.ONodeConfig;
 import com.orientechnologies.orient.distributed.ONodeListenerConfig;
 import com.orientechnologies.orient.distributed.context.ONodeState;
+import com.orientechnologies.orient.distributed.context.OStatsManager;
 import com.orientechnologies.orient.distributed.context.coordination.OCoordinatedDistributedOps;
 import com.orientechnologies.orient.distributed.context.coordination.OVersion;
 import com.orientechnologies.orient.distributed.context.coordination.action.OCompleteAction;
@@ -130,6 +131,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -192,7 +194,6 @@ public class OrientDBDistributed extends OrientDBEmbedded
 
   public void initDistributed(String nodeName, String groupIdPar, int miminumQuorum) {
     this.nodeName = nodeName;
-    // TODO: resolve groupId and minimum quorum;
     ONodeId nodeId = new ONodeId(nodeName);
     OGroupId groupId = new OGroupId(groupIdPar);
     OSystemStateStore store = new OSystemStateStore(getSystemDatabase());
@@ -270,6 +271,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
         members,
         new ONodeStatsNotify(
             getNodeId(),
+            bootTime,
             maxMem,
             totMem,
             freeMem,
@@ -1821,6 +1823,21 @@ public class OrientDBDistributed extends OrientDBEmbedded
               .map(databaseTopology::getDatabaseName)
               .collect(Collectors.toSet());
       nodeCfg.setDatabases(dbs);
+
+      OStatsManager stats = getNodeState().getStats();
+      var nodeStats = stats.getStats(member);
+      if (nodeStats.isPresent()) {
+        var ns = nodeStats.get();
+        nodeCfg.setStartedOn(new Date(ns.getBootTime()));
+        nodeCfg.setUsedMemory(ns.getUsedMem());
+        nodeCfg.setFreeMemory(ns.getFreeMem());
+        nodeCfg.setMaxMemory(ns.getMaxMem());
+
+        nodeCfg.setLatencies(ns.getNodesLatencies());
+        nodeCfg.setMessages(ns.getNodesMessages());
+      }
+      // TODO: handle cpu for third party, not shared and optional
+
     }
 
     return nodeCfg;
@@ -1840,7 +1857,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
     //    if(plugin != null) {
     //      nodeCfg.setPublicAddress(plugin.getPublicAddress());
     //    }
-    //    nodeCfg.setStartedOn(startedOn);
+    nodeCfg.setStartedOn(new Date(bootTime));
     nodeCfg.setStatus(getNodeState().getOps().getNetworkTopology().getState().toString());
     nodeCfg.setConnections(server.getClientConnectionManager().getTotal());
 

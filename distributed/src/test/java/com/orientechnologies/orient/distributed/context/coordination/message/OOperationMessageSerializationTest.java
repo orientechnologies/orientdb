@@ -42,7 +42,7 @@ import java.util.Set;
 import java.util.UUID;
 import org.junit.Test;
 
-public class OOperationMessageTest {
+public class OOperationMessageSerializationTest {
 
   private ONodeId newNodeId() {
     return new ONodeId(UUID.randomUUID().toString());
