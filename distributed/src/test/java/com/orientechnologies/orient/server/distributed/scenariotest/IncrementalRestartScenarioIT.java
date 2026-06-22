@@ -36,6 +36,7 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -91,7 +92,7 @@ public class IncrementalRestartScenarioIT extends AbstractScenarioTest {
 
       try {
         currentFuture = exec.submit(tq1);
-        currentFuture.get();
+        currentFuture.get(1, TimeUnit.HOURS);
       } catch (Exception e) {
         e.printStackTrace();
         fail();

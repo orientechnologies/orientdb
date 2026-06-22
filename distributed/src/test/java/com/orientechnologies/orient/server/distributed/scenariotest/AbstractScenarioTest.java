@@ -43,6 +43,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -79,13 +80,13 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
   }
 
   protected void executeMultipleWrites(List<ServerRun> executeOnServers, String storageType)
-      throws InterruptedException, ExecutionException {
+      throws InterruptedException, ExecutionException, TimeoutException {
     executeMultipleWrites(executeOnServers, storageType, null, serverInstance);
   }
 
   protected void executeMultipleWrites(
       List<ServerRun> executeOnServers, String storageType, List<ServerRun> checkOnServers)
-      throws InterruptedException, ExecutionException {
+      throws InterruptedException, ExecutionException, TimeoutException {
     executeMultipleWrites(executeOnServers, storageType, null, checkOnServers);
   }
 
@@ -100,7 +101,7 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
       final String storageType,
       final String dbURL,
       final List<ServerRun> checkOnServers)
-      throws InterruptedException, ExecutionException {
+      throws InterruptedException, ExecutionException, TimeoutException {
 
     ODatabaseDocument database;
     if (checkOnServers == null || checkOnServers.isEmpty()) {
@@ -159,7 +160,7 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
     System.out.println("Threads started, waiting for the end");
 
     for (Future<Void> future : futures) {
-      future.get();
+      future.get(1, TimeUnit.HOURS);
     }
 
     writerExecutors.shutdown();
@@ -168,7 +169,7 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
     System.out.println("All writer threads have finished, shutting down readers");
 
     for (Future<Void> future : rFutures) {
-      future.get();
+      future.get(1, TimeUnit.HOURS);
     }
 
     readerExecutors.shutdown();

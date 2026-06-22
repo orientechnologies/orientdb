@@ -42,6 +42,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import org.junit.Assert;
@@ -89,7 +90,7 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
    */
 
   protected void executeMultipleWritesOnShards(List<ServerRun> executeOnServers, String storageType)
-      throws InterruptedException, ExecutionException {
+      throws InterruptedException, ExecutionException, TimeoutException {
 
     System.out.println("Creating Writers threads...");
 
@@ -125,7 +126,7 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
     System.out.println("Threads started, waiting for the end");
 
     for (Future<Void> future : futures) {
-      future.get();
+      future.get(1, TimeUnit.HOURS);
     }
 
     writerExecutors.shutdown();

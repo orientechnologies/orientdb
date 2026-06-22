@@ -42,10 +42,12 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -331,7 +333,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
   }
 
   protected void executeMultipleTest()
-      throws InterruptedException, java.util.concurrent.ExecutionException {
+      throws InterruptedException, ExecutionException, TimeoutException {
     executeMultipleTest(0);
   }
 
@@ -343,7 +345,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
   }
 
   protected void executeMultipleTest(final int serverNum)
-      throws InterruptedException, java.util.concurrent.ExecutionException {
+      throws InterruptedException, ExecutionException, TimeoutException {
     ODatabaseDocument database =
         getDatabase(
             serverNum); // serverInstance.get(serverNum).getEmbeddedDatabase(getDatabaseName());
@@ -369,7 +371,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
     for (ServerRun server : executeTestsOnServers) {
       if (server.isActive()) {
         for (int j = 0; j < writerCount; j++) {
-          Callable writer = createWriter(serverId, threadId++, server);
+          Callable<Void> writer = createWriter(serverId, threadId++, server);
           workers.add(writer);
         }
 
@@ -389,7 +391,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
     System.out.println("Threads started, waiting for the end");
 
     for (Future<Void> future : futures) {
-      future.get();
+      future.get(1, TimeUnit.HOURS);
     }
 
     executors.shutdown();

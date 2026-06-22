@@ -180,7 +180,7 @@ public abstract class AbstractDistributedWriteTest extends AbstractServerCluster
     List<Callable<Void>> writerWorkers = new ArrayList<Callable<Void>>();
     for (ServerRun server : serverInstance) {
       for (int j = 0; j < writerCount; j++) {
-        Callable writer = createWriter(serverId, threadId++, server);
+        Callable<Void> writer = createWriter(serverId, threadId++, server);
         writerWorkers.add(writer);
       }
       serverId++;
@@ -190,7 +190,7 @@ public abstract class AbstractDistributedWriteTest extends AbstractServerCluster
     System.out.println("Threads started, waiting for the end");
 
     for (Future<Void> future : futures) {
-      future.get();
+      future.get(1, TimeUnit.HOURS);
     }
 
     writerExecutors.shutdown();
