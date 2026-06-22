@@ -121,7 +121,9 @@ public class ThreeClientsRecordUpdateWithTransactionsOnMultipleServersScenarioIT
       clients.add(new RecordUpdater(serverInstance.get(0), record1Server1, lukeFields, true));
       clients.add(new RecordUpdater(serverInstance.get(1), record1Server2, darthFields, true));
       clients.add(new RecordUpdater(serverInstance.get(2), record1Server3, leiaFields, true));
-      Executors.newCachedThreadPool().invokeAll(clients, 1, TimeUnit.HOURS);
+      Executors.newCachedThreadPool().invokeAll(clients, 1, TimeUnit.HOURS).stream()
+          .map(this::get)
+          .count();
 
       // checks that record on server3 is the one which wins over the others
       waitForUpdatedRecordPropagation(RECORD_ID, "firstName", "Leia");

@@ -113,7 +113,9 @@ public class TwoClientsRecordUpdateTxOnThreeServersScenarioIT extends AbstractSc
       List<Callable<Void>> clients = new LinkedList<Callable<Void>>();
       clients.add(new RecordUpdater(serverInstance.get(0), recordServer0, darthFields, true));
       clients.add(new RecordUpdater(serverInstance.get(1), recordServer1, leiaFields, true));
-      Executors.newCachedThreadPool().invokeAll(clients, 1, TimeUnit.HOURS);
+      Executors.newCachedThreadPool().invokeAll(clients, 1, TimeUnit.HOURS).stream()
+          .map(this::get)
+          .count();
 
       //    Thread.sleep(2000);
       //    recordServer0 = retrieveRecord(getDatabaseURL(serverInstance.get(0)), RECORD_ID);

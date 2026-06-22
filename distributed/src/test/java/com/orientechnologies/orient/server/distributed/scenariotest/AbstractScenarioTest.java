@@ -145,7 +145,7 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
     expected = writerCount * count * serverId + baseCount;
 
     System.out.println("Writes started.");
-    writerExecutors.invokeAll(writerWorkers, 1, TimeUnit.HOURS);
+    writerExecutors.invokeAll(writerWorkers, 1, TimeUnit.HOURS).stream().map(this::get).count();
 
     List<Callable<Void>> readerWorkers = new ArrayList<Callable<Void>>();
     for (ServerRun server : executeOnServers) {

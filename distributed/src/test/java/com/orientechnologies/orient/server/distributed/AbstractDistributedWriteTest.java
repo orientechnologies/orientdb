@@ -28,8 +28,10 @@ import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
@@ -184,12 +186,20 @@ public abstract class AbstractDistributedWriteTest extends AbstractServerCluster
       }
       serverId++;
     }
-    writerExecutors.invokeAll(writerWorkers, 1, TimeUnit.HOURS);
+    writerExecutors.invokeAll(writerWorkers, 1, TimeUnit.HOURS).stream().map(this::get).count();
 
     writerExecutors.shutdown();
     Assert.assertTrue(writerExecutors.awaitTermination(1, TimeUnit.MINUTES));
 
     System.out.println("All writer threads have finished, shutting down readers");
+  }
+
+  protected Void get(Future<Void> f) {
+    try {
+      return f.get();
+    } catch (InterruptedException | ExecutionException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   protected abstract String getDatabaseURL(ServerRun server);

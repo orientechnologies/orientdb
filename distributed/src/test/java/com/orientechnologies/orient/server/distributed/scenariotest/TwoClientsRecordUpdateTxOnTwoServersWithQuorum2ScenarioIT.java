@@ -100,7 +100,9 @@ public class TwoClientsRecordUpdateTxOnTwoServersWithQuorum2ScenarioIT
       List<Callable<Void>> clients = new LinkedList<Callable<Void>>();
       clients.add(new RecordUpdater(serverInstance.get(0), recordServer0, lukeFields, true));
       clients.add(new RecordUpdater(serverInstance.get(1), recordServer1, darthFields, true));
-      Executors.newCachedThreadPool().invokeAll(clients, 1, TimeUnit.HOURS);
+      Executors.newCachedThreadPool().invokeAll(clients, 1, TimeUnit.HOURS).stream()
+          .map(this::get)
+          .count();
 
       // checks that record on server1 is discarded in favour of record present on server0
       waitForUpdatedRecordPropagation(

@@ -120,7 +120,7 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
 
     expected = writerCount * count * serverId + baseCount;
 
-    writerExecutors.invokeAll(writerWorkers, 1, TimeUnit.HOURS);
+    writerExecutors.invokeAll(writerWorkers, 1, TimeUnit.HOURS).stream().map(this::get).count();
 
     writerExecutors.shutdown();
     assertTrue(writerExecutors.awaitTermination(1, TimeUnit.MINUTES));

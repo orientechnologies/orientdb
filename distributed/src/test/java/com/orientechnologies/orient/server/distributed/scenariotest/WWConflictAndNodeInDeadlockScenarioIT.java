@@ -151,7 +151,7 @@ public class WWConflictAndNodeInDeadlockScenarioIT extends AbstractScenarioTest 
       System.out.println("\tDone.");
       ExecutorService executor = Executors.newCachedThreadPool();
       System.out.println("Concurrent update:");
-      executor.invokeAll(clients, 1, TimeUnit.HOURS);
+      executor.invokeAll(clients, 1, TimeUnit.HOURS).stream().map(this::get).count();
       // wait for propagation
       Thread.sleep(500);
 

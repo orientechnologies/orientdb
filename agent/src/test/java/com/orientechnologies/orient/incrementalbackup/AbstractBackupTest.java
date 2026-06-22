@@ -30,11 +30,11 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-
 import org.apache.tinkerpop.gremlin.orientdb.OrientGraph;
 import org.apache.tinkerpop.gremlin.orientdb.OrientGraphFactory;
 import org.apache.tinkerpop.gremlin.orientdb.OrientVertex;
@@ -223,8 +223,7 @@ public abstract class AbstractBackupTest {
       }
 
       System.out.println("\tDone.");
-      writerExecutors.invokeAll(writerWorkers, 1, TimeUnit.HOURS);
-
+      writerExecutors.invokeAll(writerWorkers, 1, TimeUnit.HOURS).stream().map(this::get).count();
       System.out.println("Threads started, waiting for the end");
 
       writerExecutors.shutdown();
@@ -232,6 +231,14 @@ public abstract class AbstractBackupTest {
 
     } catch (Exception e) {
       logger.error("", e);
+    }
+  }
+
+  protected Void get(Future<Void> f) {
+    try {
+      return f.get();
+    } catch (InterruptedException | ExecutionException e) {
+      throw new RuntimeException(e);
     }
   }
 

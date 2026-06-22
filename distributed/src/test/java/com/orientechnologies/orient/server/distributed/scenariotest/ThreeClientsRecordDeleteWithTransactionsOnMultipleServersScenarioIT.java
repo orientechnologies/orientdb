@@ -80,7 +80,9 @@ public class ThreeClientsRecordDeleteWithTransactionsOnMultipleServersScenarioIT
       clients.add(new RecordDeleter(serverInstance.get(0), RECORD_ID, true));
       clients.add(new RecordDeleter(serverInstance.get(1), RECORD_ID, true));
       clients.add(new RecordDeleter(serverInstance.get(2), RECORD_ID, true));
-      Executors.newCachedThreadPool().invokeAll(clients, 1, TimeUnit.HOURS);
+      Executors.newCachedThreadPool().invokeAll(clients, 1, TimeUnit.HOURS).stream()
+          .map(this::get)
+          .count();
 
       waitForDeletedRecordPropagation(RECORD_ID);
 
