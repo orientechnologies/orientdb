@@ -187,7 +187,7 @@ public abstract class AbstractServerClusterSequenceTest extends AbstractServerCl
             }
           });
     }
-    List<Future<List<Long>>> results = pool.invokeAll(callables);
+    List<Future<List<Long>>> results = pool.invokeAll(callables, 1, TimeUnit.HOURS);
     pool.shutdown();
     pool.awaitTermination(Long.MAX_VALUE, TimeUnit.NANOSECONDS);
 

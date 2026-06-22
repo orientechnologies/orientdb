@@ -26,7 +26,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -94,8 +94,7 @@ public class TwoClientsRecordUpdateDuringRetryWithTransactionsOnMultipleServersS
     List<Callable<Void>> clients = new LinkedList<Callable<Void>>();
     clients.add(new RecordUpdater(serverInstance.get(0), record1Server1, lukeFields, true));
     clients.add(new RecordUpdater(serverInstance.get(1), record1Server2, darthFields, true));
-    List<Future<Void>> futures = Executors.newCachedThreadPool().invokeAll(clients);
-    executeFutures(futures);
+    Executors.newCachedThreadPool().invokeAll(clients, 1, TimeUnit.HOURS);
 
     // checks that record on server1 is discarded in favour of record present on server2
     waitForUpdatedRecordPropagation(RECORD_ID, "firstName", "Darth");

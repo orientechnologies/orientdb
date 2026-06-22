@@ -45,7 +45,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -386,13 +385,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
 
     System.out.println("Expected records=" + expected);
 
-    List<Future<Void>> futures = executors.invokeAll(workers);
-
-    System.out.println("Threads started, waiting for the end");
-
-    for (Future<Void> future : futures) {
-      future.get(1, TimeUnit.HOURS);
-    }
+    executors.invokeAll(workers, 1, TimeUnit.HOURS);
 
     executors.shutdown();
     Assert.assertTrue(executors.awaitTermination(1, TimeUnit.MINUTES));

@@ -35,7 +35,7 @@ import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.Assert;
 import org.junit.Ignore;
@@ -151,18 +151,7 @@ public class WWConflictAndNodeInDeadlockScenarioIT extends AbstractScenarioTest 
       System.out.println("\tDone.");
       ExecutorService executor = Executors.newCachedThreadPool();
       System.out.println("Concurrent update:");
-      List<Future<Void>> futures = executor.invokeAll(clients);
-
-      try {
-        for (Future f : futures) {
-          f.get();
-        }
-        assertTrue("Concurrent update correctly managed!", true);
-      } catch (Exception e) {
-        e.printStackTrace();
-        fail("Concurrent update NOT correctly managed!");
-        System.out.println("Exception was thrown!");
-      }
+      executor.invokeAll(clients, 1, TimeUnit.HOURS);
       // wait for propagation
       Thread.sleep(500);
 

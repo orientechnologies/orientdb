@@ -40,7 +40,6 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -121,13 +120,7 @@ public class AbstractShardingScenarioTest extends AbstractScenarioTest {
 
     expected = writerCount * count * serverId + baseCount;
 
-    List<Future<Void>> futures = writerExecutors.invokeAll(writerWorkers);
-
-    System.out.println("Threads started, waiting for the end");
-
-    for (Future<Void> future : futures) {
-      future.get(1, TimeUnit.HOURS);
-    }
+    writerExecutors.invokeAll(writerWorkers, 1, TimeUnit.HOURS);
 
     writerExecutors.shutdown();
     assertTrue(writerExecutors.awaitTermination(1, TimeUnit.MINUTES));

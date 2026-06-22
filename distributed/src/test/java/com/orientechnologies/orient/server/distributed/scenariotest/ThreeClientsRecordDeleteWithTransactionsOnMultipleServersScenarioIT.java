@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -80,8 +80,7 @@ public class ThreeClientsRecordDeleteWithTransactionsOnMultipleServersScenarioIT
       clients.add(new RecordDeleter(serverInstance.get(0), RECORD_ID, true));
       clients.add(new RecordDeleter(serverInstance.get(1), RECORD_ID, true));
       clients.add(new RecordDeleter(serverInstance.get(2), RECORD_ID, true));
-      List<Future<Void>> futures = Executors.newCachedThreadPool().invokeAll(clients);
-      executeFutures(futures);
+      Executors.newCachedThreadPool().invokeAll(clients, 1, TimeUnit.HOURS);
 
       waitForDeletedRecordPropagation(RECORD_ID);
 

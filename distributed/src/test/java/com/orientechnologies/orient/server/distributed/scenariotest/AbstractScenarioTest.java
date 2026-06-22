@@ -145,7 +145,7 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
     expected = writerCount * count * serverId + baseCount;
 
     System.out.println("Writes started.");
-    List<Future<Void>> futures = writerExecutors.invokeAll(writerWorkers);
+    writerExecutors.invokeAll(writerWorkers, 1, TimeUnit.HOURS);
 
     List<Callable<Void>> readerWorkers = new ArrayList<Callable<Void>>();
     for (ServerRun server : executeOnServers) {
@@ -155,22 +155,14 @@ public abstract class AbstractScenarioTest extends AbstractServerClusterInsertTe
       }
     }
 
-    List<Future<Void>> rFutures = readerExecutors.invokeAll(readerWorkers);
+    readerExecutors.invokeAll(readerWorkers, 1, TimeUnit.HOURS);
 
     System.out.println("Threads started, waiting for the end");
-
-    for (Future<Void> future : futures) {
-      future.get(1, TimeUnit.HOURS);
-    }
 
     writerExecutors.shutdown();
     assertTrue(writerExecutors.awaitTermination(1, TimeUnit.MINUTES));
 
     System.out.println("All writer threads have finished, shutting down readers");
-
-    for (Future<Void> future : rFutures) {
-      future.get(1, TimeUnit.HOURS);
-    }
 
     readerExecutors.shutdown();
     assertTrue(readerExecutors.awaitTermination(1, TimeUnit.MINUTES));

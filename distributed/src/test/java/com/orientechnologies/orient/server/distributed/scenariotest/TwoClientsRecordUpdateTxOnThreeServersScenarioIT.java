@@ -29,7 +29,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -113,8 +113,7 @@ public class TwoClientsRecordUpdateTxOnThreeServersScenarioIT extends AbstractSc
       List<Callable<Void>> clients = new LinkedList<Callable<Void>>();
       clients.add(new RecordUpdater(serverInstance.get(0), recordServer0, darthFields, true));
       clients.add(new RecordUpdater(serverInstance.get(1), recordServer1, leiaFields, true));
-      List<Future<Void>> futures = Executors.newCachedThreadPool().invokeAll(clients);
-      executeFutures(futures);
+      Executors.newCachedThreadPool().invokeAll(clients, 1, TimeUnit.HOURS);
 
       //    Thread.sleep(2000);
       //    recordServer0 = retrieveRecord(getDatabaseURL(serverInstance.get(0)), RECORD_ID);

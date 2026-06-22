@@ -26,7 +26,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import org.junit.Ignore;
 import org.junit.Test;
 
@@ -121,8 +121,7 @@ public class ThreeClientsRecordUpdateWithTransactionsOnMultipleServersScenarioIT
       clients.add(new RecordUpdater(serverInstance.get(0), record1Server1, lukeFields, true));
       clients.add(new RecordUpdater(serverInstance.get(1), record1Server2, darthFields, true));
       clients.add(new RecordUpdater(serverInstance.get(2), record1Server3, leiaFields, true));
-      List<Future<Void>> futures = Executors.newCachedThreadPool().invokeAll(clients);
-      executeFutures(futures);
+      Executors.newCachedThreadPool().invokeAll(clients, 1, TimeUnit.HOURS);
 
       // checks that record on server3 is the one which wins over the others
       waitForUpdatedRecordPropagation(RECORD_ID, "firstName", "Leia");
