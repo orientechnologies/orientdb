@@ -144,7 +144,7 @@ public class SyncOpsTest {
       // if it can open is good, it restored the right password
       var status =
           ctx1.getSharedDatabaseContext("test")
-              .map((x) -> x.getTransactionSequence().currentStatus());
+              .map(x -> x.getTransactionSequence().currentStatus());
 
       assertEquals(senderStatus, status);
       assertTrue(true);
@@ -177,23 +177,45 @@ public class SyncOpsTest {
   }
 
   @Test
+  public void testTwiceSuccesAndFailAtStartRawSyncIncremental() {
+    testRawSync(new OCanSyncAccept.NonBlockingSync());
+    testFailRawSync(new OCanSyncAccept.NonBlockingSync(), 0);
+  }
+
+  @Test
+  public void testTwiceSuccesAndFailAtStartRawSyncBackup() {
+    testRawSync(new OCanSyncAccept.BlockingSync());
+    testFailRawSync(new OCanSyncAccept.BlockingSync(), 0);
+  }
+
+  @Test
+  public void testFailAtStartRawSyncIncremental() {
+    testFailRawSync(new OCanSyncAccept.NonBlockingSync(), 0);
+  }
+
+  @Test
+  public void testFailAtStartRawSyncBackup() {
+    testFailRawSync(new OCanSyncAccept.BlockingSync(), 0);
+  }
+
+  @Test
   public void testFailRawSyncIncremental() {
-    testFailRawSync(new OCanSyncAccept.NonBlockingSync());
+    testFailRawSync(new OCanSyncAccept.NonBlockingSync(), 5);
   }
 
   @Test
   public void testFailRawSyncBackup() {
-    testFailRawSync(new OCanSyncAccept.BlockingSync());
+    testFailRawSync(new OCanSyncAccept.BlockingSync(), 5);
   }
 
-  public void testFailRawSync(OCanSyncAccept mode) {
+  public void testFailRawSync(OCanSyncAccept mode, int messageCount) {
     var nodeFrom = new ONodeId("node1");
     var nodeTo = new ONodeId("node2");
     var syncId = new OSyncId(dbId, nodeTo);
 
     var sender = new OSyncState(syncId, nodeFrom, mode);
     var receiver = new OSyncState(syncId, nodeFrom, mode);
-    var pass = new FailPassTrough(sender, receiver, 5);
+    var pass = new FailPassTrough(sender, receiver, messageCount);
 
     OutputStream out = new OutputStreamMessages(pass, sender);
     OReceiverInputStream input = new OReceiverInputStream(pass, receiver);

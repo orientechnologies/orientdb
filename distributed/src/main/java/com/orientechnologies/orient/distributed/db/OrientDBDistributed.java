@@ -1179,6 +1179,9 @@ public class OrientDBDistributed extends OrientDBEmbedded
       String dbName, OSyncState state, InputStream inputStream, OrientDBConfig conf) {
     boolean success = false;
     try (InputStream input = inputStream) {
+      setDatabaseState(state.getDbId(), state.getReceiver(), ODatabaseState.Offline)
+          .get(10, TimeUnit.MINUTES);
+
       if (state.getAcceptMode() instanceof OCanSyncAccept.NonBlockingSync) {
         success = nonBlockingSync(dbName, state.getDbId(), input, conf);
       } else if (state.getAcceptMode() instanceof OCanSyncAccept.BlockingSync) {
@@ -1188,12 +1191,14 @@ public class OrientDBDistributed extends OrientDBEmbedded
       }
 
       if (success) {
-        setDatabaseState(state.getDbId(), state.getReceiver(), ODatabaseState.Online);
+        setDatabaseState(state.getDbId(), state.getReceiver(), ODatabaseState.Online)
+            .get(10, TimeUnit.MINUTES);
       } else {
-        setDatabaseState(state.getDbId(), state.getReceiver(), ODatabaseState.Offline);
+        setDatabaseState(state.getDbId(), state.getReceiver(), ODatabaseState.Offline)
+            .get(10, TimeUnit.MINUTES);
       }
       return success;
-    } catch (IOException e) {
+    } catch (IOException | InterruptedException | ExecutionException | TimeoutException e) {
       logger.debugNode(getNodeId(), "Error on close of sync", e);
       return false;
     } finally {
