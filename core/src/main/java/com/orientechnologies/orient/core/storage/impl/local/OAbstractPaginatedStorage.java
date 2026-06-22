@@ -4596,46 +4596,41 @@ public abstract class OAbstractPaginatedStorage
 
     status = STATUS.CLOSING;
     try {
-      if (!isInError()) {
-        preCloseSteps();
+      preCloseSteps();
 
-        for (final OBaseIndexEngine engine : indexEngines) {
-          if (engine != null
-              && !(engine instanceof OSBTreeIndexEngine
-                  || engine instanceof OHashTableIndexEngine
-                  || engine instanceof OCellBTreeSingleValueIndexEngine
-                  || engine instanceof OCellBTreeMultiValueIndexEngine
-                  || engine instanceof OAutoShardingIndexEngine)) {
-            // delete method is implemented only in non native indexes, so they do not use ODB
-            // atomic operation
-            engine.delete(null);
-          }
+      for (final OBaseIndexEngine engine : indexEngines) {
+        if (engine != null
+            && !(engine instanceof OSBTreeIndexEngine
+                || engine instanceof OHashTableIndexEngine
+                || engine instanceof OCellBTreeSingleValueIndexEngine
+                || engine instanceof OCellBTreeMultiValueIndexEngine
+                || engine instanceof OAutoShardingIndexEngine)) {
+          // delete method is implemented only in non native indexes, so they do not use ODB
+          // atomic operation
+          engine.delete(null);
         }
-
-        sbTreeCollectionManager.close();
-
-        // we close all files inside cache system so we only clear cluster metadata
-        clusters.clear();
-        clusterMap.clear();
-        indexEngines.clear();
-        indexEngineNameMap.clear();
-
-        if (writeCache != null) {
-          writeCache.removeBackgroundExceptionListener(this);
-          writeCache.removePageIsBrokenListener(this);
-        }
-
-        writeAheadLog.removeCheckpointListener(this);
-
-        if (readCache != null) {
-          readCache.deleteStorage(writeCache);
-        }
-
-        writeAheadLog.delete();
-      } else {
-        logger.errorNoDb(
-            "Because of JVM error happened inside of storage it can not be properly closed", null);
       }
+
+      sbTreeCollectionManager.close();
+
+      // we close all files inside cache system so we only clear cluster metadata
+      clusters.clear();
+      clusterMap.clear();
+      indexEngines.clear();
+      indexEngineNameMap.clear();
+
+      if (writeCache != null) {
+        writeCache.removeBackgroundExceptionListener(this);
+        writeCache.removePageIsBrokenListener(this);
+      }
+
+      writeAheadLog.removeCheckpointListener(this);
+
+      if (readCache != null) {
+        readCache.deleteStorage(writeCache);
+      }
+
+      writeAheadLog.delete();
       postCloseSteps(true, isInError(), idGen.getLastId());
       transaction = null;
       lastMetadata = null;
