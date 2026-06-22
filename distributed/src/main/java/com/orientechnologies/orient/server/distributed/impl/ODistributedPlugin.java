@@ -78,7 +78,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -105,8 +104,6 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
   protected static final int DEPLOY_DB_MAX_RETRIES = 10;
   protected Set<String> installingDatabases =
       Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
-  protected volatile ODistributedMessageServiceImpl messageService;
-  protected Date startedOn = new Date();
   protected ODistributedStrategy responseManagerFactory = new ODefaultDistributedStrategy();
 
   private volatile String lastServerDump = "";
@@ -654,10 +651,6 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
   @Override
   public ODistributedMessageService getMessageService() {
     return ((OrientDBDistributed) serverInstance.getDatabases()).getMessageService();
-  }
-
-  public boolean isSyncronizing(String databaseName) {
-    return this.installingDatabases.contains(databaseName);
   }
 
   @Override

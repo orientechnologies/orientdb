@@ -153,7 +153,7 @@ import java.util.stream.Collectors;
 
 /** Created by tglman on 08/08/17. */
 public class OrientDBDistributed extends OrientDBEmbedded
-    implements OServerAware, ODatabaseStateChangeListener, OOperationContext {
+    implements OServerAware, ODatabaseStateChangeListener, OOperationContext, ONetworkDiscover {
   private static final OLoggerDistributed logger =
       OLoggerDistributed.logger(OrientDBDistributed.class);
   private volatile OServer server;

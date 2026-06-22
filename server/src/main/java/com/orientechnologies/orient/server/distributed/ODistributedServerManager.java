@@ -136,7 +136,5 @@ public interface ODistributedServerManager {
 
   void notifyClients(String databaseName);
 
-  boolean isSyncronizing(String databaseName);
-
   ODistributedRequestId nextRequestId();
 }

@@ -17,7 +17,7 @@ public class ONewDeltaSyncImporter {
 
   public static boolean importDelta(
       OrientDBDistributed context, String databaseName, InputStream in, String targetNode) {
-    final String nodeName = context.getDistributedManager().getLocalNodeName();
+    var nodeName = context.getNodeId();
     try {
 
       OScenarioThreadLocal.executeAsDistributed(
@@ -25,7 +25,10 @@ public class ONewDeltaSyncImporter {
             @Override
             public Object call() throws Exception {
               logger.infoIn(
-                  nodeName, targetNode, "Started import of delta for database '%s'", databaseName);
+                  nodeName.getNode(),
+                  targetNode,
+                  "Started import of delta for database '%s'",
+                  databaseName);
               final ODatabaseDocumentInternal db = context.openNoAuthorization(databaseName);
               DataInput dataInput = new DataInputStream(in);
               while (dataInput.readBoolean()) {
