@@ -1229,7 +1229,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
       OStorage storage = context.getStorage();
 
       if (state.getAcceptMode() instanceof OCanSyncAccept.NonBlockingSync) {
-        storage.incrementalSync(out, null);
+        storage.incrementalSync(out);
       } else if (state.getAcceptMode() instanceof OCanSyncAccept.BlockingSync) {
         int compression = getIntConfig(OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION);
         storage.backup(out, null, null, null, compression, 0);

@@ -177,6 +177,7 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
 
     checkOpennessAndMigration();
 
+    startBackup();
     freeze(false);
     try {
 
@@ -222,6 +223,7 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
       }
     } finally {
       release();
+      endBackup();
     }
     return new ArrayList<>();
   }

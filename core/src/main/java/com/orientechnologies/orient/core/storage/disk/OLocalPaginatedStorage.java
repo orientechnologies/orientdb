@@ -276,6 +276,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
     if (out == null) {
       throw new IllegalArgumentException("Backup output is null");
     }
+    startBackup();
     freeze(false);
     try {
       stateLock.readLock().lock();
@@ -326,6 +327,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
       throw logAndPrepareForRethrow(t, false);
     } finally {
       release();
+      endBackup();
     }
   }
 

@@ -4868,7 +4868,7 @@ public abstract class OAbstractPaginatedStorage
   }
 
   @Override
-  public void incrementalSync(OutputStream dest, Runnable started) {
+  public void incrementalSync(OutputStream dest) {
     OWriteAheadLog wal = getWALInstance();
     OLogSequenceNumber lsn = wal.end();
     if (lsn == null) {
@@ -4877,9 +4877,6 @@ public abstract class OAbstractPaginatedStorage
     wal.addCutTillLimit(lsn);
 
     try {
-      if (started != null) {
-        started.run();
-      }
       fullIncrementalBackup(dest);
     } finally {
       wal.removeCutTillLimit(lsn);

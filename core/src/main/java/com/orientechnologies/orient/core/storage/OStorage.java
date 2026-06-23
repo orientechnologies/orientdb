@@ -395,7 +395,7 @@ public interface OStorage extends OStorageInfo {
 
   boolean isDeleted(final ORID rid);
 
-  void incrementalSync(OutputStream dest, Runnable started);
+  void incrementalSync(OutputStream dest);
 
   Optional<Path> getPath();
 
