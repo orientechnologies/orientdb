@@ -16,6 +16,8 @@ public interface ODatabasesTopology {
 
   boolean isOnline(ODatabaseId dbId, ONodeId nodeID);
 
+  boolean isSynching(ODatabaseId dbId);
+
   boolean shouldSink(ODatabaseId dbId, ONodeId nodeID);
 
   OVersion getDatabaseVersion(ODatabaseId dbId);

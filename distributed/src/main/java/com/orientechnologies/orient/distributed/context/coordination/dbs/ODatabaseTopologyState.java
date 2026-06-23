@@ -527,4 +527,8 @@ public class ODatabaseTopologyState extends OWatcher {
       }
     }
   }
+
+  public synchronized boolean isSynching() {
+    return !this.syncSessions.isEmpty();
+  }
 }

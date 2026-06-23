@@ -99,7 +99,7 @@ public class ODistributedOutput {
             if (s.getDbId().equals(dbId)) {
               if (s.getSender().equals(m)) {
                 buffer.append(" (Sending Sync)");
-              } else {
+              } else if (s.getReceiver().equals(m)) {
                 buffer.append(" (Receiving Sync)");
               }
             }

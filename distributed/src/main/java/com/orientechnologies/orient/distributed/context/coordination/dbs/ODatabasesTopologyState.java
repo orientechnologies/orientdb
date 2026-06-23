@@ -390,6 +390,15 @@ public class ODatabasesTopologyState extends OWatcher implements ODatabasesTopol
     return ODatabaseState.Online.equals(getState(dbId, nodeID));
   }
 
+  public synchronized boolean isSynching(ODatabaseId dbId) {
+    ODatabaseTopologyState db = getDb(dbId);
+    if (db != null) {
+      return db.isSynching();
+    } else {
+      return false;
+    }
+  }
+
   public synchronized boolean shouldSink(ODatabaseId dbId, ONodeId nodeID) {
     ODatabaseTopologyState db = getDb(dbId);
     if (db != null) {
