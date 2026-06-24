@@ -568,7 +568,10 @@ public class OrientDBEmbedded implements OrientDBInternal {
     } catch (Exception e) {
       logger.warn("%s failed blocking sync of database %s", getNodeId(), e, name);
       synchronized (this) {
-        sharedContexts.remove(name);
+        var ctx = sharedContexts.remove(name);
+        if (ctx != null) {
+          ctx.close();
+        }
       }
       return false;
     }
@@ -619,7 +622,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
     OSharedContextEmbedded context =
         sharedContexts.computeIfAbsent(
             name,
-            (k) -> {
+            k -> {
               var storage =
                   getDefaultEngine()
                       .createForRestoreLocal(this, new ODatabaseId("mock"), k, config);

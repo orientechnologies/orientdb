@@ -504,7 +504,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
       OSharedContextEmbedded context =
           sharedContexts.computeIfAbsent(
               name,
-              (k) -> {
+              k -> {
                 var storage =
                     getDefaultEngine()
                         .createForRestoreLocal(
@@ -525,7 +525,10 @@ public class OrientDBDistributed extends OrientDBEmbedded
     } catch (Exception e) {
       logger.warnNode(getNodeId(), "failed non blocking sync of database %s", e, name);
       synchronized (this) {
-        sharedContexts.remove(name);
+        var ctx = sharedContexts.remove(name);
+        if (ctx != null) {
+          ctx.close();
+        }
       }
       return false;
     }
