@@ -3,6 +3,7 @@ package com.orientechnologies.orient.server.distributed.impl.lock;
 import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.transaction.OTransactionId;
+import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTransactionUniqueKey;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -16,14 +17,17 @@ import java.util.concurrent.ConcurrentHashMap;
 public class OLockManagerImpl implements OLockManager {
 
   private Map<OLockKey, Queue<OWaitingTracker>> locks = new ConcurrentHashMap<>();
-  private boolean frozen;
-  private OnFreezeAcquired frozenLock;
+  private volatile boolean frozen;
+  private volatile OnFreezeAcquired frozenLock;
 
   public synchronized void freeze(OnFreezeAcquired frozenLock) {
+    if (this.frozen) {
+      throw new ODistributedException("Already Frozen State");
+    }
     this.frozen = true;
     this.frozenLock = frozenLock;
     if (locks.isEmpty()) {
-      this.frozenLock.acquired(() -> OLockManagerImpl.this.release());
+      this.frozenLock.acquired(this::release);
     }
   }
 
@@ -56,7 +60,7 @@ public class OLockManagerImpl implements OLockManager {
     }
     if (frozen) {
       if (locks.isEmpty()) {
-        this.frozenLock.acquired(() -> OLockManagerImpl.this.release());
+        this.frozenLock.acquired(this::release);
       }
     }
   }
