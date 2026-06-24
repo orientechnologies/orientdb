@@ -495,7 +495,6 @@ public class OrientDBDistributed extends OrientDBEmbedded
 
   public boolean nonBlockingSync(
       String name, ODatabaseId databaseId, InputStream backupStream, OrientDBConfig config) {
-    ODatabaseDocumentEmbedded embedded;
 
     if (!isOpen()) {
       return false;
@@ -513,11 +512,12 @@ public class OrientDBDistributed extends OrientDBEmbedded
               });
       context.unload();
       context.getStorage().restoreFullIncrementalBackup(backupStream);
+      ODatabaseDocumentEmbedded embedded;
       synchronized (this) {
         embedded = newSessionInstance(name, config);
       }
-      embedded.getSharedContext().reInit(context.getStorage(), embedded);
-      distributedSetOnline(embedded.getSharedContext());
+      context.reInit(context.getStorage(), embedded);
+      distributedSetOnline(context);
       ODatabaseRecordThreadLocal.instance().remove();
       return true;
     } catch (OModificationOperationProhibitedException e) {
@@ -833,13 +833,6 @@ public class OrientDBDistributed extends OrientDBEmbedded
   @Override
   public void distributedSetOnline(OSharedContextEmbedded ctx) {
     ((OSharedContextDistributed) ctx).getDistributedContext().setOnline();
-  }
-
-  public void distributedPauseDatabase(String database) {
-    ODistributedDatabaseImpl distribDatabase = getDatabase(database);
-    if (distribDatabase != null) {
-      distribDatabase.suspend();
-    }
   }
 
   public Set<String> getActiveDatabases() {

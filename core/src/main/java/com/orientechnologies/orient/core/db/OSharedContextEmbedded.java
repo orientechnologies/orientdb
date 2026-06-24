@@ -3,6 +3,8 @@ package com.orientechnologies.orient.core.db;
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_TRANSACTION_SEQUENCE_SET_SIZE;
 
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -37,12 +39,16 @@ import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.tx.OTxMetadataHolderSyncOrder;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /** Created by tglman on 13/06/17. */
 public class OSharedContextEmbedded extends OSharedContext {
+  private static final OLogger logger = OLogManager.instance().logger(OSharedContextEmbedded.class);
   protected static final OProfiler PROFILER = Orient.instance().getProfiler();
 
   protected OrientDBEmbedded orientDB;
@@ -177,12 +183,22 @@ public class OSharedContextEmbedded extends OSharedContext {
   }
 
   @Override
-  public synchronized void unload() {
-    internalUnload();
-    loaded = false;
+  public void unload() {
+    Optional<Future<Void>> future;
+    synchronized (this) {
+      future = internalUnload();
+      loaded = false;
+    }
+    if (future.isPresent()) {
+      try {
+        future.get().get();
+      } catch (InterruptedException | ExecutionException e) {
+        logger.debug("Error on waiting freeze", e);
+      }
+    }
   }
 
-  protected void internalUnload() {
+  protected Optional<Future<Void>> internalUnload() {
     stringCache.close();
     viewManager.close();
     schema.close();
@@ -196,6 +212,7 @@ public class OSharedContextEmbedded extends OSharedContext {
     liveQueryOps.close();
     liveQueryOpsV2.close();
     activeDistributedQueries.values().forEach(x -> x.close());
+    return Optional.empty();
   }
 
   public synchronized void reload(ODatabaseDocumentInternal database) {

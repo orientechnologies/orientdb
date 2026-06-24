@@ -21,6 +21,8 @@ import com.orientechnologies.orient.core.transaction.ODistributedSynchronizedSeq
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedDatabaseImpl;
 import java.util.HashMap;
+import java.util.Optional;
+import java.util.concurrent.Future;
 
 /** Created by tglman on 22/06/17. */
 public class OSharedContextDistributed extends OSharedContextEmbedded {
@@ -96,13 +98,13 @@ public class OSharedContextDistributed extends OSharedContextEmbedded {
   }
 
   @Override
-  public void internalUnload() {
-    OScenarioThreadLocal.executeAsDistributed(
-        () -> {
-          super.internalUnload();
-          distributedContext.suspend();
-          return null;
-        });
+  public Optional<Future<Void>> internalUnload() {
+    return (Optional<Future<Void>>)
+        OScenarioThreadLocal.executeAsDistributed(
+            () -> {
+              super.internalUnload();
+              return Optional.of(distributedContext.suspend());
+            });
   }
 
   @Override

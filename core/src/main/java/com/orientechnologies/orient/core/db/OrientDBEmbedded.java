@@ -559,8 +559,14 @@ public class OrientDBEmbedded implements OrientDBInternal {
                 var storage = getDefaultEngine().createForRestoreLocal(this, databaseId, k, config);
                 return createSharedContext(storage);
               });
+
       context.unload();
       context.getStorage().restoreNetwork(in);
+      ODatabaseDocumentEmbedded embedded;
+      synchronized (this) {
+        embedded = newSessionInstance(name, getConfigurations());
+      }
+      context.reInit(context.getStorage(), embedded);
       distributedSetOnline(context);
       return true;
     } catch (OModificationOperationProhibitedException e) {

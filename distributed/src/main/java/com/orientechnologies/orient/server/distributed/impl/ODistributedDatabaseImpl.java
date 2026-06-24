@@ -67,9 +67,11 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
 
 /**
@@ -463,7 +465,9 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       return;
     }
     running = false;
-
+    if (this.freezeGuard != null) {
+      this.freezeGuard.release();
+    }
     if (txTimeoutTask != null) txTimeoutTask.cancel();
     requestExecutor.shutdown();
     if (wait) {
@@ -596,7 +600,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     return running;
   }
 
-  public void suspend() {
+  public Future<Void> suspend() {
     boolean parsing;
     synchronized (this) {
       parsing = this.parsing;
@@ -617,11 +621,44 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     }
     CompletableFuture<OFreezeGuard> latch = new CompletableFuture<>();
     this.lockManager.freeze(latch::complete);
-    try {
-      this.freezeGuard = latch.get();
-    } catch (InterruptedException | ExecutionException e) {
-      throw new OInterruptedException(e.getMessage());
-    }
+    return new Future<Void>() {
+
+      @Override
+      public boolean isDone() {
+        return latch.isDone();
+      }
+
+      @Override
+      public boolean isCancelled() {
+        return latch.isCancelled();
+      }
+
+      @Override
+      public Void get(long timeout, TimeUnit unit)
+          throws InterruptedException, ExecutionException, TimeoutException {
+        var guard = latch.get(timeout, unit);
+
+        synchronized (ODistributedDatabaseImpl.this) {
+          ODistributedDatabaseImpl.this.freezeGuard = guard;
+        }
+        return null;
+      }
+
+      @Override
+      public Void get() throws InterruptedException, ExecutionException {
+        var guard = latch.get();
+
+        synchronized (ODistributedDatabaseImpl.this) {
+          ODistributedDatabaseImpl.this.freezeGuard = guard;
+        }
+        return null;
+      }
+
+      @Override
+      public boolean cancel(boolean mayInterruptIfRunning) {
+        return latch.cancel(mayInterruptIfRunning);
+      }
+    };
   }
 
   public void resume() {
