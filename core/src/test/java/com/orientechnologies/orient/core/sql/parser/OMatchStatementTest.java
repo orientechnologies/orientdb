@@ -1,5 +1,8 @@
 package com.orientechnologies.orient.core.sql.parser;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotSame;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.io.ByteArrayInputStream;
@@ -241,5 +244,54 @@ public class OMatchStatementTest {
     InputStream is = new ByteArrayInputStream(string.getBytes());
     OrientSql osql = new OrientSql(is);
     return osql;
+  }
+
+  @Test
+  public void testCopyPreservesClauses() {
+    OMatchStatement statement =
+        (OMatchStatement)
+            checkSyntax(
+                "MATCH {as: foo}, NOT {as: foo}-->{as: excluded} "
+                    + "RETURN DISTINCT foo:{name} AS person "
+                    + "GROUP BY foo ORDER BY foo UNWIND person SKIP 10 LIMIT 5",
+                true);
+    OMatchStatement copy = statement.copy();
+
+    assertTrue(copy.isReturnDistinct());
+    assertEquals(statement.getReturnNestedProjections(), copy.getReturnNestedProjections());
+    assertEquals(statement.getOrderBy(), copy.getOrderBy());
+    assertEquals(statement.getUnwind(), copy.getUnwind());
+    assertEquals(statement.getSkip(), copy.getSkip());
+    assertEquals(statement.getLimit(), copy.getLimit());
+  }
+
+  @Test
+  public void testCopyDuplicatesMutableNestedStructures() {
+    OMatchStatement statement =
+        (OMatchStatement)
+            checkSyntax(
+                "MATCH {as: foo}, NOT {as: foo}-->{as: excluded} "
+                    + "RETURN DISTINCT foo:{name} AS person "
+                    + "GROUP BY foo ORDER BY foo UNWIND person SKIP 10 LIMIT 5",
+                true);
+    OMatchStatement copy = statement.copy();
+
+    assertEquals(1, copy.getNotMatchExpressions().size());
+    assertNotSame(statement.getNotMatchExpressions().get(0), copy.getNotMatchExpressions().get(0));
+    assertNotSame(
+        statement.getReturnNestedProjections().get(0), copy.getReturnNestedProjections().get(0));
+  }
+
+  @Test
+  public void testCopyFailsWhenRequiredMatchExpressionsAreMissing() {
+    OMatchStatement statement = new OMatchStatement(-1);
+    statement.matchExpressions = null;
+
+    try {
+      statement.copy();
+      fail();
+    } catch (NullPointerException expected) {
+      // expected
+    }
   }
 }
