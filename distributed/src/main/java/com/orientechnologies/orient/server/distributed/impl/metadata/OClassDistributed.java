@@ -26,7 +26,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Locale;
-import java.util.Set;
 import java.util.concurrent.Callable;
 
 /** Created by tglman on 22/06/17. */
@@ -522,10 +521,7 @@ public class OClassDistributed extends OClassEmbedded {
   public int getClusterForNewInstance(ODatabaseDocumentDistributed db, ODocument doc) {
     if (bestClusterIds == null) {
       if (this.allocation == null) {
-        OrientDBDistributed context = db.getContext();
-        final Set<String> availableNodes = context.getAvailableNodeNames(db.getName());
-        availableNodes.removeIf((node) -> !context.isNodeMaster(node, db.getName()));
-        autoAssignClusterOwnership(db, availableNodes, true);
+        db.autoAssignAllocations(true);
       }
       bestClusterFromAllocation(db);
     }
