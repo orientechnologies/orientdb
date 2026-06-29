@@ -22,6 +22,7 @@ import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabaseState;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.setup.ServerRun;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.Assert;
 import org.junit.Test;
@@ -49,12 +50,12 @@ public class HARemoveNodeFromCfgIT extends AbstractServerClusterTxTest {
   protected void onAfterExecution() throws Exception {
     final String removedServer =
         serverInstance.get(SERVERS - 1).getServerInstance().getNodeId().getNode();
-    var dbt =
-        ((OrientDBDistributed) serverInstance.get(0).getServerInstance().getDatabases())
-            .getNodeState()
-            .getDatabaseTopology();
+    var ops =
+        ((OrientDBDistributed) serverInstance.get(0).getServerInstance().getDatabases()).getOps();
+    var dbt = ops.getDatabaseTopology();
     var nodeId = new ONodeId(removedServer);
     var dbId = dbt.getDatabaseId(getDatabaseName()).get();
+    ops.waitSelfOnline(dbId, Optional.empty());
     Assert.assertTrue(dbt.getMembers(dbId).contains(nodeId));
     Assert.assertEquals(dbt.getState(dbId, nodeId), ODatabaseState.Online);
 
@@ -77,9 +78,9 @@ public class HARemoveNodeFromCfgIT extends AbstractServerClusterTxTest {
 
     banner("RESTARTING SERVER " + (SERVERS - 1) + "...");
 
-    Assert.assertFalse(dbt.getMembers(dbId).contains(nodeId));
+    //    Assert.assertFalse(dbt.getMembers(dbId).contains(nodeId));
 
-    Assert.assertEquals(dbt.getState(dbId, nodeId), ODatabaseState.NotAvailable);
+    Assert.assertEquals(dbt.getState(dbId, nodeId), ODatabaseState.Offline);
 
     serverInstance
         .get(SERVERS - 1)

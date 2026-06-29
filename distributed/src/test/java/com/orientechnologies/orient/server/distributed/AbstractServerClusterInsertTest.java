@@ -19,6 +19,8 @@ package com.orientechnologies.orient.server.distributed;
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.log.OLogManager;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -54,6 +56,8 @@ import org.junit.Assert;
 
 /** Insert records concurrently against the cluster */
 public abstract class AbstractServerClusterInsertTest extends AbstractDistributedWriteTest {
+  private final OLogger logger =
+      OLogManager.instance().logger(AbstractServerClusterInsertTest.class);
   protected volatile int delayWriter = 0;
   protected volatile int delayReader = 1000;
   protected static int writerCount = 5;
@@ -120,16 +124,14 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
               break;
 
             } catch (InterruptedException e) {
-              System.out.println("Writer received interrupt (db=" + database.getURL());
+              logger.warn("Writer received interrupt (db=%s)", e, database.getURL());
               Thread.currentThread().interrupt();
               break;
             } catch (ORecordDuplicatedException e) {
-              System.out.println("Writer received exception (db=" + database.getURL());
+              logger.error("Writer received exception (db=%s)", e, database.getURL());
               // IGNORE IT
             } catch (ONeedRetryException e) {
-              System.out.println("Writer received exception (db=" + database.getURL());
-
-              if (retry >= maxRetries) e.printStackTrace();
+              logger.warn("Writer received exception (db=%s)", e, database.getURL());
 
             } catch (ODistributedException e) {
               if (!(e.getCause() instanceof ORecordDuplicatedException)) {
@@ -137,8 +139,7 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
                 throw e;
               }
             } catch (Throwable e) {
-              System.out.println("Writer received exception (db=" + database.getURL() + ")");
-              e.printStackTrace();
+              logger.error("Writer received exception (db=%s)", e, database.getURL());
               return null;
             }
           }
@@ -179,13 +180,13 @@ public abstract class AbstractServerClusterInsertTest extends AbstractDistribute
           break;
         } catch (ONeedRetryException e) {
           // RETRY
-          System.out.println("EXCEPTION " + e + " RETRY " + retry + " ON CREATE RECORD");
+          logger.info("EXCEPTION " + e.getMessage() + " RETRY " + retry + " ON CREATE RECORD");
           Thread.sleep(200);
 
         } catch (OException e) {
           if (e.getCause() instanceof ONeedRetryException) {
             // RETRY
-            System.out.println("EXCEPTION " + e + " RETRY " + retry + " ON CREATE RECORD");
+            logger.info("EXCEPTION " + e.getMessage() + " RETRY " + retry + " ON CREATE RECORD");
             Thread.sleep(200);
           } else throw e;
         }

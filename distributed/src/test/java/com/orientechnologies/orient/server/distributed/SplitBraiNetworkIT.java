@@ -49,19 +49,19 @@ public class SplitBraiNetworkIT extends AbstractHARemoveNode {
 
     // CHECK THE SPLIT
     waitForDatabaseStatus(
-        0, "europe-2", getDatabaseName(), ODistributedServerManager.DB_STATUS.NOT_AVAILABLE, 90000);
+        0, "europe-2", getDatabaseName(), ODistributedServerManager.DB_STATUS.OFFLINE, 90000);
     waitForDatabaseStatus(
-        2, "europe-0", getDatabaseName(), ODistributedServerManager.DB_STATUS.NOT_AVAILABLE, 90000);
+        2, "europe-0", getDatabaseName(), ODistributedServerManager.DB_STATUS.OFFLINE, 90000);
     waitForDatabaseStatus(
-        2, "europe-1", getDatabaseName(), ODistributedServerManager.DB_STATUS.NOT_AVAILABLE, 90000);
+        2, "europe-1", getDatabaseName(), ODistributedServerManager.DB_STATUS.OFFLINE, 90000);
 
     assertDatabaseStatusEquals(
-        0, "europe-2", getDatabaseName(), ODistributedServerManager.DB_STATUS.NOT_AVAILABLE);
+        0, "europe-2", getDatabaseName(), ODistributedServerManager.DB_STATUS.OFFLINE);
 
     waitForDatabaseStatus(
-        1, "europe-2", getDatabaseName(), ODistributedServerManager.DB_STATUS.NOT_AVAILABLE, 90000);
+        1, "europe-2", getDatabaseName(), ODistributedServerManager.DB_STATUS.OFFLINE, 90000);
     assertDatabaseStatusEquals(
-        1, "europe-2", getDatabaseName(), ODistributedServerManager.DB_STATUS.NOT_AVAILABLE);
+        1, "europe-2", getDatabaseName(), ODistributedServerManager.DB_STATUS.OFFLINE);
 
     assertDatabaseStatusEquals(
         2, "europe-2", getDatabaseName(), ODistributedServerManager.DB_STATUS.ONLINE);
