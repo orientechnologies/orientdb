@@ -1349,11 +1349,11 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
    * Returns the number of the records of the class iClassName considering also sub classes if
    * polymorphic is true.
    */
-  public long countClass(final String iClassName, final boolean iPolymorphic) {
+  public long countClass(final String className, final boolean iPolymorphic) {
     final OImmutableClass cls =
-        (OImmutableClass) getMetadata().getImmutableSchemaSnapshot().getClass(iClassName);
+        (OImmutableClass) getMetadata().getImmutableSchemaSnapshot().getClass(className);
     if (cls == null)
-      throw new IllegalArgumentException("Class '" + cls + "' not found in database");
+      throw new IllegalArgumentException("Class '" + className + "' not found in database");
 
     return countClass(cls, iPolymorphic);
   }
