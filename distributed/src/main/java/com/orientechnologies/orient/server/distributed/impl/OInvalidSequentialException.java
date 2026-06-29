@@ -4,7 +4,7 @@ import com.orientechnologies.orient.server.distributed.task.ODistributedOperatio
 
 public class OInvalidSequentialException extends ODistributedOperationException {
 
-  public OInvalidSequentialException(ODistributedOperationException exception) {
+  public OInvalidSequentialException(OInvalidSequentialException exception) {
     super(exception);
   }
 
