@@ -31,7 +31,6 @@ import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.ODatabaseWrapperAbstract;
 import com.orientechnologies.orient.core.db.OLiveQueryMonitor;
@@ -770,8 +769,7 @@ public class OObjectDatabaseTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
   public Object stream2pojo(
       ODocument iRecord, final Object iPojo, final String iFetchPlan, boolean iReload) {
     if (iRecord.getInternalStatus() == ORecordElement.STATUS.NOT_LOADED) {
-      ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
-      iRecord = (ODocument) db.load(iRecord);
+      iRecord = (ODocument) underlying.load(iRecord);
     }
     if (iReload) {
       if (iPojo != null) {

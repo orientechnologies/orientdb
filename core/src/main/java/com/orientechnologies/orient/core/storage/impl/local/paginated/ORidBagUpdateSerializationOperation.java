@@ -20,9 +20,9 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated;
 
 import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
+import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationContext;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.OAtomicOperation;
 import com.orientechnologies.orient.core.storage.index.sbtreebonsai.local.OSBTreeBonsai;
@@ -46,11 +46,12 @@ public class ORidBagUpdateSerializationOperation implements ORecordSerialization
 
   public ORidBagUpdateSerializationOperation(
       final NavigableMap<OIdentifiable, Change> changedValues,
-      OBonsaiCollectionPointer collectionPointer) {
+      OBonsaiCollectionPointer collectionPointer,
+      OSerializationContext ctx) {
     this.changedValues = changedValues;
     this.collectionPointer = collectionPointer;
 
-    collectionManager = ODatabaseRecordThreadLocal.instance().get().getSbTreeCollectionManager();
+    collectionManager = ctx.getCollectionManager();
   }
 
   @Override

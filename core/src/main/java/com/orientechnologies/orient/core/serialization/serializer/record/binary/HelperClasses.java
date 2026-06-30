@@ -374,7 +374,7 @@ public class HelperClasses {
     if (ridbag.isEmbedded()) {
       writeEmbeddedRidbag(bytes, ridbag);
     } else {
-      writeSBTreeRidbag(bytes, ridbag, ownerUuid);
+      writeSBTreeRidbag(bytes, ridbag, ownerUuid, ctx);
     }
   }
 
@@ -412,7 +412,8 @@ public class HelperClasses {
     }
   }
 
-  protected static void writeSBTreeRidbag(BytesContainer bytes, ORidBag ridbag, UUID ownerUuid) {
+  protected static void writeSBTreeRidbag(
+      BytesContainer bytes, ORidBag ridbag, UUID ownerUuid, OSerializationContext ctx) {
     ((OSBTreeRidBag) ridbag.getDelegate()).applyNewEntries();
 
     OBonsaiCollectionPointer pointer = ridbag.getPointer();
@@ -438,7 +439,7 @@ public class HelperClasses {
     OVarIntSerializer.write(bytes, 0);
 
     if (context != null) {
-      ((OSBTreeRidBag) ridbag.getDelegate()).handleContextSBTree(context, pointer);
+      ((OSBTreeRidBag) ridbag.getDelegate()).handleContextSBTree(context, pointer, ctx);
       OVarIntSerializer.write(bytes, 0);
     } else {
       OVarIntSerializer.write(bytes, 0);
