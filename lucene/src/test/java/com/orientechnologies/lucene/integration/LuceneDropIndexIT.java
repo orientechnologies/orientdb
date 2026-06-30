@@ -6,7 +6,6 @@ import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.server.OServer;
 import java.io.IOException;
-import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -17,7 +16,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
-public class LuceneDropIndexIntegrationTest {
+public class LuceneDropIndexIT {
   private OServer server0;
   private OServer server1;
 
@@ -32,9 +31,9 @@ public class LuceneDropIndexIntegrationTest {
     final OrientDB remote =
         new OrientDB("remote:localhost", "root", "test", OrientDBConfig.defaultConfig());
     remote.execute(
-        "create database LuceneDropIndexIntegrationTest plocal users(admin identified by 'admin'"
+        "create database LuceneDropIndexIT plocal users(admin identified by 'admin'"
             + " role admin)");
-    ODatabaseSession session = remote.open("LuceneDropIndexIntegrationTest", "admin", "admin");
+    ODatabaseSession session = remote.open("LuceneDropIndexIT", "admin", "admin");
 
     session.command("create class Person");
     session.command("create property Person.name STRING");
@@ -56,32 +55,26 @@ public class LuceneDropIndexIntegrationTest {
 
     OrientDB remote =
         new OrientDB("remote:localhost", "root", "test", OrientDBConfig.defaultConfig());
-    remote.drop("LuceneDropIndexIntegrationTest");
+    remote.drop("LuceneDropIndexIT");
     remote.close();
 
     List<Path> paths =
         Files.walk(Paths.get(server0.getDatabaseDirectory()))
-            .filter(f -> f.toFile().getName().equalsIgnoreCase("LuceneDropIndexIntegrationTest"))
+            .filter(f -> f.toFile().getName().equalsIgnoreCase("LuceneDropIndexIT"))
             .collect(Collectors.toList());
 
     Assert.assertEquals(0, paths.size());
 
     paths =
         Files.walk(Paths.get(server1.getDatabaseDirectory()))
-            .filter(f -> f.toFile().getName().equalsIgnoreCase("LuceneDropIndexIntegrationTest"))
+            .filter(f -> f.toFile().getName().equalsIgnoreCase("LuceneDropIndexIT"))
             .collect(Collectors.toList());
 
     Assert.assertEquals(0, paths.size());
   }
 
   @After
-  public void after()
-      throws InstantiationException,
-          IllegalAccessException,
-          ClassNotFoundException,
-          NoSuchMethodException,
-          IOException,
-          InvocationTargetException {
+  public void after() {
 
     server0.shutdown();
     server1.shutdown();
