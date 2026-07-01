@@ -218,10 +218,6 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
       final Map.Entry<Object, OIdentifiable> entry = customIterator.next();
       nextEntry = new ORawPair<>(entry.getKey(), entry.getValue().getIdentity());
     }
-    if (nextEntry == null && nullKeyIterator != null && nullKeyIterator.hasNext()) {
-      OIdentifiable nextValue = (OIdentifiable) nullKeyIterator.next();
-      nextEntry = new ORawPair<>(null, nextValue.getIdentity());
-    }
     if (nextEntry == null) {
       updateIndexStats();
     } else {
@@ -418,26 +414,24 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
   }
 
   private void processFlatIteration() {
-    stream = isOrderAsc() ? index.stream() : index.descStream();
-    storeAcquiredStream(stream);
+    if (isOrderAsc()) {
+      stream = index.stream();
+      if (!index.getDefinition().isNullValuesIgnored()) {
+        Stream<ORawPair<Object, ORID>> nullStream = getStreamForNullKey();
+        nextStreams.add(nullStream);
+      }
+    } else {
+      if (!index.getDefinition().isNullValuesIgnored()) {
+        stream = getStreamForNullKey();
+      }
+      Stream<ORawPair<Object, ORID>> valueStream = index.descStream();
+      nextStreams.add(valueStream);
+    }
     cursorToIterator();
 
-    fetchNullKeys();
     if (stream != null) {
       fetchNextEntry();
     }
-  }
-
-  private void fetchNullKeys() {
-    if (index.getDefinition().isNullValuesIgnored()) {
-      nullKeyIterator = Collections.emptyIterator();
-      return;
-    }
-
-    final Stream<ORID> stream = index.getRids(null);
-    acquiredRidStreams.add(stream);
-
-    nullKeyIterator = stream.iterator();
   }
 
   private void init(
@@ -565,9 +559,7 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
 
   private Stream<ORawPair<Object, ORID>> getStreamForNullKey() {
     final Stream<ORID> stream = index.getRids(null);
-    acquiredRidStreams.add(stream);
-
-    return stream.map((rid) -> new ORawPair<>(null, rid));
+    return stream.map(rid -> new ORawPair<>(null, rid));
   }
 
   /**
@@ -998,7 +990,6 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     stream = null;
     indexIterator = null;
     customIterator = null;
-    nullKeyIterator = null;
     nextEntry = null;
   }
 
@@ -1024,12 +1015,6 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     }
 
     acquiredStreams.clear();
-
-    for (final Stream<ORID> stream : acquiredRidStreams) {
-      stream.close();
-    }
-
-    acquiredRidStreams.clear();
   }
 
   @Override
