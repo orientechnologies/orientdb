@@ -204,9 +204,16 @@ public class OIndexCandidateOne implements OIndexCandidate {
         }
       }
     } else {
-      streams.add(new OAllIndexStream(index, isOrderAsc));
-      if (!index.getDefinition().isNullValuesIgnored()) {
-        streams.add(new ONullIndexStream(index));
+      if (isOrderAsc) {
+        streams.add(new OAllIndexStream(index, isOrderAsc));
+        if (!index.getDefinition().isNullValuesIgnored()) {
+          streams.add(new ONullIndexStream(index));
+        }
+      } else {
+        if (!index.getDefinition().isNullValuesIgnored()) {
+          streams.add(new ONullIndexStream(index));
+        }
+        streams.add(new OAllIndexStream(index, isOrderAsc));
       }
     }
     return streams;
