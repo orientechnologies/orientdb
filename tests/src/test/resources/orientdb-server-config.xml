@@ -35,11 +35,6 @@
 				<parameter value="SQL,gremlin-groovy,gremlin" name="allowedLanguages" />
 			</parameters>
 		</handler>
-		<handler class="com.orientechnologies.orient.server.plugin.livequery.OLiveQueryPlugin">
-			<parameters>
-				<parameter value="true" name="enabled"/>
-			</parameters>
-		</handler>
 	</handlers>
 	<network>
 		<sockets>

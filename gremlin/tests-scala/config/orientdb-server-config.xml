@@ -33,11 +33,6 @@
                 <parameter value="SQL" name="allowedLanguages"/>
             </parameters>
         </handler>
-        <handler class="com.orientechnologies.orient.server.plugin.livequery.OLiveQueryPlugin">
-            <parameters>
-                <parameter value="false" name="enabled"/>
-            </parameters>
-        </handler>
     </handlers>
     <network>
         <sockets>
