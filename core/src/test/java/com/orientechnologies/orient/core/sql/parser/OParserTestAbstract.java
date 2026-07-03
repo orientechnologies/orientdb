@@ -54,7 +54,7 @@ public abstract class OParserTestAbstract {
       return result;
     } catch (Exception e) {
       if (isCorrect) {
-        fail();
+        fail(e.getMessage());
       }
     }
     return null;

@@ -21,6 +21,10 @@ public class OCreateDatabaseStatementTest extends OParserTestAbstract {
         "CREATE DATABASE foo plocal users (foo identified by 'pippo' role admin)"
             + " {\"config\":{\"security.createDefaultUsers\": true}}");
 
+    checkRightSyntaxServer(
+        "CREATE DATABASE foo plocal users (foo identified by 'pippo' role admin)"
+            + " nodes (node1 role main, node2 role main, node3 role replica)");
+
     checkWrongSyntax("CREATE DATABASE foo");
     checkWrongSyntax("CREATE DATABASE");
   }

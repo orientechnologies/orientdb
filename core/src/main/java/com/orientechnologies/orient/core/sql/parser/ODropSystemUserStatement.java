@@ -3,8 +3,13 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OServerCommandContext;
+import com.orientechnologies.orient.core.db.OSystemDatabase;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.stream.OExecutionStream;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 public class ODropSystemUserStatement extends SimpleNode implements OServerStatementExecution {
   protected OIdentifierResolver name;
@@ -19,20 +24,34 @@ public class ODropSystemUserStatement extends SimpleNode implements OServerState
 
   @Override
   public OExecutionStream executeSimple(OServerCommandContext ctx) {
-    // TODO Auto-generated method stub
-    return null;
+    OSystemDatabase systemDb = ctx.getServer().getSystemDatabase();
+    return systemDb.executeWithDB(
+        db -> {
+          List<Object> params = new ArrayList<>();
+          // INSERT INTO OUser SET
+          StringBuilder sb = new StringBuilder();
+          sb.append("DELETE FROM OUser WHERE ");
+
+          sb.append(OCreateSystemUserStatement.USER_FIELD_NAME);
+          sb.append("=?");
+          params.add(this.name.resolveIdentifierString(ctx));
+
+          Stream<OResult> stream = db.command(sb.toString(), params.toArray()).stream();
+          return OExecutionStream.resultIterator(stream.iterator())
+              .onClose(context -> stream.close());
+        });
   }
 
   @Override
   public void toString(Map<Object, Object> params, StringBuilder builder) {
-    // TODO Auto-generated method stub
-
+    builder.append("DROP SYSTEM USER ");
+    name.toString(params, builder);
   }
 
   @Override
   public void toGenericStatement(StringBuilder builder) {
-    // TODO Auto-generated method stub
-
+    builder.append("DROP SYSTEM USER ");
+    name.toGenericStatement(builder);
   }
 }
 /* JavaCC - OriginalChecksum=e0952686fd6f6ffc369058885bf4cf60 (do not edit this line) */

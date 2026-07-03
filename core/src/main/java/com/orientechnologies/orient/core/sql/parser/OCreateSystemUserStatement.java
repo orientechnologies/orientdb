@@ -48,7 +48,7 @@ public class OCreateSystemUserStatement extends SimpleNode implements OServerSta
     OSystemDatabase systemDb = ctx.getServer().getSystemDatabase();
 
     return systemDb.executeWithDB(
-        (db) -> {
+        db -> {
           List<Object> params = new ArrayList<>();
           // INSERT INTO OUser SET
           StringBuilder sb = new StringBuilder();
@@ -116,7 +116,7 @@ public class OCreateSystemUserStatement extends SimpleNode implements OServerSta
           sb.append("])");
           Stream<OResult> stream = db.command(sb.toString(), params.toArray()).stream();
           return OExecutionStream.resultIterator(stream.iterator())
-              .onClose((context) -> stream.close());
+              .onClose(context -> stream.close());
         });
   }
 

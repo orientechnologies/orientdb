@@ -3,6 +3,7 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OServerCommandContext;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.stream.OExecutionStream;
 import java.util.Map;
 
@@ -19,20 +20,22 @@ public class OExistsDatabaseStatement extends SimpleNode implements OServerState
 
   @Override
   public void toString(Map<Object, Object> params, StringBuilder builder) {
-    // TODO Auto-generated method stub
-
+    builder.append("EXISTS DATABASE ");
+    name.toString(params, builder);
   }
 
   @Override
   public void toGenericStatement(StringBuilder builder) {
-    // TODO Auto-generated method stub
-
+    builder.append("EXISTS DATABASE ");
+    name.toGenericStatement(builder);
   }
 
   @Override
   public OExecutionStream executeSimple(OServerCommandContext ctx) {
-    // TODO Auto-generated method stub
-    return null;
+    var context = ctx.getServer();
+    OResultInternal result = new OResultInternal();
+    result.setProperty("exists", context.exists(name.resolveIdentifierString(ctx), null, null));
+    return OExecutionStream.singleton(result);
   }
 }
 /* JavaCC - OriginalChecksum=848100496e147279ca7d32cc35dd59d7 (do not edit this line) */

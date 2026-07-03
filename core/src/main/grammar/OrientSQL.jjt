@@ -5455,8 +5455,11 @@ ODropSystemUserStatement DropSystemUserStatement():
 }
 {
     (
-        <DROP> <SYSTEM><USER>
-        jjtThis.name = Identifier()
+        <DROP> <SYSTEM> <USER>
+      	(      	  jjtThis.name = Identifier()
+          |
+          jjtThis.name = InputParameter()
+      	)
     )
     { return jjtThis; }
 }

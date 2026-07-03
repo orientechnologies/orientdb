@@ -9,5 +9,7 @@ public interface OIdentifierResolver {
 
   void toString(Map<Object, Object> params, StringBuilder builder);
 
+  void toGenericStatement(StringBuilder builder);
+
   OIdentifierResolver copy();
 }
