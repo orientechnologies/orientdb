@@ -17,7 +17,6 @@ package com.orientechnologies.orient.jdbc;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
@@ -32,10 +31,8 @@ import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.parser.OSelectStatement;
 import com.orientechnologies.orient.core.sql.parser.OrientSql;
 import com.orientechnologies.orient.core.sql.parser.ParseException;
-import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.io.Reader;
-import java.io.UnsupportedEncodingException;
 import java.math.BigDecimal;
 import java.net.URL;
 import java.sql.Array;
@@ -152,29 +149,7 @@ public class OrientJdbcResultSet implements ResultSet {
     if (statement.sql != null && !statement.sql.isEmpty()) {
       try {
 
-        OrientSql osql = null;
-        ODatabaseDocumentInternal db = null;
-        try {
-          db =
-              (ODatabaseDocumentInternal)
-                  ((OrientJdbcConnection) statement.getConnection()).getDatabase();
-          if (db == null) {
-            osql = new OrientSql(new ByteArrayInputStream(statement.sql.getBytes()));
-          } else {
-            osql =
-                new OrientSql(
-                    new ByteArrayInputStream(statement.sql.getBytes()),
-                    db.getStorageInfo().getConfiguration().getCharset());
-          }
-        } catch (UnsupportedEncodingException e) {
-          logger.warn(
-              "Invalid charset for database %s %s",
-              db, db.getStorageInfo().getConfiguration().getCharset());
-          osql = new OrientSql(new ByteArrayInputStream(statement.sql.getBytes()));
-        } catch (Exception e) {
-          throw new RuntimeException(e);
-        }
-
+        OrientSql osql = new OrientSql(statement.sql);
         final OSelectStatement select = osql.SelectStatement();
         if (select.getProjection() != null) {
           boolean isMappable =

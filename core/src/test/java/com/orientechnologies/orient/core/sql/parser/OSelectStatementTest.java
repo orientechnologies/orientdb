@@ -6,8 +6,6 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -842,8 +840,6 @@ public class OSelectStatementTest {
   }
 
   protected OrientSql getParserFor(String string) {
-    InputStream is = new ByteArrayInputStream(string.getBytes());
-    OrientSql osql = new OrientSql(is);
-    return osql;
+    return new OrientSql(string);
   }
 }

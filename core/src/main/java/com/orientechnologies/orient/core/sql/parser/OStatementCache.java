@@ -7,9 +7,6 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OSharedContextEmbedded;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
-import java.io.UnsupportedEncodingException;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -119,38 +116,8 @@ public class OStatementCache {
   protected static OStatement parse(String statement, ODatabaseDocumentInternal db)
       throws OCommandSQLParsingException {
     try {
-      InputStream is;
 
-      if (db == null) {
-        is = new ByteArrayInputStream(statement.getBytes());
-      } else {
-        try {
-          is =
-              new ByteArrayInputStream(
-                  statement.getBytes(db.getStorageInfo().getConfiguration().getCharset()));
-        } catch (UnsupportedEncodingException e2) {
-          logger.warn(
-              "Unsupported charset for database %s %s ",
-              db, db.getStorageInfo().getConfiguration().getCharset());
-          is = new ByteArrayInputStream(statement.getBytes());
-        }
-      }
-
-      OrientSql osql = null;
-      if (db == null) {
-        osql = new OrientSql(is);
-      } else {
-        try {
-          osql = new OrientSql(is, db.getStorageInfo().getConfiguration().getCharset());
-        } catch (UnsupportedEncodingException e2) {
-          logger.warn(
-              "Unsupported charset for database "
-                  + db
-                  + " "
-                  + db.getStorageInfo().getConfiguration().getCharset());
-          osql = new OrientSql(is);
-        }
-      }
+      OrientSql osql = new OrientSql(statement);
       OStatement result = osql.parse();
       result.originalStatement = statement;
 
@@ -173,11 +140,8 @@ public class OStatementCache {
   protected static OServerStatement parseServerStatement(String statement)
       throws OCommandSQLParsingException {
     try {
-      InputStream is = new ByteArrayInputStream(statement.getBytes());
-      OrientSql osql = new OrientSql(is);
+      OrientSql osql = new OrientSql(statement);
       OServerStatement result = osql.parseServerStatement();
-      //      result.originalStatement = statement;
-
       return result;
     } catch (ParseException e) {
       throwParsingException(e, statement);

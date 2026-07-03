@@ -6,8 +6,6 @@ import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.Assert;
@@ -75,8 +73,6 @@ public class ODeleteStatementTest extends BaseMemoryDatabase {
   }
 
   protected OrientSql getParserFor(String string) {
-    InputStream is = new ByteArrayInputStream(string.getBytes());
-    OrientSql osql = new OrientSql(is);
-    return osql;
+    return new OrientSql(string);
   }
 }

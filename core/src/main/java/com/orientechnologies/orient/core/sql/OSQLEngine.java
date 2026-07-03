@@ -52,7 +52,6 @@ import com.orientechnologies.orient.core.sql.parser.OStatement;
 import com.orientechnologies.orient.core.sql.parser.OStatementCache;
 import com.orientechnologies.orient.core.sql.parser.OrientSql;
 import com.orientechnologies.orient.core.sql.parser.ParseException;
-import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -81,8 +80,12 @@ public class OSQLEngine {
   }
 
   public static List<OStatement> parseScript(String script, ODatabaseDocumentInternal db) {
-    final InputStream is = new ByteArrayInputStream(script.getBytes());
-    return parseScript(is, db);
+    try {
+      OrientSql osql = new OrientSql(script);
+      return osql.parseScript();
+    } catch (ParseException e) {
+      throw OException.wrapException(new OCommandSQLParsingException(e, ""), e);
+    }
   }
 
   public static List<OStatement> parseScript(InputStream script, ODatabaseDocumentInternal db) {
@@ -96,9 +99,8 @@ public class OSQLEngine {
   }
 
   public static OOrBlock parsePredicate(String predicate) throws OCommandSQLParsingException {
-    final InputStream is = new ByteArrayInputStream(predicate.getBytes());
     try {
-      final OrientSql osql = new OrientSql(is);
+      final OrientSql osql = new OrientSql(predicate);
       OOrBlock result = osql.OrBlock();
       return result;
     } catch (ParseException e) {
@@ -108,9 +110,8 @@ public class OSQLEngine {
 
   public static Optional<OOrBlock> maybeParsePredicate(String predicate)
       throws OCommandSQLParsingException {
-    final InputStream is = new ByteArrayInputStream(predicate.getBytes());
     try {
-      final OrientSql osql = new OrientSql(is);
+      final OrientSql osql = new OrientSql(predicate);
       OOrBlock result = osql.OrBlock();
       return Optional.of(result);
     } catch (ParseException e) {
@@ -128,9 +129,8 @@ public class OSQLEngine {
   }
 
   public static OExpression parseExpression(String predicate) throws OCommandSQLParsingException {
-    final InputStream is = new ByteArrayInputStream(predicate.getBytes());
     try {
-      final OrientSql osql = new OrientSql(is);
+      final OrientSql osql = new OrientSql(predicate);
       OExpression result = osql.Expression();
       return result;
     } catch (ParseException e) {
@@ -139,9 +139,8 @@ public class OSQLEngine {
   }
 
   public static OSecurityResourceSegment parseSecurityResource(String exp) {
-    final InputStream is = new ByteArrayInputStream(exp.getBytes());
     try {
-      final OrientSql osql = new OrientSql(is);
+      final OrientSql osql = new OrientSql(exp);
       OSecurityResourceSegment result = osql.SecurityResourceSegment();
       return result;
     } catch (ParseException e) {

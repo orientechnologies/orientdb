@@ -2,8 +2,6 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import static org.junit.Assert.fail;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
 import org.junit.Test;
 
 public class OUpdateEdgeStatementTest {
@@ -118,8 +116,6 @@ public class OUpdateEdgeStatementTest {
   }
 
   protected OrientSql getParserFor(String string) {
-    InputStream is = new ByteArrayInputStream(string.getBytes());
-    OrientSql osql = new OrientSql(is);
-    return osql;
+    return new OrientSql(string);
   }
 }
