@@ -9,7 +9,7 @@ import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.stream.OExecutionStream;
 import java.util.Map;
 
-public class ODropDatabaseStatement extends OSimpleExecServerStatement {
+public class ODropDatabaseStatement extends SimpleNode implements OServerStatementExecution {
 
   protected boolean ifExists = false;
   protected OIdentifier name;
@@ -63,6 +63,12 @@ public class ODropDatabaseStatement extends OSimpleExecServerStatement {
     if (ifExists) {
       builder.append(" IF EXISTS");
     }
+  }
+
+  @Override
+  public void toGenericStatement(StringBuilder builder) {
+    // TODO Auto-generated method stub
+
   }
 }
 /* JavaCC - OriginalChecksum=3bc7e2aee1f1319f7cb7db5e825f7ee7 (do not edit this line) */

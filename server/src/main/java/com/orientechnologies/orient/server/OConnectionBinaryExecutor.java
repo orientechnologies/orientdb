@@ -1241,16 +1241,10 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     }
 
     // copy the result-set to make sure that the execution is successful
-    List<OResult> rsCopy = rs.stream().collect(Collectors.toList());
+    List<OResult> rsCopy = rs.stream().toList();
 
     return new OServerQueryResponse(
-        ((OLocalResultSetLifecycleDecorator) rs).getQueryId(),
-        false,
-        rsCopy,
-        rs.getExecutionPlan(),
-        false,
-        rs.getQueryStats(),
-        false);
+        "", false, rsCopy, rs.getExecutionPlan(), false, rs.getQueryStats(), false);
   }
 
   @Override

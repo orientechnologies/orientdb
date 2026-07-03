@@ -4,8 +4,9 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OServerCommandContext;
 import com.orientechnologies.orient.core.sql.executor.stream.OExecutionStream;
+import java.util.Map;
 
-public class ODropSystemUserStatement extends OSimpleExecServerStatement {
+public class ODropSystemUserStatement extends SimpleNode implements OServerStatementExecution {
   protected OIdentifier name;
   protected OInputParameter nameParam;
 
@@ -21,6 +22,18 @@ public class ODropSystemUserStatement extends OSimpleExecServerStatement {
   public OExecutionStream executeSimple(OServerCommandContext ctx) {
     // TODO Auto-generated method stub
     return null;
+  }
+
+  @Override
+  public void toString(Map<Object, Object> params, StringBuilder builder) {
+    // TODO Auto-generated method stub
+
+  }
+
+  @Override
+  public void toGenericStatement(StringBuilder builder) {
+    // TODO Auto-generated method stub
+
   }
 }
 /* JavaCC - OriginalChecksum=e0952686fd6f6ffc369058885bf4cf60 (do not edit this line) */

@@ -1,18 +1,15 @@
 package com.orientechnologies.orient.core.sql.executor;
 
-import com.orientechnologies.orient.core.command.OBasicServerCommandContext;
-import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.command.OServerCommandContext;
-import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.executor.stream.OExecutionStream;
-import com.orientechnologies.orient.core.sql.parser.OSimpleExecServerStatement;
+import com.orientechnologies.orient.core.sql.parser.OServerStatementExecution;
 
 /** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
 public class OSingleOpServerExecutionPlan implements OServerExecutionPlan {
 
-  protected final OSimpleExecServerStatement statement;
+  protected final OServerStatementExecution statement;
 
-  public OSingleOpServerExecutionPlan(OSimpleExecServerStatement stm) {
+  public OSingleOpServerExecutionPlan(OServerStatementExecution stm) {
     this.statement = stm;
   }
 
@@ -21,21 +18,9 @@ public class OSingleOpServerExecutionPlan implements OServerExecutionPlan {
     return statement.executeSimple(ctx);
   }
 
-  public void reset(OCommandContext ctx) {}
-
   @Override
   public long getCost() {
     return 0;
-  }
-
-  @Override
-  public boolean canBeCached() {
-    return false;
-  }
-
-  public OExecutionStream executeInternal(OBasicServerCommandContext ctx)
-      throws OCommandExecutionException {
-    return statement.executeSimple(ctx);
   }
 
   public String prettyPrint(OPrintContext ctx) {

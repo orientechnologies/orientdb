@@ -2,18 +2,14 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
-import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OServerCommandContext;
-import com.orientechnologies.orient.core.db.OrientDBInternal;
-import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
-import com.orientechnologies.orient.core.sql.executor.OResult;
-import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.executor.OServerExecutionPlan;
+import com.orientechnologies.orient.core.sql.executor.OSingleOpServerExecutionPlan;
 import java.util.Map;
 
 public class OServerStatement extends SimpleNode {
+  protected OServerStatementExecution statement;
+
   public OServerStatement(int id) {
     super(id);
   }
@@ -23,16 +19,13 @@ public class OServerStatement extends SimpleNode {
   }
 
   public void toString(Map<Object, Object> params, StringBuilder builder) {
-    throw new UnsupportedOperationException(
-        "missing implementation in " + getClass().getSimpleName());
+    statement.toString(params, builder);
   }
 
   @Override
   public void toGenericStatement(StringBuilder builder) {
     throw new UnsupportedOperationException();
   }
-
-  public void validate() throws OCommandSQLParsingException {}
 
   @Override
   public String toString(String prefix) {
@@ -41,95 +34,14 @@ public class OServerStatement extends SimpleNode {
     return builder.toString();
   }
 
-  public OResultSet execute(OrientDBInternal db, Object[] args, boolean usePlanCache) {
-    return execute(db, args, null, usePlanCache);
-  }
-
-  public OResultSet execute(
-      OrientDBInternal db,
-      Object[] args,
-      OServerCommandContext parentContext,
-      boolean usePlanCache) {
-    throw new UnsupportedOperationException();
-  }
-
-  public OResultSet execute(OrientDBInternal db, Map<String, Object> args, boolean usePlanCache) {
-    return execute(db, args, null, usePlanCache);
-  }
-
-  public OResultSet execute(
-      OrientDBInternal db,
-      Map<String, Object> args,
-      OServerCommandContext parentContext,
-      boolean usePlanCache) {
-    throw new UnsupportedOperationException();
-  }
-
   /**
-   * creates an execution plan for current statement, with profiling disabled
+   * creates an execution plan for current statement
    *
    * @param ctx the context that will be used to execute the statement
    * @return an execution plan
    */
   public OServerExecutionPlan createExecutionPlan(OServerCommandContext ctx) {
-    return createExecutionPlan(ctx, false);
-  }
-
-  /**
-   * creates an execution plan for current statement
-   *
-   * @param ctx the context that will be used to execute the statement
-   * @param profile true to enable profiling, false to disable it
-   * @return an execution plan
-   */
-  public OServerExecutionPlan createExecutionPlan(OServerCommandContext ctx, boolean profile) {
-    throw new UnsupportedOperationException();
-  }
-
-  public OServerExecutionPlan createExecutionPlanNoCache(
-      OServerCommandContext ctx, boolean profile) {
-    return createExecutionPlan(ctx, profile);
-  }
-
-  public OServerStatement copy() {
-    throw new UnsupportedOperationException("IMPLEMENT copy() ON " + getClass().getSimpleName());
-  }
-
-  public boolean refersToParent() {
-    throw new UnsupportedOperationException(
-        "Implement " + getClass().getSimpleName() + ".refersToParent()");
-  }
-
-  public boolean isIdempotent() {
-    return false;
-  }
-
-  public static OStatement deserializeFromOResult(OResult doc) {
-    try {
-      OStatement result =
-          (OStatement)
-              Class.forName(doc.getProperty("__class"))
-                  .getConstructor(Integer.class)
-                  .newInstance(-1);
-      result.deserialize(doc);
-    } catch (Exception e) {
-      throw OException.wrapException(new OCommandExecutionException(""), e);
-    }
-    return null;
-  }
-
-  public OResult serialize() {
-    OResultInternal result = new OResultInternal();
-    result.setProperty("__class", getClass().getName());
-    return result;
-  }
-
-  public void deserialize(OResult fromResult) {
-    throw new UnsupportedOperationException();
-  }
-
-  public boolean executinPlanCanBeCached() {
-    return false;
+    return new OSingleOpServerExecutionPlan(statement);
   }
 }
 /* JavaCC - OriginalChecksum=86cab5eeff02ee2a2f8c5e0c0a017e6b (do not edit this line) */

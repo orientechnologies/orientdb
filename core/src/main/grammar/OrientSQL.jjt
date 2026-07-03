@@ -882,32 +882,33 @@ ONumber Number():
 
 OServerStatement ServerStatement():
 {
-    OServerStatement result = null;
 }
 {
     (
         LOOKAHEAD(2)
-        result = CreateDatabaseStatement()
+        jjtThis.statement = CreateDatabaseStatement()
         |
-        result = DropDatabaseStatement()
+        LOOKAHEAD(2)
+        jjtThis.statement = DropDatabaseStatement()
         |
-        result = ExistsDatabaseStatement()
-        |
-        LOOKAHEAD(3)
-        result = CreateSystemUserStatement()
-        |
-        LOOKAHEAD(3)
-        result = DropSystemUserStatement()
+        LOOKAHEAD(2)
+        jjtThis.statement = ExistsDatabaseStatement()
         |
         LOOKAHEAD(3)
-        result = AlterSystemRoleStatement()
+        jjtThis.statement = CreateSystemUserStatement()
         |
         LOOKAHEAD(3)
-        result = ExistsSystemUserStatement()
+        jjtThis.statement = DropSystemUserStatement()
+        |
+        LOOKAHEAD(3)
+        jjtThis.statement = AlterSystemRoleStatement()
+        |
+        LOOKAHEAD(3)
+        jjtThis.statement = ExistsSystemUserStatement()
 
     )
 	{
-	    return result;
+	    return jjtThis;
 	}
 }
 

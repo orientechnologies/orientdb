@@ -15,7 +15,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Stream;
 
-public class OCreateSystemUserStatement extends OSimpleExecServerStatement {
+public class OCreateSystemUserStatement extends SimpleNode implements OServerStatementExecution {
 
   protected static final String USER_FIELD_NAME = "name";
   private static final String USER_FIELD_PASSWORD = "password";
@@ -176,6 +176,12 @@ public class OCreateSystemUserStatement extends OSimpleExecServerStatement {
 
   public void addRole(OIdentifier identifer) {
     this.roles.add(identifer);
+  }
+
+  @Override
+  public void toGenericStatement(StringBuilder builder) {
+    // TODO Auto-generated method stub
+
   }
 }
 /* JavaCC - OriginalChecksum=7d1598a31cf500e4b388bb961049e27f (do not edit this line) */

@@ -32,6 +32,7 @@ import com.orientechnologies.common.thread.OSourceTraceExecutorService;
 import com.orientechnologies.common.thread.OThreadPoolExecutors;
 import com.orientechnologies.common.util.OClassLoaderHelper;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.command.OBasicServerCommandContext;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.script.OScriptManager;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
@@ -45,7 +46,8 @@ import com.orientechnologies.orient.core.security.ODefaultSecuritySystem;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultSetReady;
-import com.orientechnologies.orient.core.sql.parser.OLocalResultSetLifecycleDecorator;
+import com.orientechnologies.orient.core.sql.executor.OServerExecutionPlan;
+import com.orientechnologies.orient.core.sql.executor.resultset.OServerResultSet;
 import com.orientechnologies.orient.core.sql.parser.OServerStatement;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEngine;
@@ -75,7 +77,6 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 /** Created by tglman on 08/04/16. */
@@ -83,7 +84,6 @@ public class OrientDBEmbedded implements OrientDBInternal {
   private static final OLogger logger = OLogManager.instance().logger(OrientDBEmbedded.class);
   protected static final long bootTime = System.currentTimeMillis();
 
-  private static final AtomicLong queryCounter = new AtomicLong(0);
   protected ThreadGroup allGroups;
   protected ThreadGroup threadsGroup;
 
@@ -1066,38 +1066,34 @@ public class OrientDBEmbedded implements OrientDBInternal {
     return scriptManager;
   }
 
-  private String newQueryId() {
-    return "" + System.currentTimeMillis() + "_" + queryCounter.incrementAndGet();
-  }
-
   @Override
   public OResultSet executeServerStatement(
       String script, String username, String pw, Map<String, Object> args) {
     OServerStatement statement = OSQLEngine.parseServerStatement(script, this);
-    OResultSet original = statement.execute(this, args, true);
-    OLocalResultSetLifecycleDecorator result;
+    var ctx = new OBasicServerCommandContext(this, (Map) args);
+    OServerExecutionPlan executionPlan = statement.createExecutionPlan(ctx);
+    var original = new OServerResultSet(executionPlan.start(ctx), ctx, executionPlan);
 
     OResultSetReady prefetched = new OResultSetReady();
-    original.forEachRemaining(x -> prefetched.add(x));
+    original.forEachRemaining(prefetched::add);
     original.close();
-    result = new OLocalResultSetLifecycleDecorator(prefetched, newQueryId());
 
-    return result;
+    return prefetched;
   }
 
   @Override
   public OResultSet executeServerStatement(
       String script, String username, String pw, Object... args) {
     OServerStatement statement = OSQLEngine.parseServerStatement(script, this);
-    OResultSet original = statement.execute(this, args, true);
-    OLocalResultSetLifecycleDecorator result;
+    var ctx = new OBasicServerCommandContext(this, args);
+    OServerExecutionPlan executionPlan = statement.createExecutionPlan(ctx);
+    var original = new OServerResultSet(executionPlan.start(ctx), ctx, executionPlan);
 
     OResultSetReady prefetched = new OResultSetReady();
-    original.forEachRemaining(x -> prefetched.add(x));
+    original.forEachRemaining(prefetched::add);
     original.close();
-    result = new OLocalResultSetLifecycleDecorator(prefetched, newQueryId());
 
-    return result;
+    return prefetched;
   }
 
   @Override

@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class OAlterSystemRoleStatement extends OSimpleExecServerStatement {
+public class OAlterSystemRoleStatement extends SimpleNode implements OServerStatementExecution {
 
   static class Op {
 
@@ -111,6 +111,12 @@ public class OAlterSystemRoleStatement extends OSimpleExecServerStatement {
         operation.resource.toString(params, builder);
       }
     }
+  }
+
+  @Override
+  public void toGenericStatement(StringBuilder builder) {
+    // TODO Auto-generated method stub
+
   }
 }
 /* JavaCC - OriginalChecksum=50b6859b3a4d19767a526b979554bbdb (do not edit this line) */

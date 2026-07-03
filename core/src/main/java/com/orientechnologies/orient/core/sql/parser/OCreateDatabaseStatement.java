@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-public class OCreateDatabaseStatement extends OSimpleExecServerStatement {
+public class OCreateDatabaseStatement extends SimpleNode implements OServerStatementExecution {
 
   protected OIdentifier name;
   protected OInputParameter nameParam;
@@ -156,6 +156,12 @@ public class OCreateDatabaseStatement extends OSimpleExecServerStatement {
       builder.append(" ");
       config.toString(params, builder);
     }
+  }
+
+  @Override
+  public void toGenericStatement(StringBuilder builder) {
+    // TODO Auto-generated method stub
+
   }
 }
 /* JavaCC - OriginalChecksum=99888a0f8bb929dce0904816cd51fefe (do not edit this line) */

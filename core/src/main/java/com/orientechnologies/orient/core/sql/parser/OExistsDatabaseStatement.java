@@ -6,7 +6,7 @@ import com.orientechnologies.orient.core.command.OServerCommandContext;
 import com.orientechnologies.orient.core.sql.executor.stream.OExecutionStream;
 import java.util.Map;
 
-public class OExistsDatabaseStatement extends OSimpleExecServerStatement {
+public class OExistsDatabaseStatement extends SimpleNode implements OServerStatementExecution {
   protected OIdentifier name;
   protected OInputParameter nameParam;
 

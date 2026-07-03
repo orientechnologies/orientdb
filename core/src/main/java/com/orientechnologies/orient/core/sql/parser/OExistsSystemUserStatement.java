@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class OExistsSystemUserStatement extends OSimpleExecServerStatement {
+public class OExistsSystemUserStatement extends SimpleNode implements OServerStatementExecution {
 
   protected OIdentifier name;
 
@@ -79,6 +79,12 @@ public class OExistsSystemUserStatement extends OSimpleExecServerStatement {
     result.name = name == null ? null : name.copy();
     result.nameParam = nameParam == null ? null : nameParam.copy();
     return result;
+  }
+
+  @Override
+  public void toGenericStatement(StringBuilder builder) {
+    // TODO Auto-generated method stub
+
   }
 }
 /* JavaCC - OriginalChecksum=6df1219621900cc168a7a1d8bef2fa31 (do not edit this line) */
