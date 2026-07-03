@@ -58,14 +58,6 @@ public abstract class SimpleNode implements Node {
     return (children == null) ? 0 : children.length;
   }
 
-  public void jjtSetValue(Object value) {
-    this.value = value;
-  }
-
-  public Object jjtGetValue() {
-    return value;
-  }
-
   public Token jjtGetFirstToken() {
     return firstToken;
   }

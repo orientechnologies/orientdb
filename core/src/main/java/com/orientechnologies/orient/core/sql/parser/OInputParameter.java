@@ -4,6 +4,7 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.executor.OResult;
@@ -15,7 +16,7 @@ import java.util.Date;
 import java.util.Iterator;
 import java.util.Map;
 
-public class OInputParameter extends SimpleNode {
+public class OInputParameter extends SimpleNode implements OIdentifierResolver {
 
   protected static final String dateFormatString = "yyyy-MM-dd HH:mm:ss.SSS";
 
@@ -33,6 +34,11 @@ public class OInputParameter extends SimpleNode {
 
   public Object getValue(Map<Object, Object> params) {
     return null;
+  }
+
+  @Override
+  public String resolveIdentifierString(OCommandContext ctx) {
+    return "" + getValue(ctx.getInputParameters());
   }
 
   protected Object toParsedTree(Object value) {

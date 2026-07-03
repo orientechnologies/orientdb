@@ -12,8 +12,7 @@ import java.util.Map;
 public class ODropDatabaseStatement extends SimpleNode implements OServerStatementExecution {
 
   protected boolean ifExists = false;
-  protected OIdentifier name;
-  protected OInputParameter nameParam;
+  protected OIdentifierResolver name;
 
   public ODropDatabaseStatement(int id) {
     super(id);
@@ -25,12 +24,7 @@ public class ODropDatabaseStatement extends SimpleNode implements OServerStateme
 
   @Override
   public OExecutionStream executeSimple(OServerCommandContext ctx) {
-    String nameString;
-    if (name != null) {
-      nameString = name.getStringValue();
-    } else {
-      nameString = "" + nameParam.getValue(ctx.getInputParameters());
-    }
+    String nameString = name.resolveIdentifierString(ctx);
     OrientDBInternal server = ctx.getServer();
     OResultInternal result = new OResultInternal();
     result.setProperty("operation", "drop database");
@@ -55,11 +49,7 @@ public class ODropDatabaseStatement extends SimpleNode implements OServerStateme
   @Override
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("DROP DATABASE ");
-    if (name != null) {
-      name.toString(params, builder);
-    } else {
-      nameParam.toString(params, builder);
-    }
+    name.toString(params, builder);
     if (ifExists) {
       builder.append(" IF EXISTS");
     }

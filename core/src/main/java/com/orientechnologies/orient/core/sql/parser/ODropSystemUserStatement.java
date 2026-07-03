@@ -7,8 +7,7 @@ import com.orientechnologies.orient.core.sql.executor.stream.OExecutionStream;
 import java.util.Map;
 
 public class ODropSystemUserStatement extends SimpleNode implements OServerStatementExecution {
-  protected OIdentifier name;
-  protected OInputParameter nameParam;
+  protected OIdentifierResolver name;
 
   public ODropSystemUserStatement(int id) {
     super(id);

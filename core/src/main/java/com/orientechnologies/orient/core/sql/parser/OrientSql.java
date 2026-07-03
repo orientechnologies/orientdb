@@ -22226,7 +22226,7 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
         case HOOK:
         case COLON:
           {
-            jjtn000.nameParam = InputParameter();
+            jjtn000.name = InputParameter();
             break;
           }
         default:
@@ -26074,7 +26074,7 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
         case HOOK:
         case COLON:
           {
-            jjtn000.nameParam = InputParameter();
+            jjtn000.name = InputParameter();
             break;
           }
         default:
@@ -26334,7 +26334,7 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
         case HOOK:
         case COLON:
           {
-            jjtn000.nameParam = InputParameter();
+            jjtn000.name = InputParameter();
             break;
           }
         default:
@@ -26522,7 +26522,7 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
         case HOOK:
         case COLON:
           {
-            jjtn000.nameParam = InputParameter();
+            jjtn000.name = InputParameter();
             break;
           }
         default:

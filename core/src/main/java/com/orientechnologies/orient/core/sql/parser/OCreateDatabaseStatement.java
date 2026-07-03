@@ -21,8 +21,7 @@ import java.util.Map;
 
 public class OCreateDatabaseStatement extends SimpleNode implements OServerStatementExecution {
 
-  protected OIdentifier name;
-  protected OInputParameter nameParam;
+  protected OIdentifierResolver name;
   protected OIdentifier type;
   protected boolean ifNotExists = false;
   protected OJson config;
@@ -57,10 +56,7 @@ public class OCreateDatabaseStatement extends SimpleNode implements OServerState
     OrientDBInternal server = ctx.getServer();
     OResultInternal result = new OResultInternal();
     result.setProperty("operation", "create database");
-    String dbName =
-        name != null
-            ? name.getStringValue()
-            : String.valueOf(nameParam.getValue(ctx.getInputParameters()));
+    String dbName = name.resolveIdentifierString(ctx);
     result.setProperty("name", dbName);
 
     ODatabaseType dbType;
@@ -129,11 +125,7 @@ public class OCreateDatabaseStatement extends SimpleNode implements OServerState
   @Override
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("CREATE DATABASE ");
-    if (name != null) {
-      name.toString(params, builder);
-    } else {
-      nameParam.toString(params, builder);
-    }
+    name.toString(params, builder);
     builder.append(" ");
     type.toString(params, builder);
     if (ifNotExists) {

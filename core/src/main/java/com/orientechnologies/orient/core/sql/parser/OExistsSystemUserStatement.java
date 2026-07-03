@@ -13,9 +13,7 @@ import java.util.Map;
 
 public class OExistsSystemUserStatement extends SimpleNode implements OServerStatementExecution {
 
-  protected OIdentifier name;
-
-  protected OInputParameter nameParam;
+  protected OIdentifierResolver name;
 
   public OExistsSystemUserStatement(int id) {
     super(id);
@@ -32,20 +30,13 @@ public class OExistsSystemUserStatement extends SimpleNode implements OServerSta
 
     OResultInternal result = new OResultInternal();
     result.setProperty("operation", "exists system user");
-    if (name != null) {
-      result.setProperty("name", name.getStringValue());
-    } else {
-      result.setProperty("name", nameParam.getValue(ctx.getInputParameters()));
-    }
+    String resolvedName = name.resolveIdentifierString(ctx);
+    result.setProperty("name", resolvedName);
 
     systemDb.executeWithDB(
-        (db) -> {
+        db -> {
           List<Object> params = new ArrayList<>();
-          if (name != null) {
-            params.add(name.getStringValue());
-          } else {
-            params.add(nameParam.getValue(ctx.getInputParameters()));
-          }
+          params.add(resolvedName);
           // INSERT INTO OUser SET
           StringBuilder sb = new StringBuilder();
           sb.append("SELECT FROM OUser WHERE name = ?");
@@ -66,18 +57,13 @@ public class OExistsSystemUserStatement extends SimpleNode implements OServerSta
   @Override
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("EXISTS SYSTEM USER ");
-    if (name != null) {
-      name.toString(params, builder);
-    } else {
-      nameParam.toString(params, builder);
-    }
+    name.toString(params, builder);
   }
 
   @Override
   public OExistsSystemUserStatement copy() {
     OExistsSystemUserStatement result = new OExistsSystemUserStatement(-1);
-    result.name = name == null ? null : name.copy();
-    result.nameParam = nameParam == null ? null : nameParam.copy();
+    result.name = name.copy();
     return result;
   }
 

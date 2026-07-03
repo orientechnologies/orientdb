@@ -14,7 +14,7 @@ import java.util.Map;
  * <p>Instances of this class are immutable and can be recycled multiple times in the same or in
  * different queries.
  */
-public class OIdentifier extends SimpleNode {
+public class OIdentifier extends SimpleNode implements OIdentifierResolver {
 
   private String value;
   private boolean quoted = false;
@@ -88,6 +88,11 @@ public class OIdentifier extends SimpleNode {
       return value.replaceAll("\\\\`", "`");
     }
     return value;
+  }
+
+  @Override
+  public String resolveIdentifierString(OCommandContext ctx) {
+    return getStringValue();
   }
 
   public boolean refersToParent() {

@@ -4655,7 +4655,7 @@ OExistsSystemUserStatement ExistsSystemUserStatement():
         (
             jjtThis.name = Identifier()
             |
-            jjtThis.nameParam = InputParameter()
+            jjtThis.name = InputParameter()
 
         )
     )
@@ -5394,7 +5394,7 @@ OCreateDatabaseStatement CreateDatabaseStatement():
     (
        jjtThis.name = Identifier()
        |
-       jjtThis.nameParam = InputParameter()
+       jjtThis.name = InputParameter()
     )
     jjtThis.type = Identifier()
     [ <IF> <NOT> <EXISTS> { jjtThis.ifNotExists = true; } ]
@@ -5429,7 +5429,7 @@ ODropDatabaseStatement DropDatabaseStatement():
     (
       jjtThis.name = Identifier()
       |
-      jjtThis.nameParam = InputParameter()
+      jjtThis.name = InputParameter()
     )
     [ <IF> <EXISTS> { jjtThis.ifExists = true; } ]
   ) {return jjtThis; }
@@ -5443,7 +5443,7 @@ OExistsDatabaseStatement ExistsDatabaseStatement():
     (
       jjtThis.name = Identifier()
       |
-      jjtThis.nameParam = InputParameter()
+      jjtThis.name = InputParameter()
     )
   ) {return jjtThis; }
 }
