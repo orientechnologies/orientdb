@@ -287,6 +287,10 @@ TOKEN [ IGNORE_CASE ] :
 | < TRUE: "true" >
 | < FALSE: "false" >
 | < ALLOCATION: "allocation" >
+| < NODES: "nodes" >
+| < NODE: "node" >
+| < MAIN: "main" >
+| < REPLICA: "replica" >
 }
 
 
@@ -815,6 +819,14 @@ OIdentifier Identifier():
     |
     token = <SYSTEM>
     |
+    token = <NODES>
+    |
+    token = <NODE>
+    | 
+    token = <MAIN>
+    |
+    token = <REPLICA>
+    |
     quotedToken = <QUOTED_IDENTIFIER>
 ) {
 
@@ -879,8 +891,13 @@ OServerStatement ServerStatement():
         |
         result = DropDatabaseStatement()
         |
+        result = ExistsDatabaseStatement()
+        |
         LOOKAHEAD(3)
         result = CreateSystemUserStatement()
+        |
+        LOOKAHEAD(3)
+        result = DropSystemUserStatement()
         |
         LOOKAHEAD(3)
         result = AlterSystemRoleStatement()
@@ -5344,9 +5361,31 @@ ODatabaseUserData DatabaseUserData():
     {return jjtThis; }
 }
 
+ONodeData NodeData():
+{}
+{
+(
+    (
+      jjtThis.name = Identifier()
+      |
+      jjtThis.nameParam = InputParameter()
+    )
+    [
+      <ROLE>
+      (
+       <MAIN> {jjtThis.main =true; }
+       |
+       <REPLICA> {jjtThis.main =false; }
+      )
+    ]
+)
+    {return jjtThis; }
+}
+
 OCreateDatabaseStatement CreateDatabaseStatement():
 {
   ODatabaseUserData lastUserData;
+  ONodeData lastNodeData;
 }
 {
   (
@@ -5368,6 +5407,15 @@ OCreateDatabaseStatement CreateDatabaseStatement():
        )
        <RPAREN>
     ]
+    [
+    	<NODES><LPAREN>
+    	(    	  lastNodeData = NodeData() { jjtThis.addNode(lastNodeData); }
+          (
+            <COMMA> lastNodeData = NodeData() { jjtThis.addNode(lastNodeData); }
+          )*
+        )
+    	<RPAREN>
+    ]
     [ jjtThis.config = Json() ]
   ) {return jjtThis; }
 }
@@ -5384,4 +5432,30 @@ ODropDatabaseStatement DropDatabaseStatement():
     )
     [ <IF> <EXISTS> { jjtThis.ifExists = true; } ]
   ) {return jjtThis; }
+}
+
+OExistsDatabaseStatement ExistsDatabaseStatement():
+{}
+{
+  (
+    <EXISTS> <DATABASE>
+    (
+      jjtThis.name = Identifier()
+      |
+      jjtThis.nameParam = InputParameter()
+    )
+  ) {return jjtThis; }
+}
+
+
+ODropSystemUserStatement DropSystemUserStatement():
+{
+    Token token;
+}
+{
+    (
+        <DROP> <SYSTEM><USER>
+        jjtThis.name = Identifier()
+    )
+    { return jjtThis; }
 }

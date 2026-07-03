@@ -27,7 +27,8 @@ public class OCreateDatabaseStatement extends OSimpleExecServerStatement {
   protected boolean ifNotExists = false;
   protected OJson config;
 
-  private List<ODatabaseUserData> users = new ArrayList<>();
+  private List<ODatabaseUserData> users = null;
+  private List<ONodeData> nodes = null;
 
   public OCreateDatabaseStatement(int id) {
     super(id);
@@ -42,6 +43,13 @@ public class OCreateDatabaseStatement extends OSimpleExecServerStatement {
       this.users = new ArrayList<>();
     }
     this.users.add(user);
+  }
+
+  public void addNode(ONodeData node) {
+    if (this.nodes == null) {
+      this.nodes = new ArrayList<>();
+    }
+    this.nodes.add(node);
   }
 
   @Override
@@ -73,7 +81,7 @@ public class OCreateDatabaseStatement extends OSimpleExecServerStatement {
           configBuilder = mapOrientDBConfig(this.config, ctx, configBuilder);
         }
 
-        if (!users.isEmpty()) {
+        if (users != null && !users.isEmpty()) {
           configBuilder = configBuilder.addConfig(OGlobalConfiguration.CREATE_DEFAULT_USERS, false);
         }
 
@@ -85,7 +93,7 @@ public class OCreateDatabaseStatement extends OSimpleExecServerStatement {
             new ODatabaseId(),
             configBuilder.build(),
             (session) -> {
-              if (!users.isEmpty()) {
+              if (users != null && !users.isEmpty()) {
                 for (ODatabaseUserData user : users) {
                   user.executeCreate((ODatabaseDocumentInternal) session, ctx);
                 }
@@ -132,7 +140,7 @@ public class OCreateDatabaseStatement extends OSimpleExecServerStatement {
       builder.append(" IF NOT EXISTS");
     }
 
-    if (!users.isEmpty()) {
+    if (users != null && !users.isEmpty()) {
       builder.append(" USERS (");
       boolean first = true;
       for (ODatabaseUserData user : users) {
