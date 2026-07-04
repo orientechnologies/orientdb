@@ -1,20 +1,20 @@
 package com.orientechnologies.orient.core.sql.executor;
 
-import com.orientechnologies.orient.core.command.OServerCommandContext;
+import com.orientechnologies.orient.core.command.OAdminCommandContext;
 import com.orientechnologies.orient.core.sql.executor.stream.OExecutionStream;
-import com.orientechnologies.orient.core.sql.parser.OServerStatementExecution;
+import com.orientechnologies.orient.core.sql.parser.OAdminStatementExecution;
 
 /** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
-public class OSingleOpServerExecutionPlan implements OServerExecutionPlan {
+public class OSingleOpAdminExecutionPlan implements OAdminExecutionPlan {
 
-  protected final OServerStatementExecution statement;
+  protected final OAdminStatementExecution statement;
 
-  public OSingleOpServerExecutionPlan(OServerStatementExecution stm) {
+  public OSingleOpAdminExecutionPlan(OAdminStatementExecution stm) {
     this.statement = stm;
   }
 
   @Override
-  public OExecutionStream start(OServerCommandContext ctx) {
+  public OExecutionStream start(OAdminCommandContext ctx) {
     return statement.executeSimple(ctx);
   }
 

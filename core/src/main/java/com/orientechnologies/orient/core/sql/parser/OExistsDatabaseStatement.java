@@ -2,12 +2,12 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=false,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
-import com.orientechnologies.orient.core.command.OServerCommandContext;
+import com.orientechnologies.orient.core.command.OAdminCommandContext;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.stream.OExecutionStream;
 import java.util.Map;
 
-public class OExistsDatabaseStatement extends SimpleNode implements OServerStatementExecution {
+public class OExistsDatabaseStatement extends SimpleNode implements OAdminStatementExecution {
   protected OIdentifierResolver name;
 
   public OExistsDatabaseStatement(int id) {
@@ -31,8 +31,8 @@ public class OExistsDatabaseStatement extends SimpleNode implements OServerState
   }
 
   @Override
-  public OExecutionStream executeSimple(OServerCommandContext ctx) {
-    var context = ctx.getServer();
+  public OExecutionStream executeSimple(OAdminCommandContext ctx) {
+    var context = ctx.getGlobalContext();
     OResultInternal result = new OResultInternal();
     result.setProperty("exists", context.exists(name.resolveIdentifierString(ctx), null, null));
     return OExecutionStream.singleton(result);

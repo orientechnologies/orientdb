@@ -74,9 +74,9 @@ public class OStatementCache {
    *     created through statement parsing
    * @return a statement executor from the cache
    */
-  public static OServerStatement getServerStatement(String statement, OrientDBInternal db) {
+  public static OAdminStatement getAdminStatement(String statement, OrientDBInternal db) {
     // TODO create a global cache!
-    return parseServerStatement(statement);
+    return parseAdminStatement(statement);
   }
 
   /**
@@ -137,11 +137,11 @@ public class OStatementCache {
    * @return the corresponding executor
    * @throws OCommandSQLParsingException if the input parameter is not a valid SQL statement
    */
-  protected static OServerStatement parseServerStatement(String statement)
+  protected static OAdminStatement parseAdminStatement(String statement)
       throws OCommandSQLParsingException {
     try {
       OrientSql osql = new OrientSql(statement);
-      OServerStatement result = osql.parseServerStatement();
+      OAdminStatement result = osql.parseAdminStatement();
       return result;
     } catch (ParseException e) {
       throwParsingException(e, statement);

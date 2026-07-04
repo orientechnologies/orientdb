@@ -3,7 +3,7 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.orient.core.command.OServerCommandContext;
+import com.orientechnologies.orient.core.command.OAdminCommandContext;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseType;
@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-public class OCreateDatabaseStatement extends SimpleNode implements OServerStatementExecution {
+public class OCreateDatabaseStatement extends SimpleNode implements OAdminStatementExecution {
 
   protected OIdentifierResolver name;
   protected OIdentifier type;
@@ -52,8 +52,8 @@ public class OCreateDatabaseStatement extends SimpleNode implements OServerState
   }
 
   @Override
-  public OExecutionStream executeSimple(OServerCommandContext ctx) {
-    OrientDBInternal server = ctx.getServer();
+  public OExecutionStream executeSimple(OAdminCommandContext ctx) {
+    OrientDBInternal server = ctx.getGlobalContext();
     OResultInternal result = new OResultInternal();
     result.setProperty("operation", "create database");
     String dbName = name.resolveIdentifierString(ctx);
@@ -109,7 +109,7 @@ public class OCreateDatabaseStatement extends SimpleNode implements OServerState
   }
 
   private OrientDBConfigBuilder mapOrientDBConfig(
-      OJson config, OServerCommandContext ctx, OrientDBConfigBuilder builder) {
+      OJson config, OAdminCommandContext ctx, OrientDBConfigBuilder builder) {
     Map<String, Object> configMap = config.toMap(new OResultInternal(), ctx);
     Object globalConfig = configMap.get("config");
     if (globalConfig != null && globalConfig instanceof Map) {

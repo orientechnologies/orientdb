@@ -2,14 +2,14 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
-import com.orientechnologies.orient.core.command.OServerCommandContext;
+import com.orientechnologies.orient.core.command.OAdminCommandContext;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.stream.OExecutionStream;
 import java.util.Map;
 
-public class ODropDatabaseStatement extends SimpleNode implements OServerStatementExecution {
+public class ODropDatabaseStatement extends SimpleNode implements OAdminStatementExecution {
 
   protected boolean ifExists = false;
   protected OIdentifierResolver name;
@@ -23,9 +23,9 @@ public class ODropDatabaseStatement extends SimpleNode implements OServerStateme
   }
 
   @Override
-  public OExecutionStream executeSimple(OServerCommandContext ctx) {
+  public OExecutionStream executeSimple(OAdminCommandContext ctx) {
     String nameString = name.resolveIdentifierString(ctx);
-    OrientDBInternal server = ctx.getServer();
+    OrientDBInternal server = ctx.getGlobalContext();
     OResultInternal result = new OResultInternal();
     result.setProperty("operation", "drop database");
     result.setProperty("name", nameString);

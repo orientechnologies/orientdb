@@ -252,15 +252,15 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
     throw new Error("Missing return statement in function");
   }
 
-  public final OServerStatement parseServerStatement() throws ParseException {
-    /*@bgen(jjtree) parseServerStatement */
-    OparseServerStatement jjtn000 = new OparseServerStatement(JJTPARSESERVERSTATEMENT);
+  public final OAdminStatement parseAdminStatement() throws ParseException {
+    /*@bgen(jjtree) parseAdminStatement */
+    OparseAdminStatement jjtn000 = new OparseAdminStatement(JJTPARSEADMINSTATEMENT);
     boolean jjtc000 = true;
     jjtree.openNodeScope(jjtn000);
     jjtn000.jjtSetFirstToken(getToken(1));
-    OServerStatement result;
+    OAdminStatement result;
     try {
-      result = ServerStatement();
+      result = AdminStatement();
       jj_consume_token(0);
       jjtree.closeNodeScope(jjtn000, true);
       jjtc000 = false;
@@ -1077,9 +1077,9 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
     throw new Error("Missing return statement in function");
   }
 
-  public final OServerStatement ServerStatement() throws ParseException {
-    /*@bgen(jjtree) ServerStatement */
-    OServerStatement jjtn000 = new OServerStatement(JJTSERVERSTATEMENT);
+  public final OAdminStatement AdminStatement() throws ParseException {
+    /*@bgen(jjtree) AdminStatement */
+    OAdminStatement jjtn000 = new OAdminStatement(JJTADMINSTATEMENT);
     boolean jjtc000 = true;
     jjtree.openNodeScope(jjtn000);
     jjtn000.jjtSetFirstToken(getToken(1));

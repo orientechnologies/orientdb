@@ -5,13 +5,13 @@ public interface OrientSqlTreeConstants {
   public int JJTRID = 0;
   public int JJTPARSE = 1;
   public int JJTPARSESCRIPT = 2;
-  public int JJTPARSESERVERSTATEMENT = 3;
+  public int JJTPARSEADMINSTATEMENT = 3;
   public int JJTSTRING = 4;
   public int JJTIDENTIFIER = 5;
   public int JJTINTEGER = 6;
   public int JJTFLOATINGPOINT = 7;
   public int JJTNUMBER = 8;
-  public int JJTSERVERSTATEMENT = 9;
+  public int JJTADMINSTATEMENT = 9;
   public int JJTSTATEMENT = 10;
   public int JJTSTATEMENTSEMICOLON = 11;
   public int JJTSTATEMENTINTERNAL = 12;
@@ -215,13 +215,13 @@ public interface OrientSqlTreeConstants {
     "Rid",
     "parse",
     "parseScript",
-    "parseServerStatement",
+    "parseAdminStatement",
     "String",
     "Identifier",
     "Integer",
     "FloatingPoint",
     "Number",
-    "ServerStatement",
+    "AdminStatement",
     "Statement",
     "StatementSemicolon",
     "StatementInternal",
@@ -422,4 +422,4 @@ public interface OrientSqlTreeConstants {
     "DropSystemUserStatement",
   };
 }
-/* JavaCC - OriginalChecksum=ee0d7fa40d382f8d90c98d8491e35f86 (do not edit this line) */
+/* JavaCC - OriginalChecksum=32d5bb998ce3d0484d5d0a541f3bb0d0 (do not edit this line) */

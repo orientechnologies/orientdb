@@ -2,7 +2,7 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=false,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
-import com.orientechnologies.orient.core.command.OServerCommandContext;
+import com.orientechnologies.orient.core.command.OAdminCommandContext;
 import com.orientechnologies.orient.core.db.OSystemDatabase;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.stream.OExecutionStream;
@@ -11,7 +11,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
 
-public class ODropSystemUserStatement extends SimpleNode implements OServerStatementExecution {
+public class ODropSystemUserStatement extends SimpleNode implements OAdminStatementExecution {
   protected OIdentifierResolver name;
 
   public ODropSystemUserStatement(int id) {
@@ -23,8 +23,8 @@ public class ODropSystemUserStatement extends SimpleNode implements OServerState
   }
 
   @Override
-  public OExecutionStream executeSimple(OServerCommandContext ctx) {
-    OSystemDatabase systemDb = ctx.getServer().getSystemDatabase();
+  public OExecutionStream executeSimple(OAdminCommandContext ctx) {
+    OSystemDatabase systemDb = ctx.getGlobalContext().getSystemDatabase();
     return systemDb.executeWithDB(
         db -> {
           List<Object> params = new ArrayList<>();

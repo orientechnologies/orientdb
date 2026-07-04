@@ -2,7 +2,7 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
-import com.orientechnologies.orient.core.command.OServerCommandContext;
+import com.orientechnologies.orient.core.command.OAdminCommandContext;
 import com.orientechnologies.orient.core.db.OSystemDatabase;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
@@ -11,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class OExistsSystemUserStatement extends SimpleNode implements OServerStatementExecution {
+public class OExistsSystemUserStatement extends SimpleNode implements OAdminStatementExecution {
 
   protected OIdentifierResolver name;
 
@@ -24,9 +24,9 @@ public class OExistsSystemUserStatement extends SimpleNode implements OServerSta
   }
 
   @Override
-  public OExecutionStream executeSimple(OServerCommandContext ctx) {
+  public OExecutionStream executeSimple(OAdminCommandContext ctx) {
 
-    OSystemDatabase systemDb = ctx.getServer().getSystemDatabase();
+    OSystemDatabase systemDb = ctx.getGlobalContext().getSystemDatabase();
 
     OResultInternal result = new OResultInternal();
     result.setProperty("operation", "exists system user");

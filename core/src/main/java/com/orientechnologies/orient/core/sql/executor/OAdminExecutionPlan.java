@@ -1,9 +1,9 @@
 package com.orientechnologies.orient.core.sql.executor;
 
-import com.orientechnologies.orient.core.command.OServerCommandContext;
+import com.orientechnologies.orient.core.command.OAdminCommandContext;
 import com.orientechnologies.orient.core.sql.executor.stream.OExecutionStream;
 
-public interface OServerExecutionPlan extends OExecutionPlanContextOps {
+public interface OAdminExecutionPlan extends OExecutionPlanContextOps {
 
   void close();
 
@@ -15,7 +15,7 @@ public interface OServerExecutionPlan extends OExecutionPlanContextOps {
    *
    * @return
    */
-  OExecutionStream start(OServerCommandContext ctx);
+  OExecutionStream start(OAdminCommandContext ctx);
 
   long getCost();
 

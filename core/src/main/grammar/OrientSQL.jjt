@@ -568,10 +568,10 @@ List<OStatement> parseScript() :
   { return result; }
 }
 
-OServerStatement parseServerStatement() :
-{OServerStatement result;}
+OAdminStatement parseAdminStatement() :
+{OAdminStatement result;}
 {
-  result = ServerStatement() <EOF>
+  result = AdminStatement() <EOF>
   { return result; }
 }
 
@@ -880,7 +880,7 @@ ONumber Number():
     { return result; }
 }
 
-OServerStatement ServerStatement():
+OAdminStatement AdminStatement():
 {
 }
 {

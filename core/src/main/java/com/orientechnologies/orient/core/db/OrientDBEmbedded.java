@@ -32,7 +32,7 @@ import com.orientechnologies.common.thread.OSourceTraceExecutorService;
 import com.orientechnologies.common.thread.OThreadPoolExecutors;
 import com.orientechnologies.common.util.OClassLoaderHelper;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.command.OBasicServerCommandContext;
+import com.orientechnologies.orient.core.command.OBasicAdminCommandContext;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.script.OScriptManager;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
@@ -44,11 +44,11 @@ import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.metadata.security.auth.OAuthenticationInfo;
 import com.orientechnologies.orient.core.security.ODefaultSecuritySystem;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
+import com.orientechnologies.orient.core.sql.executor.OAdminExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultSetReady;
-import com.orientechnologies.orient.core.sql.executor.OServerExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.resultset.OServerResultSet;
-import com.orientechnologies.orient.core.sql.parser.OServerStatement;
+import com.orientechnologies.orient.core.sql.parser.OAdminStatement;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEngine;
 import com.orientechnologies.orient.core.storage.OStorageEngine.RegisterResult;
@@ -1078,9 +1078,9 @@ public class OrientDBEmbedded implements OrientDBInternal {
   }
 
   protected OResultSetReady executeAdminStatement(String script, Map<String, Object> args) {
-    OServerStatement statement = OSQLEngine.parseServerStatement(script, this);
-    var ctx = new OBasicServerCommandContext(this, (Map) args);
-    OServerExecutionPlan executionPlan = statement.createExecutionPlan(ctx);
+    OAdminStatement statement = OSQLEngine.parseAdminStatement(script, this);
+    var ctx = new OBasicAdminCommandContext(this, (Map) args);
+    OAdminExecutionPlan executionPlan = statement.createExecutionPlan(ctx);
     var original = new OServerResultSet(executionPlan.start(ctx), ctx, executionPlan);
 
     OResultSetReady prefetched = new OResultSetReady();
@@ -1096,9 +1096,9 @@ public class OrientDBEmbedded implements OrientDBInternal {
   }
 
   protected OResultSet executeAdminStatement(String script, Object... args) {
-    OServerStatement statement = OSQLEngine.parseServerStatement(script, this);
-    var ctx = new OBasicServerCommandContext(this, args);
-    OServerExecutionPlan executionPlan = statement.createExecutionPlan(ctx);
+    OAdminStatement statement = OSQLEngine.parseAdminStatement(script, this);
+    var ctx = new OBasicAdminCommandContext(this, args);
+    OAdminExecutionPlan executionPlan = statement.createExecutionPlan(ctx);
     var original = new OServerResultSet(executionPlan.start(ctx), ctx, executionPlan);
 
     OResultSetReady prefetched = new OResultSetReady();

@@ -2,7 +2,7 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
-import com.orientechnologies.orient.core.command.OServerCommandContext;
+import com.orientechnologies.orient.core.command.OAdminCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.OSystemDatabase;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -16,7 +16,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public class OAlterSystemRoleStatement extends SimpleNode implements OServerStatementExecution {
+public class OAlterSystemRoleStatement extends SimpleNode implements OAdminStatementExecution {
 
   static class Op {
 
@@ -50,9 +50,9 @@ public class OAlterSystemRoleStatement extends SimpleNode implements OServerStat
   }
 
   @Override
-  public OExecutionStream executeSimple(OServerCommandContext ctx) {
+  public OExecutionStream executeSimple(OAdminCommandContext ctx) {
 
-    OSystemDatabase systemDb = ctx.getServer().getSystemDatabase();
+    OSystemDatabase systemDb = ctx.getGlobalContext().getSystemDatabase();
 
     return systemDb.executeWithDB(
         (db) -> {

@@ -44,10 +44,10 @@ import com.orientechnologies.orient.core.sql.functions.OSQLFunctionFactory;
 import com.orientechnologies.orient.core.sql.method.OSQLMethod;
 import com.orientechnologies.orient.core.sql.method.OSQLMethodFactory;
 import com.orientechnologies.orient.core.sql.operator.OQueryOperatorFactory;
+import com.orientechnologies.orient.core.sql.parser.OAdminStatement;
 import com.orientechnologies.orient.core.sql.parser.OExpression;
 import com.orientechnologies.orient.core.sql.parser.OOrBlock;
 import com.orientechnologies.orient.core.sql.parser.OSecurityResourceSegment;
-import com.orientechnologies.orient.core.sql.parser.OServerStatement;
 import com.orientechnologies.orient.core.sql.parser.OStatement;
 import com.orientechnologies.orient.core.sql.parser.OStatementCache;
 import com.orientechnologies.orient.core.sql.parser.OrientSql;
@@ -75,8 +75,8 @@ public class OSQLEngine {
     return OStatementCache.get(query, db);
   }
 
-  public static OServerStatement parseServerStatement(String query, OrientDBInternal db) {
-    return OStatementCache.getServerStatement(query, db);
+  public static OAdminStatement parseAdminStatement(String query, OrientDBInternal db) {
+    return OStatementCache.getAdminStatement(query, db);
   }
 
   public static List<OStatement> parseScript(String script, ODatabaseDocumentInternal db) {

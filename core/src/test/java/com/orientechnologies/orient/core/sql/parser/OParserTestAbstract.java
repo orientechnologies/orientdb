@@ -46,7 +46,7 @@ public abstract class OParserTestAbstract {
   protected SimpleNode checkSyntaxServer(String query, boolean isCorrect) {
     OrientSql osql = getParserFor(query);
     try {
-      SimpleNode result = osql.parseServerStatement();
+      SimpleNode result = osql.parseAdminStatement();
       if (!isCorrect) {
         fail();
       }

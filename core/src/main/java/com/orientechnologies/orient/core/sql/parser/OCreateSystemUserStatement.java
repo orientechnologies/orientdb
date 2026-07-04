@@ -2,7 +2,7 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
-import com.orientechnologies.orient.core.command.OServerCommandContext;
+import com.orientechnologies.orient.core.command.OAdminCommandContext;
 import com.orientechnologies.orient.core.db.OSystemDatabase;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.security.ORole;
@@ -15,7 +15,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Stream;
 
-public class OCreateSystemUserStatement extends SimpleNode implements OServerStatementExecution {
+public class OCreateSystemUserStatement extends SimpleNode implements OAdminStatementExecution {
 
   protected static final String USER_FIELD_NAME = "name";
   private static final String USER_FIELD_PASSWORD = "password";
@@ -43,9 +43,9 @@ public class OCreateSystemUserStatement extends SimpleNode implements OServerSta
   protected List<OIdentifier> roles = new ArrayList<>();
 
   @Override
-  public OExecutionStream executeSimple(OServerCommandContext ctx) {
+  public OExecutionStream executeSimple(OAdminCommandContext ctx) {
 
-    OSystemDatabase systemDb = ctx.getServer().getSystemDatabase();
+    OSystemDatabase systemDb = ctx.getGlobalContext().getSystemDatabase();
 
     return systemDb.executeWithDB(
         db -> {
