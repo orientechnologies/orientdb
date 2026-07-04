@@ -430,4 +430,6 @@ public interface OrientDBInternal extends AutoCloseable, OSchedulerInternal {
   default ONodeId getNodeId(String nodeString) {
     throw new UnsupportedOperationException();
   }
+
+  OAdminSession admin(String user, String password);
 }

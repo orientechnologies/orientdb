@@ -1067,8 +1067,17 @@ public class OrientDBEmbedded implements OrientDBInternal {
   }
 
   @Override
+  public OAdminSession admin(String user, String password) {
+    return new OAdminSessionEmbedded(this);
+  }
+
+  @Override
   public OResultSet executeServerStatement(
       String script, String username, String pw, Map<String, Object> args) {
+    return executeAdminStatement(script, args);
+  }
+
+  protected OResultSetReady executeAdminStatement(String script, Map<String, Object> args) {
     OServerStatement statement = OSQLEngine.parseServerStatement(script, this);
     var ctx = new OBasicServerCommandContext(this, (Map) args);
     OServerExecutionPlan executionPlan = statement.createExecutionPlan(ctx);
@@ -1077,13 +1086,16 @@ public class OrientDBEmbedded implements OrientDBInternal {
     OResultSetReady prefetched = new OResultSetReady();
     original.forEachRemaining(prefetched::add);
     original.close();
-
     return prefetched;
   }
 
   @Override
   public OResultSet executeServerStatement(
       String script, String username, String pw, Object... args) {
+    return executeAdminStatement(script, args);
+  }
+
+  protected OResultSet executeAdminStatement(String script, Object... args) {
     OServerStatement statement = OSQLEngine.parseServerStatement(script, this);
     var ctx = new OBasicServerCommandContext(this, args);
     OServerExecutionPlan executionPlan = statement.createExecutionPlan(ctx);

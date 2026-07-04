@@ -62,6 +62,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.OAdminSession;
 import com.orientechnologies.orient.core.db.OCachedDatabasePoolFactory;
 import com.orientechnologies.orient.core.db.OCachedDatabasePoolFactoryImpl;
 import com.orientechnologies.orient.core.db.OCancellableTimer;
@@ -715,43 +716,8 @@ public class OrientDBRemote implements OrientDBInternal {
     int retry = configurations.getConfigurations().getValueAsInteger(NETWORK_SOCKET_RETRY);
     while (retry > 0) {
       try {
-        OCredentialInterceptor ci = OSecurityManager.instance().newCredentialInterceptor();
-
-        String username;
-        String foundPassword;
         String url = buildUrl(name);
-        if (ci != null) {
-          ci.intercept(url, user, password);
-          username = ci.getUsername();
-          foundPassword = ci.getPassword();
-        } else {
-          username = user;
-          foundPassword = password;
-        }
-        OConnect37Request request = new OConnect37Request(username, foundPassword);
-
-        networkAdminOperation(
-            (network, session, nodeSession) -> {
-              try {
-                ORemoteClient.writeRequest(
-                    request, network.getChannelDataOutput(), session, nodeSession);
-              } finally {
-                network.endRequest();
-              }
-              OConnectResponse response = request.createResponse();
-              try {
-                network.beginResponse(nodeSession.getSessionId(), true);
-                response.read(network.getChannelDataInput(), session);
-                session
-                    .getServerSession(network.getServerURL())
-                    .setSession(response.getSessionId(), response.getSessionToken());
-              } finally {
-                network.endResponse();
-              }
-              return null;
-            },
-            "Cannot connect to the remote server/database '" + url + "'",
-            newSession);
+        connectAdminSession(user, password, newSession, url);
 
         T result = operation.execute(newSession);
         return result;
@@ -769,6 +735,46 @@ public class OrientDBRemote implements OrientDBInternal {
     // SHOULD NEVER REACH THIS POINT
     throw new ODatabaseException(
         "Reached maximum retry limit on admin operations, the server may be offline");
+  }
+
+  protected void connectAdminSession(
+      String user, String password, ORemoteClientSession newSession, String url) {
+    OCredentialInterceptor ci = OSecurityManager.instance().newCredentialInterceptor();
+
+    String username;
+    String foundPassword;
+    if (ci != null) {
+      ci.intercept(url, user, password);
+      username = ci.getUsername();
+      foundPassword = ci.getPassword();
+    } else {
+      username = user;
+      foundPassword = password;
+    }
+    OConnect37Request request = new OConnect37Request(username, foundPassword);
+
+    networkAdminOperation(
+        (network, session, nodeSession) -> {
+          try {
+            ORemoteClient.writeRequest(
+                request, network.getChannelDataOutput(), session, nodeSession);
+          } finally {
+            network.endRequest();
+          }
+          OConnectResponse response = request.createResponse();
+          try {
+            network.beginResponse(nodeSession.getSessionId(), true);
+            response.read(network.getChannelDataInput(), session);
+            session
+                .getServerSession(network.getServerURL())
+                .setSession(response.getSessionId(), response.getSessionToken());
+          } finally {
+            network.endResponse();
+          }
+          return null;
+        },
+        "Cannot connect to the remote server/database '" + url + "'",
+        newSession);
   }
 
   @Override
@@ -791,6 +797,13 @@ public class OrientDBRemote implements OrientDBInternal {
       OrientDBConfig config,
       ODatabaseTask<Void> createOps) {
     throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public OAdminSession admin(String user, String password) {
+    ORemoteClientSession newSession = new ORemoteClientSession(-1);
+    connectAdminSession(user, password, newSession, buildUrl(null));
+    return new ORemoteAdminSession(this, newSession);
   }
 
   @Override

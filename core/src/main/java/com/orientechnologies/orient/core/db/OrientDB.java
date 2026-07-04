@@ -356,6 +356,10 @@ public class OrientDB implements AutoCloseable {
     }
   }
 
+  public OAdminSession admin(String user, String password) {
+    return internal.admin(user, password);
+  }
+
   public OResultSet execute(String script, Map<String, Object> params) {
     return internal.executeServerStatement(script, serverUser, serverPassword, params);
   }
