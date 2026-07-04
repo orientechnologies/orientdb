@@ -107,7 +107,7 @@ public class UpdateContentStep extends AbstractExecutionStep {
     if (json != null) {
       doc.merge(json.toDocument(record, ctx), false, false);
     } else if (inputParameter != null) {
-      Object val = inputParameter.getValue(ctx.getInputParameters());
+      Object val = inputParameter.getValue(ctx);
       if (val instanceof OElement) {
         doc.merge((ODocument) ((OElement) val).getRecord(), false, false);
       } else if (val instanceof Map) {

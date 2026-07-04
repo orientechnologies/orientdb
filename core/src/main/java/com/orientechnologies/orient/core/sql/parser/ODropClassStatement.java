@@ -33,7 +33,7 @@ public class ODropClassStatement extends ODDLStatement {
     if (name != null) {
       className = name.getStringValue();
     } else {
-      className = String.valueOf(nameParam.getValue(ctx.getInputParameters()));
+      className = String.valueOf(nameParam.getValue(ctx));
     }
     OClass clazz = schema.getClass(className);
     if (clazz == null) {

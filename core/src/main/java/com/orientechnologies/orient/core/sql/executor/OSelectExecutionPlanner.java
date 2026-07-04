@@ -1384,7 +1384,7 @@ public class OSelectExecutionPlanner {
       QueryPlanningInfo info,
       OInputParameter inputParam,
       OCommandContext ctx) {
-    Object paramValue = inputParam.getValue(ctx.getInputParameters());
+    Object paramValue = inputParam.getValue(ctx);
     if (paramValue == null) {
       result.chain(new EmptyStep()); // nothing to return
     } else if (paramValue instanceof OClass) {

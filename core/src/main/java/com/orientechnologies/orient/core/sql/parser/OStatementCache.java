@@ -2,10 +2,8 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OSharedContextEmbedded;
-import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -38,7 +36,7 @@ public class OStatementCache {
    * @return true if the corresponding executor is present in the cache
    */
   public boolean contains(String statement) {
-    if (OGlobalConfiguration.STATEMENT_CACHE_SIZE.getValueAsInteger() == 0) {
+    if (mapSize == 0) {
       return false;
     }
 
@@ -66,25 +64,11 @@ public class OStatementCache {
   }
 
   /**
-   * returns an already parsed server-level SQL executor, taking it from the cache if it exists or
-   * creating a new one (parsing and then putting it into the cache) if it doesn't
-   *
-   * @param statement the SQL statement
-   * @param db the current OrientDB instance. If null, cache is ignored and a new executor is
-   *     created through statement parsing
-   * @return a statement executor from the cache
-   */
-  public static OAdminStatement getAdminStatement(String statement, OrientDBInternal db) {
-    // TODO create a global cache!
-    return parseAdminStatement(statement);
-  }
-
-  /**
    * @param statement an SQL statement
    * @return the corresponding executor, taking it from the internal cache, if it exists
    */
   public OStatement getStatement(String statement, ODatabaseDocumentInternal db) {
-    if (OGlobalConfiguration.STATEMENT_CACHE_SIZE.getValueAsInteger() == 0) {
+    if (mapSize == 0) {
       return parse(statement, db);
     }
 
@@ -130,27 +114,6 @@ public class OStatementCache {
     return null;
   }
 
-  /**
-   * parses an SQL statement and returns the corresponding executor
-   *
-   * @param statement the SQL statement
-   * @return the corresponding executor
-   * @throws OCommandSQLParsingException if the input parameter is not a valid SQL statement
-   */
-  protected static OAdminStatement parseAdminStatement(String statement)
-      throws OCommandSQLParsingException {
-    try {
-      OrientSql osql = new OrientSql(statement);
-      OAdminStatement result = osql.parseAdminStatement();
-      return result;
-    } catch (ParseException e) {
-      throwParsingException(e, statement);
-    } catch (TokenMgrError e2) {
-      throwParsingException(e2, statement);
-    }
-    return null;
-  }
-
   protected static void throwParsingException(ParseException e, String statement) {
     throw new OCommandSQLParsingException(e, statement);
   }
@@ -160,10 +123,6 @@ public class OStatementCache {
   }
 
   public void clear() {
-    if (OGlobalConfiguration.STATEMENT_CACHE_SIZE.getValueAsInteger() == 0) {
-      return;
-    }
-
     synchronized (map) {
       map.clear();
     }

@@ -24,16 +24,16 @@ public class OInputParameter extends SimpleNode implements OIdentifierResolver {
     super(id);
   }
 
-  public OInputParameter(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public Object bindFromInputParams(Map<Object, Object> params) {
-    return null;
+    throw new UnsupportedOperationException("abstract");
   }
 
-  public Object getValue(Map<Object, Object> params) {
-    return null;
+  protected Object getValue(Map<Object, Object> params) {
+    throw new UnsupportedOperationException("abstract");
+  }
+
+  public Object getValue(OCommandContext ctx) {
+    return getValue(ctx.getInputParameters());
   }
 
   @Override

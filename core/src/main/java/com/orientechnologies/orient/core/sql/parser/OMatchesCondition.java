@@ -52,7 +52,7 @@ public class OMatchesCondition extends OBooleanExpression {
         return false;
       }
     } else {
-      Object paramVal = rightParam.getValue(ctx.getInputParameters());
+      Object paramVal = rightParam.getValue(ctx);
       if (paramVal instanceof String) {
         regex = (String) paramVal;
       } else {

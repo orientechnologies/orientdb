@@ -131,7 +131,7 @@ public class ODatabaseUserData extends SimpleNode {
     if (name != null) {
       stm.name = name.copy();
     } else {
-      stm.name = new OIdentifier("" + nameParam.getValue(ctx.getInputParameters()));
+      stm.name = new OIdentifier("" + nameParam.getValue(ctx));
     }
 
     if (passwordIdentifier != null) {

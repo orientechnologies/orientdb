@@ -46,7 +46,7 @@ public class OArrayNumberSelector extends SimpleNode {
   public Integer getValue(OResult iCurrentRecord, Object iResult, OCommandContext ctx) {
     Object result = null;
     if (inputValue != null) {
-      result = inputValue.getValue(ctx.getInputParameters());
+      result = inputValue.getValue(ctx);
     } else if (expressionValue != null) {
       result = expressionValue.execute(iCurrentRecord, ctx);
     } else if (integer != null) {

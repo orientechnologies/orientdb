@@ -14,10 +14,6 @@ public class OPositionalParameter extends OInputParameter {
     super(id);
   }
 
-  public OPositionalParameter(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public String toString() {
     return "?";

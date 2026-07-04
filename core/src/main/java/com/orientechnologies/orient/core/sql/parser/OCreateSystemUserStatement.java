@@ -69,7 +69,7 @@ public class OCreateSystemUserStatement extends SimpleNode implements OAdminStat
             params.add(passwordIdentifier.getStringValue());
           } else {
             sb.append("?");
-            params.add(passwordParam.getValue(ctx.getInputParameters()));
+            params.add(passwordParam.getValue(ctx));
           }
 
           // status=ACTIVE

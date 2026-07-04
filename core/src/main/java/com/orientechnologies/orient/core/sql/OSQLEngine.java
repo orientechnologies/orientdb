@@ -52,6 +52,7 @@ import com.orientechnologies.orient.core.sql.parser.OStatement;
 import com.orientechnologies.orient.core.sql.parser.OStatementCache;
 import com.orientechnologies.orient.core.sql.parser.OrientSql;
 import com.orientechnologies.orient.core.sql.parser.ParseException;
+import com.orientechnologies.orient.core.sql.parser.TokenMgrError;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -75,8 +76,25 @@ public class OSQLEngine {
     return OStatementCache.get(query, db);
   }
 
-  public static OAdminStatement parseAdminStatement(String query, OrientDBInternal db) {
-    return OStatementCache.getAdminStatement(query, db);
+  public static OAdminStatement parseAdminStatement(String statement, OrientDBInternal db) {
+    try {
+      OrientSql osql = new OrientSql(statement);
+      OAdminStatement result = osql.parseAdminStatement();
+      return result;
+    } catch (ParseException e) {
+      throwParsingException(e, statement);
+    } catch (TokenMgrError e2) {
+      throwParsingException(e2, statement);
+    }
+    return null;
+  }
+
+  protected static void throwParsingException(ParseException e, String statement) {
+    throw new OCommandSQLParsingException(e, statement);
+  }
+
+  protected static void throwParsingException(TokenMgrError e, String statement) {
+    throw new OCommandSQLParsingException(e, statement);
   }
 
   public static List<OStatement> parseScript(String script, ODatabaseDocumentInternal db) {

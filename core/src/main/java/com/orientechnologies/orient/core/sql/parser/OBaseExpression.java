@@ -111,7 +111,7 @@ public class OBaseExpression extends OMathExpression {
     } else if (string != null && string.length() > 1) {
       result = OStringSerializerHelper.decode(string.substring(1, string.length() - 1));
     } else if (inputParam != null) {
-      result = inputParam.getValue(ctx.getInputParameters());
+      result = inputParam.getValue(ctx);
     }
     if (modifier != null) {
       result = modifier.execute(iCurrentRecord, result, ctx);
@@ -130,7 +130,7 @@ public class OBaseExpression extends OMathExpression {
           Collections.singleton(
               OStringSerializerHelper.decode(string.substring(1, string.length() - 1)));
     } else if (inputParam != null) {
-      Object parVal = inputParam.getValue(ctx.getInputParameters());
+      Object parVal = inputParam.getValue(ctx);
       if (parVal instanceof Collection) {
         return (Collection<Object>) parVal;
       } else {

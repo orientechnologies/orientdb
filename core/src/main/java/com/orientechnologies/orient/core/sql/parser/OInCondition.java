@@ -90,7 +90,7 @@ public class OInCondition extends OBooleanExpression {
     if (rightStatement != null) {
       rightVal = executeQuery(rightStatement, ctx);
     } else if (rightParam != null) {
-      rightVal = rightParam.getValue(ctx.getInputParameters());
+      rightVal = rightParam.getValue(ctx);
     } else if (rightMathExpression != null) {
       rightVal = rightMathExpression.execute(currentRecord, ctx);
     }
@@ -399,7 +399,7 @@ public class OInCondition extends OBooleanExpression {
   }
 
   private Collection<Object> rightParam(OCommandContext ctx, boolean asc) {
-    Object val = rightParam.getValue(ctx.getInputParameters());
+    Object val = rightParam.getValue(ctx);
     return sortValues(val, asc);
   }
 

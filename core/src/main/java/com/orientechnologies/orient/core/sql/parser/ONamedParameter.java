@@ -15,10 +15,6 @@ public class ONamedParameter extends OInputParameter {
     super(id);
   }
 
-  public ONamedParameter(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public String toString() {
     return ":" + paramName;
