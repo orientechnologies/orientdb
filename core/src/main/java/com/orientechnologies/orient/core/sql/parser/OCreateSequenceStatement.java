@@ -36,10 +36,6 @@ public class OCreateSequenceStatement extends OSimpleExecStatement {
     super(id);
   }
 
-  public OCreateSequenceStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public OExecutionStream executeSimple(OCommandContext ctx) {
     OSequence seq =

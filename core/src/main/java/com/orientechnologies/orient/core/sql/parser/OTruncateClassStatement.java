@@ -25,10 +25,6 @@ public class OTruncateClassStatement extends ODDLStatement {
     super(id);
   }
 
-  public OTruncateClassStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public OExecutionStream executeDDL(OCommandContext ctx) {
     ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) ctx.getDatabase();

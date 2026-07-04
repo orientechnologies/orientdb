@@ -17,10 +17,6 @@ public class OProfileStorageStatement extends OSimpleExecStatement {
     super(id);
   }
 
-  public OProfileStorageStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   // new execution logic
   @Override
   public OExecutionStream executeSimple(OCommandContext ctx) {

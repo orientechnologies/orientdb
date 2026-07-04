@@ -12,10 +12,6 @@ public class OWait extends SimpleNode {
     super(id);
   }
 
-  public OWait(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public void toGenericStatement(StringBuilder builder) {
     throw new UnsupportedOperationException();

@@ -21,10 +21,6 @@ public class OIsNullCondition extends OBooleanExpression {
     super(id);
   }
 
-  public OIsNullCondition(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
     if (expression.isFunctionAny()) {

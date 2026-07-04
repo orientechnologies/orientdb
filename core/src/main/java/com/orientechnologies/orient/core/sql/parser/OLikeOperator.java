@@ -16,10 +16,6 @@ public class OLikeOperator extends SimpleNode implements OBinaryCompareOperator 
     super(id);
   }
 
-  public OLikeOperator(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public boolean execute(Object iLeft, Object iRight, OCommandContext ctx) {
     if (OMultiValue.isMultiValue(iLeft) || OMultiValue.isMultiValue(iRight)) return false;

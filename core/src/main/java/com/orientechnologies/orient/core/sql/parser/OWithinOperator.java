@@ -18,11 +18,6 @@ public class OWithinOperator extends SimpleNode implements OBinaryCompareOperato
     initOperator();
   }
 
-  public OWithinOperator(OrientSql p, int id) {
-    super(p, id);
-    initOperator();
-  }
-
   protected void initOperator() {
     Iterator<OQueryOperatorFactory> factories = OSQLEngine.getOperatorFactories();
     while (factories.hasNext()) {

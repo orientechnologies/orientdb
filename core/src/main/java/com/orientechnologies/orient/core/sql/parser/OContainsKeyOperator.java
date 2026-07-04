@@ -16,10 +16,6 @@ public class OContainsKeyOperator extends SimpleNode implements OBinaryCompareOp
     super(id);
   }
 
-  public OContainsKeyOperator(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public boolean execute(Object left, Object right, OCommandContext ctx) {
     if (left == null) {

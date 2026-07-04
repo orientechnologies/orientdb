@@ -7,10 +7,6 @@ public class ODeleteEdgeVToStatement extends ODeleteEdgeStatement {
     super(id);
   }
 
-  public ODeleteEdgeVToStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public ODeleteEdgeStatement copy() {
     return super.copy();

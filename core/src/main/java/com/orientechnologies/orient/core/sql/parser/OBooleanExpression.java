@@ -24,10 +24,6 @@ public abstract class OBooleanExpression extends SimpleNode {
     super(id);
   }
 
-  public OBooleanExpression(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public abstract boolean evaluate(OResult currentRecord, OCommandContext ctx);
 
   /**

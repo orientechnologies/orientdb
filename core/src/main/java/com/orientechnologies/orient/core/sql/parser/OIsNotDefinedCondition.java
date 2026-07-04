@@ -17,10 +17,6 @@ public class OIsNotDefinedCondition extends OBooleanExpression {
     super(id);
   }
 
-  public OIsNotDefinedCondition(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
     if (expression.isFunctionAny() || expression.isFunctionAll()) {

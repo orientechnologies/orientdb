@@ -19,10 +19,6 @@ public class OMultiMatchPathItem extends OMatchPathItem {
     super(id);
   }
 
-  public OMultiMatchPathItem(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public boolean isBidirectional() {
     return false;
   }

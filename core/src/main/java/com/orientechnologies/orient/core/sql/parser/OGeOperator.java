@@ -40,10 +40,6 @@ public class OGeOperator extends SimpleNode implements OBinaryCompareOperator {
     super(id);
   }
 
-  public OGeOperator(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public boolean execute(Object iLeft, Object iRight, OCommandContext ctx) {
     if (iLeft == iRight) {

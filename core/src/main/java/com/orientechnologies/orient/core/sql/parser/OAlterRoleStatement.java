@@ -41,10 +41,6 @@ public class OAlterRoleStatement extends OSimpleExecStatement {
     super(id);
   }
 
-  public OAlterRoleStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public void addOperation(Op operation) {
     this.operations.add(operation);
   }

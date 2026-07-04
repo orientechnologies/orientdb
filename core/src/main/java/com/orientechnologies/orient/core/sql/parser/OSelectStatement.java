@@ -49,10 +49,6 @@ public class OSelectStatement extends OStatement {
     super(id);
   }
 
-  public OSelectStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public OProjection getProjection() {
     return projection;
   }

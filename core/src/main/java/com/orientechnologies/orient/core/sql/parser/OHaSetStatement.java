@@ -23,10 +23,6 @@ public class OHaSetStatement extends OSimpleExecStatement {
     super(id);
   }
 
-  public OHaSetStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public OExecutionStream executeSimple(OCommandContext ctx) {
     List<OResult> result = new ArrayList<>();

@@ -15,10 +15,6 @@ public class OMatchExpression extends SimpleNode {
     super(id);
   }
 
-  public OMatchExpression(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     origin.toString(params, builder);
     for (OMatchPathItem item : items) {

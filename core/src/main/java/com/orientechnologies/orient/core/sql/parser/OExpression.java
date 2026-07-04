@@ -36,10 +36,6 @@ public class OExpression extends SimpleNode {
     super(id);
   }
 
-  public OExpression(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public OExpression(OIdentifier identifier) {
     mathExpression = new OBaseExpression(identifier);
   }

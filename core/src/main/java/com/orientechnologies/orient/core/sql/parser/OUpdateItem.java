@@ -39,10 +39,6 @@ public class OUpdateItem extends SimpleNode {
     super(id);
   }
 
-  public OUpdateItem(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     left.toString(params, builder);
     if (leftModifier != null) {

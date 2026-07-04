@@ -15,10 +15,6 @@ public class OSleepStatement extends OSimpleExecStatement {
     super(id);
   }
 
-  public OSleepStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public OExecutionStream executeSimple(OCommandContext ctx) {
     OResultInternal item = new OResultInternal();

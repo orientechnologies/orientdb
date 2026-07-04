@@ -32,10 +32,6 @@ public class OUpdateOperations extends SimpleNode {
     super(id);
   }
 
-  public OUpdateOperations(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     boolean first = true;
     switch (type) {

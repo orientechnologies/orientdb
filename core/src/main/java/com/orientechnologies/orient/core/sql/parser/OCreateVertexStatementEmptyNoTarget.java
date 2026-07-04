@@ -7,10 +7,6 @@ public class OCreateVertexStatementEmptyNoTarget extends OCreateVertexStatement 
     super(id);
   }
 
-  public OCreateVertexStatementEmptyNoTarget(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public OCreateVertexStatement copy() {
     return super.copy();

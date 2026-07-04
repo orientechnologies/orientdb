@@ -18,10 +18,6 @@ public class ODropSystemUserStatement extends SimpleNode implements OAdminStatem
     super(id);
   }
 
-  public ODropSystemUserStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public OExecutionStream executeSimple(OAdminCommandContext ctx) {
     OSystemDatabase systemDb = ctx.getGlobalContext().getSystemDatabase();

@@ -7,10 +7,6 @@ public class OArrayConcatExpressionElement extends OExpression {
     super(id);
   }
 
-  public OArrayConcatExpressionElement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public OArrayConcatExpressionElement copy() {
     OArrayConcatExpressionElement result = new OArrayConcatExpressionElement(-1);

@@ -19,10 +19,6 @@ public class OCommitStatement extends OSimpleExecStatement {
     super(id);
   }
 
-  public OCommitStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public void addElse(OStatement statement) {
     if (elseStatements == null) {
       elseStatements = new ArrayList<>();

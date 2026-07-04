@@ -19,11 +19,6 @@ public class OScAndOperator extends SimpleNode implements OBinaryCompareOperator
     initOperator();
   }
 
-  public OScAndOperator(OrientSql p, int id) {
-    super(p, id);
-    initOperator();
-  }
-
   protected void initOperator() {
     Iterator<OQueryOperatorFactory> factories = OSQLEngine.getOperatorFactories();
     while (factories.hasNext()) {

@@ -9,10 +9,6 @@ public class OQueryStatement extends SimpleNode {
     super(id);
   }
 
-  public OQueryStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public void toGenericStatement(StringBuilder builder) {
     throw new UnsupportedOperationException();

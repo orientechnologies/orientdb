@@ -28,10 +28,6 @@ public class OStatement extends SimpleNode {
     super(id);
   }
 
-  public OStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append(originalStatement);
   }

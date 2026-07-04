@@ -19,10 +19,6 @@ public class ORecordAttribute extends SimpleNode {
     super(id);
   }
 
-  public ORecordAttribute(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append(name);
   }

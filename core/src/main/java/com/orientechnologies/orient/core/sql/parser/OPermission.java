@@ -11,10 +11,6 @@ public class OPermission extends SimpleNode {
     super(id);
   }
 
-  public OPermission(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append(permission);

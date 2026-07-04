@@ -23,10 +23,6 @@ public class ONestedProjectionItem extends SimpleNode {
     super(id);
   }
 
-  public ONestedProjectionItem(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public ONestedProjectionItem copy() {
     ONestedProjectionItem result = new ONestedProjectionItem(-1);

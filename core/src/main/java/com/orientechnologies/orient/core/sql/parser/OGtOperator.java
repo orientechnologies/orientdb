@@ -21,10 +21,6 @@ public class OGtOperator extends SimpleNode implements OBinaryCompareOperator {
     super(id);
   }
 
-  public OGtOperator(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public boolean execute(Object iLeft, Object iRight, OCommandContext ctx) {
     if (iLeft == null || iRight == null) {

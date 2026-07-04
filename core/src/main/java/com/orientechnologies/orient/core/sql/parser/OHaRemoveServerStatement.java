@@ -16,10 +16,6 @@ public class OHaRemoveServerStatement extends OSimpleExecStatement {
     super(id);
   }
 
-  public OHaRemoveServerStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("HA REMOVE SERVER ");

@@ -17,10 +17,6 @@ public class OHaSyncClusterStatement extends OSimpleExecStatement {
     super(id);
   }
 
-  public OHaSyncClusterStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public OExecutionStream executeSimple(OCommandContext ctx) {
     throw new OCommandExecutionException("Cannot execute HA SYNC CLUSTER, not supported anymore");

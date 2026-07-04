@@ -36,10 +36,6 @@ public class OTraverseStatement extends OStatement {
     super(id);
   }
 
-  public OTraverseStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public void validate() throws OCommandSQLParsingException {
     //    for(OTraverseProjectionItem projection:projections) {
     //

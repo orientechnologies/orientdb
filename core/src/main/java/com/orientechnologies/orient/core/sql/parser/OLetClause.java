@@ -17,10 +17,6 @@ public class OLetClause extends SimpleNode {
     super(id);
   }
 
-  public OLetClause(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("LET ");
     boolean first = true;

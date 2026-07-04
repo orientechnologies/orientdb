@@ -6,9 +6,5 @@ public class OInPathItemOpt extends OInPathItem {
   public OInPathItemOpt(int id) {
     super(id);
   }
-
-  public OInPathItemOpt(OrientSql p, int id) {
-    super(p, id);
-  }
 }
 /* JavaCC - OriginalChecksum=ef282589054869578c47f554474b5c3b (do not edit this line) */

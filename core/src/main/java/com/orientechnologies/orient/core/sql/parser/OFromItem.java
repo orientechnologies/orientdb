@@ -28,10 +28,6 @@ public class OFromItem extends SimpleNode {
     super(id);
   }
 
-  public OFromItem(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     if (rids != null && rids.size() > 0) {
       if (rids.size() == 1) {

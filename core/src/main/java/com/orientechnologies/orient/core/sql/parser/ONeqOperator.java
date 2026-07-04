@@ -11,10 +11,6 @@ public class ONeqOperator extends SimpleNode implements OBinaryCompareOperator {
     super(id);
   }
 
-  public ONeqOperator(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public boolean execute(Object left, Object right, OCommandContext ctx) {
     return !OEqualsCompareOperator.equals(left, right);

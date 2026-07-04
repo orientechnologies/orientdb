@@ -14,10 +14,6 @@ public class OMetadataIdentifier extends SimpleNode {
     super(id);
   }
 
-  public OMetadataIdentifier(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("metadata:");
     builder.append(name);

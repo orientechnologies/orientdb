@@ -23,10 +23,6 @@ public class OContainsTextCondition extends OBooleanExpression {
     super(id);
   }
 
-  public OContainsTextCondition(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
     if (left.isFunctionAny()) {

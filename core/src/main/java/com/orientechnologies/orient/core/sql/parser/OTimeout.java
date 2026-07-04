@@ -17,10 +17,6 @@ public class OTimeout extends SimpleNode {
     super(id);
   }
 
-  public OTimeout(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append(" TIMEOUT " + val);
     if (failureStrategy != null) {

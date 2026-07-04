@@ -24,10 +24,6 @@ public class OInsertStatement extends OStatement {
     super(id);
   }
 
-  public OInsertStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("INSERT INTO ");
     if (targetClass != null) {

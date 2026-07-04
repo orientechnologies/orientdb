@@ -9,10 +9,6 @@ public class ORetry extends SimpleNode {
     super(id);
   }
 
-  public ORetry(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public boolean equals(Object obj) {
     return obj != null && getClass().equals(obj.getClass());

@@ -24,10 +24,6 @@ public class OArraySingleValuesSelector extends SimpleNode {
     super(id);
   }
 
-  public OArraySingleValuesSelector(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     boolean first = true;
     for (OArraySelector item : items) {

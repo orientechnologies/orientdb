@@ -45,10 +45,6 @@ public class OCreateLinkStatement extends OSimpleExecStatement {
     super(id);
   }
 
-  public OCreateLinkStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public OExecutionStream executeSimple(OCommandContext ctx) {
     Object total = execute(ctx);

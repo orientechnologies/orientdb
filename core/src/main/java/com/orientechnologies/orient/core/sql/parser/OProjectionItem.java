@@ -49,10 +49,6 @@ public class OProjectionItem extends SimpleNode {
     super(id);
   }
 
-  public OProjectionItem(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public boolean isAll() {
     if (all) {
       return true;

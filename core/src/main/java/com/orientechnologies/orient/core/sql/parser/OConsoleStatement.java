@@ -20,10 +20,6 @@ public class OConsoleStatement extends OSimpleExecStatement {
     super(id);
   }
 
-  public OConsoleStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public OExecutionStream executeSimple(OCommandContext ctx) {
     OResultInternal item = new OResultInternal();

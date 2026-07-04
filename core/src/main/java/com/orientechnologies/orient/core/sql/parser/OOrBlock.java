@@ -28,10 +28,6 @@ public class OOrBlock extends OBooleanExpression {
     super(id);
   }
 
-  public OOrBlock(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
     if (getSubBlocks() == null) {

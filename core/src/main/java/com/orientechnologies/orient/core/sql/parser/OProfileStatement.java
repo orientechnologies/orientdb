@@ -14,10 +14,6 @@ public class OProfileStatement extends OStatement {
     super(id);
   }
 
-  public OProfileStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("PROFILE ");

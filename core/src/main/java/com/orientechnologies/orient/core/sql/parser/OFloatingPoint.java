@@ -16,10 +16,6 @@ public class OFloatingPoint extends ONumber {
     super(id);
   }
 
-  public OFloatingPoint(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public Number getValue() {
     if (finalValue != null) {

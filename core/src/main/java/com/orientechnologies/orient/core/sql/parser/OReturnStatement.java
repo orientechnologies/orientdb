@@ -17,10 +17,6 @@ public class OReturnStatement extends OSimpleExecStatement {
     super(id);
   }
 
-  public OReturnStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public OExecutionStream executeSimple(OCommandContext ctx) {
     Object result = expression == null ? null : expression.execute((OResult) null, ctx);

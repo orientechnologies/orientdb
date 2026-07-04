@@ -29,10 +29,6 @@ public class OOptimizeDatabaseStatement extends OSimpleExecStatement {
     super(id);
   }
 
-  public OOptimizeDatabaseStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public void addOption(OCommandLineOption option) {
     this.options.add(option);
   }

@@ -19,10 +19,6 @@ public class OWhileBlock extends OStatement {
     super(id);
   }
 
-  public OWhileBlock(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public void addStatement(OStatement statement) {
     if (statements == null) {
       this.statements = new ArrayList<>();

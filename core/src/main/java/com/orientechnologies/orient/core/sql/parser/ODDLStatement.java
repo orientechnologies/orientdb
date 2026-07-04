@@ -13,10 +13,6 @@ public abstract class ODDLStatement extends OStatement {
     super(id);
   }
 
-  public ODDLStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public abstract OExecutionStream executeDDL(OCommandContext ctx);
 
   public OInternalExecutionPlan createExecutionPlan(OCommandContext ctx) {

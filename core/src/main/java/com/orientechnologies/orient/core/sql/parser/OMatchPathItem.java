@@ -23,10 +23,6 @@ public class OMatchPathItem extends SimpleNode {
     super(id);
   }
 
-  public OMatchPathItem(OrientSql p, int id) {
-    super(p, id);
-  }
-
   private void graphPath(OIdentifier edgeName, String direction) {
     if (edgeName == null) {
       edgeName = new OIdentifier("E");

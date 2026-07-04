@@ -22,10 +22,6 @@ public class OLevelZeroIdentifier extends SimpleNode {
     super(id);
   }
 
-  public OLevelZeroIdentifier(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     if (functionCall != null) {
       functionCall.toString(params, builder);

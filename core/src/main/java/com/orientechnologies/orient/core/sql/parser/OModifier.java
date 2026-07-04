@@ -36,10 +36,6 @@ public class OModifier extends SimpleNode {
     super(id);
   }
 
-  public OModifier(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public boolean isArraySingleValue() {
     if (this.arraySingleValues != null) {
       return this.arraySingleValues.items.size() == 1;

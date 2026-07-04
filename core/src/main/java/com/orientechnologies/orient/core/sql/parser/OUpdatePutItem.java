@@ -14,10 +14,6 @@ public class OUpdatePutItem extends SimpleNode {
     super(id);
   }
 
-  public OUpdatePutItem(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     left.toString(params, builder);
     builder.append(" = ");

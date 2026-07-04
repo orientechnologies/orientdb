@@ -16,10 +16,6 @@ public class OContainsValueOperator extends SimpleNode implements OBinaryCompare
     super(id);
   }
 
-  public OContainsValueOperator(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public boolean execute(Object iLeft, Object iRight, OCommandContext ctx) {
     if (iLeft instanceof Map<?, ?>) {

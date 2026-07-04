@@ -24,10 +24,6 @@ public class OCreateClusterStatement extends ODDLStatement {
     super(id);
   }
 
-  public OCreateClusterStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public OExecutionStream executeDDL(OCommandContext ctx) {
     ODatabaseSession db = ctx.getDatabase();

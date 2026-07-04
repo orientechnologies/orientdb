@@ -34,11 +34,6 @@ public class OAlterSecurityPolicyStatement extends OSimpleExecStatement {
     super(id);
   }
 
-  public OAlterSecurityPolicyStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
-  @Override
   public OExecutionStream executeSimple(OCommandContext ctx) {
     ODatabaseSession db = (ODatabaseSession) ctx.getDatabase();
     OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();

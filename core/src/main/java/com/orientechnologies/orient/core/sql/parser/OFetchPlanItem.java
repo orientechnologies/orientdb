@@ -21,10 +21,6 @@ public class OFetchPlanItem extends SimpleNode {
     super(id);
   }
 
-  public OFetchPlanItem(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public void addFieldToChain(String field) {
     this.fieldChain.add(field);
   }

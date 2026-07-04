@@ -17,10 +17,6 @@ public class OCreatePropertyAttributeStatement extends SimpleNode {
     super(id);
   }
 
-  public OCreatePropertyAttributeStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     settingName.toString(params, builder);

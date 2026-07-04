@@ -37,10 +37,6 @@ public class OSuffixIdentifier extends SimpleNode {
     super(id);
   }
 
-  public OSuffixIdentifier(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public OSuffixIdentifier(OIdentifier identifier) {
     this.identifier = identifier;
   }

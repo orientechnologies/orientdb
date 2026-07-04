@@ -19,10 +19,6 @@ public class ORebuildIndexStatement extends OSimpleExecStatement {
     super(id);
   }
 
-  public ORebuildIndexStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public OExecutionStream executeSimple(OCommandContext ctx) {
     OResultInternal result = new OResultInternal();

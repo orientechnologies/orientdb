@@ -23,10 +23,6 @@ public class OGrantStatement extends OSimpleExecStatement {
     super(id);
   }
 
-  public OGrantStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public OExecutionStream executeSimple(OCommandContext ctx) {
     ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) ctx.getDatabase();

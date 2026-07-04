@@ -18,10 +18,6 @@ public class ODropDatabaseStatement extends SimpleNode implements OAdminStatemen
     super(id);
   }
 
-  public ODropDatabaseStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public OExecutionStream executeSimple(OAdminCommandContext ctx) {
     String nameString = name.resolveIdentifierString(ctx);

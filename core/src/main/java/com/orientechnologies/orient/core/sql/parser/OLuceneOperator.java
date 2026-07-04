@@ -11,10 +11,6 @@ public class OLuceneOperator extends SimpleNode implements OBinaryCompareOperato
     super(id);
   }
 
-  public OLuceneOperator(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public boolean execute(Object left, Object right, OCommandContext ctx) {
     throw new UnsupportedOperationException(

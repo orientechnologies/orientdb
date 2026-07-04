@@ -7,10 +7,6 @@ public class OFirstLevelExpression extends OMathExpression {
     super(id);
   }
 
-  public OFirstLevelExpression(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   protected boolean supportsBasicCalculation() {
     return super.supportsBasicCalculation();

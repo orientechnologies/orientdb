@@ -26,10 +26,6 @@ public class OJson extends SimpleNode {
     super(id);
   }
 
-  public OJson(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("{");
     boolean first = true;

@@ -13,10 +13,6 @@ public class OUpdateIncrementItem extends SimpleNode {
     super(id);
   }
 
-  public OUpdateIncrementItem(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     left.toString(params, builder);
     if (leftModifier != null) {

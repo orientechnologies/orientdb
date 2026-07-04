@@ -24,10 +24,6 @@ public class ONestedProjection extends SimpleNode {
     super(id);
   }
 
-  public ONestedProjection(OrientSql p, int id) {
-    super(p, id);
-  }
-
   /**
    * @param expression
    * @param input

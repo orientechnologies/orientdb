@@ -9,10 +9,6 @@ public class OAlias extends SimpleNode {
     super(id);
   }
 
-  public OAlias(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public void toString(Map<Object, Object> params, StringBuilder builder) {}
 
   @Override

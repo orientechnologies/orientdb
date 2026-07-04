@@ -32,10 +32,6 @@ public class OAlterSequenceStatement extends ODDLStatement {
     super(id);
   }
 
-  public OAlterSequenceStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public OExecutionStream executeDDL(OCommandContext ctx) {
 

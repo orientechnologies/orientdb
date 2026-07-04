@@ -9,10 +9,6 @@ public class OStatementSemicolon extends SimpleNode {
     super(id);
   }
 
-  public OStatementSemicolon(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public void toGenericStatement(StringBuilder builder) {
     throw new UnsupportedOperationException();

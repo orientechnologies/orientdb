@@ -9,10 +9,6 @@ public class OString extends SimpleNode {
     super(id);
   }
 
-  public OString(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public void toGenericStatement(StringBuilder builder) {
     throw new UnsupportedOperationException();

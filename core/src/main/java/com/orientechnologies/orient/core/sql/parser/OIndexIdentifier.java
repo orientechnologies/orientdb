@@ -23,10 +23,6 @@ public class OIndexIdentifier extends SimpleNode {
     super(id);
   }
 
-  public OIndexIdentifier(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public OIndexIdentifier(String indexName, Type type) {
     this.indexNameString = indexName;
     this.type = type;

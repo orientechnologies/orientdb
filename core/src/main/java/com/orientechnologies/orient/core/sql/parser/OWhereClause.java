@@ -35,10 +35,6 @@ public class OWhereClause extends SimpleNode {
     super(id);
   }
 
-  public OWhereClause(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public boolean matchesFilters(OIdentifiable currentRecord, OCommandContext ctx) {
     return matchesFilters(new OResultInternal(currentRecord), ctx);
   }

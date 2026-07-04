@@ -27,10 +27,6 @@ public class OContainsAllCondition extends OBooleanExpression {
     super(id);
   }
 
-  public OContainsAllCondition(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public boolean execute(Object left, Object right) {
     if (left instanceof Collection) {
       if (right instanceof Collection) {

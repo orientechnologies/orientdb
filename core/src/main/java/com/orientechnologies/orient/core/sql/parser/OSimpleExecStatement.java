@@ -18,10 +18,6 @@ public abstract class OSimpleExecStatement extends OStatement {
     super(id);
   }
 
-  public OSimpleExecStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public abstract OExecutionStream executeSimple(OCommandContext ctx);
 
   public OInternalExecutionPlan createExecutionPlan(OCommandContext ctx) {

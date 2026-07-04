@@ -24,10 +24,6 @@ public class OEqualsCompareOperator extends SimpleNode implements OBinaryCompare
     super(id);
   }
 
-  public OEqualsCompareOperator(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public boolean execute(Object iLeft, Object iRight, OCommandContext ctx) {
     return equals(iLeft, iRight);

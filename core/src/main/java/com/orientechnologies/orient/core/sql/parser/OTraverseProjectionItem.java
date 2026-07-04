@@ -21,10 +21,6 @@ public class OTraverseProjectionItem extends SimpleNode {
     super(id);
   }
 
-  public OTraverseProjectionItem(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public Object execute(OResult iCurrentRecord, OCommandContext ctx) {
     if (isStar()) {
       return handleStar(iCurrentRecord, ctx);

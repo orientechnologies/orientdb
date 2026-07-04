@@ -19,10 +19,6 @@ public class OHaSyncDatabaseStatement extends OSimpleExecStatement {
     super(id);
   }
 
-  public OHaSyncDatabaseStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public OExecutionStream executeSimple(OCommandContext ctx) {
     final ODatabaseDocumentInternal database = (ODatabaseDocumentInternal) ctx.getDatabase();

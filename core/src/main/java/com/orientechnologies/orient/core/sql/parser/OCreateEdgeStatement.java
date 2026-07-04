@@ -27,10 +27,6 @@ public class OCreateEdgeStatement extends OStatement {
     super(id);
   }
 
-  public OCreateEdgeStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public OInsertExecutionPlan createExecutionPlan(OCommandContext ctx) {
     OCreateEdgeExecutionPlanner planner = new OCreateEdgeExecutionPlanner(this);
     OInsertExecutionPlan result = planner.createExecutionPlan(ctx, false);

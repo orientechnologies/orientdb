@@ -28,10 +28,6 @@ public class OArrayRangeSelector extends SimpleNode {
     super(id);
   }
 
-  public OArrayRangeSelector(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     if (from != null) {
       builder.append(PARAMETER_PLACEHOLDER);

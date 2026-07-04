@@ -18,10 +18,6 @@ public class OSkip extends SimpleNode {
     super(id);
   }
 
-  public OSkip(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     if (num == null && inputParam == null) {
       return;

@@ -24,10 +24,6 @@ public class ODropIndexStatement extends ODDLStatement {
     super(id);
   }
 
-  public ODropIndexStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public OExecutionStream executeDDL(OCommandContext ctx) {
     List<OResult> rs = new ArrayList<>();

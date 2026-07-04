@@ -14,10 +14,6 @@ public class OAdminStatement extends SimpleNode {
     super(id);
   }
 
-  public OAdminStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     statement.toString(params, builder);
   }

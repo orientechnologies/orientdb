@@ -26,10 +26,6 @@ public class OForEachBlock extends OStatement {
     super(id);
   }
 
-  public OForEachBlock(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public void addStatement(OStatement statement) {
     if (statements == null) {
       this.statements = new ArrayList<>();

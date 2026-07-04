@@ -25,10 +25,6 @@ public class OArrayConcatExpression extends SimpleNode {
     super(id);
   }
 
-  public OArrayConcatExpression(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public List<OArrayConcatExpressionElement> getChildExpressions() {
     return childExpressions;
   }

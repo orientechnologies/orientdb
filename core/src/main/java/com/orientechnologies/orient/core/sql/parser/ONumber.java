@@ -10,10 +10,6 @@ public class ONumber extends SimpleNode {
     super(id);
   }
 
-  public ONumber(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public Number getValue() {
     return null;
   }

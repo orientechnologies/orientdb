@@ -24,10 +24,6 @@ public class ODatabaseUserData extends SimpleNode {
     super(id);
   }
 
-  public ODatabaseUserData(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public void addRole(OIdentifier role) {
     if (this.roles == null) {
       this.roles = new ArrayList<>();

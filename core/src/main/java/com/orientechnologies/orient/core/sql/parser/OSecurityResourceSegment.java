@@ -15,10 +15,6 @@ public class OSecurityResourceSegment extends SimpleNode {
     super(id);
   }
 
-  public OSecurityResourceSegment(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public boolean isStar() {
     return star;
   }

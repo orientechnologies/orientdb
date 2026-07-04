@@ -17,10 +17,6 @@ public class OAllocation extends SimpleNode {
     super(id);
   }
 
-  public OAllocation(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public void toGenericStatement(StringBuilder builder) {
     builder.append(" allocation ");

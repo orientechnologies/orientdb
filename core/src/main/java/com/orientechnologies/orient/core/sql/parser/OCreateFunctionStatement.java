@@ -26,10 +26,6 @@ public class OCreateFunctionStatement extends OSimpleExecStatement {
     super(id);
   }
 
-  public OCreateFunctionStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public void addParameter(OIdentifier parameter) {
     if (this.parameters == null) {
       this.parameters = new ArrayList<>();

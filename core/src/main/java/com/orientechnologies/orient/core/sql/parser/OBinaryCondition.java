@@ -31,10 +31,6 @@ public class OBinaryCondition extends OBooleanExpression {
     super(id);
   }
 
-  public OBinaryCondition(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
     if (left.isFunctionAny()) {

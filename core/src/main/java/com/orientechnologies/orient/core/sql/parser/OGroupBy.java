@@ -17,10 +17,6 @@ public class OGroupBy extends SimpleNode {
     super(id);
   }
 
-  public OGroupBy(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("GROUP BY ");
     for (int i = 0; i < items.size(); i++) {

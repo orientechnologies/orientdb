@@ -9,10 +9,6 @@ public class OparseScript extends SimpleNode {
     super(id);
   }
 
-  public OparseScript(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public void toGenericStatement(StringBuilder builder) {
     throw new UnsupportedOperationException();

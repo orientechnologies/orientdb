@@ -17,10 +17,6 @@ public class OFetchPlan extends SimpleNode {
     super(id);
   }
 
-  public OFetchPlan(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public void addItem(OFetchPlanItem item) {
     this.items.add(item);
   }

@@ -16,10 +16,6 @@ public class OLetItem extends SimpleNode {
     super(id);
   }
 
-  public OLetItem(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     varName.toString(params, builder);
     builder.append(" = ");

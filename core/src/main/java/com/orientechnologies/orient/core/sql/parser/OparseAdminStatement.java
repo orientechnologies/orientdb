@@ -9,10 +9,6 @@ public class OparseAdminStatement extends SimpleNode {
     super(id);
   }
 
-  public OparseAdminStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public void toGenericStatement(StringBuilder builder) {}
 

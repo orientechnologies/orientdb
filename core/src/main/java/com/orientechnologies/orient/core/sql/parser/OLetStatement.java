@@ -19,10 +19,6 @@ public class OLetStatement extends OSimpleExecStatement {
     super(id);
   }
 
-  public OLetStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public OExecutionStream executeSimple(OCommandContext ctx) {
     Object result;

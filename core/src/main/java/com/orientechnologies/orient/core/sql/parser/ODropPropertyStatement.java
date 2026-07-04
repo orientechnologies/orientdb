@@ -27,10 +27,6 @@ public class ODropPropertyStatement extends ODDLStatement {
     super(id);
   }
 
-  public ODropPropertyStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public OExecutionStream executeDDL(OCommandContext ctx) {
 

@@ -12,10 +12,6 @@ public class OUpdateEdgeStatement extends OUpdateStatement {
     super(id);
   }
 
-  public OUpdateEdgeStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   protected String getStatementType() {
     return "UPDATE EDGE ";
   }

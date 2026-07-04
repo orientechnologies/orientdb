@@ -43,10 +43,6 @@ public class OMethodCall extends SimpleNode {
     super(id);
   }
 
-  public OMethodCall(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append(".");
     methodName.toString(params, builder);

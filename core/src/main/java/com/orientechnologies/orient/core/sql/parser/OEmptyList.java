@@ -11,10 +11,6 @@ public class OEmptyList extends SimpleNode {
     super(id);
   }
 
-  public OEmptyList(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public void toGenericStatement(StringBuilder builder) {
     builder.append("[]");

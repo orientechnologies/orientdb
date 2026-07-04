@@ -18,10 +18,6 @@ public class OMoveVertexStatement extends OStatement {
     super(id);
   }
 
-  public OMoveVertexStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public OUpdateExecutionPlan createExecutionPlan(OCommandContext ctx) {
     OMoveVertexExecutionPlanner planner = new OMoveVertexExecutionPlanner(this);
     return planner.createExecutionPlan(ctx);

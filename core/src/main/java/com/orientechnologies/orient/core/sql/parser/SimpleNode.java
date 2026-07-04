@@ -10,21 +10,15 @@ public abstract class SimpleNode implements Node {
   protected Node[] children;
   protected int id;
   protected Object value;
-  protected OrientSql parser;
   protected Token firstToken;
   protected Token lastToken;
 
-  public SimpleNode() {
+  protected SimpleNode() {
     id = -1;
   }
 
-  public SimpleNode(int i) {
+  protected SimpleNode(int i) {
     id = i;
-  }
-
-  public SimpleNode(OrientSql p, int i) {
-    this(i);
-    parser = p;
   }
 
   public void jjtOpen() {}

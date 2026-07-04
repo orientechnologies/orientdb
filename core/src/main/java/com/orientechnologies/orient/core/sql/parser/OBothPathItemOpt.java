@@ -6,9 +6,5 @@ public class OBothPathItemOpt extends OBothPathItem {
   public OBothPathItemOpt(int id) {
     super(id);
   }
-
-  public OBothPathItemOpt(OrientSql p, int id) {
-    super(p, id);
-  }
 }
 /* JavaCC - OriginalChecksum=96af673f114382e530f23ae7937cb201 (do not edit this line) */

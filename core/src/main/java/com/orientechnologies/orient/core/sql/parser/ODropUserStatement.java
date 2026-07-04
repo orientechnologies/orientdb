@@ -13,10 +13,6 @@ public class ODropUserStatement extends OSimpleExecStatement {
     super(id);
   }
 
-  public ODropUserStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   protected OIdentifier name;
 
   @Override

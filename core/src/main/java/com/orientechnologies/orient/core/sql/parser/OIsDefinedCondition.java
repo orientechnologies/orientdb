@@ -17,10 +17,6 @@ public class OIsDefinedCondition extends OBooleanExpression implements OSimpleBo
     super(id);
   }
 
-  public OIsDefinedCondition(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
     if (expression.isFunctionAny()) {

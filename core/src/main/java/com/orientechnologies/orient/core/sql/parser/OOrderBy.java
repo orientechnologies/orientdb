@@ -21,10 +21,6 @@ public class OOrderBy extends SimpleNode {
     super(id);
   }
 
-  public OOrderBy(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public List<OOrderByItem> getItems() {
     return items;
   }

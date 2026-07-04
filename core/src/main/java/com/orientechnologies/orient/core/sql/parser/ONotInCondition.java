@@ -26,10 +26,6 @@ public class ONotInCondition extends OBooleanExpression {
     super(id);
   }
 
-  public ONotInCondition(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
     Object leftVal = left.execute(currentRecord, ctx);

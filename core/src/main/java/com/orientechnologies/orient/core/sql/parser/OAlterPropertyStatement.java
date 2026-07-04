@@ -31,10 +31,6 @@ public class OAlterPropertyStatement extends ODDLStatement {
     super(id);
   }
 
-  public OAlterPropertyStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public OExecutionStream executeDDL(OCommandContext ctx) {
     ODatabaseSession db = ctx.getDatabase();

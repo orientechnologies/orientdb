@@ -41,10 +41,6 @@ public class OAlterSystemRoleStatement extends SimpleNode implements OAdminState
     super(id);
   }
 
-  public OAlterSystemRoleStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public void addOperation(Op operation) {
     this.operations.add(operation);
   }

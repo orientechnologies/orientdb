@@ -15,10 +15,6 @@ public class ONodeData extends SimpleNode {
     super(id);
   }
 
-  public ONodeData(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public void toGenericStatement(StringBuilder builder) {}
 

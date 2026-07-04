@@ -9,10 +9,6 @@ public class OIfNotExists extends SimpleNode {
     super(id);
   }
 
-  public OIfNotExists(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public void toGenericStatement(StringBuilder builder) {
     throw new UnsupportedOperationException();

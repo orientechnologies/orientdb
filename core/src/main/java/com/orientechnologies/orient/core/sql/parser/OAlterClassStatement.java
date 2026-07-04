@@ -46,10 +46,6 @@ public class OAlterClassStatement extends ODDLStatement {
     super(id);
   }
 
-  public OAlterClassStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public void addIdentifierListValue(OIdentifier id) {
     if (this.identifierListValue == null) {
       this.identifierListValue = new ArrayList<>();

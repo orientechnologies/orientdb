@@ -20,10 +20,6 @@ public class ODeleteVertexStatement extends OStatement {
     super(id);
   }
 
-  public ODeleteVertexStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public ODeleteExecutionPlan createExecutionPlan(OCommandContext ctx) {
     ODeleteVertexExecutionPlanner planner = new ODeleteVertexExecutionPlanner(this);
     ODeleteExecutionPlan result = planner.createExecutionPlan(ctx);

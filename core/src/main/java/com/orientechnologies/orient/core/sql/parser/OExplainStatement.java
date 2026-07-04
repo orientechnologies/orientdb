@@ -14,10 +14,6 @@ public class OExplainStatement extends OStatement {
     super(id);
   }
 
-  public OExplainStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("EXPLAIN ");

@@ -31,10 +31,6 @@ public class OCreatePropertyStatement extends ODDLStatement {
     super(id);
   }
 
-  public OCreatePropertyStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public void addAttribute(OCreatePropertyAttributeStatement attribute) {
     if (this.attributes == null) {
       this.attributes = new ArrayList<>();

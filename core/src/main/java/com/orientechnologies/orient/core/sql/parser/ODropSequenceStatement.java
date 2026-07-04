@@ -23,10 +23,6 @@ public class ODropSequenceStatement extends ODDLStatement {
     super(id);
   }
 
-  public ODropSequenceStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public OExecutionStream executeDDL(OCommandContext ctx) {
     final ODatabaseSession database = ctx.getDatabase();

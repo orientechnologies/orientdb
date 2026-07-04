@@ -19,10 +19,6 @@ public class OTruncateClusterStatement extends ODDLStatement {
     super(id);
   }
 
-  public OTruncateClusterStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public OExecutionStream executeDDL(OCommandContext ctx) {
     ODatabaseDocumentAbstract database = (ODatabaseDocumentAbstract) ctx.getDatabase();

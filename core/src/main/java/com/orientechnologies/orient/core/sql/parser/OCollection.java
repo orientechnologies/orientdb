@@ -21,10 +21,6 @@ public class OCollection extends SimpleNode {
     super(id);
   }
 
-  public OCollection(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("[");
     boolean first = true;

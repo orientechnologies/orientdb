@@ -20,10 +20,6 @@ public class OIfStatement extends OStatement {
     super(id);
   }
 
-  public OIfStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public void addStatement(OStatement statement) {
     if (this.statements == null) {
       this.statements = new ArrayList<>();

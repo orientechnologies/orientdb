@@ -36,10 +36,6 @@ public class OProjection extends SimpleNode {
     super(id);
   }
 
-  public OProjection(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public List<OProjectionItem> getItems() {
     return items;
   }

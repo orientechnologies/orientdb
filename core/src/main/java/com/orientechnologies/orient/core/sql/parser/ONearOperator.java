@@ -18,11 +18,6 @@ public class ONearOperator extends SimpleNode implements OBinaryCompareOperator 
     initOperator();
   }
 
-  public ONearOperator(OrientSql p, int id) {
-    super(p, id);
-    initOperator();
-  }
-
   protected void initOperator() {
     Iterator<OQueryOperatorFactory> factories = OSQLEngine.getOperatorFactories();
     while (factories.hasNext()) {

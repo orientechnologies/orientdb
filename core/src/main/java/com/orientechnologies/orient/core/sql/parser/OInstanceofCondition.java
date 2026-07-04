@@ -24,10 +24,6 @@ public class OInstanceofCondition extends OBooleanExpression {
     super(id);
   }
 
-  public OInstanceofCondition(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
     if (currentRecord == null) {

@@ -16,10 +16,6 @@ public class OMatchPathItemFirst extends OMatchPathItem {
     super(id);
   }
 
-  public OMatchPathItemFirst(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public boolean isBidirectional() {
     return false;
   }

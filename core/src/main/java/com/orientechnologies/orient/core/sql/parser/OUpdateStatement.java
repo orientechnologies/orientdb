@@ -34,10 +34,6 @@ public class OUpdateStatement extends OStatement {
     super(id);
   }
 
-  public OUpdateStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append(getStatementType());
     if (target != null) {

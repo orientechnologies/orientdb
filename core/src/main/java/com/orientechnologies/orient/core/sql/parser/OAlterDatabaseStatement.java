@@ -27,10 +27,6 @@ public class OAlterDatabaseStatement extends ODDLStatement {
     super(id);
   }
 
-  public OAlterDatabaseStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public OExecutionStream executeDDL(OCommandContext ctx) {
     if (customPropertyName == null) {

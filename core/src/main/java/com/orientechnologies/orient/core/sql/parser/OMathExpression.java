@@ -628,10 +628,6 @@ public class OMathExpression extends SimpleNode {
     super(id);
   }
 
-  public OMathExpression(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public boolean isCacheable() {
     if (childExpressions != null) {
       for (OMathExpression exp : childExpressions) {

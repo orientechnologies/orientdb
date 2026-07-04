@@ -105,10 +105,6 @@ public class OMatchStatement extends OStatement {
     super(id);
   }
 
-  public OMatchStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public OInternalExecutionPlan createExecutionPlan(OCommandContext ctx) {
     OMatchExecutionPlanner planner = new OMatchExecutionPlanner(this);
     OInternalExecutionPlan result = planner.createExecutionPlan(ctx);

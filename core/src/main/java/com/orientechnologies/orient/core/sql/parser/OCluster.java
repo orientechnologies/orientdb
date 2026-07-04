@@ -19,10 +19,6 @@ public class OCluster extends SimpleNode {
     super(id);
   }
 
-  public OCluster(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public String toString(String prefix) {
     return super.toString(prefix);

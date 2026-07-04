@@ -7,10 +7,6 @@ public class ODeleteEdgeByRidStatement extends ODeleteEdgeStatement {
     super(id);
   }
 
-  public ODeleteEdgeByRidStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public ODeleteEdgeStatement copy() {
     return super.copy();

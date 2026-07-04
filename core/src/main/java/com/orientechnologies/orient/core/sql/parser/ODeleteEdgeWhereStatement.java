@@ -7,10 +7,6 @@ public class ODeleteEdgeWhereStatement extends ODeleteEdgeStatement {
     super(id);
   }
 
-  public ODeleteEdgeWhereStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public ODeleteEdgeStatement copy() {
     return super.copy();

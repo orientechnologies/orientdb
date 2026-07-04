@@ -29,10 +29,6 @@ public class ORightBinaryCondition extends SimpleNode {
     super(id);
   }
 
-  public ORightBinaryCondition(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public ORightBinaryCondition copy() {
     ORightBinaryCondition result = new ORightBinaryCondition(-1);

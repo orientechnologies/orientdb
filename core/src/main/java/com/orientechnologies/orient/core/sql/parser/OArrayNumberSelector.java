@@ -18,10 +18,6 @@ public class OArrayNumberSelector extends SimpleNode {
     super(id);
   }
 
-  public OArrayNumberSelector(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     if (inputValue != null) {
       inputValue.toString(params, builder);

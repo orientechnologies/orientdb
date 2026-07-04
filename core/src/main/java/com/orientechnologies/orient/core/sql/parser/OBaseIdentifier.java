@@ -27,10 +27,6 @@ public class OBaseIdentifier extends SimpleNode {
     super(id);
   }
 
-  public OBaseIdentifier(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public OBaseIdentifier(OIdentifier identifier) {
     this.suffix = new OSuffixIdentifier(identifier);
   }

@@ -23,10 +23,6 @@ public class OArraySelector extends SimpleNode {
     super(id);
   }
 
-  public OArraySelector(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     if (rid != null) {
       rid.toString(params, builder);

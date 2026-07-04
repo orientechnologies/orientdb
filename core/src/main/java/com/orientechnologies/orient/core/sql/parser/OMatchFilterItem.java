@@ -23,10 +23,6 @@ public class OMatchFilterItem extends SimpleNode {
     super(id);
   }
 
-  public OMatchFilterItem(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     if (className != null) {
       builder.append("class: ");

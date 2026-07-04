@@ -19,10 +19,6 @@ public class OCreateVertexStatement extends OStatement {
     super(id);
   }
 
-  public OCreateVertexStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public OInternalExecutionPlan createExecutionPlan(OCommandContext ctx) {
     OCreateVertexExecutionPlanner planner = new OCreateVertexExecutionPlanner(this);

@@ -33,10 +33,6 @@ public class OCreateDatabaseStatement extends SimpleNode implements OAdminStatem
     super(id);
   }
 
-  public OCreateDatabaseStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public void addUser(ODatabaseUserData user) {
     if (this.users == null) {
       this.users = new ArrayList<>();

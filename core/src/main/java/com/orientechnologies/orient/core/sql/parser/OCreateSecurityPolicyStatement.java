@@ -27,10 +27,6 @@ public class OCreateSecurityPolicyStatement extends OSimpleExecStatement {
     super(id);
   }
 
-  public OCreateSecurityPolicyStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public OExecutionStream executeSimple(OCommandContext ctx) {
     ODatabaseSession db = ctx.getDatabase();

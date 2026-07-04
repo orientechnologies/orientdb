@@ -16,10 +16,6 @@ public class OBatch extends SimpleNode {
     super(id);
   }
 
-  public OBatch(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public Integer evaluate(OCommandContext ctx) {
     if (this.num != null) {
       return num.getValue().intValue();

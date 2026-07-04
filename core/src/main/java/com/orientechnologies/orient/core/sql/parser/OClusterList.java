@@ -17,10 +17,6 @@ public class OClusterList extends SimpleNode {
     super(id);
   }
 
-  public OClusterList(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public void toString(Map<Object, Object> params, StringBuilder builder) {
 
     builder.append("cluster:[");

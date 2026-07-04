@@ -24,10 +24,6 @@ public class OTruncateRecordStatement extends OSimpleExecStatement {
     super(id);
   }
 
-  public OTruncateRecordStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public void addRecord(ORid rid) {
     if (this.records == null) {
       this.records = new ArrayList<>();

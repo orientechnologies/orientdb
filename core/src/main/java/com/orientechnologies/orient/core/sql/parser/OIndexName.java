@@ -14,10 +14,6 @@ public class OIndexName extends SimpleNode {
     super(id);
   }
 
-  public OIndexName(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public String getValue() {
     return value;
   }

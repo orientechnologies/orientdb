@@ -12,10 +12,6 @@ public class ORollbackStatement extends OSimpleExecStatement {
     super(id);
   }
 
-  public ORollbackStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public OExecutionStream executeSimple(OCommandContext ctx) {
     ctx.getDatabase().rollback();

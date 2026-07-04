@@ -22,10 +22,6 @@ public class ONotBlock extends OBooleanExpression {
     super(id);
   }
 
-  public ONotBlock(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
     if (sub == null) {

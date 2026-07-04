@@ -27,20 +27,16 @@ public class OCreateSystemUserStatement extends SimpleNode implements OAdminStat
   private static final String ROLE_CLASS = "ORole";
   private static final String ROLE_FIELD_NAME = "name";
 
-  public OCreateSystemUserStatement(int id) {
-    super(id);
-  }
-
-  public OCreateSystemUserStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   protected OIdentifier name;
   protected OIdentifier passwordIdentifier;
   protected String passwordString;
   protected OInputParameter passwordParam;
 
   protected List<OIdentifier> roles = new ArrayList<>();
+
+  public OCreateSystemUserStatement(int id) {
+    super(id);
+  }
 
   @Override
   public OExecutionStream executeSimple(OAdminCommandContext ctx) {

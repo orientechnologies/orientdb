@@ -28,10 +28,6 @@ public class OCreateUserStatement extends OSimpleExecStatement {
     super(id);
   }
 
-  public OCreateUserStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   protected OIdentifier name;
   protected OIdentifier passwordIdentifier;
   protected String passwordString;

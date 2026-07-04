@@ -16,10 +16,6 @@ public class OExpressionStatement extends OSimpleExecStatement {
     super(id);
   }
 
-  public OExpressionStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public OExecutionStream executeSimple(OCommandContext ctx) {
     Object expResult = expression.execute(new OResultInternal(), ctx);

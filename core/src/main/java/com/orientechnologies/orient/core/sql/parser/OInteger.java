@@ -14,10 +14,6 @@ public class OInteger extends ONumber {
     super(id);
   }
 
-  public OInteger(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public Number getValue() {
     return value;
   }

@@ -18,10 +18,6 @@ public class ONodeAllocationData extends SimpleNode {
     super(id);
   }
 
-  public ONodeAllocationData(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public void toGenericStatement(StringBuilder builder) {
     if (add) {

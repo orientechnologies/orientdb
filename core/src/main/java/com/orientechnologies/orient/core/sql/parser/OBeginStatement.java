@@ -15,10 +15,6 @@ public class OBeginStatement extends OSimpleExecStatement {
     super(id);
   }
 
-  public OBeginStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public OExecutionStream executeSimple(OCommandContext ctx) {
     ctx.getDatabase().begin();

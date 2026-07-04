@@ -19,10 +19,6 @@ public class OExistsSystemUserStatement extends SimpleNode implements OAdminStat
     super(id);
   }
 
-  public OExistsSystemUserStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public OExecutionStream executeSimple(OAdminCommandContext ctx) {
 

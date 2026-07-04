@@ -43,10 +43,6 @@ public class OCreateIndexStatement extends ODDLStatement {
     super(id);
   }
 
-  public OCreateIndexStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public void addProperty(Property property) {
     this.propertyList.add(property);
   }

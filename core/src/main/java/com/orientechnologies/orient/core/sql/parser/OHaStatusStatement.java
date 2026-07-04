@@ -26,10 +26,6 @@ public class OHaStatusStatement extends OSimpleExecStatement {
     super(id);
   }
 
-  public OHaStatusStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public boolean isIdempotent() {
     return true;

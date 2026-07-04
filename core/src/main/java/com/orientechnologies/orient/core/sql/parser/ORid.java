@@ -21,10 +21,6 @@ public class ORid extends SimpleNode {
     super(id);
   }
 
-  public ORid(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public String toString(String prefix) {
     return "#" + cluster.getValue() + ":" + position.getValue();

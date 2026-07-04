@@ -19,10 +19,6 @@ public class ODropViewStatement extends ODDLStatement {
     super(id);
   }
 
-  public ODropViewStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public OExecutionStream executeDDL(OCommandContext ctx) {
     OSchema schema = ctx.getDatabase().getMetadata().getSchema();

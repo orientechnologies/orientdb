@@ -20,10 +20,6 @@ public class OMatchesCondition extends OBooleanExpression {
     super(id);
   }
 
-  public OMatchesCondition(OrientSql p, int id) {
-    super(p, id);
-  }
-
   private boolean matches(Object value, String regex, OCommandContext ctx) {
     final String key = "MATCHES_" + regex.hashCode();
     java.util.regex.Pattern p = (java.util.regex.Pattern) ctx.getVariable(key);

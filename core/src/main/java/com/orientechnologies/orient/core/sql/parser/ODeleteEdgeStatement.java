@@ -30,10 +30,6 @@ public class ODeleteEdgeStatement extends OStatement {
     super(id);
   }
 
-  public ODeleteEdgeStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public OInternalExecutionPlan createExecutionPlan(OCommandContext ctx) {
     ODeleteEdgeExecutionPlanner planner = new ODeleteEdgeExecutionPlanner(this);
     OInternalExecutionPlan result = planner.createExecutionPlan(ctx, true);

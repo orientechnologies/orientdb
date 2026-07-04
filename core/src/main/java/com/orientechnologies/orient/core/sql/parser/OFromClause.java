@@ -14,10 +14,6 @@ public class OFromClause extends SimpleNode {
     super(id);
   }
 
-  public OFromClause(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     if (item != null) {
       item.toString(params, builder);

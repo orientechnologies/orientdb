@@ -37,10 +37,6 @@ public class OBaseExpression extends OMathExpression {
     super(id);
   }
 
-  public OBaseExpression(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public OBaseExpression(OIdentifier identifier) {
     super(-1);
     this.identifier = new OBaseIdentifier(identifier);

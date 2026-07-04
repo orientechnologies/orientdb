@@ -20,10 +20,6 @@ public class OFindReferencesStatement extends OStatement {
     super(id);
   }
 
-  public OFindReferencesStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public boolean isIdempotent() {
     return true;

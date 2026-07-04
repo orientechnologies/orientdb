@@ -31,10 +31,6 @@ public class OFunctionCall extends SimpleNode {
     super(id);
   }
 
-  public OFunctionCall(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public boolean isStar() {
 
     if (this.params.size() != 1) {

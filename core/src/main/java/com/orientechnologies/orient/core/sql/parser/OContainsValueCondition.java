@@ -26,10 +26,6 @@ public class OContainsValueCondition extends OBooleanExpression {
     super(id);
   }
 
-  public OContainsValueCondition(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
     if (left.isFunctionAny()) {

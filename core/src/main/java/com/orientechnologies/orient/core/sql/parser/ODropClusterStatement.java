@@ -19,10 +19,6 @@ public class ODropClusterStatement extends ODDLStatement {
     super(id);
   }
 
-  public ODropClusterStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public OExecutionStream executeDDL(OCommandContext ctx) {
     ODatabaseInternal database = (ODatabaseInternal) ctx.getDatabase();

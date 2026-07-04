@@ -37,10 +37,6 @@ public class OInCondition extends OBooleanExpression {
     super(id);
   }
 
-  public OInCondition(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
     Object rightVal = evaluateRight(currentRecord, ctx);

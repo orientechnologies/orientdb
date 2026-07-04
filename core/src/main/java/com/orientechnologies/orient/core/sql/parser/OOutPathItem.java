@@ -10,10 +10,6 @@ public class OOutPathItem extends OMatchPathItem {
     super(id);
   }
 
-  public OOutPathItem(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("-");

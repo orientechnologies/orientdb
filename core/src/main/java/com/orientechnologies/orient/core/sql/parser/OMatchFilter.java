@@ -16,10 +16,6 @@ public class OMatchFilter extends SimpleNode {
     super(id);
   }
 
-  public OMatchFilter(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public String getAlias() {
     for (OMatchFilterItem item : items) {
       if (item.alias != null) {

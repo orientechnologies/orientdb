@@ -34,10 +34,6 @@ public class OCreateClassStatement extends ODDLStatement {
     super(id);
   }
 
-  public OCreateClassStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public OExecutionStream executeDDL(OCommandContext ctx) {
 

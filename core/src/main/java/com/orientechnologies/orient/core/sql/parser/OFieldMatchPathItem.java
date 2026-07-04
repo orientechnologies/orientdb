@@ -20,10 +20,6 @@ public class OFieldMatchPathItem extends OMatchPathItem {
     super(id);
   }
 
-  public OFieldMatchPathItem(OrientSql p, int id) {
-    super(p, id);
-  }
-
   /** Accept the visitor. */
   public boolean isBidirectional() {
     return false;

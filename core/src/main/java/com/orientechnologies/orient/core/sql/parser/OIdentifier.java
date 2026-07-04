@@ -47,10 +47,6 @@ public class OIdentifier extends SimpleNode implements OIdentifierResolver {
     return identifier;
   }
 
-  public OIdentifier(OrientSql p, int id) {
-    super(p, id);
-  }
-
   /**
    * returns the value as is, with back-ticks quoted with backslash
    *

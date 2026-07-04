@@ -20,10 +20,6 @@ public class OUpdateRemoveItem extends SimpleNode {
     super(id);
   }
 
-  public OUpdateRemoveItem(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     left.toString(params, builder);
     if (right != null) {

@@ -20,10 +20,6 @@ public class OInsertBody extends SimpleNode {
     super(id);
   }
 
-  public OInsertBody(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public void toString(Map<Object, Object> params, StringBuilder builder) {
 
     if (identifierList != null) {

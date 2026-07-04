@@ -24,10 +24,6 @@ public class OParenthesisExpression extends OMathExpression {
     super(id);
   }
 
-  public OParenthesisExpression(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public OParenthesisExpression(OExpression exp) {
     super(-1);
     this.expression = exp;

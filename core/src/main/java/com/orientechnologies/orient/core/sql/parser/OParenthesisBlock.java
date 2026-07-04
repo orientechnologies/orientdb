@@ -19,10 +19,6 @@ public class OParenthesisBlock extends OBooleanExpression {
     super(id);
   }
 
-  public OParenthesisBlock(OrientSql p, int id) {
-    super(p, id);
-  }
-
   @Override
   public boolean evaluate(OResult currentRecord, OCommandContext ctx) {
     return subElement.evaluate(currentRecord, ctx);

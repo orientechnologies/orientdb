@@ -19,10 +19,6 @@ public class ODeleteStatement extends OStatement {
     super(id);
   }
 
-  public ODeleteStatement(OrientSql p, int id) {
-    super(p, id);
-  }
-
   public void toString(Map<Object, Object> params, StringBuilder builder) {
     builder.append("DELETE FROM ");
     fromClause.toString(params, builder);
