@@ -511,7 +511,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
       ODatabaseType type,
       ODatabaseId id,
       OrientDBConfig config,
-      ODatabaseTask<Void> createOps) {
+      OCreateDatabaseParameters createParameters) {
     checkDatabaseName(name);
     final ODatabaseDocumentEmbedded embedded;
     synchronized (this) {
@@ -525,10 +525,10 @@ public class OrientDBEmbedded implements OrientDBInternal {
             storage = getDefaultEngine().createLocal(this, id, name, config.getConfigurations());
           }
           embedded = internalCreate(config, storage);
-          if (createOps != null) {
+          if (createParameters != null) {
             OScenarioThreadLocal.executeAsDistributed(
                 () -> {
-                  createOps.call(embedded);
+                  createParameters.postCreateOps(this, embedded);
                   return null;
                 });
           }
@@ -1175,5 +1175,9 @@ public class OrientDBEmbedded implements OrientDBInternal {
   @Override
   public ONodeId getNodeId() {
     return new ONodeId("$$unnamed");
+  }
+
+  public ONodeId resolveNodeId(String name) {
+    return new ONodeId(name);
   }
 }

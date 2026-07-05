@@ -1,12 +1,12 @@
 package com.orientechnologies.orient.distributed.context.simulator;
 
+import com.orientechnologies.orient.core.db.config.OAddNodeInfo;
 import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.OGroupId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.distributed.context.coordination.OCoordinatedDistributedOps;
 import com.orientechnologies.orient.distributed.context.coordination.OVersion;
-import com.orientechnologies.orient.distributed.context.coordination.message.operation.OAddNodeInfo;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OOperationContext;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OOperationMessage;
 import com.orientechnologies.orient.distributed.context.coordination.message.state.ONodeStateNetwork;

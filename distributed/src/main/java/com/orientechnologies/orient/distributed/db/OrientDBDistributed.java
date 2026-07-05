@@ -10,19 +10,20 @@ import com.orientechnologies.common.thread.OThreadPoolExecutors;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.OCreateDatabaseParameters;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentEmbeddedPooled;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.ODatabasePoolInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.orientechnologies.orient.core.db.ODatabaseTask;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.ONetworkMessage;
 import com.orientechnologies.orient.core.db.OSharedContextEmbedded;
 import com.orientechnologies.orient.core.db.OSystemDatabase;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.OrientDBEmbedded;
+import com.orientechnologies.orient.core.db.config.OAddNodeInfo;
 import com.orientechnologies.orient.core.db.config.ONodeConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -31,6 +32,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.OGroupId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
+import com.orientechnologies.orient.core.transaction.ONodeRole;
 import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
@@ -48,7 +50,6 @@ import com.orientechnologies.orient.distributed.context.coordination.dbs.OCanSyn
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabaseState;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabaseStateChangeListener;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabasesTopology;
-import com.orientechnologies.orient.distributed.context.coordination.dbs.ONodeRole;
 import com.orientechnologies.orient.distributed.context.coordination.message.OCanSync;
 import com.orientechnologies.orient.distributed.context.coordination.message.OCanSyncAccept;
 import com.orientechnologies.orient.distributed.context.coordination.message.OConfirmedOps;
@@ -68,7 +69,6 @@ import com.orientechnologies.orient.distributed.context.coordination.message.OSt
 import com.orientechnologies.orient.distributed.context.coordination.message.OSyncData;
 import com.orientechnologies.orient.distributed.context.coordination.message.OSyncRequest;
 import com.orientechnologies.orient.distributed.context.coordination.message.OTopologyPing;
-import com.orientechnologies.orient.distributed.context.coordination.message.operation.OAddNodeInfo;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OEstablishTopology;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OMergeNode;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OOperationContext;
@@ -366,7 +366,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
         try (ODatabaseDocumentEmbedded db = openNoAuthorization(databaseName)) {
           logger.infoNode(getNodeName(), "Opening database '%s'...", databaseName);
           if (this.nodeState.getDatabaseTopology().getDatabaseId(databaseName).isEmpty()) {
-            declareDatabaseFlow(databaseName, db.getStorage().getDatabaseId()).get();
+            declareDatabaseFlow(databaseName, db.getStorage().getDatabaseId(), null).get();
             setDatabaseState(db.getStorage().getDatabaseId(), getNodeId(), ODatabaseState.Online);
           } else {
             setDatabaseState(db.getStorage().getDatabaseId(), getNodeId(), ODatabaseState.Online);
@@ -756,12 +756,12 @@ public class OrientDBDistributed extends OrientDBEmbedded
       ODatabaseType type,
       ODatabaseId id,
       OrientDBConfig config,
-      ODatabaseTask<Void> createOps) {
+      OCreateDatabaseParameters createParameters) {
 
     if (isDistributedDisabled(name)) {
-      super.create(name, user, password, type, id, config, createOps);
+      super.create(name, user, password, type, id, config, createParameters);
     } else {
-      createDatabaseFlow(name, user, password, type, id, config, createOps);
+      createDatabaseFlow(name, user, password, type, id, config, createParameters);
     }
   }
 
@@ -772,9 +772,9 @@ public class OrientDBDistributed extends OrientDBEmbedded
       ODatabaseType type,
       ODatabaseId dbId,
       OrientDBConfig config,
-      ODatabaseTask<Void> createOps) {
+      OCreateDatabaseParameters createOps) {
     try {
-      declareDatabaseFlow(name, dbId).get(10, TimeUnit.MINUTES);
+      declareDatabaseFlow(name, dbId, createOps).get(10, TimeUnit.MINUTES);
       super.create(name, user, password, type, dbId, config, createOps);
       setDatabaseState(dbId, getNodeState().getNodeId(), ODatabaseState.Online);
       getNodeState().getOps().waitOnlineAll(dbId, Optional.of(10 * 60 * 1000L));
@@ -786,8 +786,9 @@ public class OrientDBDistributed extends OrientDBEmbedded
     }
   }
 
-  public Future<Optional<OAcceptResult>> declareDatabaseFlow(String name, ODatabaseId dbId) {
-    return retryOperation(new ODeclareDatabaseRetryOperation(dbId, name));
+  public Future<Optional<OAcceptResult>> declareDatabaseFlow(
+      String name, ODatabaseId dbId, OCreateDatabaseParameters createOps) {
+    return retryOperation(new ODeclareDatabaseRetryOperation(dbId, name, createOps));
   }
 
   public Future<Optional<OAcceptResult>> retryOperation(ORetryOperation operation) {
@@ -1413,12 +1414,6 @@ public class OrientDBDistributed extends OrientDBEmbedded
     }
   }
 
-  public Set<String> getAvailableNodeNotLocalNames(String name) {
-    Set<String> nodes = getAvailableNodeNames(name);
-    nodes.remove(getNodeName());
-    return nodes;
-  }
-
   public Set<String> getAvailableNodeNames(String name) {
     Optional<ODatabaseId> id = getNodeState().getDatabaseTopology().getDatabaseId(name);
     if (id.isPresent()) {
@@ -1448,13 +1443,20 @@ public class OrientDBDistributed extends OrientDBEmbedded
     }
   }
 
-  public int getOnlineMasters(String databaseName) {
+  public Set<ONodeId> getOnlineMainsId(ODatabaseId db) {
+    ODatabasesTopology databaseTopology = getNodeState().getDatabaseTopology();
+    return databaseTopology.getOnlineNodes(db).stream()
+        .filter(x -> databaseTopology.isMain(db, x))
+        .collect(Collectors.toSet());
+  }
+
+  public int getOnlineMains(String databaseName) {
     ODatabasesTopology databaseTopology = getNodeState().getDatabaseTopology();
     Optional<ODatabaseId> id = databaseTopology.getDatabaseId(databaseName);
     if (id.isPresent()) {
       return (int)
           databaseTopology.getOnlineNodes(id.get()).stream()
-              .filter((x) -> databaseTopology.isMain(id.get(), x))
+              .filter(x -> databaseTopology.isMain(id.get(), x))
               .count();
     } else {
       return 0;

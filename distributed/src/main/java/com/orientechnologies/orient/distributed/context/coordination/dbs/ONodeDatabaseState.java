@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.distributed.context.coordination.dbs;
 
 import com.orientechnologies.orient.core.transaction.ONodeId;
+import com.orientechnologies.orient.core.transaction.ONodeRole;
 import com.orientechnologies.orient.distributed.context.ODatabaseNodeStore;
 import com.orientechnologies.orient.distributed.context.coordination.message.state.ODatabaseMemberNetwork;
 

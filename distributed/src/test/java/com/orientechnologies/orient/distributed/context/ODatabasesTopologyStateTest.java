@@ -5,8 +5,10 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
+import com.orientechnologies.orient.core.db.config.OAddNodeInfo;
 import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
+import com.orientechnologies.orient.core.transaction.ONodeRole;
 import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.distributed.context.coordination.OVersion;
@@ -14,9 +16,7 @@ import com.orientechnologies.orient.distributed.context.coordination.dbs.OCanSyn
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabaseState;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabaseStateChangeListener;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabasesTopologyState;
-import com.orientechnologies.orient.distributed.context.coordination.dbs.ONodeRole;
 import com.orientechnologies.orient.distributed.context.coordination.message.OCanSyncAccept;
-import com.orientechnologies.orient.distributed.context.coordination.message.operation.OAddNodeInfo;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAlreadyPromised;
 import com.orientechnologies.orient.distributed.context.coordination.result.ONodeAlreadyPresent;

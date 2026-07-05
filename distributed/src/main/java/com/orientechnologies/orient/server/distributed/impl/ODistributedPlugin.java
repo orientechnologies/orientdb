@@ -334,7 +334,7 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
         }
 
         // all online masters
-        onlineMasters = ctx.getOnlineMasters(databaseName);
+        onlineMasters = ctx.getOnlineMains(databaseName);
       } else {
         nodesConcurToTheQuorum = new HashSet<>(nodes);
         onlineMasters = availableNodes;

@@ -67,6 +67,7 @@ import com.orientechnologies.orient.core.db.OCachedDatabasePoolFactory;
 import com.orientechnologies.orient.core.db.OCachedDatabasePoolFactoryImpl;
 import com.orientechnologies.orient.core.db.OCancellableTimer;
 import com.orientechnologies.orient.core.db.OCancellableTimerTask;
+import com.orientechnologies.orient.core.db.OCreateDatabaseParameters;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabasePoolImpl;
 import com.orientechnologies.orient.core.db.ODatabasePoolInternal;
@@ -795,7 +796,7 @@ public class OrientDBRemote implements OrientDBInternal {
       ODatabaseType type,
       ODatabaseId id,
       OrientDBConfig config,
-      ODatabaseTask<Void> createOps) {
+      OCreateDatabaseParameters createParameters) {
     throw new UnsupportedOperationException();
   }
 

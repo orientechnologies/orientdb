@@ -31,7 +31,6 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.OCancellableTimer;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.OSystemDatabase;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -737,10 +736,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
   public void incSentRequest() {
     this.totalSentRequests.incrementAndGet();
-  }
-
-  public Set<String> getAvailableNodesButLocal(ODatabaseSession database) {
-    return context.getAvailableNodeNotLocalNames(databaseName);
   }
 
   public OrientDBDistributed getContext() {

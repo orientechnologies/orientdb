@@ -5369,7 +5369,7 @@ ONodeData NodeData():
     (
       jjtThis.name = Identifier()
       |
-      jjtThis.nameParam = InputParameter()
+      jjtThis.name = InputParameter()
     )
     [
       <ROLE>
@@ -5377,6 +5377,8 @@ ONodeData NodeData():
        <MAIN> {jjtThis.main =true; }
        |
        <REPLICA> {jjtThis.main =false; }
+       |
+       jjtThis.roleParameter = InputParameter()
       )
     ]
 )

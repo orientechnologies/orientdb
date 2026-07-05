@@ -383,7 +383,7 @@ public interface OrientDBInternal extends AutoCloseable, OSchedulerInternal {
       ODatabaseType type,
       ODatabaseId id,
       OrientDBConfig config,
-      ODatabaseTask<Void> createOps);
+      OCreateDatabaseParameters createParameters);
 
   OrientDBConfig getConfigurations();
 

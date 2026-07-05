@@ -2,6 +2,7 @@ package com.orientechnologies.orient.distributed.context.coordination.dbs;
 
 import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
+import com.orientechnologies.orient.core.transaction.ONodeRole;
 import com.orientechnologies.orient.distributed.context.coordination.OVersion;
 import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncState;
 import java.util.Collection;

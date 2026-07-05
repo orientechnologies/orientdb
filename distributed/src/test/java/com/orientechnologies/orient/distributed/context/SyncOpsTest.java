@@ -59,7 +59,7 @@ public class SyncOpsTest {
         .setQuorum(1);
     context1 = OrientDBInternal.distributed("./target/sync_receive", config2.build()).newOrientDB();
     OrientDBDistributed ctx1 = (OrientDBDistributed) OrientDBInternal.extract(context1);
-    ctx1.declareDatabaseFlow("test", dbId).get(1, TimeUnit.MINUTES);
+    ctx1.declareDatabaseFlow("test", dbId, null).get(1, TimeUnit.MINUTES);
   }
 
   private class PassTrough implements RequestNext, MessageSender {

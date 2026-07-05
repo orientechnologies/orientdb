@@ -1,12 +1,13 @@
 package com.orientechnologies.orient.distributed.context.coordination.dbs;
 
+import com.orientechnologies.orient.core.db.config.OAddNodeInfo;
 import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
+import com.orientechnologies.orient.core.transaction.ONodeRole;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.distributed.context.coordination.OVersion;
 import com.orientechnologies.orient.distributed.context.coordination.OVersionPromise;
 import com.orientechnologies.orient.distributed.context.coordination.message.OCanSyncAccept;
-import com.orientechnologies.orient.distributed.context.coordination.message.operation.OAddNodeInfo;
 import com.orientechnologies.orient.distributed.context.coordination.message.state.ODatabaseMemberNetwork;
 import com.orientechnologies.orient.distributed.context.coordination.message.state.ODatabaseStateNetwork;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;

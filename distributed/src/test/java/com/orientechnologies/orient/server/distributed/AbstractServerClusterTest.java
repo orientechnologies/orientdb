@@ -23,7 +23,6 @@ import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OrientDB;
-import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.OVertex;
@@ -259,9 +258,7 @@ public abstract class AbstractServerClusterTest {
     final ServerRun master = it.next();
 
     if (iCreateDatabase) {
-      OrientDB orientDB =
-          new OrientDB(
-              "embedded:" + master.getServerHome() + "/databases/", OrientDBConfig.defaultConfig());
+      OrientDB orientDB = master.getServerInstance().getContext();
 
       if (orientDB.exists(getDatabaseName())) orientDB.drop(getDatabaseName());
 

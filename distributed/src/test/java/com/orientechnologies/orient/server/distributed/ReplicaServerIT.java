@@ -21,11 +21,13 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassAllocation;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.setup.ServerRun;
+import java.util.Iterator;
 import java.util.List;
 import org.junit.Assert;
 import org.junit.Test;
@@ -43,6 +45,44 @@ public class ReplicaServerIT extends AbstractServerClusterTest {
     init(SERVERS);
     prepare(false);
     execute();
+  }
+
+  /** Create the database on first node only */
+  protected void prepare(final boolean iCopyDatabaseToNodes, final boolean iCreateDatabase)
+      throws Exception {
+    // CREATE THE DATABASE
+    startServers();
+    final Iterator<ServerRun> it = serverInstance.iterator();
+    final ServerRun master = it.next();
+
+    if (iCreateDatabase) {
+      OrientDB orientDB = master.getServerInstance().getContext();
+
+      if (orientDB.exists(getDatabaseName())) orientDB.drop(getDatabaseName());
+
+      orientDB.execute(
+          "create database ? plocal users(admin identified by 'adminpwd' role admin) nodes (europe0"
+              + " role main, europe1 role replica, europe2 role replica) ",
+          getDatabaseName());
+
+      final ODatabaseDocument graph = orientDB.open(getDatabaseName(), "admin", "adminpwd");
+      try {
+        onAfterDatabaseCreation(graph);
+      } finally {
+        graph.close();
+        orientDB.close();
+      }
+    }
+
+    // COPY DATABASE TO OTHER SERVERS
+    while (it.hasNext()) {
+      final ServerRun replicaSrv = it.next();
+
+      replicaSrv.deleteNode();
+
+      if (iCopyDatabaseToNodes)
+        master.copyDatabase(getDatabaseName(), replicaSrv.getDatabasePath(getDatabaseName()));
+    }
   }
 
   @Override
@@ -137,7 +177,9 @@ public class ReplicaServerIT extends AbstractServerClusterTest {
         OClassAllocation allocation = cl.getAllocation();
         if (allocation != null) {
           final List<String> clusters = allocation.getAllocationClusters(nodeName);
-          Assert.assertTrue(clusters.isEmpty());
+          Assert.assertTrue(
+              "found " + clusters + " for replica node " + nodeName,
+              clusters == null || clusters.isEmpty());
         }
       }
     }

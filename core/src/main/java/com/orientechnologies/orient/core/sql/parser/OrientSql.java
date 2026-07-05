@@ -25868,7 +25868,7 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
         case HOOK:
         case COLON:
           {
-            jjtn000.nameParam = InputParameter();
+            jjtn000.name = InputParameter();
             break;
           }
         default:
@@ -25891,6 +25891,12 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
                 {
                   jj_consume_token(REPLICA);
                   jjtn000.main = false;
+                  break;
+                }
+              case HOOK:
+              case COLON:
+                {
+                  jjtn000.roleParameter = InputParameter();
                   break;
                 }
               default:
@@ -30165,6 +30171,13 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
     return false;
   }
 
+  private boolean jj_3R_DropSystemUserStatement_5460_5_87() {
+    if (jj_scan_token(DROP)) return true;
+    if (jj_scan_token(SYSTEM)) return true;
+    if (jj_scan_token(USER)) return true;
+    return false;
+  }
+
   private boolean jj_3_113() {
     if (jj_3R_Modifier_2162_5_177()) return true;
     return false;
@@ -30181,13 +30194,6 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
         break;
       }
     }
-    return false;
-  }
-
-  private boolean jj_3R_DropSystemUserStatement_5458_5_87() {
-    if (jj_scan_token(DROP)) return true;
-    if (jj_scan_token(SYSTEM)) return true;
-    if (jj_scan_token(USER)) return true;
     return false;
   }
 
@@ -30216,7 +30222,7 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
     return false;
   }
 
-  private boolean jj_3R_ExistsDatabaseStatement_5442_3_85() {
+  private boolean jj_3R_ExistsDatabaseStatement_5444_3_85() {
     if (jj_scan_token(EXISTS)) return true;
     if (jj_scan_token(DATABASE)) return true;
     return false;
@@ -30244,14 +30250,14 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
     return false;
   }
 
-  private boolean jj_3R_BaseExpression_2344_17_439() {
-    if (jj_3R_Modifier_2162_5_177()) return true;
+  private boolean jj_3R_DropDatabaseStatement_5430_3_84() {
+    if (jj_scan_token(DROP)) return true;
+    if (jj_scan_token(DATABASE)) return true;
     return false;
   }
 
-  private boolean jj_3R_DropDatabaseStatement_5428_3_84() {
-    if (jj_scan_token(DROP)) return true;
-    if (jj_scan_token(DATABASE)) return true;
+  private boolean jj_3R_BaseExpression_2344_17_439() {
+    if (jj_3R_Modifier_2162_5_177()) return true;
     return false;
   }
 
@@ -30317,6 +30323,12 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
     return false;
   }
 
+  private boolean jj_3R_CreateDatabaseStatement_5394_3_83() {
+    if (jj_scan_token(CREATE)) return true;
+    if (jj_scan_token(DATABASE)) return true;
+    return false;
+  }
+
   private boolean jj_3R_ParenthesisExpression_2320_5_193() {
     if (jj_scan_token(LPAREN)) return true;
     Token xsp;
@@ -30329,12 +30341,6 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
       }
     }
     if (jj_scan_token(RPAREN)) return true;
-    return false;
-  }
-
-  private boolean jj_3R_CreateDatabaseStatement_5392_3_83() {
-    if (jj_scan_token(CREATE)) return true;
-    if (jj_scan_token(DATABASE)) return true;
     return false;
   }
 
@@ -36126,7 +36132,7 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
   }
 
   private boolean jj_3_11() {
-    if (jj_3R_DropSystemUserStatement_5458_5_87()) return true;
+    if (jj_3R_DropSystemUserStatement_5460_5_87()) return true;
     return false;
   }
 
@@ -36141,7 +36147,7 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
   }
 
   private boolean jj_3_9() {
-    if (jj_3R_ExistsDatabaseStatement_5442_3_85()) return true;
+    if (jj_3R_ExistsDatabaseStatement_5444_3_85()) return true;
     return false;
   }
 
@@ -36151,7 +36157,7 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
   }
 
   private boolean jj_3_8() {
-    if (jj_3R_DropDatabaseStatement_5428_3_84()) return true;
+    if (jj_3R_DropDatabaseStatement_5430_3_84()) return true;
     return false;
   }
 
@@ -36161,7 +36167,7 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
   }
 
   private boolean jj_3_7() {
-    if (jj_3R_CreateDatabaseStatement_5392_3_83()) return true;
+    if (jj_3R_CreateDatabaseStatement_5394_3_83()) return true;
     return false;
   }
 
@@ -41734,7 +41740,7 @@ public class OrientSql /*@bgen(jjtree)*/ implements OrientSqlTreeConstants, Orie
           0x400,
           0x0,
           0x3000000,
-          0x0,
+          0x3000000,
           0x0,
           0x3000000,
           0x0,

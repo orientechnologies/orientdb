@@ -5,7 +5,7 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.command.OAdminCommandContext;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.OCreateDatabaseParameters;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.OrientDBConfigBuilder;
@@ -76,22 +76,9 @@ public class OCreateDatabaseStatement extends SimpleNode implements OAdminStatem
         if (users != null && !users.isEmpty()) {
           configBuilder = configBuilder.addConfig(OGlobalConfiguration.CREATE_DEFAULT_USERS, false);
         }
-
+        OCreateDatabaseParameters parameters = new OCreateDatabaseParameters(users, nodes, ctx);
         server.create(
-            dbName,
-            null,
-            null,
-            dbType,
-            new ODatabaseId(),
-            configBuilder.build(),
-            (session) -> {
-              if (users != null && !users.isEmpty()) {
-                for (ODatabaseUserData user : users) {
-                  user.executeCreate((ODatabaseDocumentInternal) session, ctx);
-                }
-              }
-              return null;
-            });
+            dbName, null, null, dbType, new ODatabaseId(), configBuilder.build(), parameters);
         result.setProperty("created", true);
       } catch (Exception e) {
         throw OException.wrapException(

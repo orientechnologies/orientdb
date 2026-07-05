@@ -24,6 +24,21 @@ public class OCreateDatabaseStatementTest extends OParserTestAbstract {
     checkRightSyntaxServer(
         "CREATE DATABASE foo plocal users (foo identified by 'pippo' role admin)"
             + " nodes (node1 role main, node2 role main, node3 role replica)");
+    checkRightSyntaxServer(
+        "CREATE DATABASE foo plocal users (foo identified by 'pippo' role admin)"
+            + " nodes (node1 role ?, node2 role ?)");
+    checkRightSyntaxServer(
+        "CREATE DATABASE foo plocal users (foo identified by 'pippo' role admin)"
+            + " nodes (? role ?, ? role ?)");
+    checkRightSyntaxServer(
+        "CREATE DATABASE foo plocal users (foo identified by 'pippo' role admin)"
+            + " nodes (? role main, ? role replica)");
+
+    checkRightSyntaxServer(
+        "CREATE DATABASE foo plocal users (foo identified by 'pippo' role admin)" + " nodes (?,?)");
+    checkRightSyntaxServer(
+        "CREATE DATABASE foo plocal users (foo identified by 'pippo' role admin)"
+            + " nodes (node1,node2)");
 
     checkWrongSyntax("CREATE DATABASE foo");
     checkWrongSyntax("CREATE DATABASE");

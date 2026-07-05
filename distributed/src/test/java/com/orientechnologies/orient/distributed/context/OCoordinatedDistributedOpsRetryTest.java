@@ -4,9 +4,11 @@ import static org.junit.Assert.assertTrue;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
+import com.orientechnologies.orient.core.db.config.OAddNodeInfo;
 import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.OGroupId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
+import com.orientechnologies.orient.core.transaction.ONodeRole;
 import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
@@ -18,9 +20,7 @@ import com.orientechnologies.orient.distributed.context.coordination.OResponseCo
 import com.orientechnologies.orient.distributed.context.coordination.action.OCompleteAction;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabaseState;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabaseStateChangeListener;
-import com.orientechnologies.orient.distributed.context.coordination.dbs.ONodeRole;
 import com.orientechnologies.orient.distributed.context.coordination.message.OProposeOp;
-import com.orientechnologies.orient.distributed.context.coordination.message.operation.OAddNodeInfo;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.ODeclareDbMessage;
 import com.orientechnologies.orient.distributed.context.coordination.message.state.ONodeStateNetwork;
 import com.orientechnologies.orient.distributed.context.coordination.message.state.OTopologyStateNetwork;

@@ -1,8 +1,8 @@
 package com.orientechnologies.orient.distributed.context.coordination.message.state;
 
 import com.orientechnologies.orient.core.transaction.ONodeId;
+import com.orientechnologies.orient.core.transaction.ONodeRole;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabaseState;
-import com.orientechnologies.orient.distributed.context.coordination.dbs.ONodeRole;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;

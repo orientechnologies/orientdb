@@ -2,9 +2,9 @@ package com.orientechnologies.orient.distributed.context.coordination.message.op
 
 import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
+import com.orientechnologies.orient.core.transaction.ONodeRole;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.distributed.context.coordination.OVersion;
-import com.orientechnologies.orient.distributed.context.coordination.dbs.ONodeRole;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import java.io.DataInput;
 import java.io.DataOutput;

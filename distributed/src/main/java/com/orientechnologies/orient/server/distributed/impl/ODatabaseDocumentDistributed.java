@@ -101,7 +101,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -385,7 +384,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
               getName(), dManager, localDistributedDatabase, getLocalNodeId(), nretry, delay);
       int quorum = getContext().getNodeState().getOps().getDatabaseQuorum(getDatabaseId());
 
-      final int availableNodes = getContext().getOnlineMasters(getName());
+      final int availableNodes = getContext().getOnlineMains(getName());
 
       if (quorum > availableNodes) {
         Set<String> online = getContext().getAvailableNodeNames(getName());
@@ -1453,14 +1452,10 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     try {
       logger.infoNode(
           getLocalNodeId(), "Reassigning ownership of clusters for database %s...", getName());
-      final Set<ONodeId> availableNodes = getContext().getAvailableNodeIds(getName());
+
+      final Set<ONodeId> availableNodes = getContext().getOnlineMainsId(getDatabaseId());
 
       final OSchema schema = getMetadata().getSchema();
-      // FILTER OUT NON MASTER SERVER
-      for (Iterator<ONodeId> it = availableNodes.iterator(); it.hasNext(); ) {
-        final ONodeId node = it.next();
-        if (getContext().isNodeMaster(node, getName())) it.remove();
-      }
 
       for (final OClass clazz : schema.getClasses()) {
         ((OClassDistributed) clazz)

@@ -1,24 +1,24 @@
 package com.orientechnologies.orient.core.command;
 
-import com.orientechnologies.orient.core.db.OrientDBInternal;
+import com.orientechnologies.orient.core.db.OrientDBEmbedded;
 import java.util.Map;
 
 public class OBasicAdminCommandContext extends OBasicCommandContext
     implements OAdminCommandContext {
 
-  private OrientDBInternal server;
+  private OrientDBEmbedded context;
 
-  public OBasicAdminCommandContext(OrientDBInternal server, Map<Object, Object> args) {
-    this.server = server;
+  public OBasicAdminCommandContext(OrientDBEmbedded server, Map<Object, Object> args) {
+    this.context = server;
     setInputParameters(args);
   }
 
-  public OBasicAdminCommandContext(OrientDBInternal server, Object[] args) {
-    this.server = server;
+  public OBasicAdminCommandContext(OrientDBEmbedded server, Object[] args) {
+    this.context = server;
     setArrayParameters(args);
   }
 
-  public OrientDBInternal getGlobalContext() {
-    return server;
+  public OrientDBEmbedded getGlobalContext() {
+    return context;
   }
 }

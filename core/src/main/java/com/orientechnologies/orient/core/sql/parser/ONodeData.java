@@ -2,14 +2,18 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=false,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.orient.core.command.OAdminCommandContext;
+import com.orientechnologies.orient.core.db.config.OAddNodeInfo;
+import com.orientechnologies.orient.core.transaction.ONodeId;
+import com.orientechnologies.orient.core.transaction.ONodeRole;
 import java.util.Map;
 
 public class ONodeData extends SimpleNode {
 
-  protected OIdentifier name;
-  protected OInputParameter nameParam;
+  protected OIdentifierResolver name;
   // Just to values for now ... just use a flag;
-  protected boolean main;
+  protected boolean main = true;
+  protected OInputParameter roleParameter;
 
   public ONodeData(int id) {
     super(id);
@@ -19,9 +23,26 @@ public class ONodeData extends SimpleNode {
   public void toGenericStatement(StringBuilder builder) {}
 
   @Override
-  public void toString(Map<Object, Object> params, StringBuilder builder) {
-    // TODO Auto-generated method stub
+  public void toString(Map<Object, Object> params, StringBuilder builder) {}
 
+  public OAddNodeInfo toAddNodeInfo(OAdminCommandContext ctx) {
+    return new OAddNodeInfo(getNodeId(ctx), getNodeRole(ctx));
+  }
+
+  public ONodeRole getNodeRole(OAdminCommandContext ctx) {
+    if (roleParameter != null) {
+      String role = roleParameter.resolveIdentifierString(ctx);
+      return ONodeRole.fromString(role);
+    } else if (main) {
+      return ONodeRole.Main;
+    } else {
+      return ONodeRole.Replica;
+    }
+  }
+
+  public ONodeId getNodeId(OAdminCommandContext ctx) {
+    String name = this.name.resolveIdentifierString(ctx);
+    return ctx.getGlobalContext().resolveNodeId(name);
   }
 }
 /* JavaCC - OriginalChecksum=f9448adb52fcf0d21d6d138522b669a8 (do not edit this line) */

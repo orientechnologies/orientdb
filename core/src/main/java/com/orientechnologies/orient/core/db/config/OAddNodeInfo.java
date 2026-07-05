@@ -1,7 +1,7 @@
-package com.orientechnologies.orient.distributed.context.coordination.message.operation;
+package com.orientechnologies.orient.core.db.config;
 
 import com.orientechnologies.orient.core.transaction.ONodeId;
-import com.orientechnologies.orient.distributed.context.coordination.dbs.ONodeRole;
+import com.orientechnologies.orient.core.transaction.ONodeRole;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;

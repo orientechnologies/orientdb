@@ -1,8 +1,10 @@
 package com.orientechnologies.orient.distributed.context.coordination;
 
+import com.orientechnologies.orient.core.db.config.OAddNodeInfo;
 import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.OGroupId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
+import com.orientechnologies.orient.core.transaction.ONodeRole;
 import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
@@ -11,11 +13,9 @@ import com.orientechnologies.orient.distributed.context.coordination.action.OCom
 import com.orientechnologies.orient.distributed.context.coordination.dbs.OCanSyncResult;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabaseState;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabasesTopology;
-import com.orientechnologies.orient.distributed.context.coordination.dbs.ONodeRole;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ONotificationAction;
 import com.orientechnologies.orient.distributed.context.coordination.message.OCanSyncAccept;
 import com.orientechnologies.orient.distributed.context.coordination.message.ODistributedMessage;
-import com.orientechnologies.orient.distributed.context.coordination.message.operation.OAddNodeInfo;
 import com.orientechnologies.orient.distributed.context.coordination.message.state.ONodeStateNetwork;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncId;
