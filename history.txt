@@ -28,6 +28,15 @@ This document contains the last changes of OrientDB Community Edition.
 
 
 -----------------------------------------------------------------------------------------------------------------------------------
+version 3.2.54 - (July, 5 2026)
+
+# Core
+- fix: correctly handled null position when execute order by using indexes, issue #10807
+
+# Remote
+- Hardening of binary protocol, directly close connection in case of first request miss authentication
+
+-----------------------------------------------------------------------------------------------------------------------------------
 version 3.2.53 - (June, 2 2026)
 
 # Core
