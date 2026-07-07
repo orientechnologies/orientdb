@@ -278,8 +278,8 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
         // cancel the promised and try to promise e apply the message that reached consensus
         var notPromised = this.promised.removeNotPromised(promise);
         if (notPromised.isPresent()) {
-          var promisedPromise = this.sequenceManager.promised(promise.getId().getPosition());
-          // All the times not null isn't?
+          var promisedPromise =
+              this.sequenceManager.promised(notPromised.get().getPromiseId().getId().getPosition());
           if (promisedPromise != null) {
             consensusFailure(promisedPromise);
           }

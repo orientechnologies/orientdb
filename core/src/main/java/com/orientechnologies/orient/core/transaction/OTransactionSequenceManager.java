@@ -86,8 +86,12 @@ public class OTransactionSequenceManager {
     OTransactionIdPromise promised = this.promisedSequential[transactionId.getPosition()];
     if (promised != null) {
       if (promised.getId().getSequence() == transactionId.getSequence()) {
-        this.sequentials[transactionId.getPosition()] = transactionId.getSequence();
-        this.promisedSequential[transactionId.getPosition()] = null;
+        if (promised.getCoordinator().equals(promise.getCoordinator())) {
+          this.sequentials[transactionId.getPosition()] = transactionId.getSequence();
+          this.promisedSequential[transactionId.getPosition()] = null;
+        } else {
+          return ValidationResult.ALREADY_PROMISED;
+        }
       } else {
         if (promised.getId().getSequence() > transactionId.getSequence()) {
           return ValidationResult.ALREADY_PRESENT;
