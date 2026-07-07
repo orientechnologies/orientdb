@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.distributed.context.retryable;
 
 import com.orientechnologies.orient.core.transaction.ODatabaseId;
-import com.orientechnologies.orient.distributed.context.coordination.dbs.ONodeRole;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OAddNodeInfo;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.ODeclareDbMessage;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
@@ -17,7 +16,7 @@ public record ODeclareDatabaseRetryOperation(ODatabaseId dbId, String name)
       OrientDBDistributed ctx, OCompleteExecution cmplete, Optional<OAcceptResult> previousResult) {
     var members =
         ctx.getNodeState().getNetworkMembers().stream()
-            .map((n) -> new OAddNodeInfo(n, ONodeRole.Main))
+            .map(OAddNodeInfo::main)
             .collect(Collectors.toSet());
     int minimumQuorum = members.size() / 2 + 1;
 

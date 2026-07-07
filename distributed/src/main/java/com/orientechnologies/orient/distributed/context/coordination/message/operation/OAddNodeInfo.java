@@ -8,6 +8,10 @@ import java.io.IOException;
 
 public record OAddNodeInfo(ONodeId node, ONodeRole role) {
 
+  public static OAddNodeInfo main(ONodeId node) {
+    return new OAddNodeInfo(node, ONodeRole.Main);
+  }
+
   public void writeNetwork(DataOutput out) throws IOException {
     node.writeNetwork(out);
     role.writeNetwork(out);

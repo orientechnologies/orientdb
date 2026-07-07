@@ -1521,7 +1521,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
       for (ONodeId node : members) {
         ODatabaseState state = databaseTopology.getState(id, node);
         if (ODatabaseState.NotAvailable.equals(state)) {
-          nodes.add(new OAddNodeInfo(node, ONodeRole.Main));
+          nodes.add(OAddNodeInfo.main(node));
         }
       }
       if (!nodes.isEmpty()) {
