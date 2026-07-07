@@ -24,6 +24,7 @@ import com.orientechnologies.orient.distributed.context.simulator.TestAction;
 import com.orientechnologies.orient.distributed.context.simulator.TestDistributedMessage;
 import com.orientechnologies.orient.distributed.context.simulator.TestOperationContext;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -49,6 +50,87 @@ public class OFlowSimulator implements ODatabaseStateChangeListener, ONodeStateU
   @Override
   public void update(ONodeStateStore newState) {}
 
+  /** Run to message concurrently the second will be the one failing because of the order of execution.
+   *
+   * @param message
+   * @param messageSecond
+   * @return
+   */
+  public void executeConcurrently(OOperationMessage message, OOperationMessage messageSecond) {
+    var nodeId = nodes.get(0);
+    var node = contexts.get(nodeId);
+    TestAction action = new TestAction(node.getOps());
+    var start = node.getOps().start(action);
+    assertTrue(start.isPresent());
+    var promise = start.get().promise();
+    Set<ONodeId> partecipatingNodes = start.get().nodes();
+    var cm = new TestDistributedMessage(message, promise);
+
+    var nodeIdSecond = nodes.get(1);
+    var nodeSecond = contexts.get(nodeIdSecond);
+    TestAction actionSecond = new TestAction(nodeSecond.getOps());
+    var startSecond = nodeSecond.getOps().start(actionSecond);
+    assertTrue(startSecond.isPresent());
+    var promiseSecond = startSecond.get().promise();
+    var cmSecond = new TestDistributedMessage(messageSecond, promiseSecond);
+    executeConcurrentTwoPhase(
+        cm, cmSecond, node, nodeSecond, action, actionSecond, partecipatingNodes);
+  }
+
+  private void executeConcurrentTwoPhase(
+      ODistributedMessage message,
+      ODistributedMessage secondMessage,
+      TestOperationContext coordinator,
+      TestOperationContext secondCoordinator,
+      TestAction action,
+      TestAction secondAction,
+      Set<ONodeId> partecipatingNodes) {
+
+    var firstFlow = new ArrayList<>(partecipatingNodes);
+    var secondFlow = new ArrayList<>(partecipatingNodes);
+    Collections.reverse(firstFlow);
+
+    // First Phase
+    List<ORawPair<ONodeId, Optional<OAcceptResult>>> resultsFirst = new ArrayList<>();
+    List<ORawPair<ONodeId, Optional<OAcceptResult>>> resultsSecond = new ArrayList<>();
+    for (int i = 0; i < firstFlow.size(); i++) {
+      var nodeToFirst = firstFlow.get(i);
+      var context = contexts.get(nodeToFirst);
+      var firstResult = validateMessage(message, context);
+      resultsFirst.add(new ORawPair<>(nodeToFirst, firstResult));
+
+      var nodeToSecond = secondFlow.get(i);
+      var secondContext = contexts.get(nodeToSecond);
+      var secondResult = validateMessage(secondMessage, secondContext);
+      resultsSecond.add(new ORawPair<>(nodeToSecond, secondResult));
+    }
+    // First Phase report responses to coordinator.
+    for (var result : resultsFirst) {
+      validationResultToCoordinator(message, coordinator, result);
+    }
+    for (var result : resultsSecond) {
+      validationResultToCoordinator(secondMessage, secondCoordinator, result);
+    }
+
+    // Second Phase
+    // The action is filled with the state computed from the results reported, by the coordinator.
+    if (action.isSuccess()) {
+      executeSuccess(message, firstFlow);
+      assertTrue(action.isComplete());
+    } else if (action.isFailure()) {
+      executeFailure(message, firstFlow);
+    }
+
+    // Second Phase
+    // The action is filled with the state computed from the results reported, by the coordinator.
+    if (secondAction.isSuccess()) {
+      executeSuccess(secondMessage, secondFlow);
+      assertTrue(secondAction.isComplete());
+    } else if (secondAction.isFailure()) {
+      executeFailure(secondMessage, secondFlow);
+    }
+  }
+
   public Optional<OAcceptResult> execute(OOperationMessage message) {
     var nodeId = nodes.get(0);
     var node = contexts.get(nodeId);
@@ -71,59 +153,80 @@ public class OFlowSimulator implements ODatabaseStateChangeListener, ONodeStateU
     List<ORawPair<ONodeId, Optional<OAcceptResult>>> results = new ArrayList<>();
     for (var nodeTo : partecipatingNodes) {
       var context = contexts.get(nodeTo);
-      Optional<OAcceptResult> result = context.getOps().receive(message);
-      if (result.isEmpty()) {
-        Optional<OAcceptResult> res = message.validate(context);
-        if (res.isPresent()) {
-          // This is canceling the promise right away because is not accepted by the data
-          context.getOps().cancelPromise(message.getPromiseId());
-          results.add(new ORawPair<>(nodeTo, Optional.empty()));
-        } else {
-          results.add(new ORawPair<>(nodeTo, res));
-        }
-      } else {
-        results.add(new ORawPair<>(nodeTo, result));
-      }
+      var result = validateMessage(message, context);
+      results.add(new ORawPair<>(nodeTo, result));
     }
     // First Phase report responses to coordinator.
     for (var result : results) {
-      if (result.second.isEmpty()) {
-        coordinator.getOps().nodeSuccess(result.first, message.getPromiseId());
-      } else {
-        coordinator.getOps().nodeFailure(result.first, message.getPromiseId(), result.second.get());
-      }
+      validationResultToCoordinator(message, coordinator, result);
     }
 
     // Second Phase
     // The action is filled with the state computed from the results reported, by the coordinator.
     if (action.isSuccess()) {
-      for (var nodeTo : partecipatingNodes) {
-        var context = contexts.get(nodeTo);
-        var promisedMessage = context.getOps().consensusSuccess(message.getPromiseId());
-        if (promisedMessage.isPresent()) {
-          promisedMessage.get().apply(context);
-        } else {
-          fail("promised message not present");
-        }
-        context.getOps().completeExecution(message.getPromiseId());
-      }
+      executeSuccess(message, partecipatingNodes);
       assertTrue(action.isComplete());
       return Optional.empty();
     } else if (action.isFailure()) {
-      for (var nodeTo : partecipatingNodes) {
-        var context = contexts.get(nodeTo);
-        var promisedMessage = context.getOps().consensusFailure(message.getPromiseId());
-        if (promisedMessage.isPresent()) {
-          message.cancel(context);
-        } else {
-          // This should be ok .... it means it didn't promise it
-        }
-      }
+      executeFailure(message, partecipatingNodes);
       return action.getResult();
     }
 
     fail("no success, neither failure ... strange");
     return null;
+  }
+
+  protected void executeFailure(
+      ODistributedMessage message, Collection<ONodeId> partecipatingNodes) {
+    for (var nodeTo : partecipatingNodes) {
+      var context = contexts.get(nodeTo);
+      var promisedMessage = context.getOps().consensusFailure(message.getPromiseId());
+      if (promisedMessage.isPresent()) {
+        message.cancel(context);
+      } else {
+        // This should be ok .... it means it didn't promise it
+      }
+    }
+  }
+
+  protected void executeSuccess(
+      ODistributedMessage message, Collection<ONodeId> partecipatingNodes) {
+    for (var nodeTo : partecipatingNodes) {
+      var context = contexts.get(nodeTo);
+      var promisedMessage = context.getOps().consensusSuccess(message.getPromiseId());
+      if (promisedMessage.isPresent()) {
+        promisedMessage.get().apply(context);
+      } else {
+        fail("promised message not present");
+      }
+      context.getOps().completeExecution(message.getPromiseId());
+    }
+  }
+
+  protected void validationResultToCoordinator(
+      ODistributedMessage message,
+      TestOperationContext coordinator,
+      ORawPair<ONodeId, Optional<OAcceptResult>> result) {
+    if (result.second.isEmpty()) {
+      coordinator.getOps().nodeSuccess(result.first, message.getPromiseId());
+    } else {
+      coordinator.getOps().nodeFailure(result.first, message.getPromiseId(), result.second.get());
+    }
+  }
+
+  protected Optional<OAcceptResult> validateMessage(
+      ODistributedMessage message, TestOperationContext context) {
+    Optional<OAcceptResult> result = context.getOps().receive(message);
+    if (result.isEmpty()) {
+      Optional<OAcceptResult> res = message.validate(context);
+      if (res.isPresent()) {
+        // This is canceling the promise right away because is not accepted by the data
+        context.getOps().cancelPromise(message.getPromiseId());
+      }
+      return res;
+    } else {
+      return result;
+    }
   }
 
   private ONodeId newRandomNodeId() {
