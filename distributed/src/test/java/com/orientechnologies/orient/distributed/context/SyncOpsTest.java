@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.distributed.context;
 
+import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
@@ -8,6 +9,7 @@ import static org.junit.Assert.fail;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
+import com.orientechnologies.orient.core.db.OSharedContextEmbedded;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.OrientDBConfigBuilder;
@@ -243,6 +245,53 @@ public class SyncOpsTest {
       }
     } catch (InterruptedException e) {
     }
+  }
+
+  @Test
+  public void testRawDeltaSync() {
+    // First full sync to get initial state in both nodes.
+    testRawSync(new OCanSyncAccept.BlockingSync());
+    // Do some data changes
+    try (var session = context.open("test", "admin", "adminpwd")) {
+      session.getMetadata().getSecurity().createUser("reader", "readerpwd", "reader");
+      session.getMetadata().getSecurity().createUser("writer", "writerpwd", "writer");
+    }
+    OrientDBDistributed ctx = (OrientDBDistributed) OrientDBInternal.extract(context);
+    OrientDBDistributed ctx1 = (OrientDBDistributed) OrientDBInternal.extract(context1);
+
+    Optional<OSharedContextEmbedded> sdc1 = ctx1.getSharedDatabaseContext("test");
+    var txs1 = sdc1.get().getTransactionSequence();
+    var preStatus = txs1.currentStatus();
+    var nodeFrom = new ONodeId("node1");
+    var nodeTo = new ONodeId("node2");
+    var syncId = new OSyncId(dbId, nodeTo);
+    Optional<OSharedContextEmbedded> sdc = ctx.getSharedDatabaseContext("test");
+    var txs = sdc.get().getTransactionSequence();
+
+    var sender = new OSyncState(syncId, nodeFrom, new OCanSyncAccept.DeltaSync(preStatus));
+    var receiver = new OSyncState(syncId, nodeFrom, new OCanSyncAccept.DeltaSync(preStatus));
+    var pass = new PassTrough(sender, receiver);
+
+    OutputStream out = new OutputStreamMessages(pass, sender);
+    OReceiverInputStream input = new OReceiverInputStream(pass, receiver);
+    receiver.setReceiverStream(input);
+
+    new Thread(
+            () -> {
+              try {
+                ctx.syncBackup("test", sender, out);
+              } catch (Exception e) {
+                e.printStackTrace();
+              }
+            })
+        .start();
+
+    var result = ctx1.receiveSync("test", receiver, input, OrientDBConfig.defaultConfig());
+    assertTrue(result);
+    assertNotNull(ctx.getDatabase("test"));
+
+    assertArrayEquals(txs.currentStatus().getStatus(), txs1.currentStatus().getStatus());
+    assertTrue(true);
   }
 
   @After

@@ -998,10 +998,9 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         command,
         ids.getFirst(),
         ids.getSecond());
-    ODistributedServerManager dManager = getDistributedManager();
     Set<String> nodes = getContext().getAvailableNodeNames(getName());
 
-    ODistributedRequestId reqId = dManager.nextRequestId();
+    ODistributedRequestId reqId = getContext().nextRequestId();
     ODistributedTxResponseManagerImpl responseManager = sendTask(nodes, task, null, reqId);
 
     if (responseManager.isQuorumReached()) {
@@ -1257,25 +1256,24 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
   @Override
   public void syncCommit(OTransactionData data) {
-    OScenarioThreadLocal.executeAsDistributed(
-        () -> {
-          assert !this.getTransaction().isActive();
-          OTransactionOptimistic tx = new OTransactionOptimistic(this);
-          data.fill(tx, this);
-          ONodeId nodeId = getLocalNodeId();
+    logger.debug("sync commit of %s", data.getTransactionId());
+    assert !this.getTransaction().isActive();
+    OTransactionOptimistic tx = new OTransactionOptimistic(this);
+    tx.begin();
+    this.currentTx = tx;
+    data.fill(tx, this);
+    ONodeId nodeId = getLocalNodeId();
 
-          OTransactionIdPromise primise =
-              new OTransactionIdPromise(nodeId, data.getTransactionId());
-          ONewDistributedTxContextImpl txContext =
-              new ONewDistributedTxContextImpl(
-                  getSharedContext(), new ODistributedRequestId(getLocalNodeId(), -1), tx, primise);
+    OTransactionIdPromise primise = new OTransactionIdPromise(nodeId, data.getTransactionId());
+    ONewDistributedTxContextImpl txContext =
+        new ONewDistributedTxContextImpl(
+            getSharedContext(), new ODistributedRequestId(getLocalNodeId(), -1), tx, primise);
 
-          var transactionSequence = getSharedContext().getTransactionSequence();
-          transactionSequence.validate(primise);
-          getStorage().preallocateRids(tx);
-          txContext.commit(this);
-          return null;
-        });
+    var transactionSequence = getSharedContext().getTransactionSequence();
+    transactionSequence.validate(primise);
+    getStorage().preallocateRids(tx);
+    txContext.commit(this);
+    tx.close();
   }
 
   public OTransactionResultPayload firstPhaseDDL(

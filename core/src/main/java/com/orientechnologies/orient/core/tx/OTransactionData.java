@@ -74,7 +74,7 @@ public class OTransactionData {
     transaction.fill(
         changes.stream()
             .map(
-                (x) -> {
+                x -> {
                   ORecordOperation operation = new ORecordOperation(x.getId(), x.getType());
                   // TODO: Handle dirty no changed
                   ORecord record = null;
@@ -98,7 +98,7 @@ public class OTransactionData {
                           ODocumentInternal.clearTransactionTrackData((ODocument) record);
                           ODocumentSerializerDelta.instance()
                               .deserializeDelta(x.getRecord().get(), (ODocument) record);
-                          /// Got record with empty deltas, at this level we mark the record dirty
+                          // Got record with empty deltas, at this level we mark the record dirty
                           // anyway.
                           record.setDirty();
                         } else {

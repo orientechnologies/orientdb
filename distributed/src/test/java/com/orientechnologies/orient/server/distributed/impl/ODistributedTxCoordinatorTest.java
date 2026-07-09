@@ -65,7 +65,7 @@ public class ODistributedTxCoordinatorTest {
     when(databaseDocument.getSharedContext()).thenReturn(sharedContext);
     when(tx.getIndexOperations()).thenReturn(new HashMap<>());
     when(sharedContext.getTransactionSequence()).thenReturn(seq);
-    when(serverManager.nextRequestId()).thenReturn(new ODistributedRequestId());
+    when(context.nextRequestId()).thenReturn(new ODistributedRequestId());
     when(responseManager.isQuorumReached()).thenReturn(true);
     when(databaseDocument.beginDistributedTx(any(), any(), eq(tx), eq(true), anyInt()))
         .thenReturn(true);

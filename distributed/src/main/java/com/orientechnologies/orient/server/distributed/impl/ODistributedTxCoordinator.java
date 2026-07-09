@@ -90,7 +90,7 @@ public class ODistributedTxCoordinator {
   public void commit(final ODatabaseDocumentDistributed database, final OTransactionInternal iTx) {
     var retry = new ORetryInfo(maxRetries, retryDelay);
     do {
-      final ODistributedRequestId requestId = dManager.nextRequestId();
+      final ODistributedRequestId requestId = database.getContext().nextRequestId();
       localDistributedDatabase.startOperation();
       var transactionSequence = database.getSharedContext().getTransactionSequence();
       try {
