@@ -39,6 +39,7 @@ public class OFlowSimulator implements ODatabaseStateChangeListener, ONodeStateU
   private List<ONodeId> nodes = new ArrayList<>();
   private Map<ONodeId, TestOperationContext> contexts = new HashMap<>();
   private final int networkInitQuorum;
+  private int nodeSeq = 0;
 
   public OFlowSimulator(int networkInitQuorum) {
     this.networkInitQuorum = networkInitQuorum;
@@ -77,7 +78,35 @@ public class OFlowSimulator implements ODatabaseStateChangeListener, ONodeStateU
         cm, cmSecond, node, nodeSecond, action, actionSecond, partecipatingNodes);
   }
 
-  private void executeConcurrentTwoPhase(
+  /** Run to message concurrently the second will be the one failing because of the order of execution.
+   *
+   * @param message
+   * @param messageSecond
+   * @return
+   */
+  public void executeConcurrentlySecondConfirmFirst(
+      OOperationMessage message, OOperationMessage messageSecond) {
+    var nodeId = nodes.get(0);
+    var node = contexts.get(nodeId);
+    TestAction action = new TestAction(node.getOps());
+    var start = node.getOps().start(action);
+    assertTrue(start.isPresent());
+    var promise = start.get().promise();
+    Set<ONodeId> partecipatingNodes = start.get().nodes();
+    var cm = new TestDistributedMessage(message, promise);
+
+    var nodeIdSecond = nodes.get(1);
+    var nodeSecond = contexts.get(nodeIdSecond);
+    TestAction actionSecond = new TestAction(nodeSecond.getOps());
+    var startSecond = nodeSecond.getOps().start(actionSecond);
+    assertTrue(startSecond.isPresent());
+    var promiseSecond = startSecond.get().promise();
+    var cmSecond = new TestDistributedMessage(messageSecond, promiseSecond);
+    executeConcurrentTwoPhaseOtherConfirmFirst(
+        cm, cmSecond, node, nodeSecond, action, actionSecond, partecipatingNodes);
+  }
+
+  private void executeConcurrentTwoPhaseOtherConfirmFirst(
       ODistributedMessage message,
       ODistributedMessage secondMessage,
       TestOperationContext coordinator,
@@ -114,21 +143,59 @@ public class OFlowSimulator implements ODatabaseStateChangeListener, ONodeStateU
 
     // Second Phase
     // The action is filled with the state computed from the results reported, by the coordinator.
+    secondPhaseExecution(secondMessage, secondAction, secondFlow);
+
+    secondPhaseExecution(message, action, firstFlow);
+  }
+
+  protected void secondPhaseExecution(
+      ODistributedMessage message, TestAction action, Collection<ONodeId> to) {
     if (action.isSuccess()) {
-      executeSuccess(message, firstFlow);
+      executeSuccess(message, to);
       assertTrue(action.isComplete());
     } else if (action.isFailure()) {
-      executeFailure(message, firstFlow);
+      executeFailure(message, to);
+    }
+  }
+
+  private void executeConcurrentTwoPhase(
+      ODistributedMessage message,
+      ODistributedMessage secondMessage,
+      TestOperationContext coordinator,
+      TestOperationContext secondCoordinator,
+      TestAction action,
+      TestAction secondAction,
+      Set<ONodeId> partecipatingNodes) {
+
+    var firstFlow = new ArrayList<>(partecipatingNodes);
+    var secondFlow = new ArrayList<>(partecipatingNodes);
+    Collections.reverse(firstFlow);
+
+    // First Phase
+    List<ORawPair<ONodeId, Optional<OAcceptResult>>> resultsFirst = new ArrayList<>();
+    List<ORawPair<ONodeId, Optional<OAcceptResult>>> resultsSecond = new ArrayList<>();
+    for (int i = 0; i < firstFlow.size(); i++) {
+      var nodeToFirst = firstFlow.get(i);
+      var context = contexts.get(nodeToFirst);
+      var firstResult = validateMessage(message, context);
+      resultsFirst.add(new ORawPair<>(nodeToFirst, firstResult));
+
+      var nodeToSecond = secondFlow.get(i);
+      var secondContext = contexts.get(nodeToSecond);
+      var secondResult = validateMessage(secondMessage, secondContext);
+      resultsSecond.add(new ORawPair<>(nodeToSecond, secondResult));
+    }
+    // First Phase report responses to coordinator.
+    for (var result : resultsFirst) {
+      validationResultToCoordinator(message, coordinator, result);
+    }
+    for (var result : resultsSecond) {
+      validationResultToCoordinator(secondMessage, secondCoordinator, result);
     }
 
-    // Second Phase
-    // The action is filled with the state computed from the results reported, by the coordinator.
-    if (secondAction.isSuccess()) {
-      executeSuccess(secondMessage, secondFlow);
-      assertTrue(secondAction.isComplete());
-    } else if (secondAction.isFailure()) {
-      executeFailure(secondMessage, secondFlow);
-    }
+    secondPhaseExecution(message, action, firstFlow);
+
+    secondPhaseExecution(secondMessage, secondAction, secondFlow);
   }
 
   public Optional<OAcceptResult> execute(OOperationMessage message) {
@@ -229,8 +296,9 @@ public class OFlowSimulator implements ODatabaseStateChangeListener, ONodeStateU
     }
   }
 
-  private ONodeId newRandomNodeId() {
-    return new ONodeId(UUID.randomUUID().toString());
+  private ONodeId newNodeIdSeq() {
+
+    return new ONodeId("node" + this.nodeSeq++);
   }
 
   private ONodeStateNetwork networkState(OTopologyStateNetwork topology) {
@@ -243,7 +311,7 @@ public class OFlowSimulator implements ODatabaseStateChangeListener, ONodeStateU
   }
 
   public ONodeId bootNode() {
-    var nodeId = newRandomNodeId();
+    var nodeId = newNodeIdSeq();
     var ops = new OCoordinatedDistributedOpsImpl(nodeId, group, networkInitQuorum, this, this);
     var action = ops.nodeJoinStart(nodeId, bootNetworkState(), false);
     if (action instanceof ODiscoverAction.OEstablishAction) {

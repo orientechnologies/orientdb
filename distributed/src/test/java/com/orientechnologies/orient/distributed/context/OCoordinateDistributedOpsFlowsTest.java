@@ -173,4 +173,26 @@ public class OCoordinateDistributedOpsFlowsTest {
       assertEquals(3, quormu);
     }
   }
+
+  @Test
+  public void testSetDatabaseOneFailInvertedConfirm() {
+    OFlowSimulator flow = new OFlowSimulator(2);
+    var node1 = flow.bootNode();
+    var node2 = flow.bootNode();
+    var node3 = flow.bootNode();
+    var networkNodes = Set.of(node1, node2, node3);
+    var pertecipants = networkNodes.stream().map(OAddNodeInfo::main).collect(Collectors.toSet());
+    ODatabaseId dbId = new ODatabaseId("test");
+    flow.execute(new ODeclareDbMessage("test", dbId, pertecipants, 2));
+
+    System.out.println("staaaaaarrrrrtttt");
+    var version = flow.getContexts().get(node1).getOps().nextDatabaseVersion(dbId);
+    flow.executeConcurrentlySecondConfirmFirst(
+        new OSetDatabaseQuorum(dbId, 3, version), new OSetDatabaseQuorum(dbId, 1, version));
+
+    for (var c : flow.getContexts().values()) {
+      var quormu = c.getOps().getDatabaseTopology().getQuorum(dbId);
+      assertEquals(3, quormu);
+    }
+  }
 }
