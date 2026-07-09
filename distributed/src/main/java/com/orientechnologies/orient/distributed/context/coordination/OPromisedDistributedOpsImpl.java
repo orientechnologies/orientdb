@@ -33,16 +33,20 @@ public class OPromisedDistributedOpsImpl implements OPromisedDistributedOps {
     this.promisedById.put(message.getPromiseId().getId(), message);
     var perNode =
         this.primisedByNode.computeIfAbsent(
-            message.getPromiseId().getCoordinator(),
-            (node) -> {
-              return new ConcurrentHashMap<>();
-            });
+            message.getPromiseId().getCoordinator(), node -> new ConcurrentHashMap<>());
     perNode.put(message.getPromiseId().getId(), message);
   }
 
   @Override
   public ODistributedMessage getPromised(OTransactionIdPromise promise) {
     return this.promised.get(promise);
+  }
+
+  @Override
+  public void finalize(OTransactionIdPromise promise) {
+    // It may be both promised and not promised handle both cases.
+    removePromised(promise);
+    removeNotPromised(promise);
   }
 
   @Override

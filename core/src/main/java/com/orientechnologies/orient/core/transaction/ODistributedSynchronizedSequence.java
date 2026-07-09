@@ -8,6 +8,7 @@ import com.orientechnologies.orient.core.exception.OTransactionAlreadyPresentExc
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import com.orientechnologies.orient.core.tx.OTxMetadataHolder;
 import com.orientechnologies.orient.core.tx.OTxMetadataHolderSyncOrder;
+import com.orientechnologies.orient.core.tx.SuccessResult;
 import com.orientechnologies.orient.core.tx.ValidationResult;
 import java.util.List;
 import java.util.Optional;
@@ -52,10 +53,10 @@ public class ODistributedSynchronizedSequence {
     } catch (InterruptedException e) {
       e.printStackTrace();
     }
-    ValidationResult status = sequenceManager.notifySuccess(id);
-    if (status == ValidationResult.ALREADY_PRESENT) {
+    SuccessResult status = sequenceManager.notifySuccess(id);
+    if (status == SuccessResult.ALREADY_PRESENT) {
       throw new OTransactionAlreadyPresentException("Tx Already present in the current context");
-    } else if (status == ValidationResult.VALID) {
+    } else if (status == SuccessResult.VALID || status == SuccessResult.VALID_MISSING) {
       request = new CountDownLatch(1);
       return new OTxMetadataHolderSyncOrder(request, id.getId(), sequenceManager.currentStatus());
     } else {

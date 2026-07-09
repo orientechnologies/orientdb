@@ -8,8 +8,8 @@ import java.util.Objects;
 import java.util.Optional;
 
 public class OTransactionId {
-  private int position;
-  private long sequence;
+  private final int position;
+  private final long sequence;
 
   public OTransactionId(int position, long sequence) {
     this.position = position;

@@ -5,6 +5,7 @@ import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
+import com.orientechnologies.orient.core.tx.SuccessResult;
 import com.orientechnologies.orient.core.tx.ValidationResult;
 import java.io.IOException;
 import java.util.ArrayList;
@@ -81,7 +82,7 @@ public class OTransactionSequenceManager {
     return promise;
   }
 
-  public synchronized ValidationResult notifySuccess(OTransactionIdPromise promise) {
+  public synchronized SuccessResult notifySuccess(OTransactionIdPromise promise) {
     OTransactionId transactionId = promise.getId();
     OTransactionIdPromise promised = this.promisedSequential[transactionId.getPosition()];
     if (promised != null) {
@@ -90,28 +91,28 @@ public class OTransactionSequenceManager {
           this.sequentials[transactionId.getPosition()] = transactionId.getSequence();
           this.promisedSequential[transactionId.getPosition()] = null;
         } else {
-          return ValidationResult.ALREADY_PROMISED;
+          return SuccessResult.ALREADY_PROMISED;
         }
       } else {
         if (promised.getId().getSequence() > transactionId.getSequence()) {
-          return ValidationResult.ALREADY_PRESENT;
+          return SuccessResult.ALREADY_PRESENT;
         } else {
-          return ValidationResult.MISSING_PREVIOUS;
+          return SuccessResult.MISSING_PREVIOUS;
         }
       }
     } else {
       long nextSequantial = this.sequentials[transactionId.getPosition()] + 1;
       if (nextSequantial == transactionId.getSequence()) {
         // Not promised but valid, accept it
-        // TODO: may need to return this information somehow
         this.sequentials[transactionId.getPosition()] = transactionId.getSequence();
+        return SuccessResult.VALID_MISSING;
       } else if (nextSequantial > transactionId.getSequence()) {
-        return ValidationResult.ALREADY_PRESENT;
+        return SuccessResult.ALREADY_PRESENT;
       } else {
-        return ValidationResult.MISSING_PREVIOUS;
+        return SuccessResult.MISSING_PREVIOUS;
       }
     }
-    return ValidationResult.VALID;
+    return SuccessResult.VALID;
   }
 
   public synchronized ValidationResult validate(OTransactionIdPromise promise) {

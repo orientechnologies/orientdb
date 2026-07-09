@@ -28,4 +28,6 @@ public interface OPromisedDistributedOps {
   ODisconnectAction nodeDisconnected(ONodeId node);
 
   boolean isPromised(OTransactionId id);
+
+  void finalize(OTransactionIdPromise promise);
 }

@@ -8,6 +8,7 @@ import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.core.transaction.OTransactionSequenceManager;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
+import com.orientechnologies.orient.core.tx.SuccessResult;
 import com.orientechnologies.orient.core.tx.ValidationResult;
 import com.orientechnologies.orient.distributed.context.ONodeStateStore;
 import com.orientechnologies.orient.distributed.context.ONodeStateUpdated;
@@ -260,12 +261,14 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
 
   public synchronized Optional<ODistributedMessage> consensusSuccess(
       OTransactionIdPromise promise) {
-    // TODO: if received the confirmation for not promised message have to cancel eventual
-    // promised message and try to promised and apply currently confirmed message.
-    ValidationResult result = sequenceManager.notifySuccess(promise);
+    SuccessResult result = sequenceManager.notifySuccess(promise);
     return switch (result) {
       case VALID -> {
         ODistributedMessage message = this.promised.getPromised(promise);
+        yield Optional.ofNullable(message);
+      }
+      case VALID_MISSING -> {
+        ODistributedMessage message = this.promised.getNotPromised(promise);
         yield Optional.ofNullable(message);
       }
       case ALREADY_PRESENT -> {
@@ -302,8 +305,8 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
     };
   }
 
-  private void finalize(OTransactionIdPromise promise) {
-    this.promised.removePromised(promise);
+  private synchronized void finalize(OTransactionIdPromise promise) {
+    this.promised.finalize(promise);
   }
 
   @Override
