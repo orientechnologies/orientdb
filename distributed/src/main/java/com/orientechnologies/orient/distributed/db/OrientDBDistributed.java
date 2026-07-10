@@ -258,7 +258,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
               var status =
                   getSharedDatabaseContext(dbName)
                       .map(x -> x.getTransactionSequence().currentStatus());
-              final List<String> servers = getOnlineNodesNotLocal(dbName);
+              final List<ONodeId> servers = getOnlineNodesNotLocalId(dbName);
               if (status.isPresent() && !servers.isEmpty()) {
                 ORemoteTask task = new OUpdateDatabaseSequenceStatusTask(dbName, status.get());
                 plugin.sendRequest(dbName, servers, task);
@@ -1053,7 +1053,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
     execute(
         () -> {
           if (plugin != null) {
-            plugin.notifyNodeJoined(node.getNode());
+            plugin.notifyNodeJoined(node);
           }
         });
   }
@@ -1063,7 +1063,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
     execute(
         () -> {
           if (plugin != null) {
-            plugin.notifyNodeLeft(node.getNode());
+            plugin.notifyNodeLeft(node);
           }
         });
   }
@@ -1306,7 +1306,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   public void closeRemoteServer(String node) {
-    closeRemoteServer(new ONodeId(node));
+    closeRemoteServer(getNodeId(node));
   }
 
   public void closeRemoteServer(ONodeId node) {
@@ -1323,7 +1323,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   public ORemoteServerController getRemoteServer(String rNodeName) {
-    return getRemoteServer(new ONodeId(rNodeName));
+    return getRemoteServer(getNodeId(rNodeName));
   }
 
   public ORemoteServerController connectRemoteServer(ONodeId node, String url) throws IOException {
@@ -1369,7 +1369,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   public DB_STATUS getDatabaseStatus(String node, String dbName) {
-    return getDatabaseStatus(new ONodeId(node), dbName);
+    return getDatabaseStatus(getNodeId(node), dbName);
   }
 
   public DB_STATUS getDatabaseStatus(String dbName) {
@@ -1436,6 +1436,22 @@ public class OrientDBDistributed extends OrientDBEmbedded
     }
   }
 
+  public Set<ONodeId> getAvailableNodeNotLocalIds(String name) {
+    Set<ONodeId> nodes = getAvailableNodeIds(name);
+    nodes.remove(getNodeId());
+    return nodes;
+  }
+
+  public Set<ONodeId> getAvailableNodeIds(String name) {
+    Optional<ODatabaseId> id = getNodeState().getDatabaseTopology().getDatabaseId(name);
+    if (id.isPresent()) {
+      return getNodeState().getDatabaseTopology().getOnlineNodes(id.get()).stream()
+          .collect(Collectors.toSet());
+    } else {
+      return getNodeState().getNetworkMembers().stream().collect(Collectors.toSet());
+    }
+  }
+
   public int getOnlineMasters(String databaseName) {
     ODatabasesTopology databaseTopology = getNodeState().getDatabaseTopology();
     Optional<ODatabaseId> id = databaseTopology.getDatabaseId(databaseName);
@@ -1482,14 +1498,28 @@ public class OrientDBDistributed extends OrientDBEmbedded
     return result;
   }
 
+  public List<ONodeId> getOnlineNodesNotLocalId(String dbName) {
+    Optional<ODatabaseId> id = getNodeState().getDatabaseTopology().getDatabaseId(dbName);
+    List<ONodeId> result;
+    if (id.isPresent()) {
+      result =
+          getNodeState().getDatabaseTopology().getOnlineNodes(id.get()).stream()
+              .collect(Collectors.toList());
+    } else {
+      result = getNodeState().getNetworkMembers().stream().collect(Collectors.toList());
+    }
+    result.remove(getNodeId());
+    return result;
+  }
+
   /** Returns the nodes with the requested status. */
   public int getNodesWithStatus(
-      final Collection<String> iNodes, final String databaseName, final DB_STATUS... statuses) {
+      final Collection<ONodeId> iNodes, final String databaseName, final DB_STATUS... statuses) {
     Optional<ODatabaseId> id = getNodeState().getDatabaseTopology().getDatabaseId(databaseName);
     ODatabasesTopology topology = getNodeState().getDatabaseTopology();
-    for (Iterator<String> it = iNodes.iterator(); it.hasNext(); ) {
-      final String node = it.next();
-      ODatabaseState state = topology.getState(id.get(), new ONodeId(node));
+    for (Iterator<ONodeId> it = iNodes.iterator(); it.hasNext(); ) {
+      final ONodeId node = it.next();
+      ODatabaseState state = topology.getState(id.get(), node);
       DB_STATUS s = state.toSatus();
       boolean matchState = false;
       for (DB_STATUS st : statuses) {
@@ -1702,11 +1732,11 @@ public class OrientDBDistributed extends OrientDBEmbedded
     }
   }
 
-  public boolean isNodeMaster(String node, String databaseName) {
+  public boolean isNodeMaster(ONodeId node, String databaseName) {
     ODatabasesTopology databaseTopology = getNodeState().getDatabaseTopology();
     Optional<ODatabaseId> id = databaseTopology.getDatabaseId(databaseName);
     if (id.isPresent()) {
-      return databaseTopology.isMain(id.get(), new ONodeId(node));
+      return databaseTopology.isMain(id.get(), node);
     } else {
       return false;
     }
@@ -1752,7 +1782,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
       ODatabaseId databaseId, String serverName, String role) {
     var r = ONodeRole.fromString(role);
     return retryOperation(
-        new OSetDatabaseNodeRoleRetryOperation(databaseId, new ONodeId(serverName), r));
+        new OSetDatabaseNodeRoleRetryOperation(databaseId, getNodeId(serverName), r));
   }
 
   public Future<Optional<OAcceptResult>> setDatabaseQuorum(ODatabaseId databaseId, int newQuorum) {
@@ -1819,7 +1849,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
 
   public ONodeConfig getNodeConfiguration(ONodeId member) {
     // TODO: collect more informations
-    ONodeConfig nodeCfg = new ONodeConfig();
+    ONodeConfig nodeCfg = new ONodeConfig(member);
     nodeCfg.setName(member.getNode());
     //    nodeCfg.setUuid();
 
@@ -1865,7 +1895,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   public ONodeConfig getLocalNodeConfiguration() {
-    ONodeConfig nodeCfg = new ONodeConfig();
+    ONodeConfig nodeCfg = new ONodeConfig(getNodeId());
     nodeCfg.setUuid(getSystemDatabase().getServerId());
     nodeCfg.setName(nodeName);
     nodeCfg.setVersion(OConstants.getRawVersion());
@@ -1955,7 +1985,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
     var task =
         remoteServerManager
             .getTaskFactoryManager()
-            .getFactoryByServerName(iNode)
+            .getFactoryByServerId(getNodeId(iNode))
             .createTask(OStopServerTask.FACTORYID);
     var request = new ODistributedRequest(getTaskFactoryManager(), nextRequestId(), null, task);
     var remoteNode = getRemoteServer(iNode);
@@ -1973,7 +2003,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
     var task =
         remoteServerManager
             .getTaskFactoryManager()
-            .getFactoryByServerName(iNode)
+            .getFactoryByServerId(getNodeId(iNode))
             .createTask(ORestartServerTask.FACTORYID);
     var request = new ODistributedRequest(getTaskFactoryManager(), nextRequestId(), null, task);
 

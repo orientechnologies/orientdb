@@ -47,6 +47,7 @@ import com.orientechnologies.orient.core.storage.ORawBuffer;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
+import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionAbstract;
 import com.orientechnologies.orient.core.tx.OTransactionData;
@@ -210,7 +211,7 @@ public interface ODatabaseDocumentInternal extends ODatabaseSession, ODatabaseIn
    * @return an OResultSet to fetch the results of the query execution
    */
   default OExecutionStream queryOnNode(
-      String nodeName, OInternalExecutionPlan executionPlan, Map<Object, Object> inputParameters) {
+      ONodeId nodeName, OInternalExecutionPlan executionPlan, Map<Object, Object> inputParameters) {
     throw new UnsupportedOperationException();
   }
 

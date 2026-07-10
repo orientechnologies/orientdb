@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.distributed.ONodeLatencies;
 import com.orientechnologies.orient.distributed.ONodeMessages;
 import java.util.List;
@@ -29,7 +30,7 @@ public interface ODistributedMessageService {
 
   void dispatchResponseToThread(final ODistributedResponse response);
 
-  void updateLatency(String metricName, long sentOn);
+  void updateLatency(ONodeId metricName, long sentOn);
 
   List<ONodeLatencies> getNodesLatencies();
 
@@ -45,11 +46,11 @@ public interface ODistributedMessageService {
 
   long getProcessedRequests();
 
-  long getCurrentLatency(String server);
+  long getCurrentLatency(ONodeId server);
 
   void registerRequest(final long id, final ODistributedResponseManager currentResponseMgr);
 
-  void handleUnreachableNode(final String nodeName);
+  void handleUnreachableNode(final ONodeId nodeName);
 
   void timeoutRequest(final long msgId);
 }

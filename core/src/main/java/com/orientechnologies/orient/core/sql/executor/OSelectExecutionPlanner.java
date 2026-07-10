@@ -58,6 +58,7 @@ import com.orientechnologies.orient.core.sql.parser.OStatement;
 import com.orientechnologies.orient.core.sql.parser.OTimeout;
 import com.orientechnologies.orient.core.sql.parser.OWhereClause;
 import com.orientechnologies.orient.core.sql.parser.SubQueryCollector;
+import com.orientechnologies.orient.core.transaction.ONodeId;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -228,7 +229,11 @@ public class OSelectExecutionPlanner {
     if (info.distributedFetchExecutionPlans == null) {
       return;
     }
-    String currentNode = ((ODatabaseDocumentInternal) ctx.getDatabase()).getLocalNodeName();
+    ONodeId currentNode =
+        ((ODatabaseDocumentInternal) ctx.getDatabase())
+            .getSharedContext()
+            .getOrientDB()
+            .getNodeId();
     if (info.distributedFetchExecutionPlans.size() == 1) {
       if (info.distributedFetchExecutionPlans.get(currentNode) != null) {
         // everything is executed on local server
@@ -238,7 +243,7 @@ public class OSelectExecutionPlanner {
         }
       } else {
         // everything is executed on a single remote node
-        String node = info.distributedFetchExecutionPlans.keySet().iterator().next();
+        ONodeId node = info.distributedFetchExecutionPlans.keySet().iterator().next();
         OSelectExecutionPlan subPlan = info.distributedFetchExecutionPlans.get(node);
         DistributedExecutionStep step = new DistributedExecutionStep(subPlan, node);
         result.chain(step);
@@ -247,7 +252,7 @@ public class OSelectExecutionPlanner {
     } else {
       // sharded fetching
       List<OInternalExecutionPlan> subPlans = new ArrayList<>();
-      for (Map.Entry<String, OSelectExecutionPlan> entry :
+      for (Map.Entry<ONodeId, OSelectExecutionPlan> entry :
           info.distributedFetchExecutionPlans.entrySet()) {
         if (entry.getKey().equals(currentNode)) {
           subPlans.add(entry.getValue());
@@ -274,7 +279,8 @@ public class OSelectExecutionPlanner {
   private void calculateShardingStrategy(QueryPlanningInfo info, OCommandContext ctx) {
     ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) ctx.getDatabase();
     info.distributedFetchExecutionPlans = new LinkedHashMap<>();
-    String localNode = db.getLocalNodeName();
+    ONodeId localNodeId = db.getSharedContext().getOrientDB().getNodeId();
+
     Collection<String> readClusterNames = db.getClusterNames();
     Set<String> clusterNames;
     if (readClusterNames instanceof Set) {
@@ -284,21 +290,21 @@ public class OSelectExecutionPlanner {
     }
     if (!db.isSharded()) {
       info.serverToClusters = new LinkedHashMap<>();
-      info.serverToClusters.put(localNode, clusterNames);
-      info.distributedFetchExecutionPlans.put(localNode, new OSelectExecutionPlan());
+      info.serverToClusters.put(localNodeId, clusterNames);
+      info.distributedFetchExecutionPlans.put(localNodeId, new OSelectExecutionPlan());
       return;
     }
 
     //    Map<String, Set<String>> clusterMap = db.getActiveClusterMap();
-    Map<String, Set<String>> clusterMap = new HashMap<>();
-    clusterMap.put(localNode, new HashSet<>(clusterNames));
+    Map<ONodeId, Set<String>> clusterMap = new HashMap<>();
+    clusterMap.put(localNodeId, new HashSet<>(clusterNames));
 
     Set<String> queryClusters = calculateTargetClusters(info, ctx);
     if (queryClusters == null || queryClusters.size() == 0) { // no target
 
       info.serverToClusters = new LinkedHashMap<>();
-      info.serverToClusters.put(localNode, clusterMap.get(localNode));
-      info.distributedFetchExecutionPlans.put(localNode, new OSelectExecutionPlan());
+      info.serverToClusters.put(localNodeId, clusterMap.get(localNodeId));
+      info.distributedFetchExecutionPlans.put(localNodeId, new OSelectExecutionPlan());
       return;
     }
 
@@ -306,13 +312,14 @@ public class OSelectExecutionPlanner {
     // queryClusters);
     //    if (serversWithAllTheClusers.isEmpty()) {
     // sharded query
-    Map<String, Set<String>> minimalSetOfNodes =
-        getMinimalSetOfNodesForShardedQuery(db.getLocalNodeName(), clusterMap, queryClusters);
+    Map<ONodeId, Set<String>> minimalSetOfNodes =
+        getMinimalSetOfNodesForShardedQuery(
+            db.getSharedContext().getOrientDB().getNodeId(), clusterMap, queryClusters);
     if (minimalSetOfNodes == null) {
       throw new OCommandExecutionException("Cannot execute sharded query");
     }
     info.serverToClusters = minimalSetOfNodes;
-    for (String node : info.serverToClusters.keySet()) {
+    for (ONodeId node : info.serverToClusters.keySet()) {
       info.distributedFetchExecutionPlans.put(node, new OSelectExecutionPlan());
     }
     //    } else {
@@ -334,10 +341,10 @@ public class OSelectExecutionPlanner {
    * @param queryClusters
    * @return a map that has node names as a key and clusters (data files) for each node as a value
    */
-  private Map<String, Set<String>> getMinimalSetOfNodesForShardedQuery(
-      String localNode, Map<String, Set<String>> clusterMap, Set<String> queryClusters) {
+  private Map<ONodeId, Set<String>> getMinimalSetOfNodesForShardedQuery(
+      ONodeId localNode, Map<ONodeId, Set<String>> clusterMap, Set<String> queryClusters) {
     // approximate algorithm, the problem is NP-complete
-    Map<String, Set<String>> result = new LinkedHashMap<>();
+    Map<ONodeId, Set<String>> result = new LinkedHashMap<>();
     Set<String> uncovered = new HashSet<>();
     uncovered.addAll(queryClusters);
     uncovered =
@@ -359,7 +366,7 @@ public class OSelectExecutionPlanner {
     }
 
     while (uncovered.size() > 0) {
-      String nextNode = findItemThatCoversMore(uncovered, clusterMap);
+      ONodeId nextNode = findItemThatCoversMore(uncovered, clusterMap);
       nextNodeClusters = new HashSet<>();
       nextNodeClusters.addAll(clusterMap.get(nextNode));
       nextNodeClusters.retainAll(uncovered);
@@ -386,11 +393,11 @@ public class OSelectExecutionPlanner {
     return result;
   }
 
-  private String findItemThatCoversMore(
-      Set<String> uncovered, Map<String, Set<String>> clusterMap) {
-    String lastFound = null;
+  private ONodeId findItemThatCoversMore(
+      Set<String> uncovered, Map<ONodeId, Set<String>> clusterMap) {
+    ONodeId lastFound = null;
     int lastSize = -1;
-    for (Map.Entry<String, Set<String>> nodeConfig : clusterMap.entrySet()) {
+    for (Map.Entry<ONodeId, Set<String>> nodeConfig : clusterMap.entrySet()) {
       Set<String> current = new HashSet<>();
       current.addAll(nodeConfig.getValue());
       current.retainAll(uncovered);
@@ -408,11 +415,11 @@ public class OSelectExecutionPlanner {
    * @param queryClusters the clusters that are target of the query
    * @return
    */
-  private Set<String> getServersThatHasAllClusters(
-      Map<String, Set<String>> clusterMap, Set<String> queryClusters) {
-    Set<String> remainingServers = clusterMap.keySet();
+  private Set<ONodeId> getServersThatHasAllClusters(
+      Map<ONodeId, Set<String>> clusterMap, Set<String> queryClusters) {
+    Set<ONodeId> remainingServers = clusterMap.keySet();
     for (String cluster : queryClusters) {
-      for (Map.Entry<String, Set<String>> serverConfig : clusterMap.entrySet()) {
+      for (Map.Entry<ONodeId, Set<String>> serverConfig : clusterMap.entrySet()) {
         if (!serverConfig.getValue().contains(cluster)) {
           remainingServers.remove(serverConfig.getKey());
         }
@@ -1230,7 +1237,7 @@ public class OSelectExecutionPlanner {
       OSelectExecutionPlan result, QueryPlanningInfo info, OCommandContext ctx) {
 
     OFromItem target = info.target == null ? null : info.target.getItem();
-    for (Map.Entry<String, OSelectExecutionPlan> shardedPlan :
+    for (Map.Entry<ONodeId, OSelectExecutionPlan> shardedPlan :
         info.distributedFetchExecutionPlans.entrySet()) {
       if (target == null) {
         handleNoTarget(shardedPlan.getValue());

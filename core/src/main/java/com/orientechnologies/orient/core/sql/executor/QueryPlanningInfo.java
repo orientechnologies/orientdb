@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.sql.parser.*;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.transaction.ONodeId;
 import java.util.Map;
 import java.util.Set;
 
@@ -26,9 +27,9 @@ public class QueryPlanningInfo {
    * in a sharded execution plan, this maps the single server to the clusters it will be queried for
    * to execute the query.
    */
-  protected Map<String, Set<String>> serverToClusters;
+  protected Map<ONodeId, Set<String>> serverToClusters;
 
-  protected Map<String, OSelectExecutionPlan> distributedFetchExecutionPlans;
+  protected Map<ONodeId, OSelectExecutionPlan> distributedFetchExecutionPlans;
 
   /**
    * set to true when the distributedFetchExecutionPlans are aggregated in the main execution plan

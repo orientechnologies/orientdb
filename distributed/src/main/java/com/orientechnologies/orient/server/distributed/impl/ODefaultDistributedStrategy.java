@@ -21,6 +21,7 @@ package com.orientechnologies.orient.server.distributed.impl;
 
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
+import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
@@ -51,31 +52,31 @@ public class ODefaultDistributedStrategy implements ODistributedStrategy {
   }
 
   @Override
-  public Set<String> getNodesConcurInQuorum(
+  public Set<ONodeId> getNodesConcurInQuorum(
       final ODistributedServerManager manager,
       final String databaseName,
       final ODistributedRequest request,
-      final Collection<String> iNodes) {
+      final Collection<ONodeId> iNodes) {
     OrientDBDistributed ctx = (OrientDBDistributed) manager.getServerInstance().getDatabases();
-    final Set<String> nodesConcurToTheQuorum = new HashSet<String>();
+    final Set<ONodeId> nodesConcurToTheQuorum = new HashSet<>();
     if (request.getTask().getQuorumType() == OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE
         || request.getTask().getQuorumType()
             == OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE_ALL_MASTERS) {
       // ONLY MASTER NODES CONCUR TO THE MINIMUM QUORUM
-      for (String node : iNodes) {
+      for (ONodeId node : iNodes) {
         if (ctx.isNodeMaster(node, databaseName)) nodesConcurToTheQuorum.add(node);
       }
 
-      if (ctx.isNodeMaster(manager.getLocalNodeName(), databaseName))
+      if (ctx.isNodeMaster(ctx.getNodeId(), databaseName))
         // INCLUDE LOCAL NODE TOO
-        nodesConcurToTheQuorum.add(manager.getLocalNodeName());
+        nodesConcurToTheQuorum.add(ctx.getNodeId());
 
     } else {
 
       // ALL NODES CONCUR TO THE MINIMUM QUORUM
       nodesConcurToTheQuorum.addAll(iNodes);
 
-      nodesConcurToTheQuorum.add(manager.getLocalNodeName());
+      nodesConcurToTheQuorum.add(ctx.getNodeId());
     }
 
     return nodesConcurToTheQuorum;

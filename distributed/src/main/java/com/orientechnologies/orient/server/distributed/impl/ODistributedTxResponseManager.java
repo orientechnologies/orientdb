@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.server.distributed.impl;
 
+import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.server.distributed.ODistributedResponseManager;
 import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPhase1TaskResult;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTransactionResultPayload;
@@ -9,11 +10,11 @@ import java.util.Optional;
 public interface ODistributedTxResponseManager extends ODistributedResponseManager {
   boolean isQuorumReached();
 
-  String getNodeNameFromPayload(OTransactionResultPayload payload);
+  ONodeId getNodeNameFromPayload(OTransactionResultPayload payload);
 
   List<OTransactionResultPayload> getAllResponses();
 
   Optional<OTransactionResultPayload> getDistributedTxFinalResponse();
 
-  boolean collectResponse(OTransactionPhase1TaskResult response, String senderNodeName);
+  boolean collectResponse(OTransactionPhase1TaskResult response, ONodeId senderNodeName);
 }

@@ -4,6 +4,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.stream.OExecutionStream;
 import com.orientechnologies.orient.core.sql.executor.stream.OExecutionStreamProducer;
+import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.server.distributed.ODistributedResponse;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
 import java.util.List;
@@ -12,12 +13,12 @@ import java.util.NoSuchElementException;
 public final class OExecutionStreamDistributedFetch implements OExecutionStreamProducer {
   private final String queryId;
   private final ODatabaseDocumentDistributed db;
-  private final String nodeName;
+  private final ONodeId nodeName;
   private OExecutionStream current;
   private boolean closed = false;
 
   public OExecutionStreamDistributedFetch(
-      String queryId, String nodeName, OExecutionStream first, ODatabaseDocumentDistributed db) {
+      String queryId, ONodeId nodeName, OExecutionStream first, ODatabaseDocumentDistributed db) {
     this.queryId = queryId;
     this.db = db;
     this.nodeName = nodeName;

@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.distributed.ONodeConfig;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.config.OClusterConfiguration;
@@ -72,11 +73,11 @@ public interface ODistributedServerManager {
 
   ODistributedServerManager unregisterLifecycleListener(ODistributedLifecycleListener iListener);
 
-  ORemoteServerController getRemoteServer(String nodeName) throws IOException;
+  ORemoteServerController getRemoteServer(ONodeId nodeId) throws IOException;
 
   long getLastClusterChangeOn();
 
-  DB_STATUS getDatabaseStatus(String iNode, String iDatabaseName);
+  DB_STATUS getDatabaseStatus(ONodeId iNode, String iDatabaseName);
 
   ODistributedMessageService getMessageService();
 
@@ -105,7 +106,7 @@ public interface ODistributedServerManager {
    * @return
    */
   ODistributedResponse sendRequest(
-      String iDatabaseName, Collection<String> iTargetNodeNames, ORemoteTask iTask);
+      String iDatabaseName, Collection<ONodeId> iTargetNodeNames, ORemoteTask iTask);
 
   /**
    * Sends a distributed request against multiple servers.
@@ -115,11 +116,11 @@ public interface ODistributedServerManager {
    * @param iTask
    * @return
    */
-  ODistributedResponse sendSingleRequest(String iDatabaseName, String node, ORemoteTask iTask);
+  ODistributedResponse sendSingleRequest(String iDatabaseName, ONodeId node, ORemoteTask iTask);
 
   ODistributedResponse sendRequest(
       String iDatabaseName,
-      Collection<String> iTargetNodeNames,
+      Collection<ONodeId> iTargetNodeNames,
       ORemoteTask iTask,
       ODistributedRequestId messageId,
       Object localResult,

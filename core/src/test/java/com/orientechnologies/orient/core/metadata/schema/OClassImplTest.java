@@ -13,6 +13,7 @@ import com.orientechnologies.orient.core.db.tool.ODatabaseImport;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.transaction.ONodeId;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -528,10 +529,10 @@ public class OClassImplTest extends BaseMemoryInternalDatabase {
   public void assignClusterBalanced() {
     OSchema schema = db.getMetadata().getSchema();
     OClass cl = schema.createClass("AutoClusterAssign", 6);
-    Set<String> nodes = new HashSet<>();
-    nodes.add("node1");
-    nodes.add("node2");
-    nodes.add("node3");
+    Set<ONodeId> nodes = new HashSet<>();
+    nodes.add(new ONodeId("node1"));
+    nodes.add(new ONodeId("node2"));
+    nodes.add(new ONodeId("node3"));
     ((OClassEmbedded) cl).autoAssignClusterOwnership(db, nodes, false);
 
     assertEquals(cl.getAllocation().getDefinedNodes().size(), 3);
@@ -544,10 +545,10 @@ public class OClassImplTest extends BaseMemoryInternalDatabase {
   public void reassignClusterBalanced() {
     OSchema schema = db.getMetadata().getSchema();
     OClass cl = schema.createClass("AutoClusterAssign", 12);
-    Set<String> nodes = new HashSet<>();
-    nodes.add("node1");
-    nodes.add("node2");
-    nodes.add("node3");
+    Set<ONodeId> nodes = new HashSet<>();
+    nodes.add(new ONodeId("node1"));
+    nodes.add(new ONodeId("node2"));
+    nodes.add(new ONodeId("node3"));
     ((OClassEmbedded) cl).autoAssignClusterOwnership(db, nodes, false);
 
     assertEquals(cl.getAllocation().getDefinedNodes().size(), 3);
@@ -555,7 +556,7 @@ public class OClassImplTest extends BaseMemoryInternalDatabase {
     assertEquals(cl.getAllocation().getAllocationClusters("node2").size(), 4);
     assertEquals(cl.getAllocation().getAllocationClusters("node3").size(), 4);
 
-    nodes.add("node4");
+    nodes.add(new ONodeId("node4"));
     ((OClassEmbedded) cl).autoAssignClusterOwnership(db, nodes, false);
 
     assertEquals(cl.getAllocation().getDefinedNodes().size(), 4);
@@ -569,10 +570,10 @@ public class OClassImplTest extends BaseMemoryInternalDatabase {
   public void assignClusterBalancedShort() {
     OSchema schema = db.getMetadata().getSchema();
     OClass cl = schema.createClass("AutoClusterAssign", 2);
-    Set<String> nodes = new HashSet<>();
-    nodes.add("node1");
-    nodes.add("node2");
-    nodes.add("node3");
+    Set<ONodeId> nodes = new HashSet<>();
+    nodes.add(new ONodeId("node1"));
+    nodes.add(new ONodeId("node2"));
+    nodes.add(new ONodeId("node3"));
     ((OClassEmbedded) cl).autoAssignClusterOwnership(db, nodes, false);
 
     assertEquals(cl.getAllocation().getDefinedNodes().size(), 2);
@@ -585,11 +586,11 @@ public class OClassImplTest extends BaseMemoryInternalDatabase {
   public void createClustersAndAssign() {
     OSchema schema = db.getMetadata().getSchema();
     OClass cl = schema.createClass("AutoClusterAssign", 2);
-    Set<String> nodes = new HashSet<>();
-    nodes.add("node1");
-    nodes.add("node2");
-    nodes.add("node3");
-    nodes.add("node4");
+    Set<ONodeId> nodes = new HashSet<>();
+    nodes.add(new ONodeId("node1"));
+    nodes.add(new ONodeId("node2"));
+    nodes.add(new ONodeId("node3"));
+    nodes.add(new ONodeId("node4"));
     ((OClassEmbedded) cl).autoAssignClusterOwnership(db, nodes, true);
 
     assertEquals(4, cl.getClusterIds().length);
@@ -603,9 +604,9 @@ public class OClassImplTest extends BaseMemoryInternalDatabase {
   public void expandClustersAndAssign() {
     OSchema schema = db.getMetadata().getSchema();
     OClass cl = schema.createClass("AutoClusterAssign", 2);
-    Set<String> nodes = new HashSet<>();
-    nodes.add("node1");
-    nodes.add("node2");
+    Set<ONodeId> nodes = new HashSet<>();
+    nodes.add(new ONodeId("node1"));
+    nodes.add(new ONodeId("node2"));
     ((OClassEmbedded) cl).autoAssignClusterOwnership(db, nodes, true);
 
     assertEquals(2, cl.getClusterIds().length);
@@ -614,8 +615,8 @@ public class OClassImplTest extends BaseMemoryInternalDatabase {
       assertEquals(1, cl.getAllocation().getAllocationClusters(node).size());
     }
 
-    nodes.add("node3");
-    nodes.add("node4");
+    nodes.add(new ONodeId("node3"));
+    nodes.add(new ONodeId("node4"));
     ((OClassEmbedded) cl).autoAssignClusterOwnership(db, nodes, true);
 
     assertEquals(4, cl.getClusterIds().length);
@@ -629,11 +630,11 @@ public class OClassImplTest extends BaseMemoryInternalDatabase {
   public void testExportImportAllocation() throws IOException {
     OSchema schema = db.getMetadata().getSchema();
     OClass cl = schema.createClass("AutoClusterAssign", 2);
-    Set<String> nodes = new HashSet<>();
-    nodes.add("node1");
-    nodes.add("node2");
-    nodes.add("node3");
-    nodes.add("node4");
+    Set<ONodeId> nodes = new HashSet<>();
+    nodes.add(new ONodeId("node1"));
+    nodes.add(new ONodeId("node2"));
+    nodes.add(new ONodeId("node3"));
+    nodes.add(new ONodeId("node4"));
     ((OClassEmbedded) cl).autoAssignClusterOwnership(db, nodes, true);
     ByteArrayOutputStream bytes = new ByteArrayOutputStream();
     ODatabaseExport export = new ODatabaseExport(db, bytes, iText -> {});

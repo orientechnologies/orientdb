@@ -43,7 +43,6 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.schema.OClassEmbedded;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
-import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.distributed.ONodeConfig;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.OClientConnection;
@@ -298,7 +297,9 @@ public class OEnterpriseAgent extends OServerPluginAbstract
     final String databaseName = database.getName();
     OrientDBDistributed context = ((ODatabaseDocumentDistributed) database).getContext();
     context.setDatabaseStatus(
-        new ONodeId(nodeName), databaseName, ODistributedServerManager.DB_STATUS.valueOf(status));
+        context.getNodeId(nodeName),
+        databaseName,
+        ODistributedServerManager.DB_STATUS.valueOf(status));
   }
 
   @Override

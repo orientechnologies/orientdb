@@ -1,12 +1,14 @@
 package com.orientechnologies.orient.core.transaction;
 
+import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.Objects;
 
-public class ONodeId {
+public class ONodeId implements Comparable<ONodeId> {
   // TODO: replace this with a uuid
   private final String node;
 
@@ -15,7 +17,7 @@ public class ONodeId {
   }
 
   public ONodeId(String node) {
-    super();
+    Objects.nonNull(node);
     this.node = node;
   }
 
@@ -64,5 +66,16 @@ public class ONodeId {
     assert (int) e.getProperty("serializationVersion") == 1;
     String node = e.getProperty("node");
     return new ONodeId(node);
+  }
+
+  public static ONodeId readElement(OElement e) {
+    assert (int) e.getProperty("serializationVersion") == 1;
+    String node = e.getProperty("node");
+    return new ONodeId(node);
+  }
+
+  @Override
+  public int compareTo(ONodeId o) {
+    return this.node.compareTo(o.node);
   }
 }

@@ -211,9 +211,9 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       // INTERNAL MSG
       return true;
 
-    final String local = ctx.getNodeId().getNode();
+    var local = ctx.getNodeId();
 
-    final String sender = iRequestId.getNodeId().getNode();
+    var sender = iRequestId.getNodeId();
 
     final ODistributedResponse response =
         new ODistributedResponse(null, iRequestId, local, sender, responsePayload);

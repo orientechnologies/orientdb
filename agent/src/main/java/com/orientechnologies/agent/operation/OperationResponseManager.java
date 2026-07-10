@@ -27,7 +27,7 @@ public class OperationResponseManager implements ODistributedResponseManager {
   }
 
   @Override
-  public synchronized boolean setLocalResult(String localNodeName, Object localResult) {
+  public synchronized boolean setLocalResult(ONodeId localNodeName, Object localResult) {
     NodeOperationResponse result = (NodeOperationResponse) localResult;
     if (result.isOk()) {
       responses.add(new OperationResponseFromNode(localNodeName, new ResponseOk(result)));
@@ -43,7 +43,7 @@ public class OperationResponseManager implements ODistributedResponseManager {
   }
 
   @Override
-  public synchronized void removeServerBecauseUnreachable(String node) {
+  public synchronized void removeServerBecauseUnreachable(ONodeId node) {
     responses.add(new OperationResponseFromNode(node, new NodeNotReachable()));
     waitingFor.countDown();
   }
@@ -66,13 +66,13 @@ public class OperationResponseManager implements ODistributedResponseManager {
   }
 
   @Override
-  public Set<String> getExpectedNodes() {
-    return servers.stream().map(ONodeId::getNode).collect(Collectors.toSet());
+  public Set<ONodeId> getExpectedNodes() {
+    return servers.stream().collect(Collectors.toSet());
   }
 
   @Override
-  public List<String> getRespondingNodes() {
-    return responses.stream().map(OperationResponseFromNode::getSenderNodeName).toList();
+  public List<ONodeId> getRespondingNodes() {
+    return responses.stream().map(OperationResponseFromNode::getSenderNodeId).toList();
   }
 
   @Override
@@ -112,7 +112,7 @@ public class OperationResponseManager implements ODistributedResponseManager {
   }
 
   @Override
-  public List<String> getMissingNodes() {
+  public List<ONodeId> getMissingNodes() {
     throw new UnsupportedOperationException();
   }
 

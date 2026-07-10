@@ -8,6 +8,7 @@ import com.orientechnologies.orient.core.metadata.schema.OIndexConfigProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaEmbedded;
 import com.orientechnologies.orient.core.metadata.schema.OViewConfig;
 import com.orientechnologies.orient.core.metadata.schema.OViewIndexConfig;
+import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
 import java.util.List;
@@ -187,12 +188,9 @@ public class OSchemaDistributed extends OSchemaEmbedded {
       sendCommand(database, cmd.toString());
 
       OrientDBDistributed context = ((ODatabaseDocumentDistributed) database).getContext();
-      Set<String> nodes = context.getAvailableNodeNames(database.getName());
+      Set<ONodeId> nodes = context.getAvailableNodeIds(database.getName());
 
-      nodes.removeIf(
-          (x) -> {
-            return !context.isNodeMaster(x, database.getName());
-          });
+      nodes.removeIf(x -> !context.isNodeMaster(x, database.getName()));
       ((OClassDistributed) getClass(className)).autoAssignClusterOwnership(database, nodes, false);
 
     } else {

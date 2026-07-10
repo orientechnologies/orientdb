@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.distributed.ONodeConfig;
 import com.orientechnologies.orient.distributed.ONodeListenerConfig;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabasesTopology;
@@ -175,12 +176,12 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
       throws IOException {
 
     final String command = parts[1];
-    final String id = parts.length > 2 ? parts[2] : null;
-
+    final String name = parts.length > 2 ? parts[2] : null;
     final ODocument doc;
 
     // NODE CONFIG
     if (command.equalsIgnoreCase("node")) {
+      ONodeId id = getServer().getDatabases().getNodeId(name);
 
       OClusterConfiguration info = doGetNodeConfig();
       if (info != null) {
@@ -190,7 +191,7 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
       }
 
     } else if (command.equalsIgnoreCase("database")) {
-      ODistributedConfiguration info = doGetDatabaseInfo(server, id);
+      ODistributedConfiguration info = doGetDatabaseInfo(server, name);
       if (info != null) {
         doc = info.getDocument();
       } else {
@@ -198,7 +199,7 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
       }
 
     } else if (command.equalsIgnoreCase("stats")) {
-
+      ONodeId id = getServer().getDatabases().getNodeId(name);
       if (id != null) {
 
         doc = singleNodeStats(id);
@@ -224,7 +225,7 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
     }
   }
 
-  private ODocument singleNodeStats(final String id) {
+  private ODocument singleNodeStats(final ONodeId id) {
     final ODocument doc;
 
     if (server.getDatabases() instanceof OrientDBDistributed dc) {
@@ -256,8 +257,10 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
       final OClusterConfiguration doc = dc.getClusterConfiguration();
 
       final Collection<ONodeConfig> members = doc.getMembers();
-      List<String> servers = new ArrayList<>(members.size());
-      for (ONodeConfig nodeConf : members) servers.add(nodeConf.getName());
+      List<ONodeId> servers = new ArrayList<>(members.size());
+      for (ONodeConfig nodeConf : members) {
+        servers.add(nodeConf.getNodeId());
+      }
 
       Set<String> databases = dc.listDatabases(null, null);
       if (databases.isEmpty()) {
@@ -332,8 +335,8 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
       doc = dc.getClusterConfiguration();
 
       final Collection<ONodeConfig> documents = doc.getMembers();
-      List<String> servers = new ArrayList<>(documents.size());
-      for (ONodeConfig document : documents) servers.add(document.getName());
+      List<ONodeId> servers = new ArrayList<>(documents.size());
+      for (ONodeConfig document : documents) servers.add(document.getNodeId());
 
       final ODistributedResponse dResponse =
           dc.getPlugin()
@@ -361,7 +364,7 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
     } else {
       doc = new OClusterConfiguration();
 
-      final ONodeConfig member = new ONodeConfig();
+      final ONodeConfig member = new ONodeConfig(server.getNodeId());
 
       member.setName("orientdb");
       member.setStatus("ONLINE");
@@ -409,14 +412,14 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
     }
   }
 
-  private ONodeConfig getMemberConfig(final OClusterConfiguration doc, final String node) {
+  private ONodeConfig getMemberConfig(final OClusterConfiguration doc, final ONodeId node) {
 
     final Collection<ONodeConfig> documents = doc.getMembers();
 
     ONodeConfig member = null;
     for (ONodeConfig document : documents) {
       final String name = document.getName();
-      if (name.equalsIgnoreCase(node)) {
+      if (name.equalsIgnoreCase(node.getNode())) {
         member = document;
         break;
       }

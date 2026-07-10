@@ -78,7 +78,7 @@ public class OVersionPromise {
   }
 
   public synchronized void cancel(OTransactionIdPromise promise) {
-    if (this.promise.isPresent() && this.promise.get().equals(promise)) {
+    if (this.promise.map(p -> p.equals(promise)).orElse(false)) {
       logger.debugNode(current, "%s canceling version promise %s", context, this.promise.get());
       this.promise = Optional.empty();
     }

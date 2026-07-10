@@ -1,14 +1,15 @@
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.orient.core.transaction.ONodeId;
 import java.util.List;
 import java.util.Set;
 
 public interface ODistributedResponseManager {
-  boolean setLocalResult(String localNodeName, Object localResult);
+  boolean setLocalResult(ONodeId localNodeName, Object localResult);
 
   ODistributedResponse getFinalResponse();
 
-  void removeServerBecauseUnreachable(String node);
+  void removeServerBecauseUnreachable(ONodeId node);
 
   boolean waitForSynchronousResponses() throws InterruptedException;
 
@@ -16,9 +17,9 @@ public interface ODistributedResponseManager {
 
   void cancel();
 
-  Set<String> getExpectedNodes();
+  Set<ONodeId> getExpectedNodes();
 
-  List<String> getRespondingNodes();
+  List<ONodeId> getRespondingNodes();
 
   ODistributedRequestId getMessageId();
 
@@ -30,7 +31,7 @@ public interface ODistributedResponseManager {
 
   long getSentOn();
 
-  List<String> getMissingNodes();
+  List<ONodeId> getMissingNodes();
 
   String getDatabaseName();
 

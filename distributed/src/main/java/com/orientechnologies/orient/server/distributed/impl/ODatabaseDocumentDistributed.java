@@ -227,19 +227,19 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     if (getContext().isDistributedDisabled(getName()))
       throw new OCommandExecutionException("OrientDB is not started in distributed mode");
 
-    return getContext().removeDatabaseMember(getDatabaseId(), new ONodeId(serverName));
+    return getContext().removeDatabaseMember(getDatabaseId(), getContext().getNodeId(serverName));
   }
 
   @Override
   public OExecutionStream queryOnNode(
-      String nodeName, OInternalExecutionPlan executionPlan, Map<Object, Object> inputParameters) {
+      ONodeId nodeName, OInternalExecutionPlan executionPlan, Map<Object, Object> inputParameters) {
     ORunQueryExecutionPlanTask task =
         new ORunQueryExecutionPlanTask(executionPlan, inputParameters, nodeName);
     ODistributedResponse result = executeTaskOnNode(task, nodeName);
     return task.getResult(result, this);
   }
 
-  public ODistributedResponse executeTaskOnNode(ORemoteTask task, String nodeName) {
+  public ODistributedResponse executeTaskOnNode(ORemoteTask task, ONodeId nodeName) {
 
     if (getContext().isDistributedDisabled(getName()))
       throw new ODistributedException("OrientDB is not started in distributed mode");
@@ -385,7 +385,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
               .getValueAsInteger(OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_AUTORETRY_DELAY);
       ODistributedTxCoordinator txManager =
           new ODistributedTxCoordinator(
-              getName(), dManager, localDistributedDatabase, getLocalNodeName(), nretry, delay);
+              getName(), dManager, localDistributedDatabase, getLocalNodeId(), nretry, delay);
       int quorum = getContext().getNodeState().getOps().getDatabaseQuorum(getDatabaseId());
 
       final int availableNodes = getContext().getOnlineMasters(getName());
@@ -998,7 +998,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         command,
         ids.getFirst(),
         ids.getSecond());
-    Set<String> nodes = getContext().getAvailableNodeNames(getName());
+    Set<ONodeId> nodes = getContext().getAvailableNodeIds(getName());
 
     ODistributedRequestId reqId = getContext().nextRequestId();
     ODistributedTxResponseManagerImpl responseManager = sendTask(nodes, task, null, reqId);
@@ -1045,7 +1045,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       List<Exception> exceptions = new ArrayList<>();
       List<String> messages = new ArrayList<>();
       for (OTransactionResultPayload result : results) {
-        String node = responseManager.getNodeNameFromPayload(result);
+        ONodeId node = responseManager.getNodeNameFromPayload(result);
         switch (result.getResponseType()) {
           case OTxSuccess.ID:
             messages.add("node: " + node + " success");
@@ -1092,7 +1092,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   }
 
   private void confirmPhase2DDL(
-      Set<String> nodes,
+      Set<ONodeId> nodes,
       ODistributedRequestId messageId,
       ORawPair<OTransactionIdPromise, OTransactionIdPromise> ids,
       boolean apply) {
@@ -1108,7 +1108,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   }
 
   private ODistributedTxResponseManagerImpl sendTask(
-      Collection<String> nodes, ORemoteTask task, Object localResult, ODistributedRequestId next) {
+      Collection<ONodeId> nodes, ORemoteTask task, Object localResult, ODistributedRequestId next) {
     ODistributedServerManager dManager = getDistributedManager();
     final class HoldResponseManager {
       ODistributedTxResponseManagerImpl responseManager;
@@ -1427,13 +1427,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     ODatabasesTopology topology = getContext().getNodeState().getDatabaseTopology();
     var members = topology.getMembers(id);
     var name = getName();
-    var mi =
-        members.stream()
-            .map(
-                (x) -> {
-                  return new OMemberInfo(x, topology.getRole(id, x));
-                })
-            .toList();
+    var mi = members.stream().map(x -> new OMemberInfo(x, topology.getRole(id, x))).toList();
 
     var listCl = new ArrayList<OAllocationInfoOClass>();
     for (var cl : getMetadata().getSchema().getClasses()) {
@@ -1443,7 +1437,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         var nodes = allocation.getDefinedNodes();
         for (var node : nodes) {
           var clus = allocation.getAllocationClusters(node);
-          infoNodes.add(new OAllocationInfoOClassNode(new ONodeId(node), clus));
+          infoNodes.add(new OAllocationInfoOClassNode(getContext().getNodeId(node), clus));
         }
         listCl.add(new OAllocationInfoOClass(cl.getName(), infoNodes));
       }
@@ -1459,7 +1453,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
   @Override
   public void autoAssignAllocations(boolean canCreateNewClusters) {
-    if (!getContext().isNodeMaster(getLocalNodeName(), getName()))
+    if (!getContext().isNodeMaster(getLocalNodeId(), getName()))
       // NO MASTER, DON'T CREATE LOCAL CLUSTERS
       return;
     var context = getSharedContext();
@@ -1467,12 +1461,12 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     try {
       logger.infoNode(
           getLocalNodeId(), "Reassigning ownership of clusters for database %s...", getName());
-      final Set<String> availableNodes = getContext().getAvailableNodeNames(getName());
+      final Set<ONodeId> availableNodes = getContext().getAvailableNodeIds(getName());
 
       final OSchema schema = getMetadata().getSchema();
       // FILTER OUT NON MASTER SERVER
-      for (Iterator<String> it = availableNodes.iterator(); it.hasNext(); ) {
-        final String node = it.next();
+      for (Iterator<ONodeId> it = availableNodes.iterator(); it.hasNext(); ) {
+        final ONodeId node = it.next();
         if (getContext().isNodeMaster(node, getName())) it.remove();
       }
 

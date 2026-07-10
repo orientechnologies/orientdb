@@ -250,20 +250,20 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
 
   @Override
   public ODistributedResponse sendRequest(
-      final String iDatabaseName, final Collection<String> iTargetNodes, final ORemoteTask iTask) {
+      final String iDatabaseName, final Collection<ONodeId> iTargetNodes, final ORemoteTask iTask) {
     return sendRequest(iDatabaseName, iTargetNodes, iTask, nextRequestId(), null, null);
   }
 
   @Override
   public ODistributedResponse sendSingleRequest(
-      String databaseName, String node, ORemoteTask iTask) {
+      String databaseName, ONodeId node, ORemoteTask iTask) {
     return sendRequest(
         databaseName, Collections.singletonList(node), iTask, nextRequestId(), null, null);
   }
 
   public ODistributedResponse sendRequest(
       final String iDatabaseName,
-      final Collection<String> iTargetNodes,
+      final Collection<ONodeId> iTargetNodes,
       final ORemoteTask iTask,
       final ODistributedRequestId reqId,
       final Object localResult,
@@ -300,7 +300,7 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
 
   public ODistributedResponse send2Nodes(
       final ODistributedRequest request,
-      Collection<String> nodes,
+      Collection<ONodeId> nodes,
       final Object localResult,
       ODistributedResponseManagerFactory responseManagerFactory) {
     OrientDBDistributed ctx = (OrientDBDistributed) serverInstance.getDatabases();
@@ -322,7 +322,7 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
       final ORemoteTask task = request.getTask();
       final boolean checkNodesAreOnline = task.isNodeOnlineRequired();
 
-      final Set<String> nodesConcurToTheQuorum;
+      final Set<ONodeId> nodesConcurToTheQuorum;
       int availableNodes = nodes.size();
       int onlineMasters;
       if (databaseName != null) {
@@ -379,21 +379,21 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
               groupByResponse,
               waitLocalNode);
 
-      if (localResult != null && currentResponseMgr.setLocalResult(this.nodeName, localResult)) {
+      if (localResult != null && currentResponseMgr.setLocalResult(ctx.getNodeId(), localResult)) {
         // COLLECT LOCAL RESULT ONLY
         return currentResponseMgr.getFinalResponse();
       }
 
       // SORT THE NODE TO GUARANTEE THE SAME ORDER OF DELIVERY
-      if (!(nodes instanceof List)) nodes = new ArrayList<>(nodes);
-      if (nodes.size() > 1) Collections.sort((List<String>) nodes);
+      if (!(nodes instanceof List)) nodes = new ArrayList<ONodeId>(nodes);
+      if (nodes.size() > 1) Collections.sort((List<ONodeId>) nodes);
 
       ctx.getMessageService().registerRequest(request.getId().getMessageId(), currentResponseMgr);
 
-      for (String node : nodes) {
+      for (ONodeId node : nodes) {
         // CATCH ANY EXCEPTION LOG IT AND IGNORE TO CONTINUE SENDING REQUESTS TO OTHER NODES
         try {
-          if (ctx.getNodeId().equals(new ONodeId(node))) {
+          if (ctx.getNodeId().equals(node)) {
             ctx.executeDistributedRequest(request);
           } else {
             final ORemoteServerController remoteServer = ctx.getRemoteServer(node);
@@ -424,7 +424,7 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
 
           logger.warnOut(
               this.nodeName,
-              node,
+              node.getNode(),
               "Error on sending distributed request %s (err=%s). Active nodes: %s",
               request,
               reason,
@@ -558,11 +558,11 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
   }
 
   private long adjustTimeoutWithLatency(
-      final Collection<String> iNodes, final long timeout, final ODistributedRequestId requestId) {
+      final Collection<ONodeId> iNodes, final long timeout, final ODistributedRequestId requestId) {
     long delta = 0;
     OrientDBDistributed ctx = (OrientDBDistributed) serverInstance.getDatabases();
     if (iNodes != null)
-      for (String n : iNodes) {
+      for (ONodeId n : iNodes) {
         // UPDATE THE TIMEOUT WITH THE CURRENT SERVER LATENCY
         final long l = ctx.getMessageService().getCurrentLatency(n);
         delta = Math.max(delta, l);
@@ -572,7 +572,7 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
   }
 
   public ODistributedResponse send2Nodes(
-      final ODistributedRequest iRequest, Collection<String> iNodes, final Object localResult) {
+      final ODistributedRequest iRequest, Collection<ONodeId> iNodes, final Object localResult) {
     return send2Nodes(
         iRequest,
         iNodes,
@@ -600,9 +600,10 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
   }
 
   protected boolean waitForLocalNode(
-      final ODistributedConfiguration cfg, final Collection<String> iNodes) {
+      final ODistributedConfiguration cfg, final Collection<ONodeId> iNodes) {
     boolean waitLocalNode = false;
-    if (iNodes.contains(this.nodeName)) {
+    var localId = getServerInstance().getDatabases().getNodeId();
+    if (iNodes.contains(localId)) {
       if (cfg != null) {
         if (cfg.isReadYourWrites(null)) waitLocalNode = true;
       } else {
@@ -780,7 +781,7 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
     clusterManager.updateLastClusterChange();
   }
 
-  public void closeRemoteServer(final String node) {
+  public void closeRemoteServer(final ONodeId node) {
     ((OrientDBDistributed) this.serverInstance.getDatabases()).closeRemoteServer(node);
   }
 
@@ -849,42 +850,42 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
     }
   }
 
-  public ORemoteServerController getRemoteServer(final String rNodeName) throws IOException {
-    if (rNodeName == null) throw new IllegalArgumentException("Server name is NULL");
+  public ORemoteServerController getRemoteServer(final ONodeId rNodeId) throws IOException {
+    if (rNodeId == null) throw new IllegalArgumentException("Server name is NULL");
 
     OrientDBDistributed ctx = (OrientDBDistributed) serverInstance.getDatabases();
-    ORemoteServerController remoteServer = ctx.getRemoteServer(rNodeName);
+    ORemoteServerController remoteServer = ctx.getRemoteServer(rNodeId);
     if (remoteServer == null) {
-      Member member = clusterManager.getClusterMemberByName(rNodeName);
+      Member member = clusterManager.getClusterMemberByNodeId(rNodeId);
 
       for (int retry = 0; retry < 20; ++retry) {
         ONodeConfig cfg = getNodeConfigurationByUuid(member.getUuid(), false);
         if (cfg == null || cfg.getListeners() == null) {
           try {
             Thread.sleep(100);
-            member = clusterManager.getClusterMemberByName(rNodeName);
+            member = clusterManager.getClusterMemberByNodeId(rNodeId);
             continue;
 
           } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw OException.wrapException(
-                new ODistributedException("Cannot find node '" + rNodeName + "'"), e);
+                new ODistributedException("Cannot find node '" + rNodeId + "'"), e);
           }
         }
 
         final String url = ODistributedPlugin.getListeningBinaryAddress(cfg);
 
         if (url == null) {
-          closeRemoteServer(rNodeName);
+          closeRemoteServer(rNodeId);
           throw new ODatabaseException(
               "Cannot connect to a remote node because the url was not found");
         }
 
         try {
-          remoteServer = ctx.connectRemoteServer(new ONodeId(rNodeName), url);
+          remoteServer = ctx.connectRemoteServer(rNodeId, url);
           break;
         } catch (ONetworkProtocolException | IOException e) {
-          logger.warn("failing to connect to remote node %s", rNodeName, e);
+          logger.warn("failing to connect to remote node %s", rNodeId, e);
         }
 
         // RETRY TO GET USR+PASSWORD IN A WHILE
@@ -893,13 +894,12 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
         } catch (InterruptedException e) {
           Thread.currentThread().interrupt();
           throw OException.wrapException(
-              new OInterruptedException("Cannot connect to remote server " + rNodeName), e);
+              new OInterruptedException("Cannot connect to remote server " + rNodeId), e);
         }
       }
     }
 
-    if (remoteServer == null)
-      throw new ODistributedException("Cannot find node '" + rNodeName + "'");
+    if (remoteServer == null) throw new ODistributedException("Cannot find node '" + rNodeId + "'");
 
     return remoteServer;
   }
@@ -909,43 +909,47 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
     return clusterManager.getLastClusterChangeOn();
   }
 
-  public void onNodeJoined(String joinedNodeName, String url, Member member) {
+  public void onNodeJoined(ONodeId joinedNodeId, String url) {
     try {
-      getRemoteServer(joinedNodeName);
+      getRemoteServer(joinedNodeId);
     } catch (IOException e) {
-      logger.errorOut(nodeName, joinedNodeName, "Error on connecting to node %s", joinedNodeName);
+      logger.errorOut(
+          nodeName, joinedNodeId.getNode(), "Error on connecting to node %s", joinedNodeId);
     }
-    ((OrientDBDistributed) serverInstance.getDatabases())
-        .connected(new ONodeId(joinedNodeName), url);
+    ((OrientDBDistributed) serverInstance.getDatabases()).connected(joinedNodeId, url);
 
     // NOTIFY NODE WAS ADDED SUCCESSFULLY
-    notifyNodeJoined(joinedNodeName);
+    notifyNodeJoined(joinedNodeId);
 
     // FORCE THE ALIGNMENT FOR ALL THE ONLINE DATABASES AFTER THE JOIN ONLY IF AUTO-DEPLOY IS SET
     dumpServersStatus();
   }
 
-  public void notifyNodeJoined(String joinedNodeName) {
-    for (ODistributedLifecycleListener l : listeners) l.onNodeJoined(joinedNodeName);
+  public void notifyNodeJoined(ONodeId joinedNodeName) {
+    for (ODistributedLifecycleListener l : listeners) l.onNodeJoined(joinedNodeName.getNode());
   }
 
-  public void notifyNodeLeft(String joinedNodeName) {
-    for (ODistributedLifecycleListener l : listeners) l.onNodeLeft(joinedNodeName);
+  public void notifyNodeLeft(ONodeId joinedNodeName) {
+    for (ODistributedLifecycleListener l : listeners) l.onNodeLeft(joinedNodeName.getNode());
   }
 
   // This is used only during startup and gets called by the cluster metadata manager
-  public void connectToAllNodes(Set<String> clusterNodes) throws IOException {
-    for (String m : clusterNodes) if (!m.equals(nodeName)) getRemoteServer(m);
+  public void connectToAllNodes(Set<ONodeId> clusterNodes) throws IOException {
+    for (ONodeId m : clusterNodes) {
+      if (!m.equals(serverInstance.getDatabases().getNodeId())) {
+        getRemoteServer(m);
+      }
+    }
   }
 
   @Override
-  public DB_STATUS getDatabaseStatus(String iNode, String iDatabaseName) {
+  public DB_STATUS getDatabaseStatus(ONodeId iNode, String iDatabaseName) {
     return ((OrientDBDistributed) serverInstance.getDatabases())
         .getDatabaseStatus(iNode, iDatabaseName);
   }
 
   // Called to notify this server, that a node has been removed from the cluster
-  public void onServerRemoved(String nodeName) {
+  public void onServerRemoved(ONodeId nodeName) {
     closeRemoteServer(nodeName);
   }
 

@@ -20,7 +20,6 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.orient.core.transaction.ONodeId;
-import java.util.Collection;
 
 /**
  * Factory manager to handle multiple version of distributed protocols.
@@ -29,10 +28,6 @@ import java.util.Collection;
  */
 public interface ORemoteTaskFactoryManager {
   ORemoteTaskFactory getFactoryByServerId(ONodeId serverId);
-
-  ORemoteTaskFactory getFactoryByServerName(String serverName);
-
-  ORemoteTaskFactory getFactoryByServerNames(Collection<String> serverNames);
 
   ORemoteTaskFactory getFactoryByVersion(int version);
 }

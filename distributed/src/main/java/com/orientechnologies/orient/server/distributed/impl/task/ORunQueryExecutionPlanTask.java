@@ -14,6 +14,7 @@ import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.executor.stream.OExecutionStream;
+import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
@@ -35,15 +36,15 @@ public class ORunQueryExecutionPlanTask extends OAbstractRemoteTask {
 
   public static final int FACTORYID = 40;
 
-  private String nodeName;
+  private ONodeId nodeId;
   private OInternalExecutionPlan plan;
   private Map<Object, Object> inputParams;
 
   public ORunQueryExecutionPlanTask(
-      OInternalExecutionPlan executionPlan, Map<Object, Object> inputParameters, String nodeName) {
+      OInternalExecutionPlan executionPlan, Map<Object, Object> inputParameters, ONodeId nodeId) {
     this.plan = executionPlan;
     this.inputParams = inputParameters;
-    this.nodeName = nodeName;
+    this.nodeId = nodeId;
   }
 
   public ORunQueryExecutionPlanTask() {}
@@ -105,7 +106,7 @@ public class ORunQueryExecutionPlanTask extends OAbstractRemoteTask {
         OExecutionStream.resultCollection(((List<OResult>) payload.getProperty("data")));
     String queryId = payload.getProperty("queryId");
     return OExecutionStream.multipleStreams(
-        new OExecutionStreamDistributedFetch(queryId, nodeName, first, db));
+        new OExecutionStreamDistributedFetch(queryId, nodeId, first, db));
   }
 
   @Override
@@ -120,7 +121,7 @@ public class ORunQueryExecutionPlanTask extends OAbstractRemoteTask {
     serializerNetwork.serialize(params, container);
 
     OResultInternal metadata = new OResultInternal();
-    params.setProperty("nodeName", nodeName);
+    params.setProperty("nodeId", nodeId);
     serializerNetwork.serialize(metadata, container);
 
     container.fitBytes();
@@ -148,7 +149,7 @@ public class ORunQueryExecutionPlanTask extends OAbstractRemoteTask {
     OResult serializedExecutionPlan = serializerNetwork.deserialize(container);
     inputParams = serializerNetwork.deserialize(container).getProperty("params");
     OResult metadata = serializerNetwork.deserialize(container);
-    nodeName = metadata.getProperty("nodeName");
+    nodeId = metadata.getProperty("nodeId");
     this.plan = deserializePlan(serializedExecutionPlan);
   }
 

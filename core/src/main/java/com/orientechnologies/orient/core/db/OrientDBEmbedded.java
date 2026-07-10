@@ -1160,6 +1160,11 @@ public class OrientDBEmbedded implements OrientDBInternal {
   }
 
   @Override
+  public ONodeId getNodeId(String nodeName) {
+    return new ONodeId(nodeName);
+  }
+
+  @Override
   public ONodeId getNodeId() {
     return new ONodeId("$$unnamed");
   }

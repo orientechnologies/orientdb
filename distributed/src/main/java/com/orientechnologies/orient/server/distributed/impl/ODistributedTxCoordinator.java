@@ -28,6 +28,7 @@ import com.orientechnologies.orient.core.exception.OConcurrentModificationExcept
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.storage.ORecordDuplicatedException;
+import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionInternal;
@@ -67,7 +68,7 @@ public class ODistributedTxCoordinator {
   private final ODistributedDatabaseImpl localDistributedDatabase;
   private ODistributedTxResponseManager responseManager;
   // ID and name of the node where this tx coordinator is running
-  private final String nodeName;
+  private final ONodeId nodeId;
   private final int maxRetries;
   private final int retryDelay;
   private final String dbName;
@@ -76,13 +77,13 @@ public class ODistributedTxCoordinator {
       final String dbName,
       final ODistributedServerManager manager,
       final ODistributedDatabase iDDatabase,
-      String nodeName,
+      ONodeId nodeName,
       int maxRetries,
       int retryDelay) {
     this.dManager = manager;
     this.dbName = dbName;
     this.localDistributedDatabase = (ODistributedDatabaseImpl) iDDatabase;
-    this.nodeName = nodeName;
+    this.nodeId = nodeName;
     this.maxRetries = maxRetries;
     this.retryDelay = retryDelay;
   }
@@ -172,14 +173,14 @@ public class ODistributedTxCoordinator {
     if (localResult.getResponseType() == OTxRecordLockTimeout.ID) {
       localDistributedDatabase.popTxContext(requestId).destroy();
       throw new ODistributedRecordLockedException(
-          nodeName, ((OTxRecordLockTimeout) localResult).getLockedId());
+          nodeId.getNode(), ((OTxRecordLockTimeout) localResult).getLockedId());
     }
     if (localResult.getResponseType() == OTxKeyLockTimeout.ID) {
       localDistributedDatabase.popTxContext(requestId).destroy();
       throw new ODistributedKeyLockedException(
-          nodeName, ((OTxKeyLockTimeout) localResult).getKey());
+          nodeId.getNode(), ((OTxKeyLockTimeout) localResult).getKey());
     }
-    Set<String> nodes = database.getContext().getAvailableNodeNotLocalNames(dbName);
+    Set<ONodeId> nodes = database.getContext().getAvailableNodeNotLocalIds(dbName);
     if (nodes.isEmpty()) {
       switch (localResult.getResponseType()) {
         case OTxSuccess.ID:
@@ -221,12 +222,12 @@ public class ODistributedTxCoordinator {
         case OTxRecordLockTimeout.ID:
           {
             throw new ODistributedRecordLockedException(
-                nodeName, ((OTxRecordLockTimeout) localResult).getLockedId());
+                nodeId.getNode(), ((OTxRecordLockTimeout) localResult).getLockedId());
           }
         case OTxKeyLockTimeout.ID:
           {
             throw new ODistributedKeyLockedException(
-                nodeName, ((OTxKeyLockTimeout) localResult).getKey());
+                nodeId.getNode(), ((OTxKeyLockTimeout) localResult).getKey());
           }
         case OTxInvalidSequential.ID:
           // This never happen in local only, keep the management anyway
@@ -236,7 +237,7 @@ public class ODistributedTxCoordinator {
     }
     final OTransactionPhase1Task txTask = createTxPhase1Task(txId, iTx);
 
-    final Set<String> sentNodes = new HashSet<>(nodes);
+    final Set<ONodeId> sentNodes = new HashSet<>(nodes);
 
     iTx.setStatus(OTransaction.TXSTATUS.COMMITTING);
     // SYNCHRONOUS CALL: REPLICATE IT
@@ -272,7 +273,7 @@ public class ODistributedTxCoordinator {
   private void handleResponse(
       ODistributedRequestId requestId,
       ODistributedTxResponseManager responseManager,
-      Set<String> nodes,
+      Set<ONodeId> nodes,
       ODatabaseDocumentDistributed database,
       OTransactionInternal iTx,
       OTransactionPhase1Task txTask) {
@@ -360,7 +361,7 @@ public class ODistributedTxCoordinator {
       List<Exception> exceptions = new ArrayList<>();
       List<String> messages = new ArrayList<>();
       for (OTransactionResultPayload result : results) {
-        String node = responseManager.getNodeNameFromPayload(result);
+        ONodeId node = responseManager.getNodeNameFromPayload(result);
         switch (result.getResponseType()) {
           case OTxRecordLockTimeout.ID:
             sendPhase2Task(nodes, createTxPhase2Task(requestId, txTask, false));
@@ -456,7 +457,7 @@ public class ODistributedTxCoordinator {
     }
   }
 
-  private void sendPhase2Task(Set<String> nodes, OTransactionPhase2Task task) {
+  private void sendPhase2Task(Set<ONodeId> nodes, OTransactionPhase2Task task) {
     dManager.sendRequest(dbName, nodes, task);
   }
 

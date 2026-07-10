@@ -56,7 +56,7 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
   private final ConcurrentHashMap<Long, ODistributedResponseManager> responsesByRequestIds;
   private final TimerTask asynchMessageManager;
   private long[] responseTimeMetrics = new long[10];
-  private final Map<String, OProfilerEntry> latencies = new HashMap<String, OProfilerEntry>();
+  private final Map<ONodeId, OProfilerEntry> latencies = new HashMap<>();
   private final Map<String, AtomicLong> messagesStats = new HashMap<String, AtomicLong>();
 
   public ODistributedMessageServiceImpl(final OrientDBDistributed context) {
@@ -92,7 +92,7 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
     responsesByRequestIds.put(id, currentResponseMgr);
   }
 
-  public void handleUnreachableNode(final String nodeName) {
+  public void handleUnreachableNode(final ONodeId nodeName) {
     // WAKE UP ALL THE WAITING RESPONSES
     for (ODistributedResponseManager r : responsesByRequestIds.values())
       r.removeServerBecauseUnreachable(nodeName);
@@ -151,8 +151,8 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
   public List<ONodeLatencies> getNodesLatencies() {
     List<ONodeLatencies> nodes = new ArrayList<>();
     synchronized (latencies) {
-      for (Entry<String, OProfilerEntry> entry : latencies.entrySet())
-        nodes.add(new ONodeLatencies(new ONodeId(entry.getKey()), entry.getValue().toSnapshot()));
+      for (Entry<ONodeId, OProfilerEntry> entry : latencies.entrySet())
+        nodes.add(new ONodeLatencies(entry.getKey(), entry.getValue().toSnapshot()));
     }
     return nodes;
   }
@@ -172,15 +172,15 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
     final ODocument doc = new ODocument();
 
     synchronized (latencies) {
-      for (Entry<String, OProfilerEntry> entry : latencies.entrySet())
-        doc.field(entry.getKey(), entry.getValue().toDocument(), OType.EMBEDDED);
+      for (Entry<ONodeId, OProfilerEntry> entry : latencies.entrySet())
+        doc.field(entry.getKey().getNode(), entry.getValue().toDocument(), OType.EMBEDDED);
     }
 
     return doc;
   }
 
   @Override
-  public long getCurrentLatency(final String server) {
+  public long getCurrentLatency(final ONodeId server) {
     synchronized (latencies) {
       final OProfilerEntry l = latencies.get(server);
       if (l != null) return (long) (l.getAverage() / 1000000);
@@ -190,10 +190,11 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
   }
 
   @Override
-  public void updateLatency(final String server, final long sentOn) {
+  public void updateLatency(final ONodeId server, final long sentOn) {
     // MANAGE THIS ASYNCHRONOUSLY
     synchronized (latencies) {
-      OProfilerEntry latency = latencies.computeIfAbsent(server, OProfilerEntry::new);
+      OProfilerEntry latency =
+          latencies.computeIfAbsent(server, (n) -> new OProfilerEntry(n.getNode()));
       latency.resettableUpdate(System.nanoTime() - sentOn, 30000);
     }
   }
@@ -214,7 +215,7 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
 
       if (timeElapsed > timeout) {
         // EXPIRED REQUEST, FREE IT!
-        final List<String> missingNodes = resp.getMissingNodes();
+        final List<ONodeId> missingNodes = resp.getMissingNodes();
 
         logger.warnIn(
             context.getNodeName(),

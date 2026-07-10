@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.command.OCommandDistributedReplicateReq
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.exception.OConcurrentCreateException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
 import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
 import java.util.ArrayList;
@@ -60,8 +61,8 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
   private final ODistributedServerManager dManager;
   private final ODistributedRequest request;
   private final long sentOn;
-  private final Set<String> nodesConcurInQuorum;
-  private final HashMap<String, Object> responses = new HashMap<>();
+  private final Set<ONodeId> nodesConcurInQuorum;
+  private final HashMap<ONodeId, Object> responses = new HashMap<>();
   private final boolean groupResponsesByResult;
   private final List<List<ODistributedResponse>> responseGroups = new ArrayList<>();
   private final long synchTimeout;
@@ -80,8 +81,8 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
       ODistributedServerManager iManager,
       OrientDBInternal ctx,
       ODistributedRequest iRequest,
-      Collection<String> expectedResponses,
-      Set<String> iNodesConcurInQuorum,
+      Collection<ONodeId> expectedResponses,
+      Set<ONodeId> iNodesConcurInQuorum,
       int iQuorum,
       boolean iWaitForLocalNode,
       long iSynchTimeout,
@@ -96,7 +97,7 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
     this.groupResponsesByResult = iGroupResponsesByResult;
     this.nodesConcurInQuorum = iNodesConcurInQuorum;
 
-    for (String node : expectedResponses) responses.put(node, NO_RESPONSE);
+    for (ONodeId node : expectedResponses) responses.put(node, NO_RESPONSE);
 
     if (groupResponsesByResult) responseGroups.add(new ArrayList<>());
   }
@@ -108,16 +109,16 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
    * @return True if all the nodes responded, otherwise false
    */
   public boolean collectResponse(final ODistributedResponse response) {
-    final String executorNode = response.getExecutorNodeName();
-    final String senderNode = response.getSenderNodeName();
+    final ONodeId executorNode = response.getExecutorNodeName();
+    final ONodeId senderNode = response.getSenderNodeName();
     response.setDistributedResponseManager(this);
 
     synchronousResponsesLock.lock();
     try {
       if (!executorNode.equals(ctx.getNodeId().getNode()) && !responses.containsKey(executorNode)) {
         logger.warnIn(
-            senderNode,
-            executorNode,
+            senderNode.getNode(),
+            executorNode.getNode(),
             "Received response for request (%s) from unexpected node. Expected are: %s",
             request,
             getExpectedNodes());
@@ -223,14 +224,14 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
    * @param localResult
    * @return
    */
-  public boolean setLocalResult(final String localNodeName, final Object localResult) {
+  public boolean setLocalResult(final ONodeId localNodeName, final Object localResult) {
     localResponse =
         new ODistributedResponse(this, request.getId(), localNodeName, localNodeName, localResult);
     receivedCurrentNode = true;
     return collectResponse(localResponse);
   }
 
-  public void removeServerBecauseUnreachable(final String node) {
+  public void removeServerBecauseUnreachable(final ONodeId node) {
     synchronousResponsesLock.lock();
     try {
 
@@ -298,14 +299,14 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
           int synchronizingNodes = 0;
           int missingActiveNodes = 0;
 
-          Map<String, ODistributedServerManager.DB_STATUS> missingResponseNodeStatuses =
+          Map<ONodeId, ODistributedServerManager.DB_STATUS> missingResponseNodeStatuses =
               new HashMap<>(responses.size());
 
           int missingResponses = 0;
 
-          for (Iterator<Map.Entry<String, Object>> iter = responses.entrySet().iterator();
+          for (Iterator<Map.Entry<ONodeId, Object>> iter = responses.entrySet().iterator();
               iter.hasNext(); ) {
-            final Map.Entry<String, Object> curr = iter.next();
+            final Map.Entry<ONodeId, Object> curr = iter.next();
 
             if (curr.getValue() == NO_RESPONSE) {
               missingResponses++;
@@ -387,7 +388,7 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
       final RuntimeException failure = manageConflicts();
       if (failure != null)
         return new ODistributedResponse(
-            this, request.getId(), ctx.getNodeId().getNode(), ctx.getNodeId().getNode(), failure);
+            this, request.getId(), ctx.getNodeId(), ctx.getNodeId(), failure);
 
       if (receivedResponses == 0) {
         if (quorum > 0 && !request.getTask().isIdempotent())
@@ -409,8 +410,8 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
         case UNION:
           {
             // COLLECT ALL THE RESPONSE IN A MAP OF <NODE, RESULT>
-            final Map<String, Object> payloads = new HashMap<String, Object>();
-            for (Map.Entry<String, Object> entry : responses.entrySet())
+            final Map<ONodeId, Object> payloads = new HashMap<>();
+            for (Map.Entry<ONodeId, Object> entry : responses.entrySet())
               if (entry.getValue() != NO_RESPONSE)
                 payloads.put(
                     entry.getKey(), ((ODistributedResponse) entry.getValue()).getPayload());
@@ -418,7 +419,7 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
             if (payloads.isEmpty()) return null;
 
             final ODistributedResponse response = getReceivedResponses().iterator().next();
-            response.setExecutorNodeName(responses.keySet().toString());
+            //            response.setExecutorNodeName(responses.keySet().toString());
             response.setPayload(payloads);
             return response;
           }
@@ -461,12 +462,12 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
   }
 
   /** Returns the list of node names that didn't provide a response. */
-  public List<String> getMissingNodes() {
+  public List<ONodeId> getMissingNodes() {
     synchronousResponsesLock.lock();
     try {
 
-      final List<String> missingNodes = new ArrayList<>();
-      for (Map.Entry<String, Object> entry : responses.entrySet())
+      final List<ONodeId> missingNodes = new ArrayList<>();
+      for (Map.Entry<ONodeId, Object> entry : responses.entrySet())
         if (entry.getValue() == NO_RESPONSE) missingNodes.add(entry.getKey());
       return missingNodes;
 
@@ -475,21 +476,21 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
     }
   }
 
-  public Set<String> getExpectedNodes() {
+  public Set<ONodeId> getExpectedNodes() {
     synchronousResponsesLock.lock();
     try {
-      return new HashSet<>(responses.keySet());
+      return new HashSet<ONodeId>(responses.keySet());
     } finally {
       synchronousResponsesLock.unlock();
     }
   }
 
   /** Returns the list of node names that provided a response. */
-  public List<String> getRespondingNodes() {
-    final List<String> respondedNodes = new ArrayList<>();
+  public List<ONodeId> getRespondingNodes() {
+    final List<ONodeId> respondedNodes = new ArrayList<>();
     synchronousResponsesLock.lock();
     try {
-      for (Map.Entry<String, Object> entry : responses.entrySet())
+      for (Map.Entry<ONodeId, Object> entry : responses.entrySet())
         if (entry.getValue() != NO_RESPONSE) respondedNodes.add(entry.getKey());
     } finally {
       synchronousResponsesLock.unlock();
@@ -582,7 +583,7 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
     } else {
       if (receivedResponses >= quorum) {
         int responsesForQuorum = 0;
-        for (Map.Entry<String, Object> response : responses.entrySet()) {
+        for (Map.Entry<ONodeId, Object> response : responses.entrySet()) {
           if (response.getValue() != NO_RESPONSE
               && nodesConcurInQuorum.contains(response.getKey())
               && ++responsesForQuorum >= quorum) {
@@ -690,7 +691,7 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
       msg.append("Received no responses");
     } else {
       msg.append("Received: ");
-      for (Map.Entry<String, Object> response : responses.entrySet()) {
+      for (Map.Entry<ONodeId, Object> response : responses.entrySet()) {
         msg.append("\n - ");
         msg.append(response.getKey());
         msg.append(": ");
@@ -709,14 +710,14 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
 
     for (List<ODistributedResponse> responseGroup : responseGroups) {
       if (responseGroup != bestResponsesGroup && responseGroup.size() == maxCoherentResponses) {
-        final List<String> a = new ArrayList<String>();
+        final List<ONodeId> a = new ArrayList<>();
         Object aResponse = null;
         for (ODistributedResponse r : bestResponsesGroup) {
           a.add(r.getExecutorNodeName());
           aResponse = r.getPayload();
         }
 
-        final List<String> b = new ArrayList<String>();
+        final List<ONodeId> b = new ArrayList<>();
         Object bResponse = null;
         for (ODistributedResponse r : responseGroup) {
           b.add(r.getExecutorNodeName());

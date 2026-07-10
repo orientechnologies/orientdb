@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.server.distributed.impl;
 
+import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedResponse;
@@ -20,14 +21,14 @@ import java.util.Set;
 public class ODistributedTxResponseManagerImpl implements ODistributedTxResponseManager {
 
   private final ORemoteTask iRequest;
-  private final Set<String> nodesConcurToTheQuorum;
+  private final Set<ONodeId> nodesConcurToTheQuorum;
   private final int expectedResponses;
   private final int quorum;
   private volatile long timeout;
   private volatile int responseCount;
-  private final List<String> debugNodeReplied = new ArrayList<>();
+  private final List<ONodeId> debugNodeReplied = new ArrayList<>();
   private volatile Map<Integer, List<OTransactionResultPayload>> resultsByType = new HashMap<>();
-  private volatile IdentityHashMap<OTransactionResultPayload, String> payloadToNode =
+  private volatile IdentityHashMap<OTransactionResultPayload, ONodeId> payloadToNode =
       new IdentityHashMap<>();
   private volatile boolean finished = false;
   private volatile boolean quorumReached = false;
@@ -37,8 +38,8 @@ public class ODistributedTxResponseManagerImpl implements ODistributedTxResponse
 
   public ODistributedTxResponseManagerImpl(
       ORemoteTask iRequest,
-      Collection<String> iNodes,
-      Set<String> nodesConcurToTheQuorum,
+      Collection<ONodeId> iNodes,
+      Set<ONodeId> nodesConcurToTheQuorum,
       int availableNodes,
       int expectedResponses,
       int quorum) {
@@ -50,7 +51,7 @@ public class ODistributedTxResponseManagerImpl implements ODistributedTxResponse
   }
 
   @Override
-  public synchronized boolean setLocalResult(String localNodeName, Object localResult) {
+  public synchronized boolean setLocalResult(ONodeId localNodeName, Object localResult) {
     debugNodeReplied.add(localNodeName);
     return addResult(localNodeName, (OTransactionResultPayload) localResult);
   }
@@ -70,7 +71,7 @@ public class ODistributedTxResponseManagerImpl implements ODistributedTxResponse
   }
 
   @Override
-  public synchronized void removeServerBecauseUnreachable(String node) {}
+  public synchronized void removeServerBecauseUnreachable(ONodeId node) {}
 
   @Override
   public synchronized boolean waitForSynchronousResponses() {
@@ -109,12 +110,12 @@ public class ODistributedTxResponseManagerImpl implements ODistributedTxResponse
   }
 
   @Override
-  public Set<String> getExpectedNodes() {
+  public Set<ONodeId> getExpectedNodes() {
     return nodesConcurToTheQuorum;
   }
 
   @Override
-  public List<String> getRespondingNodes() {
+  public List<ONodeId> getRespondingNodes() {
     return debugNodeReplied;
   }
 
@@ -124,7 +125,7 @@ public class ODistributedTxResponseManagerImpl implements ODistributedTxResponse
   }
 
   @Override
-  public String getNodeNameFromPayload(OTransactionResultPayload payload) {
+  public ONodeId getNodeNameFromPayload(OTransactionResultPayload payload) {
     return this.payloadToNode.get(payload);
   }
 
@@ -135,7 +136,7 @@ public class ODistributedTxResponseManagerImpl implements ODistributedTxResponse
 
   @Override
   public synchronized boolean collectResponse(
-      OTransactionPhase1TaskResult response, String senderNodeName) {
+      OTransactionPhase1TaskResult response, ONodeId senderNodeName) {
     if (response.getResultPayload() instanceof OTxStillRunning) {
       stillRunning++;
       return false;
@@ -144,7 +145,7 @@ public class ODistributedTxResponseManagerImpl implements ODistributedTxResponse
     return addResult(senderNodeName, response.getResultPayload());
   }
 
-  private boolean addResult(String senderNodeName, OTransactionResultPayload result) {
+  private boolean addResult(ONodeId senderNodeName, OTransactionResultPayload result) {
     List<OTransactionResultPayload> results = new ArrayList<>();
 
     if (nodesConcurToTheQuorum.contains(senderNodeName)) {
@@ -232,7 +233,7 @@ public class ODistributedTxResponseManagerImpl implements ODistributedTxResponse
   }
 
   @Override
-  public List<String> getMissingNodes() {
+  public List<ONodeId> getMissingNodes() {
     return null;
   }
 

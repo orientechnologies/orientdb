@@ -1,16 +1,22 @@
 package com.orientechnologies.agent.operation;
 
+import com.orientechnologies.orient.core.transaction.ONodeId;
+
 public class OperationResponseFromNode {
-  private String senderNodeName;
+  private ONodeId senderNodeId;
   private NodeResponse nodeResponse;
 
-  public OperationResponseFromNode(final String senderNodeName, final NodeResponse nodeResponse) {
-    this.senderNodeName = senderNodeName;
+  public OperationResponseFromNode(final ONodeId senderNodeName, final NodeResponse nodeResponse) {
+    this.senderNodeId = senderNodeName;
     this.nodeResponse = nodeResponse;
   }
 
+  public ONodeId getSenderNodeId() {
+    return senderNodeId;
+  }
+
   public String getSenderNodeName() {
-    return senderNodeName;
+    return senderNodeId.getNode();
   }
 
   public NodeResponse getNodeResponse() {

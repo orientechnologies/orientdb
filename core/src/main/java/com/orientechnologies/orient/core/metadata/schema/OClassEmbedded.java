@@ -17,6 +17,7 @@ import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.storage.OCluster;
 import com.orientechnologies.orient.core.storage.OStorage;
+import com.orientechnologies.orient.core.transaction.ONodeId;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -25,6 +26,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.stream.Collectors;
 
 /** Created by tglman on 14/06/17. */
 public class OClassEmbedded extends OClassImpl {
@@ -873,7 +875,7 @@ public class OClassEmbedded extends OClassImpl {
 
   public void autoAssignClusterOwnership(
       final ODatabaseDocumentInternal db,
-      final Set<String> availableNodes,
+      final Set<ONodeId> availableNodes,
       final boolean canCreateNewClusters) {
 
     if (availableNodes.isEmpty())
@@ -931,7 +933,9 @@ public class OClassEmbedded extends OClassImpl {
   }
 
   protected void reassignClusters(
-      ODatabaseDocumentInternal db, Set<String> availableNodes, Set<String> clusterNames) {
+      ODatabaseDocumentInternal db, Set<ONodeId> availableNodes, Set<String> clusterNames) {
+    Set<String> availableNodesNames =
+        availableNodes.stream().map(ONodeId::getNode).collect(Collectors.toSet());
     if (getAllocation() == null) {
       int size = clusterNames.size() / availableNodes.size();
       if (size == 0) {
@@ -939,31 +943,31 @@ public class OClassEmbedded extends OClassImpl {
       }
       List<String> all = new ArrayList<>(clusterNames);
       int cursor = size;
-      for (String node : availableNodes) {
+      for (ONodeId node : availableNodes) {
         if (cursor > all.size()) {
           var overflow = cursor - all.size();
           var newSize = size - overflow;
           if (newSize > 0) {
-            addAllocations(db, node, all.subList(all.size() - newSize, all.size()));
+            addAllocations(db, node.getNode(), all.subList(all.size() - newSize, all.size()));
           }
           break;
         } else {
-          addAllocations(db, node, all.subList(cursor - size, cursor));
+          addAllocations(db, node.getNode(), all.subList(cursor - size, cursor));
           cursor += size;
         }
       }
     } else {
-      int size = clusterNames.size() / availableNodes.size();
+      int size = clusterNames.size() / availableNodesNames.size();
       if (size == 0) {
         return;
       }
       List<String> unassigned = new ArrayList<>(clusterNames);
       List<String> definedNodes = new ArrayList<>(getAllocation().getDefinedNodes());
       List<String> toRemoveNodes = new ArrayList<>(definedNodes);
-      toRemoveNodes.removeAll(availableNodes);
-      definedNodes.retainAll(availableNodes);
+      toRemoveNodes.removeAll(availableNodesNames);
+      definedNodes.retainAll(availableNodesNames);
       List<String> toReassing = new ArrayList<>();
-      List<String> toReceive = new ArrayList<>(availableNodes);
+      List<String> toReceive = new ArrayList<>(availableNodesNames);
       toReceive.removeAll(definedNodes);
       for (String node : toRemoveNodes) {
         List<String> assigned = getAllocation().getAllocationClusters(node);

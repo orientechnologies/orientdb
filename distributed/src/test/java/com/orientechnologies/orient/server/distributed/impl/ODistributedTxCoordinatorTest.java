@@ -46,11 +46,10 @@ public class ODistributedTxCoordinatorTest {
   @Test
   public void tryCommitSucceeds() {
     String dbName = "testDB";
-    String localNode = "node0";
-    List<String> remoteNodes = Arrays.asList("node1", "node2");
+    ONodeId localNode = new ONodeId("node0");
+    List<ONodeId> remoteNodes = Arrays.asList(new ONodeId("node1"), new ONodeId("node2"));
 
-    ODistributedSynchronizedSequence seq =
-        new ODistributedSynchronizedSequence(new ONodeId(localNode), 10);
+    ODistributedSynchronizedSequence seq = new ODistributedSynchronizedSequence(localNode, 10);
     OTransactionInternal tx = mock(OTransactionInternal.class);
     ODistributedTxResponseManager responseManager = mock(ODistributedTxResponseManager.class);
 
@@ -59,7 +58,7 @@ public class ODistributedTxCoordinatorTest {
             dbName, serverManager, distributedDatabase, localNode, 5, 100);
     coordinator.setResponseManager(responseManager);
 
-    when(context.getAvailableNodeNotLocalNames(any())).thenReturn(new HashSet<>(remoteNodes));
+    when(context.getAvailableNodeNotLocalIds(any())).thenReturn(new HashSet<>(remoteNodes));
     when(databaseDocument.getName()).thenReturn(dbName);
     when(databaseDocument.getContext()).thenReturn(context);
     when(databaseDocument.getSharedContext()).thenReturn(sharedContext);

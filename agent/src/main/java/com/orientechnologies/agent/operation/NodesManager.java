@@ -46,7 +46,8 @@ public class NodesManager {
   }
 
   public OperationResponseFromNode send(final String nodeName, final NodeOperation task) {
-    var nodes = Set.of(new ONodeId(nodeName));
+    var nodeId = context.getNodeId(nodeName);
+    var nodes = Set.of(nodeId);
     OperationResponseManager responseManager = new OperationResponseManager(nodes);
     long requestId = context.getNextMessageIdCounter();
     ODistributedRequest req =
@@ -55,7 +56,7 @@ public class NodesManager {
             context.nextRequestId(),
             null,
             new NodeOperationTask(task));
-    context.getRemoteServer(nodeName).sendRequest(req);
+    context.getRemoteServer(nodeId).sendRequest(req);
 
     context.getMessageService().registerRequest(requestId, responseManager);
 

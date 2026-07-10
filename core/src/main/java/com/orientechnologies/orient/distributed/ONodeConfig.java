@@ -13,6 +13,7 @@ import java.util.Set;
 public class ONodeConfig {
 
   private int id;
+  private ONodeId nodeId;
   private String uuid;
   private String name;
   private String version;
@@ -32,6 +33,10 @@ public class ONodeConfig {
 
   public ONodeConfig(ODocument config) {
     id = config.getProperty("id");
+    var readId = (ODocument) config.getProperty("nodeId");
+    if (readId != null) {
+      this.nodeId = ONodeId.readElement(readId);
+    }
     uuid = config.getProperty("uuid");
     name = config.getProperty("name");
     version = config.getProperty("version");
@@ -66,11 +71,16 @@ public class ONodeConfig {
     }
   }
 
-  public ONodeConfig() {}
+  public ONodeConfig(ONodeId nodeIdPar) {
+    this.nodeId = nodeIdPar;
+  }
 
   public ODocument getConfig() {
     var config = new ODocument();
     config.setProperty("id", id);
+    if (this.nodeId != null) {
+      config.setProperty("nodeId", this.nodeId.toDocument());
+    }
     config.setProperty("uuid", uuid);
     config.setProperty("name", name);
     config.setProperty("version", version);
@@ -114,6 +124,14 @@ public class ONodeConfig {
 
   public String getUuid() {
     return uuid;
+  }
+
+  public void setNodeId(ONodeId nodeId) {
+    this.nodeId = nodeId;
+  }
+
+  public ONodeId getNodeId() {
+    return nodeId;
   }
 
   public void setUuid(String uuid) {

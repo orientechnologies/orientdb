@@ -97,10 +97,8 @@ public class ServerRun {
         getHazelcastNode(
             ((ODistributedPlugin) server.getDistributedManager()).getHazelcastInstance());
     for (ServerRun s : serverIds) {
-      ((ODistributedPlugin) server.getDistributedManager())
-          .closeRemoteServer(s.server.getNodeId().getNode());
-      ((ODistributedPlugin) s.server.getDistributedManager())
-          .closeRemoteServer(server.getNodeId().getNode());
+      ((ODistributedPlugin) server.getDistributedManager()).closeRemoteServer(s.server.getNodeId());
+      ((ODistributedPlugin) s.server.getDistributedManager()).closeRemoteServer(server.getNodeId());
 
       final Node otherNode =
           getHazelcastNode(

@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.orient.core.transaction.ONodeId;
 import java.util.Collection;
 import java.util.Set;
 
@@ -31,9 +32,9 @@ public interface ODistributedStrategy {
 
   void validateConfiguration(ODistributedConfiguration cfg);
 
-  Set<String> getNodesConcurInQuorum(
+  Set<ONodeId> getNodesConcurInQuorum(
       ODistributedServerManager manager,
       String databaseName,
       ODistributedRequest request,
-      Collection<String> iNodes);
+      Collection<ONodeId> iNodes);
 }

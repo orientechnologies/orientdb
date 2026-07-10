@@ -426,4 +426,8 @@ public interface OrientDBInternal extends AutoCloseable, OSchedulerInternal {
   default boolean isDistributed() {
     return false;
   }
+
+  default ONodeId getNodeId(String nodeString) {
+    throw new UnsupportedOperationException();
+  }
 }

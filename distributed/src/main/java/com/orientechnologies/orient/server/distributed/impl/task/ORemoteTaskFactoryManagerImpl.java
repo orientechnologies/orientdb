@@ -27,7 +27,6 @@ import com.orientechnologies.orient.server.distributed.ORemoteServerController;
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactoryManager;
 import com.orientechnologies.orient.server.distributed.impl.ORemoteServerManager;
-import java.util.Collection;
 
 /**
  * Factory for remote tasks.
@@ -54,41 +53,6 @@ public class ORemoteTaskFactoryManagerImpl implements ORemoteTaskFactoryManager 
       if (factory == null)
         throw new IllegalArgumentException(
             "Cannot find a factory for remote task for server " + nodeId);
-
-      return factory;
-
-    } catch (ODistributedException e) {
-      // SERVER NOT AVAILABLE, CONSIDER CURRENT PROTOCOL FOR THE MISSING ONE
-      return getFactoryByVersion(ORemoteServerController.CURRENT_PROTOCOL_VERSION);
-    }
-  }
-
-  @Override
-  public ORemoteTaskFactory getFactoryByServerNames(final Collection<String> serverNames) {
-    int minVersion = ORemoteServerController.CURRENT_PROTOCOL_VERSION;
-    ORemoteTaskFactory factory = getFactoryByVersion(minVersion);
-
-    for (String server : serverNames) {
-      final ORemoteTaskFactory f = getFactoryByServerName(server);
-      if (f != null && f.getProtocolVersion() < minVersion) {
-        factory = f;
-        minVersion = f.getProtocolVersion();
-      }
-    }
-
-    return factory;
-  }
-
-  @Override
-  public ORemoteTaskFactory getFactoryByServerName(final String serverName) {
-    try {
-      final ORemoteServerController remoteServer =
-          dManager.getRemoteServer(new ONodeId(serverName));
-
-      final ORemoteTaskFactory factory = getFactoryByVersion(remoteServer.getProtocolVersion());
-      if (factory == null)
-        throw new IllegalArgumentException(
-            "Cannot find a factory for remote task for server " + serverName);
 
       return factory;
 

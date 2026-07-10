@@ -132,7 +132,7 @@ public class OrientDBMetricsCommand extends OServerCommandAuthenticatedServerAbs
                   .collect(
                       Collectors.toMap(
                           OperationResponseFromNode::getSenderNodeName,
-                          (r) -> {
+                          r -> {
                             NodeResponse node = r.getNodeResponse();
                             if (node != null && node.getResponseType() == 1) {
                               ResponseOk ok = (ResponseOk) node;

@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.orient.core.serialization.OStreamableHelper;
+import com.orientechnologies.orient.core.transaction.ONodeId;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -29,8 +30,8 @@ import java.util.Arrays;
 public class ODistributedResponse {
   private ODistributedResponseManager distributedResponseManager;
   private ODistributedRequestId requestId;
-  private String executorNodeName;
-  private String senderNodeName;
+  private ONodeId executorNodeName;
+  private ONodeId senderNodeName;
   private Object payload;
 
   /** Constructor used by serializer. */
@@ -39,8 +40,8 @@ public class ODistributedResponse {
   public ODistributedResponse(
       final ODistributedResponseManager msg,
       final ODistributedRequestId iRequestId,
-      final String executorNodeName,
-      final String senderNodeName,
+      final ONodeId executorNodeName,
+      final ONodeId senderNodeName,
       final Object payload) {
     this.distributedResponseManager = msg;
     this.requestId = iRequestId;
@@ -61,11 +62,11 @@ public class ODistributedResponse {
     return false;
   }
 
-  public String getExecutorNodeName() {
+  public ONodeId getExecutorNodeName() {
     return executorNodeName;
   }
 
-  public String getSenderNodeName() {
+  public ONodeId getSenderNodeName() {
     return senderNodeName;
   }
 
@@ -78,23 +79,23 @@ public class ODistributedResponse {
     return this;
   }
 
-  public ODistributedResponse setExecutorNodeName(final String executorNodeName) {
+  public ODistributedResponse setExecutorNodeName(final ONodeId executorNodeName) {
     this.executorNodeName = executorNodeName;
     return this;
   }
 
   public void toStream(final DataOutput out) throws IOException {
     requestId.toStream(out);
-    out.writeUTF(executorNodeName);
-    out.writeUTF(senderNodeName);
+    executorNodeName.writeNetwork(out);
+    senderNodeName.writeNetwork(out);
     OStreamableHelper.toStream(out, payload);
   }
 
   public void fromStream(final DataInput in) throws IOException {
     requestId = new ODistributedRequestId();
     requestId.fromStream(in);
-    executorNodeName = in.readUTF();
-    senderNodeName = in.readUTF();
+    executorNodeName = ONodeId.readNetwork(in);
+    senderNodeName = ONodeId.readNetwork(in);
     payload = OStreamableHelper.fromStream(in);
   }
 
