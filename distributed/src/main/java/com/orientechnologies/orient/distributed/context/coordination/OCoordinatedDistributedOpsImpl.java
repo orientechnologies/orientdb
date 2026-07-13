@@ -259,48 +259,29 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
     return Optional.empty();
   }
 
-  public synchronized Optional<ODistributedMessage> consensusSuccess(
-      OTransactionIdPromise promise) {
+  public synchronized OConsensusSuccess consensusSuccess(OTransactionIdPromise promise) {
     SuccessResult result = sequenceManager.notifySuccess(promise);
     return switch (result) {
       case VALID -> {
-        ODistributedMessage message = this.promised.getPromised(promise);
-        yield Optional.ofNullable(message);
+        yield new OConsensusSuccess(this.promised.getPromised(promise));
       }
       case VALID_MISSING -> {
-        ODistributedMessage message = this.promised.getNotPromised(promise);
-        yield Optional.ofNullable(message);
+        yield new OConsensusSuccess(this.promised.getNotPromised(promise));
       }
       case ALREADY_PRESENT -> {
         // Already present ... maybe do nothing, already done
         finalize(promise);
-        yield Optional.empty();
+        yield new OConsensusSuccess();
       }
       case ALREADY_PROMISED -> {
         // Consensus has been reached on a different message of what the current node promised,
         // cancel the promised and try to promise e apply the message that reached consensus
-        var notPromised = this.promised.removeNotPromised(promise);
-        if (notPromised.isPresent()) {
-          var promisedPromise =
-              this.sequenceManager.promised(notPromised.get().getPromiseId().getId().getPosition());
-          if (promisedPromise != null) {
-            consensusFailure(promisedPromise);
-          }
-          var reReceive = receive(notPromised.get());
-          if (reReceive.isEmpty()) {
-            yield consensusSuccess(promise);
-          } else {
-            // It may happen that there is a gap in the messages
-            yield Optional.empty();
-          }
-        } else {
-          // Never received the message
-          yield Optional.empty();
-        }
+        var promisedPromise = this.sequenceManager.promised(promise.getId().getPosition());
+        yield new OConsensusSuccess(promisedPromise);
       }
       case MISSING_PREVIOUS -> {
         // wait for previous one
-        yield Optional.empty();
+        yield new OConsensusSuccess();
       }
     };
   }

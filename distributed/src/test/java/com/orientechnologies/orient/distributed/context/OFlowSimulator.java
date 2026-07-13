@@ -9,6 +9,7 @@ import com.orientechnologies.orient.core.transaction.OGroupId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
+import com.orientechnologies.orient.distributed.context.coordination.OConsensusSuccess;
 import com.orientechnologies.orient.distributed.context.coordination.OCoordinatedDistributedOpsImpl;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabaseState;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabaseStateChangeListener;
@@ -260,13 +261,21 @@ public class OFlowSimulator implements ODatabaseStateChangeListener, ONodeStateU
       ODistributedMessage message, Collection<ONodeId> partecipatingNodes) {
     for (var nodeTo : partecipatingNodes) {
       var context = contexts.get(nodeTo);
-      var promisedMessage = context.getOps().consensusSuccess(message.getPromiseId());
-      if (promisedMessage.isPresent()) {
-        promisedMessage.get().apply(context);
-      } else {
-        fail("promised message not present");
-      }
-      context.getOps().completeExecution(message.getPromiseId());
+      OConsensusSuccess successResult;
+      do {
+        successResult = context.getOps().consensusSuccess(message.getPromiseId());
+        if (successResult.isFailure()) {
+          var cancelled = context.getOps().consensusFailure(successResult.failure());
+          if (cancelled.isPresent()) {
+            message.cancel(context);
+          }
+        } else if (successResult.isSuccess()) {
+          successResult.success().apply(context);
+          context.getOps().completeExecution(message.getPromiseId());
+        } else {
+          fail("promised message not present");
+        }
+      } while (!successResult.isFinished());
     }
   }
 
