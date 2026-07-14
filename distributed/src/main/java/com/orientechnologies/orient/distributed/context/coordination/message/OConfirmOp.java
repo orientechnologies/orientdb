@@ -32,6 +32,10 @@ public class OConfirmOp implements OStructuralMessage {
         }
       } else if (successResult.isSuccess()) {
         try {
+          if (successResult.missing()) {
+            var prom = successResult.success().validate(ctx);
+            assert prom.isEmpty();
+          }
           successResult.success().apply(ctx);
         } catch (Exception e) {
           // TOOD: do something about this.

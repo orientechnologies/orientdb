@@ -266,7 +266,7 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
         yield new OConsensusSuccess(this.promised.getPromised(promise));
       }
       case VALID_MISSING -> {
-        yield new OConsensusSuccess(this.promised.getNotPromised(promise));
+        yield new OConsensusSuccess(this.promised.getNotPromised(promise), true);
       }
       case ALREADY_PRESENT -> {
         // Already present ... maybe do nothing, already done

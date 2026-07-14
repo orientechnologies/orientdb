@@ -64,6 +64,16 @@ public class OVersionPromise {
     if (this.version.promise(version) && this.promise.map(x -> x.equals(promise)).orElse(false)) {
       this.version = version;
       this.promise = Optional.empty();
+      logger.debugNode(current, "%s accepted %s -> %s ", context, promise, version);
+    } else {
+      logger.debugNode(
+          current,
+          "%s ignored accept %s -> %s current state %s-> %s",
+          context,
+          promise,
+          version,
+          this.promise,
+          this.version);
     }
   }
 
