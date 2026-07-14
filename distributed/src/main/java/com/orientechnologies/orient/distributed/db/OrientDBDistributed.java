@@ -1723,6 +1723,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
       this.internalDrop(dbName);
     }
     this.getNodeState().getOps().dropDatabase(dbId, version, promise);
+    dumpNodeInfo();
   }
 
   @Override

@@ -26,7 +26,7 @@ public record OOutdatedVersion(long proposed, long current) implements OAcceptRe
   public static OOutdatedVersion fromNetwork(DataInput input) throws IOException {
     long current = input.readLong();
     long proposed = input.readLong();
-    return new OOutdatedVersion(current, proposed);
+    return new OOutdatedVersion(proposed, current);
   }
 
   @Override

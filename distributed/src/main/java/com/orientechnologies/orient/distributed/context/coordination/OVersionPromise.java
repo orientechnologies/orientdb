@@ -25,11 +25,13 @@ public class OVersionPromise {
       OTransactionIdPromise promise, OVersion version) {
     if (this.promise.isEmpty()) {
       if (this.version.promise(version)) {
-        logger.debugNode(current, "version promising %s", promise);
+        logger.debugNode(current, "version promising %s ", promise);
         this.promise = Optional.of(promise);
         return Optional.empty();
       } else {
-        return Optional.of(new OOutdatedVersion(version.getValue(), this.version.getValue()));
+        var outdated = new OOutdatedVersion(version.getValue(), this.version.getValue());
+        logger.debugNode(current, "%s %s promising %s", context, outdated, promise);
+        return Optional.of(outdated);
       }
     } else {
       var promised = this.promise.get();
@@ -39,14 +41,16 @@ public class OVersionPromise {
           this.promise = Optional.of(promise);
           return Optional.empty();
         } else {
+          var outdated = new OOutdatedVersion(version.getValue(), this.version.getValue());
           logger.debugNode(
               current,
-              "%s outdated version %s~%s on promising %s",
+              "%s %s %s~%s on promising %s",
               context,
+              outdated,
               this.version,
               version,
               promise);
-          return Optional.of(new OOutdatedVersion(version.getValue(), this.version.getValue()));
+          return Optional.of(outdated);
         }
       } else {
         logger.debugNode(
