@@ -271,7 +271,7 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
       case ALREADY_PRESENT -> {
         // Already present ... maybe do nothing, already done
         finalize(promise);
-        yield new OConsensusSuccess();
+        yield new OConsensusSuccess(true);
       }
       case ALREADY_PROMISED -> {
         // Consensus has been reached on a different message of what the current node promised,
