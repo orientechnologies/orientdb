@@ -19,6 +19,8 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer.record.string;
 
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DB_CUSTOM_SUPPORT;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
@@ -35,6 +37,7 @@ import com.orientechnologies.orient.core.db.record.ORecordLazySet;
 import com.orientechnologies.orient.core.db.record.OTrackedList;
 import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.fetch.OFetchHelper;
 import com.orientechnologies.orient.core.fetch.OFetchPlan;
@@ -594,6 +597,11 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
           return OStringSerializerHelper.fieldTypeFromStream(iRecord, iType, iFieldValueAsString);
         case CUSTOM:
           {
+            if (!DB_CUSTOM_SUPPORT.getValueAsBoolean()) {
+              throw new ODatabaseException(
+                  String.format(
+                      "OType CUSTOM used with serializable types, is not enabled, set `db.custom.support` to true for enable it"));
+            }
             try {
               ByteArrayInputStream bais =
                   new ByteArrayInputStream(Base64.getDecoder().decode(iFieldValueAsString));

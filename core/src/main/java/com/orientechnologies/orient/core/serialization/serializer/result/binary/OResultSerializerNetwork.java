@@ -20,6 +20,8 @@
 
 package com.orientechnologies.orient.core.serialization.serializer.result.binary;
 
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DB_CUSTOM_SUPPORT;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.serialization.types.ODecimalSerializer;
@@ -27,6 +29,7 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -261,6 +264,11 @@ public class OResultSerializerNetwork {
       case TRANSIENT:
         break;
       case CUSTOM:
+        if (!DB_CUSTOM_SUPPORT.getValueAsBoolean()) {
+          throw new ODatabaseException(
+              String.format(
+                  "OType CUSTOM used with serializable types, is not enabled, set `db.custom.support` to true for enable it"));
+        }
         try {
           String className = readString(bytes);
           Class<?> clazz = Class.forName(className);
@@ -442,6 +450,11 @@ public class OResultSerializerNetwork {
       case LINKBAG:
         throw new UnsupportedOperationException("LINKBAG should never appear in a projection");
       case CUSTOM:
+        if (!DB_CUSTOM_SUPPORT.getValueAsBoolean()) {
+          throw new ODatabaseException(
+              String.format(
+                  "OType CUSTOM used with serializable types, is not enabled, set `db.custom.support` to true for enable it"));
+        }
         if (!(value instanceof OSerializableStream))
           value = new OSerializableWrapper((Serializable) value);
         writeString(bytes, value.getClass().getName());

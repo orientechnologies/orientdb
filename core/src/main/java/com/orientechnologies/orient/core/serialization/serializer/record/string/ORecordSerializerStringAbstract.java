@@ -19,11 +19,14 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer.record.string;
 
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DB_CUSTOM_SUPPORT;
+
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -82,6 +85,11 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
         }
 
       case CUSTOM:
+        if (!DB_CUSTOM_SUPPORT.getValueAsBoolean()) {
+          throw new ODatabaseException(
+              String.format(
+                  "OType CUSTOM used with serializable types, is not enabled, set `db.custom.support` to true for enable it"));
+        }
         // RECORD
         final Object result = OStringSerializerAnyStreamable.INSTANCE.fromStream((String) iValue);
         if (result instanceof ODocument) ODocumentInternal.addOwner((ODocument) result, iDocument);
@@ -284,6 +292,11 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
         break;
 
       case CUSTOM:
+        if (!DB_CUSTOM_SUPPORT.getValueAsBoolean()) {
+          throw new ODatabaseException(
+              String.format(
+                  "OType CUSTOM used with serializable types, is not enabled, set `db.custom.support` to true for enable it"));
+        }
         OStringSerializerAnyStreamable.INSTANCE.toStream(iBuffer, iValue);
         PROFILER.stopChrono(
             PROFILER.getProcessMetric("serializer.record.string.custom2string"),

@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.serialization.serializer.record.binary;
 
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DB_CUSTOM_SUPPORT;
 import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.MILLISEC_PER_DAY;
 import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.NULL_RECORD_ID;
 import static com.orientechnologies.orient.core.serialization.serializer.record.binary.HelperClasses.convertDayToTimezone;
@@ -36,6 +37,7 @@ import com.orientechnologies.orient.core.db.record.OTrackedMap;
 import com.orientechnologies.orient.core.db.record.OTrackedMultiValue;
 import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.exception.OValidationException;
@@ -1102,6 +1104,11 @@ public class ODocumentSerializerDelta {
         writeRidBag(bytes, (ORidBag) value);
         break;
       case CUSTOM:
+        if (!DB_CUSTOM_SUPPORT.getValueAsBoolean()) {
+          throw new ODatabaseException(
+              String.format(
+                  "OType CUSTOM used with serializable types, is not enabled, set `db.custom.support` to true for enable it"));
+        }
         if (!(value instanceof OSerializableStream))
           value = new OSerializableWrapper((Serializable) value);
         writeString(bytes, value.getClass().getName());
@@ -1309,6 +1316,11 @@ public class ODocumentSerializerDelta {
       case TRANSIENT:
         break;
       case CUSTOM:
+        if (!DB_CUSTOM_SUPPORT.getValueAsBoolean()) {
+          throw new ODatabaseException(
+              String.format(
+                  "OType CUSTOM used with serializable types, is not enabled, set `db.custom.support` to true for enable it"));
+        }
         try {
           String className = readString(bytes);
           Class<?> clazz = Class.forName(className);
