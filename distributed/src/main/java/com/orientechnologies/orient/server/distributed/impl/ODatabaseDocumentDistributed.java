@@ -1362,6 +1362,8 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         () -> {
           assert !this.getTransaction().isActive();
           OTransactionOptimistic tx = new OTransactionOptimistic(this);
+          tx.begin();
+          this.currentTx = tx;
           data.fill(tx, this);
           ODistributedDatabaseImpl ddb = (ODistributedDatabaseImpl) getDistributedShared();
           ONewDistributedTxContextImpl txContext =
@@ -1370,6 +1372,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           ddb.validate(data.getTransactionId());
           ((OAbstractPaginatedStorage) getStorage().getUnderlying()).preallocateRids(tx);
           txContext.commit(this);
+          tx.close();
           return null;
         });
   }
