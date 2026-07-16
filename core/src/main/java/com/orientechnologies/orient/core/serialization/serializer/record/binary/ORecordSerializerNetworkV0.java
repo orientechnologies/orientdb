@@ -20,6 +20,8 @@
 
 package com.orientechnologies.orient.core.serialization.serializer.record.binary;
 
+import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DB_CUSTOM_SUPPORT;
+
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.serialization.types.ODecimalSerializer;
@@ -36,6 +38,7 @@ import com.orientechnologies.orient.core.db.record.OTrackedList;
 import com.orientechnologies.orient.core.db.record.OTrackedMap;
 import com.orientechnologies.orient.core.db.record.OTrackedSet;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
+import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.exception.OValidationException;
@@ -393,6 +396,12 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
       case TRANSIENT:
         break;
       case CUSTOM:
+        if (!DB_CUSTOM_SUPPORT.getValueAsBoolean()) {
+          throw new ODatabaseException(
+              String.format(
+                  "OType CUSTOM used with serializable types, is not enabled, set"
+                      + " `db.custom.support` to true for enable it"));
+        }
         try {
           String className = readString(bytes);
           Class<?> clazz = Class.forName(className);
@@ -605,6 +614,12 @@ public class ORecordSerializerNetworkV0 implements ODocumentSerializer {
         pointer = ((ORidBag) value).toStream(bytes, ctx);
         break;
       case CUSTOM:
+        if (!DB_CUSTOM_SUPPORT.getValueAsBoolean()) {
+          throw new ODatabaseException(
+              String.format(
+                  "OType CUSTOM used with serializable types, is not enabled, set"
+                      + " `db.custom.support` to true for enable it"));
+        }
         if (!(value instanceof OSerializableStream))
           value = new OSerializableWrapper((Serializable) value);
         pointer = writeString(bytes, value.getClass().getName());
