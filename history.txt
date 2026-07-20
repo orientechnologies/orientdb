@@ -28,6 +28,18 @@ This document contains the last changes of OrientDB Community Edition.
 
 
 -----------------------------------------------------------------------------------------------------------------------------------
+version 3.2.55 - (July, 21 2026)
+
+# Core 
+- Add check for configuration to enable CUSTOM types in all serialization cases.
+- Minor dependencies updates
+
+# Distributed
+- Downgraded Hazelcast Kubernates version to a compatible version of Hazelcast core
+- Handle transaction status during delta sync for avoid to create independent transactions 
+
+
+-----------------------------------------------------------------------------------------------------------------------------------
 version 3.2.54 - (July, 5 2026)
 
 # Core
