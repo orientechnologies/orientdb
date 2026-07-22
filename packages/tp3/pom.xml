@@ -21,7 +21,7 @@
     <artifactId>orientdb-tp3</artifactId>
     <packaging>pom</packaging>
 
-    <name>OrientDB Community Distribution TinkerPop 3</name>
+    <name>OrientDB Community TinkerPop 3 Package</name>
 
     <properties>
         <VERSION>${project.version}</VERSION>

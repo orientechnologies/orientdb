@@ -23,6 +23,5 @@
     <modules>
         <module>driver</module>
         <module>server</module>
-        <module>distribution</module>
     </modules>
 </project>

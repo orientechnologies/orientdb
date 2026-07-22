@@ -96,9 +96,9 @@
         <module>agent</module>
         <module>jdbc</module>
         <module>etl</module>
-        <module>distribution</module>
         <module>gremlin</module>
         <module>tests</module>
+        <module>packages</module>
     </modules>
 
     <scm>

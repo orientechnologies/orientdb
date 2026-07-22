@@ -23,7 +23,7 @@
     <artifactId>orientdb-community</artifactId>
     <packaging>pom</packaging>
 
-    <name>OrientDB Community Distribution</name>
+    <name>OrientDB Community Package</name>
 
     <properties>
         <VERSION>${project.version}</VERSION>

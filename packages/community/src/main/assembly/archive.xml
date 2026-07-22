@@ -14,7 +14,7 @@
          | copy server scripts
         -->
         <fileSet>
-            <directory>${basedir}/../server/script</directory>
+            <directory>${basedir}/../../server/script</directory>
             <outputDirectory>bin</outputDirectory>
             <includes>
                 <include>*.bat</include>
@@ -35,7 +35,7 @@
          | copy service scripts
         -->
         <fileSet>
-            <directory>${basedir}/../server/script</directory>
+            <directory>${basedir}/../../server/script</directory>
             <outputDirectory>bin</outputDirectory>
             <includes>
                 <include>orientdb.service</include>
@@ -50,7 +50,7 @@
          | copy etl scripts
         -->
         <fileSet>
-            <directory>${basedir}/../etl/script</directory>
+            <directory>${basedir}/../../etl/script</directory>
             <outputDirectory>bin</outputDirectory>
             <includes>
                 <include>*.bat</include>
@@ -59,7 +59,7 @@
             <filtered>true</filtered>
         </fileSet>
         <fileSet>
-            <directory>${basedir}/../etl/script</directory>
+            <directory>${basedir}/../../etl/script</directory>
             <outputDirectory>bin</outputDirectory>
             <includes>
                 <include>*.sh</include>
@@ -72,7 +72,7 @@
          | copy distributed scripts
         -->
         <fileSet>
-            <directory>${basedir}/../distributed/script</directory>
+            <directory>${basedir}/script</directory>
             <outputDirectory>bin</outputDirectory>
             <includes>
                 <include>*.bat</include>
@@ -81,7 +81,7 @@
             <filtered>true</filtered>
         </fileSet>
         <fileSet>
-            <directory>${basedir}/../distributed/script</directory>
+            <directory>${basedir}/script</directory>
             <outputDirectory>bin</outputDirectory>
             <includes>
                 <include>*.sh</include>
@@ -95,32 +95,27 @@
          | configurations
         -->
         <fileSet>
-            <directory>${basedir}/../server/config</directory>
+            <directory>${basedir}/../../server/config</directory>
             <outputDirectory>config</outputDirectory>
             <fileMode>600</fileMode>
         </fileSet>
         <fileSet>
-            <directory>${basedir}/../distributed/config</directory>
+            <directory>${basedir}/../../distributed/config</directory>
             <outputDirectory>config</outputDirectory>
             <fileMode>600</fileMode>
         </fileSet>
         <fileSet>
-            <directory>${basedir}/../graphdb/config</directory>
+            <directory>${basedir}/../../tools/config</directory>
             <outputDirectory>config</outputDirectory>
             <fileMode>600</fileMode>
         </fileSet>
         <fileSet>
-            <directory>${basedir}/../tools/config</directory>
+            <directory>${basedir}/../../etl/config</directory>
             <outputDirectory>config</outputDirectory>
             <fileMode>600</fileMode>
         </fileSet>
         <fileSet>
-            <directory>${basedir}/../etl/config</directory>
-            <outputDirectory>config</outputDirectory>
-            <fileMode>600</fileMode>
-        </fileSet>
-        <fileSet>
-            <directory>${basedir}/../server/config/cert</directory>
+            <directory>${basedir}/../../server/config/cert</directory>
             <outputDirectory>config/cert</outputDirectory>
             <fileMode>600</fileMode>
         </fileSet>
@@ -137,7 +132,7 @@
          | Web part
         -->
         <fileSet>
-            <directory>${basedir}/../server/src/site</directory>
+            <directory>${basedir}/../../server/src/site</directory>
             <outputDirectory>www</outputDirectory>
         </fileSet>
 
@@ -145,7 +140,7 @@
          | creates an empty log directory
         -->
         <fileSet>
-            <directory>${basedir}/../server/config</directory>
+            <directory>${basedir}/../../server/config</directory>
             <outputDirectory>log</outputDirectory>
             <excludes>
                 <exclude>*</exclude>
@@ -166,15 +161,15 @@
     -->
     <files>
         <file>
-            <source>${basedir}/../license.txt</source>
+            <source>${basedir}/../../license.txt</source>
             <fileMode>444</fileMode>
         </file>
         <file>
-            <source>${basedir}/../history.txt</source>
+            <source>${basedir}/../../history.txt</source>
             <fileMode>444</fileMode>
         </file>
         <file>
-            <source>${basedir}/../readme.txt</source>
+            <source>${basedir}/../../readme.txt</source>
             <fileMode>444</fileMode>
         </file>
     </files>
