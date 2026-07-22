@@ -9,10 +9,10 @@ import com.orientechnologies.orient.core.transaction.OGroupId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
-import com.orientechnologies.orient.distributed.context.coordination.OConsensusSuccess;
 import com.orientechnologies.orient.distributed.context.coordination.OCoordinatedDistributedOpsImpl;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabaseState;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabaseStateChangeListener;
+import com.orientechnologies.orient.distributed.context.coordination.message.OConfirmOp;
 import com.orientechnologies.orient.distributed.context.coordination.message.ODistributedMessage;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OAddTopologyMember;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OEstablishTopology;
@@ -261,21 +261,7 @@ public class OFlowSimulator implements ODatabaseStateChangeListener, ONodeStateU
       ODistributedMessage message, Collection<ONodeId> partecipatingNodes) {
     for (var nodeTo : partecipatingNodes) {
       var context = contexts.get(nodeTo);
-      OConsensusSuccess successResult;
-      do {
-        successResult = context.getOps().consensusSuccess(message.getPromiseId());
-        if (successResult.isFailure()) {
-          var cancelled = context.getOps().consensusFailure(successResult.failure());
-          if (cancelled.isPresent()) {
-            message.cancel(context);
-          }
-        } else if (successResult.isSuccess()) {
-          successResult.success().apply(context);
-          context.getOps().completeExecution(message.getPromiseId());
-        } else {
-          fail("promised message not present");
-        }
-      } while (!successResult.isFinished());
+      OConfirmOp.executeConfirm(context, message.getPromiseId());
     }
   }
 

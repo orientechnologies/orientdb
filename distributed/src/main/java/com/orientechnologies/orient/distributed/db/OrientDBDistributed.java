@@ -1004,6 +1004,11 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   @Override
+  public void apllied(OTransactionIdPromise promise) {
+    getNodeState().apllied(promise);
+  }
+
+  @Override
   public ONetworkMessage newNetworkMessage() {
     return new ONetworkMessageStructural(this);
   }

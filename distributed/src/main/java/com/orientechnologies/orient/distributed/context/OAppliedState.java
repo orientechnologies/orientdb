@@ -16,7 +16,6 @@ public class OAppliedState {
   public interface OAppliedTransaction {
     boolean isApplied(OTransactionId tx);
   }
-  ;
 
   public OAppliedState(int size, OAppliedTransaction applied) {
     this.watches = new OWatchPromise[size];
@@ -36,7 +35,7 @@ public class OAppliedState {
     return Optional.of(watch.watch(id.getSequence()));
   }
 
-  public synchronized void complete(OTransactionId id) {
+  public synchronized void applied(OTransactionId id) {
     if (this.applied.isApplied(id)) {
       // No Op, already applied
       return;

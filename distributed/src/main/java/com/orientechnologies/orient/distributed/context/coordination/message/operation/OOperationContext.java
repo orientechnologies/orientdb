@@ -33,4 +33,6 @@ public interface OOperationContext {
   void registerNode(ONodeId node, OVersion version, OTransactionIdPromise promise);
 
   void recoordinateOperation(OTransactionIdPromise promise, OOperationMessage op);
+
+  void apllied(OTransactionIdPromise promise);
 }

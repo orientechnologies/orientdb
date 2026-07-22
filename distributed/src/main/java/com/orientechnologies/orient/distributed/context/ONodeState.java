@@ -90,9 +90,9 @@ public class ONodeState {
     return this.coordinated.consensusSuccess(promise);
   }
 
-  public void complete(OTransactionIdPromise promise) {
+  public void apllied(OTransactionIdPromise promise) {
     this.coordinated.completeExecution(promise);
-    this.state.complete(promise.getId());
+    this.state.applied(promise.getId());
   }
 
   public List<ODistributedMessage> recover(List<OTransactionId> ids) {

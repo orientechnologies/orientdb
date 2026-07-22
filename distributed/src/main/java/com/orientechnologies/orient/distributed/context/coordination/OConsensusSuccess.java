@@ -4,13 +4,16 @@ import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.distributed.context.coordination.message.ODistributedMessage;
 
 public record OConsensusSuccess(
-    ODistributedMessage success, OTransactionIdPromise failure, boolean missing, boolean applied) {
+    ODistributedMessage success,
+    OTransactionIdPromise otherPromised,
+    boolean missing,
+    boolean alreadyApplied) {
   public OConsensusSuccess() {
     this(null, null, false, false);
   }
 
-  public OConsensusSuccess(boolean applied) {
-    this(null, null, false, applied);
+  public OConsensusSuccess(boolean alreadyApplied) {
+    this(null, null, false, alreadyApplied);
   }
 
   public OConsensusSuccess(ODistributedMessage success) {
@@ -29,11 +32,11 @@ public record OConsensusSuccess(
     return success != null;
   }
 
-  public boolean isFailure() {
-    return failure != null;
+  public boolean isPromisedToOther() {
+    return otherPromised != null;
   }
 
   public boolean isFinished() {
-    return success != null || applied;
+    return success != null || alreadyApplied || missing;
   }
 }

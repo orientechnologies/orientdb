@@ -63,4 +63,9 @@ public class TestOperationContext implements OOperationContext {
   public void recoordinateOperation(OTransactionIdPromise promise, OOperationMessage op) {
     // TODO Auto-generated method stub
   }
+
+  @Override
+  public void apllied(OTransactionIdPromise promise) {
+    ops.completeExecution(promise);
+  }
 }
