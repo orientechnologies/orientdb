@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.storage.impl.local.paginated.atomicoperations.operationsfreezer;
 
+import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
@@ -47,6 +48,9 @@ public final class OperationsFreezer {
 
         if (freezeRequests.get() > 0) {
           LockSupport.park(this);
+        }
+        if (thread.isInterrupted()) {
+          throw new OInterruptedException("Thread interrupted during waiting frozen database");
         }
 
         operationsCount.increment();

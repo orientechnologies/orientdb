@@ -242,14 +242,6 @@ public class OAtomicOperationsManager {
     componentOperationsFreezer.endOperation();
   }
 
-  public long freezeComponentOperations() {
-    return componentOperationsFreezer.freezeOperations(null, null);
-  }
-
-  public void releaseComponentOperations(final long freezeId) {
-    componentOperationsFreezer.releaseOperations(freezeId);
-  }
-
   private boolean tryStartComponentOperation(
       final OAtomicOperation atomicOperation, final String lockName) {
     final boolean result = tryAcquireExclusiveLockTillOperationComplete(atomicOperation, lockName);
