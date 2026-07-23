@@ -6,7 +6,7 @@ import com.orientechnologies.orient.distributed.context.coordination.message.ODi
 public record OConsensusSuccess(
     ODistributedMessage success,
     OTransactionIdPromise otherPromised,
-    boolean missing,
+    boolean previousMissing,
     boolean alreadyApplied) {
   public OConsensusSuccess() {
     this(null, null, false, false);
@@ -34,9 +34,5 @@ public record OConsensusSuccess(
 
   public boolean isPromisedToOther() {
     return otherPromised != null;
-  }
-
-  public boolean isFinished() {
-    return success != null || alreadyApplied || missing;
   }
 }

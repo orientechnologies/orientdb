@@ -28,29 +28,56 @@ public class OConfirmOp implements OStructuralMessage {
     // promised operation in case the current node was out of consent
     // it probably happen only once, but not locked so potentially can be multiple
     // promise otherPromised even though unlikely, looping anyway
+    boolean exit;
     do {
       successResult = ctx.getOps().consensusSuccess(promise);
       if (successResult.isPromisedToOther()) {
         var cancelled = ctx.getOps().consensusFailure(successResult.otherPromised());
         if (cancelled.isPresent()) {
           cancelled.get().cancel(ctx);
+          exit = false;
+        } else {
+          logger.warn("Error cannot cancel failed missing operation");
+          exit = true;
         }
       } else if (successResult.isSuccess()) {
         try {
-          if (successResult.missing()) {
+          if (successResult.previousMissing()) {
             var prom = successResult.success().validate(ctx);
-            assert prom.isEmpty() : prom.toString();
+            // If there is an error
+            if (prom.isEmpty()) {
+              successResult.success().apply(ctx);
+              ctx.apllied(promise);
+              exit = true;
+            } else {
+              logger.warn("Error on re-validating confirmed operation: %s ", prom.get());
+              exit = false;
+            }
+          } else {
+            successResult.success().apply(ctx);
+            ctx.apllied(promise);
+            exit = true;
           }
-          successResult.success().apply(ctx);
         } catch (Exception e) {
           // TOOD: do something about this.
+          // It should be rare and only the result of a bug, should be anyway in recover for missing
+          // transaction.
           logger.error("Error on apply operation %s need recover", e, successResult.success());
+          exit = true;
         }
-        ctx.apllied(promise);
-      } else if (successResult.missing()) {
+      } else if (successResult.previousMissing()) {
+        exit = true;
         // TODO: maybe here request to sync/resend promised, or just wait for message to arrive
+      } else if (successResult.alreadyApplied()) {
+        exit = true;
+      } else {
+        logger.warn("Does really get here ? strange %s", successResult);
+        exit = false;
       }
-    } while (!successResult.isFinished());
+      if (!exit) {
+        logger.debug("retry commit for %s", successResult);
+      }
+    } while (!exit);
   }
 
   @Override
