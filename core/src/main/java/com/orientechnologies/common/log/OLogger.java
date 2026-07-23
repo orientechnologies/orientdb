@@ -8,6 +8,9 @@ public interface OLogger {
     WARN,
     ERROR,
   }
+  static OLogger get(Class<?> cl) {
+    return OLogManager.instance().logger(cl);
+  }
 
   static OLogger get(Class<?> cl) {
     return OLogManager.instance().logger(cl);
