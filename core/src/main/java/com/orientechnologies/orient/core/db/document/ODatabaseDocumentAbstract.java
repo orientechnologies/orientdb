@@ -939,9 +939,9 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   @Override
   public ODocument newInstance(final String iClassName) {
     OClass cl = getClass(iClassName);
-    if (cl.isVertexType()) {
+    if (cl != null && cl.isVertexType()) {
       return new OVertexDocument(cl);
-    } else if (cl.isEdgeType()) {
+    } else if (cl != null && cl.isEdgeType()) {
       return new OEdgeDocument(cl);
     } else {
       return new ODocument(cl);
