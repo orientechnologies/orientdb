@@ -8,6 +8,7 @@
   </parent>
   <artifactId>orientdb-nashorn</artifactId>
   <name>OrientDB Nashorn</name>
+  <packaging>jar</packaging>
   <description>OrientDB Nashorn script engine integration</description>
 
     <properties>

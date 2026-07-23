@@ -7,7 +7,8 @@
         <version>4.0.0-SNAPSHOT</version>
         <relativePath>../</relativePath>
     </parent>
-    <artifactId>agent</artifactId>
+    <artifactId>orientdb-agent</artifactId>
+    <name>OrientDB Agent</name>
     <packaging>jar</packaging>
 
     <properties>
@@ -15,7 +16,6 @@
         <project.rootdir>${project.basedir}/../</project.rootdir>
     </properties>
 
-    <name>agent</name>
     <build>
         <resources>
             <resource>

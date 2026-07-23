@@ -10,6 +10,7 @@
 	</parent>
 	<artifactId>orientdb-polyglot</artifactId>
     <name>OrientDB Polyglot</name>
+    <packaging>jar</packaging>
     <description>OrientDB Graal polyglot script engine integration</description>
 
 	<properties>
