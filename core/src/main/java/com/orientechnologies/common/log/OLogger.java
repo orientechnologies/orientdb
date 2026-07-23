@@ -9,6 +9,10 @@ public interface OLogger {
     ERROR,
   }
 
+  static OLogger get(Class<?> cl) {
+    return OLogManager.instance().logger(cl);
+  }
+
   default void debug(String message, Object... additionalArgs) {
     log(Level.DEBUG, message, null, true, additionalArgs);
   }

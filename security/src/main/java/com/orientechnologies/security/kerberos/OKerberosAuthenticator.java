@@ -37,9 +37,6 @@ import javax.security.auth.Subject;
 import javax.security.auth.login.Configuration;
 import javax.security.auth.login.LoginContext;
 
-// Temporary, for Java 7 support.
-// import sun.misc.BASE64Decoder;
-
 /**
  * Implements the Kerberos authenticator module.
  *
