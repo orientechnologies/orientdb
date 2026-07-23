@@ -605,10 +605,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
       startupMetadata.delete();
     } else {
       if (!internalError) {
-        startupMetadata.setLastTxId(lastTxId);
-        startupMetadata.setTxMetadata(getLastMetadata().orElse(null));
-
-        startupMetadata.clearDirty();
+        startupMetadata.finalMetatada(lastTxId, getLastMetadata().orElse(null));
       }
       startupMetadata.close();
     }
