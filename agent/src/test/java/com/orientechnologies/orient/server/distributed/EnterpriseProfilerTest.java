@@ -65,7 +65,6 @@ public class EnterpriseProfilerTest extends AbstractServerClusterTest {
 
     OServer server = s.getServerInstance();
     OrientDBDistributed context = (OrientDBDistributed) server.getDatabases();
-    ODistributedServerManager dm = server.getDistributedManager();
 
     Set<String> availableNodeNames = context.getAvailableNodeNames(getDatabaseName());
 
@@ -76,7 +75,7 @@ public class EnterpriseProfilerTest extends AbstractServerClusterTest {
         (OServerCommandDistributedManager)
             listener.getCommand(OServerCommandDistributedManager.class);
 
-    OClusterConfiguration clusterStats = command.getClusterConfig(dm);
+    OClusterConfiguration clusterStats = command.getClusterConfig();
 
     Assert.assertNotNull(clusterStats);
 

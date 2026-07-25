@@ -17,7 +17,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.distributed.ONodeConfig;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabasesTopology;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.config.OClusterConfiguration;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
@@ -114,15 +113,15 @@ public class OrientDBMetricsCommand extends OServerCommandAuthenticatedServerAbs
     if (parts.length == 1) {
 
       OClusterConfiguration metrics;
-      ODistributedServerManager manager = server.getDistributedManager();
+      var ctx = server.getDatabases();
 
-      if (manager != null) {
-        metrics = manager.getClusterConfiguration();
+      if (ctx instanceof OrientDBDistributed dc) {
+        metrics = dc.getClusterConfiguration();
         final Collection<ONodeConfig> documents = metrics.getMembers();
         List<String> servers = new ArrayList<String>(documents.size());
         for (ONodeConfig document : documents) servers.add(document.getName());
 
-        Set<String> databases = manager.getServerInstance().listDatabases();
+        Set<String> databases = ctx.listDatabases(null, null);
         if (databases.isEmpty()) {
           logger.warn("Cannot load stats, no databases on this server");
 
@@ -148,7 +147,8 @@ public class OrientDBMetricsCommand extends OServerCommandAuthenticatedServerAbs
 
           metrics.setDatabaseStatus(calculateDBStatus(metrics));
         }
-
+        metrics.setDistributed(true);
+        metrics.setLocalName(dc.getNodeId().getNode());
       } else {
         metrics = new OClusterConfiguration();
         ByteArrayOutputStream buffer = new ByteArrayOutputStream();
@@ -156,9 +156,9 @@ public class OrientDBMetricsCommand extends OServerCommandAuthenticatedServerAbs
         registry.toJSON(buffer);
         singleNodeStats.put("orientdb", new ODocument().fromJSON(buffer.toString()));
         metrics.setClusterStats(singleNodeStats);
+        metrics.setDistributed(false);
+        metrics.setLocalName("orientdb");
       }
-      metrics.setDistributed(manager != null);
-      metrics.setLocalName(manager != null ? manager.getLocalNodeName() : "orientdb");
       iResponse.send(
           OHttpUtils.STATUS_OK_CODE,
           OHttpUtils.STATUS_OK_DESCRIPTION,

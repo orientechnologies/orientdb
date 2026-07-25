@@ -23,12 +23,9 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.enterprise.server.OEnterpriseServer;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
-import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.distributed.ONodeConfig;
 import com.orientechnologies.orient.distributed.ONodeListenerConfig;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabasesTopology;
@@ -37,9 +34,7 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedResponse;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.config.OClusterConfiguration;
-import com.orientechnologies.orient.server.distributed.impl.ODistributedPlugin;
 import com.orientechnologies.orient.server.distributed.impl.task.OEnterpriseStatsTask;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
@@ -119,7 +114,7 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
       if (parts.length < 2)
         throw new IllegalArgumentException("Cannot stop the server: missing server name to stop");
 
-      if (server.getDistributedManager() == null)
+      if (!server.getDatabases().isDistributed())
         throw new OConfigurationException(
             "Cannot stop the server: local server is not distributed");
 
@@ -133,7 +128,7 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
         throw new IllegalArgumentException(
             "Cannot restart the server: missing server name to restart");
 
-      if (server.getDistributedManager() == null)
+      if (!server.getDatabases().isDistributed())
         throw new OConfigurationException(
             "Cannot restart the server: local server is not distributed");
 
@@ -141,34 +136,10 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
       dManager.restartNode(parts[2]);
 
       iResponse.send(OHttpUtils.STATUS_OK_CODE, null, null, OHttpUtils.STATUS_OK_DESCRIPTION, null);
-    } else if (command.equalsIgnoreCase("syncCluster")) {
-      synchCluster(iResponse, parts);
     } else if (command.equalsIgnoreCase("syncDatabase")) {
       syncDatabase(iResponse, parts);
     } else {
       throw new IllegalArgumentException(String.format("Command %s not supported", command));
-    }
-  }
-
-  private void synchCluster(final OHttpResponse iResponse, final String[] parts)
-      throws IOException {
-    if (parts.length < 3)
-      throw new IllegalArgumentException("Cannot sync cluster: missing database or cluster name ");
-
-    if (server.getDistributedManager() == null)
-      throw new OConfigurationException("Cannot sync cluster: local server is not distributed");
-
-    final String database = parts[2];
-    final String cluster = parts[3];
-
-    ODatabaseDocumentInternal db = server.openDatabase(database);
-    try {
-      OResult result = db.command(String.format("ha sync cluster  %s ", cluster)).next();
-      final ODocument document = new ODocument().field("result", result.toElement());
-      iResponse.send(
-          OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, document.toJSON(""), null);
-    } finally {
-      db.close();
     }
   }
 
@@ -179,20 +150,19 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
 
     OrientDBInternal context = server.getDatabases();
 
-    if (context instanceof OrientDBDistributed)
+    if (context.isDistributed())
       throw new OConfigurationException("Cannot sync database: local server is not distributed");
 
     final String database = parts[2];
-
-    final ODistributedPlugin dManager = ((ODistributedPlugin) server.getDistributedManager());
-    if (dManager == null || !dManager.isEnabled())
-      throw new OCommandExecutionException("OrientDB is not started in distributed mode");
 
     boolean installDatabase;
     try {
       installDatabase =
           ((OrientDBDistributed) context).installDatabase(database, false, true).get();
-    } catch (InterruptedException | ExecutionException e) {
+    } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
+      installDatabase = false;
+    } catch (ExecutionException e) {
       installDatabase = false;
     }
 
@@ -204,7 +174,6 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
   private void doGet(
       final OHttpRequest iRequest, final OHttpResponse iResponse, final String[] parts)
       throws IOException {
-    final ODistributedServerManager manager = server.getDistributedManager();
 
     final String command = parts[1];
     final String id = parts.length > 2 ? parts[2] : null;
@@ -214,7 +183,7 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
     // NODE CONFIG
     if (command.equalsIgnoreCase("node")) {
 
-      OClusterConfiguration info = doGetNodeConfig(manager);
+      OClusterConfiguration info = doGetNodeConfig();
       if (info != null) {
         doc = info.getDocument();
       } else {
@@ -233,16 +202,12 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
 
       if (id != null) {
 
-        doc = singleNodeStats(manager, id);
+        doc = singleNodeStats(id);
 
       } else {
-        if (manager != null) {
-          OClusterConfiguration info = getClusterConfig(manager);
-          if (info != null) {
-            doc = info.getDocument();
-          } else {
-            doc = null;
-          }
+        OClusterConfiguration info = getClusterConfig();
+        if (info != null) {
+          doc = info.getDocument();
         } else {
           throw new OConfigurationException(
               "Seems that the server is not running in distributed mode");
@@ -260,23 +225,24 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
     }
   }
 
-  private ODocument singleNodeStats(final ODistributedServerManager manager, final String id) {
+  private ODocument singleNodeStats(final String id) {
     final ODocument doc;
 
-    if (manager != null) {
+    if (server.getDatabases() instanceof OrientDBDistributed dc) {
       final ODistributedResponse dResponse =
-          manager.sendRequest(
-              null,
-              OMultiValue.getSingletonList(id),
-              new OEnterpriseStatsTask(),
-              manager.nextRequestId(),
-              ODistributedRequest.EXECUTION_MODE.RESPONSE,
-              null);
+          dc.getPlugin()
+              .sendRequest(
+                  null,
+                  OMultiValue.getSingletonList(id),
+                  new OEnterpriseStatsTask(),
+                  dc.nextRequestId(),
+                  ODistributedRequest.EXECUTION_MODE.RESPONSE,
+                  null);
       final Object payload = dResponse.getPayload();
 
       if (payload != null && payload instanceof Map) {
         doc = (ODocument) ((Map<String, Object>) payload).get(id);
-        doc.field("member", getMemberConfig(manager.getClusterConfiguration(), id));
+        doc.field("member", getMemberConfig(dc.getClusterConfiguration(), id));
       } else doc = new ODocument();
 
     } else {
@@ -286,35 +252,40 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
     return doc;
   }
 
-  public OClusterConfiguration getClusterConfig(final ODistributedServerManager manager) {
-    final OClusterConfiguration doc = manager.getClusterConfiguration();
+  public OClusterConfiguration getClusterConfig() {
+    if (server.getDatabases() instanceof OrientDBDistributed dc) {
+      final OClusterConfiguration doc = dc.getClusterConfiguration();
 
-    final Collection<ONodeConfig> documents = doc.getMembers();
-    List<String> servers = new ArrayList<String>(documents.size());
-    for (ONodeConfig document : documents) servers.add((String) document.getName());
+      final Collection<ONodeConfig> members = doc.getMembers();
+      List<String> servers = new ArrayList<>(members.size());
+      for (ONodeConfig nodeConf : members) servers.add(nodeConf.getName());
 
-    Set<String> databases = manager.getServerInstance().listDatabases();
-    if (databases.isEmpty()) {
-      logger.warn("Cannot load stats, no databases on this server");
+      Set<String> databases = dc.listDatabases(null, null);
+      if (databases.isEmpty()) {
+        logger.warn("Cannot load stats, no databases on this server");
+        return doc;
+      }
+
+      final ODistributedResponse dResponse =
+          dc.getPlugin()
+              .sendRequest(
+                  databases.iterator().next(),
+                  servers,
+                  new OEnterpriseStatsTask(),
+                  dc.nextRequestId(),
+                  ODistributedRequest.EXECUTION_MODE.RESPONSE,
+                  null);
+      final Object payload = dResponse.getPayload();
+
+      if (payload instanceof Map) {
+        doc.setClusterStats((Map<String, ODocument>) payload);
+      }
+
+      doc.setDatabaseStatus(calculateDBStatus(doc));
       return doc;
+    } else {
+      return null;
     }
-
-    final ODistributedResponse dResponse =
-        manager.sendRequest(
-            databases.iterator().next(),
-            servers,
-            new OEnterpriseStatsTask(),
-            manager.nextRequestId(),
-            ODistributedRequest.EXECUTION_MODE.RESPONSE,
-            null);
-    final Object payload = dResponse.getPayload();
-
-    if (payload != null && payload instanceof Map) {
-      doc.setClusterStats((Map<String, ODocument>) payload);
-    }
-
-    doc.setDatabaseStatus(calculateDBStatus(doc));
-    return doc;
   }
 
   private ODocument calculateDBStatus(final OClusterConfiguration cfg) {
@@ -349,28 +320,31 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
   }
 
   public ODistributedConfiguration doGetDatabaseInfo(final OServer server, final String id) {
-    final ODistributedConfiguration cfg =
-        server.getDistributedManager().getDatabaseConfiguration(id);
-    return cfg;
+    if (server.getDatabases() instanceof OrientDBDistributed dc) {
+      return dc.getDistributedConfiguration(id);
+    } else {
+      return null;
+    }
   }
 
-  public OClusterConfiguration doGetNodeConfig(final ODistributedServerManager manager) {
+  public OClusterConfiguration doGetNodeConfig() {
     OClusterConfiguration doc;
-    if (manager != null) {
-      doc = manager.getClusterConfiguration();
+    if (server.getDatabases() instanceof OrientDBDistributed dc) {
+      doc = dc.getClusterConfiguration();
 
       final Collection<ONodeConfig> documents = doc.getMembers();
       List<String> servers = new ArrayList<>(documents.size());
       for (ONodeConfig document : documents) servers.add(document.getName());
 
       final ODistributedResponse dResponse =
-          manager.sendRequest(
-              null,
-              servers,
-              new OEnterpriseStatsTask(),
-              manager.nextRequestId(),
-              ODistributedRequest.EXECUTION_MODE.RESPONSE,
-              null);
+          dc.getPlugin()
+              .sendRequest(
+                  null,
+                  servers,
+                  new OEnterpriseStatsTask(),
+                  dc.nextRequestId(),
+                  ODistributedRequest.EXECUTION_MODE.RESPONSE,
+                  null);
       final Object payload = dResponse.getPayload();
 
       if (payload != null && payload instanceof Map) {

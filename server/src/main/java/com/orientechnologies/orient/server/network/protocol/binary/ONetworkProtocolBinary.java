@@ -55,7 +55,6 @@ import com.orientechnologies.orient.enterprise.channel.binary.OTokenSecurityExce
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OConnectionBinaryExecutor;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.plugin.OServerPluginHelper;
@@ -570,16 +569,14 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
   }
 
   private void waitDistribuedIsOnline(OClientConnection connection) {
-    if (requests == 0) {
-      final ODistributedServerManager manager = server.getDistributedManager();
-      if (manager != null && connection.hasDatabase())
-        try {
-          String databaseName = connection.getDatabaseName();
-          server.getDatabases().waitOnline(databaseName);
-        } catch (InterruptedException e) {
-          Thread.currentThread().interrupt();
-          throw OException.wrapException(new OInterruptedException("Request interrupted"), e);
-        }
+    if (requests == 0 && connection.hasDatabase()) {
+      try {
+        String databaseName = connection.getDatabaseName();
+        server.getDatabases().waitOnline(databaseName);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        throw OException.wrapException(new OInterruptedException("Request interrupted"), e);
+      }
     }
   }
 

@@ -253,12 +253,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract
   public void onBeforeClientRequest(final OClientConnection iConnection, final byte iRequestType) {}
 
   public boolean isDistributed() {
-    return server.getDistributedManager() != null;
-  }
-
-  public ODistributedServerManager getDistributedManager() {
-
-    return server.getDistributedManager();
+    return server.getDatabases().isDistributed();
   }
 
   public String getNodeName() {

@@ -1988,4 +1988,9 @@ public class OrientDBDistributed extends OrientDBEmbedded
   public ORemoteTaskFactoryManager getTaskFactoryManager() {
     return remoteServerManager.getTaskFactoryManager();
   }
+
+  @Override
+  public boolean isDistributed() {
+    return !isDistributedDisabled();
+  }
 }
