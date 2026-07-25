@@ -45,7 +45,6 @@ import com.orientechnologies.orient.core.exception.OCoreException;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
-import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkFactory;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
@@ -417,8 +416,6 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
               "Total received requests",
               timer,
               "server.network.requests");
-
-      OSerializationThreadLocal.instance().get().clear();
     }
   }
 

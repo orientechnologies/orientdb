@@ -56,8 +56,8 @@ import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
-import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
+import com.orientechnologies.orient.object.db.ODatabaseObjectInternal;
 import com.orientechnologies.orient.object.db.OObjectLazyList;
 import com.orientechnologies.orient.object.db.OObjectLazyMap;
 import com.orientechnologies.orient.object.db.OObjectNotDetachedException;
@@ -411,11 +411,7 @@ public class OObjectSerializerHelper {
 
     final long timer = Orient.instance().getProfiler().startChrono();
 
-    final Integer identityRecord = System.identityHashCode(iRecord);
-
-    if (OSerializationThreadLocal.instance().get().contains(identityRecord)) return iRecord;
-
-    OSerializationThreadLocal.instance().get().add(identityRecord);
+    if (ODatabaseObjectInternal.get(db).startVisit(iRecord)) return iRecord;
 
     OProperty schemaProperty;
 
@@ -520,7 +516,7 @@ public class OObjectSerializerHelper {
     // CALL AFTER MARSHALLING
     invokeCallback(iPojo, iRecord, OAfterSerialization.class);
 
-    OSerializationThreadLocal.instance().get().remove(identityRecord);
+    ODatabaseObjectInternal.get(db).endVisit(iRecord);
 
     Orient.instance()
         .getProfiler()

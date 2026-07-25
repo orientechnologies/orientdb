@@ -59,7 +59,6 @@ import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationThreadLocal;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
@@ -79,6 +78,7 @@ import com.orientechnologies.orient.object.serialization.OObjectSerializerHelper
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -95,7 +95,7 @@ import javassist.util.proxy.ProxyObject;
  */
 @SuppressWarnings("unchecked")
 public class OObjectDatabaseTx extends ODatabaseWrapperAbstract<ODatabaseDocumentInternal, Object>
-    implements ODatabaseObject {
+    implements ODatabaseObjectInternal, ODatabaseObject {
   private static final OLogger logger = OLogManager.instance().logger(OObjectDatabaseTx.class);
 
   public static final String TYPE = "object";
@@ -105,6 +105,7 @@ public class OObjectDatabaseTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
   protected boolean lazyLoading;
   protected boolean automaticSchemaGeneration;
   protected OMetadataObject metadata;
+  private Set<Integer> serializationVisit = new HashSet<>();
 
   /**
    * Constructor to wrap an existing database connect for object connections
@@ -115,6 +116,22 @@ public class OObjectDatabaseTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
     super(iDatabase);
     underlying.setDatabaseOwner(this);
     init();
+  }
+
+  @Override
+  public boolean startVisit(Object obj) {
+    final Integer identityRecord = System.identityHashCode(obj);
+
+    if (serializationVisit.contains(identityRecord)) return true;
+
+    serializationVisit.add(identityRecord);
+    return false;
+  }
+
+  @Override
+  public void endVisit(Object obj) {
+    final Integer identityRecord = System.identityHashCode(obj);
+    serializationVisit.remove(identityRecord);
   }
 
   public <T> T newInstance(final Class<T> iType) {
@@ -501,7 +518,7 @@ public class OObjectDatabaseTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
       }
       return (RET) iPojo;
     } else {
-      OSerializationThreadLocal.instance().get().clear();
+      serializationVisit.clear();
 
       // GET THE ASSOCIATED DOCUMENT
       final Object proxiedObject = OObjectEntitySerializer.serializeObject(iPojo, this);
