@@ -40,7 +40,7 @@ public class OServerCommandPostServer extends OServerCommandAuthenticatedServerA
     final String[] urlParts =
         checkSyntax(iRequest.getUrl(), 3, "Syntax error: server/<setting-name>/<setting-value>");
 
-    iRequest.getData().commandInfo = "Change server settings";
+    iRequest.getData().setCommandInfo("Change server settings");
 
     if (urlParts[1] == null || urlParts.length == 0)
       throw new IllegalArgumentException("setting-name is null or empty");

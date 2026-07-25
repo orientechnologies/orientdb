@@ -53,7 +53,7 @@ public class OServerCommandPostImportRecords extends OServerCommandDocumentAbstr
 
     final long start = System.currentTimeMillis();
 
-    iRequest.getData().commandInfo = "Import records";
+    iRequest.getData().setCommandInfo("Import records");
 
     ODatabaseDocument db = getProfiledDatabaseInstance(iRequest);
     try {

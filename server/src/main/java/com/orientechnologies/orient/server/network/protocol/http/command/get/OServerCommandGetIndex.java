@@ -38,7 +38,7 @@ public class OServerCommandGetIndex extends OServerCommandDocumentAbstract {
     final String[] urlParts =
         checkSyntax(iRequest.getUrl(), 3, "Syntax error: index/<database>/<index-name>/<key>");
 
-    iRequest.getData().commandInfo = "Index get";
+    iRequest.getData().setCommandInfo("Index get");
 
     ODatabaseDocumentInternal db = null;
 

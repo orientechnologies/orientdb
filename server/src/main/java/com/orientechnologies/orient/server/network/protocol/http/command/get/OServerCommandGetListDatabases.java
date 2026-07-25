@@ -49,7 +49,7 @@ public class OServerCommandGetListDatabases extends OServerCommandAuthenticatedS
       throws Exception {
     checkSyntax(iRequest.getUrl(), 1, "Syntax error: server");
 
-    iRequest.getData().commandInfo = "Server status";
+    iRequest.getData().setCommandInfo("Server status");
 
     final ODocument result = new ODocument();
 

@@ -35,8 +35,8 @@ public class OServerCommandGetConnect extends OServerCommandAuthenticatedDbAbstr
 
     urlParts[1] = urlParts[1].replace(DBNAME_DIR_SEPARATOR, '/');
 
-    iRequest.getData().commandInfo = "Connect";
-    iRequest.getData().commandDetail = urlParts[1];
+    iRequest.getData().setCommandInfo("Connect");
+    iRequest.getData().setCommandDetail(urlParts[1]);
 
     iResponse.send(
         OHttpUtils.STATUS_OK_NOCONTENT_CODE,

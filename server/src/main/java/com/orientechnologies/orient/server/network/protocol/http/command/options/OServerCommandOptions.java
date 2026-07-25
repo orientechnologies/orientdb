@@ -31,8 +31,8 @@ public class OServerCommandOptions extends OServerCommandAbstract {
 
   @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-    iRequest.getData().commandInfo = "HTTP Options";
-    iRequest.getData().commandDetail = iRequest.getUrl();
+    iRequest.getData().setCommandInfo("HTTP Options");
+    iRequest.getData().setCommandDetail(iRequest.getUrl());
 
     iResponse.send(
         OHttpUtils.STATUS_OK_CODE,

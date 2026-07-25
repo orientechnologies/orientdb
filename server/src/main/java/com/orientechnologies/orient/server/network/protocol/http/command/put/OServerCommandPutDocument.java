@@ -39,7 +39,7 @@ public class OServerCommandPutDocument extends OServerCommandDocumentAbstract {
             2,
             "Syntax error: document/<database>[/<record-id>][?updateMode=full|partial]");
 
-    iRequest.getData().commandInfo = "Edit Document";
+    iRequest.getData().setCommandInfo("Edit Document");
 
     ODatabaseDocument db = null;
     ORecordId recordId;

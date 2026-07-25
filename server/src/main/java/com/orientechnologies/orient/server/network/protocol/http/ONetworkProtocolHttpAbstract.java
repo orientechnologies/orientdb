@@ -165,7 +165,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol
     channel = new OChannelTextServer(iSocket, iConfiguration);
     channel.connected();
 
-    connection.getData().caller = channel.toString();
+    connection.getData().setCaller(channel.toString());
 
     listeningAddress = getListeningAddress();
 
@@ -176,8 +176,8 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol
 
   public void service() throws ONetworkProtocolException, IOException {
     ++connection.getStats().totalRequests;
-    connection.getData().commandInfo = null;
-    connection.getData().commandDetail = null;
+    connection.getData().setCommandInfo(null);
+    connection.getData().setCommandDetail(null);
 
     final String callbackF;
     if (server
@@ -271,8 +271,8 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol
       }
     } while (isChain);
 
-    connection.getStats().lastCommandInfo = connection.getData().commandInfo;
-    connection.getStats().lastCommandDetail = connection.getData().commandDetail;
+    connection.getStats().lastCommandInfo = connection.getData().getCommandInfo();
+    connection.getStats().lastCommandDetail = connection.getData().getCommandDetail();
 
     connection.getStats().activeQueries = getActiveQueries(connection.getDatabase());
 
@@ -642,8 +642,9 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol
             iRequest.setIfMatch(line.substring(OHttpUtils.HEADER_IF_MATCH.length()));
           else if (OStringSerializerHelper.startsWithIgnoreCase(
               line, OHttpUtils.HEADER_X_FORWARDED_FOR))
-            connection.getData().caller =
-                line.substring(OHttpUtils.HEADER_X_FORWARDED_FOR.length());
+            connection
+                .getData()
+                .setCaller(line.substring(OHttpUtils.HEADER_X_FORWARDED_FOR.length()));
           else if (OStringSerializerHelper.startsWithIgnoreCase(
               line, OHttpUtils.HEADER_AUTHENTICATION))
             iRequest.setAuthentication(line.substring(OHttpUtils.HEADER_AUTHENTICATION.length()));
@@ -713,8 +714,8 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol
       return;
     }
 
-    connection.getData().commandInfo = "Listening";
-    connection.getData().commandDetail = null;
+    connection.getData().setCommandInfo("Listening");
+    connection.getData().setCommandDetail(null);
 
     try {
       channel.socket.setSoTimeout(socketTimeout);

@@ -265,8 +265,8 @@ public class CSVAggregateReporter {
                     lastDatabase = stats.lastDatabase;
                     lastUser = stats.lastUser;
                   } else {
-                    lastDatabase = data.lastDatabase;
-                    lastUser = data.lastUser;
+                    lastDatabase = data.getLastDatabase();
+                    lastUser = data.getLastUser();
                   }
 
                   value.add(c.getId());
@@ -277,8 +277,8 @@ public class CSVAggregateReporter {
                   value.add(lastDatabase != null ? lastDatabase : "-");
                   value.add(lastUser != null ? lastUser : "-");
                   value.add(stats.totalRequests);
-                  value.add(data.commandInfo);
-                  value.add(data.commandDetail);
+                  value.add(data.getCommandInfo());
+                  value.add(data.getCommandDetail());
                   value.add(lastCommandOn);
                   value.add(stats.lastCommandInfo);
                   value.add(stats.lastCommandDetail);
@@ -287,16 +287,16 @@ public class CSVAggregateReporter {
                   value.add(stats.activeQueries != null ? stats.activeQueries.size() : "-");
                   value.add(connectedOn);
                   value.add(c.getProtocol().getType());
-                  value.add(data.sessionId);
-                  value.add(data.clientId);
+                  value.add(data.getSessionId());
+                  value.add(data.getClientId());
 
                   final StringBuilder driver = new StringBuilder(128);
-                  if (data.driverName != null) {
-                    driver.append(data.driverName);
+                  if (data.getDriverName() != null) {
+                    driver.append(data.getDriverName());
                     driver.append(" v");
-                    driver.append(data.driverVersion);
+                    driver.append(data.getDriverVersion());
                     driver.append(" Protocol v");
-                    driver.append(data.protocolVersion);
+                    driver.append(data.getProtocolVersion());
                   }
                   value.add(driver.toString());
                   return value;

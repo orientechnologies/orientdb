@@ -227,10 +227,10 @@ public class OClientConnection {
     stats.lastCommandExecutionTime = System.currentTimeMillis() - stats.lastCommandReceived;
     stats.totalCommandExecutionTime += stats.lastCommandExecutionTime;
 
-    stats.lastCommandInfo = data.commandInfo;
-    stats.lastCommandDetail = data.commandDetail;
+    stats.lastCommandInfo = data.getCommandInfo();
+    stats.lastCommandDetail = data.getCommandDetail();
 
-    data.commandDetail = "-";
+    data.setCommandDetail("-");
     release();
   }
 
@@ -341,8 +341,8 @@ public class OClientConnection {
     }
 
     ++stats.totalRequests;
-    data.commandInfo = "Listening";
-    data.commandDetail = "-";
+    data.setCommandInfo("Listening");
+    data.setCommandDetail("-");
     stats.lastCommandReceived = System.currentTimeMillis();
   }
 

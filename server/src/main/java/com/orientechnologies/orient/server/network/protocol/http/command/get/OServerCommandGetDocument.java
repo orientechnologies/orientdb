@@ -40,7 +40,7 @@ public class OServerCommandGetDocument extends OServerCommandAuthenticatedDbAbst
 
     final String fetchPlan = urlParts.length > 3 ? urlParts[3] : null;
 
-    iRequest.getData().commandInfo = "Load document";
+    iRequest.getData().setCommandInfo("Load document");
 
     final ORecord rec;
 

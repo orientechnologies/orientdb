@@ -39,8 +39,8 @@ public class OServerCommandGetDisconnect extends OServerCommandAbstract {
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
     checkSyntax(iRequest.getUrl(), 1, "Syntax error: disconnect");
 
-    iRequest.getData().commandInfo = "Disconnect";
-    iRequest.getData().commandDetail = null;
+    iRequest.getData().setCommandInfo("Disconnect");
+    iRequest.getData().setCommandDetail(null);
 
     if (iRequest.getSessionId() != null) {
       server.getHttpSessionManager().removeSession(iRequest.getSessionId());

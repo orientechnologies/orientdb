@@ -55,8 +55,8 @@ public class OServerCommandGetFileDownload extends OServerCommandAuthenticatedDb
 
     final String rid = urlParts[2];
 
-    iRequest.getData().commandInfo = "Download";
-    iRequest.getData().commandDetail = rid;
+    iRequest.getData().setCommandInfo("Download");
+    iRequest.getData().setCommandDetail(rid);
 
     final ORecordAbstract response;
     ODatabaseDocument db = getProfiledDatabaseInstance(iRequest);

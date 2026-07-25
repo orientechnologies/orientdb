@@ -93,8 +93,8 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
 
     if (text == null) throw new IllegalArgumentException("text cannot be null");
 
-    iRequest.getData().commandInfo = "Command";
-    iRequest.getData().commandDetail = text;
+    iRequest.getData().setCommandInfo("Command");
+    iRequest.getData().setCommandDetail(text);
 
     ODatabaseDocument db = null;
 

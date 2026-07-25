@@ -120,7 +120,7 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
     }
 
     if ("add".equals(operation)) {
-      iRequest.getData().commandInfo = "Studio add property";
+      iRequest.getData().setCommandInfo("Studio add property");
 
       try {
         OType type = OType.valueOf(fields.get("type"));
@@ -163,7 +163,7 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
             null);
       }
     } else if ("del".equals(operation)) {
-      iRequest.getData().commandInfo = "Studio delete property";
+      iRequest.getData().setCommandInfo("Studio delete property");
 
       cls.dropProperty(className);
 
@@ -186,7 +186,7 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
       final Map<String, String> fields)
       throws IOException {
     if ("add".equals(operation)) {
-      iRequest.getData().commandInfo = "Studio add class";
+      iRequest.getData().setCommandInfo("Studio add class");
 
       // int defCluster = fields.get("defaultCluster") != null ?
       // Integer.parseInt(fields.get("defaultCluster")) : db
@@ -223,7 +223,7 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
             null);
       }
     } else if ("del".equals(operation)) {
-      iRequest.getData().commandInfo = "Studio delete class";
+      iRequest.getData().setCommandInfo("Studio delete class");
 
       db.getMetadata().getSchema().dropClass(rid);
 
@@ -246,7 +246,7 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
       final Map<String, String> fields)
       throws IOException {
     if ("add".equals(operation)) {
-      iRequest.getData().commandInfo = "Studio add cluster";
+      iRequest.getData().setCommandInfo("Studio add cluster");
 
       int clusterId = db.addCluster(fields.get("name"));
 
@@ -258,7 +258,7 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
           null);
 
     } else if ("del".equals(operation)) {
-      iRequest.getData().commandInfo = "Studio delete cluster";
+      iRequest.getData().setCommandInfo("Studio delete cluster");
 
       db.dropCluster(rid);
 
@@ -281,7 +281,7 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
       final Map<String, String> fields)
       throws IOException {
     if ("edit".equals(operation)) {
-      iRequest.getData().commandInfo = "Studio edit document";
+      iRequest.getData().setCommandInfo("Studio edit document");
 
       if (rid == null) throw new IllegalArgumentException("Record ID not found in request");
 
@@ -324,7 +324,7 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
           "Record " + rid + " updated successfully.",
           null);
     } else if ("add".equals(operation)) {
-      iRequest.getData().commandInfo = "Studio create document";
+      iRequest.getData().setCommandInfo("Studio create document");
 
       final ODocument doc = new ODocument(className);
 
@@ -340,7 +340,7 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
           null);
 
     } else if ("del".equals(operation)) {
-      iRequest.getData().commandInfo = "Studio delete document";
+      iRequest.getData().setCommandInfo("Studio delete document");
 
       if (rid == null) throw new IllegalArgumentException("Record ID not found in request");
 
@@ -378,7 +378,7 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
     }
 
     if ("add".equals(operation)) {
-      iRequest.getData().commandInfo = "Studio add index";
+      iRequest.getData().setCommandInfo("Studio add index");
 
       try {
         final String[] fieldNames =
@@ -403,7 +403,7 @@ public class OServerCommandPostStudio extends OServerCommandAuthenticatedDbAbstr
             null);
       }
     } else if ("del".equals(operation)) {
-      iRequest.getData().commandInfo = "Studio delete index";
+      iRequest.getData().setCommandInfo("Studio delete index");
 
       try {
         final OIndex index = cls.getClassIndex(className);

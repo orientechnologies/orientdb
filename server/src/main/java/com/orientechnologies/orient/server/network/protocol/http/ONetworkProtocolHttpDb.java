@@ -56,8 +56,10 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
 
     super.config(iListener, server, iSocket, iConfiguration);
 
-    connection.getData().serverInfo =
-        iConfiguration.getValueAsString(OGlobalConfiguration.NETWORK_HTTP_SERVER_INFO);
+    connection
+        .getData()
+        .setServerInfo(
+            iConfiguration.getValueAsString(OGlobalConfiguration.NETWORK_HTTP_SERVER_INFO));
   }
 
   @Override

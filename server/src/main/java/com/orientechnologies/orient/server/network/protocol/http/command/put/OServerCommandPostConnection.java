@@ -36,8 +36,8 @@ public class OServerCommandPostConnection extends OServerCommandAuthenticatedSer
     final String[] urlParts =
         checkSyntax(iRequest.getUrl(), 3, "Syntax error: connection/<command>/<id>");
 
-    iRequest.getData().commandInfo = "Interrupt command";
-    iRequest.getData().commandDetail = urlParts[1];
+    iRequest.getData().setCommandInfo("Interrupt command");
+    iRequest.getData().setCommandDetail(urlParts[1]);
 
     if ("KILL".equalsIgnoreCase(urlParts[1]))
       server.getClientConnectionManager().kill(Integer.parseInt(urlParts[2]));

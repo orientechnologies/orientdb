@@ -129,7 +129,7 @@ public abstract class OHttpRequestAbstract implements OHttpRequest {
 
   @Override
   public String getRemoteAddress() {
-    if (getData().caller != null) return getData().caller;
+    if (getData().getCaller() != null) return getData().getCaller();
     return getExecutor().getRemoteAddress();
   }
 

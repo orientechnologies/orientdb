@@ -50,8 +50,8 @@ public class ListSessionsFunction extends OSQLEnterpriseFunction {
                 lastDatabase = stats.lastDatabase;
                 lastUser = stats.lastUser;
               } else {
-                lastDatabase = data.lastDatabase;
-                lastUser = data.lastUser;
+                lastDatabase = data.getLastDatabase();
+                lastUser = data.getLastUser();
               }
               OResultInternal internal = new OResultInternal();
 
@@ -64,8 +64,8 @@ public class ListSessionsFunction extends OSQLEnterpriseFunction {
               internal.setProperty("db", lastDatabase != null ? lastDatabase : "-");
               internal.setProperty("user", lastUser != null ? lastUser : "-");
               internal.setProperty("totalRequests", stats.totalRequests);
-              internal.setProperty("commandInfo", data.commandInfo);
-              internal.setProperty("commandDetail", data.commandDetail);
+              internal.setProperty("commandInfo", data.getCommandInfo());
+              internal.setProperty("commandDetail", data.getCommandDetail());
               internal.setProperty("lastCommandOn", lastCommandOn);
               internal.setProperty("lastCommandInfo", stats.lastCommandInfo);
               internal.setProperty("lastCommandDetail", stats.lastCommandDetail);
@@ -74,16 +74,16 @@ public class ListSessionsFunction extends OSQLEnterpriseFunction {
               internal.setProperty("activeQueries", stats.activeQueries);
               internal.setProperty("connectedOn", connectedOn);
               internal.setProperty("protocol", c.getProtocol().getType());
-              internal.setProperty("sessionId", data.sessionId);
-              internal.setProperty("clientId", data.clientId);
+              internal.setProperty("sessionId", data.getSessionId());
+              internal.setProperty("clientId", data.getClientId());
 
               final StringBuilder driver = new StringBuilder(128);
-              if (data.driverName != null) {
-                driver.append(data.driverName);
+              if (data.getDriverName() != null) {
+                driver.append(data.getDriverName());
                 driver.append(" v");
-                driver.append(data.driverVersion);
+                driver.append(data.getDriverVersion());
                 driver.append(" Protocol v");
-                driver.append(data.protocolVersion);
+                driver.append(data.getProtocolVersion());
               }
               internal.setProperty("driver", driver.toString());
               return internal;

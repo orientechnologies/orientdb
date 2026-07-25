@@ -796,11 +796,11 @@ public class OServer {
       serverAuth = true;
     }
     if (serverAuth && data != null) {
-      data.serverUser = true;
-      data.serverUsername = user;
+      data.setServerUser(true);
+      data.setServerUsername(user);
     } else if (data != null) {
-      data.serverUser = false;
-      data.serverUsername = null;
+      data.setServerUser(false);
+      data.setServerUsername(null);
     }
     return database;
   }

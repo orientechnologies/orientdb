@@ -41,7 +41,7 @@ public class OServerCommandDeleteDocument extends OServerCommandDocumentAbstract
       final String[] urlParts =
           checkSyntax(iRequest.getUrl(), 3, "Syntax error: document/<database>/<record-id>");
 
-      iRequest.getData().commandInfo = "Delete document";
+      iRequest.getData().setCommandInfo("Delete document");
 
       db = getProfiledDatabaseInstance(iRequest);
 

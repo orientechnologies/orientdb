@@ -35,7 +35,7 @@ public class OServerCommandGetSupportedLanguages extends OServerCommandAuthentic
     String[] urlParts =
         checkSyntax(iRequest.getUrl(), 2, "Syntax error: supportedLanguages/<database>");
 
-    iRequest.getData().commandInfo = "Returns the supported languages";
+    iRequest.getData().setCommandInfo("Returns the supported languages");
 
     ODatabaseDocument db = null;
 

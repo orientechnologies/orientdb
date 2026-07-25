@@ -56,7 +56,7 @@ public class OServerCommandPostDatabase extends OServerCommandAuthenticatedServe
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
     String[] urlParts = checkSyntax(iRequest.getUrl(), 3, "Syntax error: database/<db>/<type>");
 
-    iRequest.getData().commandInfo = "Create database";
+    iRequest.getData().setCommandInfo("Create database");
 
     final String databaseName = urlParts[1];
     final String storageMode = urlParts[2];

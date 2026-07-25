@@ -35,7 +35,7 @@ public class OServerCommandPatchDocument extends OServerCommandDocumentAbstract 
     final String[] urlParts =
         checkSyntax(iRequest.getUrl(), 2, "Syntax error: document/<database>[/<record-id>]");
 
-    iRequest.getData().commandInfo = "Edit Document";
+    iRequest.getData().setCommandInfo("Edit Document");
 
     ODatabaseDocument db = null;
     com.orientechnologies.orient.core.id.ORecordId recordId;

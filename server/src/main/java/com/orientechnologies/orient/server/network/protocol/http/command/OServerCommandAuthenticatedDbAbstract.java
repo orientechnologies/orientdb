@@ -196,8 +196,10 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
       // return false;
 
       // Set user rid after authentication
-      iRequest.getData().currentUserId =
-          db.getUser() == null ? "<server user>" : db.getUser().getIdentity().toString();
+      iRequest
+          .getData()
+          .setCurrentUserId(
+              db.getUser() == null ? "<server user>" : db.getUser().getIdentity().toString());
 
       // AUTHENTICATED: CREATE THE SESSION
       iRequest.setSessionId(
@@ -283,9 +285,10 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
       }
     }
 
-    iRequest.getData().lastDatabase = localDatabase.getName();
-    iRequest.getData().lastUser =
-        localDatabase.getUser() != null ? localDatabase.getUser().getName() : null;
+    iRequest.getData().setLastDatabase(localDatabase.getName());
+    iRequest
+        .getData()
+        .setLastUser(localDatabase.getUser() != null ? localDatabase.getUser().getName() : null);
     return (ODatabaseDocumentInternal) localDatabase.getDatabaseOwner();
   }
 
@@ -306,7 +309,7 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
               iRequest.getDatabaseName(), session.getUserName(), session.getUserPassword());
     } else {
 
-      String currentUserId = iRequest.getData().currentUserId;
+      String currentUserId = iRequest.getData().getCurrentUserId();
       if (currentUserId != null
           && currentUserId.length() > 0
           && localDatabase != null
@@ -318,9 +321,10 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
       }
     }
 
-    iRequest.getData().lastDatabase = localDatabase.getName();
-    iRequest.getData().lastUser =
-        localDatabase.getUser() != null ? localDatabase.getUser().getName() : null;
+    iRequest.getData().setLastDatabase(localDatabase.getName());
+    iRequest
+        .getData()
+        .setLastUser(localDatabase.getUser() != null ? localDatabase.getUser().getName() : null);
     iRequest.getExecutor().setDatabase(localDatabase);
     return (ODatabaseDocumentInternal) localDatabase.getDatabaseOwner();
   }

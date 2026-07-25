@@ -60,8 +60,8 @@ public class OServerCommandGetGephi extends OServerCommandAuthenticatedDbAbstrac
     final int limit = urlParts.length > 4 ? Integer.parseInt(urlParts[4]) : 20;
     final String fetchPlan = urlParts.length > 5 ? urlParts[5] : null;
 
-    iRequest.getData().commandInfo = "Gephi";
-    iRequest.getData().commandDetail = text;
+    iRequest.getData().setCommandInfo("Gephi");
+    iRequest.getData().setCommandDetail(text);
 
     final ODatabaseDocument db = getProfiledDatabaseInstance(iRequest);
 

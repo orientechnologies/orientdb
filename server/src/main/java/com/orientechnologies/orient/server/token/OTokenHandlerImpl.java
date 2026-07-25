@@ -265,18 +265,18 @@ public class OTokenHandlerImpl implements OTokenHandler {
         payload.setDatabase(db.getName());
         payload.setDatabaseType(db.getStorage().getType());
       }
-      if (data.serverUser) {
+      if (data.isServerUser()) {
         payload.setServerUser(true);
-        payload.setUserName(data.serverUsername);
+        payload.setUserName(data.getServerUsername());
       }
       if (user != null) {
         payload.setUserRid(user.getIdentity().getIdentity());
       }
       payload.setExpiry(curTime + sessionInMills);
-      payload.setProtocolVersion(data.protocolVersion);
+      payload.setProtocolVersion(data.getProtocolVersion());
       payload.setSerializer(data.getSerializationImpl());
-      payload.setDriverName(data.driverName);
-      payload.setDriverVersion(data.driverVersion);
+      payload.setDriverName(data.getDriverName());
+      payload.setDriverVersion(data.getDriverVersion());
       token.setPayload(payload);
 
       return serializeSignedToken(token);
@@ -303,14 +303,14 @@ public class OTokenHandlerImpl implements OTokenHandler {
       final OBinaryToken binary = (OBinaryToken) token;
       final ONetworkProtocolData data = new ONetworkProtocolData();
       // data.clientId = binary.get;
-      data.protocolVersion = binary.getProtocolVersion();
+      data.setProtocolVersion(binary.getProtocolVersion());
       data.setSerializationImpl(binary.getSerializer());
-      data.driverName = binary.getDriverName();
-      data.driverVersion = binary.getDriverVersion();
-      data.serverUser = binary.isServerUser();
-      data.serverUsername = binary.getUserName();
-      data.serverUsername = binary.getUserName();
-      data.collectStats = connection.getData().collectStats;
+      data.setDriverName(binary.getDriverName());
+      data.setDriverVersion(binary.getDriverVersion());
+      data.setServerUser(binary.isServerUser());
+      data.setServerUsername(binary.getUserName());
+      data.setServerUsername(binary.getUserName());
+      data.setCollectStats(connection.getData().isCollectStats());
       return data;
     }
     return null;

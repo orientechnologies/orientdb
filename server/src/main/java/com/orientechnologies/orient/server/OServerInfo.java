@@ -83,8 +83,8 @@ public class OServerInfo {
         lastDatabase = stats.lastDatabase;
         lastUser = stats.lastUser;
       } else {
-        lastDatabase = data.lastDatabase;
-        lastUser = data.lastUser;
+        lastDatabase = data.getLastDatabase();
+        lastUser = data.getLastUser();
       }
       json.beginObject(2);
       writeField(json, 2, "connectionId", c.getId());
@@ -98,8 +98,8 @@ public class OServerInfo {
       writeField(json, 2, "db", lastDatabase != null ? lastDatabase : "-");
       writeField(json, 2, "user", lastUser != null ? lastUser : "-");
       writeField(json, 2, "totalRequests", stats.totalRequests);
-      writeField(json, 2, "commandInfo", data.commandInfo);
-      writeField(json, 2, "commandDetail", data.commandDetail);
+      writeField(json, 2, "commandInfo", data.getCommandInfo());
+      writeField(json, 2, "commandDetail", data.getCommandDetail());
       writeField(json, 2, "lastCommandOn", lastCommandOn);
       writeField(json, 2, "lastCommandInfo", stats.lastCommandInfo);
       writeField(json, 2, "lastCommandDetail", stats.lastCommandDetail);
@@ -108,16 +108,16 @@ public class OServerInfo {
       writeField(json, 2, "activeQueries", stats.activeQueries);
       writeField(json, 2, "connectedOn", connectedOn);
       writeField(json, 2, "protocol", c.getProtocol().getType());
-      writeField(json, 2, "sessionId", data.sessionId);
-      writeField(json, 2, "clientId", data.clientId);
+      writeField(json, 2, "sessionId", data.getSessionId());
+      writeField(json, 2, "clientId", data.getClientId());
 
       final StringBuilder driver = new StringBuilder(128);
-      if (data.driverName != null) {
-        driver.append(data.driverName);
+      if (data.getDriverName() != null) {
+        driver.append(data.getDriverName());
         driver.append(" v");
-        driver.append(data.driverVersion);
+        driver.append(data.getDriverVersion());
         driver.append(" Protocol v");
-        driver.append(data.protocolVersion);
+        driver.append(data.getProtocolVersion());
       }
 
       writeField(json, 2, "driver", driver.toString());

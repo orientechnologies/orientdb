@@ -137,8 +137,8 @@ public class OServerCommandGetStaticContent extends OServerCommandConfigurableAb
   @Override
   public boolean execute(final OHttpRequest iRequest, final OHttpResponse iResponse)
       throws Exception {
-    iRequest.getData().commandInfo = "Get static content";
-    iRequest.getData().commandDetail = iRequest.getUrl();
+    iRequest.getData().setCommandInfo("Get static content");
+    iRequest.getData().setCommandDetail(iRequest.getUrl());
 
     OStaticContent staticContent = null;
     try {

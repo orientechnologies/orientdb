@@ -43,7 +43,7 @@ public class OServerCommandGetDocumentByClass extends OServerCommandAuthenticate
 
     final String fetchPlan = urlParts.length > 4 ? urlParts[4] : null;
 
-    iRequest.getData().commandInfo = "Load document";
+    iRequest.getData().setCommandInfo("Load document");
 
     final ORecord rec;
     try {

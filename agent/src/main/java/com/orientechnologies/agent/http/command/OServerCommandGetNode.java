@@ -80,7 +80,7 @@ public class OServerCommandGetNode extends OServerCommandDistributedScope {
   private void doGet(OHttpRequest iRequest, OHttpResponse iResponse, String command)
       throws IOException {
     if (command.equalsIgnoreCase("info")) {
-      iRequest.getData().commandInfo = "Server status";
+      iRequest.getData().setCommandInfo("Server status");
       final String result = OServerInfo.getServerInfo(server);
       iResponse.send(OHttpUtils.STATUS_OK_CODE, "OK", OHttpUtils.CONTENT_JSON, result, null);
     } else if (command.equalsIgnoreCase("threadDump")) {

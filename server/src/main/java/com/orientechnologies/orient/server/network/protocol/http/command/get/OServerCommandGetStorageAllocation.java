@@ -31,8 +31,8 @@ public class OServerCommandGetStorageAllocation extends OServerCommandAuthentica
       throws Exception {
     String[] urlParts = checkSyntax(iRequest.getUrl(), 2, "Syntax error: allocation/<database>");
 
-    iRequest.getData().commandInfo = "Storage allocation";
-    iRequest.getData().commandDetail = urlParts[1];
+    iRequest.getData().setCommandInfo("Storage allocation");
+    iRequest.getData().setCommandDetail(urlParts[1]);
 
     throw new IllegalArgumentException(
         "Cannot get allocation information for database '"

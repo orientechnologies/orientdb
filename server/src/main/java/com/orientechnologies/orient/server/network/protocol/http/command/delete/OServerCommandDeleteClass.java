@@ -33,8 +33,8 @@ public class OServerCommandDeleteClass extends OServerCommandAuthenticatedDbAbst
     String[] urlParts =
         checkSyntax(iRequest.getUrl(), 3, "Syntax error: class/<database>/<class-name>");
 
-    iRequest.getData().commandInfo = "Delete class";
-    iRequest.getData().commandDetail = urlParts[2];
+    iRequest.getData().setCommandInfo("Delete class");
+    iRequest.getData().setCommandDetail(urlParts[2]);
 
     ODatabaseDocument db = null;
 

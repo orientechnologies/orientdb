@@ -40,7 +40,7 @@ public class OServerCommandGetServer extends OServerCommandGetConnections {
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
     checkSyntax(iRequest.getUrl(), 1, "Syntax error: server");
 
-    iRequest.getData().commandInfo = "Server status";
+    iRequest.getData().setCommandInfo("Server status");
 
     final String result = OServerInfo.getServerInfo(server);
 

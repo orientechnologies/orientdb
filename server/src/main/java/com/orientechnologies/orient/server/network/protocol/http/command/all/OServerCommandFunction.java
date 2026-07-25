@@ -35,7 +35,7 @@ public class OServerCommandFunction extends OServerCommandAbstractLogic {
   public String[] init(final OHttpRequest iRequest, final OHttpResponse iResponse) {
     final String[] parts =
         checkSyntax(iRequest.getUrl(), 3, "Syntax error: function/<database>/<name>[/param]*");
-    iRequest.getData().commandInfo = "Execute a function";
+    iRequest.getData().setCommandInfo("Execute a function");
     return parts;
   }
 

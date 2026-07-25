@@ -67,7 +67,7 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
 
   @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-    iRequest.getData().commandInfo = "Distributed information";
+    iRequest.getData().setCommandInfo("Distributed information");
     return super.execute(iRequest, iResponse);
   }
 

@@ -39,7 +39,7 @@ public class OServerCommandGetProfiler extends OServerCommandAuthenticatedServer
     final String[] parts =
         checkSyntax(iRequest.getUrl(), 2, "Syntax error: profiler/<command>/[<config>]|[<from>]");
 
-    iRequest.getData().commandInfo = "Profiler information";
+    iRequest.getData().setCommandInfo("Profiler information");
 
     try {
 

@@ -35,8 +35,8 @@ public class OServerCommandDeleteDatabase extends OServerCommandAuthenticatedSer
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
     String[] urlParts = checkSyntax(iRequest.getUrl(), 2, "Syntax error: database/<database>");
 
-    iRequest.getData().commandInfo = "Drop database";
-    iRequest.getData().commandDetail = urlParts[1];
+    iRequest.getData().setCommandInfo("Drop database");
+    iRequest.getData().setCommandDetail(urlParts[1]);
 
     server.dropDatabase(urlParts[1]);
 

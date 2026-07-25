@@ -44,7 +44,7 @@ public class OServerCommandAuditing extends OServerCommandDistributedScope {
     final String[] parts =
         checkSyntax(iRequest.getUrl(), 3, "Syntax error: auditing/<db>/<action>");
 
-    iRequest.getData().commandInfo = "Auditing information";
+    iRequest.getData().setCommandInfo("Auditing information");
 
     String db = parts[1];
     String action = parts[2];

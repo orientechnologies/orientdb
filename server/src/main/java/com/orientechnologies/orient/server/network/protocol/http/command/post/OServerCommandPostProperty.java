@@ -63,8 +63,8 @@ public class OServerCommandPostProperty extends OServerCommandAuthenticatedDbAbs
             "Syntax error:"
                 + " property/<database>/<class-name>/<property-name>/[<property-type>]/[<link-type>]");
 
-    iRequest.getData().commandInfo = "Create property";
-    iRequest.getData().commandDetail = urlParts[2] + "." + urlParts[3];
+    iRequest.getData().setCommandInfo("Create property");
+    iRequest.getData().setCommandDetail(urlParts[2] + "." + urlParts[3]);
 
     if (db.getMetadata().getSchema().getClass(urlParts[2]) == null)
       throw new IllegalArgumentException("Invalid class '" + urlParts[2] + "'");
@@ -134,8 +134,8 @@ public class OServerCommandPostProperty extends OServerCommandAuthenticatedDbAbs
     String[] urlParts =
         checkSyntax(iRequest.getUrl(), 3, "Syntax error: property/<database>/<class-name>");
 
-    iRequest.getData().commandInfo = "Create property";
-    iRequest.getData().commandDetail = urlParts[2];
+    iRequest.getData().setCommandInfo("Create property");
+    iRequest.getData().setCommandDetail(urlParts[2]);
 
     if (db.getMetadata().getSchema().getClass(urlParts[2]) == null)
       throw new IllegalArgumentException("Invalid class '" + urlParts[2] + "'");

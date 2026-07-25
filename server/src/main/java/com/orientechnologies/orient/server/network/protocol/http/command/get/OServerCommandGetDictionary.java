@@ -31,7 +31,7 @@ public class OServerCommandGetDictionary extends OServerCommandAuthenticatedDbAb
 
   @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
-    iRequest.getData().commandInfo = "Dictionary lookup";
+    iRequest.getData().setCommandInfo("Dictionary lookup");
 
     String[] urlParts =
         checkSyntax(iRequest.getUrl(), 3, "Syntax error: dictionary/<database>/<key>");

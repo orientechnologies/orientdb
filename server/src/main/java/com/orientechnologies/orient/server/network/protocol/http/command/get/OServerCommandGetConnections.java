@@ -43,7 +43,7 @@ public class OServerCommandGetConnections extends OServerCommandAuthenticatedSer
     final String[] args =
         checkSyntax(iRequest.getUrl(), 1, "Syntax error: connections[/<database>]");
 
-    iRequest.getData().commandInfo = "Server status";
+    iRequest.getData().setCommandInfo("Server status");
 
     final StringWriter jsonBuffer = new StringWriter();
     final OJSONWriter json = new OJSONWriter(jsonBuffer);

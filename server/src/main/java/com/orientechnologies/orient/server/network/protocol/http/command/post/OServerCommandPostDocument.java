@@ -36,7 +36,7 @@ public class OServerCommandPostDocument extends OServerCommandDocumentAbstract {
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
     checkSyntax(iRequest.getUrl(), 2, "Syntax error: document/<database>");
 
-    iRequest.getData().commandInfo = "Create document";
+    iRequest.getData().setCommandInfo("Create document");
 
     ODatabaseDocument db = null;
 

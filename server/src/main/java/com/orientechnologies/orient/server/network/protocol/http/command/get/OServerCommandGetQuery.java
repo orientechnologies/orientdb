@@ -50,8 +50,8 @@ public class OServerCommandGetQuery extends OServerCommandAuthenticatedDbAbstrac
     final String text = urlParts[3];
     final String accept = iRequest.getHeader("accept");
 
-    iRequest.getData().commandInfo = "Query";
-    iRequest.getData().commandDetail = text;
+    iRequest.getData().setCommandInfo("Query");
+    iRequest.getData().setCommandDetail(text);
 
     ODatabaseDocument db = null;
 

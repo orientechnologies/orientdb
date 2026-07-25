@@ -33,8 +33,8 @@ public class OServerCommandPostClass extends OServerCommandAuthenticatedDbAbstra
     String[] urlParts =
         checkSyntax(iRequest.getUrl(), 3, "Syntax error: class/<database>/<class-name>");
 
-    iRequest.getData().commandInfo = "Create class";
-    iRequest.getData().commandDetail = urlParts[2];
+    iRequest.getData().setCommandInfo("Create class");
+    iRequest.getData().setCommandDetail(urlParts[2]);
 
     ODatabaseDocument db = null;
 

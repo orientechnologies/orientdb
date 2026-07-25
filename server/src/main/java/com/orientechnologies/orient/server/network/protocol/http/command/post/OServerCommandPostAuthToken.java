@@ -51,7 +51,7 @@ public class OServerCommandPostAuthToken extends OServerCommandAbstract {
     String[] urlParts = checkSyntax(iRequest.getUrl(), 2, "Syntax error: token/<database>");
     iRequest.setDatabaseName(urlParts[1]);
 
-    iRequest.getData().commandInfo = "Generate authentication token";
+    iRequest.getData().setCommandInfo("Generate authentication token");
 
     // Parameter names consistent with 4.3.2 (Access Token Request) of RFC 6749
     Map<String, String> content = iRequest.getUrlEncodedContent();

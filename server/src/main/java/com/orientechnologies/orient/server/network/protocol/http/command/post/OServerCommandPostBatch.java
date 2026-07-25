@@ -88,7 +88,7 @@ public class OServerCommandPostBatch extends OServerCommandDocumentAbstract {
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
     checkSyntax(iRequest.getUrl(), 2, "Syntax error: batch/<database>");
 
-    iRequest.getData().commandInfo = "Execute multiple requests in one shot";
+    iRequest.getData().setCommandInfo("Execute multiple requests in one shot");
 
     ODatabaseDocument db = null;
 

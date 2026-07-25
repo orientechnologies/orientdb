@@ -39,7 +39,7 @@ public class OServerCommandGetSQLProfiler extends OServerCommandDistributedScope
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
     final String[] parts = checkSyntax(iRequest.getUrl(), 2, "Syntax error: sqlProfiler/<command>");
 
-    iRequest.getData().commandInfo = "Profiler information";
+    iRequest.getData().setCommandInfo("Profiler information");
 
     try {
 

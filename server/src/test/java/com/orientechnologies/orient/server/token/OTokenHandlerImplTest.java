@@ -123,10 +123,10 @@ public class OTokenHandlerImplTest extends BaseMemoryInternalDatabase {
     OSecurityUser original = db.getUser();
     OTokenHandlerImpl handler = new OTokenHandlerImpl("any key".getBytes(), 60, "HmacSHA256");
     ONetworkProtocolData data = new ONetworkProtocolData();
-    data.driverName = "aa";
-    data.driverVersion = "aa";
+    data.setDriverName("aa");
+    data.setDriverVersion("aa");
     data.setSerializationImpl("a");
-    data.protocolVersion = 2;
+    data.setProtocolVersion((short) 2);
 
     byte[] token = handler.getSignedBinaryToken((ODatabaseDocumentInternal) db, original, data);
 
@@ -148,10 +148,10 @@ public class OTokenHandlerImplTest extends BaseMemoryInternalDatabase {
     OSecurityUser original = db.getUser();
     OTokenHandlerImpl handler = new OTokenHandlerImpl("any key".getBytes(), 60, "HmacSHA256");
     ONetworkProtocolData data = new ONetworkProtocolData();
-    data.driverName = "aa";
-    data.driverVersion = "aa";
+    data.setDriverName("aa");
+    data.setDriverVersion("aa");
     data.setSerializationImpl("a");
-    data.protocolVersion = 2;
+    data.setProtocolVersion((short) 2);
 
     byte[] token = handler.getSignedBinaryToken((ODatabaseDocumentInternal) db, original, data);
 
@@ -166,10 +166,10 @@ public class OTokenHandlerImplTest extends BaseMemoryInternalDatabase {
     OSecurityUser original = db.getUser();
     OTokenHandlerImpl handler = new OTokenHandlerImpl("any key".getBytes(), 60, "HmacSHA256");
     ONetworkProtocolData data = new ONetworkProtocolData();
-    data.driverName = "aa";
-    data.driverVersion = "aa";
+    data.setDriverName("aa");
+    data.setDriverVersion("aa");
     data.setSerializationImpl("a");
-    data.protocolVersion = 2;
+    data.setProtocolVersion((short) 2);
 
     byte[] token = handler.getSignedBinaryToken((ODatabaseDocumentInternal) db, original, data);
 

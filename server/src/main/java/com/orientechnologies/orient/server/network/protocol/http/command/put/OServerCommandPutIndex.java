@@ -40,7 +40,7 @@ public class OServerCommandPutIndex extends OServerCommandDocumentAbstract {
         checkSyntax(
             iRequest.getUrl(), 3, "Syntax error: index/<database>/<index-name>/<key>[/<value>]");
 
-    iRequest.getData().commandInfo = "Index put";
+    iRequest.getData().setCommandInfo("Index put");
 
     ODatabaseDocumentInternal db = null;
 

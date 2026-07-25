@@ -36,8 +36,8 @@ public class OServerCommandGetClass extends OServerCommandAuthenticatedDbAbstrac
     String[] urlParts =
         checkSyntax(iRequest.getUrl(), 3, "Syntax error: class/<database>/<class-name>");
 
-    iRequest.getData().commandInfo = "Returns the information of a class in the schema";
-    iRequest.getData().commandDetail = urlParts[2];
+    iRequest.getData().setCommandInfo("Returns the information of a class in the schema");
+    iRequest.getData().setCommandDetail(urlParts[2]);
 
     ODatabaseDocument db = null;
 

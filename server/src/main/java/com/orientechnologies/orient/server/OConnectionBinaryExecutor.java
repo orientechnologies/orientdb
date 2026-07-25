@@ -308,7 +308,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
       final byte[] record =
           ((OClusterBasedStorageConfiguration)
                   connection.getDatabase().getStorageInfo().getConfiguration())
-              .toStream(connection.getData().protocolVersion, StandardCharsets.UTF_8);
+              .toStream(connection.getData().getProtocolVersion(), StandardCharsets.UTF_8);
 
       response = new OReadRecordResponse(OBlob.RECORD_TYPE, 0, record, new HashSet<>());
 
@@ -365,7 +365,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
       final byte[] record =
           ((OClusterBasedStorageConfiguration)
                   connection.getDatabase().getStorage().getConfiguration())
-              .toStream(connection.getData().protocolVersion, StandardCharsets.UTF_8);
+              .toStream(connection.getData().getProtocolVersion(), StandardCharsets.UTF_8);
 
       response =
           new OReadRecordIfVersionIsNotLatestResponse(
@@ -574,17 +574,17 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
       OCommandRequest.OScript script = request.getScript();
       OCommandRequest.OLQuery liveQ = request.getLiveQuery();
       if (query != null) {
-        connection.getData().commandDetail = query.getText();
+        connection.getData().setCommandDetail(query.getText());
         result =
             db.queryLikeLegacy(
                 query.getText(), query.getParameters(), query.getLimit(), query.getFetchPlan());
 
       } else if (command != null) {
-        connection.getData().commandDetail = command.getText();
+        connection.getData().setCommandDetail(command.getText());
         result = db.commandLikeLegacy(command.getText(), command.getParameters());
 
       } else if (script != null) {
-        connection.getData().commandDetail = script.getText();
+        connection.getData().setCommandDetail(script.getText());
         result =
             db.executeLikeLegacy(script.getLanguage(), script.getText(), script.getParameters());
 
@@ -955,14 +955,14 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
       throw new OConfigurationException(
           "You can use connect as first operation only for protocol  < 37 please use handshake for"
               + " protocol >= 37");
-    connection.getData().driverName = request.getDriverName();
-    connection.getData().driverVersion = request.getDriverVersion();
-    connection.getData().protocolVersion = request.getProtocolVersion();
-    connection.getData().clientId = request.getClientId();
+    connection.getData().setDriverName(request.getDriverName());
+    connection.getData().setDriverVersion(request.getDriverVersion());
+    connection.getData().setProtocolVersion(request.getProtocolVersion());
+    connection.getData().setClientId(request.getClientId());
     connection.getData().setSerializationImpl(request.getRecordFormat());
 
     connection.setTokenBased(request.isTokenBased());
-    connection.getData().collectStats = request.isCollectStats();
+    connection.getData().setCollectStats(request.isCollectStats());
 
     if (!request.isTokenBased()
         && !OGlobalConfiguration.NETWORK_BINARY_ALLOW_NO_TOKEN.getValueAsBoolean()) {
@@ -981,9 +981,9 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
       throw new OSecurityAccessException(
           "Wrong user/password to [connect] to the remote OrientDB Server instance");
     byte[] token = null;
-    if (connection.getData().protocolVersion > OChannelBinaryProtocol.PROTOCOL_VERSION_26) {
-      connection.getData().serverUsername = connection.getServerUser().getName();
-      connection.getData().serverUser = true;
+    if (connection.getData().getProtocolVersion() > OChannelBinaryProtocol.PROTOCOL_VERSION_26) {
+      connection.getData().setServerUsername(connection.getServerUser().getName());
+      connection.getData().setServerUser(true);
 
       if (Boolean.TRUE.equals(connection.getTokenBased())) {
         token = server.getTokenHandler().getSignedBinaryToken(null, null, connection.getData());
@@ -995,13 +995,13 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
 
   @Override
   public OBinaryResponse executeConnect37(OConnect37Request request) {
-    connection.getData().driverName = handshakeInfo.getDriverName();
-    connection.getData().driverVersion = handshakeInfo.getDriverVersion();
-    connection.getData().protocolVersion = handshakeInfo.getProtocolVersion();
+    connection.getData().setDriverName(handshakeInfo.getDriverName());
+    connection.getData().setDriverVersion(handshakeInfo.getDriverVersion());
+    connection.getData().setProtocolVersion(handshakeInfo.getProtocolVersion());
     connection.getData().setSerializer(handshakeInfo.getSerializer());
 
     connection.setTokenBased(true);
-    connection.getData().collectStats = true;
+    connection.getData().setCollectStats(true);
 
     connection.setServerUser(
         server.authenticateUser(request.getUsername(), request.getPassword(), "server.connect"));
@@ -1011,9 +1011,9 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
           "Wrong user/password to [connect] to the remote OrientDB Server instance");
 
     byte[] token = null;
-    if (connection.getData().protocolVersion > OChannelBinaryProtocol.PROTOCOL_VERSION_26) {
-      connection.getData().serverUsername = connection.getServerUser().getName();
-      connection.getData().serverUser = true;
+    if (connection.getData().getProtocolVersion() > OChannelBinaryProtocol.PROTOCOL_VERSION_26) {
+      connection.getData().setServerUsername(connection.getServerUser().getName());
+      connection.getData().setServerUser(true);
 
       if (Boolean.TRUE.equals(connection.getTokenBased())) {
         token = server.getTokenHandler().getSignedBinaryToken(null, null, connection.getData());
@@ -1030,10 +1030,10 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
       throw new OConfigurationException(
           "You can use open as first operation only for protocol  < 37 please use handshake for"
               + " protocol >= 37");
-    connection.getData().driverName = request.getDriverName();
-    connection.getData().driverVersion = request.getDriverVersion();
-    connection.getData().protocolVersion = request.getProtocolVersion();
-    connection.getData().clientId = request.getClientId();
+    connection.getData().setDriverName(request.getDriverName());
+    connection.getData().setDriverVersion(request.getDriverVersion());
+    connection.getData().setProtocolVersion(request.getProtocolVersion());
+    connection.getData().setClientId(request.getClientId());
     connection.getData().setSerializationImpl(request.getRecordFormat());
     if (!request.isUseToken()
         && !OGlobalConfiguration.NETWORK_BINARY_ALLOW_NO_TOKEN.getValueAsBoolean()) {
@@ -1045,7 +1045,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
               + " sessions");
     }
     connection.setTokenBased(request.isUseToken());
-    connection.getData().collectStats = request.isCollectStats();
+    connection.getData().setCollectStats(request.isCollectStats());
 
     try {
       connection.setDatabase(
@@ -1125,10 +1125,10 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
   @Override
   public OBinaryResponse executeDatabaseOpen37(OOpen37Request request) {
     connection.setTokenBased(true);
-    connection.getData().collectStats = true;
-    connection.getData().driverName = handshakeInfo.getDriverName();
-    connection.getData().driverVersion = handshakeInfo.getDriverVersion();
-    connection.getData().protocolVersion = handshakeInfo.getProtocolVersion();
+    connection.getData().setCollectStats(true);
+    connection.getData().setDriverName(handshakeInfo.getDriverName());
+    connection.getData().setDriverVersion(handshakeInfo.getDriverVersion());
+    connection.getData().setProtocolVersion(handshakeInfo.getProtocolVersion());
     connection.getData().setSerializer(handshakeInfo.getSerializer());
     try {
       connection.setDatabase(
@@ -1671,11 +1671,11 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
           "Wrong user/password to [connect] to the remote OrientDB Server instance");
     }
 
-    connection.getData().driverName = "OrientDB Distributed";
-    connection.getData().clientId = "OrientDB Distributed";
+    connection.getData().setDriverName("OrientDB Distributed");
+    connection.getData().setClientId("OrientDB Distributed");
     connection.getData().setSerializer(ORecordSerializerNetworkV37.INSTANCE);
     connection.setTokenBased(true);
-    connection.getData().collectStats = false;
+    connection.getData().setCollectStats(false);
     int chosenProtocolVersion =
         Math.min(
             request.getDistributedProtocolVersion(),
@@ -1687,8 +1687,8 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
       throw new ODatabaseException("protocol version too old rejected connection");
     } else {
       connection.setServerUser(serverUser);
-      connection.getData().serverUsername = serverUser.getName();
-      connection.getData().serverUser = true;
+      connection.getData().setServerUsername(serverUser.getName());
+      connection.getData().setServerUser(true);
       byte[] token =
           server.getTokenHandler().getSignedBinaryToken(null, null, connection.getData());
 
