@@ -26,7 +26,6 @@ import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Set;
 
 /**
  * Server cluster interface to abstract cluster behavior.
@@ -97,10 +96,6 @@ public interface ODistributedServerManager {
 
   ONodeConfig getNodeConfigurationByUuid(String iNode, boolean useCache);
 
-  ONodeConfig getLocalNodeConfiguration();
-
-  ODistributedConfiguration getDatabaseConfiguration(String iDatabaseName);
-
   /**
    * Sends a distributed request against multiple servers.
    *
@@ -129,8 +124,6 @@ public interface ODistributedServerManager {
       ODistributedRequestId messageId,
       Object localResult,
       ODistributedResponseManagerFactory responseManagerFactory);
-
-  Set<String> getActiveServers();
 
   File getDefaultDatabaseConfigFile();
 

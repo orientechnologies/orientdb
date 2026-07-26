@@ -97,6 +97,7 @@ import com.orientechnologies.orient.distributed.context.retryable.OSetDatabaseSt
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerAware;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
+import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedMessageService;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
@@ -1816,7 +1817,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
     return cc;
   }
 
-  private ONodeConfig getNodeConfiguration(ONodeId member) {
+  public ONodeConfig getNodeConfiguration(ONodeId member) {
     // TODO: collect more informations
     ONodeConfig nodeCfg = new ONodeConfig();
     nodeCfg.setName(member.getNode());
@@ -1831,7 +1832,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
 
     List<ONodeListenerConfig> listeners = new ArrayList<>();
     for (var listener : remoteServerManager.getRemoteAddresses(member)) {
-      listeners.add(new ONodeListenerConfig("binary", listener.address()));
+      listeners.add(new ONodeListenerConfig("ONetworkProtocolBinary", listener.address()));
     }
     nodeCfg.setListeners(listeners);
 
@@ -1992,5 +1993,37 @@ public class OrientDBDistributed extends OrientDBEmbedded
   @Override
   public boolean isDistributed() {
     return !isDistributedDisabled();
+  }
+
+  public void executeDistributedRequest(ODistributedRequest req) {
+    final String dbName = req.getDatabaseName();
+    ODistributedDatabase ddb = null;
+    boolean online = false;
+    if (dbName != null) {
+      try {
+        online = waitOnline(dbName);
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+      }
+      if (req.getTask().isNodeOnlineRequired()) {
+        ddb = getDatabase(dbName);
+        if (online && ddb == null) {
+          openNoAuthorization(dbName);
+        }
+        ddb = getDatabase(dbName);
+        if (ddb == null) {
+          logger.warnNode(
+              getNodeId(),
+              "Message %s require online database, but offline, dropping execution",
+              req.toString());
+          return;
+        }
+      }
+    }
+    if (ddb != null) {
+      ddb.processRequest(req, true);
+    } else {
+      ODistributedDatabaseImpl.executeNoDb(req, this);
+    }
   }
 }

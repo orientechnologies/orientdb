@@ -71,7 +71,6 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
       throws IOException {
 
     final String command = parts[1];
-    final String id = parts.length > 2 ? parts[2] : null;
 
     if (command.equalsIgnoreCase("database")) {
 

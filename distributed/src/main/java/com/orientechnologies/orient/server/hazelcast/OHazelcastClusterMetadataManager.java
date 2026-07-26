@@ -32,7 +32,6 @@ import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.distributed.NODE_STATUS;
-import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager.DB_STATUS;
 import com.orientechnologies.orient.server.distributed.ODistributedStartupException;
@@ -211,7 +210,8 @@ public class OHazelcastClusterMetadataManager
 
   protected void publishLocalNodeConfiguration() {
     try {
-      final ONodeConfig cfg = distributedPlugin.getLocalNodeConfiguration();
+      final ONodeConfig cfg =
+          ((OrientDBDistributed) serverInstance.getDatabases()).getLocalNodeConfiguration();
       configurationMap.putNodeConfig(nodeUuid, cfg);
     } catch (Exception e) {
       logger.errorNode(nodeName, "Error on publishing local server configuration", e);
@@ -506,10 +506,6 @@ public class OHazelcastClusterMetadataManager
     return member;
   }
 
-  public Set<String> getActiveServers() {
-    return activeNodes.keySet();
-  }
-
   protected void registerNode(final Member member, final String joinedNodeName) {
     if (activeNodes.containsKey(joinedNodeName))
       // ALREADY REGISTERED: SKIP IT
@@ -612,16 +608,6 @@ public class OHazelcastClusterMetadataManager
       throw new IllegalArgumentException("Node name " + name + " is invalid");
 
     return activeNodesUuidByName.get(name);
-  }
-
-  public ODistributedConfiguration getDatabaseConfiguration(final String iDatabaseName) {
-    return getDatabaseConfiguration(iDatabaseName, true);
-  }
-
-  public ODistributedConfiguration getDatabaseConfiguration(
-      final String iDatabaseName, final boolean createIfNotPresent) {
-    return ((OrientDBDistributed) serverInstance.getDatabases())
-        .getDistributedConfiguration(iDatabaseName);
   }
 
   public void updateLastClusterChange() {

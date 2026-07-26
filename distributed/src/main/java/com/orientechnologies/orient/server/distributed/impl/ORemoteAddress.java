@@ -8,7 +8,6 @@ import java.util.List;
 public class ORemoteAddress {
 
   public record OBinaryAddress(String address) {}
-  ;
 
   private List<OBinaryAddress> addresses =
       Collections.synchronizedList(new ArrayList<OBinaryAddress>());
@@ -17,7 +16,7 @@ public class ORemoteAddress {
 
   public void addAddresses(List<ONodeInfoListener> listeners) {
     for (var listener : listeners) {
-      if (listener.protocol().equalsIgnoreCase("binary")) {
+      if (listener.protocol().equalsIgnoreCase("ONetworkProtocolBinary")) {
         this.addresses.add(new OBinaryAddress(listener.address()));
       }
     }

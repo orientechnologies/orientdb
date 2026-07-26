@@ -61,10 +61,9 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
   private final ODistributedRequest request;
   private final long sentOn;
   private final Set<String> nodesConcurInQuorum;
-  private final HashMap<String, Object> responses = new HashMap<String, Object>();
+  private final HashMap<String, Object> responses = new HashMap<>();
   private final boolean groupResponsesByResult;
-  private final List<List<ODistributedResponse>> responseGroups =
-      new ArrayList<List<ODistributedResponse>>();
+  private final List<List<ODistributedResponse>> responseGroups = new ArrayList<>();
   private final long synchTimeout;
   private final Lock synchronousResponsesLock = new ReentrantLock();
   private final CountDownLatch synchronousResponsesArrived = new CountDownLatch(1);
@@ -99,7 +98,7 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
 
     for (String node : expectedResponses) responses.put(node, NO_RESPONSE);
 
-    if (groupResponsesByResult) responseGroups.add(new ArrayList<ODistributedResponse>());
+    if (groupResponsesByResult) responseGroups.add(new ArrayList<>());
   }
 
   /**
@@ -185,7 +184,7 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
 
         if (!foundBucket) {
           // CREATE A NEW BUCKET
-          final ArrayList<ODistributedResponse> newBucket = new ArrayList<ODistributedResponse>();
+          final ArrayList<ODistributedResponse> newBucket = new ArrayList<>();
           responseGroups.add(newBucket);
           newBucket.add(response);
         }
@@ -300,7 +299,7 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
           int missingActiveNodes = 0;
 
           Map<String, ODistributedServerManager.DB_STATUS> missingResponseNodeStatuses =
-              new HashMap<String, ODistributedServerManager.DB_STATUS>(responses.size());
+              new HashMap<>(responses.size());
 
           int missingResponses = 0;
 
@@ -466,7 +465,7 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
     synchronousResponsesLock.lock();
     try {
 
-      final List<String> missingNodes = new ArrayList<String>();
+      final List<String> missingNodes = new ArrayList<>();
       for (Map.Entry<String, Object> entry : responses.entrySet())
         if (entry.getValue() == NO_RESPONSE) missingNodes.add(entry.getKey());
       return missingNodes;
@@ -479,7 +478,7 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
   public Set<String> getExpectedNodes() {
     synchronousResponsesLock.lock();
     try {
-      return new HashSet<String>(responses.keySet());
+      return new HashSet<>(responses.keySet());
     } finally {
       synchronousResponsesLock.unlock();
     }
@@ -487,7 +486,7 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
 
   /** Returns the list of node names that provided a response. */
   public List<String> getRespondingNodes() {
-    final List<String> respondedNodes = new ArrayList<String>();
+    final List<String> respondedNodes = new ArrayList<>();
     synchronousResponsesLock.lock();
     try {
       for (Map.Entry<String, Object> entry : responses.entrySet())
@@ -500,7 +499,7 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
 
   /** Returns all the responses in conflict. */
   protected List<ODistributedResponse> getConflictResponses() {
-    final List<ODistributedResponse> servers = new ArrayList<ODistributedResponse>();
+    final List<ODistributedResponse> servers = new ArrayList<>();
     int bestGroupSoFar = getBestResponsesGroup();
     for (int i = 0; i < responseGroups.size(); ++i) {
       if (i != bestGroupSoFar) {

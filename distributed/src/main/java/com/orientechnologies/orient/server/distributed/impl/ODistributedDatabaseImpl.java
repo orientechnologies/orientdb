@@ -218,13 +218,14 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     final ODistributedResponse response =
         new ODistributedResponse(null, iRequestId, local, sender, responsePayload);
 
-    // TODO: check if using remote channel for local node still makes sense
-    //    if (!senderNodeName.equalsIgnoreCase(manager.getLocalNodeName()))
     try {
       // GET THE SENDER'S RESPONSE QUEUE
       final ORemoteServerController remoteSenderServer = ctx.getRemoteServer(sender);
-
-      remoteSenderServer.sendResponse(response);
+      if (sender.equals(local)) {
+        ctx.getMessageService().dispatchResponseToThread(response);
+      } else {
+        remoteSenderServer.sendResponse(response);
+      }
 
     } catch (Exception e) {
       logger.errorNode(

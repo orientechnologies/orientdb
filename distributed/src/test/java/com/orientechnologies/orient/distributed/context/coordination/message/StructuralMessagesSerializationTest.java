@@ -132,7 +132,7 @@ public class StructuralMessagesSerializationTest {
     ONodeInfo info =
         new ONodeInfo(
             OConstants.getRawVersion(),
-            List.of(new ONodeInfoListener("binary", "127.0.0.1:24242")),
+            List.of(new ONodeInfoListener("ONetworkProtocolBinary", "127.0.0.1:24242")),
             10,
             20,
             30);

@@ -2,7 +2,6 @@ package com.orientechnologies.orient.distributed.db;
 
 import com.orientechnologies.orient.core.db.ONetworkMessage;
 import com.orientechnologies.orient.server.distributed.ODistributedResponse;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
@@ -19,8 +18,7 @@ public class ONetworkResponseMessage implements ONetworkMessage {
 
   @Override
   public void execute() {
-    final ODistributedServerManager manager = ctx.getDistributedManager();
-    manager.getMessageService().dispatchResponseToThread(response);
+    ctx.getMessageService().dispatchResponseToThread(response);
   }
 
   @Override

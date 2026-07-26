@@ -569,7 +569,8 @@ public class OClassDistributed extends OClassEmbedded {
     final List<String> clusterNames = new ArrayList<String>(clusterIds.length);
     for (int c : clusterIds) clusterNames.add(db.getClusterNameById(c).toLowerCase(Locale.ENGLISH));
 
-    ODistributedConfiguration cfg = manager.getDatabaseConfiguration(db.getName());
+    ODistributedConfiguration cfg =
+        db.getSharedContext().getOrientDB().getDistributedConfiguration(db.getName());
 
     List<String> bestClusters = cfg.getOwnedClustersByServer(clusterNames, db.getLocalNodeName());
     if (bestClusters.isEmpty()) {
