@@ -397,7 +397,12 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
             ctx.executeDistributedRequest(request);
           } else {
             final ORemoteServerController remoteServer = ctx.getRemoteServer(node);
-            remoteServer.sendRequest(request);
+            if (remoteServer != null) {
+              remoteServer.sendRequest(request);
+            } else {
+              logger.warnNode(
+                  ctx.getNodeId(), "Can't send message to node %s no connection ", node);
+            }
           }
 
         } catch (Exception e) {
