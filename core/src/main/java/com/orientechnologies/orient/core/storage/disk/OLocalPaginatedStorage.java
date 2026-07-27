@@ -103,7 +103,6 @@ import net.jpountz.xxhash.XXHashFactory;
 public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   private static final OLogger logger = OLogManager.instance().logger(OLocalPaginatedStorage.class);
 
-  @SuppressWarnings("WeakerAccess")
   protected static final long IV_SEED = 234120934;
 
   private static final String[] ALL_FILE_EXTENSIONS = {

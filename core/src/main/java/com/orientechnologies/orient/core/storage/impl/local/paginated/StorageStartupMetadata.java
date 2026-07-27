@@ -82,8 +82,8 @@ public class StorageStartupMetadata {
     final ZipEntry ze = new ZipEntry(name);
     zos.putNextEntry(ze);
     try {
+      assert !isDirty();
       final ByteBuffer byteBuffer = serialize();
-      byteBuffer.put(DIRTY_FLAG_OFFSET, (byte) 0);
       zos.write(byteBuffer.array());
     } finally {
       zos.closeEntry();
