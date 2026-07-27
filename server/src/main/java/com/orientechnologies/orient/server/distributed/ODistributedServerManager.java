@@ -25,7 +25,6 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.config.OClusterConfiguration;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import java.io.File;
-import java.io.IOException;
 import java.util.Collection;
 
 /**
@@ -72,8 +71,6 @@ public interface ODistributedServerManager {
   ODistributedServerManager registerLifecycleListener(ODistributedLifecycleListener iListener);
 
   ODistributedServerManager unregisterLifecycleListener(ODistributedLifecycleListener iListener);
-
-  ORemoteServerController getRemoteServer(ONodeId nodeId) throws IOException;
 
   long getLastClusterChangeOn();
 

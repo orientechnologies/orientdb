@@ -21,9 +21,7 @@ package com.orientechnologies.orient.server.distributed.impl;
 
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
-import com.hazelcast.core.Member;
 import com.orientechnologies.common.concur.OOfflineNodeException;
-import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.console.OConsoleReader;
 import com.orientechnologies.common.console.ODefaultConsoleReader;
 import com.orientechnologies.common.exception.OException;
@@ -46,7 +44,6 @@ import com.orientechnologies.orient.distributed.ONodeConfig;
 import com.orientechnologies.orient.distributed.ONodeListenerConfig;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabasesTopology;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
-import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolException;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
 import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
@@ -855,72 +852,12 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
     }
   }
 
-  public ORemoteServerController getRemoteServer(final ONodeId rNodeId) throws IOException {
-    if (rNodeId == null) throw new IllegalArgumentException("Server name is NULL");
-
-    OrientDBDistributed ctx = (OrientDBDistributed) serverInstance.getDatabases();
-    ORemoteServerController remoteServer = ctx.getRemoteServer(rNodeId);
-    if (remoteServer == null) {
-      Member member = clusterManager.getClusterMemberByNodeId(rNodeId);
-
-      for (int retry = 0; retry < 20; ++retry) {
-        ONodeConfig cfg = getNodeConfigurationByUuid(member.getUuid(), false);
-        if (cfg == null || cfg.getListeners() == null) {
-          try {
-            Thread.sleep(100);
-            member = clusterManager.getClusterMemberByNodeId(rNodeId);
-            continue;
-
-          } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw OException.wrapException(
-                new ODistributedException("Cannot find node '" + rNodeId + "'"), e);
-          }
-        }
-
-        final String url = ODistributedPlugin.getListeningBinaryAddress(cfg);
-
-        if (url == null) {
-          closeRemoteServer(rNodeId);
-          throw new ODatabaseException(
-              "Cannot connect to a remote node because the url was not found");
-        }
-
-        try {
-          remoteServer = ctx.connectRemoteServer(rNodeId, url);
-          break;
-        } catch (ONetworkProtocolException | IOException e) {
-          logger.warn("failing to connect to remote node %s", rNodeId, e);
-        }
-
-        // RETRY TO GET USR+PASSWORD IN A WHILE
-        try {
-          Thread.sleep(100);
-        } catch (InterruptedException e) {
-          Thread.currentThread().interrupt();
-          throw OException.wrapException(
-              new OInterruptedException("Cannot connect to remote server " + rNodeId), e);
-        }
-      }
-    }
-
-    if (remoteServer == null) throw new ODistributedException("Cannot find node '" + rNodeId + "'");
-
-    return remoteServer;
-  }
-
   @Override
   public long getLastClusterChangeOn() {
     return clusterManager.getLastClusterChangeOn();
   }
 
   public void onNodeJoined(ONodeId joinedNodeId, String url) {
-    try {
-      getRemoteServer(joinedNodeId);
-    } catch (IOException e) {
-      logger.errorOut(
-          nodeName, joinedNodeId.getNode(), "Error on connecting to node %s", joinedNodeId);
-    }
     ((OrientDBDistributed) serverInstance.getDatabases()).connected(joinedNodeId, url);
 
     // NOTIFY NODE WAS ADDED SUCCESSFULLY
@@ -936,15 +873,6 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
 
   public void notifyNodeLeft(ONodeId joinedNodeName) {
     for (ODistributedLifecycleListener l : listeners) l.onNodeLeft(joinedNodeName.getNode());
-  }
-
-  // This is used only during startup and gets called by the cluster metadata manager
-  public void connectToAllNodes(Set<ONodeId> clusterNodes) throws IOException {
-    for (ONodeId m : clusterNodes) {
-      if (!m.equals(serverInstance.getDatabases().getNodeId())) {
-        getRemoteServer(m);
-      }
-    }
   }
 
   @Override
