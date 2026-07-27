@@ -174,7 +174,6 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
         try {
           changes =
               storage.callIndexEngine(
-                  false,
                   indexId,
                   engine -> {
                     OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
@@ -225,7 +224,6 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
           //noinspection resource
           return storage
               .callIndexEngine(
-                  false,
                   indexId,
                   engine -> {
                     OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
@@ -278,7 +276,6 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
           try {
             luceneDoc =
                 storage.callIndexEngine(
-                    false,
                     indexId,
                     engine -> {
                       OLuceneIndexEngine oIndexEngine = (OLuceneIndexEngine) engine;
@@ -309,7 +306,6 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
       try {
         // TODO apply current TX
         return storage.callIndexEngine(
-            false,
             indexId,
             engine -> {
               OTransaction transaction = getDatabase().getTransaction();
@@ -419,7 +415,6 @@ public class OLuceneIndexNotUnique extends OIndexAbstract implements OLuceneInde
     while (true) {
       try {
         return storage.callIndexEngine(
-            false,
             indexId,
             engine -> {
               final OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;

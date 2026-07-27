@@ -331,8 +331,7 @@ public interface OStorage extends OStorageInfo {
       int indexId, final IndexEngineValuesTransformer valuesTransformer)
       throws OInvalidIndexEngineIdException;
 
-  <T> T callIndexEngine(
-      final boolean readOperation, int indexId, final OIndexEngineCallback<T> callback)
+  <T> T callIndexEngine(int indexId, final OIndexEngineCallback<T> callback)
       throws OInvalidIndexEngineIdException;
 
   Stream<Object> getIndexKeyStream(int indexId) throws OInvalidIndexEngineIdException;

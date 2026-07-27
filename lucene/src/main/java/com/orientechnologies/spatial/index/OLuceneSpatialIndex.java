@@ -53,7 +53,6 @@ public class OLuceneSpatialIndex extends OLuceneIndexNotUnique {
 
     try {
       return storage.callIndexEngine(
-          false,
           indexId,
           engine -> {
             if (((OLuceneSpatialIndexContainer) engine).isLegacy()) {

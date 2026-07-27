@@ -35,6 +35,8 @@ import com.orientechnologies.common.directmemory.OByteBufferPool;
 import com.orientechnologies.common.exception.OErrorCode;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.exception.OHighLevelException;
+import com.orientechnologies.common.function.TxConsumer;
+import com.orientechnologies.common.function.TxFunction;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.io.OIOUtils;
@@ -621,9 +623,14 @@ public abstract class OAbstractPaginatedStorage
                 final String cs = configuration.getConflictStrategy();
                 if (cs != null) {
                   // SET THE CONFLICT STORAGE STRATEGY FROM THE LOADED CONFIGURATION
-                  doSetConflictStrategy(
-                      Orient.instance().getRecordConflictStrategy().getStrategy(cs),
-                      atomicOperation);
+                  var conflictResolver =
+                      Orient.instance().getRecordConflictStrategy().getStrategy(cs);
+                  if (recordConflictStrategy == null
+                      || !recordConflictStrategy.getName().equals(conflictResolver.getName())) {
+                    this.recordConflictStrategy = conflictResolver;
+                    ((OClusterBasedStorageConfiguration) configuration)
+                        .setConflictStrategy(atomicOperation, conflictResolver.getName());
+                  }
                 }
                 if (lastMetadata == null) {
                   lastMetadata = startupMetadata.txMetadata;
@@ -894,13 +901,11 @@ public abstract class OAbstractPaginatedStorage
     transaction = new ThreadLocal<>();
 
     preCreateSteps();
-    makeStorageDirty();
-
     int sequenceSize =
         contextConfiguration.getValueAsInteger(DISTRIBUTED_TRANSACTION_SEQUENCE_SET_SIZE);
     var initSequence = OTransactionSequenceManager.initData(sequenceSize);
 
-    atomicOperationsManager.executeInsideAtomicOperation(
+    modifyWithAtomicOperation(
         initSequence,
         (atomicOperation) -> {
           configuration = new OClusterBasedStorageConfiguration(this);
@@ -1133,8 +1138,7 @@ public abstract class OAbstractPaginatedStorage
         }
         checkOpennessAndMigration();
 
-        makeStorageDirty();
-        return atomicOperationsManager.calculateInsideAtomicOperation(
+        return calculateAndModifyWithAtomicOperation(
             null, (atomicOperation) -> doAddCluster(atomicOperation, clusterName));
 
       } catch (final IOException e) {
@@ -1177,8 +1181,7 @@ public abstract class OAbstractPaginatedStorage
               String.format("Cluster with name:'%s' already exists", clusterName));
         }
 
-        makeStorageDirty();
-        return atomicOperationsManager.calculateInsideAtomicOperation(
+        return calculateAndModifyWithAtomicOperation(
             null, atomicOperation -> doAddCluster(atomicOperation, clusterName, requestedId));
 
       } catch (final IOException e) {
@@ -1216,9 +1219,7 @@ public abstract class OAbstractPaginatedStorage
                   + "'");
         }
 
-        makeStorageDirty();
-
-        return atomicOperationsManager.calculateInsideAtomicOperation(
+        return calculateAndModifyWithAtomicOperation(
             null,
             atomicOperation -> {
               if (dropClusterInternal(atomicOperation, clusterId)) {
@@ -1707,9 +1708,7 @@ public abstract class OAbstractPaginatedStorage
       try {
         checkOpennessAndMigration();
 
-        makeStorageDirty();
-
-        return atomicOperationsManager.calculateInsideAtomicOperation(
+        return calculateAndModifyWithAtomicOperation(
             null,
             atomicOperation ->
                 doCreateRecord(
@@ -1888,10 +1887,8 @@ public abstract class OAbstractPaginatedStorage
         try {
           checkOpennessAndMigration();
 
-          makeStorageDirty();
-
           final OCluster cluster = doGetAndCheckCluster(rid.getClusterId());
-          return atomicOperationsManager.calculateInsideAtomicOperation(
+          return calculateAndModifyWithAtomicOperation(
               null,
               atomicOperation ->
                   doUpdateRecord(
@@ -1936,9 +1933,7 @@ public abstract class OAbstractPaginatedStorage
 
         final OCluster cluster = doGetAndCheckCluster(rid.getClusterId());
 
-        makeStorageDirty();
-
-        return atomicOperationsManager.calculateInsideAtomicOperation(
+        return calculateAndModifyWithAtomicOperation(
             null, atomicOperation -> doDeleteRecord(atomicOperation, rid, version, cluster));
       } finally {
         stateLock.readLock().unlock();
@@ -1978,6 +1973,42 @@ public abstract class OAbstractPaginatedStorage
         });
   }
 
+  public void modifyWithAtomicOperation(final byte[] metadata, final TxConsumer consumer)
+      throws IOException {
+    Throwable error = null;
+    final OAtomicOperation atomicOperation = atomicOperationsManager.startAtomicOperation(metadata);
+    try {
+      makeStorageDirty();
+      consumer.accept(atomicOperation);
+    } catch (Exception e) {
+      error = e;
+      throw OException.wrapException(
+          new OStorageException(
+              "Exception during execution of atomic operation inside of storage " + getName()),
+          e);
+    } finally {
+      atomicOperationsManager.endAtomicOperation(error);
+    }
+  }
+
+  public <T> T calculateAndModifyWithAtomicOperation(
+      final byte[] metadata, final TxFunction<T> function) throws IOException {
+    Throwable error = null;
+    final OAtomicOperation atomicOperation = atomicOperationsManager.startAtomicOperation(metadata);
+    try {
+      makeStorageDirty();
+      return function.accept(atomicOperation);
+    } catch (Exception e) {
+      error = e;
+      throw OException.wrapException(
+          new OStorageException(
+              "Exception during execution of atomic operation inside of storage " + getName()),
+          e);
+    } finally {
+      atomicOperationsManager.endAtomicOperation(error);
+    }
+  }
+
   /**
    * Scan the given transaction for new record and allocate a record id for them, the relative
    * record id is inserted inside the transaction for future use.
@@ -2005,8 +2036,7 @@ public abstract class OAbstractPaginatedStorage
 
         checkOpennessAndMigration();
 
-        makeStorageDirty();
-        atomicOperationsManager.executeInsideAtomicOperation(
+        modifyWithAtomicOperation(
             null,
             atomicOperation -> {
               lockClusters(clustersToLock);
@@ -2181,10 +2211,9 @@ public abstract class OAbstractPaginatedStorage
         try {
           checkOpennessAndMigration();
 
-          makeStorageDirty();
-
           Throwable error = null;
           startStorageTx(transaction);
+          makeStorageDirty();
           try {
             final OAtomicOperation atomicOperation = atomicOperationsManager.getCurrentOperation();
             lockClusters(clustersToLock);
@@ -2386,8 +2415,7 @@ public abstract class OAbstractPaginatedStorage
 
         checkOpennessAndMigration();
 
-        makeStorageDirty();
-        return atomicOperationsManager.calculateInsideAtomicOperation(
+        return calculateAndModifyWithAtomicOperation(
             null,
             atomicOperation -> {
               if (indexEngineNameMap.containsKey(indexMetadata.getName())) {
@@ -2556,9 +2584,7 @@ public abstract class OAbstractPaginatedStorage
 
         checkIndexId(internalIndexId);
 
-        makeStorageDirty();
-
-        atomicOperationsManager.executeInsideAtomicOperation(
+        modifyWithAtomicOperation(
             null,
             atomicOperation -> {
               final OBaseIndexEngine engine =
@@ -2627,9 +2653,7 @@ public abstract class OAbstractPaginatedStorage
 
         checkOpennessAndMigration();
 
-        makeStorageDirty();
-
-        atomicOperationsManager.executeInsideAtomicOperation(
+        modifyWithAtomicOperation(
             null, atomicOperation -> doClearIndex(atomicOperation, internalIndexId));
       } finally {
         stateLock.readLock().unlock();
@@ -2762,8 +2786,7 @@ public abstract class OAbstractPaginatedStorage
     }
   }
 
-  public <T> T callIndexEngine(
-      final boolean readOperation, int indexId, final OIndexEngineCallback<T> callback)
+  public <T> T callIndexEngine(int indexId, final OIndexEngineCallback<T> callback)
       throws OInvalidIndexEngineIdException {
     indexId = extractInternalId(indexId);
 
@@ -2772,10 +2795,6 @@ public abstract class OAbstractPaginatedStorage
       try {
 
         checkOpennessAndMigration();
-
-        if (readOperation) {
-          makeStorageDirty();
-        }
 
         return doCallIndexEngine(indexId, callback);
       } finally {
@@ -3343,6 +3362,7 @@ public abstract class OAbstractPaginatedStorage
         }
 
         synch();
+
       } finally {
         stateLock.writeLock().unlock();
       }
@@ -3632,38 +3652,15 @@ public abstract class OAbstractPaginatedStorage
   @Override
   public final void setConflictStrategy(final ORecordConflictStrategy conflictResolver) {
     Objects.requireNonNull(conflictResolver);
-    stateLock.readLock().lock();
-    try {
 
-      checkOpennessAndMigration();
-
-      makeStorageDirty();
-
-      atomicOperationsManager.executeInsideAtomicOperation(
-          null, atomicOperation -> doSetConflictStrategy(conflictResolver, atomicOperation));
-    } catch (final Exception e) {
-      throw OException.wrapException(
-          new OStorageException(
-              "Exception during setting of conflict strategy "
-                  + conflictResolver.getName()
-                  + " for storage "
-                  + name),
-          e);
-    } finally {
-      stateLock.readLock().unlock();
-    }
-  }
-
-  private void doSetConflictStrategy(
-      ORecordConflictStrategy conflictResolver, OAtomicOperation atomicOperation) {
-
-    if (recordConflictStrategy == null
-        || !recordConflictStrategy.getName().equals(conflictResolver.getName())) {
-
-      this.recordConflictStrategy = conflictResolver;
-      ((OClusterBasedStorageConfiguration) configuration)
-          .setConflictStrategy(atomicOperation, conflictResolver.getName());
-    }
+    modifyConfiguration(
+        (ao, sc) -> {
+          if (recordConflictStrategy == null
+              || !recordConflictStrategy.getName().equals(conflictResolver.getName())) {
+            this.recordConflictStrategy = conflictResolver;
+            sc.setConflictStrategy(ao, conflictResolver.getName());
+          }
+        });
   }
 
   @SuppressWarnings("unused")
@@ -4059,8 +4056,11 @@ public abstract class OAbstractPaginatedStorage
 
   public void metadataOnly(byte[] metadata) {
     try {
-      atomicOperationsManager.executeInsideAtomicOperation(metadata, (op) -> {});
-      this.lastMetadata = metadata;
+      modifyWithAtomicOperation(
+          metadata,
+          (op) -> {
+            this.lastMetadata = metadata;
+          });
     } catch (IOException e) {
       throw logAndPrepareForRethrow(e);
     }
@@ -4432,9 +4432,7 @@ public abstract class OAbstractPaginatedStorage
         return false;
       }
 
-      makeStorageDirty();
-
-      return atomicOperationsManager.calculateInsideAtomicOperation(
+      return calculateAndModifyWithAtomicOperation(
           null,
           atomicOperation -> doSetClusterAttributed(atomicOperation, attribute, value, cluster));
     } catch (final RuntimeException ee) {
@@ -6108,9 +6106,7 @@ public abstract class OAbstractPaginatedStorage
       final OClusterBasedStorageConfiguration storageConfiguration =
           (OClusterBasedStorageConfiguration) configuration;
 
-      makeStorageDirty();
-
-      atomicOperationsManager.executeInsideAtomicOperation(
+      modifyWithAtomicOperation(
           null, atomicOperation -> modify.modify(atomicOperation, storageConfiguration));
     } catch (final RuntimeException ee) {
       throw logAndPrepareForRethrow(ee);
@@ -6170,26 +6166,7 @@ public abstract class OAbstractPaginatedStorage
 
   @Override
   public final void setMinimumClusters(final int minimumClusters) {
-    stateLock.readLock().lock();
-    try {
-
-      checkOpennessAndMigration();
-
-      final OClusterBasedStorageConfiguration storageConfiguration =
-          (OClusterBasedStorageConfiguration) configuration;
-
-      makeStorageDirty();
-
-      storageConfiguration.setMinimumClusters(minimumClusters);
-    } catch (final RuntimeException ee) {
-      throw logAndPrepareForRethrow(ee);
-    } catch (final Error ee) {
-      throw logAndPrepareForRethrow(ee);
-    } catch (final Throwable t) {
-      throw logAndPrepareForRethrow(t);
-    } finally {
-      stateLock.readLock().unlock();
-    }
+    modifyConfiguration((ao, sc) -> sc.setMinimumClusters(minimumClusters));
   }
 
   @Override

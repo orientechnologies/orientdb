@@ -37,7 +37,6 @@ public class OLuceneFullTextIndex extends OLuceneIndexNotUnique {
     while (true)
       try {
         return storage.callIndexEngine(
-            false,
             indexId,
             engine -> {
               OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
@@ -52,7 +51,6 @@ public class OLuceneFullTextIndex extends OLuceneIndexNotUnique {
     while (true)
       try {
         return storage.callIndexEngine(
-            false,
             indexId,
             engine -> {
               OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
@@ -67,7 +65,6 @@ public class OLuceneFullTextIndex extends OLuceneIndexNotUnique {
     while (true)
       try {
         return storage.callIndexEngine(
-            false,
             indexId,
             engine -> {
               OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
@@ -82,7 +79,6 @@ public class OLuceneFullTextIndex extends OLuceneIndexNotUnique {
     while (true) {
       try {
         return storage.callIndexEngine(
-            false,
             indexId,
             engine -> {
               OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
@@ -98,7 +94,6 @@ public class OLuceneFullTextIndex extends OLuceneIndexNotUnique {
     while (true) {
       try {
         return storage.callIndexEngine(
-            false,
             indexId,
             engine -> {
               OLuceneIndexEngine indexEngine = (OLuceneIndexEngine) engine;
