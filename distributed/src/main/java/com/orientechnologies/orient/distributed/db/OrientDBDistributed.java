@@ -1764,6 +1764,9 @@ public class OrientDBDistributed extends OrientDBEmbedded
 
   @Override
   public boolean waitOnline(String database) throws InterruptedException {
+    if (isDistributedDisabled()) {
+      return true;
+    }
     long waitTime = getLongConfig(OGlobalConfiguration.DISTRIBUTED_DATABASE_ONLINE_GRACE_PERIOD);
     return getNodeState().getOps().waitSelfOnline(database, Optional.of(waitTime));
   }
