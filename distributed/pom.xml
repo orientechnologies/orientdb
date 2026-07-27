@@ -36,7 +36,7 @@
     <name>OrientDB Distributed Server</name>
 
     <properties>
-        <hz.version>3.12.13</hz.version>
+        <hz.version>5.2.5</hz.version>
         <jar.manifest.mainclass>com.orientechnologies.orient.server.OServerMain</jar.manifest.mainclass>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <exclude.test.distributed>NONE</exclude.test.distributed>
