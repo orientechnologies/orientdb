@@ -972,8 +972,8 @@ public class OClassEmbedded extends OClassImpl {
       for (String node : toRemoveNodes) {
         List<String> assigned = getAllocation().getAllocationClusters(node);
         List<String> toMove = assigned.subList(size, assigned.size());
-        removeAllocations(db, node, toMove);
         toReassing.addAll(toMove);
+        removeAllocations(db, node, toMove);
       }
 
       for (String node : definedNodes) {

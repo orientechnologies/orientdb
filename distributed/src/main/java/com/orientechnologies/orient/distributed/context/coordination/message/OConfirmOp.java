@@ -1,7 +1,7 @@
 package com.orientechnologies.orient.distributed.context.coordination.message;
 
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
-import com.orientechnologies.orient.distributed.context.coordination.OConsensusSuccess;
+import com.orientechnologies.orient.distributed.context.coordination.OConfirmResult;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OOperationContext;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
@@ -10,7 +10,7 @@ import java.io.DataOutput;
 import java.io.IOException;
 
 public class OConfirmOp implements OStructuralMessage {
-  private static OLoggerDistributed logger = OLoggerDistributed.logger(OConfirmOp.class);
+  private static final OLoggerDistributed logger = OLoggerDistributed.logger(OConfirmOp.class);
   private OTransactionIdPromise promise;
 
   public OConfirmOp(OTransactionIdPromise promise) {
@@ -23,61 +23,19 @@ public class OConfirmOp implements OStructuralMessage {
   }
 
   public static void executeConfirm(OOperationContext ctx, OTransactionIdPromise promise) {
-    OConsensusSuccess successResult;
+    OConfirmResult confirmResult;
     // The success of this operation may means the otherPromised of another
     // promised operation in case the current node was out of consent
     // it probably happen only once, but not locked so potentially can be multiple
     // promise otherPromised even though unlikely, looping anyway
-    boolean exit;
+    boolean complete;
     do {
-      successResult = ctx.getOps().consensusSuccess(promise);
-      if (successResult.isPromisedToOther()) {
-        var cancelled = ctx.getOps().consensusFailure(successResult.otherPromised());
-        if (cancelled.isPresent()) {
-          cancelled.get().cancel(ctx);
-          exit = false;
-        } else {
-          logger.warn("Error cannot cancel failed missing operation");
-          exit = true;
-        }
-      } else if (successResult.isSuccess()) {
-        try {
-          if (successResult.previousMissing()) {
-            var prom = successResult.success().validate(ctx);
-            // If there is an error
-            if (prom.isEmpty()) {
-              successResult.success().apply(ctx);
-              ctx.apllied(promise);
-              exit = true;
-            } else {
-              logger.warn("Error on re-validating confirmed operation: %s ", prom.get());
-              exit = false;
-            }
-          } else {
-            successResult.success().apply(ctx);
-            ctx.apllied(promise);
-            exit = true;
-          }
-        } catch (Exception e) {
-          // TOOD: do something about this.
-          // It should be rare and only the result of a bug, should be anyway in recover for missing
-          // transaction.
-          logger.error("Error on apply operation %s need recover", e, successResult.success());
-          exit = true;
-        }
-      } else if (successResult.previousMissing()) {
-        exit = true;
-        // TODO: maybe here request to sync/resend promised, or just wait for message to arrive
-      } else if (successResult.alreadyApplied()) {
-        exit = true;
-      } else {
-        logger.warn("Does really get here ? strange %s", successResult);
-        exit = false;
+      confirmResult = ctx.getOps().consensusSuccess(promise);
+      complete = confirmResult.apply(ctx);
+      if (!complete) {
+        logger.debug("retry commit for %s", confirmResult);
       }
-      if (!exit) {
-        logger.debug("retry commit for %s", successResult);
-      }
-    } while (!exit);
+    } while (!complete);
   }
 
   @Override

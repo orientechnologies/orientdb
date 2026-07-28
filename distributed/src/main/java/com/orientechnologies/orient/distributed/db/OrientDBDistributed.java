@@ -634,16 +634,8 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   public void receiveMessage(OStructuralMessage op) {
+    logger.debug("scheduling execution of received message %s", op);
     this.execute(() -> op.execute(this));
-  }
-
-  private boolean checkDbAvailable(String name) {
-    if (getPlugin() == null || !getPlugin().isEnabled()) {
-      return true;
-    }
-    if (OSystemDatabase.SYSTEM_DB_NAME.equals(name)) return true;
-    DB_STATUS dbStatus = getDatabaseStatus(name);
-    return dbStatus == DB_STATUS.ONLINE || dbStatus == DB_STATUS.BACKUP;
   }
 
   private boolean checkDbAvailableOpen(String name) {
@@ -1728,7 +1720,8 @@ public class OrientDBDistributed extends OrientDBEmbedded
               + operation
               + ") on node '"
               + localNodeId
-              + "' because is non a master");
+              + "' because does not define database "
+              + name);
     }
   }
 

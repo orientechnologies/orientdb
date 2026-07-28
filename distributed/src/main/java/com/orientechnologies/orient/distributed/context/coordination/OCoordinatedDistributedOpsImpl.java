@@ -259,29 +259,29 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
     return Optional.empty();
   }
 
-  public synchronized OConsensusSuccess consensusSuccess(OTransactionIdPromise promise) {
+  public synchronized OConfirmResult consensusSuccess(OTransactionIdPromise promise) {
     SuccessResult result = sequenceManager.notifySuccess(promise);
     return switch (result) {
       case VALID -> {
-        yield new OConsensusSuccess(this.promised.getPromised(promise));
+        yield OConfirmResult.success(this.promised.getPromised(promise));
       }
       case VALID_MISSING -> {
-        yield new OConsensusSuccess(this.promised.getNotPromised(promise), true);
+        yield OConfirmResult.successNotPromised(this.promised.getNotPromised(promise));
       }
       case ALREADY_PRESENT -> {
         // Already present ... maybe do nothing, already done
         finalize(promise);
-        yield new OConsensusSuccess(true);
+        yield OConfirmResult.alreadyPresent();
       }
       case ALREADY_PROMISED -> {
         // Consensus has been reached on a different message of what the current node promised,
         // cancel the promised and try to promise e apply the message that reached consensus
         var promisedPromise = this.sequenceManager.promised(promise.getId().getPosition());
-        yield new OConsensusSuccess(promisedPromise);
+        yield OConfirmResult.promisedToOther(promisedPromise);
       }
       case MISSING_PREVIOUS -> {
         // wait for previous one
-        yield new OConsensusSuccess();
+        yield OConfirmResult.missingPrevious();
       }
     };
   }

@@ -42,7 +42,7 @@ public interface OCoordinatedDistributedOps {
 
   Optional<ODistributedMessage> consensusFailure(OTransactionIdPromise promise);
 
-  OConsensusSuccess consensusSuccess(OTransactionIdPromise promise);
+  OConfirmResult consensusSuccess(OTransactionIdPromise promise);
 
   void completeExecution(OTransactionIdPromise promise);
 

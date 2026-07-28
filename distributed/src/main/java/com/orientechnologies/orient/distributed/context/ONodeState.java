@@ -4,7 +4,7 @@ import com.orientechnologies.orient.core.transaction.OGroupId;
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
-import com.orientechnologies.orient.distributed.context.coordination.OConsensusSuccess;
+import com.orientechnologies.orient.distributed.context.coordination.OConfirmResult;
 import com.orientechnologies.orient.distributed.context.coordination.OCoordinatedDistributedOps;
 import com.orientechnologies.orient.distributed.context.coordination.OCoordinatedDistributedOpsImpl;
 import com.orientechnologies.orient.distributed.context.coordination.OOperationStart;
@@ -86,7 +86,7 @@ public class ONodeState {
     return this.coordinated.consensusFailure(promise);
   }
 
-  public OConsensusSuccess receiveSuccess(OTransactionIdPromise promise) {
+  public OConfirmResult receiveSuccess(OTransactionIdPromise promise) {
     return this.coordinated.consensusSuccess(promise);
   }
 
