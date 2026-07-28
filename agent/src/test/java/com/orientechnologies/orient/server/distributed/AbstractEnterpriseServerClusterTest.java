@@ -15,8 +15,6 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import com.hazelcast.core.Hazelcast;
-import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.spi.properties.GroupProperty;
 import com.orientechnologies.agent.OEnterpriseAgent;
 import com.orientechnologies.agent.services.backup.OBackupService;
@@ -154,16 +152,6 @@ public abstract class AbstractEnterpriseServerClusterTest {
       }
 
       onTestEnded();
-
-      banner("Terminate HZ...");
-      for (HazelcastInstance in : Hazelcast.getAllHazelcastInstances()) {
-        if (terminateAtShutdown)
-          // TERMINATE (HARD SHUTDOWN)
-          in.getLifecycleService().terminate();
-        else
-          // SOFT SHUTDOWN
-          in.shutdown();
-      }
 
       banner("Clean server directories...");
       deleteServers();

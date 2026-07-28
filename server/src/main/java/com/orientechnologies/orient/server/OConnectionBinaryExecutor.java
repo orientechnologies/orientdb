@@ -232,6 +232,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
 
     if (operation.equals("status")) {
       final OServerPlugin plugin = server.getPlugin("cluster");
+
       if (plugin != null && plugin instanceof ODistributedServerManager) {
         clusterConfig = ((ODistributedServerManager) plugin).getClusterConfiguration();
       } else {

@@ -339,13 +339,7 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
             break;
           }
 
-          final long lastClusterChange = dManager.getLastClusterChangeOn();
-          if (lastClusterChange > 0
-              && now - lastClusterChange < (synchTimeout + ADDITIONAL_TIMEOUT_CLUSTER_SHAPE)) {
-            // CHANGED CLUSTER SHAPE DURING WAIT: ENLARGE TIMEOUT
-            currentTimeout = synchTimeout;
-            continue;
-          } else if (synchronizingNodes > 0) {
+          if (synchronizingNodes > 0) {
             // SOME NODE IS SYNCHRONIZING: WAIT FOR THEM
             // currentTimeout = synchTimeout;
             // ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,

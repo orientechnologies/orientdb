@@ -19,8 +19,6 @@
  */
 package com.orientechnologies.orient.server.distributed.impl;
 
-import com.hazelcast.core.HazelcastInstance;
-import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.console.OConsoleReader;
 import com.orientechnologies.common.console.ODefaultConsoleReader;
@@ -218,12 +216,8 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
     logger.warnNode(nodeName, "Shutting down node '%s'...", nodeName);
 
     clusterManager.prepareHazelcastPluginShutdown();
-    try {
-      if (haStatsTask != null) haStatsTask.cancel();
+    if (haStatsTask != null) haStatsTask.cancel();
 
-    } catch (HazelcastInstanceNotActiveException e) {
-      // HZ IS ALREADY DOWN, IGNORE IT
-    }
     clusterManager.hazelcastPluginShutdown();
   }
 
@@ -778,11 +772,6 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
     return ((OrientDBDistributed) serverInstance.getDatabases()).getNextMessageIdCounter();
   }
 
-  @Override
-  public void updateLastClusterChange() {
-    clusterManager.updateLastClusterChange();
-  }
-
   public void closeRemoteServer(final ONodeId node) {
     ((OrientDBDistributed) this.serverInstance.getDatabases()).closeRemoteServer(node);
   }
@@ -852,11 +841,6 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
     }
   }
 
-  @Override
-  public long getLastClusterChangeOn() {
-    return clusterManager.getLastClusterChangeOn();
-  }
-
   public void onNodeJoined(ONodeId joinedNodeId, String url) {
     ((OrientDBDistributed) serverInstance.getDatabases()).connected(joinedNodeId, url);
 
@@ -890,16 +874,12 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
   public OClusterConfiguration getClusterConfiguration() {
     if (!enabled) return null;
 
-    return clusterManager.getClusterConfiguration();
+    return ((OrientDBDistributed) serverInstance.getDatabases()).getClusterConfiguration();
   }
 
   @Override
   public ONodeConfig getNodeConfigurationByUuid(String iNode, boolean useCache) {
     return clusterManager.getNodeConfigurationByUuid(iNode, useCache);
-  }
-
-  public HazelcastInstance getHazelcastInstance() {
-    return clusterManager.getHazelcastInstance();
   }
 
   @Override

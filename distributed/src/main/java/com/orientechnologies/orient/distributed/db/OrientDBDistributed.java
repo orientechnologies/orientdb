@@ -952,6 +952,10 @@ public class OrientDBDistributed extends OrientDBEmbedded
     return messageService;
   }
 
+  public ORemoteServerManager getRemoteServerManager() {
+    return remoteServerManager;
+  }
+
   public OStandardCompleteAction newCompleteAction(
       OOperationMessage operation, OCompleteExecution execution) {
     return new OStandardCompleteAction(this, operation, execution);

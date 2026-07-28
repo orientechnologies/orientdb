@@ -15,8 +15,6 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import com.hazelcast.core.Hazelcast;
-import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.spi.properties.GroupProperty;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.common.log.OLogManager;
@@ -164,16 +162,6 @@ public abstract class AbstractServerClusterTest {
       }
 
       onTestEnded();
-
-      banner("Terminate HZ...");
-      for (HazelcastInstance in : Hazelcast.getAllHazelcastInstances()) {
-        if (terminateAtShutdown)
-          // TERMINATE (HARD SHUTDOWN)
-          in.getLifecycleService().terminate();
-        else
-          // SOFT SHUTDOWN
-          in.shutdown();
-      }
 
       banner("Clean server directories...");
       deleteServers();

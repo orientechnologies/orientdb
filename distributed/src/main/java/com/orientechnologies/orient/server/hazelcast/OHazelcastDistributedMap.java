@@ -19,15 +19,9 @@
  */
 package com.orientechnologies.orient.server.hazelcast;
 
-import com.hazelcast.core.EntryEvent;
 import com.hazelcast.core.HazelcastInstance;
 import com.hazelcast.core.HazelcastInstanceNotActiveException;
 import com.hazelcast.core.IMap;
-import com.hazelcast.core.MapEvent;
-import com.hazelcast.map.listener.EntryAddedListener;
-import com.hazelcast.map.listener.EntryRemovedListener;
-import com.hazelcast.map.listener.EntryUpdatedListener;
-import com.hazelcast.map.listener.MapClearedListener;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.distributed.ONodeConfig;
 import java.util.ArrayList;
@@ -35,138 +29,76 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Optimized concurrent hash map implementation on top of Hazelcast distributed map.
  *
  * @author Luca Garulli (l.garulli--at--orientdb.com)
  */
-public class OHazelcastDistributedMap extends ConcurrentHashMap<String, Object>
-    implements EntryAddedListener<String, Object>,
-        EntryRemovedListener<String, Object>,
-        MapClearedListener,
-        EntryUpdatedListener<String, Object> {
+public class OHazelcastDistributedMap {
   private final IMap<String, Object> hzMap;
-  private final String membershipListenerRegistration;
 
   public static final String ORIENTDB_MAP = "orientdb";
 
   public OHazelcastDistributedMap(final HazelcastInstance hz) {
     hzMap = hz.getMap(ORIENTDB_MAP);
-    membershipListenerRegistration = hzMap.addEntryListener(this, true);
-
-    super.putAll(hzMap);
   }
 
   public IMap<String, Object> getHazelcastMap() {
     return hzMap;
   }
 
-  @Override
   public Object get(final Object key) {
     return hzMap.get(key);
   }
 
-  @Override
   public boolean containsKey(final Object key) {
     return hzMap.containsKey(key);
   }
 
-  @Override
   public Set<Entry<String, Object>> entrySet() {
     return hzMap.entrySet();
   }
 
-  public Set<Entry<String, Object>> localEntrySet() {
-    return super.entrySet();
-  }
-
-  public Object getLocalCachedValue(final Object key) {
-    final Object res = super.get(key);
-    if (res != null) return res;
-
+  public Object put(final String key, final Object value) {
     try {
-      return hzMap.get(key);
+      return hzMap.put(key, value);
     } catch (HazelcastInstanceNotActiveException e) {
       // IGNORE IT
       return null;
     }
   }
 
-  @Override
-  public Object put(final String key, final Object value) {
-    try {
-      hzMap.put(key, value);
-    } catch (HazelcastInstanceNotActiveException e) {
-      // IGNORE IT
-    }
-    return super.put(key, value);
-  }
-
-  @Override
   public Object putIfAbsent(final String key, final Object value) {
     try {
-      hzMap.putIfAbsent(key, value);
+      return hzMap.putIfAbsent(key, value);
     } catch (HazelcastInstanceNotActiveException e) {
       // IGNORE IT
+      return null;
     }
-    return super.putIfAbsent(key, value);
   }
 
-  public Object putInLocalCache(final String key, final Object value) {
-    return super.put(key, value);
-  }
-
-  @Override
   public Object remove(final Object key) {
     try {
-      hzMap.remove(key);
+      return hzMap.remove(key);
     } catch (HazelcastInstanceNotActiveException e) {
       // IGNORE IT
+      return null;
     }
-    return super.remove(key);
   }
 
-  @Override
   public boolean remove(final Object key, final Object value) {
     try {
-      hzMap.remove(key, value);
+      return hzMap.remove(key, value);
     } catch (HazelcastInstanceNotActiveException e) {
       // IGNORE IT
+      return false;
     }
-    return super.remove(key, value);
   }
 
-  @Override
-  public void entryAdded(final EntryEvent<String, Object> event) {
-    super.put(event.getKey(), event.getValue());
-  }
-
-  @Override
-  public void entryUpdated(final EntryEvent<String, Object> event) {
-    super.put(event.getKey(), event.getValue());
-  }
-
-  @Override
-  public void entryRemoved(final EntryEvent<String, Object> event) {
-    super.remove(event.getKey());
-  }
-
-  @Override
-  public void mapCleared(MapEvent event) {
-    super.clear();
-  }
-
-  public void destroy() {
-    clear();
-    hzMap.removeEntryListener(membershipListenerRegistration);
-  }
-
-  public void clearLocalCache() {
-    super.clear();
-  }
+  public void destroy() {}
 
   public boolean existsNode(String nodeUuid) {
     return this.containsKey(OHazelcastClusterMetadataManager.CONFIG_NODE_PREFIX + nodeUuid);
@@ -180,14 +112,6 @@ public class OHazelcastDistributedMap extends ConcurrentHashMap<String, Object>
 
   public void removeNode(String nodeUuid) {
     this.remove(OHazelcastClusterMetadataManager.CONFIG_NODE_PREFIX + nodeUuid);
-  }
-
-  public ONodeConfig getLocalCachedNodeConfig(String nodeUuid) {
-    ODocument doc =
-        (ODocument)
-            getLocalCachedValue(OHazelcastClusterMetadataManager.CONFIG_NODE_PREFIX + nodeUuid);
-    if (doc == null) return null;
-    return new ONodeConfig(doc);
   }
 
   public List<String> getNodes() {
@@ -210,7 +134,7 @@ public class OHazelcastDistributedMap extends ConcurrentHashMap<String, Object>
 
   public Set<String> getNodeUuidByName(String name) {
     Set<String> uuids = new HashSet<String>();
-    for (Iterator<Map.Entry<String, Object>> it = this.localEntrySet().iterator(); it.hasNext(); ) {
+    for (Iterator<Map.Entry<String, Object>> it = this.entrySet().iterator(); it.hasNext(); ) {
       final Map.Entry<String, Object> entry = it.next();
       if (entry.getKey().startsWith(OHazelcastClusterMetadataManager.CONFIG_NODE_PREFIX)) {
         final ODocument nodeCfg = (ODocument) entry.getValue();

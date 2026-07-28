@@ -72,8 +72,6 @@ public interface ODistributedServerManager {
 
   ODistributedServerManager unregisterLifecycleListener(ODistributedLifecycleListener iListener);
 
-  long getLastClusterChangeOn();
-
   DB_STATUS getDatabaseStatus(ONodeId iNode, String iDatabaseName);
 
   ODistributedMessageService getMessageService();
@@ -85,8 +83,6 @@ public interface ODistributedServerManager {
   void setDistributedStrategy(ODistributedStrategy streatgy);
 
   long getNextMessageIdCounter();
-
-  void updateLastClusterChange();
 
   String getLocalNodeName();
 

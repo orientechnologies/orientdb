@@ -32,18 +32,13 @@ import com.orientechnologies.orient.distributed.ONodeConfig;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
-import com.orientechnologies.orient.server.distributed.NODE_STATUS;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager.DB_STATUS;
 import com.orientechnologies.orient.server.distributed.ODistributedStartupException;
 import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
-import com.orientechnologies.orient.server.distributed.config.OClusterConfiguration;
 import com.orientechnologies.orient.server.distributed.impl.ODistributedPlugin;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -67,13 +62,9 @@ public class OHazelcastClusterMetadataManager
   protected ConcurrentMap<ONodeId, Member> activeNodes = new ConcurrentHashMap<>();
   protected ConcurrentMap<String, ONodeId> activeNodesNamesByUuid = new ConcurrentHashMap<>();
   protected ConcurrentMap<ONodeId, String> activeNodesUuidByName = new ConcurrentHashMap<>();
-  protected final ConcurrentMap<String, Integer> registeredNodeByName = new ConcurrentHashMap<>();
 
   protected OCancellableTimer publishLocalNodeConfigurationTask = null;
 
-  protected volatile NODE_STATUS status = NODE_STATUS.OFFLINE;
-
-  protected long lastClusterChangeOn;
   private String nodeUuid;
 
   private String nodeName = null;
@@ -111,7 +102,6 @@ public class OHazelcastClusterMetadataManager
   }
 
   public void startupHazelcastPlugin() throws IOException, InterruptedException {
-    status = NODE_STATUS.STARTING;
 
     final String localNodeName = nodeName;
     final ONodeId localNodeId = serverInstance.getNodeId();
@@ -266,24 +256,6 @@ public class OHazelcastClusterMetadataManager
         });
   }
 
-  public Member getClusterMemberByNodeId(final ONodeId rNodeName) {
-    Member member = activeNodes.get(rNodeName);
-    if (member == null) {
-      for (String uuid : getConfigurationMap().getNodeUuidByName(rNodeName.getNode())) {
-        for (Member m : hazelcastInstance.getCluster().getMembers()) {
-          if (m.getUuid().equals(uuid)) {
-            member = m;
-            registerNode(member, rNodeName);
-            break;
-          }
-        }
-      }
-
-      if (member == null) throw new ODistributedException("Cannot find node '" + rNodeName + "'");
-    }
-    return member;
-  }
-
   public HazelcastInstance getHazelcastInstance() {
     for (int retry = 1;
         hazelcastInstance == null && !Thread.currentThread().isInterrupted();
@@ -304,10 +276,6 @@ public class OHazelcastClusterMetadataManager
   protected HazelcastInstance configureHazelcast() throws FileNotFoundException {
 
     return Hazelcast.newHazelcastInstance(hazelcastConfig);
-  }
-
-  public OHazelcastDistributedMap getConfigurationMap() {
-    return configurationMap;
   }
 
   @Override
@@ -377,8 +345,6 @@ public class OHazelcastClusterMetadataManager
         var cfg = new ONodeConfig((ODocument) iEvent.getValue());
 
         var name = cfg.getNodeId();
-        if (!activeNodes.containsKey(name)) updateLastClusterChange();
-
         activeNodes.put(name, iEvent.getMember());
         if (iEvent.getMember().getUuid() != null) {
           activeNodesNamesByUuid.put(iEvent.getMember().getUuid(), name);
@@ -410,8 +376,6 @@ public class OHazelcastClusterMetadataManager
         activeNodesUuidByName.remove(eventNodeName);
         distributedPlugin.onServerRemoved(eventNodeName);
 
-        updateLastClusterChange();
-
         distributedPlugin.dumpServersStatus();
       }
     } catch (HazelcastInstanceNotActiveException | RetryableHazelcastException e) {
@@ -430,9 +394,7 @@ public class OHazelcastClusterMetadataManager
 
   /** Removes the node map entry. */
   @Override
-  public void memberRemoved(final MembershipEvent iEvent) {
-    updateLastClusterChange();
-  }
+  public void memberRemoved(final MembershipEvent iEvent) {}
 
   @Override
   public void memberAdded(final MembershipEvent iEvent) {
@@ -442,7 +404,6 @@ public class OHazelcastClusterMetadataManager
           if (hazelcastInstance == null || !hazelcastInstance.getLifecycleService().isRunning())
             return;
 
-          updateLastClusterChange();
           var addedNodeId = getNodeId(iEvent.getMember(), true);
           if (addedNodeId != null) {
             logger.infoNode(
@@ -458,8 +419,6 @@ public class OHazelcastClusterMetadataManager
     final LifecycleEvent.LifecycleState state = event.getState();
     if (state == LifecycleEvent.LifecycleState.MERGED) {
       logger.infoNode(nodeName, "Server merged the existent cluster, merging databases...");
-
-      configurationMap.clearLocalCache();
 
       // UPDATE THE UUID
       final String oldUuid = nodeUuid;
@@ -484,18 +443,8 @@ public class OHazelcastClusterMetadataManager
       return null;
 
     final ONodeConfig doc;
-    if (useCache) {
-      doc = configurationMap.getLocalCachedNodeConfig(iNodeId);
-    } else {
-      doc = configurationMap.getNodeConfig(iNodeId);
-    }
-
+    doc = configurationMap.getNodeConfig(iNodeId);
     return doc;
-  }
-
-  public ONodeConfig getNodeConfigurationByNodeId(final ONodeId nodeName, final boolean useCache) {
-    String uuid = getNodeUuidByNodeId(nodeName);
-    return getNodeConfigurationByUuid(uuid, useCache);
   }
 
   protected void registerNode(final Member member, final ONodeId joinedNodeName) {
@@ -545,22 +494,6 @@ public class OHazelcastClusterMetadataManager
     }
   }
 
-  public String getNodeName(final Member iMember, final boolean useCache) {
-    if (iMember == null || iMember.getUuid() == null) return "?";
-
-    if (nodeUuid.equals(iMember.getUuid()))
-      // LOCAL NODE (NOT YET NAMED)
-      return nodeName;
-
-    //    final String name = activeNodesNamesByUuid.get(iMember.getUuid());
-    //    if (name != null) return name;
-
-    final ONodeConfig cfg = getNodeConfigurationByUuid(iMember.getUuid(), useCache);
-    if (cfg != null) return cfg.getName();
-
-    return "ext:" + iMember.getUuid();
-  }
-
   public ONodeId getNodeId(final Member iMember, final boolean useCache) {
     if (iMember == null || iMember.getUuid() == null) return null;
 
@@ -575,48 +508,5 @@ public class OHazelcastClusterMetadataManager
     if (cfg != null) return cfg.getNodeId();
 
     return null;
-  }
-
-  public OClusterConfiguration getClusterConfiguration() {
-
-    OClusterConfiguration clusterConfig = new OClusterConfiguration();
-    OrientDBDistributed context = (OrientDBDistributed) serverInstance.getDatabases();
-
-    clusterConfig.setLocalName(distributedPlugin.getName());
-    clusterConfig.setLocalId(nodeUuid);
-
-    var networkTopology = context.getNodeState().getOps().getNetworkTopology();
-    var databaseTopology = context.getNodeState().getOps().getDatabaseTopology();
-    // INSERT MEMBERS
-    for (var member : networkTopology.getMembers()) {
-      ONodeConfig nodeConfig = getNodeConfigurationByNodeId(member, true);
-      if (nodeConfig == null) {
-        continue;
-      }
-      final Map<String, String> dbStatus = new HashMap<>();
-      for (var db : databaseTopology.getDatabases()) {
-        var dbName = databaseTopology.getDatabaseName(db);
-        final DB_STATUS nodeDbState = context.getDatabaseStatus(nodeName, dbName);
-        dbStatus.put(dbName, nodeDbState.toString());
-      }
-      nodeConfig.setDatabasesStatus(dbStatus);
-      clusterConfig.addMember(nodeConfig);
-    }
-
-    return clusterConfig;
-  }
-
-  public String getNodeUuidByNodeId(final ONodeId name) {
-    if (name == null) throw new IllegalArgumentException("Node name " + name + " is invalid");
-
-    return activeNodesUuidByName.get(name);
-  }
-
-  public void updateLastClusterChange() {
-    lastClusterChangeOn = System.currentTimeMillis();
-  }
-
-  public long getLastClusterChangeOn() {
-    return lastClusterChangeOn;
   }
 }

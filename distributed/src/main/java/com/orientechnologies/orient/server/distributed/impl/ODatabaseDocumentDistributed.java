@@ -7,9 +7,6 @@ import static com.orientechnologies.orient.server.distributed.impl.TxContextStat
 import static com.orientechnologies.orient.server.distributed.impl.TxContextStatus.SUCCESS;
 import static com.orientechnologies.orient.server.distributed.impl.TxContextStatus.TIMEDOUT;
 
-import com.hazelcast.core.HazelcastException;
-import com.hazelcast.core.HazelcastInstanceNotActiveException;
-import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OException;
@@ -402,11 +399,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       return;
     } catch (OValidationException e) {
       throw e;
-    } catch (HazelcastInstanceNotActiveException e) {
-      throw new OOfflineNodeException("Hazelcast instance is not available");
-
-    } catch (HazelcastException e) {
-      throw new OOfflineNodeException("Hazelcast instance is not available");
     } catch (Exception e) {
 
       handleDistributedException("Cannot route TX operation against distributed node", e);

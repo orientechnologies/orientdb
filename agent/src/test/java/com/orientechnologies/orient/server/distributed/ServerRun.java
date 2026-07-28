@@ -18,9 +18,9 @@ package com.orientechnologies.orient.server.distributed;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
-import com.orientechnologies.orient.server.distributed.impl.ODistributedPlugin;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 import java.io.File;
 import java.io.IOException;
@@ -74,10 +74,7 @@ public class ServerRun {
   public void crashServer() {
     if (server != null) {
       server.getClientConnectionManager().killAllChannels();
-      ((ODistributedPlugin) server.getDistributedManager())
-          .getHazelcastInstance()
-          .getLifecycleService()
-          .terminate();
+      ((OrientDBDistributed) server.getDatabases()).getRemoteServerManager().closeAll();
       server.shutdown();
     }
   }
@@ -135,7 +132,7 @@ public class ServerRun {
   public void shutdownServer() {
     if (server != null) {
       try {
-        ((ODistributedPlugin) server.getDistributedManager()).getHazelcastInstance().shutdown();
+        ((OrientDBDistributed) server.getDatabases()).getRemoteServerManager().closeAll();
       } catch (Exception e) {
       }
       server.shutdown();
@@ -150,14 +147,7 @@ public class ServerRun {
   public void terminateServer() {
     if (server != null) {
       try {
-        if (((ODistributedPlugin) server.getDistributedManager())
-            .getHazelcastInstance()
-            .getLifecycleService()
-            .isRunning())
-          ((ODistributedPlugin) server.getDistributedManager())
-              .getHazelcastInstance()
-              .getLifecycleService()
-              .terminate();
+        ((OrientDBDistributed) server.getDatabases()).getRemoteServerManager().closeAll();
       } catch (Exception e) {
       }
       server.shutdown();
