@@ -17,8 +17,6 @@ import com.hazelcast.core.MemberAttributeEvent;
 import com.hazelcast.core.MembershipEvent;
 import com.hazelcast.core.MembershipListener;
 import com.hazelcast.spi.exception.RetryableHazelcastException;
-import com.orientechnologies.common.concur.lock.OInterruptedException;
-import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.util.OCallableNoParamNoReturn;
@@ -102,7 +100,7 @@ public class OHazelcastClusterMetadataManager
   }
 
   public void startupHazelcastPlugin() throws IOException, InterruptedException {
-
+    OrientDBDistributed ctx = (OrientDBDistributed) serverInstance.getDatabases();
     final String localNodeName = nodeName;
     final ONodeId localNodeId = serverInstance.getNodeId();
 
@@ -126,8 +124,6 @@ public class OHazelcastClusterMetadataManager
     configurationMap = new OHazelcastDistributedMap(hazelcastInstance);
 
     // PUBLISH CURRENT NODE NAME
-    final ONodeConfig nodeCfg =
-        new ONodeConfig(distributedPlugin.getServerInstance().getDatabases().getNodeId());
 
     // REMOVE ANY PREVIOUS REGISTERED SERVER WITH THE SAME NODE NAME
     final Set<String> node2Remove = new HashSet<String>();
@@ -142,34 +138,13 @@ public class OHazelcastClusterMetadataManager
 
     for (String n : node2Remove) configurationMap.removeNode(n);
 
-    nodeCfg.setUuid(nodeUuid);
-    nodeCfg.setName(nodeName);
-    configurationMap.putNodeConfig(nodeUuid, nodeCfg);
+    configurationMap.putNodeConfig(nodeUuid, ctx.getLocalNodeConfiguration());
 
     // REGISTER CURRENT NODES
     for (Member m : hazelcastInstance.getCluster().getMembers()) {
       if (!m.getUuid().equals(nodeUuid)) {
-        boolean found = false;
-        for (int retry = 0; retry < 10; ++retry) {
-          final ONodeId memberName = getNodeId(m, false);
-
-          if (memberName == null) {
-            // ACTIVE NODE IN HZ, BUT NOT YET REGISTERED, WAIT AND RETRY
-            Thread.sleep(1000);
-            continue;
-          }
-
-          found = true;
-          activeNodes.put(memberName, m);
-          activeNodesNamesByUuid.put(m.getUuid(), memberName);
-          activeNodesUuidByName.put(memberName, m.getUuid());
-
-          break;
-        }
-
-        if (!found)
-          logger.warnNode(
-              localNodeName, "Cannot find configuration for member: %s, uuid", m, m.getUuid());
+        var nodeInfo = getNodeConfigurationByUuid(m.getUuid(), false);
+        registerNode(m, nodeInfo);
       }
     }
 
@@ -187,7 +162,6 @@ public class OHazelcastClusterMetadataManager
     membershipListenerMapRegistration =
         configurationMap.getHazelcastMap().addEntryListener(this, true);
     membershipListenerRegistration = hazelcastInstance.getCluster().addMembershipListener(this);
-    OrientDBInternal ctx = serverInstance.getDatabases();
 
     publishLocalNodeConfiguration();
 
@@ -290,11 +264,6 @@ public class OHazelcastClusterMetadataManager
         // IGNORE IT
         return;
 
-      final ONodeId eventNodeId = getNodeId(iEvent.getMember(), true);
-      if (eventNodeId == null)
-        // MOM ALWAYS SAYS: DON'T ACCEPT CHANGES FROM STRANGERS NODES
-        return;
-
       final String key = iEvent.getKey();
       if (OHazelcastDistributedMap.isNodeConfigKey(key)) {
         if (!iEvent.getMember().equals(hazelcastInstance.getCluster().getLocalMember())) {
@@ -304,7 +273,7 @@ public class OHazelcastClusterMetadataManager
           if (this.serverInstance.getNodeId().equals(joinedNodeName)) {
             logger.errorIn(
                 joinedNodeName.getNode(),
-                eventNodeId.getNode(),
+                cfg.getNodeId().getNode(),
                 "Found a new node (%s) with the same name as current: '%s'. "
                     + "The node has been excluded. Change the name in its"
                     + " config/orientdb-dserver-config.xml file",
@@ -320,7 +289,7 @@ public class OHazelcastClusterMetadataManager
                     + " config/orientdb-dserver-config.xml file");
           }
 
-          registerNode(iEvent.getMember(), joinedNodeName);
+          registerNode(iEvent.getMember(), cfg);
         }
       }
     } catch (HazelcastInstanceNotActiveException | RetryableHazelcastException e) {
@@ -335,22 +304,9 @@ public class OHazelcastClusterMetadataManager
     try {
       final String key = iEvent.getKey();
 
-      final ONodeId eventNodeId = getNodeId(iEvent.getMember(), true);
-      if (eventNodeId == null)
-        // MOM ALWAYS SAYS: DON'T ACCEPT CHANGES FROM STRANGERS NODES
-        return;
-
       if (OHazelcastDistributedMap.isNodeConfigKey(key)) {
-
         var cfg = new ONodeConfig((ODocument) iEvent.getValue());
-
-        var name = cfg.getNodeId();
-        activeNodes.put(name, iEvent.getMember());
-        if (iEvent.getMember().getUuid() != null) {
-          activeNodesNamesByUuid.put(iEvent.getMember().getUuid(), name);
-          activeNodesUuidByName.put(name, iEvent.getMember().getUuid());
-        }
-        distributedPlugin.dumpServersStatus();
+        registerNode(iEvent.getMember(), cfg);
       }
 
     } catch (HazelcastInstanceNotActiveException | RetryableHazelcastException e) {
@@ -404,12 +360,13 @@ public class OHazelcastClusterMetadataManager
           if (hazelcastInstance == null || !hazelcastInstance.getLifecycleService().isRunning())
             return;
 
-          var addedNodeId = getNodeId(iEvent.getMember(), true);
-          if (addedNodeId != null) {
-            logger.infoNode(
-                nodeName, "Added new node id=%s name=%s", iEvent.getMember(), addedNodeId);
+          final ONodeConfig cfg = getNodeConfigurationByUuid(iEvent.getMember().getUuid(), false);
 
-            registerNode(iEvent.getMember(), addedNodeId);
+          if (cfg != null) {
+            logger.infoNode(
+                nodeName, "Added new node id=%s name=%s", iEvent.getMember(), cfg.getNodeId());
+
+            registerNode(iEvent.getMember(), cfg);
           }
         });
   }
@@ -447,42 +404,16 @@ public class OHazelcastClusterMetadataManager
     return doc;
   }
 
-  protected void registerNode(final Member member, final ONodeId joinedNodeName) {
+  protected void registerNode(final Member member, final ONodeConfig cfg) {
+    var joinedNodeName = cfg.getNodeId();
     if (activeNodes.containsKey(joinedNodeName))
       // ALREADY REGISTERED: SKIP IT
       return;
 
     if (activeNodes.putIfAbsent(joinedNodeName, member) == null) {
-      String url = null;
-      for (int retry = 0; retry < 20; ++retry) {
-        ONodeConfig cfg = getNodeConfigurationByUuid(member.getUuid(), false);
-        if (cfg == null || cfg.getListeners() == null) {
-          try {
-            Thread.sleep(100);
-            continue;
 
-          } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            throw OException.wrapException(
-                new ODistributedException("Cannot find node '" + joinedNodeName + "'"), e);
-          }
-        }
+      String url = ODistributedPlugin.getListeningBinaryAddress(cfg);
 
-        url = ODistributedPlugin.getListeningBinaryAddress(cfg);
-
-        if (url != null) {
-          break;
-        }
-
-        // RETRY TO GET USR+PASSWORD IN A WHILE
-        try {
-          Thread.sleep(100);
-        } catch (InterruptedException e) {
-          Thread.currentThread().interrupt();
-          throw OException.wrapException(
-              new OInterruptedException("Cannot connect to remote server " + joinedNodeName), e);
-        }
-      }
       if (url == null) {
         return;
       }

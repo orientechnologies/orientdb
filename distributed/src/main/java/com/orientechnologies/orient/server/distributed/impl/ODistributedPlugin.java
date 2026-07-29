@@ -796,14 +796,11 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
     if (cfg == null) return null;
 
     final Collection<ONodeListenerConfig> listeners = cfg.getListeners();
-    if (listeners == null)
-      throw new ODatabaseException(
-          "Cannot connect to a remote node because bad distributed configuration: missing"
-              + " 'listeners' array field");
+    if (listeners == null) return null;
     String listenUrl = null;
     for (ONodeListenerConfig listener : listeners) {
-      if ((listener.getProtocol()).equals("ONetworkProtocolBinary")) {
-        listenUrl = (String) listener.getListen();
+      if (listener.getProtocol().equals("ONetworkProtocolBinary")) {
+        listenUrl = listener.getListen();
         break;
       }
     }
