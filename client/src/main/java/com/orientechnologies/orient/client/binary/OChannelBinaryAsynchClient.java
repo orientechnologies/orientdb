@@ -100,6 +100,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
                 this.maxChunkSize,
                 this::updateMetricTransmittedBytes,
                 this::updateMetricFlushes);
+        initDebug();
 
         srvProtocolVersion = inChannel.readShort();
 

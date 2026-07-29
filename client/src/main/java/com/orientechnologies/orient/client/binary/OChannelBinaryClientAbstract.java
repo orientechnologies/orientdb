@@ -117,7 +117,7 @@ public abstract class OChannelBinaryClientAbstract extends OChannelBinary {
                 this.maxChunkSize,
                 this::updateMetricTransmittedBytes,
                 this::updateMetricFlushes);
-
+        initDebug();
         srvProtocolVersion = getChannelDataInput().readShort();
       } catch (IOException e) {
         throw OException.wrapException(
