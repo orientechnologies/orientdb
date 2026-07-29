@@ -2,6 +2,7 @@ package com.orientechnologies.orient.client.remote.message;
 
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInputBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutputBinary;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -28,5 +29,6 @@ public class MockChannel extends OChannelBinary {
   @Override
   public void close() {
     this.in = new DataInputStream(new ByteArrayInputStream(byteOut.toByteArray()));
+    inChannel = new OChannelDataInputBinary(in, this.maxChunkSize, this::updateMetricReceivedBytes);
   }
 }
