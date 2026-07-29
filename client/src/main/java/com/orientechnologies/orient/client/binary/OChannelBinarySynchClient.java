@@ -38,19 +38,19 @@ public class OChannelBinarySynchClient extends OChannelBinaryClientAbstract {
 
   public void beginRequest(final byte iCommand, final int sessionId, final byte[] token)
       throws IOException {
-    writeByte(iCommand);
-    writeInt(sessionId);
-    writeBytes(token);
+    getChannelDataOutput().writeByte(iCommand);
+    getChannelDataOutput().writeInt(sessionId);
+    getChannelDataOutput().writeBytes(token);
   }
 
   public byte[] beginResponse(final boolean token) throws IOException {
-    currentStatus = readByte();
-    currentSessionId = readInt();
+    currentStatus = getChannelDataInput().readByte();
+    currentSessionId = getChannelDataInput().readInt();
 
     byte[] tokenBytes;
-    if (token) tokenBytes = this.readBytes();
+    if (token) tokenBytes = this.getChannelDataInput().readBytes();
     else tokenBytes = null;
-    int opCode = readByte();
+    int opCode = getChannelDataInput().readByte();
     handleStatus(currentStatus, currentSessionId);
     return tokenBytes;
   }

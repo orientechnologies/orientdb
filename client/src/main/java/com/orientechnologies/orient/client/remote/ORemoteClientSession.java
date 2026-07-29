@@ -141,7 +141,7 @@ public class ORemoteClientSession {
                 nodeSession.getServerURL(), connectionManager, clientConfiguration);
         OCloseRequest request = new OCloseRequest();
         network.beginRequest(request.getCommand(), this);
-        request.write(network, this);
+        request.write(network.getChannelDataOutput(), this);
         network.endRequest();
         connectionManager.release(network);
       } catch (OIOException ex) {

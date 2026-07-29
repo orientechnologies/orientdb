@@ -31,7 +31,7 @@ public class OQueryResponseTest {
 
     MockChannel channel = new MockChannel();
     response.write(
-        channel,
+        channel.getChannelDataOutput(),
         OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION,
         ORecordSerializerNetworkFactory.INSTANCE.current());
 
@@ -39,7 +39,7 @@ public class OQueryResponseTest {
 
     OQueryResponse newResponse = new OQueryResponse();
 
-    newResponse.read(channel, null);
+    newResponse.read(channel.getChannelDataInput(), null);
     Iterator<OResult> responseRs = newResponse.getResult().iterator();
 
     for (int i = 0; i < 10; i++) {

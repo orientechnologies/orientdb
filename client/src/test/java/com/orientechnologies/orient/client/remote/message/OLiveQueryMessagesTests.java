@@ -22,10 +22,10 @@ public class OLiveQueryMessagesTests {
     params.put("par", "value");
     OSubscribeLiveQueryRequest request = new OSubscribeLiveQueryRequest("select from Some", params);
     MockChannel channel = new MockChannel();
-    request.write(channel, null);
+    request.write(channel.getChannelDataOutput(), null);
     channel.close();
     OSubscribeLiveQueryRequest requestRead = new OSubscribeLiveQueryRequest();
-    requestRead.read(channel, -1, new ORecordSerializerNetworkV37());
+    requestRead.read(channel.getChannelDataInput(), -1, new ORecordSerializerNetworkV37());
     assertEquals(requestRead.getQuery(), "select from Some");
     assertEquals(requestRead.getParams(), params);
   }
@@ -34,10 +34,10 @@ public class OLiveQueryMessagesTests {
   public void testSubscribeResponseWriteRead() throws IOException {
     OSubscribeLiveQueryResponse response = new OSubscribeLiveQueryResponse(20);
     MockChannel channel = new MockChannel();
-    response.write(channel, 0, null);
+    response.write(channel.getChannelDataOutput(), 0, null);
     channel.close();
     OSubscribeLiveQueryResponse responseRead = new OSubscribeLiveQueryResponse();
-    responseRead.read(channel, null);
+    responseRead.read(channel.getChannelDataInput(), null);
     assertEquals(responseRead.getMonitorId(), 20);
   }
 
@@ -47,10 +47,10 @@ public class OLiveQueryMessagesTests {
     OLiveQueryPushRequest pushRequest =
         new OLiveQueryPushRequest(10, 20, OErrorCode.GENERIC_ERROR, "the message");
     MockChannel channel = new MockChannel();
-    pushRequest.write(channel);
+    pushRequest.write(channel.getChannelDataOutput());
     channel.close();
     OLiveQueryPushRequest pushRequestRead = new OLiveQueryPushRequest();
-    pushRequestRead.read(channel);
+    pushRequestRead.read(channel.getChannelDataInput());
     assertEquals(pushRequestRead.getMonitorId(), 10);
     assertEquals(pushRequestRead.getStatus(), OLiveQueryPushRequest.ERROR);
     assertEquals(pushRequestRead.getErrorIdentifier(), 20);
@@ -74,10 +74,10 @@ public class OLiveQueryMessagesTests {
     OLiveQueryPushRequest pushRequest =
         new OLiveQueryPushRequest(10, OLiveQueryPushRequest.END, events);
     MockChannel channel = new MockChannel();
-    pushRequest.write(channel);
+    pushRequest.write(channel.getChannelDataOutput());
     channel.close();
     OLiveQueryPushRequest pushRequestRead = new OLiveQueryPushRequest();
-    pushRequestRead.read(channel);
+    pushRequestRead.read(channel.getChannelDataInput());
 
     assertEquals(pushRequestRead.getMonitorId(), 10);
     assertEquals(pushRequestRead.getStatus(), OLiveQueryPushRequest.END);

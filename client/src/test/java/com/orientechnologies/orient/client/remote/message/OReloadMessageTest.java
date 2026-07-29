@@ -41,10 +41,11 @@ public class OReloadMessageTest {
         ((ODatabaseDocumentInternal) session).getStorage().getConfiguration();
     OReloadResponse37 responseWrite = new OReloadResponse37(configuration);
     MockChannel channel = new MockChannel();
-    responseWrite.write(channel, OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION, null);
+    responseWrite.write(
+        channel.getChannelDataOutput(), OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION, null);
     channel.close();
     OReloadResponse37 responseRead = new OReloadResponse37();
-    responseRead.read(channel, null);
+    responseRead.read(channel.getChannelDataInput(), null);
     OStorageConfigurationPayload payload = responseRead.getPayload();
     assertEquals(configuration.getProperties().size(), payload.getProperties().size());
     Map<String, String> expectedProps = new HashMap<>();

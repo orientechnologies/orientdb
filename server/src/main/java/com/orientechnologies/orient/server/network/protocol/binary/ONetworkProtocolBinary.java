@@ -136,9 +136,9 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     initVariables(iServer, channel);
 
     // SEND PROTOCOL VERSION
-    channel.writeShort((short) getVersion());
+    channel.getChannelDataOutput().writeShort((short) getVersion());
 
-    channel.flush();
+    channel.getChannelDataOutput().flush();
 
     OServerPluginHelper.invokeHandlerCallbackOnSocketAccepted(server, this);
 
@@ -189,7 +189,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     okSent = false;
     try {
       channel.setWaitRequestTimeout();
-      requestType = channel.readByte();
+      requestType = channel.getChannelDataInput().readByte();
       channel.setReadRequestTimeout();
 
       if (server.rejectRequests()) {
@@ -199,7 +199,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         if (requestType != OChannelBinaryProtocol.REQUEST_HANDSHAKE
             && isDistributed(requestType)
             && requestType != OChannelBinaryProtocol.REQUEST_OK_PUSH) {
-          clientTxId = channel.readInt();
+          clientTxId = channel.getChannelDataInput().readInt();
           channel.clearInput();
           sendError(null, clientTxId, new OOfflineNodeException("Node Shutting down"));
         }
@@ -215,7 +215,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         return;
       }
 
-      clientTxId = channel.readInt();
+      clientTxId = channel.getChannelDataInput().readInt();
       // GET THE CONNECTION IF EXIST
       OClientConnection connection =
           server.getClientConnectionManager().getConnection(clientTxId, this);
@@ -230,11 +230,11 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
   }
 
   private void handleHandshake() throws IOException {
-    short protocolVersion = channel.readShort();
-    String driverName = channel.readString();
-    String driverVersion = channel.readString();
-    byte encoding = channel.readByte();
-    byte errorEncoding = channel.readByte();
+    short protocolVersion = channel.getChannelDataInput().readShort();
+    String driverName = channel.getChannelDataInput().readString();
+    String driverVersion = channel.getChannelDataInput().readString();
+    byte encoding = channel.getChannelDataInput().readByte();
+    byte errorEncoding = channel.getChannelDataInput().readByte();
     OBinaryProtocolHelper.checkProtocolVersion(this, protocolVersion);
     this.handshakeInfo =
         new HandshakeInfo(protocolVersion, driverName, driverVersion, encoding, errorEncoding);
@@ -272,7 +272,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         try {
           byte[] tokenBytes = null;
           if (shouldReadToken(connection, requestType)) {
-            tokenBytes = channel.readBytes();
+            tokenBytes = channel.getChannelDataInput().readBytes();
           }
           if (isHandshaking(requestType)) {
             connection = onBeforeHandshakeRequest(connection, tokenBytes);
@@ -306,7 +306,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
             protocolVersion = connection.getData().getProtocolVersion();
             serializer = connection.getData().getSerializer();
           }
-          request.read(channel, protocolVersion, serializer);
+          request.read(channel.getChannelDataInput(), protocolVersion, serializer);
         } catch (IOException e) {
           if (connection != null) {
             connection.endOperation();
@@ -376,7 +376,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
               try {
                 sendOk(connection, clientTxId);
                 response.write(
-                    channel,
+                    channel.getChannelDataOutput(),
                     connection.getData().getProtocolVersion(),
                     connection.getData().getSerializer());
               } finally {
@@ -469,7 +469,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     try {
 
       timer = Orient.instance().getProfiler().startChrono();
-      byte[] tokenBytes = channel.readBytes();
+      byte[] tokenBytes = channel.getChannelDataInput().readBytes();
       connection = onBeforeOperationalRequest(connection, tokenBytes);
       logger.debug("Request id: %d type: %s", clientTxId, requestType);
 
@@ -660,8 +660,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     channel.acquireWriteLock();
     try {
 
-      channel.writeByte(OChannelBinaryProtocol.RESPONSE_STATUS_ERROR);
-      channel.writeInt(iClientTxId);
+      channel.getChannelDataOutput().writeByte(OChannelBinaryProtocol.RESPONSE_STATUS_ERROR);
+      channel.getChannelDataOutput().writeInt(iClientTxId);
       if (handshakeInfo != null) {
         byte[] renewedToken = null;
         if (connection != null && connection.getToken() != null) {
@@ -670,8 +670,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
             connection.setTokenBytes(renewedToken);
           }
         }
-        channel.writeBytes(renewedToken);
-        channel.writeByte((byte) requestType);
+        channel.getChannelDataOutput().writeBytes(renewedToken);
+        channel.getChannelDataOutput().writeByte((byte) requestType);
       } else {
         if (tokenConnection
                 && requestType != OChannelBinaryProtocol.REQUEST_CONNECT
@@ -687,8 +687,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
 
           if (connection != null && connection.getToken() != null) {
             byte[] renewedToken = server.getTokenHandler().renewIfNeeded(connection.getToken());
-            channel.writeBytes(renewedToken);
-          } else channel.writeBytes(new byte[] {});
+            channel.getChannelDataOutput().writeBytes(renewedToken);
+          } else channel.getChannelDataOutput().writeBytes(new byte[] {});
         }
       }
       final Throwable current;
@@ -742,8 +742,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
         protocolVersion = connection.getData().getProtocolVersion();
         serializationImpl = connection.getData().getSerializer();
       }
-      error.write(channel, protocolVersion, serializationImpl);
-      channel.flush();
+      error.write(channel.getChannelDataOutput(), protocolVersion, serializationImpl);
+      channel.getChannelDataOutput().flush();
 
       if (logClientFullStackTrace)
         logger.log(
@@ -776,7 +776,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
   }
 
   protected void endResponse() throws IOException {
-    channel.flush();
+    channel.getChannelDataOutput().flush();
     channel.releaseWriteLock();
   }
 
@@ -785,8 +785,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
   }
 
   protected void sendOk(OClientConnection connection, final int iClientTxId) throws IOException {
-    channel.writeByte(OChannelBinaryProtocol.RESPONSE_STATUS_OK);
-    channel.writeInt(iClientTxId);
+    channel.getChannelDataOutput().writeByte(OChannelBinaryProtocol.RESPONSE_STATUS_OK);
+    channel.getChannelDataOutput().writeInt(iClientTxId);
     okSent = true;
     if (handshakeInfo != null) {
       byte[] renewedToken = null;
@@ -796,8 +796,8 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
           connection.setTokenBytes(renewedToken);
         }
       }
-      channel.writeBytes(renewedToken);
-      channel.writeByte((byte) requestType);
+      channel.getChannelDataOutput().writeBytes(renewedToken);
+      channel.getChannelDataOutput().writeByte((byte) requestType);
     } else {
       if (connection != null
           && Boolean.TRUE.equals(connection.getTokenBased())
@@ -807,14 +807,14 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
           && requestType != OChannelBinaryProtocol.REQUEST_DB_OPEN) {
         // TODO: Check if the token is expiring and if it is send a new token
         byte[] renewedToken = server.getTokenHandler().renewIfNeeded(connection.getToken());
-        channel.writeBytes(renewedToken);
+        channel.getChannelDataOutput().writeBytes(renewedToken);
       }
     }
   }
 
   protected void handleConnectionError(OClientConnection connection, final Throwable e) {
     try {
-      channel.flush();
+      channel.getChannelDataOutput().flush();
     } catch (IOException e1) {
       logger.debug("Error during channel flush", e1);
     }
@@ -873,10 +873,10 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
     expectedPushResponse = request.createResponse();
     channel.acquireWriteLock();
     try {
-      channel.writeByte(OChannelBinaryProtocol.PUSH_DATA);
-      channel.writeByte(request.getPushCommand());
-      request.write(channel);
-      channel.flush();
+      channel.getChannelDataOutput().writeByte(OChannelBinaryProtocol.PUSH_DATA);
+      channel.getChannelDataOutput().writeByte(request.getPushCommand());
+      request.write(channel.getChannelDataOutput());
+      channel.getChannelDataOutput().flush();
       if (expectedPushResponse != null) {
         try {
           return pushResponse.take();
@@ -891,7 +891,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
   }
 
   private void handlePushResponse() throws IOException {
-    expectedPushResponse.read(channel);
+    expectedPushResponse.read(channel.getChannelDataInput());
     this.pushResponse.offer(expectedPushResponse);
   }
 }

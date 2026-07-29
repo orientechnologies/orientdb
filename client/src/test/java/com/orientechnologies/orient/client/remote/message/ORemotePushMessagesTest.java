@@ -30,11 +30,11 @@ public class ORemotePushMessagesTest {
     hosts.add("one");
     hosts.add("two");
     OPushDistributedConfigurationRequest request = new OPushDistributedConfigurationRequest(hosts);
-    request.write(channel);
+    request.write(channel.getChannelDataOutput());
     channel.close();
 
     OPushDistributedConfigurationRequest readRequest = new OPushDistributedConfigurationRequest();
-    readRequest.read(channel);
+    readRequest.read(channel.getChannelDataInput());
     assertEquals(readRequest.getHosts().size(), 2);
     assertEquals(readRequest.getHosts().get(0), "one");
     assertEquals(readRequest.getHosts().get(1), "two");
@@ -53,11 +53,11 @@ public class ORemotePushMessagesTest {
     MockChannel channel = new MockChannel();
 
     OPushSchemaRequest request = new OPushSchemaRequest(schema);
-    request.write(channel);
+    request.write(channel.getChannelDataOutput());
     channel.close();
 
     OPushSchemaRequest readRequest = new OPushSchemaRequest();
-    readRequest.read(channel);
+    readRequest.read(channel.getChannelDataInput());
     assertNotNull(readRequest.getSchema());
   }
 
@@ -77,11 +77,11 @@ public class ORemotePushMessagesTest {
     MockChannel channel = new MockChannel();
 
     OPushIndexManagerRequest request = new OPushIndexManagerRequest(schema);
-    request.write(channel);
+    request.write(channel.getChannelDataOutput());
     channel.close();
 
     OPushIndexManagerRequest readRequest = new OPushIndexManagerRequest();
-    readRequest.read(channel);
+    readRequest.read(channel.getChannelDataInput());
     assertNotNull(readRequest.getIndexManager());
   }
 
@@ -97,11 +97,11 @@ public class ORemotePushMessagesTest {
     MockChannel channel = new MockChannel();
 
     OPushStorageConfigurationRequest request = new OPushStorageConfigurationRequest(configuration);
-    request.write(channel);
+    request.write(channel.getChannelDataOutput());
     channel.close();
 
     OPushStorageConfigurationRequest readRequest = new OPushStorageConfigurationRequest();
-    readRequest.read(channel);
+    readRequest.read(channel.getChannelDataInput());
     OStorageConfigurationPayload readPayload = readRequest.getPayload();
     OStorageConfigurationPayload payload = request.getPayload();
     assertEquals(readPayload.getName(), payload.getName());
@@ -152,11 +152,11 @@ public class ORemotePushMessagesTest {
 
     OSubscribeRequest request =
         new OSubscribeRequest(new OSubscribeLiveQueryRequest("10", new HashMap<>()));
-    request.write(channel, null);
+    request.write(channel.getChannelDataOutput(), null);
     channel.close();
 
     OSubscribeRequest requestRead = new OSubscribeRequest();
-    requestRead.read(channel, 1, ORecordSerializerNetworkV37.INSTANCE);
+    requestRead.read(channel.getChannelDataInput(), 1, ORecordSerializerNetworkV37.INSTANCE);
 
     assertEquals(request.getPushMessage(), requestRead.getPushMessage());
     assertTrue(requestRead.getPushRequest() instanceof OSubscribeLiveQueryRequest);
@@ -167,11 +167,11 @@ public class ORemotePushMessagesTest {
     MockChannel channel = new MockChannel();
 
     OSubscribeResponse response = new OSubscribeResponse(new OSubscribeLiveQueryResponse(10));
-    response.write(channel, 1, ORecordSerializerNetworkV37.INSTANCE);
+    response.write(channel.getChannelDataOutput(), 1, ORecordSerializerNetworkV37.INSTANCE);
     channel.close();
 
     OSubscribeResponse responseRead = new OSubscribeResponse(new OSubscribeLiveQueryResponse());
-    responseRead.read(channel, null);
+    responseRead.read(channel.getChannelDataInput(), null);
 
     assertTrue(responseRead.getResponse() instanceof OSubscribeLiveQueryResponse);
     assertEquals(((OSubscribeLiveQueryResponse) responseRead.getResponse()).getMonitorId(), 10);
@@ -181,10 +181,10 @@ public class ORemotePushMessagesTest {
   public void testUnsubscribeRequest() throws IOException {
     MockChannel channel = new MockChannel();
     OUnsubscribeRequest request = new OUnsubscribeRequest(new OUnsubscribeLiveQueryRequest(10));
-    request.write(channel, null);
+    request.write(channel.getChannelDataOutput(), null);
     channel.close();
     OUnsubscribeRequest readRequest = new OUnsubscribeRequest();
-    readRequest.read(channel, 0, null);
+    readRequest.read(channel.getChannelDataInput(), 0, null);
     assertEquals(
         ((OUnsubscribeLiveQueryRequest) readRequest.getUnsubscribeRequest()).getMonitorId(), 10);
   }

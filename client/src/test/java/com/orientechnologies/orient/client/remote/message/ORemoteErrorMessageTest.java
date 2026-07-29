@@ -19,10 +19,10 @@ public class ORemoteErrorMessageTest {
     messages.put("one", "two");
     OError37Response response =
         new OError37Response(OErrorCode.GENERIC_ERROR, 10, messages, "some".getBytes());
-    response.write(channel, 0, null);
+    response.write(channel.getChannelDataOutput(), 0, null);
     channel.close();
     OError37Response readResponse = new OError37Response();
-    readResponse.read(channel, null);
+    readResponse.read(channel.getChannelDataInput(), null);
 
     assertEquals(readResponse.getCode(), OErrorCode.GENERIC_ERROR);
     assertEquals(readResponse.getErrorIdentifier(), 10);

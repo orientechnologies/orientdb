@@ -34,6 +34,8 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.enterprise.channel.OSocketFactory;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInputBinary;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutputBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolException;
 import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
 import java.io.BufferedInputStream;
@@ -90,16 +92,24 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
 
         in = new DataInputStream(inStream);
         out = new DataOutputStream(outStream);
+        inChannel =
+            new OChannelDataInputBinary(in, this.maxChunkSize, this::updateMetricReceivedBytes);
+        outChannel =
+            new OChannelDataOutputBinary(
+                out,
+                this.maxChunkSize,
+                this::updateMetricTransmittedBytes,
+                this::updateMetricFlushes);
 
-        srvProtocolVersion = readShort();
+        srvProtocolVersion = inChannel.readShort();
 
-        writeByte(OChannelBinaryProtocol.REQUEST_HANDSHAKE);
-        writeShort((short) iProtocolVersion);
-        writeString("Java Client");
-        writeString(OConstants.getVersion());
-        writeByte(OChannelBinaryProtocol.ENCODING_DEFAULT);
-        writeByte(OChannelBinaryProtocol.ERROR_MESSAGE_JAVA);
-        flush();
+        outChannel.writeByte(OChannelBinaryProtocol.REQUEST_HANDSHAKE);
+        outChannel.writeShort((short) iProtocolVersion);
+        outChannel.writeString("Java Client");
+        outChannel.writeString(OConstants.getVersion());
+        outChannel.writeByte(OChannelBinaryProtocol.ENCODING_DEFAULT);
+        outChannel.writeByte(OChannelBinaryProtocol.ERROR_MESSAGE_JAVA);
+        outChannel.flush();
       } catch (IOException e) {
         throw new ONetworkProtocolException(
             "Cannot read protocol version from remote server "
@@ -179,8 +189,8 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
       int currentSessionId;
       try {
         setWaitResponseTimeout();
-        currentStatus = readByte();
-        currentSessionId = readInt();
+        currentStatus = getChannelDataInput().readByte();
+        currentSessionId = getChannelDataInput().readInt();
 
         if (debug)
           logger.debug(
@@ -196,10 +206,10 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
       if (debug)
         logger.debug("%s - Session %d handle response", socket.getLocalAddress(), iRequesterId);
       byte[] tokenBytes;
-      if (token) tokenBytes = this.readBytes();
+      if (token) tokenBytes = getChannelDataInput().readBytes();
       else tokenBytes = null;
 
-      byte currentMessage = readByte();
+      byte currentMessage = getChannelDataInput().readByte();
       handleStatus(currentStatus, currentSessionId);
       return tokenBytes;
     } catch (OLockException e) {
@@ -221,7 +231,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
   }
 
   public void endRequest() throws IOException {
-    flush();
+    getChannelDataOutput().flush();
     releaseWriteLock();
   }
 
@@ -288,7 +298,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
     } else if (iResult == OChannelBinaryProtocol.RESPONSE_STATUS_ERROR) {
 
       OError37Response response = new OError37Response();
-      response.read(this, null);
+      response.read(this.getChannelDataInput(), null);
       byte[] serializedException = response.getVerbose();
       Exception previous = null;
       if (serializedException != null && serializedException.length > 0) {
@@ -384,9 +394,9 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
     if (nodeSession == null)
       throw new OIOException("Invalid session for URL '" + getServerURL() + "'");
 
-    writeByte(iCommand);
-    writeInt(nodeSession.getSessionId());
-    writeBytes(nodeSession.getToken());
+    getChannelDataOutput().writeByte(iCommand);
+    getChannelDataOutput().writeInt(nodeSession.getSessionId());
+    getChannelDataOutput().writeBytes(nodeSession.getToken());
   }
 
   public int getSocketTimeout() {

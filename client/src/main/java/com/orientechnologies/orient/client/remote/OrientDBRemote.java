@@ -660,14 +660,14 @@ public class OrientDBRemote implements OrientDBInternal {
               throws IOException {
             try {
               network.beginRequest(request.getCommand(), session);
-              request.write(network, session);
+              request.write(network.getChannelDataOutput(), session);
             } finally {
               network.endRequest();
             }
             T response = request.createResponse();
             try {
               ORemoteClient.beginResponse(network, session);
-              response.read(network, session);
+              response.read(network.getChannelDataInput(), session);
             } finally {
               network.endResponse();
             }
@@ -739,14 +739,17 @@ public class OrientDBRemote implements OrientDBInternal {
                   session.getOrCreateServerSession(network.getServerURL());
               try {
                 network.beginRequest(request.getCommand(), session);
-                request.write(network, session);
+                request.write(network.getChannelDataOutput(), session);
               } finally {
                 network.endRequest();
               }
               OConnectResponse response = request.createResponse();
               try {
                 network.beginResponse(nodeSession.getSessionId(), true);
-                response.read(network, session);
+                response.read(network.getChannelDataInput(), session);
+                session
+                    .getServerSession(network.getServerURL())
+                    .setSession(response.getSessionId(), response.getSessionToken());
               } finally {
                 network.endResponse();
               }

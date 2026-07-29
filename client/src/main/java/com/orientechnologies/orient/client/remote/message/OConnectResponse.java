@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.client.remote.message;
 
-import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.ORemoteClientSession;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
@@ -32,8 +31,13 @@ public class OConnectResponse implements OBinaryResponse {
   public void read(OChannelDataInput network, ORemoteClientSession session) throws IOException {
     sessionId = network.readInt();
     sessionToken = network.readBytes();
-    session
-        .getServerSession(((OChannelBinaryAsynchClient) network).getServerURL())
-        .setSession(sessionId, sessionToken);
+  }
+
+  public int getSessionId() {
+    return sessionId;
+  }
+
+  public byte[] getSessionToken() {
+    return sessionToken;
   }
 }

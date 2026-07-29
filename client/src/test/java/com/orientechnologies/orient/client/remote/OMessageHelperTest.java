@@ -50,13 +50,14 @@ public class OMessageHelperTest {
       ORecordInternal.setVersion(doc, 1);
 
       OMessageHelper.writeIdentifiable(
-          channel, doc, ORecordSerializerNetworkFactory.INSTANCE.current());
+          channel.getChannelDataOutput(), doc, ORecordSerializerNetworkFactory.INSTANCE.current());
       channel.close();
 
       ODocument newDoc =
           (ODocument)
               OMessageHelper.readIdentifiable(
-                  channel, ORecordSerializerNetworkFactory.INSTANCE.current());
+                  channel.getChannelDataInput(),
+                  ORecordSerializerNetworkFactory.INSTANCE.current());
 
       assertThat(newDoc.getClassName()).isEqualTo("Test");
       assertThat((ORidBag) newDoc.field("bag")).hasSize(1);

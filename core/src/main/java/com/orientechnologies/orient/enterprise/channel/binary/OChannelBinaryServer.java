@@ -44,6 +44,11 @@ public class OChannelBinaryServer extends OChannelBinary {
 
     out = new DataOutputStream(outStream);
     in = new DataInputStream(inStream);
+    inChannel = new OChannelDataInputBinary(in, this.maxChunkSize, this::updateMetricReceivedBytes);
+    outChannel =
+        new OChannelDataOutputBinary(
+            out, this.maxChunkSize, this::updateMetricTransmittedBytes, this::updateMetricFlushes);
+
     connected();
   }
 }

@@ -29,6 +29,8 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.enterprise.channel.OSocketFactory;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInputBinary;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutputBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolException;
 import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
 import java.io.BufferedInputStream;
@@ -107,8 +109,16 @@ public abstract class OChannelBinaryClientAbstract extends OChannelBinary {
 
         in = new DataInputStream(inStream);
         out = new DataOutputStream(outStream);
+        inChannel =
+            new OChannelDataInputBinary(in, this.maxChunkSize, this::updateMetricReceivedBytes);
+        outChannel =
+            new OChannelDataOutputBinary(
+                out,
+                this.maxChunkSize,
+                this::updateMetricTransmittedBytes,
+                this::updateMetricFlushes);
 
-        srvProtocolVersion = readShort();
+        srvProtocolVersion = getChannelDataInput().readShort();
       } catch (IOException e) {
         throw OException.wrapException(
             new ONetworkProtocolException(
@@ -222,14 +232,14 @@ public abstract class OChannelBinaryClientAbstract extends OChannelBinary {
       final List<OPair<String, String>> exceptions = new ArrayList<OPair<String, String>>();
 
       // EXCEPTION
-      while (readByte() == 1) {
-        final String excClassName = readString();
-        final String excMessage = readString();
+      while (getChannelDataInput().readByte() == 1) {
+        final String excClassName = getChannelDataInput().readString();
+        final String excMessage = getChannelDataInput().readString();
         exceptions.add(new OPair<String, String>(excClassName, excMessage));
       }
 
       byte[] serializedException = null;
-      if (srvProtocolVersion >= 19) serializedException = readBytes();
+      if (srvProtocolVersion >= 19) serializedException = getChannelDataInput().readBytes();
 
       Exception previous = null;
 

@@ -245,8 +245,8 @@ public abstract class OChannel {
     metricReceivedBytes += iDelta;
   }
 
-  protected void updateMetricFlushes() {
-    metricGlobalFlushes.incrementAndGet();
-    metricFlushes++;
+  protected void updateMetricFlushes(int value) {
+    metricGlobalFlushes.addAndGet(value);
+    metricFlushes += value;
   }
 }

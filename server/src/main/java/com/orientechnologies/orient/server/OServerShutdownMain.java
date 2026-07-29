@@ -87,11 +87,11 @@ public class OServerShutdownMain {
               + Arrays.toString(networkPort));
 
     OShutdownRequest request = new OShutdownRequest(rootUser, rootPassword);
-    channel.writeByte(request.getCommand());
-    channel.writeInt(0);
-    channel.writeBytes(null);
-    request.write(channel, null);
-    channel.flush();
+    channel.getChannelDataOutput().writeByte(request.getCommand());
+    channel.getChannelDataOutput().writeInt(0);
+    channel.getChannelDataOutput().writeBytes(null);
+    request.write(channel.getChannelDataOutput(), null);
+    channel.getChannelDataOutput().flush();
 
     channel.beginResponse(0, true);
   }

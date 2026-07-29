@@ -21,13 +21,14 @@ public class OBatchOperationsTest {
     MockChannel channel = new MockChannel();
     OBatchOperationsRequest request = new OBatchOperationsRequest(-1, operations);
 
-    request.write(channel, null);
+    request.write(channel.getChannelDataOutput(), null);
 
     channel.close();
 
     request = new OBatchOperationsRequest();
 
-    request.read(channel, 0, ORecordSerializerNetworkFactory.INSTANCE.current());
+    request.read(
+        channel.getChannelDataInput(), 0, ORecordSerializerNetworkFactory.INSTANCE.current());
 
     assertEquals(request.getOperations().size(), 1);
     assertEquals(request.getTxId(), -1);

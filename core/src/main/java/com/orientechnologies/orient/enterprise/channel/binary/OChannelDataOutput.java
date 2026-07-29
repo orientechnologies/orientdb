@@ -2,7 +2,6 @@ package com.orientechnologies.orient.enterprise.channel.binary;
 
 import com.orientechnologies.orient.core.id.ORID;
 import java.io.IOException;
-import java.io.OutputStream;
 
 /** Created by luigidellaquila on 12/12/16. */
 public interface OChannelDataOutput {
@@ -27,5 +26,5 @@ public interface OChannelDataOutput {
 
   void writeVersion(final int version) throws IOException;
 
-  OutputStream getDataOutput();
+  void flush() throws IOException;
 }

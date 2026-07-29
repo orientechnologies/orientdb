@@ -113,8 +113,8 @@ public class ORemoteServerChannel {
           networkOperation(
               request.getCommand(),
               () -> {
-                request.write(channel, null);
-                channel.flush();
+                request.write(channel.getChannelDataOutput(), null);
+                channel.getChannelDataOutput().flush();
                 return null;
               },
               "Cannot send distributed request " + request.getClass(),
@@ -168,7 +168,7 @@ public class ORemoteServerChannel {
         OChannelBinaryProtocol.DISTRIBUTED_MESSAGE,
         () -> {
           message.serialize(channel.getDataOutput());
-          channel.flush();
+          channel.getDataOutput().flush();
           return null;
         },
         "Cannot send distributed request " + message.getClass());
@@ -179,7 +179,7 @@ public class ORemoteServerChannel {
         OChannelBinaryProtocol.DISTRIBUTED_REQUEST,
         () -> {
           request.toStream(channel.getDataOutput());
-          channel.flush();
+          channel.getDataOutput().flush();
           return null;
         },
         "Cannot send distributed request " + request.getClass());
@@ -189,7 +189,7 @@ public class ORemoteServerChannel {
     ORemoteClientOperation<Object> remoteOperation =
         () -> {
           response.toStream(channel.getDataOutput());
-          channel.flush();
+          channel.getDataOutput().flush();
           return null;
         };
     executeNetworkOperation(
@@ -217,12 +217,12 @@ public class ORemoteServerChannel {
         () -> {
           ODistributedConnectRequest request =
               new ODistributedConnectRequest(protocolVersion, userName, userPassword);
-          request.write(channel, null);
-          channel.flush();
+          request.write(channel.getChannelDataOutput(), null);
+          channel.getChannelDataOutput().flush();
 
           channel.beginResponse(true);
           ODistributedConnectResponse response = request.createResponse();
-          response.read(channel, null);
+          response.read(channel.getChannelDataInput(), null);
           sessionId = response.getSessionId();
           if (response.getToken() != null) {
             sessionToken = response.getToken();

@@ -305,7 +305,7 @@ public class ORemoteClient implements OStorageInfo {
           try {
             try {
               network.beginRequest(request.getCommand(), session);
-              request.write(network, session);
+              request.write(network.getChannelDataOutput(), session);
             } finally {
               network.endRequest();
             }
@@ -321,7 +321,7 @@ public class ORemoteClient implements OStorageInfo {
           try {
             if (timeout > 0) network.setSocketTimeout(timeout);
             beginResponse(network, session);
-            response.read(network, session);
+            response.read(network.getChannelDataInput(), session);
           } finally {
             endResponse(network);
             if (timeout > 0) network.setSocketTimeout(prev);
@@ -1203,7 +1203,7 @@ public class ORemoteClient implements OStorageInfo {
   public void endRequest(final OChannelBinaryAsynchClient iNetwork) throws IOException {
     if (iNetwork == null) return;
 
-    iNetwork.flush();
+    iNetwork.getChannelDataOutput().flush();
     iNetwork.releaseWriteLock();
   }
 
@@ -1253,10 +1253,10 @@ public class ORemoteClient implements OStorageInfo {
             OReopenRequest request = new OReopenRequest();
 
             try {
-              network.writeByte(request.getCommand());
-              network.writeInt(nodeSession.getSessionId());
-              network.writeBytes(nodeSession.getToken());
-              request.write(network, session);
+              network.getChannelDataOutput().writeByte(request.getCommand());
+              network.getChannelDataOutput().writeInt(nodeSession.getSessionId());
+              network.getChannelDataOutput().writeBytes(nodeSession.getToken());
+              request.write(network.getChannelDataOutput(), session);
             } finally {
               endRequest(network);
             }
@@ -1264,7 +1264,7 @@ public class ORemoteClient implements OStorageInfo {
             OReopenResponse response = request.createResponse();
             try {
               byte[] newToken = network.beginResponse(nodeSession.getSessionId(), true);
-              response.read(network, session);
+              response.read(network.getChannelDataInput(), session);
               if (newToken != null && newToken.length > 0) {
                 nodeSession.setSession(response.getSessionId(), newToken);
               } else {
@@ -1348,10 +1348,10 @@ public class ORemoteClient implements OStorageInfo {
     OOpen37Request request =
         new OOpen37Request(name, session.connectionUserName, session.connectionUserPassword);
     try {
-      network.writeByte(request.getCommand());
-      network.writeInt(nodeSession.getSessionId());
-      network.writeBytes(null);
-      request.write(network, session);
+      network.getChannelDataOutput().writeByte(request.getCommand());
+      network.getChannelDataOutput().writeInt(nodeSession.getSessionId());
+      network.getChannelDataOutput().writeBytes(null);
+      request.write(network.getChannelDataOutput(), session);
     } finally {
       endRequest(network);
     }
@@ -1359,7 +1359,7 @@ public class ORemoteClient implements OStorageInfo {
     OOpen37Response response = request.createResponse();
     try {
       network.beginResponse(nodeSession.getSessionId(), true);
-      response.read(network, session);
+      response.read(network.getChannelDataInput(), session);
     } finally {
       endResponse(network);
       connectionManager.release(network);

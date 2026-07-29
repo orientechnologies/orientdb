@@ -28,12 +28,13 @@ public class OQueryRequestTest {
             123);
 
     MockChannel channel = new MockChannel();
-    request.write(channel, null);
+    request.write(channel.getChannelDataOutput(), null);
 
     channel.close();
 
     OQueryRequest other = new OQueryRequest();
-    other.read(channel, -1, ORecordSerializerNetworkFactory.INSTANCE.current());
+    other.read(
+        channel.getChannelDataInput(), -1, ORecordSerializerNetworkFactory.INSTANCE.current());
 
     Assert.assertEquals(request.getCommand(), other.getCommand());
 
@@ -57,12 +58,13 @@ public class OQueryRequestTest {
             123);
 
     MockChannel channel = new MockChannel();
-    request.write(channel, null);
+    request.write(channel.getChannelDataOutput(), null);
 
     channel.close();
 
     OQueryRequest other = new OQueryRequest();
-    other.read(channel, -1, ORecordSerializerNetworkFactory.INSTANCE.current());
+    other.read(
+        channel.getChannelDataInput(), -1, ORecordSerializerNetworkFactory.INSTANCE.current());
 
     Assert.assertEquals(request.getCommand(), other.getCommand());
     Assert.assertTrue(other.isNamedParams());
@@ -82,12 +84,13 @@ public class OQueryRequestTest {
             123);
 
     MockChannel channel = new MockChannel();
-    request.write(channel, null);
+    request.write(channel.getChannelDataOutput(), null);
 
     channel.close();
 
     OQueryRequest other = new OQueryRequest();
-    other.read(channel, -1, ORecordSerializerNetworkFactory.INSTANCE.current());
+    other.read(
+        channel.getChannelDataInput(), -1, ORecordSerializerNetworkFactory.INSTANCE.current());
 
     Assert.assertEquals(request.getCommand(), other.getCommand());
     Assert.assertTrue(other.isNamedParams());

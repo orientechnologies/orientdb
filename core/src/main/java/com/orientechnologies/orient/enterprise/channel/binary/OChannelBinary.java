@@ -41,14 +41,16 @@ import java.util.Arrays;
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-public abstract class OChannelBinary extends OChannel
-    implements OChannelDataInput, OChannelDataOutput {
+public abstract class OChannelBinary extends OChannel {
   private static final OLogger logger = OLogManager.instance().logger(OChannelBinary.class);
   private static final int MAX_LENGTH_DEBUG = 150;
   protected final boolean debug;
-  private final int maxChunkSize;
-  public DataInputStream in;
-  public DataOutputStream out;
+  protected final int maxChunkSize;
+  protected DataInputStream in;
+  protected DataOutputStream out;
+  protected OChannelDataInput inChannel;
+  protected OChannelDataOutput outChannel;
+  ;
   private int responseTimeout;
   private int networkTimeout;
 
@@ -360,7 +362,7 @@ public abstract class OChannelBinary extends OChannel
           "%s - Flush",
           socket != null ? " null possible previous close" : socket.getRemoteSocketAddress());
 
-    updateMetricFlushes();
+    updateMetricFlushes(1);
 
     if (out != null)
       // IT ALREADY CALL THE UNDERLYING FLUSH
@@ -415,5 +417,13 @@ public abstract class OChannelBinary extends OChannel
   public void setReadRequestTimeout() throws SocketException {
     final Socket s = socket;
     if (s != null) s.setSoTimeout(networkTimeout);
+  }
+
+  public OChannelDataInput getChannelDataInput() {
+    return inChannel;
+  }
+
+  public OChannelDataOutput getChannelDataOutput() {
+    return outChannel;
   }
 }

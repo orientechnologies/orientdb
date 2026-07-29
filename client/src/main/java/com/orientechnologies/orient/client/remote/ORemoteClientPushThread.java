@@ -53,33 +53,33 @@ public class ORemoteClientPushThread extends Thread {
     while (!Thread.interrupted() && !shutDown) {
       try {
         network.setWaitResponseTimeout();
-        byte res = network.readByte();
+        byte res = network.getChannelDataInput().readByte();
         if (res == OChannelBinaryProtocol.RESPONSE_STATUS_OK) {
-          int currentSessionId = network.readInt();
-          byte[] token = network.readBytes();
-          byte messageId = network.readByte();
+          int currentSessionId = network.getChannelDataInput().readInt();
+          byte[] token = network.getChannelDataInput().readBytes();
+          byte messageId = network.getChannelDataInput().readByte();
           OBinaryResponse response = currentRequest.createResponse();
-          response.read(network, null);
+          response.read(network.getChannelDataInput(), null);
           blockingQueue.put(response);
         } else if (res == OChannelBinaryProtocol.RESPONSE_STATUS_ERROR) {
-          int currentSessionId = network.readInt();
-          byte[] token = network.readBytes();
-          byte messageId = network.readByte();
+          int currentSessionId = network.getChannelDataInput().readInt();
+          byte[] token = network.getChannelDataInput().readBytes();
+          byte messageId = network.getChannelDataInput().readByte();
           // TODO move handle status somewhere else
           ((OChannelBinaryAsynchClient) network)
               .handleStatus(res, currentSessionId, this::handleException);
         } else {
-          byte push = network.readByte();
+          byte push = network.getChannelDataInput().readByte();
           OBinaryPushRequest request = pushHandler.createPush(push);
-          request.read(network);
+          request.read(network.getChannelDataInput());
           try {
             OBinaryPushResponse response = request.execute(pushHandler);
             if (response != null) {
               synchronized (this) {
-                network.writeByte(OChannelBinaryProtocol.REQUEST_OK_PUSH);
+                network.getChannelDataOutput().writeByte(OChannelBinaryProtocol.REQUEST_OK_PUSH);
                 // session
-                network.writeInt(-1);
-                response.write(network);
+                network.getChannelDataOutput().writeInt(-1);
+                response.write(network.getChannelDataOutput());
               }
             }
           } catch (Exception e) {
@@ -127,8 +127,8 @@ public class ORemoteClientPushThread extends Thread {
         this.currentRequest = new OSubscribeRequest(request);
         ((OChannelBinaryAsynchClient) network)
             .beginRequest(OChannelBinaryProtocol.SUBSCRIBE_PUSH, session);
-        this.currentRequest.write(network, null);
-        network.flush();
+        this.currentRequest.write(network.getChannelDataOutput(), null);
+        network.getChannelDataOutput().flush();
       }
       Object poll = blockingQueue.poll(requestTimeout, TimeUnit.MILLISECONDS);
       if (poll == null) return null;

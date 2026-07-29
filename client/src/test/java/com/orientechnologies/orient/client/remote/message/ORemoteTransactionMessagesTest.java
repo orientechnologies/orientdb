@@ -33,10 +33,10 @@ public class ORemoteTransactionMessagesTest {
   public void testBeginTransactionEmptyWriteRead() throws IOException {
     MockChannel channel = new MockChannel();
     OBeginTransactionRequest request = new OBeginTransactionRequest(0, false, true, null, null);
-    request.write(channel, null);
+    request.write(channel.getChannelDataOutput(), null);
     channel.close();
     OBeginTransactionRequest readRequest = new OBeginTransactionRequest();
-    readRequest.read(channel, 0, null);
+    readRequest.read(channel.getChannelDataInput(), 0, null);
     assertFalse(readRequest.isHasContent());
   }
 
@@ -58,12 +58,13 @@ public class ORemoteTransactionMessagesTest {
     MockChannel channel = new MockChannel();
     OBeginTransactionRequest request =
         new OBeginTransactionRequest(0, true, true, operations, changes);
-    request.write(channel, null);
+    request.write(channel.getChannelDataOutput(), null);
 
     channel.close();
 
     OBeginTransactionRequest readRequest = new OBeginTransactionRequest();
-    readRequest.read(channel, 0, ORecordSerializerNetworkFactory.INSTANCE.current());
+    readRequest.read(
+        channel.getChannelDataInput(), 0, ORecordSerializerNetworkFactory.INSTANCE.current());
     assertTrue(readRequest.isUsingLog());
     assertEquals(readRequest.getOperations().size(), 1);
     assertEquals(readRequest.getTxId(), 0);
@@ -97,12 +98,13 @@ public class ORemoteTransactionMessagesTest {
 
     MockChannel channel = new MockChannel();
     OCommit37Request request = new OCommit37Request(0, true, true, operations, changes);
-    request.write(channel, null);
+    request.write(channel.getChannelDataOutput(), null);
 
     channel.close();
 
     OCommit37Request readRequest = new OCommit37Request();
-    readRequest.read(channel, 0, ORecordSerializerNetworkFactory.INSTANCE.current());
+    readRequest.read(
+        channel.getChannelDataInput(), 0, ORecordSerializerNetworkFactory.INSTANCE.current());
     assertTrue(readRequest.isUsingLog());
     assertEquals(readRequest.getOperations().size(), 1);
     assertEquals(readRequest.getTxId(), 0);
@@ -144,11 +146,11 @@ public class ORemoteTransactionMessagesTest {
     UUID val = UUID.randomUUID();
     changes.put(val, new OBonsaiCollectionPointer(10, new OBonsaiBucketPointer(30, 40)));
     OCommit37Response response = new OCommit37Response(creates, updates, deletes, changes);
-    response.write(channel, 0, null);
+    response.write(channel.getChannelDataOutput(), 0, null);
     channel.close();
 
     OCommit37Response readResponse = new OCommit37Response();
-    readResponse.read(channel, null);
+    readResponse.read(channel.getChannelDataInput(), null);
     assertEquals(readResponse.getCreated().size(), 2);
     assertEquals(readResponse.getCreated().get(0).getCurrentRid(), new ORecordId(1, 2));
     assertEquals(readResponse.getCreated().get(0).getCreatedRid(), new ORecordId(-1, -2));
@@ -181,12 +183,13 @@ public class ORemoteTransactionMessagesTest {
 
     MockChannel channel = new MockChannel();
     OCommit37Request request = new OCommit37Request(0, false, true, null, null);
-    request.write(channel, null);
+    request.write(channel.getChannelDataOutput(), null);
 
     channel.close();
 
     OCommit37Request readRequest = new OCommit37Request();
-    readRequest.read(channel, 0, ORecordSerializerNetworkFactory.INSTANCE.current());
+    readRequest.read(
+        channel.getChannelDataInput(), 0, ORecordSerializerNetworkFactory.INSTANCE.current());
     assertTrue(readRequest.isUsingLog());
     assertNull(readRequest.getOperations());
     assertEquals(readRequest.getTxId(), 0);
@@ -215,12 +218,12 @@ public class ORemoteTransactionMessagesTest {
     MockChannel channel = new MockChannel();
     OFetchTransactionResponse response =
         new OFetchTransactionResponse(10, operations, changes, new HashMap<>());
-    response.write(channel, 0, ORecordSerializerNetworkV37.INSTANCE);
+    response.write(channel.getChannelDataOutput(), 0, ORecordSerializerNetworkV37.INSTANCE);
 
     channel.close();
 
     OFetchTransactionResponse readResponse = new OFetchTransactionResponse();
-    readResponse.read(channel, null);
+    readResponse.read(channel.getChannelDataInput(), null);
 
     assertEquals(readResponse.getOperations().size(), 3);
     assertEquals(readResponse.getOperations().get(0).getType(), ORecordOperation.CREATED);
@@ -267,12 +270,12 @@ public class ORemoteTransactionMessagesTest {
     MockChannel channel = new MockChannel();
     OFetchTransaction38Response response =
         new OFetchTransaction38Response(10, operations, changes, new HashMap<>(), null);
-    response.write(channel, 0, ORecordSerializerNetworkV37.INSTANCE);
+    response.write(channel.getChannelDataOutput(), 0, ORecordSerializerNetworkV37.INSTANCE);
 
     channel.close();
 
     OFetchTransaction38Response readResponse = new OFetchTransaction38Response();
-    readResponse.read(channel, null);
+    readResponse.read(channel.getChannelDataInput(), null);
 
     assertEquals(readResponse.getOperations().size(), 3);
     assertEquals(readResponse.getOperations().get(0).getType(), ORecordOperation.CREATED);
@@ -313,13 +316,13 @@ public class ORemoteTransactionMessagesTest {
     MockChannel channel = new MockChannel();
     OFetchTransactionResponse response =
         new OFetchTransactionResponse(10, operations, changes, new HashMap<>());
-    response.write(channel, 0, ORecordSerializerNetworkV37.INSTANCE);
+    response.write(channel.getChannelDataOutput(), 0, ORecordSerializerNetworkV37.INSTANCE);
 
     channel.close();
 
     OFetchTransactionResponse readResponse =
         new OFetchTransactionResponse(10, operations, changes, new HashMap<>());
-    readResponse.read(channel, null);
+    readResponse.read(channel.getChannelDataInput(), null);
 
     assertEquals(readResponse.getTxId(), 10);
     assertEquals(readResponse.getIndexChanges().size(), 1);
