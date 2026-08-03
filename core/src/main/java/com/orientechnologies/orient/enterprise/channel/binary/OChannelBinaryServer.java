@@ -52,4 +52,25 @@ public class OChannelBinaryServer extends OChannelBinary {
     initDebug();
     connected();
   }
+
+  @Override
+  public void wrapStreams(WrapStreams stre) throws IOException {
+    var wrapped = stre.wrap(socket.getInputStream(), socket.getOutputStream());
+    if (socketBufferSize > 0) {
+      inStream = new BufferedInputStream(wrapped.input(), socketBufferSize);
+      outStream = new BufferedOutputStream(wrapped.output(), socketBufferSize);
+    } else {
+      inStream = new BufferedInputStream(wrapped.input());
+      outStream = new BufferedOutputStream(wrapped.output());
+    }
+
+    out = new DataOutputStream(outStream);
+    in = new DataInputStream(inStream);
+    inChannel = new OChannelDataInputBinary(in, this.maxChunkSize, this::updateMetricReceivedBytes);
+    outChannel =
+        new OChannelDataOutputBinary(
+            out, this.maxChunkSize, this::updateMetricTransmittedBytes, this::updateMetricFlushes);
+
+    initDebug();
+  }
 }

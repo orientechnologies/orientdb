@@ -31,4 +31,9 @@ public class MockChannel extends OChannelBinary {
     this.in = new DataInputStream(new ByteArrayInputStream(byteOut.toByteArray()));
     inChannel = new OChannelDataInputBinary(in, this.maxChunkSize, this::updateMetricReceivedBytes);
   }
+
+  @Override
+  public void wrapStreams(WrapStreams stre) throws IOException {
+    throw new UnsupportedOperationException();
+  }
 }

@@ -133,6 +133,26 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
     }
   }
 
+  @Override
+  public void wrapStreams(WrapStreams stre) throws IOException {
+    var wrapped = stre.wrap(socket.getInputStream(), socket.getOutputStream());
+    if (socketBufferSize > 0) {
+      inStream = new BufferedInputStream(wrapped.input(), socketBufferSize);
+      outStream = new BufferedOutputStream(wrapped.output(), socketBufferSize);
+    } else {
+      inStream = new BufferedInputStream(wrapped.input());
+      outStream = new BufferedOutputStream(wrapped.output());
+    }
+
+    in = new DataInputStream(inStream);
+    out = new DataOutputStream(outStream);
+    inChannel = new OChannelDataInputBinary(in, this.maxChunkSize, this::updateMetricReceivedBytes);
+    outChannel =
+        new OChannelDataOutputBinary(
+            out, this.maxChunkSize, this::updateMetricTransmittedBytes, this::updateMetricFlushes);
+    initDebug();
+  }
+
   @SuppressWarnings("unchecked")
   private static RuntimeException createException(
       final String iClassName, final String iMessage, final Exception iPrevious) {
