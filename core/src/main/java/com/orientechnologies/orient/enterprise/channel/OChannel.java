@@ -53,7 +53,6 @@ public abstract class OChannel {
   public InputStream inStream;
   public OutputStream outStream;
   public int socketBufferSize;
-  protected long timeout;
   private long metricTransmittedBytes = 0;
   private long metricReceivedBytes = 0;
   private long metricFlushes = 0;

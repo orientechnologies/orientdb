@@ -1287,7 +1287,10 @@ public class ORemoteClient implements OStorageInfo {
 
             OReopenResponse response = request.createResponse();
             try {
-              byte[] newToken = network.beginResponse(nodeSession.getSessionId());
+              byte currentStatus = network.waitResponse();
+              byte[] newToken =
+                  ORemoteClient.readResponseHeader(
+                      nodeSession.getSessionId(), currentStatus, network.getChannelDataInput());
               response.read(network.getChannelDataInput());
               if (newToken != null && newToken.length > 0) {
                 nodeSession.setSession(response.getSessionId(), newToken);
@@ -1382,7 +1385,9 @@ public class ORemoteClient implements OStorageInfo {
     final int sessionId;
     OOpen37Response response = request.createResponse();
     try {
-      network.beginResponse(nodeSession.getSessionId());
+      byte currentStatus = network.waitResponse();
+      ORemoteClient.readResponseHeader(
+          nodeSession.getSessionId(), currentStatus, network.getChannelDataInput());
       response.read(network.getChannelDataInput());
     } finally {
       endResponse(network);
@@ -1580,9 +1585,10 @@ public class ORemoteClient implements OStorageInfo {
   }
 
   public static void beginResponse(
-      OChannelBinaryAsynchClient iNetwork, ORemoteClientNodeSession nodeSession)
-      throws IOException {
-    byte[] newToken = iNetwork.beginResponse(nodeSession.getSessionId());
+      OChannelBinaryAsynchClient network, ORemoteClientNodeSession nodeSession) throws IOException {
+    var responseCode = network.waitResponse();
+    byte[] newToken =
+        readResponseHeader(nodeSession.getSessionId(), responseCode, network.getChannelDataInput());
     if (newToken != null && newToken.length > 0) {
       nodeSession.setSession(nodeSession.getSessionId(), newToken);
     }
@@ -1967,8 +1973,15 @@ public class ORemoteClient implements OStorageInfo {
     return liveQueryListener;
   }
 
-  public static void handleStatus(final byte iResult, OChannelDataInput input) throws IOException {
-    handleStatus(iResult, input, ORemoteClient::handleException);
+  public static byte[] readResponseHeader(
+      final int requesterId, byte currentStatus, OChannelDataInput input) throws IOException {
+    int currentSessionId;
+    currentSessionId = input.readInt();
+    assert (currentSessionId == requesterId);
+    byte[] tokenBytes = input.readBytes();
+    byte currentMessage = input.readByte();
+    handleStatus(currentStatus, input, ORemoteClient::handleException);
+    return tokenBytes;
   }
 
   public static void handleException(Throwable throwable) {

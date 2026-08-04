@@ -22,10 +22,12 @@ package com.orientechnologies.orient.server;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
+import com.orientechnologies.orient.client.remote.ORemoteClient;
 import com.orientechnologies.orient.client.remote.message.OShutdownRequest;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.enterprise.channel.OSocketFactory;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
 import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolException;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
@@ -87,13 +89,15 @@ public class OServerShutdownMain {
               + Arrays.toString(networkPort));
 
     OShutdownRequest request = new OShutdownRequest(rootUser, rootPassword);
-    channel.getChannelDataOutput().writeByte(request.getCommand());
-    channel.getChannelDataOutput().writeInt(0);
-    channel.getChannelDataOutput().writeBytes(null);
-    request.write(channel.getChannelDataOutput());
-    channel.getChannelDataOutput().flush();
+    OChannelDataOutput output = channel.getChannelDataOutput();
+    output.writeByte(request.getCommand());
+    output.writeInt(0);
+    output.writeBytes(null);
+    request.write(output);
+    output.flush();
 
-    channel.beginResponse(0);
+    byte currentStatus = channel.waitResponse();
+    ORemoteClient.readResponseHeader(0, currentStatus, channel.getChannelDataInput());
   }
 
   public static void main(final String[] iArgs) {

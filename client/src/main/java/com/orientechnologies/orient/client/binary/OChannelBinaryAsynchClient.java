@@ -22,7 +22,6 @@ package com.orientechnologies.orient.client.binary;
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
-import com.orientechnologies.orient.client.remote.ORemoteClient;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
@@ -143,52 +142,29 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
     initDebug();
   }
 
-  public byte[] beginResponse(final int iRequesterId) throws IOException {
-    return beginResponse(iRequesterId, timeout);
-  }
-
-  public byte[] beginResponse(final int iRequesterId, final long iTimeout) throws IOException {
+  public byte waitResponse() throws IOException, SocketException {
     try {
       // WAIT FOR THE RESPONSE
-      if (iTimeout <= 0) acquireReadLock();
+      acquireReadLock();
 
       if (!isConnected()) {
         releaseReadLock();
         throw new IOException("Channel is closed");
       }
       OChannelDataInput input = getChannelDataInput();
-      byte currentStatus;
-      int currentSessionId;
       try {
         setWaitResponseTimeout();
-        currentStatus = input.readByte();
-        currentSessionId = input.readInt();
-
-        if (debug) {
-          logger.debug(
-              "%s - Read response: %d-%d",
-              socket.getLocalAddress(), (int) currentStatus, currentSessionId);
-        }
-
+        return input.readByte();
       } finally {
         setReadResponseTimeout();
       }
 
-      assert (currentSessionId == iRequesterId);
-
-      if (debug) {
-        logger.debug("%s - Session %d handle response", socket.getLocalAddress(), iRequesterId);
-      }
-      byte[] tokenBytes = input.readBytes();
-      byte currentMessage = input.readByte();
-      ORemoteClient.handleStatus(currentStatus, input);
-      return tokenBytes;
     } catch (OLockException e) {
       Thread.currentThread().interrupt();
       // NEVER HAPPENS?
       logger.error("Unexpected error on reading response from channel", e);
+      throw e;
     }
-    return null;
   }
 
   public void endResponse() throws IOException {
