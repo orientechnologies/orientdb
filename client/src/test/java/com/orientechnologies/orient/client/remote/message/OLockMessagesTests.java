@@ -37,7 +37,7 @@ public class OLockMessagesTests {
     channel.close();
 
     OLockRecordResponse other = new OLockRecordResponse();
-    other.read(channel.getChannelDataInput(), null);
+    other.read(channel.getChannelDataInput());
     assertEquals(other.getRecordType(), response.getRecordType());
     assertEquals(other.getVersion(), response.getVersion());
     assertArrayEquals(other.getRecord(), response.getRecord());

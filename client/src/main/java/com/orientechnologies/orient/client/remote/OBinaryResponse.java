@@ -11,5 +11,5 @@ public interface OBinaryResponse {
   void write(OChannelDataOutput channel, int protocolVersion, ORecordSerializer serializer)
       throws IOException;
 
-  void read(final OChannelDataInput network, ORemoteClientSession session) throws IOException;
+  void read(final OChannelDataInput network) throws IOException;
 }

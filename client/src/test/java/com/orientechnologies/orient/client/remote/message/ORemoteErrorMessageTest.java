@@ -22,7 +22,7 @@ public class ORemoteErrorMessageTest {
     response.write(channel.getChannelDataOutput(), 0, null);
     channel.close();
     OError37Response readResponse = new OError37Response();
-    readResponse.read(channel.getChannelDataInput(), null);
+    readResponse.read(channel.getChannelDataInput());
 
     assertEquals(readResponse.getCode(), OErrorCode.GENERIC_ERROR);
     assertEquals(readResponse.getErrorIdentifier(), 10);

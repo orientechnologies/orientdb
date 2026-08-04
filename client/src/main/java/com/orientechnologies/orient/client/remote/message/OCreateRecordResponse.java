@@ -20,7 +20,6 @@
 package com.orientechnologies.orient.client.remote.message;
 
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
-import com.orientechnologies.orient.client.remote.ORemoteClientSession;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollectionPointer;
@@ -54,7 +53,7 @@ public class OCreateRecordResponse implements OBinaryResponse {
   }
 
   @Override
-  public void read(OChannelDataInput network, ORemoteClientSession session) throws IOException {
+  public void read(OChannelDataInput network) throws IOException {
     short clusterId = network.readShort();
     long posistion = network.readLong();
     identity = new ORecordId(clusterId, posistion);

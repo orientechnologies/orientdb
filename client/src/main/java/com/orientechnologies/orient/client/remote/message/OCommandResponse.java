@@ -23,7 +23,6 @@ import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
-import com.orientechnologies.orient.client.remote.ORemoteClientSession;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -163,25 +162,20 @@ public final class OCommandResponse implements OBinaryResponse {
   }
 
   @Override
-  public void read(OChannelDataInput network, ORemoteClientSession session) throws IOException {
-    try {
-      // Collection of prefetched temporary record (nested projection record), to refer for avoid
-      // garbage collection.
-      List<ORecord> temporaryResults = new ArrayList<ORecord>();
+  public void read(OChannelDataInput network) throws IOException {
+    // Collection of prefetched temporary record (nested projection record), to refer for avoid
+    // garbage collection.
+    List<ORecord> temporaryResults = new ArrayList<ORecord>();
 
-      result = readSynchResult(network, database, temporaryResults);
-      if (live) {
-        final ODocument doc = ((List<ODocument>) result).get(0);
-        final Integer token = doc.field("token");
-        final Boolean unsubscribe = doc.field("unsubscribe");
-        if (token != null) {
-        } else {
-          throw new OStorageException("Cannot execute live query, returned null token");
-        }
+    result = readSynchResult(network, database, temporaryResults);
+    if (live) {
+      final ODocument doc = ((List<ODocument>) result).get(0);
+      final Integer token = doc.field("token");
+      final Boolean unsubscribe = doc.field("unsubscribe");
+      if (token != null) {
+      } else {
+        throw new OStorageException("Cannot execute live query, returned null token");
       }
-    } finally {
-      // TODO: this is here because we allow query in end listener.
-      session.commandExecuting = false;
     }
   }
 

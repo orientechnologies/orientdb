@@ -60,7 +60,7 @@ public class ORemoteClientPushThread extends Thread {
           byte[] token = network.getChannelDataInput().readBytes();
           byte messageId = network.getChannelDataInput().readByte();
           OBinaryResponse response = currentRequest.createResponse();
-          response.read(network.getChannelDataInput(), null);
+          response.read(network.getChannelDataInput());
           blockingQueue.put(response);
         } else if (res == OChannelBinaryProtocol.RESPONSE_STATUS_ERROR) {
           int currentSessionId = network.getChannelDataInput().readInt();

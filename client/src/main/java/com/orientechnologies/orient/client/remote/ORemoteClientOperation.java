@@ -25,9 +25,6 @@ import java.io.IOException;
 /** Created by tglman on 16/12/15. */
 public interface ORemoteClientOperation<T> {
 
-  T execute(
-      final OChannelBinaryAsynchClient network,
-      ORemoteClientSession session,
-      ORemoteClientNodeSession nodeSession)
+  T execute(final OChannelBinaryAsynchClient network, ORemoteClientNodeSession nodeSession)
       throws IOException;
 }

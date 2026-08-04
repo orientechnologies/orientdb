@@ -656,7 +656,7 @@ public class OrientDBRemote implements OrientDBInternal {
   public <T extends OBinaryResponse> T networkAdminOperation(
       final OBinaryRequest<T> request, ORemoteClientSession session, final String errorMessage) {
     return networkAdminOperation(
-        (network, session1, nodeSession) -> {
+        (network, nodeSession) -> {
           try {
             ORemoteClient.writeRequest(request, network.getChannelDataOutput(), nodeSession);
           } finally {
@@ -665,7 +665,7 @@ public class OrientDBRemote implements OrientDBInternal {
           T response = request.createResponse();
           try {
             ORemoteClient.beginResponse(network, nodeSession);
-            response.read(network.getChannelDataInput(), session1);
+            response.read(network.getChannelDataInput());
           } finally {
             network.endResponse();
           }
@@ -695,7 +695,7 @@ public class OrientDBRemote implements OrientDBInternal {
       } while (network == null);
       ORemoteClientNodeSession nodeSession =
           session.getOrCreateServerSession(network.getServerURL());
-      T res = operation.execute(network, session, nodeSession);
+      T res = operation.execute(network, nodeSession);
       connectionManager.release(network);
       return res;
     } catch (Exception e) {
@@ -754,7 +754,7 @@ public class OrientDBRemote implements OrientDBInternal {
     OConnect37Request request = new OConnect37Request(username, foundPassword);
 
     networkAdminOperation(
-        (network, session, nodeSession) -> {
+        (network, nodeSession) -> {
           try {
             ORemoteClient.writeRequest(request, network.getChannelDataOutput(), nodeSession);
           } finally {
@@ -763,10 +763,8 @@ public class OrientDBRemote implements OrientDBInternal {
           OConnectResponse response = request.createResponse();
           try {
             network.beginResponse(nodeSession.getSessionId(), true);
-            response.read(network.getChannelDataInput(), session);
-            session
-                .getServerSession(network.getServerURL())
-                .setSession(response.getSessionId(), response.getSessionToken());
+            response.read(network.getChannelDataInput());
+            nodeSession.setSession(response.getSessionId(), response.getSessionToken());
           } finally {
             network.endResponse();
           }

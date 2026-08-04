@@ -20,7 +20,6 @@
 package com.orientechnologies.orient.client.remote.message;
 
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
-import com.orientechnologies.orient.client.remote.ORemoteClientSession;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
@@ -108,7 +107,7 @@ public final class OCommit37Response implements OBinaryResponse {
   public OCommit37Response() {}
 
   @Override
-  public void read(OChannelDataInput network, ORemoteClientSession session) throws IOException {
+  public void read(OChannelDataInput network) throws IOException {
 
     final int createdRecords = network.readInt();
     created = new ArrayList<>(createdRecords);

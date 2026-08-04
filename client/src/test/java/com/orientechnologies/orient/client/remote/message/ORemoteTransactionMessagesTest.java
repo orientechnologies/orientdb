@@ -150,7 +150,7 @@ public class ORemoteTransactionMessagesTest {
     channel.close();
 
     OCommit37Response readResponse = new OCommit37Response();
-    readResponse.read(channel.getChannelDataInput(), null);
+    readResponse.read(channel.getChannelDataInput());
     assertEquals(readResponse.getCreated().size(), 2);
     assertEquals(readResponse.getCreated().get(0).getCurrentRid(), new ORecordId(1, 2));
     assertEquals(readResponse.getCreated().get(0).getCreatedRid(), new ORecordId(-1, -2));
@@ -223,7 +223,7 @@ public class ORemoteTransactionMessagesTest {
     channel.close();
 
     OFetchTransactionResponse readResponse = new OFetchTransactionResponse();
-    readResponse.read(channel.getChannelDataInput(), null);
+    readResponse.read(channel.getChannelDataInput());
 
     assertEquals(readResponse.getOperations().size(), 3);
     assertEquals(readResponse.getOperations().get(0).getType(), ORecordOperation.CREATED);
@@ -275,7 +275,7 @@ public class ORemoteTransactionMessagesTest {
     channel.close();
 
     OFetchTransaction38Response readResponse = new OFetchTransaction38Response();
-    readResponse.read(channel.getChannelDataInput(), null);
+    readResponse.read(channel.getChannelDataInput());
 
     assertEquals(readResponse.getOperations().size(), 3);
     assertEquals(readResponse.getOperations().get(0).getType(), ORecordOperation.CREATED);
@@ -322,7 +322,7 @@ public class ORemoteTransactionMessagesTest {
 
     OFetchTransactionResponse readResponse =
         new OFetchTransactionResponse(10, operations, changes, new HashMap<>());
-    readResponse.read(channel.getChannelDataInput(), null);
+    readResponse.read(channel.getChannelDataInput());
 
     assertEquals(readResponse.getTxId(), 10);
     assertEquals(readResponse.getIndexChanges().size(), 1);

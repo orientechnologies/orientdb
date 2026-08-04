@@ -315,7 +315,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
     } else if (iResult == OChannelBinaryProtocol.RESPONSE_STATUS_ERROR) {
 
       OError37Response response = new OError37Response();
-      response.read(this.getChannelDataInput(), null);
+      response.read(this.getChannelDataInput());
       byte[] serializedException = response.getVerbose();
       Exception previous = null;
       if (serializedException != null && serializedException.length > 0) {

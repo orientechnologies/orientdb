@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.client.remote.message;
 
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
-import com.orientechnologies.orient.client.remote.ORemoteClientSession;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
@@ -31,7 +30,7 @@ public class OListGlobalConfigurationsResponse implements OBinaryResponse {
   }
 
   @Override
-  public void read(OChannelDataInput network, ORemoteClientSession session) throws IOException {
+  public void read(OChannelDataInput network) throws IOException {
     configs = new HashMap<String, String>();
     final int num = network.readShort();
     for (int i = 0; i < num; ++i) configs.put(network.readString(), network.readString());

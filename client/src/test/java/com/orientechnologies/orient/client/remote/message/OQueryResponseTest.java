@@ -39,7 +39,7 @@ public class OQueryResponseTest {
 
     OQueryResponse newResponse = new OQueryResponse();
 
-    newResponse.read(channel.getChannelDataInput(), null);
+    newResponse.read(channel.getChannelDataInput());
     Iterator<OResult> responseRs = newResponse.getResult().iterator();
 
     for (int i = 0; i < 10; i++) {

@@ -45,7 +45,7 @@ public class OReloadMessageTest {
         channel.getChannelDataOutput(), OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION, null);
     channel.close();
     OReloadResponse37 responseRead = new OReloadResponse37();
-    responseRead.read(channel.getChannelDataInput(), null);
+    responseRead.read(channel.getChannelDataInput());
     OStorageConfigurationPayload payload = responseRead.getPayload();
     assertEquals(configuration.getProperties().size(), payload.getProperties().size());
     Map<String, String> expectedProps = new HashMap<>();

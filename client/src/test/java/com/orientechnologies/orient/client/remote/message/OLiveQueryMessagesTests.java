@@ -37,7 +37,7 @@ public class OLiveQueryMessagesTests {
     response.write(channel.getChannelDataOutput(), 0, null);
     channel.close();
     OSubscribeLiveQueryResponse responseRead = new OSubscribeLiveQueryResponse();
-    responseRead.read(channel.getChannelDataInput(), null);
+    responseRead.read(channel.getChannelDataInput());
     assertEquals(responseRead.getMonitorId(), 20);
   }
 

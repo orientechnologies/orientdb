@@ -171,7 +171,7 @@ public class ORemotePushMessagesTest {
     channel.close();
 
     OSubscribeResponse responseRead = new OSubscribeResponse(new OSubscribeLiveQueryResponse());
-    responseRead.read(channel.getChannelDataInput(), null);
+    responseRead.read(channel.getChannelDataInput());
 
     assertTrue(responseRead.getResponse() instanceof OSubscribeLiveQueryResponse);
     assertEquals(((OSubscribeLiveQueryResponse) responseRead.getResponse()).getMonitorId(), 10);

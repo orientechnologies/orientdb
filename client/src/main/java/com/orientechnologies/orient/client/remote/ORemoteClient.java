@@ -312,7 +312,7 @@ public class ORemoteClient implements OStorageInfo {
       int timeout) {
     return baseNetworkOperation(
         baseSession,
-        (network, session, nodeSession) -> {
+        (network, nodeSession) -> {
           try {
             try {
               writeRequest(request, network.getChannelDataOutput(), nodeSession);
@@ -331,7 +331,7 @@ public class ORemoteClient implements OStorageInfo {
           try {
             if (timeout > 0) network.setSocketTimeout(timeout);
             beginResponse(network, nodeSession);
-            response.read(network.getChannelDataInput(), session);
+            response.read(network.getChannelDataInput());
           } finally {
             endResponse(network);
             if (timeout > 0) network.setSocketTimeout(prev);
@@ -399,7 +399,7 @@ public class ORemoteClient implements OStorageInfo {
           if (!network.tryLock()) continue;
         }
 
-        return operation.execute(network, session, nodeSession);
+        return operation.execute(network, nodeSession);
       } catch (ONotSendRequestException e) {
         connectionManager.remove(network);
         serverUrl = null;
@@ -1275,7 +1275,7 @@ public class ORemoteClient implements OStorageInfo {
             OReopenResponse response = request.createResponse();
             try {
               byte[] newToken = network.beginResponse(nodeSession.getSessionId(), true);
-              response.read(network.getChannelDataInput(), session);
+              response.read(network.getChannelDataInput());
               if (newToken != null && newToken.length > 0) {
                 nodeSession.setSession(response.getSessionId(), newToken);
               } else {
@@ -1370,7 +1370,7 @@ public class ORemoteClient implements OStorageInfo {
     OOpen37Response response = request.createResponse();
     try {
       network.beginResponse(nodeSession.getSessionId(), true);
-      response.read(network.getChannelDataInput(), session);
+      response.read(network.getChannelDataInput());
     } finally {
       endResponse(network);
       connectionManager.release(network);
