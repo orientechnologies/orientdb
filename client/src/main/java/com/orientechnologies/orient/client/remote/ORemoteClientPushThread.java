@@ -67,8 +67,7 @@ public class ORemoteClientPushThread extends Thread {
           byte[] token = network.getChannelDataInput().readBytes();
           byte messageId = network.getChannelDataInput().readByte();
           // TODO move handle status somewhere else
-          ((OChannelBinaryAsynchClient) network)
-              .handleStatus(res, currentSessionId, this::handleException);
+          ORemoteClient.handleStatus(res, network.getChannelDataInput(), this::handleException);
         } else {
           byte push = network.getChannelDataInput().readByte();
           OBinaryPushRequest request = pushHandler.createPush(push);

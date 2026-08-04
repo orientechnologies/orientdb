@@ -762,7 +762,7 @@ public class OrientDBRemote implements OrientDBInternal {
           }
           OConnectResponse response = request.createResponse();
           try {
-            network.beginResponse(nodeSession.getSessionId(), true);
+            network.beginResponse(nodeSession.getSessionId());
             response.read(network.getChannelDataInput());
             nodeSession.setSession(response.getSessionId(), response.getSessionToken());
           } finally {

@@ -23,6 +23,7 @@ import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.exception.OSystemException;
 import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
@@ -50,6 +51,7 @@ import com.orientechnologies.orient.client.remote.message.OCountRequest;
 import com.orientechnologies.orient.client.remote.message.OCountResponse;
 import com.orientechnologies.orient.client.remote.message.ODropClusterRequest;
 import com.orientechnologies.orient.client.remote.message.ODropClusterResponse;
+import com.orientechnologies.orient.client.remote.message.OError37Response;
 import com.orientechnologies.orient.client.remote.message.OExperimentalRequest;
 import com.orientechnologies.orient.client.remote.message.OExperimentalResponse;
 import com.orientechnologies.orient.client.remote.message.OFetchTransaction38Request;
@@ -151,11 +153,18 @@ import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
 import com.orientechnologies.orient.enterprise.channel.binary.ODistributedRedirectException;
+import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolException;
+import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
 import com.orientechnologies.orient.enterprise.channel.binary.OTokenSecurityException;
+import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.ObjectInputStream;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
 import java.net.SocketException;
 import java.util.Arrays;
 import java.util.Collection;
@@ -184,6 +193,10 @@ public class ORemoteClient implements OStorageInfo {
     STICKY,
     ROUND_ROBIN_CONNECT,
     ROUND_ROBIN_REQUEST
+  }
+
+  public interface ExceptionHandler {
+    void onException(Throwable ex);
   }
 
   private CONNECTION_STRATEGY connectionStrategy = CONNECTION_STRATEGY.STICKY;
@@ -1274,7 +1287,7 @@ public class ORemoteClient implements OStorageInfo {
 
             OReopenResponse response = request.createResponse();
             try {
-              byte[] newToken = network.beginResponse(nodeSession.getSessionId(), true);
+              byte[] newToken = network.beginResponse(nodeSession.getSessionId());
               response.read(network.getChannelDataInput());
               if (newToken != null && newToken.length > 0) {
                 nodeSession.setSession(response.getSessionId(), newToken);
@@ -1369,7 +1382,7 @@ public class ORemoteClient implements OStorageInfo {
     final int sessionId;
     OOpen37Response response = request.createResponse();
     try {
-      network.beginResponse(nodeSession.getSessionId(), true);
+      network.beginResponse(nodeSession.getSessionId());
       response.read(network.getChannelDataInput());
     } finally {
       endResponse(network);
@@ -1569,7 +1582,7 @@ public class ORemoteClient implements OStorageInfo {
   public static void beginResponse(
       OChannelBinaryAsynchClient iNetwork, ORemoteClientNodeSession nodeSession)
       throws IOException {
-    byte[] newToken = iNetwork.beginResponse(nodeSession.getSessionId(), true);
+    byte[] newToken = iNetwork.beginResponse(nodeSession.getSessionId());
     if (newToken != null && newToken.length > 0) {
       nodeSession.setSession(nodeSession.getSessionId(), newToken);
     }
@@ -1952,5 +1965,137 @@ public class ORemoteClient implements OStorageInfo {
 
   public Map<Integer, OLiveQueryClientListener> getLiveQueryListener() {
     return liveQueryListener;
+  }
+
+  public static void handleStatus(final byte iResult, OChannelDataInput input) throws IOException {
+    handleStatus(iResult, input, ORemoteClient::handleException);
+  }
+
+  public static void handleException(Throwable throwable) {
+    if (throwable instanceof OException) {
+      try {
+        final Class<? extends OException> cls = (Class<? extends OException>) throwable.getClass();
+        final Constructor<? extends OException> constructor;
+        constructor = cls.getConstructor(cls);
+        final OException proxyInstance = constructor.newInstance(throwable);
+        proxyInstance.addSuppressed((Exception) throwable);
+        throw proxyInstance;
+
+      } catch (NoSuchMethodException
+          | InvocationTargetException
+          | InstantiationException
+          | IllegalAccessException e) {
+        OChannelBinaryAsynchClient.logger.error("Error during exception deserialization", e);
+      }
+    }
+
+    if (throwable instanceof RuntimeException) {
+      throw (RuntimeException) throwable;
+    }
+    if (throwable instanceof Throwable) {
+      throw new OResponseProcessingException(
+          "Exception during response processing", (Throwable) throwable);
+    } else {
+      // WRAP IT
+      String exceptionType = throwable != null ? throwable.getClass().getName() : "null";
+      OChannelBinaryAsynchClient.logger.error(
+          "Error during exception serialization, serialized exception is not Throwable,"
+              + " exception type is "
+              + exceptionType,
+          null);
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  static RuntimeException createException(
+      final String iClassName, final String iMessage, final Exception iPrevious) {
+    RuntimeException rootException = null;
+    Constructor<?> c = null;
+    try {
+      final Class<RuntimeException> excClass = (Class<RuntimeException>) Class.forName(iClassName);
+      if (iPrevious != null) {
+        try {
+          c = excClass.getConstructor(String.class, Throwable.class);
+        } catch (NoSuchMethodException e) {
+          c = excClass.getConstructor(String.class, Exception.class);
+        }
+      }
+
+      if (c == null) c = excClass.getConstructor(String.class);
+
+    } catch (Exception e) {
+      // UNABLE TO REPRODUCE THE SAME SERVER-SIDE EXCEPTION: THROW AN SYSTEM EXCEPTION
+      rootException = OException.wrapException(new OSystemException(iMessage), iPrevious);
+    }
+
+    if (c != null)
+      try {
+        final Exception cause;
+        if (c.getParameterTypes().length > 1)
+          cause = (Exception) c.newInstance(iMessage, iPrevious);
+        else cause = (Exception) c.newInstance(iMessage);
+
+        rootException =
+            OException.wrapException(new OSystemException("Data processing exception"), cause);
+      } catch (InstantiationException ignored) {
+      } catch (IllegalAccessException ignored) {
+      } catch (InvocationTargetException ignored) {
+      }
+
+    return rootException;
+  }
+
+  public static void handleStatus(
+      final byte resultCode,
+      OChannelDataInput input,
+      ORemoteClient.ExceptionHandler exceptionHandler)
+      throws IOException {
+    if (resultCode == OChannelBinaryProtocol.RESPONSE_STATUS_OK
+        || resultCode == OChannelBinaryProtocol.PUSH_DATA) {
+      return;
+    } else if (resultCode == OChannelBinaryProtocol.RESPONSE_STATUS_ERROR) {
+
+      OError37Response response = new OError37Response();
+      response.read(input);
+      byte[] serializedException = response.getVerbose();
+      Exception previous = null;
+      if (serializedException != null && serializedException.length > 0) {
+        Throwable deserializeException = deserializeException(serializedException);
+        exceptionHandler.onException(deserializeException);
+      }
+
+      for (Map.Entry<String, String> entry : response.getMessages().entrySet()) {
+        previous = ORemoteClient.createException(entry.getKey(), entry.getValue(), previous);
+      }
+
+      if (previous != null) {
+        exceptionHandler.onException(new RuntimeException(previous));
+      } else exceptionHandler.onException(new ONetworkProtocolException("Network response error"));
+
+    } else {
+      // PROTOCOL ERROR
+      // close();
+      exceptionHandler.onException(
+          new ONetworkProtocolException("Error on reading response from the server"));
+    }
+
+    return;
+  }
+
+  public static Throwable deserializeException(final byte[] serializedException)
+      throws IOException {
+    final ByteArrayInputStream inputStream = new ByteArrayInputStream(serializedException);
+    final ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
+
+    Object throwable = null;
+    try {
+      throwable = objectInputStream.readObject();
+    } catch (ClassNotFoundException e) {
+      logger.error("Error during exception deserialization", e);
+      throw new IOException("Error during exception deserialization: " + e.toString(), e);
+    }
+
+    objectInputStream.close();
+    return (Throwable) throwable;
   }
 }

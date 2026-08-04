@@ -93,7 +93,7 @@ public class OServerShutdownMain {
     request.write(channel.getChannelDataOutput());
     channel.getChannelDataOutput().flush();
 
-    channel.beginResponse(0, true);
+    channel.beginResponse(0);
   }
 
   public static void main(final String[] iArgs) {
