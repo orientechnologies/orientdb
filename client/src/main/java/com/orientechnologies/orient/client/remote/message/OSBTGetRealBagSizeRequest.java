@@ -25,7 +25,6 @@ import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
 import com.orientechnologies.orient.client.remote.OCollectionNetworkSerializer;
-import com.orientechnologies.orient.client.remote.ORemoteClientSession;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.Change;
@@ -55,7 +54,7 @@ public class OSBTGetRealBagSizeRequest implements OBinaryRequest<OSBTGetRealBagS
   }
 
   @Override
-  public void write(OChannelDataOutput network, ORemoteClientSession session) throws IOException {
+  public void write(OChannelDataOutput network) throws IOException {
     OCollectionNetworkSerializer.INSTANCE.writeCollectionPointer(network, collectionPointer);
     final ChangeSerializationHelper changeSerializer = ChangeSerializationHelper.INSTANCE;
     final byte[] stream =

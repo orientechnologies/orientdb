@@ -27,7 +27,6 @@ import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
-import com.orientechnologies.orient.client.remote.ORemoteClientSession;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest.DISTRIBUTED_EXECUTION_MODE;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -213,7 +212,7 @@ public final class OCommandRequest implements OBinaryRequest<OCommandResponse> {
   public OCommandRequest() {}
 
   @Override
-  public void write(OChannelDataOutput network, ORemoteClientSession session) throws IOException {
+  public void write(OChannelDataOutput network) throws IOException {
     if (live) {
       network.writeByte((byte) 'l');
     } else {

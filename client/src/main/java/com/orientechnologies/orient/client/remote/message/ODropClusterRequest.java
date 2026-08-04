@@ -22,7 +22,6 @@ package com.orientechnologies.orient.client.remote.message;
 import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
-import com.orientechnologies.orient.client.remote.ORemoteClientSession;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
@@ -39,7 +38,7 @@ public class ODropClusterRequest implements OBinaryRequest<ODropClusterResponse>
   public ODropClusterRequest() {}
 
   @Override
-  public void write(OChannelDataOutput network, ORemoteClientSession session) throws IOException {
+  public void write(OChannelDataOutput network) throws IOException {
     network.writeShort((short) clusterId);
   }
 

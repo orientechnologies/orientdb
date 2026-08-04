@@ -131,7 +131,7 @@ public class ORemoteClientPushThread extends Thread {
         OChannelDataOutput output = network.getChannelDataOutput();
         if (nodeSession == null)
           throw new OIOException("Invalid session for URL '" + serverURL + "'");
-        ORemoteClient.writeRequest(this.currentRequest, output, session, nodeSession);
+        ORemoteClient.writeRequest(this.currentRequest, output, nodeSession);
         output.flush();
       }
       Object poll = blockingQueue.poll(requestTimeout, TimeUnit.MILLISECONDS);

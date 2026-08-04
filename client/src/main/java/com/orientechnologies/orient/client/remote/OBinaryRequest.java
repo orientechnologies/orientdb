@@ -9,7 +9,7 @@ import java.io.IOException;
 /** Created by tglman on 07/06/16. */
 public interface OBinaryRequest<T extends OBinaryResponse> {
 
-  void write(final OChannelDataOutput network, ORemoteClientSession session) throws IOException;
+  void write(final OChannelDataOutput network) throws IOException;
 
   void read(OChannelDataInput channel, int protocolVersion, ORecordSerializer serializer)
       throws IOException;

@@ -22,7 +22,6 @@ package com.orientechnologies.orient.client.remote.message;
 import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
-import com.orientechnologies.orient.client.remote.ORemoteClientSession;
 import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationRequest;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -66,7 +65,7 @@ public class OBatchOperationsRequest implements OBinaryRequest<OBatchOperationsR
   public OBatchOperationsRequest() {}
 
   @Override
-  public void write(OChannelDataOutput network, ORemoteClientSession session) throws IOException {
+  public void write(OChannelDataOutput network) throws IOException {
     ORecordSerializerNetworkV37Client serializer = ORecordSerializerNetworkV37Client.INSTANCE;
 
     network.writeInt(txId);

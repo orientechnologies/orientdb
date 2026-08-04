@@ -22,7 +22,7 @@ public class OLiveQueryMessagesTests {
     params.put("par", "value");
     OSubscribeLiveQueryRequest request = new OSubscribeLiveQueryRequest("select from Some", params);
     MockChannel channel = new MockChannel();
-    request.write(channel.getChannelDataOutput(), null);
+    request.write(channel.getChannelDataOutput());
     channel.close();
     OSubscribeLiveQueryRequest requestRead = new OSubscribeLiveQueryRequest();
     requestRead.read(channel.getChannelDataInput(), -1, new ORecordSerializerNetworkV37());

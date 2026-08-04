@@ -113,7 +113,7 @@ public class ORemoteServerChannel {
           networkOperation(
               request.getCommand(),
               () -> {
-                request.write(channel.getChannelDataOutput(), null);
+                request.write(channel.getChannelDataOutput());
                 channel.getChannelDataOutput().flush();
                 return null;
               },
@@ -217,7 +217,7 @@ public class ORemoteServerChannel {
         () -> {
           ODistributedConnectRequest request =
               new ODistributedConnectRequest(protocolVersion, userName, userPassword);
-          request.write(channel.getChannelDataOutput(), null);
+          request.write(channel.getChannelDataOutput());
           channel.getChannelDataOutput().flush();
 
           channel.beginResponse(true);

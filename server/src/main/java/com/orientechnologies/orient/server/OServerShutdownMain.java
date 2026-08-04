@@ -90,7 +90,7 @@ public class OServerShutdownMain {
     channel.getChannelDataOutput().writeByte(request.getCommand());
     channel.getChannelDataOutput().writeInt(0);
     channel.getChannelDataOutput().writeBytes(null);
-    request.write(channel.getChannelDataOutput(), null);
+    request.write(channel.getChannelDataOutput());
     channel.getChannelDataOutput().flush();
 
     channel.beginResponse(0, true);

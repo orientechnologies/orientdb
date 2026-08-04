@@ -3,7 +3,6 @@ package com.orientechnologies.orient.client.remote.message;
 import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.client.remote.OBinaryResponse;
-import com.orientechnologies.orient.client.remote.ORemoteClientSession;
 import com.orientechnologies.orient.client.remote.message.tx.IndexChange;
 import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationRequest;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
@@ -70,7 +69,7 @@ public class OBeginTransactionRequest implements OBinaryRequest<OBeginTransactio
   public OBeginTransactionRequest() {}
 
   @Override
-  public void write(OChannelDataOutput network, ORemoteClientSession session) throws IOException {
+  public void write(OChannelDataOutput network) throws IOException {
     // from 3.0 the the serializer is bound to the protocol
     ORecordSerializerNetworkV37Client serializer = ORecordSerializerNetworkV37Client.INSTANCE;
 

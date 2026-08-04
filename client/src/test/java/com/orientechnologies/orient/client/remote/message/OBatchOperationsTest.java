@@ -21,7 +21,7 @@ public class OBatchOperationsTest {
     MockChannel channel = new MockChannel();
     OBatchOperationsRequest request = new OBatchOperationsRequest(-1, operations);
 
-    request.write(channel.getChannelDataOutput(), null);
+    request.write(channel.getChannelDataOutput());
 
     channel.close();
 

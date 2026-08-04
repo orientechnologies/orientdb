@@ -152,7 +152,7 @@ public class ORemotePushMessagesTest {
 
     OSubscribeRequest request =
         new OSubscribeRequest(new OSubscribeLiveQueryRequest("10", new HashMap<>()));
-    request.write(channel.getChannelDataOutput(), null);
+    request.write(channel.getChannelDataOutput());
     channel.close();
 
     OSubscribeRequest requestRead = new OSubscribeRequest();
@@ -181,7 +181,7 @@ public class ORemotePushMessagesTest {
   public void testUnsubscribeRequest() throws IOException {
     MockChannel channel = new MockChannel();
     OUnsubscribeRequest request = new OUnsubscribeRequest(new OUnsubscribeLiveQueryRequest(10));
-    request.write(channel.getChannelDataOutput(), null);
+    request.write(channel.getChannelDataOutput());
     channel.close();
     OUnsubscribeRequest readRequest = new OUnsubscribeRequest();
     readRequest.read(channel.getChannelDataInput(), 0, null);

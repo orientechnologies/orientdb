@@ -295,15 +295,12 @@ public class ORemoteClient implements OStorageInfo {
   }
 
   public static void writeRequest(
-      OBinaryRequest<?> request,
-      OChannelDataOutput output,
-      ORemoteClientSession session,
-      ORemoteClientNodeSession nodeSession)
+      OBinaryRequest<?> request, OChannelDataOutput output, ORemoteClientNodeSession nodeSession)
       throws IOException {
     output.writeByte(request.getCommand());
     output.writeInt(nodeSession.getSessionId());
     output.writeBytes(nodeSession.getToken());
-    request.write(output, session);
+    request.write(output);
     output.flush();
   }
 
@@ -318,7 +315,7 @@ public class ORemoteClient implements OStorageInfo {
         (network, session, nodeSession) -> {
           try {
             try {
-              writeRequest(request, network.getChannelDataOutput(), session, nodeSession);
+              writeRequest(request, network.getChannelDataOutput(), nodeSession);
             } finally {
               network.endRequest();
             }
@@ -1270,7 +1267,7 @@ public class ORemoteClient implements OStorageInfo {
               network.getChannelDataOutput().writeByte(request.getCommand());
               network.getChannelDataOutput().writeInt(nodeSession.getSessionId());
               network.getChannelDataOutput().writeBytes(nodeSession.getToken());
-              request.write(network.getChannelDataOutput(), session);
+              request.write(network.getChannelDataOutput());
             } finally {
               endRequest(network);
             }
@@ -1365,7 +1362,7 @@ public class ORemoteClient implements OStorageInfo {
       network.getChannelDataOutput().writeByte(request.getCommand());
       network.getChannelDataOutput().writeInt(nodeSession.getSessionId());
       network.getChannelDataOutput().writeBytes(null);
-      request.write(network.getChannelDataOutput(), session);
+      request.write(network.getChannelDataOutput());
     } finally {
       endRequest(network);
     }

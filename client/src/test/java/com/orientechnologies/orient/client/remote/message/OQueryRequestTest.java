@@ -28,7 +28,7 @@ public class OQueryRequestTest {
             123);
 
     MockChannel channel = new MockChannel();
-    request.write(channel.getChannelDataOutput(), null);
+    request.write(channel.getChannelDataOutput());
 
     channel.close();
 
@@ -58,7 +58,7 @@ public class OQueryRequestTest {
             123);
 
     MockChannel channel = new MockChannel();
-    request.write(channel.getChannelDataOutput(), null);
+    request.write(channel.getChannelDataOutput());
 
     channel.close();
 
@@ -84,7 +84,7 @@ public class OQueryRequestTest {
             123);
 
     MockChannel channel = new MockChannel();
-    request.write(channel.getChannelDataOutput(), null);
+    request.write(channel.getChannelDataOutput());
 
     channel.close();
 

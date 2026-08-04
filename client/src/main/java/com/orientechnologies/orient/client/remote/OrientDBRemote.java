@@ -658,8 +658,7 @@ public class OrientDBRemote implements OrientDBInternal {
     return networkAdminOperation(
         (network, session1, nodeSession) -> {
           try {
-            ORemoteClient.writeRequest(
-                request, network.getChannelDataOutput(), session1, nodeSession);
+            ORemoteClient.writeRequest(request, network.getChannelDataOutput(), nodeSession);
           } finally {
             network.endRequest();
           }
@@ -757,8 +756,7 @@ public class OrientDBRemote implements OrientDBInternal {
     networkAdminOperation(
         (network, session, nodeSession) -> {
           try {
-            ORemoteClient.writeRequest(
-                request, network.getChannelDataOutput(), session, nodeSession);
+            ORemoteClient.writeRequest(request, network.getChannelDataOutput(), nodeSession);
           } finally {
             network.endRequest();
           }

@@ -16,7 +16,7 @@ public class OLockMessagesTests {
     OLockRecordRequest request =
         new OLockRecordRequest(new ORecordId(10, 10), OStorage.LOCKING_STRATEGY.EXCLUSIVE_LOCK, 10);
     MockChannel channel = new MockChannel();
-    request.write(channel.getChannelDataOutput(), null);
+    request.write(channel.getChannelDataOutput());
 
     channel.close();
 
@@ -47,7 +47,7 @@ public class OLockMessagesTests {
   public void testReadWriteUnlockRequest() throws IOException {
     OUnlockRecordRequest request = new OUnlockRecordRequest(new ORecordId(10, 10));
     MockChannel channel = new MockChannel();
-    request.write(channel.getChannelDataOutput(), null);
+    request.write(channel.getChannelDataOutput());
 
     channel.close();
 

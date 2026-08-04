@@ -33,7 +33,7 @@ public class ORemoteTransactionMessagesTest {
   public void testBeginTransactionEmptyWriteRead() throws IOException {
     MockChannel channel = new MockChannel();
     OBeginTransactionRequest request = new OBeginTransactionRequest(0, false, true, null, null);
-    request.write(channel.getChannelDataOutput(), null);
+    request.write(channel.getChannelDataOutput());
     channel.close();
     OBeginTransactionRequest readRequest = new OBeginTransactionRequest();
     readRequest.read(channel.getChannelDataInput(), 0, null);
@@ -58,7 +58,7 @@ public class ORemoteTransactionMessagesTest {
     MockChannel channel = new MockChannel();
     OBeginTransactionRequest request =
         new OBeginTransactionRequest(0, true, true, operations, changes);
-    request.write(channel.getChannelDataOutput(), null);
+    request.write(channel.getChannelDataOutput());
 
     channel.close();
 
@@ -98,7 +98,7 @@ public class ORemoteTransactionMessagesTest {
 
     MockChannel channel = new MockChannel();
     OCommit37Request request = new OCommit37Request(0, true, true, operations, changes);
-    request.write(channel.getChannelDataOutput(), null);
+    request.write(channel.getChannelDataOutput());
 
     channel.close();
 
@@ -183,7 +183,7 @@ public class ORemoteTransactionMessagesTest {
 
     MockChannel channel = new MockChannel();
     OCommit37Request request = new OCommit37Request(0, false, true, null, null);
-    request.write(channel.getChannelDataOutput(), null);
+    request.write(channel.getChannelDataOutput());
 
     channel.close();
 
