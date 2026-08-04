@@ -654,25 +654,21 @@ public class OrientDBRemote implements OrientDBInternal {
   public <T extends OBinaryResponse> T networkAdminOperation(
       final OBinaryRequest<T> request, ORemoteClientSession session, final String errorMessage) {
     return networkAdminOperation(
-        new ORemoteClientOperation<T>() {
-          @Override
-          public T execute(OChannelBinaryAsynchClient network, ORemoteClientSession session)
-              throws IOException {
-            try {
-              network.beginRequest(request.getCommand(), session);
-              request.write(network.getChannelDataOutput(), session);
-            } finally {
-              network.endRequest();
-            }
-            T response = request.createResponse();
-            try {
-              ORemoteClient.beginResponse(network, session);
-              response.read(network.getChannelDataInput(), session);
-            } finally {
-              network.endResponse();
-            }
-            return response;
+        (network, session1, nodeSession) -> {
+          try {
+            ORemoteClient.writeRequest(
+                request, network.getChannelDataOutput(), session1, nodeSession);
+          } finally {
+            network.endRequest();
           }
+          T response = request.createResponse();
+          try {
+            ORemoteClient.beginResponse(network, nodeSession);
+            response.read(network.getChannelDataInput(), session1);
+          } finally {
+            network.endResponse();
+          }
+          return response;
         },
         errorMessage,
         session);
@@ -696,8 +692,9 @@ public class OrientDBRemote implements OrientDBInternal {
           if (serverUrl == null) throw e;
         }
       } while (network == null);
-
-      T res = operation.execute(network, session);
+      ORemoteClientNodeSession nodeSession =
+          session.getOrCreateServerSession(network.getServerURL());
+      T res = operation.execute(network, session, nodeSession);
       connectionManager.release(network);
       return res;
     } catch (Exception e) {
@@ -734,12 +731,10 @@ public class OrientDBRemote implements OrientDBInternal {
         OConnect37Request request = new OConnect37Request(username, foundPassword);
 
         networkAdminOperation(
-            (network, session) -> {
-              ORemoteClientNodeSession nodeSession =
-                  session.getOrCreateServerSession(network.getServerURL());
+            (network, session, nodeSession) -> {
               try {
-                network.beginRequest(request.getCommand(), session);
-                request.write(network.getChannelDataOutput(), session);
+                ORemoteClient.writeRequest(
+                    request, network.getChannelDataOutput(), session, nodeSession);
               } finally {
                 network.endRequest();
               }

@@ -11,6 +11,7 @@ import com.orientechnologies.orient.client.remote.message.OSubscribeRequest;
 import com.orientechnologies.orient.client.remote.message.OSubscribeResponse;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
 import java.io.IOException;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.SynchronousQueue;
@@ -125,10 +126,13 @@ public class ORemoteClientPushThread extends Thread {
     try {
       synchronized (this) {
         this.currentRequest = new OSubscribeRequest(request);
-        ((OChannelBinaryAsynchClient) network)
-            .beginRequest(OChannelBinaryProtocol.SUBSCRIBE_PUSH, session);
-        this.currentRequest.write(network.getChannelDataOutput(), null);
-        network.getChannelDataOutput().flush();
+        String serverURL = ((OChannelBinaryAsynchClient) network).getServerURL();
+        final ORemoteClientNodeSession nodeSession = session.getServerSession(serverURL);
+        OChannelDataOutput output = network.getChannelDataOutput();
+        if (nodeSession == null)
+          throw new OIOException("Invalid session for URL '" + serverURL + "'");
+        ORemoteClient.writeRequest(this.currentRequest, output, session, nodeSession);
+        output.flush();
       }
       Object poll = blockingQueue.poll(requestTimeout, TimeUnit.MILLISECONDS);
       if (poll == null) return null;

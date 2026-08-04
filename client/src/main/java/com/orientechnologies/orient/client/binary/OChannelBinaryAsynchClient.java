@@ -22,11 +22,8 @@ package com.orientechnologies.orient.client.binary;
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.exception.OSystemException;
-import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
-import com.orientechnologies.orient.client.remote.ORemoteClientNodeSession;
-import com.orientechnologies.orient.client.remote.ORemoteClientSession;
 import com.orientechnologies.orient.client.remote.message.OError37Response;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
@@ -252,7 +249,6 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
   }
 
   public void endRequest() throws IOException {
-    getChannelDataOutput().flush();
     releaseWriteLock();
   }
 
@@ -403,21 +399,6 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
               + exceptionType,
           null);
     }
-  }
-
-  public void beginRequest(final byte iCommand, final ORemoteClientSession session)
-      throws IOException {
-    final ORemoteClientNodeSession nodeSession = session.getServerSession(getServerURL());
-    beginRequest(iCommand, nodeSession);
-  }
-
-  public void beginRequest(byte iCommand, ORemoteClientNodeSession nodeSession) throws IOException {
-    if (nodeSession == null)
-      throw new OIOException("Invalid session for URL '" + getServerURL() + "'");
-
-    getChannelDataOutput().writeByte(iCommand);
-    getChannelDataOutput().writeInt(nodeSession.getSessionId());
-    getChannelDataOutput().writeBytes(nodeSession.getToken());
   }
 
   public int getSocketTimeout() {

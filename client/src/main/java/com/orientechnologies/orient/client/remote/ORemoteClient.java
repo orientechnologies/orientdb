@@ -151,6 +151,7 @@ import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
 import com.orientechnologies.orient.enterprise.channel.binary.ODistributedRedirectException;
 import com.orientechnologies.orient.enterprise.channel.binary.OTokenSecurityException;
 import java.io.IOException;
@@ -293,6 +294,19 @@ public class ORemoteClient implements OStorageInfo {
     return name;
   }
 
+  public static void writeRequest(
+      OBinaryRequest<?> request,
+      OChannelDataOutput output,
+      ORemoteClientSession session,
+      ORemoteClientNodeSession nodeSession)
+      throws IOException {
+    output.writeByte(request.getCommand());
+    output.writeInt(nodeSession.getSessionId());
+    output.writeBytes(nodeSession.getToken());
+    request.write(output, session);
+    output.flush();
+  }
+
   public <T extends OBinaryResponse> T networkOperationRetryTimeout(
       ORemoteClientSession baseSession,
       final OBinaryRequest<T> request,
@@ -301,11 +315,10 @@ public class ORemoteClient implements OStorageInfo {
       int timeout) {
     return baseNetworkOperation(
         baseSession,
-        (network, session) -> {
+        (network, session, nodeSession) -> {
           try {
             try {
-              network.beginRequest(request.getCommand(), session);
-              request.write(network.getChannelDataOutput(), session);
+              writeRequest(request, network.getChannelDataOutput(), session, nodeSession);
             } finally {
               network.endRequest();
             }
@@ -320,7 +333,7 @@ public class ORemoteClient implements OStorageInfo {
           T response = request.createResponse();
           try {
             if (timeout > 0) network.setSocketTimeout(timeout);
-            beginResponse(network, session);
+            beginResponse(network, nodeSession);
             response.read(network.getChannelDataInput(), session);
           } finally {
             endResponse(network);
@@ -385,10 +398,11 @@ public class ORemoteClient implements OStorageInfo {
             session.removeServerSession(nodeSession.getServerURL());
           }
           openRemoteDatabase(session, network);
+          nodeSession = session.getServerSession(network.getServerURL());
           if (!network.tryLock()) continue;
         }
 
-        return operation.execute(network, session);
+        return operation.execute(network, session, nodeSession);
       } catch (ONotSendRequestException e) {
         connectionManager.remove(network);
         serverUrl = null;
@@ -1511,20 +1525,6 @@ public class ORemoteClient implements OStorageInfo {
     return newUrl;
   }
 
-  /**
-   * Acquire a network channel from the pool. Don't lock the write stream since the connection usage
-   * is exclusive.
-   *
-   * @param iCommand id. Ids described at {@link OChannelBinaryProtocol}
-   * @return connection to server
-   */
-  public OChannelBinaryAsynchClient beginRequest(
-      final OChannelBinaryAsynchClient network, final byte iCommand, ORemoteClientSession session)
-      throws IOException {
-    network.beginRequest(iCommand, session);
-    return network;
-  }
-
   protected String getNextAvailableServerURL(
       boolean iIsConnectOperation, ORemoteClientSession session) {
 
@@ -1570,8 +1570,8 @@ public class ORemoteClient implements OStorageInfo {
   }
 
   public static void beginResponse(
-      OChannelBinaryAsynchClient iNetwork, ORemoteClientSession session) throws IOException {
-    ORemoteClientNodeSession nodeSession = session.getServerSession(iNetwork.getServerURL());
+      OChannelBinaryAsynchClient iNetwork, ORemoteClientNodeSession nodeSession)
+      throws IOException {
     byte[] newToken = iNetwork.beginResponse(nodeSession.getSessionId(), true);
     if (newToken != null && newToken.length > 0) {
       nodeSession.setSession(nodeSession.getSessionId(), newToken);
