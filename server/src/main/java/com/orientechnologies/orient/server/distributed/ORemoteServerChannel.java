@@ -19,6 +19,9 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.common.exception.OException;
+import com.orientechnologies.common.exception.OSystemException;
+import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.client.binary.OChannelBinarySynchClient;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.client.remote.message.ODistributedConnectRequest;
@@ -30,9 +33,18 @@ import com.orientechnologies.orient.core.metadata.security.binary.OBinaryTokenSe
 import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.enterprise.channel.OSocketFactory;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutput;
+import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolException;
+import com.orientechnologies.orient.enterprise.channel.binary.OResponseProcessingException;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.InvocationTargetException;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.RejectedExecutionException;
 
@@ -93,10 +105,13 @@ public class ORemoteServerChannel {
 
     this.executor = exec;
     factory = new OSocketFactory(contextConfig);
+  }
+
+  public void connect() {
     executor.execute(
         () -> {
           try {
-            connect();
+            sendConnect();
           } catch (IOException e) {
             handleNewError();
           }
@@ -112,9 +127,9 @@ public class ORemoteServerChannel {
         () -> {
           networkOperation(
               request.getCommand(),
-              () -> {
-                request.write(channel.getChannelDataOutput());
-                channel.getChannelDataOutput().flush();
+              (ch) -> {
+                request.write(ch.getChannelDataOutput());
+                ch.getChannelDataOutput().flush();
                 return null;
               },
               "Cannot send distributed request " + request.getClass(),
@@ -124,7 +139,7 @@ public class ORemoteServerChannel {
   }
 
   public interface ORemoteClientOperation<T> {
-    T execute() throws IOException;
+    T execute(OChannelBinarySynchClient channel) throws IOException;
   }
 
   public void checkReconnect() {
@@ -133,7 +148,7 @@ public class ORemoteServerChannel {
           retry <= MAX_RETRY && totalConsecutiveErrors < MAX_CONSECUTIVE_ERRORS;
           ++retry) {
         try {
-          connect();
+          sendConnect();
           totalConsecutiveErrors = 0;
           break;
         } catch (Exception e1) {
@@ -166,9 +181,9 @@ public class ORemoteServerChannel {
   public void sendMessage(final ONetworkMessage message) {
     executeNetworkOperation(
         OChannelBinaryProtocol.DISTRIBUTED_MESSAGE,
-        () -> {
-          message.serialize(channel.getDataOutput());
-          channel.getDataOutput().flush();
+        (ch) -> {
+          message.serialize(ch.getDataOutput());
+          ch.getDataOutput().flush();
           return null;
         },
         "Cannot send distributed request " + message.getClass());
@@ -177,9 +192,9 @@ public class ORemoteServerChannel {
   public void sendRequest(final ODistributedRequest request) {
     executeNetworkOperation(
         OChannelBinaryProtocol.DISTRIBUTED_REQUEST,
-        () -> {
-          request.toStream(channel.getDataOutput());
-          channel.getDataOutput().flush();
+        (ch) -> {
+          request.toStream(ch.getDataOutput());
+          ch.getDataOutput().flush();
           return null;
         },
         "Cannot send distributed request " + request.getClass());
@@ -187,9 +202,9 @@ public class ORemoteServerChannel {
 
   public void sendResponse(final ODistributedResponse response) {
     ORemoteClientOperation<Object> remoteOperation =
-        () -> {
-          response.toStream(channel.getDataOutput());
-          channel.getDataOutput().flush();
+        (ch) -> {
+          response.toStream(ch.getDataOutput());
+          ch.getDataOutput().flush();
           return null;
         };
     executeNetworkOperation(
@@ -201,7 +216,7 @@ public class ORemoteServerChannel {
             + response.getClass());
   }
 
-  public void connect() throws IOException {
+  public void sendConnect() throws IOException {
     networkClose();
     channel =
         new OChannelBinarySynchClient(
@@ -214,15 +229,15 @@ public class ORemoteServerChannel {
 
     networkOperation(
         OChannelBinaryProtocol.DISTRIBUTED_CONNECT,
-        () -> {
+        (ch) -> {
           ODistributedConnectRequest request =
               new ODistributedConnectRequest(protocolVersion, userName, userPassword);
-          request.write(channel.getChannelDataOutput());
-          channel.getChannelDataOutput().flush();
+          request.write(ch.getChannelDataOutput());
+          ch.getChannelDataOutput().flush();
 
-          channel.beginResponse(true);
+          readResponse(ch.getChannelDataInput(), ch.getSrvProtocolVersion());
           ODistributedConnectResponse response = request.createResponse();
-          response.read(channel.getChannelDataInput());
+          response.read(ch.getChannelDataInput());
           sessionId = response.getSessionId();
           if (response.getToken() != null) {
             sessionToken = response.getToken();
@@ -239,6 +254,17 @@ public class ORemoteServerChannel {
         false);
   }
 
+  protected byte[] readResponse(OChannelDataInput input, int srvProtocolVersion)
+      throws IOException {
+    byte currentStatus = input.readByte();
+    int currentSessionId = input.readInt();
+
+    byte[] tokenBytes = input.readBytes();
+    int opCode = input.readByte();
+    handleStatus(currentStatus, currentSessionId, input, srvProtocolVersion);
+    return tokenBytes;
+  }
+
   public void close() {
     networkClose();
   }
@@ -248,6 +274,15 @@ public class ORemoteServerChannel {
 
     sessionId = -1;
     sessionToken = null;
+  }
+
+  public void beginRequest(
+      OChannelDataOutput output, final byte iCommand, final int sessionId, final byte[] token)
+      throws IOException {
+
+    output.writeByte(iCommand);
+    output.writeInt(sessionId);
+    output.writeBytes(token);
   }
 
   protected synchronized <T> T networkOperation(
@@ -262,9 +297,9 @@ public class ORemoteServerChannel {
         ++retry) {
       try {
         channel.setWaitResponseTimeout();
-        channel.beginRequest(operationId, sessionId, sessionToken);
+        beginRequest(channel.getChannelDataOutput(), operationId, sessionId, sessionToken);
 
-        T result = operation.execute();
+        T result = operation.execute(channel);
 
         // RESET ERRORS
         totalConsecutiveErrors = 0;
@@ -292,7 +327,7 @@ public class ORemoteServerChannel {
         }
 
         try {
-          connect();
+          sendConnect();
 
           // RESET ERRORS
           totalConsecutiveErrors = 0;
@@ -338,5 +373,133 @@ public class ORemoteServerChannel {
             server);
       }
     }
+  }
+
+  protected static int handleStatus(
+      final byte iResult, final int iClientTxId, OChannelDataInput input, int srvProtocolVersion)
+      throws IOException {
+    if (iResult == OChannelBinaryProtocol.RESPONSE_STATUS_OK
+        || iResult == OChannelBinaryProtocol.PUSH_DATA) {
+      return iClientTxId;
+    } else if (iResult == OChannelBinaryProtocol.RESPONSE_STATUS_ERROR) {
+
+      final List<OPair<String, String>> exceptions = new ArrayList<OPair<String, String>>();
+
+      // EXCEPTION
+      while (input.readByte() == 1) {
+        final String excClassName = input.readString();
+        final String excMessage = input.readString();
+        exceptions.add(new OPair<String, String>(excClassName, excMessage));
+      }
+
+      byte[] serializedException = null;
+      if (srvProtocolVersion >= 19) serializedException = input.readBytes();
+
+      Exception previous = null;
+
+      if (serializedException != null && serializedException.length > 0)
+        throwSerializedException(serializedException);
+
+      for (int i = exceptions.size() - 1; i > -1; --i) {
+        previous =
+            createException(exceptions.get(i).getKey(), exceptions.get(i).getValue(), previous);
+      }
+
+      if (previous != null) {
+        throw new RuntimeException(previous);
+      } else throw new ONetworkProtocolException("Network response error");
+
+    } else {
+      // PROTOCOL ERROR
+      // close();
+      throw new ONetworkProtocolException("Error on reading response from the server");
+    }
+  }
+
+  protected static void throwSerializedException(final byte[] serializedException)
+      throws IOException {
+    final ByteArrayInputStream inputStream = new ByteArrayInputStream(serializedException);
+    final ObjectInputStream objectInputStream = new ObjectInputStream(inputStream);
+
+    Object throwable = null;
+    try {
+      throwable = objectInputStream.readObject();
+    } catch (ClassNotFoundException e) {
+      logger.error("Error during exception deserialization", e);
+      throw new IOException("Error during exception deserialization: " + e.toString(), e);
+    }
+
+    objectInputStream.close();
+
+    if (throwable instanceof OException) {
+      try {
+        final Class<? extends OException> cls = (Class<? extends OException>) throwable.getClass();
+        final Constructor<? extends OException> constructor;
+        constructor = cls.getConstructor(cls);
+        final OException proxyInstance = constructor.newInstance(throwable);
+
+        throw proxyInstance;
+
+      } catch (NoSuchMethodException e) {
+        logger.error("Error during exception deserialization", e);
+      } catch (InvocationTargetException e) {
+        logger.error("Error during exception deserialization", e);
+      } catch (InstantiationException e) {
+        logger.error("Error during exception deserialization", e);
+      } catch (IllegalAccessException e) {
+        logger.error("Error during exception deserialization", e);
+      }
+    }
+
+    if (throwable instanceof Throwable) {
+      throw new OResponseProcessingException(
+          "Exception during response processing", (Throwable) throwable);
+    } else {
+      // WRAP IT
+      String exceptionType = throwable != null ? throwable.getClass().getName() : "null";
+      logger.error(
+          "Error during exception serialization, serialized exception is not Throwable,"
+              + " exception type is %s",
+          null, exceptionType);
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  private static RuntimeException createException(
+      final String iClassName, final String iMessage, final Exception iPrevious) {
+    RuntimeException rootException = null;
+    Constructor<?> c = null;
+    try {
+      final Class<RuntimeException> excClass = (Class<RuntimeException>) Class.forName(iClassName);
+      if (iPrevious != null) {
+        try {
+          c = excClass.getConstructor(String.class, Throwable.class);
+        } catch (NoSuchMethodException e) {
+          c = excClass.getConstructor(String.class, Exception.class);
+        }
+      }
+
+      if (c == null) c = excClass.getConstructor(String.class);
+
+    } catch (Exception e) {
+      // UNABLE TO REPRODUCE THE SAME SERVER-SIZE EXCEPTION: THROW AN IO EXCEPTION
+      rootException = OException.wrapException(new OSystemException(iMessage), iPrevious);
+    }
+
+    if (c != null)
+      try {
+        final Exception cause;
+        if (c.getParameterTypes().length > 1)
+          cause = (Exception) c.newInstance(iMessage, iPrevious);
+        else cause = (Exception) c.newInstance(iMessage);
+
+        rootException =
+            OException.wrapException(new OSystemException("Data processing exception"), cause);
+      } catch (InstantiationException ignored) {
+      } catch (IllegalAccessException ignored) {
+      } catch (InvocationTargetException ignored) {
+      }
+
+    return rootException;
   }
 }

@@ -64,6 +64,7 @@ public class ORemoteServerController {
       var channel =
           new ORemoteServerChannel(
               check, local, remote, url, user, passwd, CURRENT_PROTOCOL_VERSION, executor);
+      channel.connect();
       requestChannels[i] = channel;
     }
 
@@ -72,6 +73,7 @@ public class ORemoteServerController {
       var channel =
           new ORemoteServerChannel(
               check, local, remote, url, user, passwd, CURRENT_PROTOCOL_VERSION, executor);
+      channel.connect();
       responseChannels[i] = channel;
     }
   }
