@@ -226,7 +226,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
         new ORemoteServerManager(nodeId, check, newNetIoExecutor(), groupIdPar, password);
     ODiscoverAction action = this.nodeState.initFromStore();
 
-    action.execute(this, null, newExectution(new OInitRetryOperation(action)));
+    action.execute(this, null, newExectution(new OInitRetryOperation(action), newRetryInfo(1, 0)));
 
     reconciliateState();
     this.nodeState.getOps().executeOnEnstablish(() -> execute(this::loadAllDatabases));
@@ -303,6 +303,11 @@ public class OrientDBDistributed extends OrientDBEmbedded
 
   private OStandardCompleteExecution newExectution(ORetryOperation operation) {
     ORetryInfo retryInfo = newRetryInfo();
+    return newExectution(operation, retryInfo);
+  }
+
+  protected OStandardCompleteExecution newExectution(
+      ORetryOperation operation, ORetryInfo retryInfo) {
     return new OStandardCompleteExecution(this, operation, retryInfo);
   }
 
@@ -732,8 +737,9 @@ public class OrientDBDistributed extends OrientDBEmbedded
     if (isDistributedDisabled()) {
       return;
     }
+
     for (var db : getNodeState().getDatabaseTopology().getDatabases()) {
-      setDatabaseState(db, getNodeId(), ODatabaseState.Offline);
+      setDatabaseStateNoRetry(db, getNodeId(), ODatabaseState.Offline);
     }
   }
 
@@ -802,7 +808,13 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   public Future<Optional<OAcceptResult>> retryOperation(ORetryOperation operation) {
-    OStandardCompleteExecution exec = newExectution(operation);
+    OStandardCompleteExecution exec = newExectution(operation, newRetryInfo());
+    execute(() -> operation.execute(this, exec, Optional.empty()));
+    return exec.getResult();
+  }
+
+  public Future<Optional<OAcceptResult>> noRetryOperation(ORetryOperation operation) {
+    OStandardCompleteExecution exec = newExectution(operation, newRetryInfo(1, 0));
     execute(() -> operation.execute(this, exec, Optional.empty()));
     return exec.getResult();
   }
@@ -818,6 +830,11 @@ public class OrientDBDistributed extends OrientDBEmbedded
   private Future<Optional<OAcceptResult>> setDatabaseState(
       ODatabaseId dbId, ONodeId node, ODatabaseState state) {
     return retryOperation(new OSetDatabaseStateRetryOperation(node, dbId, state));
+  }
+
+  private Future<Optional<OAcceptResult>> setDatabaseStateNoRetry(
+      ODatabaseId dbId, ONodeId node, ODatabaseState state) {
+    return noRetryOperation(new OSetDatabaseStateRetryOperation(node, dbId, state));
   }
 
   public ODatabaseState getDatabaseState(ODatabaseId dbId, ONodeId node) {
@@ -979,6 +996,10 @@ public class OrientDBDistributed extends OrientDBEmbedded
   public ORetryInfo newRetryInfo() {
     int retryCountDown = getIntConfig(OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY);
     int delay = getIntConfig(OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_AUTORETRY_DELAY);
+    return newRetryInfo(retryCountDown, delay);
+  }
+
+  public ORetryInfo newRetryInfo(int retryCountDown, int delay) {
     return new ORetryInfo(retryCountDown, delay);
   }
 

@@ -28,10 +28,10 @@ public class ORetryInfo {
   }
 
   public Optional<Integer> nextRetry() {
+    this.retryCount++;
     if (isFinished()) {
       return Optional.empty();
     } else {
-      this.retryCount++;
       int delay = random.nextInt(this.delay * retryCount);
       return Optional.of(delay);
     }
