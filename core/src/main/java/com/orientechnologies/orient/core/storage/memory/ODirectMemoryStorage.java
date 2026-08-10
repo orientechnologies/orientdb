@@ -342,7 +342,7 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
   }
 
   @Override
-  public void restore(
+  public boolean restore(
       final InputStream in,
       final Map<String, Object> options,
       final OCommandOutputListener iListener) {
@@ -366,9 +366,12 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
       final String charset = quarto.three;
       final Locale locale = quarto.four;
 
-      restoreFromBackup(charset, serverLocale, locale, contextConfiguration, aesKey, in);
-
-      postProcessIncrementalRestore(contextConfiguration);
+      boolean restored =
+          restoreFromBackup(charset, serverLocale, locale, contextConfiguration, aesKey, in);
+      if (restored) {
+        postProcessIncrementalRestore(contextConfiguration);
+      }
+      return restored;
     } catch (IOException e) {
       throw OException.wrapException(
           new OStorageException("Error during restore from incremental backup"), e);
@@ -431,7 +434,7 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
         });
   }
 
-  private void restoreFromBackup(
+  private boolean restoreFromBackup(
       final String charset,
       final Locale serverLocale,
       final Locale locale,
@@ -593,6 +596,7 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
           readCache.deleteFile(fileId, writeCache);
         }
       }
+      return !processedFiles.isEmpty();
 
     } finally {
       stateLock.writeLock().unlock();
@@ -600,7 +604,7 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
   }
 
   @Override
-  public void restoreNetwork(final InputStream in) {
+  public boolean restoreNetwork(final InputStream in) {
     try {
       throw new UnsupportedOperationException();
     } catch (final RuntimeException e) {

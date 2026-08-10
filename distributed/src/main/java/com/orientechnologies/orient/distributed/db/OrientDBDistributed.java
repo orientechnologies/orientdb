@@ -512,15 +512,25 @@ public class OrientDBDistributed extends OrientDBEmbedded
                 return createSharedContext(storage);
               });
       context.unload();
-      context.getStorage().restoreFullIncrementalBackup(backupStream);
-      ODatabaseDocumentEmbedded embedded;
-      synchronized (this) {
-        embedded = newSessionInstance(name, config);
+      boolean restored = context.getStorage().restoreFullIncrementalBackup(backupStream);
+      if (restored) {
+        ODatabaseDocumentEmbedded embedded;
+        synchronized (this) {
+          embedded = newSessionInstance(name, config);
+        }
+        context.reInit(context.getStorage(), embedded);
+        distributedSetOnline(context);
+        ODatabaseRecordThreadLocal.instance().remove();
+        return true;
+      } else {
+        synchronized (this) {
+          var ctx = sharedContexts.remove(name);
+          if (ctx != null) {
+            ctx.close();
+          }
+        }
+        return false;
       }
-      context.reInit(context.getStorage(), embedded);
-      distributedSetOnline(context);
-      ODatabaseRecordThreadLocal.instance().remove();
-      return true;
     } catch (OModificationOperationProhibitedException e) {
       throw e;
     } catch (Exception e) {

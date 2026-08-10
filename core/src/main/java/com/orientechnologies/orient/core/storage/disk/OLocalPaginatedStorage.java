@@ -331,10 +331,10 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   }
 
   @Override
-  public void restoreNetwork(InputStream in) {
+  public boolean restoreNetwork(InputStream in) {
     try {
       stateLock.writeLock().lock();
-      restore(in, null, null);
+      return restore(in, null, null);
     } catch (Exception e) {
       try {
         delete();
@@ -351,7 +351,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   }
 
   @Override
-  public final void restore(
+  public final boolean restore(
       final InputStream in,
       final Map<String, Object> options,
       final OCommandOutputListener iListener) {
@@ -381,7 +381,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
         }
         Files.createDirectories(Paths.get(storagePath.toString()));
         if (!OZIPCompressionUtil.uncompressDirectory(in, storagePath.toString(), iListener)) {
-          throw new OStorageException("Empty archive no files restored");
+          return false;
         }
 
         final File[] newStorageFiles = dbDir.listFiles();
@@ -410,6 +410,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
 
       open(new OContextConfiguration());
       atomicOperationsManager.executeInsideAtomicOperation(null, this::generateDatabaseInstanceId);
+      return true;
     } catch (final RuntimeException e) {
       throw logAndPrepareForRethrow(e);
     } catch (final Error e) {

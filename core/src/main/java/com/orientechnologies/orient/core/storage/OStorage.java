@@ -238,7 +238,7 @@ public interface OStorage extends OStorageInfo {
 
   void restoreFromIncrementalBackup(String filePath);
 
-  void restoreFullIncrementalBackup(InputStream stream) throws UnsupportedOperationException;
+  boolean restoreFullIncrementalBackup(InputStream stream) throws UnsupportedOperationException;
 
   /**
    * This method is called in {@link com.orientechnologies.orient.core.Orient#shutdown()} method.
@@ -439,8 +439,8 @@ public interface OStorage extends OStorageInfo {
    * @throws IOException
    * @see ODatabaseImport
    */
-  void restore(InputStream in, Map<String, Object> options, OCommandOutputListener iListener)
+  boolean restore(InputStream in, Map<String, Object> options, OCommandOutputListener iListener)
       throws IOException;
 
-  void restoreNetwork(InputStream in);
+  boolean restoreNetwork(InputStream in);
 }

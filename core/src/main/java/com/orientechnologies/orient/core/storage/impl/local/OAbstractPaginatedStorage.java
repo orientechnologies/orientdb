@@ -5208,7 +5208,7 @@ public abstract class OAbstractPaginatedStorage
   }
 
   @Override
-  public void restoreFullIncrementalBackup(final InputStream stream)
+  public boolean restoreFullIncrementalBackup(final InputStream stream)
       throws UnsupportedOperationException {
     stateLock.writeLock().lock();
     try {
@@ -5231,10 +5231,20 @@ public abstract class OAbstractPaginatedStorage
       final String charset = quarto.three;
       final Locale locale = quarto.four;
 
-      restoreFromIncrementalBackup(
-          charset, serverLocale, locale, contextConfiguration, aesKey, stream, true);
+      boolean restored =
+          restoreFromIncrementalBackup(
+              charset, serverLocale, locale, contextConfiguration, aesKey, stream, true);
 
-      postProcessIncrementalRestore(contextConfiguration);
+      if (restored) {
+        postProcessIncrementalRestore(contextConfiguration);
+      } else {
+        try {
+          delete();
+        } catch (Exception ed) {
+          logger.warn("Error while deleting storage %s on failed sync ", ed, name);
+        }
+      }
+      return restored;
     } catch (Exception e) {
       try {
         delete();
@@ -5257,7 +5267,7 @@ public abstract class OAbstractPaginatedStorage
   }
 
   @SuppressWarnings("unused")
-  protected void restoreFromIncrementalBackup(
+  protected boolean restoreFromIncrementalBackup(
       final String charset,
       final Locale serverLocale,
       final Locale locale,
@@ -5269,8 +5279,6 @@ public abstract class OAbstractPaginatedStorage
     stateLock.writeLock().lock();
     File walTempDir = null;
     try {
-
-      final List<String> currentFiles = new ArrayList<>(writeCache.files().keySet());
 
       final BufferedInputStream bufferedInputStream = new BufferedInputStream(inputStream);
       final ZipInputStream zipInputStream =
@@ -5291,6 +5299,7 @@ public abstract class OAbstractPaginatedStorage
           readCache.deleteFile(fileId, writeCache);
         }
       }
+      final List<String> currentFiles = new ArrayList<>(writeCache.files().keySet());
 
       walTempDir = createWalTempDirectory();
 
@@ -5456,6 +5465,8 @@ public abstract class OAbstractPaginatedStorage
       if (maxLsn != null && writeAheadLog != null) {
         writeAheadLog.moveLsnAfter(maxLsn);
       }
+
+      return !processedFiles.isEmpty();
 
     } finally {
       if (walTempDir != null) {
