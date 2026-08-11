@@ -1,8 +1,8 @@
 package com.orientechnologies.orient.distributed.context.coordination.dbs;
 
 import com.orientechnologies.orient.core.db.config.OAddNodeInfo;
-import com.orientechnologies.orient.core.transaction.ODatabaseId;
-import com.orientechnologies.orient.core.transaction.ONodeId;
+import com.orientechnologies.orient.core.id.ODatabaseId;
+import com.orientechnologies.orient.core.id.ONodeId;
 import com.orientechnologies.orient.core.transaction.ONodeRole;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.distributed.context.coordination.OVersion;

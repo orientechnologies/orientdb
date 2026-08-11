@@ -1,9 +1,9 @@
 package com.orientechnologies.orient.distributed;
 
 import com.orientechnologies.common.profiler.OProfilerEntrySnapshot;
+import com.orientechnologies.orient.core.id.ONodeId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.core.transaction.ONodeId;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;

@@ -3,8 +3,8 @@ package com.orientechnologies.orient.core.sql.executor;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.id.ONodeId;
 import com.orientechnologies.orient.core.sql.executor.stream.OExecutionStream;
-import com.orientechnologies.orient.core.transaction.ONodeId;
 
 /** Created by luigidellaquila on 08/05/17. */
 public class DistributedExecutionStep extends AbstractExecutionStep {

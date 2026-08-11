@@ -1,6 +1,6 @@
 package com.orientechnologies.orient.server.distributed.impl;
 
-import com.orientechnologies.orient.core.transaction.ONodeId;
+import com.orientechnologies.orient.core.id.ONodeId;
 import com.orientechnologies.orient.server.distributed.ODistributedResponseManager;
 import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPhase1TaskResult;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTransactionResultPayload;

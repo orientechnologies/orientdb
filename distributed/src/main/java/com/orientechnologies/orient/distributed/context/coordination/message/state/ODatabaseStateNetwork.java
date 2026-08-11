@@ -1,6 +1,6 @@
 package com.orientechnologies.orient.distributed.context.coordination.message.state;
 
-import com.orientechnologies.orient.core.transaction.ODatabaseId;
+import com.orientechnologies.orient.core.id.ODatabaseId;
 import com.orientechnologies.orient.distributed.context.coordination.OVersion;
 import java.io.DataInput;
 import java.io.DataOutput;

@@ -6,9 +6,9 @@ import static org.junit.Assert.assertTrue;
 
 import com.orientechnologies.common.profiler.OProfilerEntrySnapshot;
 import com.orientechnologies.orient.core.OConstants;
-import com.orientechnologies.orient.core.transaction.ODatabaseId;
-import com.orientechnologies.orient.core.transaction.OGroupId;
-import com.orientechnologies.orient.core.transaction.ONodeId;
+import com.orientechnologies.orient.core.id.ODatabaseId;
+import com.orientechnologies.orient.core.id.OGroupId;
+import com.orientechnologies.orient.core.id.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;

@@ -2,7 +2,7 @@ package com.orientechnologies.orient.distributed.context.coordination;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
-import com.orientechnologies.orient.core.transaction.ONodeId;
+import com.orientechnologies.orient.core.id.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.distributed.context.coordination.message.ODistributedMessage;

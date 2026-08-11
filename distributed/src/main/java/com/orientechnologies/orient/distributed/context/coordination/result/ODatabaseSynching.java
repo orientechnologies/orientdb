@@ -1,6 +1,6 @@
 package com.orientechnologies.orient.distributed.context.coordination.result;
 
-import com.orientechnologies.orient.core.transaction.ODatabaseId;
+import com.orientechnologies.orient.core.id.ODatabaseId;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;

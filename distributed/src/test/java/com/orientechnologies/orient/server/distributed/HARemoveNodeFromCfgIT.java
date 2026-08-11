@@ -18,7 +18,7 @@ package com.orientechnologies.orient.server.distributed;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
-import com.orientechnologies.orient.core.transaction.ONodeId;
+import com.orientechnologies.orient.core.id.ONodeId;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabaseState;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.setup.ServerRun;

@@ -3,7 +3,7 @@ package com.orientechnologies.orient.server.distributed;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.orientechnologies.orient.core.transaction.ONodeId;
+import com.orientechnologies.orient.core.id.ONodeId;
 import com.orientechnologies.orient.core.transaction.ONodeRole;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabasesTopology;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;

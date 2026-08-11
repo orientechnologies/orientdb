@@ -1,7 +1,7 @@
 package com.orientechnologies.orient.distributed;
 
 import com.orientechnologies.common.profiler.OProfilerEntrySnapshot;
-import com.orientechnologies.orient.core.transaction.ONodeId;
+import com.orientechnologies.orient.core.id.ONodeId;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;

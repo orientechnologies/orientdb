@@ -2,8 +2,8 @@ package com.orientechnologies.orient.distributed.context.coordination.sync;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOException;
-import com.orientechnologies.orient.core.transaction.ODatabaseId;
-import com.orientechnologies.orient.core.transaction.ONodeId;
+import com.orientechnologies.orient.core.id.ODatabaseId;
+import com.orientechnologies.orient.core.id.ONodeId;
 import com.orientechnologies.orient.distributed.context.coordination.message.OCanSyncAccept;
 import com.orientechnologies.orient.distributed.db.OReceiverInputStream;
 import com.orientechnologies.orient.server.distributed.OLoggerDistributed;

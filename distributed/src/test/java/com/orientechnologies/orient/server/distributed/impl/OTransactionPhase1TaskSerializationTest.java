@@ -2,10 +2,10 @@ package com.orientechnologies.orient.server.distributed.impl;
 
 import static org.junit.Assert.assertEquals;
 
+import com.orientechnologies.orient.core.id.ONodeId;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationContextImpl;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkDistributed;
-import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.server.distributed.impl.task.OTransactionPhase1Task;

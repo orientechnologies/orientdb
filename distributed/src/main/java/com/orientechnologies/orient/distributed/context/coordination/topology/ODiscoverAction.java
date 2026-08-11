@@ -1,7 +1,7 @@
 package com.orientechnologies.orient.distributed.context.coordination.topology;
 
-import com.orientechnologies.orient.core.transaction.OGroupId;
-import com.orientechnologies.orient.core.transaction.ONodeId;
+import com.orientechnologies.orient.core.id.OGroupId;
+import com.orientechnologies.orient.core.id.ONodeId;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OAddTopologyMember;
 import com.orientechnologies.orient.distributed.context.coordination.message.state.ONodeStateNetwork;
 import com.orientechnologies.orient.distributed.db.OCompleteExecution;

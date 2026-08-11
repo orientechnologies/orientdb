@@ -1,6 +1,6 @@
 package com.orientechnologies.agent.operation;
 
-import com.orientechnologies.orient.core.transaction.ONodeId;
+import com.orientechnologies.orient.core.id.ONodeId;
 
 public class OperationResponseFromNode {
   private ONodeId senderNodeId;

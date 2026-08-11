@@ -1,7 +1,7 @@
 package com.orientechnologies.orient.distributed.context.coordination.message.state;
 
-import com.orientechnologies.orient.core.transaction.OGroupId;
-import com.orientechnologies.orient.core.transaction.ONodeId;
+import com.orientechnologies.orient.core.id.OGroupId;
+import com.orientechnologies.orient.core.id.ONodeId;
 import com.orientechnologies.orient.distributed.context.coordination.OVersion;
 import com.orientechnologies.orient.distributed.context.coordination.topology.OTopologyState;
 import java.io.DataInput;

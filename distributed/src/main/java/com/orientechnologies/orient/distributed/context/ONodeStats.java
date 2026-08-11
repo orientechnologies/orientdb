@@ -1,6 +1,6 @@
 package com.orientechnologies.orient.distributed.context;
 
-import com.orientechnologies.orient.core.transaction.ONodeId;
+import com.orientechnologies.orient.core.id.ONodeId;
 import com.orientechnologies.orient.distributed.ONodeLatencies;
 import com.orientechnologies.orient.distributed.ONodeMessages;
 import java.util.List;

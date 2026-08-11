@@ -1,8 +1,8 @@
 package com.orientechnologies.orient.core.sql.executor;
 
+import com.orientechnologies.orient.core.id.ONodeId;
 import com.orientechnologies.orient.core.sql.parser.*;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.transaction.ONodeId;
 import java.util.Map;
 import java.util.Set;
 

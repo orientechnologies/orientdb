@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.transaction;
 
 import static org.junit.Assert.assertArrayEquals;
 
+import com.orientechnologies.orient.core.id.ONodeId;
 import org.junit.Test;
 
 public class OMimimumSequenceStatusTest {

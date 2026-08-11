@@ -1,8 +1,8 @@
 package com.orientechnologies.orient.distributed.context;
 
+import com.orientechnologies.orient.core.id.ONodeId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
-import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.core.transaction.ONodeRole;
 
 public record ODatabaseNodeStore(ONodeId id, ONodeRole role) {

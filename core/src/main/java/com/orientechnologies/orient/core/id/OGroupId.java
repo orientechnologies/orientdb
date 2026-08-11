@@ -1,22 +1,31 @@
-package com.orientechnologies.orient.core.transaction;
+package com.orientechnologies.orient.core.id;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
-import java.util.UUID;
 
-public class ODatabaseId {
+public class OGroupId {
 
   private final String id;
 
-  public ODatabaseId() {
-    this.id = UUID.randomUUID().toString();
+  public OGroupId(String id) {
+    super();
+    this.id = id;
   }
 
-  public ODatabaseId(String id) {
-    this.id = id;
+  public String getId() {
+    return id;
+  }
+
+  public static OGroupId readNetwork(DataInput input) throws IOException {
+    String id = input.readUTF();
+    return new OGroupId(id);
+  }
+
+  public void writeNetwork(DataOutput out) throws IOException {
+    out.writeUTF(id);
   }
 
   @Override
@@ -32,41 +41,28 @@ public class ODatabaseId {
     if (this == obj) return true;
     if (obj == null) return false;
     if (getClass() != obj.getClass()) return false;
-    ODatabaseId other = (ODatabaseId) obj;
+    OGroupId other = (OGroupId) obj;
     if (id == null) {
       if (other.id != null) return false;
     } else if (!id.equals(other.id)) return false;
     return true;
   }
 
-  public String getId() {
-    return id;
+  public ODocument toDocument() {
+    ODocument doc = new ODocument();
+    doc.setProperty("serializationVersion", 1);
+    doc.setProperty("groupId", id);
+    return doc;
+  }
+
+  public static OGroupId readResult(OResult e) {
+    assert (int) e.getProperty("serializationVersion") == 1;
+    String groupId = e.getProperty("groupId");
+    return new OGroupId(groupId);
   }
 
   @Override
   public String toString() {
-    return "Database(" + id + ")";
-  }
-
-  public static ODatabaseId readNetwork(DataInput input) throws IOException {
-    String node = input.readUTF();
-    return new ODatabaseId(node);
-  }
-
-  public void writeNetwork(DataOutput out) throws IOException {
-    out.writeUTF(id);
-  }
-
-  public ODocument toDocument() {
-    ODocument doc = new ODocument();
-    doc.setProperty("serializationVersion", 1);
-    doc.setProperty("id", id);
-    return doc;
-  }
-
-  public static ODatabaseId readResult(OResult e) {
-    assert (int) e.getProperty("serializationVersion") == 1;
-    String node = e.getProperty("id");
-    return new ODatabaseId(node);
+    return "Group(" + id + ")";
   }
 }

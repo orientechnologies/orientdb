@@ -1,7 +1,7 @@
 package com.orientechnologies.orient.distributed.context.coordination.sync;
 
-import com.orientechnologies.orient.core.transaction.ODatabaseId;
-import com.orientechnologies.orient.core.transaction.ONodeId;
+import com.orientechnologies.orient.core.id.ODatabaseId;
+import com.orientechnologies.orient.core.id.ONodeId;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.OCanSyncResult;
 import com.orientechnologies.orient.distributed.context.coordination.message.OCanSyncAccept;
 import java.util.Collections;

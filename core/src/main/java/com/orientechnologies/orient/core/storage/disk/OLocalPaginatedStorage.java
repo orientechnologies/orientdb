@@ -42,6 +42,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.OrientDBEmbedded;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.exception.OStorageException;
+import com.orientechnologies.orient.core.id.ODatabaseId;
 import com.orientechnologies.orient.core.index.engine.v1.OCellBTreeMultiValueIndexEngine;
 import com.orientechnologies.orient.core.storage.OChecksumMode;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
@@ -66,7 +67,6 @@ import com.orientechnologies.orient.core.storage.index.engine.OSBTreeIndexEngine
 import com.orientechnologies.orient.core.storage.index.versionmap.OVersionPositionMap;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OIndexRIDContainer;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManagerShared;
-import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;

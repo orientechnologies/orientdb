@@ -22,7 +22,7 @@ package com.orientechnologies.orient.server.distributed;
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ONetworkMessage;
-import com.orientechnologies.orient.core.transaction.ONodeId;
+import com.orientechnologies.orient.core.id.ONodeId;
 import java.util.concurrent.ExecutorService;
 
 /**

@@ -4,7 +4,7 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OAdminCommandContext;
 import com.orientechnologies.orient.core.db.config.OAddNodeInfo;
-import com.orientechnologies.orient.core.transaction.ONodeId;
+import com.orientechnologies.orient.core.id.ONodeId;
 import com.orientechnologies.orient.core.transaction.ONodeRole;
 import java.util.Map;
 

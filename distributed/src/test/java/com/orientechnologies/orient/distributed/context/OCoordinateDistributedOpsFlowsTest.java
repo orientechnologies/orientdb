@@ -5,7 +5,7 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import com.orientechnologies.orient.core.db.config.OAddNodeInfo;
-import com.orientechnologies.orient.core.transaction.ODatabaseId;
+import com.orientechnologies.orient.core.id.ODatabaseId;
 import com.orientechnologies.orient.core.transaction.ONodeRole;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabaseState;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.ODeclareDbMessage;

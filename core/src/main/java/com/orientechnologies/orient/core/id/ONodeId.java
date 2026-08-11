@@ -1,4 +1,4 @@
-package com.orientechnologies.orient.core.transaction;
+package com.orientechnologies.orient.core.id;
 
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;

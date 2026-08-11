@@ -1,7 +1,7 @@
 package com.orientechnologies.orient.distributed.context.retryable;
 
 import com.orientechnologies.orient.core.db.config.OAddNodeInfo;
-import com.orientechnologies.orient.core.transaction.ODatabaseId;
+import com.orientechnologies.orient.core.id.ODatabaseId;
 import com.orientechnologies.orient.distributed.context.coordination.OCoordinatedDistributedOps;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OAddDatabaseMembers;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;

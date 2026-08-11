@@ -1,6 +1,6 @@
 package com.orientechnologies.orient.server.distributed;
 
-import com.orientechnologies.orient.core.transaction.ONodeId;
+import com.orientechnologies.orient.core.id.ONodeId;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import java.util.Collection;
 import java.util.Set;

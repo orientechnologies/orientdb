@@ -1,8 +1,8 @@
 package com.orientechnologies.orient.server.distributed.impl;
 
+import com.orientechnologies.orient.core.id.ODatabaseId;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-import com.orientechnologies.orient.core.transaction.ODatabaseId;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;

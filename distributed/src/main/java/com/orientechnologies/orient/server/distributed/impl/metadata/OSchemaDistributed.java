@@ -2,13 +2,13 @@ package com.orientechnologies.orient.server.distributed.impl.metadata;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OSharedContext;
+import com.orientechnologies.orient.core.id.ONodeId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OIndexConfigProperty;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaEmbedded;
 import com.orientechnologies.orient.core.metadata.schema.OViewConfig;
 import com.orientechnologies.orient.core.metadata.schema.OViewIndexConfig;
-import com.orientechnologies.orient.core.transaction.ONodeId;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
 import java.util.List;

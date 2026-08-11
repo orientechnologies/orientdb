@@ -3,7 +3,7 @@ package com.orientechnologies.agent.operation;
 import com.orientechnologies.agent.cloud.processor.tasks.request.NewEnterpriseStatsTask;
 import com.orientechnologies.agent.cloud.processor.tasks.response.EnterpriseStatsResponse;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
-import com.orientechnologies.orient.core.transaction.ONodeId;
+import com.orientechnologies.orient.core.id.ONodeId;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;

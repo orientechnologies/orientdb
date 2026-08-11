@@ -1,6 +1,6 @@
 package com.orientechnologies.orient.distributed.context.coordination.topology;
 
-import com.orientechnologies.orient.core.transaction.ONodeId;
+import com.orientechnologies.orient.core.id.ONodeId;
 
 public interface OTopologyEvents {
 

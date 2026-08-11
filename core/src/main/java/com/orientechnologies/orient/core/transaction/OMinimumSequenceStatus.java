@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.transaction;
 
+import com.orientechnologies.orient.core.id.ONodeId;
 import java.util.HashMap;
 import java.util.Map;
 

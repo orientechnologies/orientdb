@@ -2,7 +2,7 @@ package com.orientechnologies.orient.core.storage;
 
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
-import com.orientechnologies.orient.core.transaction.ODatabaseId;
+import com.orientechnologies.orient.core.id.ODatabaseId;
 import java.nio.file.Path;
 
 public interface OStorageEngine {
