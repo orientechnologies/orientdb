@@ -40,7 +40,8 @@ public class OTopologyManager extends OWatcher implements OTopologyEvents, ONetw
   private volatile int minimumQuorum;
   private volatile int quorum = 0;
   private final OVersionPromise versionPromise;
-  private Map<ONodeId, ONodeInfo> nodesInfo = new HashMap<>();
+  private Map<ONodeId, ONodeInfo> membersInfo = new HashMap<>();
+  private Map<String, ONodeId> membersByName = new HashMap<>();
 
   public OTopologyManager(ONodeId current, OGroupId groupId, int minimumQuorum) {
     this.current = current;
@@ -63,7 +64,7 @@ public class OTopologyManager extends OWatcher implements OTopologyEvents, ONetw
   }
 
   protected boolean hasMember(ONodeId node) {
-    return members.contains(node);
+    return getMembers().contains(node);
   }
 
   private boolean canEstablish() {
@@ -87,35 +88,37 @@ public class OTopologyManager extends OWatcher implements OTopologyEvents, ONetw
   public synchronized void register(
       ONodeId toRegister, OVersion version, OTransactionIdPromise promise) {
     // TODO: verify promise and clean it, verification is not needed is just for solidity
-    if (!members.contains(toRegister)) {
-      var newMenbers = new HashSet<ONodeId>(members);
+    if (!getMembers().contains(toRegister)) {
+      var newMenbers = new HashSet<ONodeId>(getMembers());
       newMenbers.add(toRegister);
       this.members = Collections.unmodifiableSet(newMenbers);
-      int newQuorum = (members.size() / 2) + 1;
+      int newQuorum = (getMembers().size() / 2) + 1;
       if (newQuorum >= minimumQuorum) {
         this.quorum = newQuorum;
       }
-      this.nodesInfo.put(toRegister, new ONodeInfo());
+      this.membersInfo.put(toRegister, new ONodeInfo());
+      this.membersByName.put(toRegister.getNode(), toRegister);
     }
     this.versionPromise.accept(promise, version);
     this.notifyChange();
   }
 
   public synchronized boolean enoughNodes() {
-    return this.members.size() < this.minimumQuorum;
+    return getMembers().size() < this.minimumQuorum;
   }
 
   public synchronized void unregister(
       ONodeId node, OVersion version, OTransactionIdPromise promise) {
-    if (members.contains(node)) {
-      var newMenbers = new HashSet<ONodeId>(members);
+    if (getMembers().contains(node)) {
+      var newMenbers = new HashSet<ONodeId>(getMembers());
       newMenbers.remove(node);
       this.members = Collections.unmodifiableSet(newMenbers);
-      int newQuorum = (members.size() / 2) + 1;
+      int newQuorum = (getMembers().size() / 2) + 1;
       if (newQuorum >= minimumQuorum) {
         this.quorum = newQuorum;
       }
-      this.nodesInfo.remove(node);
+      this.membersInfo.remove(node);
+      this.membersByName.remove(node.getNode());
     }
     this.versionPromise.accept(promise, version);
     this.notifyChange();
@@ -142,7 +145,7 @@ public class OTopologyManager extends OWatcher implements OTopologyEvents, ONetw
     assert this.groupId.equals(groupId);
     this.state = OTopologyState.ESTABLISHED;
     setMember(candidates);
-    this.quorum = (members.size() / 2) + 1;
+    this.quorum = (getMembers().size() / 2) + 1;
     Set<ONodeId> allNodes = new HashSet<>(candidates);
     allNodes.addAll(this.candidates);
     this.candidates = new HashSet<>();
@@ -156,14 +159,19 @@ public class OTopologyManager extends OWatcher implements OTopologyEvents, ONetw
     logger.debugNode(current, "new network members %s ", this.members);
     Map<ONodeId, ONodeInfo> newNodesInfo = new HashMap<>();
     for (var member : members) {
-      var info = this.nodesInfo.get(member);
+      var info = this.membersInfo.get(member);
       if (info == null) {
         info = new ONodeInfo();
       }
       newNodesInfo.put(member, info);
     }
-    this.nodesInfo = newNodesInfo;
-    this.notifyChange();
+    this.membersInfo = newNodesInfo;
+
+    Map<String, ONodeId> newMemberName = new HashMap<>();
+    for (var member : members) {
+      newMemberName.put(member.getNode(), member);
+    }
+    this.membersByName = newMemberName;
   }
 
   public synchronized Optional<OAcceptResult> validateEstablish(
@@ -193,7 +201,7 @@ public class OTopologyManager extends OWatcher implements OTopologyEvents, ONetw
             this.quorum = externState.quorum();
             this.notifyChange();
             return new ODiscoverAction.OApplyStateAction();
-          } else if (this.quorum == 1 && this.members.size() == 1) {
+          } else if (this.quorum == 1 && getMembers().size() == 1) {
             this.setMember(externState.members());
             this.versionPromise.forceVersion(externState.version());
             this.quorum = externState.quorum();
@@ -209,7 +217,7 @@ public class OTopologyManager extends OWatcher implements OTopologyEvents, ONetw
             // Other outdated just notify self state
             return new ODiscoverAction.ONotifySelf(Set.of(node));
           }
-        } else if (merge && !members.contains(node)) {
+        } else if (merge && !getMembers().contains(node)) {
           return new OMergeNodeAction(node);
         } else if (this.quorum == 1) {
           /// Try to merge the state if possible
@@ -225,7 +233,7 @@ public class OTopologyManager extends OWatcher implements OTopologyEvents, ONetw
 
   public synchronized OTopologyStateNetwork getNetworkState() {
     return new OTopologyStateNetwork(
-        this.groupId, this.state, this.members, this.quorum, getVersion());
+        this.groupId, this.state, getMembers(), this.quorum, getVersion());
   }
 
   public synchronized void load(ONetworkTopologyStore nodeStateStore) {
@@ -237,7 +245,7 @@ public class OTopologyManager extends OWatcher implements OTopologyEvents, ONetw
   }
 
   public synchronized ONetworkTopologyStore getStore() {
-    return new ONetworkTopologyStore(groupId, state, this.members, quorum, getVersion());
+    return new ONetworkTopologyStore(groupId, state, getMembers(), quorum, getVersion());
   }
 
   public synchronized void cancelRegisterPromise(OTransactionIdPromise promise) {
@@ -284,7 +292,7 @@ public class OTopologyManager extends OWatcher implements OTopologyEvents, ONetw
   }
 
   public synchronized void ping(ONodeId node) {
-    var info = nodesInfo.get(node);
+    var info = membersInfo.get(node);
     if (info != null) {
       info.ping();
     } else {
@@ -294,7 +302,7 @@ public class OTopologyManager extends OWatcher implements OTopologyEvents, ONetw
 
   public synchronized Set<ONodeId> awayNodes(long time) {
     Set<ONodeId> nodes = new HashSet<>();
-    for (var entry : nodesInfo.entrySet()) {
+    for (var entry : membersInfo.entrySet()) {
       if (entry.getValue().awayMoreThan(time)) {
         nodes.add(entry.getKey());
       }
@@ -323,7 +331,7 @@ public class OTopologyManager extends OWatcher implements OTopologyEvents, ONetw
 
   public synchronized void applyMerge(
       OTopologyStateNetwork topology, OTransactionIdPromise promise) {
-    this.members = Collections.unmodifiableSet(topology.members());
+    setMember(topology.members());
     this.quorum = topology.quorum();
     this.versionPromise.forceVersion(topology.version());
     this.notifyChange();
@@ -336,20 +344,21 @@ public class OTopologyManager extends OWatcher implements OTopologyEvents, ONetw
 
   public synchronized boolean waitNodeJoined(ONodeId node, Optional<Long> timeout)
       throws InterruptedException {
-    return waitFor(timeout, () -> this.members.contains(node));
+    return waitFor(timeout, () -> getMembers().contains(node));
   }
 
   public void mergeNode(ONodeId node, OVersion version, OTransactionIdPromise promise) {
     // TODO: verify promise and clean it, verification is not needed is just for solidity
-    if (!members.contains(node)) {
-      var newMenbers = new HashSet<ONodeId>(members);
+    if (!getMembers().contains(node)) {
+      var newMenbers = new HashSet<ONodeId>(getMembers());
       newMenbers.add(node);
       this.members = Collections.unmodifiableSet(newMenbers);
-      int newQuorum = (members.size() / 2) + 1;
+      int newQuorum = (getMembers().size() / 2) + 1;
       if (newQuorum >= minimumQuorum) {
         this.quorum = newQuorum;
       }
-      this.nodesInfo.put(node, new ONodeInfo());
+      this.membersInfo.put(node, new ONodeInfo());
+      this.membersByName.put(node.getNode(), node);
     }
     this.versionPromise.forceVersion(version);
     this.notifyChange();
@@ -357,9 +366,9 @@ public class OTopologyManager extends OWatcher implements OTopologyEvents, ONetw
 
   public synchronized Optional<OAcceptResult> validateSetQuorum(
       int quorumToSet, OVersion version, OTransactionIdPromise promise) {
-    if (quorumToSet > members.size()) {
+    if (quorumToSet > getMembers().size()) {
       return Optional.of(new OQuormuTooBig());
-    } else if (quorumToSet < members.size() / 2) {
+    } else if (quorumToSet < getMembers().size() / 2) {
       return Optional.of(new OQuormuTooSmall());
     } else {
       return this.versionPromise.promise(promise, version);
@@ -375,5 +384,10 @@ public class OTopologyManager extends OWatcher implements OTopologyEvents, ONetw
 
   public void cancelSetQuorum(int quorumToSet, OVersion version, OTransactionIdPromise promise) {
     this.versionPromise.cancel(promise);
+  }
+
+  @Override
+  public Optional<ONodeId> getNodeId(String nodeName) {
+    return Optional.ofNullable(this.membersByName.get(nodeName));
   }
 }

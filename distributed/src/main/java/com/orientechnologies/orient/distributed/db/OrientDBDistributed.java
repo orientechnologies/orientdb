@@ -649,7 +649,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   public void receiveMessage(OStructuralMessage op) {
-    logger.debug("scheduling execution of received message %s", op);
+    logger.debugNode(getNodeId(), "scheduling execution of received message %s", op);
     this.execute(() -> op.execute(this));
   }
 
@@ -2088,5 +2088,17 @@ public class OrientDBDistributed extends OrientDBEmbedded
     } else {
       ODistributedDatabaseImpl.executeNoDb(req, this);
     }
+  }
+
+  @Override
+  public ONodeId getNodeId(String name) {
+    var node = getNodeState().getOps().getNetworkTopology().getNodeId(name);
+    return node.orElse(null);
+  }
+
+  @Override
+  public ONodeId resolveNodeId(String name) {
+    var node = getNodeState().getOps().getNetworkTopology().getNodeId(name);
+    return node.orElse(null);
   }
 }
