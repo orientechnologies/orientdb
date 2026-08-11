@@ -605,7 +605,7 @@ public abstract class OAbstractPaginatedStorage
                   uuid = UUID.randomUUID().toString();
                   configuration.setUuid(atomicOperation, uuid);
                 }
-                this.databaseId = new ODatabaseId(uuid);
+                this.databaseId = ODatabaseId.fromStored(name, uuid);
               });
 
           checkPageSizeAndRelatedParameters();

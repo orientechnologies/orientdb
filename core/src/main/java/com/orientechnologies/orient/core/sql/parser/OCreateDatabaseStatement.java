@@ -78,7 +78,13 @@ public class OCreateDatabaseStatement extends SimpleNode implements OAdminStatem
         }
         OCreateDatabaseParameters parameters = new OCreateDatabaseParameters(users, nodes, ctx);
         server.create(
-            dbName, null, null, dbType, new ODatabaseId(), configBuilder.build(), parameters);
+            dbName,
+            null,
+            null,
+            dbType,
+            ODatabaseId.newRandom(dbName),
+            configBuilder.build(),
+            parameters);
         result.setProperty("created", true);
       } catch (Exception e) {
         throw OException.wrapException(

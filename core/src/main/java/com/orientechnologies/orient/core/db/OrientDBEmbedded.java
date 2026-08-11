@@ -500,7 +500,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
   @Override
   public void create(
       String name, String user, String password, ODatabaseType type, OrientDBConfig config) {
-    create(name, user, password, type, new ODatabaseId(), config, null);
+    create(name, user, password, type, ODatabaseId.newRandom(name), config, null);
   }
 
   @Override
@@ -602,7 +602,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
         try {
           storage =
               getDefaultEngine()
-                  .createLocal(this, new ODatabaseId(), name, config.getConfigurations());
+                  .createLocal(this, ODatabaseId.newRandom(name), name, config.getConfigurations());
           embedded = internalCreate(config, storage);
         } catch (Exception e) {
           throw OException.wrapException(
@@ -634,7 +634,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
             k -> {
               var storage =
                   getDefaultEngine()
-                      .createForRestoreLocal(this, new ODatabaseId("mock"), k, config);
+                      .createForRestoreLocal(this, ODatabaseId.fromStored(name, "mock"), k, config);
               return createSharedContext(storage);
             });
     context.unload();

@@ -147,7 +147,7 @@ public class OCoordinateDistributedOpsMergeStateTest
 
     ONodeId nodeId1 = newRandomNodeId();
 
-    declareDatabase(ops, new ODatabaseId("testId"), "test");
+    declareDatabase(ops, ODatabaseId.newRandom("testId"), "test");
 
     OCoordinatedDistributedOps ops1 = quorum1Env(nodeId1, groupId);
     var state = ops.createMergedState(ops1.getNetworkState()).get();
@@ -174,7 +174,7 @@ public class OCoordinateDistributedOpsMergeStateTest
 
     ONodeId nodeId1 = newRandomNodeId();
 
-    ODatabaseId dbId = new ODatabaseId("testId");
+    ODatabaseId dbId = ODatabaseId.newRandom("testId");
     declareDatabase(ops, dbId, "test");
     setDatabaseState(ops, dbId, nodeId, ODatabaseState.Online);
 
@@ -203,7 +203,7 @@ public class OCoordinateDistributedOpsMergeStateTest
 
     ONodeId nodeId1 = newRandomNodeId();
 
-    ODatabaseId dbId = new ODatabaseId("testId");
+    ODatabaseId dbId = ODatabaseId.newRandom("testId");
     declareDatabase(ops, dbId, "test");
     setDatabaseState(ops, dbId, nodeId, ODatabaseState.Online);
 
@@ -231,11 +231,11 @@ public class OCoordinateDistributedOpsMergeStateTest
 
     ONodeId nodeId1 = newRandomNodeId();
 
-    ODatabaseId dbId = new ODatabaseId("testId");
+    ODatabaseId dbId = ODatabaseId.newRandom("testId");
     declareDatabase(ops, dbId, "test");
     setDatabaseState(ops, dbId, nodeId, ODatabaseState.Online);
 
-    ODatabaseId dbId1 = new ODatabaseId("testId1");
+    ODatabaseId dbId1 = ODatabaseId.newRandom("testId1");
     OCoordinatedDistributedOps ops1 = quorum1Env(nodeId1, groupId);
     declareDatabase(ops1, dbId1, "test");
     setDatabaseState(ops1, dbId1, nodeId1, ODatabaseState.Online);

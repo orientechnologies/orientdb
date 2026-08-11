@@ -175,7 +175,7 @@ public class OStorageEnginePaginatedLocal implements OStorageEngine {
       storage.open(config);
       return new RegisterResult(storage, false);
     } else {
-      storage.create(config, new ODatabaseId());
+      storage.create(config, ODatabaseId.newRandom(name));
       return new RegisterResult(storage, true);
     }
   }

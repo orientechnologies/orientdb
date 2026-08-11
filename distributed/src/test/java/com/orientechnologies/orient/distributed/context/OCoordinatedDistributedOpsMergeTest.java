@@ -521,7 +521,7 @@ public class OCoordinatedDistributedOpsMergeTest
 
     var declare = ops3.start(new TestAction(null));
     var declarePromise = declare.get().promise();
-    var dbId = new ODatabaseId("aaaa");
+    var dbId = ODatabaseId.newRandom("aaa");
     String databaseName = "abc";
     Set<OAddNodeInfo> parts = Set.of(new OAddNodeInfo(nodeId3, ONodeRole.Main));
     int minQuo = 1;

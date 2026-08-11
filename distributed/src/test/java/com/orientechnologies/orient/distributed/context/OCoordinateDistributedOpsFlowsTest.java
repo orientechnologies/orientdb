@@ -30,7 +30,7 @@ public class OCoordinateDistributedOpsFlowsTest {
     var node3 = flow.bootNode();
     var networkNodes = Set.of(node1, node2, node3);
     var pertecipants = networkNodes.stream().map(OAddNodeInfo::main).collect(Collectors.toSet());
-    ODatabaseId dbId = new ODatabaseId("test");
+    ODatabaseId dbId = ODatabaseId.newRandom("test");
     flow.execute(new ODeclareDbMessage("test", dbId, pertecipants, 2));
 
     var version = flow.getContexts().get(node1).getOps().nextDatabaseVersion(dbId);
@@ -50,7 +50,7 @@ public class OCoordinateDistributedOpsFlowsTest {
     var node3 = flow.bootNode();
     var networkNodes = Set.of(node1, node2, node3);
     var pertecipants = networkNodes.stream().map(OAddNodeInfo::main).collect(Collectors.toSet());
-    ODatabaseId dbId = new ODatabaseId("test");
+    ODatabaseId dbId = ODatabaseId.newRandom("test");
     flow.execute(new ODeclareDbMessage("test", dbId, pertecipants, 2));
 
     var version = flow.getContexts().get(node1).getOps().nextDatabaseVersion(dbId);
@@ -89,7 +89,7 @@ public class OCoordinateDistributedOpsFlowsTest {
     var node3 = flow.bootNode();
     var networkNodes = Set.of(node1, node2, node3);
     var pertecipants = networkNodes.stream().map(OAddNodeInfo::main).collect(Collectors.toSet());
-    ODatabaseId dbId = new ODatabaseId("test");
+    ODatabaseId dbId = ODatabaseId.newRandom("test");
     flow.execute(new ODeclareDbMessage("test", dbId, pertecipants, 2));
 
     var version = flow.getContexts().get(node1).getOps().nextDatabaseVersion(dbId);
@@ -110,7 +110,7 @@ public class OCoordinateDistributedOpsFlowsTest {
     var node3 = flow.bootNode();
     var networkNodes = Set.of(node1, node2, node3);
     var pertecipants = networkNodes.stream().map(OAddNodeInfo::main).collect(Collectors.toSet());
-    ODatabaseId dbId = new ODatabaseId("test");
+    ODatabaseId dbId = ODatabaseId.newRandom("test");
     flow.execute(new ODeclareDbMessage("test", dbId, pertecipants, 2));
 
     var version = flow.getContexts().get(node1).getOps().nextTopologyVersion();
@@ -131,7 +131,7 @@ public class OCoordinateDistributedOpsFlowsTest {
     var node3 = flow.bootNode();
     var networkNodes = Set.of(node1, node2, node3);
     var pertecipants = networkNodes.stream().map(OAddNodeInfo::main).collect(Collectors.toSet());
-    ODatabaseId dbId = new ODatabaseId("test");
+    ODatabaseId dbId = ODatabaseId.newRandom("test");
     flow.execute(new ODeclareDbMessage("test", dbId, pertecipants, 2));
 
     var version = flow.getContexts().get(node1).getOps().nextDatabaseVersion(dbId);
@@ -161,7 +161,7 @@ public class OCoordinateDistributedOpsFlowsTest {
     var node3 = flow.bootNode();
     var networkNodes = Set.of(node1, node2, node3);
     var pertecipants = networkNodes.stream().map(OAddNodeInfo::main).collect(Collectors.toSet());
-    ODatabaseId dbId = new ODatabaseId("test");
+    ODatabaseId dbId = ODatabaseId.newRandom("test");
     flow.execute(new ODeclareDbMessage("test", dbId, pertecipants, 2));
 
     var version = flow.getContexts().get(node1).getOps().nextDatabaseVersion(dbId);
@@ -182,7 +182,7 @@ public class OCoordinateDistributedOpsFlowsTest {
     var node3 = flow.bootNode();
     var networkNodes = Set.of(node1, node2, node3);
     var pertecipants = networkNodes.stream().map(OAddNodeInfo::main).collect(Collectors.toSet());
-    ODatabaseId dbId = new ODatabaseId("test");
+    ODatabaseId dbId = ODatabaseId.newRandom("test");
     flow.execute(new ODeclareDbMessage("test", dbId, pertecipants, 2));
 
     System.out.println("staaaaaarrrrrtttt");

@@ -37,7 +37,7 @@ public class ODatabasesTopologyStateTest implements ODatabaseStateChangeListener
   }
 
   private ODatabaseId newDbId() {
-    return new ODatabaseId(UUID.randomUUID().toString());
+    return ODatabaseId.newRandom("test");
   }
 
   private OTransactionIdPromise newPromiseId() {

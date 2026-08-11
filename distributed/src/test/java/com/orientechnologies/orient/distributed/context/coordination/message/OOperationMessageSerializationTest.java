@@ -57,7 +57,7 @@ public class OOperationMessageSerializationTest {
   }
 
   private ODatabaseId newDatabaseId() {
-    return new ODatabaseId("dbID");
+    return ODatabaseId.newRandom("dbID");
   }
 
   private <T extends OOperationMessage> T writeRead(T message) throws IOException {

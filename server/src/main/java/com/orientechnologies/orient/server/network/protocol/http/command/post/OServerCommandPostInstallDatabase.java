@@ -51,7 +51,7 @@ public class OServerCommandPostInstallDatabase extends OServerCommandAuthenticat
           conn.setDefaultUseCaches(false);
           server
               .getDatabases()
-              .networkRestore(name, new ODatabaseId("mock"), conn.getInputStream());
+              .networkRestore(name, ODatabaseId.fromStored(name, "mock"), conn.getInputStream());
           try (ODatabaseSession session = server.getDatabases().openNoAuthorization(name)) {}
 
           iResponse.send(

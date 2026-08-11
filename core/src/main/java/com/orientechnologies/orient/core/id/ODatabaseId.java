@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.core.id;
 
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import java.io.DataInput;
@@ -8,15 +9,26 @@ import java.io.IOException;
 import java.util.UUID;
 
 public class ODatabaseId {
-
+  private static final OLogger logger = OLogger.get(ODatabaseId.class);
+  private final String name;
   private final String id;
 
-  public ODatabaseId() {
+  private ODatabaseId(String name) {
+    this.name = name;
     this.id = UUID.randomUUID().toString();
   }
 
-  public ODatabaseId(String id) {
+  private ODatabaseId(String name, String id) {
+    this.name = name;
     this.id = id;
+  }
+
+  public static ODatabaseId newRandom(String name) {
+    return new ODatabaseId(name);
+  }
+
+  public static ODatabaseId fromStored(String name, String id) {
+    return new ODatabaseId(name, id);
   }
 
   @Override
@@ -45,28 +57,36 @@ public class ODatabaseId {
 
   @Override
   public String toString() {
-    return "Database(" + id + ")";
+    if (logger.isDebugEnabled()) {
+      return "[" + name + "|" + id + "]";
+    } else {
+      return "[" + name + "]";
+    }
   }
 
   public static ODatabaseId readNetwork(DataInput input) throws IOException {
     String node = input.readUTF();
-    return new ODatabaseId(node);
+    String name = input.readUTF();
+    return new ODatabaseId(name, node);
   }
 
   public void writeNetwork(DataOutput out) throws IOException {
     out.writeUTF(id);
+    out.writeUTF(name);
   }
 
   public ODocument toDocument() {
     ODocument doc = new ODocument();
     doc.setProperty("serializationVersion", 1);
     doc.setProperty("id", id);
+    doc.setProperty("name", name);
     return doc;
   }
 
   public static ODatabaseId readResult(OResult e) {
     assert (int) e.getProperty("serializationVersion") == 1;
     String node = e.getProperty("id");
-    return new ODatabaseId(node);
+    String name = e.getProperty("name");
+    return new ODatabaseId(name, node);
   }
 }

@@ -160,7 +160,7 @@ public class OCoordinatedDistributedOpsRetryTest
     var message =
         new ODeclareDbMessage(
             "db1",
-            new ODatabaseId(),
+            ODatabaseId.newRandom("db1"),
             members.stream().map(this::add).collect(Collectors.toSet()),
             2);
     Optional<OOperationStart> sarted = ops1.start(new TestAction());
