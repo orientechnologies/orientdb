@@ -47,4 +47,9 @@ public class OSyncRequest implements OStructuralMessage {
   public OSyncMode getMode() {
     return mode;
   }
+
+  @Override
+  public String toString() {
+    return "Sync Request " + syncId + " -> " + mode + "";
+  }
 }

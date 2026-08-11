@@ -53,4 +53,9 @@ public class OCanSync implements OStructuralMessage {
   public OCanSyncAccept getCanSync() {
     return canSync;
   }
+
+  @Override
+  public String toString() {
+    return "Can Sync " + syncId + " from=" + sender + ", canSync=" + canSync + "]";
+  }
 }

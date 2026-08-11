@@ -45,4 +45,9 @@ public class OStartSync implements OStructuralMessage {
   public OSyncId getSyncId() {
     return syncId;
   }
+
+  @Override
+  public String toString() {
+    return "Start Sync " + syncId + " -> " + mode + "";
+  }
 }

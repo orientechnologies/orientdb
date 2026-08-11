@@ -69,4 +69,17 @@ public class OSyncData implements OStructuralMessage {
   public long getSequential() {
     return sequential;
   }
+
+  @Override
+  public String toString() {
+    return "Sync Data "
+        + syncId
+        + " size="
+        + data.length
+        + ", finished="
+        + finished
+        + ", sequential="
+        + sequential
+        + "";
+  }
 }

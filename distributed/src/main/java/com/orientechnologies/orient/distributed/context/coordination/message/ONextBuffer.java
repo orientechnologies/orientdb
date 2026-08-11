@@ -45,4 +45,9 @@ public class ONextBuffer implements OStructuralMessage {
   public OSyncId getSyncId() {
     return syncId;
   }
+
+  @Override
+  public String toString() {
+    return "Next Buffer " + syncId + " close=" + close;
+  }
 }

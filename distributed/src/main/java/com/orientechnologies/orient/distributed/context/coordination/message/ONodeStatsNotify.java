@@ -123,4 +123,25 @@ public class ONodeStatsNotify implements OStructuralMessage {
   public List<ONodeMessages> getNodesMessages() {
     return nodesMessages;
   }
+
+  @Override
+  public String toString() {
+    return "ONodeStatsNotify [nodeId="
+        + nodeId
+        + ", bootTime="
+        + bootTime
+        + ", maxMem="
+        + maxMem
+        + ", totMem="
+        + totMem
+        + ", freeMem="
+        + freeMem
+        + ", usedMem="
+        + usedMem
+        + ", nodesLatencies="
+        + nodesLatencies
+        + ", nodesMessages="
+        + nodesMessages
+        + "]";
+  }
 }
