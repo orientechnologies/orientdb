@@ -1,8 +1,6 @@
 package com.orientechnologies.orient.distributed.context.coordination.message;
 
-import com.orientechnologies.orient.core.id.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
-import com.orientechnologies.orient.distributed.context.ONodeState;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OOperationContext;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OOperationMessage;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
@@ -23,14 +21,15 @@ public class OProposeOp implements OStructuralMessage, ODistributedMessage {
 
   @Override
   public void execute(OrientDBDistributed ctx) {
-    ONodeState nodeState = ctx.getNodeState();
-    ONodeId coordinator = promise.getCoordinator();
-    Optional<OAcceptResult> result = nodeState.receive(this, ctx);
+    var result = ctx.propose(this);
+
+    var coordinator = promise.getCoordinator();
+    var current = ctx.getNodeId();
     if (result.isEmpty()) {
-      var success = new OSuccessPropose(nodeState.getNodeId(), promise);
+      var success = new OSuccessPropose(current, promise);
       ctx.sendMessage(coordinator, success);
     } else {
-      var failure = new OFailPropose(nodeState.getNodeId(), promise, result.get());
+      var failure = new OFailPropose(current, promise, result.get());
       ctx.sendMessage(coordinator, failure);
     }
   }

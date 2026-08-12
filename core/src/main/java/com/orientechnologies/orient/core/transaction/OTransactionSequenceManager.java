@@ -104,8 +104,6 @@ public class OTransactionSequenceManager {
     } else {
       long nextSequantial = this.sequentials[transactionId.getPosition()] + 1;
       if (nextSequantial == transactionId.getSequence()) {
-        // Not promised but valid, accept it
-        this.sequentials[transactionId.getPosition()] = transactionId.getSequence();
         return SuccessResult.VALID_MISSING;
       } else if (nextSequantial > transactionId.getSequence()) {
         return SuccessResult.ALREADY_PRESENT;

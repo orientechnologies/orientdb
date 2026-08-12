@@ -15,16 +15,19 @@ import com.orientechnologies.orient.distributed.context.coordination.log.ODistri
 import com.orientechnologies.orient.distributed.context.coordination.log.ODistributedMessageLogMemory;
 import com.orientechnologies.orient.distributed.context.coordination.message.OConfirmedRetryOp;
 import com.orientechnologies.orient.distributed.context.coordination.message.ODistributedMessage;
+import com.orientechnologies.orient.distributed.context.coordination.message.operation.OOperationContext;
 import com.orientechnologies.orient.distributed.context.coordination.message.state.ONodeStateNetwork;
 import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
 import com.orientechnologies.orient.distributed.context.coordination.topology.ODiscoverAction;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
+import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.CountDownLatch;
 
 public class ONodeState {
+  private static final OLoggerDistributed logger = OLoggerDistributed.logger(ONodeState.class);
 
   private final ODistributedMessageLog log;
   private final OCoordinatedDistributedOps coordinated;
@@ -67,7 +70,7 @@ public class ONodeState {
     this.coordinated.nodeFailure(node, promise, acceptResult);
   }
 
-  public Optional<OAcceptResult> receive(ODistributedMessage message, OrientDBDistributed ctx) {
+  public Optional<OAcceptResult> propose(ODistributedMessage message, OOperationContext ctx) {
     var result = this.coordinated.receive(message);
     if (result.isEmpty()) {
       Optional<OAcceptResult> res = message.getOp().validate(ctx, message.getPromiseId());
@@ -79,6 +82,28 @@ public class ONodeState {
       return res;
     } else {
       return result;
+    }
+  }
+
+  public void confirm(OTransactionIdPromise promise, OOperationContext ctx) {
+    // The success of this operation may means the otherPromised of another
+    // promised operation in case the current node was out of consent
+    // it probably happen only once, but not locked so potentially can be multiple
+    // promise otherPromised even though unlikely, looping anyway
+    boolean complete;
+    do {
+      var confirmResult = getOps().consensusSuccess(promise);
+      complete = confirmResult.apply(ctx);
+      if (!complete) {
+        logger.debug("retry commit for %s", confirmResult);
+      }
+    } while (!complete);
+  }
+
+  public void cancel(OTransactionIdPromise promise, OOperationContext ctx) {
+    Optional<ODistributedMessage> operation = this.coordinated.consensusFailure(promise);
+    if (operation.isPresent()) {
+      operation.get().cancel(ctx);
     }
   }
 

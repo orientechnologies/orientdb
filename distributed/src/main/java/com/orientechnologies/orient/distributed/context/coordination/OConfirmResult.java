@@ -31,7 +31,7 @@ public sealed interface OConfirmResult
     @Override
     public boolean apply(OOperationContext ctx) {
       if (toApply != null) {
-        var prom = toApply.validate(ctx);
+        var prom = ctx.propose(toApply);
         // If there is an error
         if (prom.isEmpty()) {
           toApply.apply(ctx);

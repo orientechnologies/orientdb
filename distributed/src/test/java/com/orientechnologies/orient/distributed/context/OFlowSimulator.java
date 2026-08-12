@@ -12,7 +12,6 @@ import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import com.orientechnologies.orient.distributed.context.coordination.OCoordinatedDistributedOpsImpl;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabaseState;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabaseStateChangeListener;
-import com.orientechnologies.orient.distributed.context.coordination.message.OConfirmOp;
 import com.orientechnologies.orient.distributed.context.coordination.message.ODistributedMessage;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OAddTopologyMember;
 import com.orientechnologies.orient.distributed.context.coordination.message.operation.OEstablishTopology;
@@ -261,7 +260,7 @@ public class OFlowSimulator implements ODatabaseStateChangeListener, ONodeStateU
       ODistributedMessage message, Collection<ONodeId> partecipatingNodes) {
     for (var nodeTo : partecipatingNodes) {
       var context = contexts.get(nodeTo);
-      OConfirmOp.executeConfirm(context, message.getPromiseId());
+      context.confirm(message.getPromiseId());
     }
   }
 

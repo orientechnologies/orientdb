@@ -162,6 +162,6 @@ public class OResponseCollectorMerge implements OResponseCollector {
   @Override
   public String toString() {
     return MessageFormat.format(
-        "{0} merge:{1} results {2}", action, mergeSuccess ? true : mergeFailure, resultMap);
+        "results {2} action {0} merge:{1} ", action, mergeSuccess ? true : mergeFailure, resultMap);
   }
 }

@@ -7,7 +7,10 @@ import com.orientechnologies.orient.core.id.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.distributed.context.coordination.OCoordinatedDistributedOps;
 import com.orientechnologies.orient.distributed.context.coordination.OVersion;
+import com.orientechnologies.orient.distributed.context.coordination.message.ODistributedMessage;
 import com.orientechnologies.orient.distributed.context.coordination.message.state.ONodeStateNetwork;
+import com.orientechnologies.orient.distributed.context.coordination.result.OAcceptResult;
+import java.util.Optional;
 import java.util.Set;
 
 public interface OOperationContext {
@@ -36,4 +39,10 @@ public interface OOperationContext {
   void recoordinateOperation(OTransactionIdPromise promise, OOperationMessage op);
 
   void apllied(OTransactionIdPromise promise);
+
+  Optional<OAcceptResult> propose(ODistributedMessage message);
+
+  void confirm(OTransactionIdPromise promise);
+
+  void cancel(OTransactionIdPromise promise);
 }

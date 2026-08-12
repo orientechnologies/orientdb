@@ -54,6 +54,7 @@ import com.orientechnologies.orient.distributed.context.coordination.message.OCa
 import com.orientechnologies.orient.distributed.context.coordination.message.OCanSyncAccept;
 import com.orientechnologies.orient.distributed.context.coordination.message.OConfirmedOps;
 import com.orientechnologies.orient.distributed.context.coordination.message.OConfirmedRetryOp;
+import com.orientechnologies.orient.distributed.context.coordination.message.ODistributedMessage;
 import com.orientechnologies.orient.distributed.context.coordination.message.OMergeRequest;
 import com.orientechnologies.orient.distributed.context.coordination.message.OMergeResult;
 import com.orientechnologies.orient.distributed.context.coordination.message.ONextBuffer;
@@ -2100,5 +2101,20 @@ public class OrientDBDistributed extends OrientDBEmbedded
   public ONodeId resolveNodeId(String name) {
     var node = getNodeState().getOps().getNetworkTopology().getNodeId(name);
     return node.orElse(null);
+  }
+
+  @Override
+  public Optional<OAcceptResult> propose(ODistributedMessage message) {
+    return getNodeState().propose(message, this);
+  }
+
+  @Override
+  public void confirm(OTransactionIdPromise promise) {
+    getNodeState().confirm(promise, this);
+  }
+
+  @Override
+  public void cancel(OTransactionIdPromise promise) {
+    getNodeState().cancel(promise, this);
   }
 }
