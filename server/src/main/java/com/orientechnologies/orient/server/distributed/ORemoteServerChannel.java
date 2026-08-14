@@ -223,7 +223,6 @@ public class ORemoteServerChannel {
             factory,
             remoteHost,
             remotePort,
-            null,
             contextConfig,
             OChannelBinaryProtocol.CURRENT_PROTOCOL_VERSION);
 

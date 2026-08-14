@@ -26,7 +26,6 @@ import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.enterprise.channel.OSocketFactory;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary.WrapStreams;
 import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolException;
 import java.io.IOException;
 import java.net.Inet6Address;
@@ -34,6 +33,7 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.net.SocketException;
+import java.net.SocketTimeoutException;
 
 /** Synchronous implementation of binary channel. */
 public class OChannelBinarySynchClient extends OChannelBinary {
@@ -41,21 +41,17 @@ public class OChannelBinarySynchClient extends OChannelBinary {
       OLogManager.instance().logger(OChannelBinarySynchClient.class);
   protected final int socketTimeout; // IN MS
   protected final short srvProtocolVersion;
-  protected String serverURL;
 
   public OChannelBinarySynchClient(
       OSocketFactory factory,
       final String remoteHost,
       final int remotePort,
-      final String iDatabaseName,
       final OContextConfiguration iConfig,
       final int protocolVersion)
       throws IOException {
     super(factory.createSocket(), iConfig);
     try {
 
-      serverURL = remoteHost + ":" + remotePort;
-      if (iDatabaseName != null) serverURL += "/" + iDatabaseName;
       socketTimeout = iConfig.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_TIMEOUT);
 
       try {
@@ -63,14 +59,13 @@ public class OChannelBinarySynchClient extends OChannelBinary {
           // IPV6
           final InetAddress[] addresses = Inet6Address.getAllByName(remoteHost);
           socket.connect(new InetSocketAddress(addresses[0], remotePort), socketTimeout);
-
         } else {
           // IPV4
           socket.connect(new InetSocketAddress(remoteHost, remotePort), socketTimeout);
         }
         setReadResponseTimeout();
         connected();
-      } catch (java.net.SocketTimeoutException e) {
+      } catch (SocketTimeoutException e) {
         throw new IOException(
             "Cannot connect to host "
                 + remoteHost
@@ -135,10 +130,6 @@ public class OChannelBinarySynchClient extends OChannelBinary {
   /** Gets the major supported protocol version */
   public short getSrvProtocolVersion() {
     return srvProtocolVersion;
-  }
-
-  public String getServerURL() {
-    return serverURL;
   }
 
   public boolean tryLock() {
