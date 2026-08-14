@@ -26,13 +26,8 @@ import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.enterprise.channel.OSocketFactory;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInputBinary;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutputBinary;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary.WrapStreams;
 import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolException;
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Inet6Address;
 import java.net.InetAddress;
@@ -87,25 +82,7 @@ public class OChannelBinarySynchClient extends OChannelBinary {
             e);
       }
       try {
-        if (socketBufferSize > 0) {
-          inStream = new BufferedInputStream(socket.getInputStream(), socketBufferSize);
-          outStream = new BufferedOutputStream(socket.getOutputStream(), socketBufferSize);
-        } else {
-          inStream = new BufferedInputStream(socket.getInputStream());
-          outStream = new BufferedOutputStream(socket.getOutputStream());
-        }
-
-        in = new DataInputStream(inStream);
-        out = new DataOutputStream(outStream);
-        inChannel =
-            new OChannelDataInputBinary(in, this.maxChunkSize, this::updateMetricReceivedBytes);
-        outChannel =
-            new OChannelDataOutputBinary(
-                out,
-                this.maxChunkSize,
-                this::updateMetricTransmittedBytes,
-                this::updateMetricFlushes);
-        initDebug();
+        initChannels(WrapStreams.Wrapped::new);
         srvProtocolVersion = getChannelDataInput().readShort();
       } catch (IOException e) {
         throw OException.wrapException(
@@ -129,26 +106,6 @@ public class OChannelBinarySynchClient extends OChannelBinary {
       if (socket.isConnected()) socket.close();
       throw e;
     }
-  }
-
-  @Override
-  public void wrapStreams(WrapStreams stre) throws IOException {
-    var wrapped = stre.wrap(socket.getInputStream(), socket.getOutputStream());
-    if (socketBufferSize > 0) {
-      inStream = new BufferedInputStream(wrapped.input(), socketBufferSize);
-      outStream = new BufferedOutputStream(wrapped.output(), socketBufferSize);
-    } else {
-      inStream = new BufferedInputStream(wrapped.input());
-      outStream = new BufferedOutputStream(wrapped.output());
-    }
-
-    in = new DataInputStream(inStream);
-    out = new DataOutputStream(outStream);
-    inChannel = new OChannelDataInputBinary(in, this.maxChunkSize, this::updateMetricReceivedBytes);
-    outChannel =
-        new OChannelDataOutputBinary(
-            out, this.maxChunkSize, this::updateMetricTransmittedBytes, this::updateMetricFlushes);
-    initDebug();
   }
 
   @Override

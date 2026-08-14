@@ -29,13 +29,7 @@ import com.orientechnologies.orient.enterprise.channel.OSocketFactory;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInput;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInputBinary;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutputBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolException;
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Socket;
@@ -71,35 +65,11 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
         throw new IOException("Cannot connect to host " + remoteHost + ":" + remotePort, e);
       }
       try {
-        if (socketBufferSize > 0) {
-          inStream = new BufferedInputStream(socket.getInputStream(), socketBufferSize);
-          outStream = new BufferedOutputStream(socket.getOutputStream(), socketBufferSize);
-        } else {
-          inStream = new BufferedInputStream(socket.getInputStream());
-          outStream = new BufferedOutputStream(socket.getOutputStream());
-        }
-
-        in = new DataInputStream(inStream);
-        out = new DataOutputStream(outStream);
-        inChannel =
-            new OChannelDataInputBinary(in, this.maxChunkSize, this::updateMetricReceivedBytes);
-        outChannel =
-            new OChannelDataOutputBinary(
-                out,
-                this.maxChunkSize,
-                this::updateMetricTransmittedBytes,
-                this::updateMetricFlushes);
-        initDebug();
+        initChannels(WrapStreams.Wrapped::new);
 
         srvProtocolVersion = inChannel.readShort();
 
-        outChannel.writeByte(OChannelBinaryProtocol.REQUEST_HANDSHAKE);
-        outChannel.writeShort((short) iProtocolVersion);
-        outChannel.writeString("Java Client");
-        outChannel.writeString(OConstants.getVersion());
-        outChannel.writeByte(OChannelBinaryProtocol.ENCODING_DEFAULT);
-        outChannel.writeByte(OChannelBinaryProtocol.ERROR_MESSAGE_JAVA);
-        outChannel.flush();
+        sendHandshake(iProtocolVersion);
       } catch (IOException e) {
         throw new ONetworkProtocolException(
             "Cannot read protocol version from remote server "
@@ -122,24 +92,14 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
     }
   }
 
-  @Override
-  public void wrapStreams(WrapStreams stre) throws IOException {
-    var wrapped = stre.wrap(socket.getInputStream(), socket.getOutputStream());
-    if (socketBufferSize > 0) {
-      inStream = new BufferedInputStream(wrapped.input(), socketBufferSize);
-      outStream = new BufferedOutputStream(wrapped.output(), socketBufferSize);
-    } else {
-      inStream = new BufferedInputStream(wrapped.input());
-      outStream = new BufferedOutputStream(wrapped.output());
-    }
-
-    in = new DataInputStream(inStream);
-    out = new DataOutputStream(outStream);
-    inChannel = new OChannelDataInputBinary(in, this.maxChunkSize, this::updateMetricReceivedBytes);
-    outChannel =
-        new OChannelDataOutputBinary(
-            out, this.maxChunkSize, this::updateMetricTransmittedBytes, this::updateMetricFlushes);
-    initDebug();
+  protected void sendHandshake(int iProtocolVersion) throws IOException {
+    outChannel.writeByte(OChannelBinaryProtocol.REQUEST_HANDSHAKE);
+    outChannel.writeShort((short) iProtocolVersion);
+    outChannel.writeString("Java Client");
+    outChannel.writeString(OConstants.getVersion());
+    outChannel.writeByte(OChannelBinaryProtocol.ENCODING_DEFAULT);
+    outChannel.writeByte(OChannelBinaryProtocol.ERROR_MESSAGE_JAVA);
+    outChannel.flush();
   }
 
   public byte waitResponse() throws IOException, SocketException {

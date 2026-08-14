@@ -2,7 +2,6 @@ package com.orientechnologies.orient.server.network;
 
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
-import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary.WrapStreams;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataInputBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelDataOutputBinary;
 import java.io.DataInputStream;
@@ -27,10 +26,5 @@ public class MockPipeChannel extends OChannelBinary {
             this.maxChunkSize,
             this::updateMetricTransmittedBytes,
             this::updateMetricFlushes);
-  }
-
-  @Override
-  public void wrapStreams(WrapStreams stre) throws IOException {
-    throw new UnsupportedOperationException();
   }
 }

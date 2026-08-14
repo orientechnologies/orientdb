@@ -21,10 +21,6 @@
 package com.orientechnologies.orient.enterprise.channel.binary;
 
 import com.orientechnologies.orient.core.config.OContextConfiguration;
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.DataInputStream;
-import java.io.DataOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 
@@ -34,43 +30,7 @@ public class OChannelBinaryServer extends OChannelBinary {
       throws IOException {
     super(iSocket, iConfig);
 
-    if (socketBufferSize > 0) {
-      inStream = new BufferedInputStream(socket.getInputStream(), socketBufferSize);
-      outStream = new BufferedOutputStream(socket.getOutputStream(), socketBufferSize);
-    } else {
-      inStream = new BufferedInputStream(socket.getInputStream());
-      outStream = new BufferedOutputStream(socket.getOutputStream());
-    }
-
-    out = new DataOutputStream(outStream);
-    in = new DataInputStream(inStream);
-    inChannel = new OChannelDataInputBinary(in, this.maxChunkSize, this::updateMetricReceivedBytes);
-    outChannel =
-        new OChannelDataOutputBinary(
-            out, this.maxChunkSize, this::updateMetricTransmittedBytes, this::updateMetricFlushes);
-
-    initDebug();
+    initChannels(WrapStreams.Wrapped::new);
     connected();
-  }
-
-  @Override
-  public void wrapStreams(WrapStreams stre) throws IOException {
-    var wrapped = stre.wrap(socket.getInputStream(), socket.getOutputStream());
-    if (socketBufferSize > 0) {
-      inStream = new BufferedInputStream(wrapped.input(), socketBufferSize);
-      outStream = new BufferedOutputStream(wrapped.output(), socketBufferSize);
-    } else {
-      inStream = new BufferedInputStream(wrapped.input());
-      outStream = new BufferedOutputStream(wrapped.output());
-    }
-
-    out = new DataOutputStream(outStream);
-    in = new DataInputStream(inStream);
-    inChannel = new OChannelDataInputBinary(in, this.maxChunkSize, this::updateMetricReceivedBytes);
-    outChannel =
-        new OChannelDataOutputBinary(
-            out, this.maxChunkSize, this::updateMetricTransmittedBytes, this::updateMetricFlushes);
-
-    initDebug();
   }
 }

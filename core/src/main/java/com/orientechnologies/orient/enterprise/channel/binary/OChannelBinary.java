@@ -25,6 +25,9 @@ import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.enterprise.channel.OChannel;
+import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary.WrapStreams;
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
 import java.io.IOException;
@@ -167,5 +170,25 @@ public abstract class OChannelBinary extends OChannel {
     Wrapped wrap(InputStream input, OutputStream output) throws IOException;
   }
 
-  public abstract void wrapStreams(WrapStreams stre) throws IOException;
+  //  public abstract void wrapStreams(WrapStreams stre) throws IOException;
+
+  public void initChannels(WrapStreams stre) throws IOException {
+    var wrapped = stre.wrap(socket.getInputStream(), socket.getOutputStream());
+    if (socketBufferSize > 0) {
+      inStream = new BufferedInputStream(wrapped.input(), socketBufferSize);
+      outStream = new BufferedOutputStream(wrapped.output(), socketBufferSize);
+    } else {
+      inStream = new BufferedInputStream(wrapped.input());
+      outStream = new BufferedOutputStream(wrapped.output());
+    }
+
+    out = new DataOutputStream(outStream);
+    in = new DataInputStream(inStream);
+    inChannel = new OChannelDataInputBinary(in, this.maxChunkSize, this::updateMetricReceivedBytes);
+    outChannel =
+        new OChannelDataOutputBinary(
+            out, this.maxChunkSize, this::updateMetricTransmittedBytes, this::updateMetricFlushes);
+
+    initDebug();
+  }
 }
