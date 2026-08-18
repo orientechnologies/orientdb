@@ -363,10 +363,82 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
   }
 
   @Test
-  public void testSelectOrderrByIndexNullAsc() {
+  public void testSelectOrderByIndexNullAsc() {
     String className = "testSelectOrderByIndexNullAsc";
     OClass cl = db.getMetadata().getSchema().createClass(className);
     cl.createProperty("name", OType.STRING).createIndex(OClass.INDEX_TYPE.NOTUNIQUE);
+    for (int i = 0; i < 30; i++) {
+      ODocument doc = db.newInstance(className);
+      if (i % 2 == 0) {
+        doc.setProperty("name", null);
+      } else {
+        doc.setProperty("name", "name" + i);
+      }
+      db.save(doc);
+    }
+    OResultSet result = db.query("select from " + className + " order by name asc");
+    printExecutionPlan(result);
+
+    String lastName = null;
+    for (int i = 0; i < 30; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item);
+      String thisName = item.getProperty("name");
+      if (thisName == null) {
+        // Validate that null come after the last
+        assertEquals(lastName, "name9");
+      } else {
+        if (lastName != null) {
+          Assert.assertTrue(lastName.compareTo(thisName) <= 0);
+        }
+        lastName = thisName;
+      }
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test
+  public void testSelectOrderByxNullDesc() {
+    String className = "testSelectOrderByxNullDesc";
+    OClass cl = db.getMetadata().getSchema().createClass(className);
+    cl.createProperty("name", OType.STRING);
+    for (int i = 0; i < 30; i++) {
+      ODocument doc = db.newInstance(className);
+      if (i % 2 == 0) {
+        doc.setProperty("name", null);
+      } else {
+        doc.setProperty("name", "name" + i);
+      }
+      db.save(doc);
+    }
+    OResultSet result = db.query("select from " + className + " order by name desc");
+    printExecutionPlan(result);
+
+    String lastName = null;
+    for (int i = 0; i < 30; i++) {
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertNotNull(item);
+      String thisName = item.getProperty("name");
+      if (thisName == null) {
+        // Validate that no value come before null
+        assertNull(lastName);
+      } else if (lastName != null) {
+        Assert.assertTrue(lastName.compareTo(thisName) >= 0);
+      }
+      lastName = thisName;
+    }
+    Assert.assertFalse(result.hasNext());
+    result.close();
+  }
+
+  @Test
+  public void testSelectOrderByNullAsc() {
+    String className = "testSelectOrderByNullAsc";
+    OClass cl = db.getMetadata().getSchema().createClass(className);
+    cl.createProperty("name", OType.STRING);
     for (int i = 0; i < 30; i++) {
       ODocument doc = db.newInstance(className);
       if (i % 2 == 0) {
