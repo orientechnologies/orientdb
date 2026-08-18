@@ -137,10 +137,10 @@ public class OOrderByItem {
         if (bVal == null) {
           result = 0;
         } else {
-          result = -1;
+          result = 1;
         }
       } else if (bVal == null) {
-        result = 1;
+        result = -1;
       } else if (aVal instanceof String && bVal instanceof String) {
 
         ODatabaseDocumentInternal internal = ((ODatabaseDocumentInternal) ctx.getDatabase());
@@ -170,7 +170,7 @@ public class OOrderByItem {
         }
       }
     }
-    if (type == DESC) {
+    if (type.equals(DESC)) {
       result = -1 * result;
     }
     return result;
