@@ -5100,4 +5100,23 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
       assertEquals(entity1.getIdentity(), resultId);
     }
   }
+
+  @Test
+  public void testInBracketsCase() {
+    db.command("create class ParamItem").close();
+    db.command("create property ParamItem.oldid LONG").close();
+    db.command("create index ParamItem.oldid NOTUNIQUE").close();
+    db.command("insert into ParamItem set oldid = 5").close();
+    db.command("insert into ParamItem set oldid = 3").close();
+    List<Long> ids = List.of(5L, 3L);
+    OResultSet res = db.command("select from ParamItem " + "where oldid in [?]", (Object) ids);
+    assertEquals(res.stream().count(), 2);
+    res = db.query("select from ParamItem " + "where oldid in [?]", (Object) ids);
+    assertEquals(res.stream().count(), 2);
+    res = db.command("select from ParamItem " + "where oldid in ?", (Object) ids);
+    assertEquals(res.stream().count(), 2);
+    res =
+        db.command("select from ParamItem " + "where oldid in :ids", java.util.Map.of("ids", ids));
+    assertEquals(res.stream().count(), 2);
+  }
 }
