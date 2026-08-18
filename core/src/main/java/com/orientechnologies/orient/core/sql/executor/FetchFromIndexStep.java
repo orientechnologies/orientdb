@@ -607,6 +607,10 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
       } else {
         ss = new TreeSet<>((Comparator<Object>) Collections.reverseOrder());
       }
+      if (((Collection<?>) value).size() == 1
+          && ((Collection) value).iterator().next() instanceof Collection<?>) {
+        value = ((Collection) value).iterator().next();
+      }
       for (Object elemInKey : (Collection) value) {
         ss.add(elemInKey);
       }
