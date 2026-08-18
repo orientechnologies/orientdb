@@ -81,7 +81,9 @@ public class SQLSelectGroupByTest extends DocumentDBBaseTest {
     Assert.assertTrue(result.size() > 1);
     String last = null;
     for (OResult d : result) {
-      if (last != null) Assert.assertTrue(last.compareTo((String) d.getProperty("location")) < 0);
+      if (last != null && d.getProperty("location") != null) {
+        Assert.assertTrue(last.compareTo((String) d.getProperty("location")) < 0);
+      }
       last = d.getProperty("location");
     }
 

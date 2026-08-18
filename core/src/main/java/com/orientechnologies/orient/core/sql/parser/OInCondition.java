@@ -89,6 +89,12 @@ public class OInCondition extends OBooleanExpression {
       rightVal = rightParam.getValue(ctx);
     } else if (rightMathExpression != null) {
       rightVal = rightMathExpression.execute(currentRecord, ctx);
+      if (rightVal instanceof Collection<?> && ((Collection<?>) rightVal).size() == 1) {
+        Object next = ((Collection<?>) rightVal).iterator().next();
+        if (next instanceof Collection<?>) {
+          rightVal = next;
+        }
+      }
     }
     return rightVal;
   }
