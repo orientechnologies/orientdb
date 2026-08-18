@@ -16,7 +16,6 @@
         <groupId>com.orientechnologies</groupId>
         <artifactId>orientdb-gremlin-parent</artifactId>
         <version>4.0.0-SNAPSHOT</version>
-        <relativePath>../</relativePath>
     </parent>
     <artifactId>orientdb-tp3</artifactId>
     <packaging>pom</packaging>
