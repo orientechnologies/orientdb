@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.sql.executor;
 import static com.orientechnologies.orient.core.sql.executor.ExecutionPlanPrintUtils.printExecutionPlan;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.common.concur.OTimeoutException;
@@ -39,6 +40,7 @@ import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import org.junit.Assert;
+import org.junit.Ignore;
 import org.junit.Test;
 
 /** @author Luigi Dell'Aquila (l.dellaquila-(at)-orientdb.com) */
@@ -5028,5 +5030,48 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
       final ORID resultId = results.get(0).getIdentity().orElseThrow();
       assertEquals(entity1.getIdentity(), resultId);
     }
+  }
+
+  @Test
+  @Ignore
+  // TODO: make sure that in support indexes in this cases
+  public void testInBracketsIndexCase() {
+    db.command("create class ParamItem").close();
+    db.command("create property ParamItem.oldid LONG").close();
+    db.command("create index ParamItem.oldid on ParamItem(oldid) NOTUNIQUE").close();
+    db.command("insert into ParamItem set oldid = 5").close();
+    db.command("insert into ParamItem set oldid = 3").close();
+    List<Long> ids = List.of(5L, 3L);
+    OResultSet res = db.command("select from ParamItem " + "where oldid in [?]", (Object) ids);
+    assertTrue(res.getExecutionPlan().get().getIndexes().contains("ParamItem"));
+    assertEquals(res.stream().count(), 2);
+    res = db.query("select from ParamItem " + "where oldid in [?]", (Object) ids);
+    assertTrue(res.getExecutionPlan().get().getIndexes().contains("ParamItem"));
+    assertEquals(res.stream().count(), 2);
+    res = db.command("select from ParamItem " + "where oldid in ?", (Object) ids);
+    assertTrue(res.getExecutionPlan().get().getIndexes().contains("ParamItem"));
+    assertEquals(res.stream().count(), 2);
+    res =
+        db.command("select from ParamItem " + "where oldid in :ids", java.util.Map.of("ids", ids));
+    assertTrue(res.getExecutionPlan().get().getIndexes().contains("ParamItem"));
+    assertEquals(res.stream().count(), 2);
+  }
+
+  @Test
+  public void testInBracketsCase() {
+    db.command("create class ParamItem").close();
+    db.command("create property ParamItem.oldid LONG").close();
+    db.command("insert into ParamItem set oldid = 5").close();
+    db.command("insert into ParamItem set oldid = 3").close();
+    List<Long> ids = List.of(5L, 3L);
+    OResultSet res = db.command("select from ParamItem " + "where oldid in [?]", (Object) ids);
+    assertEquals(res.stream().count(), 2);
+    res = db.query("select from ParamItem " + "where oldid in [?]", (Object) ids);
+    assertEquals(res.stream().count(), 2);
+    res = db.command("select from ParamItem " + "where oldid in ?", (Object) ids);
+    assertEquals(res.stream().count(), 2);
+    res =
+        db.command("select from ParamItem " + "where oldid in :ids", java.util.Map.of("ids", ids));
+    assertEquals(res.stream().count(), 2);
   }
 }
