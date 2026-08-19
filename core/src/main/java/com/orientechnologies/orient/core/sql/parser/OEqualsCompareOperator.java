@@ -4,11 +4,8 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.metadata.schema.OType;
-import com.orientechnologies.orient.core.record.ORecord;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OExactIndexStream;
 import com.orientechnologies.orient.core.sql.executor.OIndexStream;
 import com.orientechnologies.orient.core.sql.executor.OResult;
@@ -116,36 +113,6 @@ public class OEqualsCompareOperator extends SimpleNode implements OBinaryCompare
     }
   }
 
-  public static boolean comparesValues(
-      final Object iValue, final ORecord iRecord, final boolean iConsiderIn) {
-    // ORID && RECORD
-    final ORID other = iRecord.getIdentity();
-
-    if (!other.isPersistent() && iRecord instanceof ODocument) {
-      // ODOCUMENT AS RESULT OF SUB-QUERY: GET THE FIRST FIELD IF ANY
-      final Set<String> firstFieldName = ((ODocument) iRecord).getPropertyNames();
-      if (firstFieldName.size() > 0) {
-        Object fieldValue = ((ODocument) iRecord).getProperty(firstFieldName.iterator().next());
-        if (fieldValue != null) {
-          if (iConsiderIn && OMultiValue.isMultiValue(fieldValue)) {
-            for (Object o : OMultiValue.getMultiValueIterable(fieldValue, false)) {
-              if (o != null && o.equals(iValue)) return true;
-            }
-          }
-
-          return fieldValue.equals(iValue);
-        }
-      }
-      return false;
-    }
-
-    if (iValue instanceof OResult && ((OResult) iValue).getIdentity().isPresent()) {
-      return other.equals(((OResult) iValue).getIdentity().get());
-    }
-
-    return other.equals(iValue);
-  }
-
   public static boolean equals(Object iLeft, Object iRight) {
     if (iLeft == null || iRight == null) return false;
 
@@ -154,10 +121,6 @@ public class OEqualsCompareOperator extends SimpleNode implements OBinaryCompare
     }
 
     // RECORD & ORID
-    /*from this is only legacy query engine */
-    if (iLeft instanceof ORecord) return comparesValues(iRight, (ORecord) iLeft, true);
-    else if (iRight instanceof ORecord) return comparesValues(iLeft, (ORecord) iRight, true);
-    /*till this is only legacy query engine */
     else if (iLeft instanceof OResult) return comparesValues(iRight, (OResult) iLeft, true);
     else if (iRight instanceof OResult) {
       return comparesValues(iLeft, (OResult) iRight, true);
