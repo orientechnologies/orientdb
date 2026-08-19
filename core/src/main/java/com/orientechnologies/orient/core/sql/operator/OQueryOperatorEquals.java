@@ -82,7 +82,7 @@ public class OQueryOperatorEquals extends OQueryOperatorEqualityNotNulls {
     if (iLeft instanceof ORecord) return comparesValues(iRight, (ORecord) iLeft, true);
     else if (iRight instanceof ORecord) return comparesValues(iLeft, (ORecord) iRight, true);
     /*till this is only legacy query engine */
-    else if (iRight instanceof OResult) return comparesValues(iLeft, (OResult) iRight, true);
+    else if (iLeft instanceof OResult) return comparesValues(iRight, (OResult) iLeft, true);
     else if (iRight instanceof OResult) {
       return comparesValues(iLeft, (OResult) iRight, true);
     }

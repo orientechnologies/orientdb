@@ -12,8 +12,10 @@ import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import org.junit.Assert;
 import org.junit.Test;
@@ -2234,6 +2236,48 @@ public class OMatchStatementExecutionNewTest extends BaseMemoryDatabase {
     Assert.assertFalse(result.hasNext());
 
     result.close();
+  }
+
+  @Test
+  public void testThisVariableTraversal() {
+    db.command("create class TestNode extends V").close();
+    db.command("create property TestNode.name string").close();
+    db.command("create class ParentOf extends E").close();
+
+    ORID root;
+    try (OResultSet result = db.command("create vertex TestNode set name = 'root'")) {
+      root = result.next().getIdentity().get();
+    }
+
+    ORID child;
+    try (OResultSet result = db.command("create vertex TestNode set name = 'child'")) {
+      child = result.next().getIdentity().get();
+    }
+
+    Map<String, Object> edgeParams = new HashMap<>();
+    edgeParams.put("root", root);
+    edgeParams.put("child", child);
+    db.command("create edge ParentOf from :root to :child", edgeParams).close();
+
+    OResultSet usingThis =
+        db.query(
+            "MATCH {class: TestNode, as: child, "
+                + "where: (name = 'child')}\n"
+                + "<-ParentOf-{as: ancestor, while: (true), "
+                + "where: (@this = :root)}\n"
+                + "RETURN child",
+            edgeParams);
+    Assert.assertEquals(usingThis.stream().count(), 1);
+
+    OResultSet usingRid =
+        db.query(
+            "MATCH {class: TestNode, as: child, "
+                + "where: (name = 'child')}\n"
+                + "<-ParentOf-{as: ancestor, while: (true), "
+                + "where: (@rid = :root)}\n"
+                + "RETURN child",
+            edgeParams);
+    Assert.assertEquals(usingRid.stream().count(), 1);
   }
 
   @Test
