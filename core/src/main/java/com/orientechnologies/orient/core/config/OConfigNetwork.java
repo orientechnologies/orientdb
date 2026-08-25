@@ -7,6 +7,7 @@ public class OConfigNetwork {
   private String protocol;
   private OConfigNetworkTls tls;
   // TODO: Add additional protocol settings
-  // Traditionally in http could be plugged some more endpoint ... maybe it should be configured here
+  // Traditionally in http could be plugged some more endpoint ... maybe it should be configured
+  // here
   // or maybe in the plugin sections
 }

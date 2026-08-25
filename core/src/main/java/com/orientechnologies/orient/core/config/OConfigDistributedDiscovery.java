@@ -1,5 +1,3 @@
 package com.orientechnologies.orient.core.config;
 
-public class OConfiguDistributedDiscovery {
-
-}
+public class OConfigDistributedDiscovery {}

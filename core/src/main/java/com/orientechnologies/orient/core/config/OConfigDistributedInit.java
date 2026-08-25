@@ -4,5 +4,5 @@ import java.util.List;
 
 public class OConfigDistributedInit {
   private List<String> members;
-  private OConfiguDistributedDiscovery discover;
+  private OConfigDistributedDiscovery discover;
 }
