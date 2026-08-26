@@ -1074,8 +1074,8 @@ public class ODatabaseDocumentRemote extends ODatabaseDocumentAbstract {
       callOnCloseListeners();
 
       status = STATUS.CLOSED;
-      sharedContext.endSession();
       if (!recycle) {
+        sharedContext.endSession();
         if (getRemoteClient() != null) getRemoteClient().close(getSession());
       }
 
