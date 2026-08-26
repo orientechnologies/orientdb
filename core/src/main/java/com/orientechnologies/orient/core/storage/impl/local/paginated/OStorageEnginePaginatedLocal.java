@@ -218,7 +218,7 @@ public class OStorageEnginePaginatedLocal implements OStorageEngine {
     long maxSegSize = configurations.walMaxSegmentSize() * 1024 * 1024;
 
     if (maxSegSize <= 0) {
-      int sizePercent = configurations.walMaxSegmentSizePercent();
+      long sizePercent = configurations.walMaxSegmentSizePercent();
       if (sizePercent <= 0) {
         throw new ODatabaseException(
             "Invalid configuration settings. Can not set maximum size of WAL segment");
@@ -274,7 +274,7 @@ public class OStorageEnginePaginatedLocal implements OStorageEngine {
     long maxSegSize = configurations.storageDoubleWriteLogMaxSegSize() * 1024 * 1024;
 
     if (maxSegSize <= 0) {
-      int sizePercent = configurations.storageDoubleWriteLogMaxSegSizePercent();
+      long sizePercent = configurations.storageDoubleWriteLogMaxSegSizePercent();
       if (sizePercent <= 0) {
         throw new ODatabaseException(
             "Invalid configuration settings. Can not set maximum size of WAL segment");

@@ -64,16 +64,16 @@ public interface OConfiguration {
     return getValueAsInteger(OGlobalConfiguration.COMPONENTS_LOCK_CACHE);
   }
 
-  default int diskCacheSize() {
+  default long diskCacheSize() {
     return getValueAsInteger(OGlobalConfiguration.DISK_CACHE_SIZE);
   }
 
-  default int diskWriteCachePart() {
+  default long diskWriteCachePart() {
     return getValueAsInteger(OGlobalConfiguration.DISK_WRITE_CACHE_PART);
   }
 
-  default int diskWriteCachePageFlushInterval() {
-    return getValueAsInteger(OGlobalConfiguration.DISK_WRITE_CACHE_PAGE_FLUSH_INTERVAL);
+  default long diskWriteCachePageFlushInterval() {
+    return getValueAsLong(OGlobalConfiguration.DISK_WRITE_CACHE_PAGE_FLUSH_INTERVAL);
   }
 
   default OChecksumMode storageChecksumMode() {
@@ -104,15 +104,15 @@ public interface OConfiguration {
     return getValueAsBoolean(OGlobalConfiguration.STORAGE_USE_DOUBLE_WRITE_LOG);
   }
 
-  default int storageDoubleWriteLogMaxSegSize() {
+  default long storageDoubleWriteLogMaxSegSize() {
     return getValueAsInteger(OGlobalConfiguration.STORAGE_DOUBLE_WRITE_LOG_MAX_SEG_SIZE);
   }
 
-  default int storageDoubleWriteLogMaxSegSizePercent() {
+  default long storageDoubleWriteLogMaxSegSizePercent() {
     return getValueAsInteger(OGlobalConfiguration.STORAGE_DOUBLE_WRITE_LOG_MAX_SEG_SIZE_PERCENT);
   }
 
-  default int storageDoubleWriteLogMinSegSize() {
+  default long storageDoubleWriteLogMinSegSize() {
     return getValueAsInteger(OGlobalConfiguration.STORAGE_DOUBLE_WRITE_LOG_MIN_SEG_SIZE);
   }
 
@@ -140,19 +140,19 @@ public interface OConfiguration {
     return getValueAsInteger(OGlobalConfiguration.WAL_BUFFER_SIZE);
   }
 
-  default int walSegmentsInterval() {
+  default long walSegmentsInterval() {
     return getValueAsInteger(OGlobalConfiguration.WAL_SEGMENTS_INTERVAL);
   }
 
-  default int walMaxSegmentSize() {
+  default long walMaxSegmentSize() {
     return getValueAsInteger(OGlobalConfiguration.WAL_MAX_SEGMENT_SIZE);
   }
 
-  default int walMaxSegmentSizePercent() {
+  default long walMaxSegmentSizePercent() {
     return getValueAsInteger(OGlobalConfiguration.WAL_MAX_SEGMENT_SIZE_PERCENT);
   }
 
-  default int walMinSegSize() {
+  default long walMinSegSize() {
     return getValueAsInteger(OGlobalConfiguration.WAL_MIN_SEG_SIZE);
   }
 
@@ -160,7 +160,7 @@ public interface OConfiguration {
     return getValueAsInteger(OGlobalConfiguration.WAL_MIN_COMPRESSED_RECORD_SIZE);
   }
 
-  default int walMaxSize() {
+  default long walMaxSize() {
     return getValueAsInteger(OGlobalConfiguration.WAL_MAX_SIZE);
   }
 
@@ -176,7 +176,7 @@ public interface OConfiguration {
     return getValueAsInteger(OGlobalConfiguration.WAL_SHUTDOWN_TIMEOUT);
   }
 
-  default int walFuzzyCheckpointInterval() {
+  default long walFuzzyCheckpointInterval() {
     return getValueAsInteger(OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL);
   }
 

@@ -324,8 +324,7 @@ public enum OGlobalConfiguration implements OConfiguration { // ENVIRONMENT
       Integer.class,
       8 * 1024),
 
-  WAL_MAX_SIZE(
-      "storage.wal.maxSize", "Maximum size of WAL on disk (in megabytes)", Integer.class, -1),
+  WAL_MAX_SIZE("storage.wal.maxSize", "Maximum size of WAL on disk (in megabytes)", Long.class, -1),
 
   WAL_KEEP_SINGLE_SEGMENT(
       "storage.wal.keepSingleSegment",
