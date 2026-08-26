@@ -31,7 +31,6 @@ import com.orientechnologies.orient.core.command.script.OScriptManager;
 import com.orientechnologies.orient.core.command.script.OScriptResultHandler;
 import com.orientechnologies.orient.core.command.script.formatter.OGroovyScriptFormatter;
 import com.orientechnologies.orient.core.command.script.transformer.OScriptTransformer;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
@@ -354,8 +353,7 @@ public class OCommandGremlinExecutor extends OAbstractScriptExecutor
         pooledEngines.computeIfAbsent(
             database.getName(),
             (key) -> {
-              int poolSize =
-                  database.getConfiguration().getValueAsInteger(OGlobalConfiguration.SCRIPT_POOL);
+              int poolSize = database.getConfiguration().scriptPool();
               return new OResourcePool<ODatabaseSession, ScriptEngine>(
                   poolSize,
                   new OResourcePoolListener<ODatabaseSession, ScriptEngine>() {

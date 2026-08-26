@@ -46,10 +46,9 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
   private final long fileId;
   private Set<OIdentifiable> underlying;
   private boolean isEmbedded;
-  private int topThreshold =
-      OGlobalConfiguration.INDEX_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getValueAsInteger();
+  private int topThreshold = OGlobalConfiguration.global().indexEmbeddedToSbtreebonsaiThreshold();
   private final int bottomThreshold =
-      OGlobalConfiguration.INDEX_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.getValueAsInteger();
+      OGlobalConfiguration.global().indexSbtreebonsaiToEmbeddedThreshold();
   private final boolean durableNonTxMode;
 
   /** Should be called inside of lock to ensure uniqueness of entity on disk !!! */

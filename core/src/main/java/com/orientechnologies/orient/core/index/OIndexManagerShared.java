@@ -24,7 +24,6 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OMultiKey;
 import com.orientechnologies.common.util.OUncaughtExceptionHandler;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
@@ -638,10 +637,7 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
         indexDefinition.setNullValuesIgnored(false);
       } else {
         indexDefinition.setNullValuesIgnored(
-            storage
-                .getConfiguration()
-                .getContextConfiguration()
-                .getValueAsBoolean(OGlobalConfiguration.INDEX_IGNORE_NULL_VALUES_DEFAULT));
+            storage.getConfiguration().getContextConfiguration().indexIgnoreNullValuesDefault());
       }
 
       OIndexMetadata im =
@@ -841,9 +837,7 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
       releaseExclusiveLock(database);
     }
 
-    if (database
-        .getConfiguration()
-        .getValueAsBoolean(OGlobalConfiguration.INDEX_SYNCHRONOUS_AUTO_REBUILD)) {
+    if (database.getConfiguration().indexSynchronousAutoRebuild()) {
       waitTillIndexRestore();
 
       database.getMetadata().reload();

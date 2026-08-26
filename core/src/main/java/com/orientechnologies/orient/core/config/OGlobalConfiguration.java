@@ -69,9 +69,6 @@ public enum OGlobalConfiguration implements OConfiguration { // ENVIRONMENT
       Integer.class,
       20),
 
-  SCRIPT_POLYGLOT_USE_GRAAL(
-      "script.polyglot.useGraal", "Use GraalVM as polyglot engine", Boolean.class, true),
-
   // MEMORY
   MEMORY_USE_UNSAFE(
       "memory.useUnsafe",
@@ -259,13 +256,6 @@ public enum OGlobalConfiguration implements OConfiguration { // ENVIRONMENT
       Integer.class,
       256),
 
-  STORAGE_PAGE_OPERATIONS_CACHE_SIZE(
-      "storage.pageOperationsCacheSize",
-      "Size of page operations cache in MB per transaction. "
-          + "If operations are cached, they are not read from WAL during rollback.",
-      Integer.class,
-      16),
-
   STORAGE_CLUSTER_VERSION(
       "storage.cluster.version",
       "Binary version of cluster which will be used inside of storage",
@@ -289,12 +279,6 @@ public enum OGlobalConfiguration implements OConfiguration { // ENVIRONMENT
       "Set the approach of the pessimistic locking, valid options: none, modification, readwrite",
       String.class,
       "none"),
-
-  /**
-   * @deprecated WAL can not be disabled because that is very unsafe for consistency and durability
-   */
-  @Deprecated
-  USE_WAL("storage.useWAL", "Whether WAL should be used in paginated storage", Boolean.class, true),
 
   WAL_CACHE_SIZE(
       "storage.wal.cacheSize",
@@ -408,18 +392,6 @@ public enum OGlobalConfiguration implements OConfiguration { // ENVIRONMENT
       Integer.class,
       16),
 
-  STORAGE_LOCK_TIMEOUT(
-      "storage.lockTimeout",
-      "Maximum amount of time (in ms) to lock the storage",
-      Integer.class,
-      0),
-
-  STORAGE_RECORD_LOCK_TIMEOUT(
-      "storage.record.lockTimeout",
-      "Maximum of time (in ms) to lock a shared record",
-      Integer.class,
-      2000),
-
   // RECORDS
   @Deprecated
   RECORD_DOWNSIZING_ENABLED(
@@ -431,12 +403,6 @@ public enum OGlobalConfiguration implements OConfiguration { // ENVIRONMENT
       true),
 
   // DATABASE
-  OBJECT_SAVE_ONLY_DIRTY(
-      "object.saveOnlyDirty",
-      "Object Database only! It saves objects bound to dirty records",
-      Boolean.class,
-      false,
-      true),
 
   DOCUMENT_BINARY_MAPPING(
       "document.binaryMapping", "Mapping approach for binary fields", Integer.class, 0),
@@ -449,7 +415,7 @@ public enum OGlobalConfiguration implements OConfiguration { // ENVIRONMENT
   DB_CACHED_POOL_CAPACITY(
       "db.cached.pool.capacity", "Default database cached pools capacity", Integer.class, 100),
 
-  DB_STRING_CAHCE_SIZE(
+  DB_STRING_CACHE_SIZE(
       "db.string.cache.size",
       "Number of common string to keep in memory cache",
       Integer.class,
@@ -467,17 +433,6 @@ public enum OGlobalConfiguration implements OConfiguration { // ENVIRONMENT
       "Default database pool timeout in milliseconds",
       Integer.class,
       60000),
-
-  @Deprecated
-  DB_POOL_IDLE_TIMEOUT(
-      "db.pool.idleTimeout",
-      "Timeout for checking for free databases in the pool",
-      Integer.class,
-      0),
-
-  @Deprecated
-  DB_POOL_IDLE_CHECK_DELAY(
-      "db.pool.idleCheckDelay", "Delay time on checking for idle databases", Integer.class, 0),
 
   DB_VALIDATION(
       "db.validation", "Enables or disables validation of records", Boolean.class, true, true),
@@ -1333,15 +1288,12 @@ public enum OGlobalConfiguration implements OConfiguration { // ENVIRONMENT
 
   SPATIAL_ENABLE_DIRECT_WKT_READER(
       "spatial.enableDirectWktReader",
-      "Enable direct usage of WKTReader for additional dimention info",
+      "Enable direct usage of WKTReader for additional dimenion info",
       Boolean.class,
       false),
 
   @Deprecated
   OAUTH2_SECRETKEY("oauth2.secretkey", "Http OAuth2 secret key", String.class, "", false, true),
-
-  @Deprecated
-  CLIENT_CHANNEL_MIN_POOL("client.channel.minPool", "Minimum pool size", Integer.class, 1),
 
   AUTO_CLOSE_AFTER_DELAY(
       "storage.autoCloseAfterDelay",

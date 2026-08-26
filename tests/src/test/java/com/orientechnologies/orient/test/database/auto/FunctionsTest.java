@@ -93,7 +93,7 @@ public class FunctionsTest extends DocumentDBBaseTest {
     database.command("create function testMTCall \"return 3;\" LANGUAGE Javascript").close();
 
     final int TOT = 1000;
-    final int threadNum = OGlobalConfiguration.SCRIPT_POOL.getValueAsInteger() * 3;
+    final int threadNum = OGlobalConfiguration.global().scriptPool() * 3;
     // System.out.println("Starting " + threadNum + " concurrent threads with scriptPool="
     // + OGlobalConfiguration.SCRIPT_POOL.getValueAsInteger() + " executing function for " + TOT + "
     // times");

@@ -339,8 +339,7 @@ public class OServer {
     pushManager = new OPushManager(this.getContextConfiguration(), getClientConnectionManager());
     rejectRequests = false;
 
-    if (contextConfiguration.getValueAsBoolean(
-        OGlobalConfiguration.ENVIRONMENT_DUMP_CFG_AT_STARTUP)) {
+    if (contextConfiguration.environmentDumpCfgAtStartup()) {
       System.out.println("Dumping environment after server startup...");
       OGlobalConfiguration.dumpConfiguration(System.out);
     }

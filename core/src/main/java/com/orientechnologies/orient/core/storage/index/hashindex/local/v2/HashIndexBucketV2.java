@@ -49,7 +49,7 @@ public final class HashIndexBucketV2<K, V> extends ODurablePage {
       NEXT_REMOVED_BUCKET_OFFSET + OLongSerializer.LONG_SIZE;
 
   private static final int MAX_BUCKET_SIZE_BYTES =
-      OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
+      OGlobalConfiguration.global().diskCachePageSize() * 1024;
 
   private final Comparator keyComparator = ODefaultComparator.INSTANCE;
 

@@ -276,7 +276,7 @@ public class IntSerializerTest {
 
     final int size = serializer.getObjectSize(value);
     final ByteBuffer byteBuffer =
-        ByteBuffer.allocate(OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024)
+        ByteBuffer.allocate(OGlobalConfiguration.global().diskCachePageSize() * 1024)
             .order(ByteOrder.nativeOrder());
     final byte[] serializedValue = new byte[size];
     serializer.serializeNativeObject(value, serializedValue, 0);

@@ -13,7 +13,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
  */
 public interface OWALPage {
   /** Size of the current instance of page in direct memory. */
-  int PAGE_SIZE = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
+  int PAGE_SIZE = OGlobalConfiguration.global().diskCachePageSize() * 1024;
 
   /**
    * Size of the record which will be stored inside of page even if payload of record equals to 0.

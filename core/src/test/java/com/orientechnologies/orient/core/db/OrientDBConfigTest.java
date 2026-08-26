@@ -37,8 +37,7 @@ public class OrientDBConfigTest {
             .addAttribute(ATTRIBUTES.VALIDATION, true)
             .build();
 
-    assertEquals(
-        settings.getConfigurations().getValue(OGlobalConfiguration.DB_POOL_MAX), (Integer) 20);
+    assertEquals(settings.getConfigurations().dbPoolMax(), 20);
     assertEquals(settings.getAttributes().get(ATTRIBUTES.VALIDATION), true);
   }
 
@@ -47,8 +46,7 @@ public class OrientDBConfigTest {
     Map<String, Object> configs = new HashMap<>();
     configs.put(OGlobalConfiguration.DB_POOL_MAX.getKey(), 20);
     OrientDBConfig settings = OrientDBConfig.builder().fromMap(configs).build();
-    assertEquals(
-        settings.getConfigurations().getValue(OGlobalConfiguration.DB_POOL_MAX), (Integer) 20);
+    assertEquals(settings.getConfigurations().dbPoolMax(), 20);
   }
 
   @Test
@@ -56,8 +54,7 @@ public class OrientDBConfigTest {
     Map<OGlobalConfiguration, Object> configs = new HashMap<>();
     configs.put(OGlobalConfiguration.DB_POOL_MAX, 20);
     OrientDBConfig settings = OrientDBConfig.builder().fromGlobalMap(configs).build();
-    assertEquals(
-        settings.getConfigurations().getValue(OGlobalConfiguration.DB_POOL_MAX), (Integer) 20);
+    assertEquals(settings.getConfigurations().dbPoolMax(), 20);
   }
 
   @Test
@@ -76,11 +73,8 @@ public class OrientDBConfigTest {
 
     settings.setParent(parent);
 
-    assertEquals(
-        settings.getConfigurations().getValue(OGlobalConfiguration.DB_POOL_MAX), (Integer) 20);
-    assertEquals(
-        settings.getConfigurations().getValue(OGlobalConfiguration.CLIENT_CONNECTION_STRATEGY),
-        "ROUND_ROBIN_CONNECT");
+    assertEquals(settings.getConfigurations().dbPoolMax(), 20);
+    assertEquals(settings.getConfigurations().clientConnectionStrategy(), "ROUND_ROBIN_CONNECT");
     assertEquals(settings.getAttributes().get(ATTRIBUTES.VALIDATION), false);
   }
 }

@@ -9,7 +9,6 @@ import com.orientechnologies.orient.core.command.script.OAbstractScriptExecutor;
 import com.orientechnologies.orient.core.command.script.OCommandScriptException;
 import com.orientechnologies.orient.core.command.script.OScriptManager;
 import com.orientechnologies.orient.core.command.script.transformer.OScriptTransformer;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OrientDBEmbedded;
 import com.orientechnologies.orient.core.metadata.function.OFunction;
@@ -55,8 +54,7 @@ public class OPolyglotScriptExecutor extends OAbstractScriptExecutor
             database.getName(),
             (k) -> {
               return new OResourcePool<ODatabaseDocumentInternal, Context>(
-                  database.getConfiguration().getValueAsInteger(OGlobalConfiguration.SCRIPT_POOL),
-                  OPolyglotScriptExecutor.this);
+                  database.getConfiguration().scriptPool(), OPolyglotScriptExecutor.this);
             });
     return pool.getResource(database, 0);
   }

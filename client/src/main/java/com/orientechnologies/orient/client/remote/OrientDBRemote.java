@@ -150,12 +150,8 @@ public class OrientDBRemote implements OrientDBInternal {
   }
 
   protected OCachedDatabasePoolFactory createCachedDatabasePoolFactory(OrientDBConfig config) {
-    int capacity =
-        config.getConfigurations().getValueAsInteger(OGlobalConfiguration.DB_CACHED_POOL_CAPACITY);
-    long timeout =
-        config
-            .getConfigurations()
-            .getValueAsInteger(OGlobalConfiguration.DB_CACHED_POOL_CLEAN_UP_TIMEOUT);
+    int capacity = config.getConfigurations().dbCachedPoolCapacity();
+    long timeout = config.getConfigurations().dbCachedPoolCleanUpTimeout();
     return new OCachedDatabasePoolFactoryImpl(this, capacity, timeout);
   }
 

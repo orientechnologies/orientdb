@@ -19,11 +19,10 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer.record.string;
 
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DB_CUSTOM_SUPPORT;
-
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -42,7 +41,12 @@ import com.orientechnologies.orient.core.util.ODateHelper;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.Calendar;
+import java.util.Date;
+import java.util.HashSet;
+import java.util.Set;
 
 @SuppressWarnings("serial")
 public abstract class ORecordSerializerStringAbstract implements ORecordSerializer, Serializable {
@@ -86,7 +90,7 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
         }
 
       case CUSTOM:
-        if (!DB_CUSTOM_SUPPORT.getValueAsBoolean()) {
+        if (!OGlobalConfiguration.global().dbCustomSupport()) {
           throw new ODatabaseException(
               String.format(
                   "OType CUSTOM used with serializable types, is not enabled, set"
@@ -294,7 +298,7 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
         break;
 
       case CUSTOM:
-        if (!DB_CUSTOM_SUPPORT.getValueAsBoolean()) {
+        if (!OGlobalConfiguration.global().dbCustomSupport()) {
           throw new ODatabaseException(
               String.format(
                   "OType CUSTOM used with serializable types, is not enabled, set"

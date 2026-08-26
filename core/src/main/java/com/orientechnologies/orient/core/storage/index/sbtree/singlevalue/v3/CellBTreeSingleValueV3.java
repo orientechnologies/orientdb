@@ -80,7 +80,7 @@ import java.util.stream.StreamSupport;
 public final class CellBTreeSingleValueV3<K> extends ODurableComponent
     implements OCellBTreeSingleValue<K> {
   private static final int SPLITERATOR_CACHE_SIZE =
-      OGlobalConfiguration.INDEX_CURSOR_PREFETCH_SIZE.getValueAsInteger();
+      OGlobalConfiguration.global().indexCursorPrefetchSize();
   private static final int MAX_KEY_SIZE =
       OGlobalConfiguration.SBTREE_MAX_KEY_SIZE.getValueAsInteger();
   private static final OAlwaysLessKey ALWAYS_LESS_KEY = new OAlwaysLessKey();

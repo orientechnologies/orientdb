@@ -1827,7 +1827,7 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent
 
       keysCache.clear();
 
-      final int prefetchSize = OGlobalConfiguration.INDEX_CURSOR_PREFETCH_SIZE.getValueAsInteger();
+      final int prefetchSize = OGlobalConfiguration.global().indexCursorPrefetchSize();
 
       atomicOperationsManager.acquireReadLock(CellBTreeMultiValueV2.this);
       try {
@@ -1956,7 +1956,7 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent
 
       dataCache.clear();
 
-      final int prefetchSize = OGlobalConfiguration.INDEX_CURSOR_PREFETCH_SIZE.getValueAsInteger();
+      final int prefetchSize = OGlobalConfiguration.global().indexCursorPrefetchSize();
 
       atomicOperationsManager.acquireReadLock(CellBTreeMultiValueV2.this);
       try {
@@ -2173,7 +2173,7 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent
 
       dataCache.clear();
 
-      final int prefetchSize = OGlobalConfiguration.INDEX_CURSOR_PREFETCH_SIZE.getValueAsInteger();
+      final int prefetchSize = OGlobalConfiguration.global().indexCursorPrefetchSize();
       atomicOperationsManager.acquireReadLock(CellBTreeMultiValueV2.this);
       try {
         acquireSharedLock();

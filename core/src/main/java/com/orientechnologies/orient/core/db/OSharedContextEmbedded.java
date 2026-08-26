@@ -83,7 +83,7 @@ public class OSharedContextEmbedded extends OSharedContext {
   }
 
   protected void init(OStorage storage) {
-    stringCache = new OStringCache(orientDB.getContextConfigurations().dbStringCahceSize());
+    stringCache = new OStringCache(orientDB.getContextConfigurations().dbStringCacheSize());
 
     schema = new OSchemaEmbedded(this);
     security = orientDB.getSecuritySystem().newSecurity(storage.getName());

@@ -33,7 +33,7 @@ public class DirectoryPageV2 extends ODurablePage {
   private static final int ITEMS_OFFSET = NEXT_FREE_POSITION;
 
   static final int NODES_PER_PAGE =
-      (OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024 - ITEMS_OFFSET)
+      (OGlobalConfiguration.global().diskCachePageSize() * 1024 - ITEMS_OFFSET)
           / HashTableDirectory.BINARY_LEVEL_SIZE;
 
   public DirectoryPageV2(OCacheEntry cacheEntry) {

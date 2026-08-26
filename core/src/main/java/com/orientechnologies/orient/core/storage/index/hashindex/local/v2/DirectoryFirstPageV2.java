@@ -35,7 +35,7 @@ public final class DirectoryFirstPageV2 extends DirectoryPageV2 {
   private static final int ITEMS_OFFSET = TOMBSTONE_OFFSET + OIntegerSerializer.INT_SIZE;
 
   static final int NODES_PER_PAGE =
-      (OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024 - ITEMS_OFFSET)
+      (OGlobalConfiguration.global().diskCachePageSize() * 1024 - ITEMS_OFFSET)
           / HashTableDirectory.BINARY_LEVEL_SIZE;
 
   public DirectoryFirstPageV2(OCacheEntry cacheEntry) {

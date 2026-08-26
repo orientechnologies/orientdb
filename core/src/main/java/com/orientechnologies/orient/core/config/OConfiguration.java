@@ -20,10 +20,6 @@ public interface OConfiguration {
     return getValueAsInteger(OGlobalConfiguration.SCRIPT_POOL);
   }
 
-  default boolean scriptPolyglotUseGraal() {
-    return getValueAsBoolean(OGlobalConfiguration.SCRIPT_POLYGLOT_USE_GRAAL);
-  }
-
   default boolean memoryUseUnsafe() {
     return getValueAsBoolean(OGlobalConfiguration.MEMORY_USE_UNSAFE);
   }
@@ -81,7 +77,7 @@ public interface OConfiguration {
   }
 
   default OChecksumMode storageChecksumMode() {
-    return (OChecksumMode) getValue(OGlobalConfiguration.STORAGE_CHECKSUM_MODE);
+    return getValueAsEnum(OGlobalConfiguration.STORAGE_CHECKSUM_MODE, OChecksumMode.class);
   }
 
   default String storageCompressionMethod() {
@@ -120,10 +116,6 @@ public interface OConfiguration {
     return getValueAsInteger(OGlobalConfiguration.STORAGE_DOUBLE_WRITE_LOG_MIN_SEG_SIZE);
   }
 
-  default int storagePageOperationsCacheSize() {
-    return getValueAsInteger(OGlobalConfiguration.STORAGE_PAGE_OPERATIONS_CACHE_SIZE);
-  }
-
   default int storageClusterVersion() {
     return getValueAsInteger(OGlobalConfiguration.STORAGE_CLUSTER_VERSION);
   }
@@ -138,10 +130,6 @@ public interface OConfiguration {
 
   default String storagePessimisticLocking() {
     return getValueAsString(OGlobalConfiguration.STORAGE_PESSIMISTIC_LOCKING);
-  }
-
-  default boolean useWal() {
-    return getValueAsBoolean(OGlobalConfiguration.USE_WAL);
   }
 
   default int walCacheSize() {
@@ -212,24 +200,8 @@ public interface OConfiguration {
     return getValueAsLong(OGlobalConfiguration.DISK_CACHE_FREE_SPACE_LIMIT);
   }
 
-  default int paginatedStorageLowestFreelistBoundary() {
-    return getValueAsInteger(OGlobalConfiguration.PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY);
-  }
-
-  default int storageLockTimeout() {
-    return getValueAsInteger(OGlobalConfiguration.STORAGE_LOCK_TIMEOUT);
-  }
-
-  default int storageRecordLockTimeout() {
-    return getValueAsInteger(OGlobalConfiguration.STORAGE_RECORD_LOCK_TIMEOUT);
-  }
-
   default boolean recordDownsizingEnabled() {
     return getValueAsBoolean(OGlobalConfiguration.RECORD_DOWNSIZING_ENABLED);
-  }
-
-  default boolean objectSaveOnlyDirty() {
-    return getValueAsBoolean(OGlobalConfiguration.OBJECT_SAVE_ONLY_DIRTY);
   }
 
   default int documentBinaryMapping() {
@@ -248,8 +220,8 @@ public interface OConfiguration {
     return getValueAsInteger(OGlobalConfiguration.DB_CACHED_POOL_CAPACITY);
   }
 
-  default int dbStringCahceSize() {
-    return getValueAsInteger(OGlobalConfiguration.DB_STRING_CAHCE_SIZE);
+  default int dbStringCacheSize() {
+    return getValueAsInteger(OGlobalConfiguration.DB_STRING_CACHE_SIZE);
   }
 
   default long dbCachedPoolCleanUpTimeout() {
@@ -258,14 +230,6 @@ public interface OConfiguration {
 
   default int dbPoolAcquireTimeout() {
     return getValueAsInteger(OGlobalConfiguration.DB_POOL_ACQUIRE_TIMEOUT);
-  }
-
-  default int dbPoolIdleTimeout() {
-    return getValueAsInteger(OGlobalConfiguration.DB_POOL_IDLE_TIMEOUT);
-  }
-
-  default int dbPoolIdleCheckDelay() {
-    return getValueAsInteger(OGlobalConfiguration.DB_POOL_IDLE_CHECK_DELAY);
   }
 
   default boolean dbValidation() {
@@ -776,10 +740,6 @@ public interface OConfiguration {
     return getValueAsString(OGlobalConfiguration.OAUTH2_SECRETKEY);
   }
 
-  default int clientChannelMinPool() {
-    return getValueAsInteger(OGlobalConfiguration.CLIENT_CHANNEL_MIN_POOL);
-  }
-
   default boolean autoCloseAfterDelay() {
     return getValueAsBoolean(OGlobalConfiguration.AUTO_CLOSE_AFTER_DELAY);
   }
@@ -856,5 +816,22 @@ public interface OConfiguration {
   default float getValueAsFloat(OGlobalConfiguration gc) {
     Object v = getValue(gc);
     return v instanceof Float ? (Float) v : Float.parseFloat(v.toString());
+  }
+
+  public default <T extends Enum<T>> T getValueAsEnum(
+      final OGlobalConfiguration gc, Class<T> enumType) {
+    final Object value = getValue(gc);
+
+    if (value == null) return null;
+
+    if (enumType.isAssignableFrom(value.getClass())) {
+      return enumType.cast(value);
+    } else if (value instanceof String) {
+      final String presentation = value.toString();
+      return Enum.valueOf(enumType, presentation);
+    } else {
+      throw new ClassCastException(
+          "Value " + value + " can not be cast to enumeration " + enumType.getSimpleName());
+    }
   }
 }

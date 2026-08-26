@@ -20,13 +20,12 @@
 
 package com.orientechnologies.orient.core.serialization.serializer.result.binary;
 
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DB_CUSTOM_SUPPORT;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.serialization.types.ODecimalSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordLazyMultiValue;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -264,7 +263,7 @@ public class OResultSerializerNetwork {
       case TRANSIENT:
         break;
       case CUSTOM:
-        if (!DB_CUSTOM_SUPPORT.getValueAsBoolean()) {
+        if (!OGlobalConfiguration.global().dbCustomSupport()) {
           throw new ODatabaseException(
               String.format(
                   "OType CUSTOM used with serializable types, is not enabled, set"
@@ -451,7 +450,7 @@ public class OResultSerializerNetwork {
       case LINKBAG:
         throw new UnsupportedOperationException("LINKBAG should never appear in a projection");
       case CUSTOM:
-        if (!DB_CUSTOM_SUPPORT.getValueAsBoolean()) {
+        if (!OGlobalConfiguration.global().dbCustomSupport()) {
           throw new ODatabaseException(
               String.format(
                   "OType CUSTOM used with serializable types, is not enabled, set"

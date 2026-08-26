@@ -44,7 +44,6 @@ import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.ODatabaseId;
 import com.orientechnologies.orient.core.index.engine.v1.OCellBTreeMultiValueIndexEngine;
-import com.orientechnologies.orient.core.storage.OChecksumMode;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.local.OWOWCache;
 import com.orientechnologies.orient.core.storage.cache.local.doublewritelog.DoubleWriteLog;
@@ -511,8 +510,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
       final Locale locale,
       byte[] iv)
       throws IOException {
-    final String aesKeyEncoded =
-        contextConfiguration.getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY);
+    final String aesKeyEncoded = contextConfiguration.storageEncryptionKey();
     final byte[] aesKey =
         Optional.ofNullable(aesKeyEncoded)
             .map(keyEncoded -> Base64.getDecoder().decode(keyEncoded))
@@ -522,27 +520,21 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
         name,
         storagePath,
         directory.toPath(),
-        contextConfiguration.getValueAsInteger(OGlobalConfiguration.WAL_CACHE_SIZE),
-        contextConfiguration.getValueAsInteger(OGlobalConfiguration.WAL_BUFFER_SIZE),
+        contextConfiguration.walCacheSize(),
+        contextConfiguration.walBufferSize(),
         aesKey,
         iv,
-        contextConfiguration.getValueAsLong(OGlobalConfiguration.WAL_SEGMENTS_INTERVAL)
-            * 60
-            * 1_000_000_000L,
-        contextConfiguration.getValueAsInteger(OGlobalConfiguration.WAL_MAX_SEGMENT_SIZE)
-            * 1024
-            * 1024L,
+        contextConfiguration.walSegmentsInterval() * 60 * 1_000_000_000L,
+        contextConfiguration.walMaxSegmentSize() * 1024 * 1024L,
         10,
         true,
         locale,
-        OGlobalConfiguration.WAL_MAX_SIZE.getValueAsLong() * 1024 * 1024,
-        contextConfiguration.getValueAsInteger(OGlobalConfiguration.WAL_COMMIT_TIMEOUT),
-        contextConfiguration.getValueAsBoolean(OGlobalConfiguration.WAL_KEEP_SINGLE_SEGMENT),
-        contextConfiguration.getValueAsBoolean(OGlobalConfiguration.STORAGE_CALL_FSYNC),
-        contextConfiguration.getValueAsBoolean(
-            OGlobalConfiguration.STORAGE_PRINT_WAL_PERFORMANCE_STATISTICS),
-        contextConfiguration.getValueAsInteger(
-            OGlobalConfiguration.STORAGE_PRINT_WAL_PERFORMANCE_INTERVAL));
+        contextConfiguration.walMaxSize() * 1024 * 1024,
+        contextConfiguration.walCommitTimeout(),
+        contextConfiguration.walKeepSingleSegment(),
+        contextConfiguration.storageCallFsync(),
+        contextConfiguration.storagePrintWalPerformanceStatistics(),
+        contextConfiguration.storagePrintWalPerformanceInterval());
   }
 
   @Override
@@ -757,8 +749,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
   @Override
   protected void initWalAndDiskCache(final OContextConfiguration contextConfiguration)
       throws IOException, InterruptedException {
-    final String aesKeyEncoded =
-        contextConfiguration.getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY);
+    final String aesKeyEncoded = contextConfiguration.storageEncryptionKey();
     final byte[] aesKey =
         Optional.ofNullable(aesKeyEncoded)
             .map(keyEncoded -> Base64.getDecoder().decode(keyEncoded))
@@ -767,14 +758,11 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
     fuzzyCheckpointTask =
         fuzzyCheckpointExecutor.scheduleWithFixedDelay(
             new OPeriodicFuzzyCheckpoint(this),
-            contextConfiguration.getValueAsInteger(
-                OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL),
-            contextConfiguration.getValueAsInteger(
-                OGlobalConfiguration.WAL_FUZZY_CHECKPOINT_INTERVAL),
+            contextConfiguration.walFuzzyCheckpointInterval(),
+            contextConfiguration.walFuzzyCheckpointInterval(),
             TimeUnit.SECONDS);
 
-    final String configWalPath =
-        contextConfiguration.getValueAsString(OGlobalConfiguration.WAL_LOCATION);
+    final String configWalPath = contextConfiguration.walLocation();
     final Path walPath;
     if (configWalPath == null) {
       walPath = null;
@@ -787,39 +775,30 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
             name,
             storagePath,
             walPath,
-            contextConfiguration.getValueAsInteger(OGlobalConfiguration.WAL_CACHE_SIZE),
-            contextConfiguration.getValueAsInteger(OGlobalConfiguration.WAL_BUFFER_SIZE),
+            contextConfiguration.walCacheSize(),
+            contextConfiguration.walBufferSize(),
             aesKey,
             iv,
-            contextConfiguration.getValueAsLong(OGlobalConfiguration.WAL_SEGMENTS_INTERVAL)
-                * 60
-                * 1_000_000_000L,
+            contextConfiguration.walSegmentsInterval() * 60 * 1_000_000_000L,
             walMaxSegSize,
             10,
             true,
             Locale.getDefault(),
-            contextConfiguration.getValueAsLong(OGlobalConfiguration.WAL_MAX_SIZE) * 1024 * 1024,
-            contextConfiguration.getValueAsInteger(OGlobalConfiguration.WAL_COMMIT_TIMEOUT),
-            contextConfiguration.getValueAsBoolean(OGlobalConfiguration.WAL_KEEP_SINGLE_SEGMENT),
-            contextConfiguration.getValueAsBoolean(OGlobalConfiguration.STORAGE_CALL_FSYNC),
-            contextConfiguration.getValueAsBoolean(
-                OGlobalConfiguration.STORAGE_PRINT_WAL_PERFORMANCE_STATISTICS),
-            contextConfiguration.getValueAsInteger(
-                OGlobalConfiguration.STORAGE_PRINT_WAL_PERFORMANCE_INTERVAL));
+            contextConfiguration.walMaxSize() * 1024 * 1024,
+            contextConfiguration.walCommitTimeout(),
+            contextConfiguration.walKeepSingleSegment(),
+            contextConfiguration.storageCallFsync(),
+            contextConfiguration.storagePrintWalPerformanceStatistics(),
+            contextConfiguration.storagePrintWalPerformanceInterval());
     writeAheadLog.addCheckpointListener(this);
 
-    final int pageSize =
-        contextConfiguration.getValueAsInteger(OGlobalConfiguration.DISK_CACHE_PAGE_SIZE) * ONE_KB;
-    final long diskCacheSize =
-        contextConfiguration.getValueAsLong(OGlobalConfiguration.DISK_CACHE_SIZE) * 1024 * 1024;
+    final int pageSize = contextConfiguration.diskCachePageSize() * ONE_KB;
+    final long diskCacheSize = contextConfiguration.diskCacheSize() * 1024 * 1024;
     final long writeCacheSize =
-        (long)
-            (contextConfiguration.getValueAsInteger(OGlobalConfiguration.DISK_WRITE_CACHE_PART)
-                / 100.0
-                * diskCacheSize);
+        (long) (contextConfiguration.diskWriteCachePart() / 100.0 * diskCacheSize);
 
     final DoubleWriteLog doubleWriteLog;
-    if (contextConfiguration.getValueAsBoolean(OGlobalConfiguration.STORAGE_USE_DOUBLE_WRITE_LOG)) {
+    if (contextConfiguration.storageUseDoubleWriteLog()) {
       doubleWriteLog = new DoubleWriteLogGL(doubleWriteLogMaxSegSize);
     } else {
       doubleWriteLog = new DoubleWriteLogNoOP();
@@ -831,20 +810,18 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
             memoryPool,
             writeAheadLog,
             doubleWriteLog,
-            contextConfiguration.getValueAsInteger(
-                OGlobalConfiguration.DISK_WRITE_CACHE_PAGE_FLUSH_INTERVAL),
-            contextConfiguration.getValueAsInteger(OGlobalConfiguration.WAL_SHUTDOWN_TIMEOUT),
+            contextConfiguration.diskWriteCachePageFlushInterval(),
+            contextConfiguration.walShutdownTimeout(),
             writeCacheSize,
             storagePath,
             getName(),
             OStringSerializer.INSTANCE,
             files,
             getId(),
-            contextConfiguration.getValueAsEnum(
-                OGlobalConfiguration.STORAGE_CHECKSUM_MODE, OChecksumMode.class),
+            contextConfiguration.storageChecksumMode(),
             iv,
             aesKey,
-            contextConfiguration.getValueAsBoolean(OGlobalConfiguration.STORAGE_CALL_FSYNC),
+            contextConfiguration.storageCallFsync(),
             ((OrientDBEmbedded) context).getIoExecutor());
 
     wowCache.loadRegisteredFiles();

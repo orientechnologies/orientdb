@@ -941,7 +941,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
   }
 
   public static void manualIndexesWarning() {
-    if (!OGlobalConfiguration.INDEX_ALLOW_MANUAL_INDEXES.getValueAsBoolean()) {
+    if (!OGlobalConfiguration.global().indexAllowManualIndexes()) {
       throw new OManualIndexesAreProhibited(
           "Manual indexes are deprecated, not supported any more and will be removed in next"
               + " versions if you still want to use them, please set global property `"
@@ -949,7 +949,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
               + "` to `true`");
     }
 
-    if (OGlobalConfiguration.INDEX_ALLOW_MANUAL_INDEXES_WARNING.getValueAsBoolean()) {
+    if (OGlobalConfiguration.global().indexAllowManualIndexesWarning()) {
       logger.warn(
           "Seems you use manual indexes. Manual indexes are deprecated, not supported any more"
               + " and will be removed in next versions if you do not want to see warning,"

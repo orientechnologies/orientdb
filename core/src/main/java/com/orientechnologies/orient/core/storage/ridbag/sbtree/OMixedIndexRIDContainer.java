@@ -25,7 +25,7 @@ public class OMixedIndexRIDContainer implements Set<OIdentifiable> {
   private final OAbstractPaginatedStorage storage;
   private OIndexRIDContainerSBTree tree = null;
   private final int topThreshold =
-      OGlobalConfiguration.INDEX_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getValueAsInteger();
+      OGlobalConfiguration.global().indexEmbeddedToSbtreebonsaiThreshold();
 
   /** Should be called inside of lock to ensure uniqueness of entity on disk !!!
    * @param storage TODO*/

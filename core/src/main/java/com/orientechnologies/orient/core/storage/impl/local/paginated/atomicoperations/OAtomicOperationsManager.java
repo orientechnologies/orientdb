@@ -55,7 +55,7 @@ public class OAtomicOperationsManager {
   private final OWriteAheadLog writeAheadLog;
   private final OOneEntryPerKeyLockManager<String> lockManager =
       new OOneEntryPerKeyLockManager<>(
-          true, -1, OGlobalConfiguration.COMPONENTS_LOCK_CACHE.getValueAsInteger());
+          true, -1, OGlobalConfiguration.global().componentsLockCache());
   private final OReadCache readCache;
   private final OWriteCache writeCache;
 

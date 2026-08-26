@@ -7,7 +7,6 @@ import com.orientechnologies.orient.client.remote.OrientDBRemote;
 import com.orientechnologies.orient.client.remote.metadata.schema.OSchemaRemote;
 import com.orientechnologies.orient.client.remote.metadata.security.OSecurityRemote;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OSharedContext;
 import com.orientechnologies.orient.core.db.OStringCache;
@@ -46,11 +45,7 @@ public class OSharedContextRemote extends OSharedContext {
   private volatile long lastCloseTime = System.currentTimeMillis();
 
   public OSharedContextRemote(ORemoteClient storage, OrientDBRemote orientDBRemote) {
-    stringCache =
-        new OStringCache(
-            orientDBRemote
-                .getContextConfiguration()
-                .getValueAsInteger(OGlobalConfiguration.DB_STRING_CAHCE_SIZE));
+    stringCache = new OStringCache(orientDBRemote.getContextConfiguration().dbStringCacheSize());
     orientDB = orientDBRemote;
     this.storage = storage;
     schema = new OSchemaRemote();

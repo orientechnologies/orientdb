@@ -254,7 +254,7 @@ public final class OWOWCache extends OAbstractWriteCache
    * Limit of free space on disk after which database will be switched to "read only" mode
    */
   private final long freeSpaceLimit =
-      OGlobalConfiguration.DISK_CACHE_FREE_SPACE_LIMIT.getValueAsLong() * 1024L * 1024L;
+      OGlobalConfiguration.global().diskCacheFreeSpaceLimit() * 1024L * 1024L;
 
   /**
    * Listeners which are called once we detect that some of the pages of files are broken.

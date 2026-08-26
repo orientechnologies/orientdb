@@ -65,7 +65,7 @@ public class OOneEntryPerKeyLockManager<T> implements OLockManager<T> {
     this(
         iEnabled,
         iAcquireTimeout,
-        OGlobalConfiguration.ENVIRONMENT_LOCK_MANAGER_CONCURRENCY_LEVEL.getValueAsInteger(),
+        OGlobalConfiguration.global().environmentLockManagerConcurrencyLevel(),
         amountOfCachedInstances);
   }
 

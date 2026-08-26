@@ -44,8 +44,7 @@ public class OPartitionedLockManager<T> implements OLockManager<T> {
   private static final int HASH_BITS = 0x7fffffff;
 
   private final int concurrencyLevel =
-      closestInteger(
-          OGlobalConfiguration.ENVIRONMENT_LOCK_MANAGER_CONCURRENCY_LEVEL.getValueAsInteger());
+      closestInteger(OGlobalConfiguration.global().environmentLockManagerConcurrencyLevel());
   private final int mask = concurrencyLevel - 1;
 
   private final ReadWriteLock[] locks;

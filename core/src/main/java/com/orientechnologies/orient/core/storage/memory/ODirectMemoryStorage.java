@@ -195,9 +195,7 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
           secureRandom.nextBytes(encryptionIv);
 
           final String aesKeyEncoded =
-              getConfiguration()
-                  .getContextConfiguration()
-                  .getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY);
+              getConfiguration().getContextConfiguration().storageEncryptionKey();
           final byte[] aesKey =
               aesKeyEncoded == null ? null : Base64.getDecoder().decode(aesKeyEncoded);
 
@@ -264,11 +262,7 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
         try {
           final byte[] data = new byte[pageSize];
           ODurablePage.getPageData(cacheEntry.getCachePointer().getBuffer(), data, 0, pageSize);
-          OChecksumMode mode =
-              (OChecksumMode)
-                  getConfiguration()
-                      .getContextConfiguration()
-                      .getValue(OGlobalConfiguration.STORAGE_CHECKSUM_MODE);
+          OChecksumMode mode = getConfiguration().getContextConfiguration().storageChecksumMode();
           ByteBuffer bufferWrap = ByteBuffer.wrap(data);
           bufferWrap.order(ByteOrder.nativeOrder());
           OWOWCache.addMagicChecksumBackup(internalId, pageIndex, mode, bufferWrap);
@@ -349,9 +343,7 @@ public class ODirectMemoryStorage extends OAbstractPaginatedStorage {
     stateLock.writeLock().lock();
     try {
       final String aesKeyEncoded =
-          getConfiguration()
-              .getContextConfiguration()
-              .getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY);
+          getConfiguration().getContextConfiguration().storageEncryptionKey();
       final byte[] aesKey =
           aesKeyEncoded == null ? null : Base64.getDecoder().decode(aesKeyEncoded);
 

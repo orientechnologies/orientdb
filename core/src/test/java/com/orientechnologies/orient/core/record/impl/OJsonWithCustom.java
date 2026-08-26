@@ -16,7 +16,7 @@ public class OJsonWithCustom {
 
   @Test
   public void testCustomField() {
-    boolean old = OGlobalConfiguration.DB_CUSTOM_SUPPORT.getValueAsBoolean();
+    boolean old = OGlobalConfiguration.global().dbCustomSupport();
     OGlobalConfiguration.DB_CUSTOM_SUPPORT.setValue(true);
     ODocument doc = new ODocument();
     doc.field("test", String.class, OType.CUSTOM);
@@ -47,7 +47,7 @@ public class OJsonWithCustom {
 
   @Test
   public void testCustomSerialization() {
-    boolean old = OGlobalConfiguration.DB_CUSTOM_SUPPORT.getValueAsBoolean();
+    boolean old = OGlobalConfiguration.global().dbCustomSupport();
     OGlobalConfiguration.DB_CUSTOM_SUPPORT.setValue(true);
     try (final OrientDB orientDB =
         OCreateDatabaseUtil.createDatabase(

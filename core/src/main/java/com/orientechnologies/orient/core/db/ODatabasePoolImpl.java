@@ -19,10 +19,6 @@
  */
 package com.orientechnologies.orient.core.db;
 
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DB_POOL_ACQUIRE_TIMEOUT;
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DB_POOL_MAX;
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DB_POOL_MIN;
-
 import com.orientechnologies.common.concur.resource.OResourcePool;
 import com.orientechnologies.common.concur.resource.OResourcePoolListener;
 import com.orientechnologies.orient.core.exception.OAcquireTimeoutException;
@@ -41,8 +37,8 @@ public class ODatabasePoolImpl implements ODatabasePoolInternal {
       String user,
       String password,
       OrientDBConfig config) {
-    int max = config.getConfigurations().getValueAsInteger(DB_POOL_MAX);
-    int min = config.getConfigurations().getValueAsInteger(DB_POOL_MIN);
+    int max = config.getConfigurations().dbPoolMax();
+    int min = config.getConfigurations().dbPoolMin();
     this.factory = factory;
     this.config = config;
     pool =
@@ -75,8 +71,7 @@ public class ODatabasePoolImpl implements ODatabasePoolInternal {
       p = pool;
     }
     if (p != null) {
-      return p.getResource(
-          null, config.getConfigurations().getValueAsLong(DB_POOL_ACQUIRE_TIMEOUT));
+      return p.getResource(null, config.getConfigurations().dbPoolAcquireTimeout());
     } else {
       throw new ODatabaseException("The pool is closed");
     }

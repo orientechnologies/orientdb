@@ -16,8 +16,7 @@ import java.nio.ByteBuffer;
 public final class OWALPageChangesPortion implements OWALChanges {
 
   private static final OLogger logger = OLogManager.instance().logger(OWALPageChangesPortion.class);
-  private static final int PAGE_SIZE =
-      OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
+  private static final int PAGE_SIZE = OGlobalConfiguration.global().diskCachePageSize() * 1024;
 
   private static final int CHUNK_SIZE = 32;
   private static final int PORTION_SIZE = 32;

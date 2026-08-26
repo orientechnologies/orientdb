@@ -101,9 +101,9 @@ public class OStorageEnginePaginatedLocal implements OStorageEngine {
     final long diskCacheSize =
         calculateReadCacheMaxMemory(
             OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * 1024 * 1024);
-    final int pageSize = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
+    final int pageSize = OGlobalConfiguration.global().diskCachePageSize() * 1024;
 
-    if (OGlobalConfiguration.DIRECT_MEMORY_PREALLOCATE.getValueAsBoolean()) {
+    if (OGlobalConfiguration.global().directMemoryPreallocate()) {
       final int pageCount = (int) (diskCacheSize / pageSize);
       logger.info("Allocation of %d pages.", pageCount);
 
@@ -180,17 +180,9 @@ public class OStorageEnginePaginatedLocal implements OStorageEngine {
     }
   }
 
-  private int getIntConfig(OContextConfiguration configurations, OGlobalConfiguration config) {
-    return configurations.getValueAsInteger(config);
-  }
-
-  private long getLongConfig(OContextConfiguration configurations, OGlobalConfiguration config) {
-    return configurations.getValueAsLong(config);
-  }
-
   private long calculateInitialMaxWALSegSize(Path basePath, OContextConfiguration configurations)
       throws IOException {
-    String walPath = configurations.getValueAsString(OGlobalConfiguration.WAL_LOCATION);
+    String walPath = configurations.walLocation();
 
     if (walPath == null) {
       walPath = basePath.toString();
@@ -223,12 +215,10 @@ public class OStorageEnginePaginatedLocal implements OStorageEngine {
       filesSize = 0;
     }
 
-    long maxSegSize =
-        getLongConfig(configurations, OGlobalConfiguration.WAL_MAX_SEGMENT_SIZE) * 1024 * 1024;
+    long maxSegSize = configurations.walMaxSegmentSize() * 1024 * 1024;
 
     if (maxSegSize <= 0) {
-      int sizePercent =
-          getIntConfig(configurations, OGlobalConfiguration.WAL_MAX_SEGMENT_SIZE_PERCENT);
+      int sizePercent = configurations.walMaxSegmentSizePercent();
       if (sizePercent <= 0) {
         throw new ODatabaseException(
             "Invalid configuration settings. Can not set maximum size of WAL segment");
@@ -239,8 +229,7 @@ public class OStorageEnginePaginatedLocal implements OStorageEngine {
 
     final long minSegSizeLimit = (long) (freeSpace * 0.25);
 
-    long minSegSize =
-        getLongConfig(configurations, OGlobalConfiguration.WAL_MIN_SEG_SIZE) * 1024 * 1024;
+    long minSegSize = configurations.walMinSegSize() * 1024 * 1024;
 
     if (minSegSize > minSegSizeLimit) {
       minSegSize = minSegSizeLimit;
@@ -282,16 +271,10 @@ public class OStorageEnginePaginatedLocal implements OStorageEngine {
       filesSize = 0;
     }
 
-    long maxSegSize =
-        getLongConfig(configurations, OGlobalConfiguration.STORAGE_DOUBLE_WRITE_LOG_MAX_SEG_SIZE)
-            * 1024
-            * 1024;
+    long maxSegSize = configurations.storageDoubleWriteLogMaxSegSize() * 1024 * 1024;
 
     if (maxSegSize <= 0) {
-      int sizePercent =
-          getIntConfig(
-              configurations, OGlobalConfiguration.STORAGE_DOUBLE_WRITE_LOG_MAX_SEG_SIZE_PERCENT);
-
+      int sizePercent = configurations.storageDoubleWriteLogMaxSegSizePercent();
       if (sizePercent <= 0) {
         throw new ODatabaseException(
             "Invalid configuration settings. Can not set maximum size of WAL segment");
@@ -300,10 +283,7 @@ public class OStorageEnginePaginatedLocal implements OStorageEngine {
       maxSegSize = (freeSpace + filesSize) / 100 * sizePercent;
     }
 
-    long minSegSize =
-        getLongConfig(configurations, OGlobalConfiguration.STORAGE_DOUBLE_WRITE_LOG_MIN_SEG_SIZE)
-            * 1024
-            * 1024;
+    long minSegSize = configurations.storageDoubleWriteLogMinSegSize() * 1024 * 1024;
 
     if (minSegSize > 0 && maxSegSize < minSegSize) {
       maxSegSize = minSegSize;

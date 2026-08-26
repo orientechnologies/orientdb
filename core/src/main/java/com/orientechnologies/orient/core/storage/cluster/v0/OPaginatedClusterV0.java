@@ -29,7 +29,6 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.compression.OCompression;
 import com.orientechnologies.orient.core.compression.OCompressionFactory;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStoragePaginatedClusterConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
@@ -123,13 +122,10 @@ public final class OPaginatedClusterV0 extends OPaginatedCluster {
     acquireExclusiveLock();
     try {
       final OContextConfiguration ctxCfg = storage.getConfiguration().getContextConfiguration();
-      final String cfgCompression =
-          ctxCfg.getValueAsString(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD);
+      final String cfgCompression = ctxCfg.storageCompressionMethod();
       @SuppressWarnings("deprecation")
-      final String cfgEncryption =
-          ctxCfg.getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD);
-      final String cfgEncryptionKey =
-          ctxCfg.getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY);
+      final String cfgEncryption = ctxCfg.storageEncryptionMethod();
+      final String cfgEncryptionKey = ctxCfg.storageEncryptionKey();
 
       init(id, clusterName, cfgCompression, cfgEncryption, cfgEncryptionKey, null);
     } finally {
@@ -173,13 +169,9 @@ public final class OPaginatedClusterV0 extends OPaginatedCluster {
     acquireExclusiveLock();
     try {
       final OContextConfiguration ctxCfg = storage.getConfiguration().getContextConfiguration();
-      final String cfgCompression =
-          ctxCfg.getValueAsString(OGlobalConfiguration.STORAGE_COMPRESSION_METHOD);
-      @SuppressWarnings("deprecation")
-      final String cfgEncryption =
-          ctxCfg.getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD);
-      final String cfgEncryptionKey =
-          ctxCfg.getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY);
+      final String cfgCompression = ctxCfg.storageCompressionMethod();
+      final String cfgEncryption = ctxCfg.storageEncryptionMethod();
+      final String cfgEncryptionKey = ctxCfg.storageEncryptionKey();
 
       init(
           config.getId(),

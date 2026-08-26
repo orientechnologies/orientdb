@@ -171,9 +171,7 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
       preloadStringProperties();
       preloadClusters();
       preloadConfigurationProperties();
-      setValidation(
-          atomicOperation,
-          getContextConfiguration().getValueAsBoolean(OGlobalConfiguration.DB_VALIDATION));
+      setValidation(atomicOperation, getContextConfiguration().dbValidation());
       recalculateLocale();
     } finally {
       lock.writeLock().unlock();
@@ -1590,7 +1588,7 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
         isNullValueSupport,
         keySize,
         encryption,
-        configuration.getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY),
+        configuration.storageEncryptionKey(),
         engineProperties);
   }
 
@@ -1678,7 +1676,7 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
         0,
         compression,
         encryption,
-        configuration.getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY),
+        configuration.storageEncryptionKey(),
         conflictStrategy,
         OStorageClusterConfiguration.STATUS.valueOf(status),
         binaryVersion);

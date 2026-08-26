@@ -42,8 +42,7 @@ public final class OByteBufferPool implements OByteBufferPoolMXBean {
   private static final OLogger logger = OLogManager.instance().logger(OByteBufferPool.class);
 
   /** Whether we should track memory leaks during application execution */
-  private static final boolean TRACK =
-      OGlobalConfiguration.DIRECT_MEMORY_TRACK_MODE.getValueAsBoolean();
+  private static final boolean TRACK = OGlobalConfiguration.global().directMemoryTrackMode();
 
   /**
    * Holder for singleton instance. We use {@link AtomicReference} instead of static constructor to

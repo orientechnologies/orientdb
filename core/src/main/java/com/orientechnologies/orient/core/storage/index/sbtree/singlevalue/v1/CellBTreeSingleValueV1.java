@@ -1497,8 +1497,7 @@ public final class CellBTreeSingleValueV1<K> extends ODurableComponent
   }
 
   public final class OSBTreeFullKeySpliterator implements Spliterator<K> {
-    private final int prefetchSize =
-        OGlobalConfiguration.INDEX_CURSOR_PREFETCH_SIZE.getValueAsInteger();
+    private final int prefetchSize = OGlobalConfiguration.global().indexCursorPrefetchSize();
     private long pageIndex;
     private int itemIndex;
 
@@ -1654,7 +1653,7 @@ public final class CellBTreeSingleValueV1<K> extends ODurableComponent
 
       dataCache.clear();
 
-      final int prefetchSize = OGlobalConfiguration.INDEX_CURSOR_PREFETCH_SIZE.getValueAsInteger();
+      final int prefetchSize = OGlobalConfiguration.global().indexCursorPrefetchSize();
 
       atomicOperationsManager.acquireReadLock(CellBTreeSingleValueV1.this);
       try {
@@ -1824,7 +1823,7 @@ public final class CellBTreeSingleValueV1<K> extends ODurableComponent
 
       dataCache.clear();
 
-      final int prefetchSize = OGlobalConfiguration.INDEX_CURSOR_PREFETCH_SIZE.getValueAsInteger();
+      final int prefetchSize = OGlobalConfiguration.global().indexCursorPrefetchSize();
 
       atomicOperationsManager.acquireReadLock(CellBTreeSingleValueV1.this);
       try {

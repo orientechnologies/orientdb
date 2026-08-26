@@ -32,7 +32,6 @@ import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.common.util.OQuarto;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.exception.OInvalidInstanceIdException;
 import com.orientechnologies.orient.core.exception.OInvalidStorageEncryptionKeyException;
@@ -451,9 +450,7 @@ public class OEnterpriseLocalPaginatedStorage extends OLocalPaginatedStorage {
       try {
 
         final String aesKeyEncoded =
-            getConfiguration()
-                .getContextConfiguration()
-                .getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY);
+            getConfiguration().getContextConfiguration().storageEncryptionKey();
         final byte[] aesKey =
             aesKeyEncoded == null ? null : Base64.getDecoder().decode(aesKeyEncoded);
 

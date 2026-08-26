@@ -60,7 +60,7 @@ public final class OWALRecordsFactory {
 
   private static final LZ4Factory factory = LZ4Factory.fastestInstance();
   private static final int MIN_COMPRESSED_RECORD_SIZE =
-      OGlobalConfiguration.WAL_MIN_COMPRESSED_RECORD_SIZE.getValueAsInteger();
+      OGlobalConfiguration.global().walMinCompressedRecordSize();
 
   public static ByteBuffer toStream(final WriteableWALRecord walRecord) {
     final int contentSize = walRecord.serializedSize() + METADATA_SIZE;

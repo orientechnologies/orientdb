@@ -672,7 +672,7 @@ public class ODocumentSchemalessBinarySerializationTest {
 
   @Test
   public void testDocumentWithCostum() {
-    boolean old = OGlobalConfiguration.DB_CUSTOM_SUPPORT.getValueAsBoolean();
+    boolean old = OGlobalConfiguration.global().dbCustomSupport();
     OGlobalConfiguration.DB_CUSTOM_SUPPORT.setValue(true);
     ODatabaseRecordThreadLocal.instance().remove();
     ODocument document = new ODocument();
@@ -853,7 +853,7 @@ public class ODocumentSchemalessBinarySerializationTest {
 
   @Test
   public void testSerializableValue() {
-    boolean old = OGlobalConfiguration.DB_CUSTOM_SUPPORT.getValueAsBoolean();
+    boolean old = OGlobalConfiguration.global().dbCustomSupport();
     OGlobalConfiguration.DB_CUSTOM_SUPPORT.setValue(true);
 
     ODocument document = new ODocument();

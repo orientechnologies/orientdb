@@ -39,8 +39,7 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
   private static final OLogger logger = OLogManager.instance().logger(OVersionPositionMapV0.class);
   private long fileId;
   private int numberOfPages;
-  public static final int PAGE_SIZE =
-      OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
+  public static final int PAGE_SIZE = OGlobalConfiguration.global().diskCachePageSize() * 1024;
 
   public OVersionPositionMapV0(
       final OAbstractPaginatedStorage storage,

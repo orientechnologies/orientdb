@@ -87,7 +87,7 @@ import java.util.stream.StreamSupport;
  */
 public class OSBTreeV2<K, V> extends ODurableComponent implements OSBTree<K, V> {
   private static final int SPLITERATOR_CACHE_SIZE =
-      OGlobalConfiguration.INDEX_CURSOR_PREFETCH_SIZE.getValueAsInteger();
+      OGlobalConfiguration.global().indexCursorPrefetchSize();
   private static final int MAX_KEY_SIZE =
       OGlobalConfiguration.SBTREE_MAX_KEY_SIZE.getValueAsInteger();
   private static final int MAX_EMBEDDED_VALUE_SIZE =

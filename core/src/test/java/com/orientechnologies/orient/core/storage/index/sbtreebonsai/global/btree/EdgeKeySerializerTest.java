@@ -82,7 +82,7 @@ public class EdgeKeySerializerTest {
 
     final OWALChanges walChanges = new OWALPageChangesPortion();
     final ByteBuffer buffer =
-        ByteBuffer.allocate(OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024)
+        ByteBuffer.allocate(OGlobalConfiguration.global().diskCachePageSize() * 1024)
             .order(ByteOrder.nativeOrder());
 
     final byte[] rawKey = new byte[serializedSize];

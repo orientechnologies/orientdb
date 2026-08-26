@@ -216,7 +216,7 @@ public class LongSerializationTest {
 
     final int size = LongSerializer.getObjectSize(value);
     final ByteBuffer byteBuffer =
-        ByteBuffer.allocate(OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024)
+        ByteBuffer.allocate(OGlobalConfiguration.global().diskCachePageSize() * 1024)
             .order(ByteOrder.nativeOrder());
     final byte[] serializedValue = new byte[size];
     LongSerializer.serialize(value, serializedValue, 0);

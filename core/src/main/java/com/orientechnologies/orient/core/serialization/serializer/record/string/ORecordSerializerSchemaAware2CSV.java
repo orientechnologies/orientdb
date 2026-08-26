@@ -516,7 +516,7 @@ public class ORecordSerializerSchemaAware2CSV extends ORecordSerializerCSVAbstra
       // IDENTICAL! DO NOTHING
       newSize = record.getSize();
     else if (record.getSize() > iOutput.length()
-        && !OGlobalConfiguration.RECORD_DOWNSIZING_ENABLED.getValueAsBoolean()) {
+        && !OGlobalConfiguration.global().recordDownsizingEnabled()) {
       // APPEND EXTRA SPACES TO FILL ALL THE AVAILABLE SPACE AND AVOID FRAGMENTATION
       newSize = record.getSize();
     } else if (overSize > 0) {

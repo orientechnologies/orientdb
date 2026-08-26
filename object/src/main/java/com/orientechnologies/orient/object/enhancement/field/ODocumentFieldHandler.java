@@ -32,8 +32,7 @@ public class ODocumentFieldHandler {
   }
 
   public static final ODocumentFieldHandlingStrategy getStrategy(ODatabase<?> database) {
-    int strategy =
-        database.getConfiguration().getValueAsInteger(OGlobalConfiguration.DOCUMENT_BINARY_MAPPING);
+    int strategy = database.getConfiguration().documentBinaryMapping();
     return ODocumentFieldHandlingStrategyFactory.getInstance().create(strategy);
   }
 }

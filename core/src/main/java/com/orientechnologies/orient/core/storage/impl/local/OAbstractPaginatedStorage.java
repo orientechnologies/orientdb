@@ -489,7 +489,7 @@ public abstract class OAbstractPaginatedStorage
   }
 
   private static void checkPageSizeAndRelatedParametersInGlobalConfiguration() {
-    final int pageSize = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
+    final int pageSize = OGlobalConfiguration.global().diskCachePageSize() * 1024;
     final int maxKeySize = OGlobalConfiguration.SBTREE_MAX_KEY_SIZE.getValueAsInteger();
 
     if (maxKeySize > pageSize / 4) {
@@ -576,8 +576,7 @@ public abstract class OAbstractPaginatedStorage
 
           atomicOperationsTable =
               new AtomicOperationsTable(
-                  contextConfiguration.getValueAsInteger(
-                      OGlobalConfiguration.STORAGE_ATOMIC_OPERATIONS_TABLE_COMPACTION_LIMIT),
+                  contextConfiguration.storageAtomicOperationsTableCompactionLimit(),
                   idGen.getLastId() + 1);
           atomicOperationsManager = new OAtomicOperationsManager(this, atomicOperationsTable);
 
@@ -722,8 +721,7 @@ public abstract class OAbstractPaginatedStorage
   protected abstract byte[] getIv();
 
   private void initLockingStrategy(final OContextConfiguration contextConfiguration) {
-    final String lockKind =
-        contextConfiguration.getValueAsString(OGlobalConfiguration.STORAGE_PESSIMISTIC_LOCKING);
+    final String lockKind = contextConfiguration.storagePessimisticLocking();
     if (OrientDBConfig.LOCK_TYPE_MODIFICATION.equals(lockKind)) {
       modificationLock = true;
     } else if (OrientDBConfig.LOCK_TYPE_READWRITE.equals(lockKind)) {
@@ -894,8 +892,7 @@ public abstract class OAbstractPaginatedStorage
 
     atomicOperationsTable =
         new AtomicOperationsTable(
-            contextConfiguration.getValueAsInteger(
-                OGlobalConfiguration.STORAGE_ATOMIC_OPERATIONS_TABLE_COMPACTION_LIMIT),
+            contextConfiguration.storageAtomicOperationsTableCompactionLimit(),
             idGen.getLastId() + 1);
     atomicOperationsManager = new OAtomicOperationsManager(this, atomicOperationsTable);
     transaction = new ThreadLocal<>();
@@ -928,8 +925,7 @@ public abstract class OAbstractPaginatedStorage
               .setCreationVersion(atomicOperation, OConstants.getVersion());
           ((OClusterBasedStorageConfiguration) configuration)
               .setPageSize(
-                  atomicOperation,
-                  OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024);
+                  atomicOperation, OGlobalConfiguration.global().diskCachePageSize() * 1024);
           ((OClusterBasedStorageConfiguration) configuration)
               .setMaxKeySize(
                   atomicOperation, OGlobalConfiguration.SBTREE_MAX_KEY_SIZE.getValueAsInteger());
@@ -998,7 +994,7 @@ public abstract class OAbstractPaginatedStorage
   protected abstract void initIv() throws IOException;
 
   private void checkPageSizeAndRelatedParameters() {
-    final int pageSize = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger() * 1024;
+    final int pageSize = OGlobalConfiguration.global().diskCachePageSize() * 1024;
     final int maxKeySize = OGlobalConfiguration.SBTREE_MAX_KEY_SIZE.getValueAsInteger();
 
     if (configuration.getPageSize() != -1 && configuration.getPageSize() != pageSize) {
@@ -2436,11 +2432,8 @@ public abstract class OAbstractPaginatedStorage
               final byte valueSerializerId =
                   indexMetadata.getValueSerializerId(binaryFormatVersion);
               final OContextConfiguration ctxCfg = configuration.getContextConfiguration();
-              @SuppressWarnings("deprecation")
-              final String cfgEncryption =
-                  ctxCfg.getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_METHOD);
-              final String cfgEncryptionKey =
-                  ctxCfg.getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY);
+              final String cfgEncryption = ctxCfg.storageEncryptionMethod();
+              final String cfgEncryptionKey = ctxCfg.storageEncryptionKey();
               int genenrateId = indexEngines.size();
               final IndexEngineData engineData =
                   new IndexEngineData(
@@ -4389,9 +4382,7 @@ public abstract class OAbstractPaginatedStorage
           OPaginatedClusterFactory.createCluster(
               clusterName,
               configuration.getVersion(),
-              configuration
-                  .getContextConfiguration()
-                  .getValueAsInteger(OGlobalConfiguration.STORAGE_CLUSTER_VERSION),
+              configuration.getContextConfiguration().storageClusterVersion(),
               this);
       cluster.configure(clusterPos, clusterName);
     } else {
@@ -5023,9 +5014,7 @@ public abstract class OAbstractPaginatedStorage
             backupEncryptedIv(zipOutputStream, encryptionIv);
 
             final String aesKeyEncoded =
-                getConfiguration()
-                    .getContextConfiguration()
-                    .getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY);
+                getConfiguration().getContextConfiguration().storageEncryptionKey();
             final byte[] aesKey =
                 aesKeyEncoded == null ? null : Base64.getDecoder().decode(aesKeyEncoded);
 
@@ -5213,9 +5202,7 @@ public abstract class OAbstractPaginatedStorage
     stateLock.writeLock().lock();
     try {
       final String aesKeyEncoded =
-          getConfiguration()
-              .getContextConfiguration()
-              .getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY);
+          getConfiguration().getContextConfiguration().storageEncryptionKey();
       final byte[] aesKey =
           aesKeyEncoded == null ? null : Base64.getDecoder().decode(aesKeyEncoded);
 
@@ -5560,7 +5547,7 @@ public abstract class OAbstractPaginatedStorage
     long recordsProcessed = 0;
 
     final int reportBatchSize =
-        OGlobalConfiguration.WAL_REPORT_AFTER_OPERATIONS_DURING_RESTORE.getValueAsInteger();
+        OGlobalConfiguration.global().walReportAfterOperationsDuringRestore();
     final Map<Long, List<OWALRecord>> operationUnits = new HashMap<>(1024);
     final Map<Long, byte[]> operationMetadata = new LinkedHashMap<>(1024);
 

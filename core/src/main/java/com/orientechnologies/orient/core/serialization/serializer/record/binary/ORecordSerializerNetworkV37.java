@@ -20,8 +20,6 @@
 
 package com.orientechnologies.orient.core.serialization.serializer.record.binary;
 
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DB_CUSTOM_SUPPORT;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
@@ -30,6 +28,7 @@ import com.orientechnologies.common.serialization.types.ODecimalSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.serialization.types.OUUIDSerializer;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.db.record.ORecordLazyList;
@@ -341,7 +340,7 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
       case TRANSIENT:
         break;
       case CUSTOM:
-        if (!DB_CUSTOM_SUPPORT.getValueAsBoolean()) {
+        if (!OGlobalConfiguration.global().dbCustomSupport()) {
           throw new ODatabaseException(
               String.format(
                   "OType CUSTOM used with serializable types, is not enabled, set"
@@ -657,7 +656,7 @@ public class ORecordSerializerNetworkV37 implements ORecordSerializer {
         writeRidBag(bytes, (ORidBag) value, ctx);
         break;
       case CUSTOM:
-        if (!DB_CUSTOM_SUPPORT.getValueAsBoolean()) {
+        if (!OGlobalConfiguration.global().dbCustomSupport()) {
           throw new ODatabaseException(
               String.format(
                   "OType CUSTOM used with serializable types, is not enabled, set"

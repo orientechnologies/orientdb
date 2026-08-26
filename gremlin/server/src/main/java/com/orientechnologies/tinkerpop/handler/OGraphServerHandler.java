@@ -22,7 +22,6 @@ package com.orientechnologies.tinkerpop.handler;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
@@ -41,8 +40,7 @@ public class OGraphServerHandler extends OServerPluginAbstract {
 
   @Override
   public void config(final OServer server, OServerParameterConfiguration[] iParams) {
-    graphPoolMax =
-        server.getContextConfiguration().getValueAsInteger(OGlobalConfiguration.DB_POOL_MAX);
+    graphPoolMax = server.getContextConfiguration().dbPoolMax();
     for (OServerParameterConfiguration param : iParams) {
       if (param.name.equalsIgnoreCase("enabled")) {
         if (!Boolean.parseBoolean(param.value))
