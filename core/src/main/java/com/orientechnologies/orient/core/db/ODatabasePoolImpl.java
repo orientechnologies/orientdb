@@ -57,7 +57,7 @@ public class ODatabasePoolImpl implements ODatabasePoolInternal {
 
               @Override
               public boolean reuseResource(Void iKey, ODatabaseDocumentInternal iValue) {
-                if (iValue.isReusable()) {
+                if (!iValue.isReusable()) {
                   return false;
                 }
                 iValue.reuse();
