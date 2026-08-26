@@ -736,6 +736,7 @@ public interface OConfiguration {
     return getValueAsBoolean(OGlobalConfiguration.SPATIAL_ENABLE_DIRECT_WKT_READER);
   }
 
+  @Deprecated
   default String oauth2Secretkey() {
     return getValueAsString(OGlobalConfiguration.OAUTH2_SECRETKEY);
   }

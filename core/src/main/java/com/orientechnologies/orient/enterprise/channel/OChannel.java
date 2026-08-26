@@ -27,7 +27,6 @@ import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.profiler.OProfiler.METRIC_TYPE;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -91,7 +90,7 @@ public abstract class OChannel {
   }
 
   public OChannel(final Socket iSocket, final OContextConfiguration iConfig) throws IOException {
-    socketBufferSize = iConfig.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_BUFFER_SIZE);
+    socketBufferSize = iConfig.networkSocketBufferSize();
 
     socket = iSocket;
     socket.setTcpNoDelay(true);

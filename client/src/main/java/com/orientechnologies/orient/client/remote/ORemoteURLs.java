@@ -129,9 +129,7 @@ public class ORemoteURLs {
       addHost(host, contextConfiguration);
     }
 
-    if (serverURLs.size() == 1
-        && contextConfiguration.getValueAsBoolean(
-            OGlobalConfiguration.NETWORK_BINARY_DNS_LOADBALANCING_ENABLED)) {
+    if (serverURLs.size() == 1 && contextConfiguration.networkBinaryDnsLoadbalancingEnabled()) {
       List<String> toAdd = fetchHostsFromDns(lastHost, contextConfiguration);
       serverURLs.addAll(toAdd);
     }
@@ -148,9 +146,7 @@ public class ORemoteURLs {
       final String primaryServer, OContextConfiguration contextConfiguration) {
     logger.debug(
         "Retrieving URLs from DNS '%s' (timeout=%d)...",
-        primaryServer,
-        contextConfiguration.getValueAsInteger(
-            OGlobalConfiguration.NETWORK_BINARY_DNS_LOADBALANCING_TIMEOUT));
+        primaryServer, contextConfiguration.networkBinaryDnsLoadbalancingTimeout());
 
     List<String> toAdd = new ArrayList<>();
     try {
@@ -158,8 +154,7 @@ public class ORemoteURLs {
       env.put("java.naming.factory.initial", "com.sun.jndi.dns.DnsContextFactory");
       env.put(
           "com.sun.jndi.ldap.connect.timeout",
-          contextConfiguration.getValueAsString(
-              OGlobalConfiguration.NETWORK_BINARY_DNS_LOADBALANCING_TIMEOUT));
+          String.valueOf(contextConfiguration.networkBinaryDnsLoadbalancingTimeout()));
 
       final DirContext ictx = new InitialDirContext(env);
       final String hostName =

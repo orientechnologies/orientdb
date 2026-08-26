@@ -86,7 +86,7 @@ public abstract class OHttpResponseAbstract implements OHttpResponse {
   private boolean jsonErrorResponse = true;
   private boolean sameSiteCookie = true;
   private OClientConnection connection;
-  private boolean streaming = OGlobalConfiguration.NETWORK_HTTP_STREAMING.getValueAsBoolean();
+  private boolean streaming = OGlobalConfiguration.global().networkHttpStreaming();
 
   public OHttpResponseAbstract(
       final OutputStream iOutStream,
@@ -99,8 +99,7 @@ public abstract class OHttpResponseAbstract implements OHttpResponse {
       final boolean iKeepAlive,
       OClientConnection connection,
       OContextConfiguration contextConfiguration) {
-    setStreaming(
-        contextConfiguration.getValueAsBoolean(OGlobalConfiguration.NETWORK_HTTP_STREAMING));
+    setStreaming(contextConfiguration.networkHttpStreaming());
     out = iOutStream;
     httpVersion = iHttpVersion;
     setAdditionalHeaders(iAdditionalHeaders);

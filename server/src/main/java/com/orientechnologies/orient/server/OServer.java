@@ -151,7 +151,7 @@ public class OServer {
 
     Orient.instance().startup();
 
-    if (OGlobalConfiguration.PROFILER_ENABLED.getValueAsBoolean()
+    if (OGlobalConfiguration.global().profilerEnabled()
         && !Orient.instance().getProfiler().isRecording())
       Orient.instance().getProfiler().startRecording();
 

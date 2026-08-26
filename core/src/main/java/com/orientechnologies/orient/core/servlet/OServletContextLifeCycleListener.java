@@ -39,7 +39,7 @@ public class OServletContextLifeCycleListener implements ServletContextListener 
 
   @Override
   public void contextInitialized(ServletContextEvent sce) {
-    if (OGlobalConfiguration.INIT_IN_SERVLET_CONTEXT_LISTENER.getValueAsBoolean()) {
+    if (OGlobalConfiguration.global().initInServletContextListener()) {
       logger.infoNoDb("Start web application is detected, OrientDB engine is staring up...");
       Orient.startUp(true);
       logger.infoNoDb("OrientDB engine is started");
@@ -48,7 +48,7 @@ public class OServletContextLifeCycleListener implements ServletContextListener 
 
   @Override
   public void contextDestroyed(ServletContextEvent sce) {
-    if (OGlobalConfiguration.INIT_IN_SERVLET_CONTEXT_LISTENER.getValueAsBoolean()) {
+    if (OGlobalConfiguration.global().initInServletContextListener()) {
       final Orient orient = Orient.instance();
       if (orient != null) {
         logger.infoNoDb(

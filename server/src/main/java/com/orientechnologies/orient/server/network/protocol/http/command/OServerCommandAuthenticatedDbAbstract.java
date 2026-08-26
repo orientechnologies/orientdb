@@ -22,7 +22,6 @@ package com.orientechnologies.orient.server.network.protocol.http.command;
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -330,10 +329,7 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
   }
 
   private void init() {
-    if (tokenHandler == null
-        && server
-            .getContextConfiguration()
-            .getValueAsBoolean(OGlobalConfiguration.NETWORK_HTTP_USE_TOKEN)) {
+    if (tokenHandler == null && server.getContextConfiguration().networkHttpUseToken()) {
       tokenHandler = server.getTokenHandler();
     }
   }

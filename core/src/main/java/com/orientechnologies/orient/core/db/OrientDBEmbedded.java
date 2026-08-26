@@ -20,8 +20,6 @@
 
 package com.orientechnologies.orient.core.db;
 
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.FILE_DELETE_DELAY;
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.FILE_DELETE_RETRY;
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.WARNING_DEFAULT_USERS;
 
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
@@ -649,10 +647,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
         context.close();
         context.getStorage().delete();
         OLocalPaginatedStorage.deleteFilesFromDisc(
-            name,
-            config.getValueAsInteger(FILE_DELETE_RETRY),
-            config.getValueAsInteger(FILE_DELETE_DELAY),
-            name);
+            name, config.fileDeleteRetry(), config.fileDeleteDelay(), name);
         sharedContexts.remove(name);
       }
       throw OException.wrapException(

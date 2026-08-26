@@ -4,7 +4,6 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.exception.OSystemException;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -45,9 +44,7 @@ public class OTokenHandlerImpl implements OTokenHandler {
   private final OTokenSign sign;
 
   public OTokenHandlerImpl(OContextConfiguration config) {
-    this(
-        new OTokenSignImpl(config),
-        config.getValueAsLong(OGlobalConfiguration.NETWORK_TOKEN_EXPIRE_TIMEOUT));
+    this(new OTokenSignImpl(config), config.networkTokenExpireTimeout());
   }
 
   protected OTokenHandlerImpl(byte[] key, long sessionLength, String algorithm) {
@@ -55,7 +52,7 @@ public class OTokenHandlerImpl implements OTokenHandler {
   }
 
   public OTokenHandlerImpl(OTokenSign sign, OContextConfiguration config) {
-    this(sign, config.getValueAsLong(OGlobalConfiguration.NETWORK_TOKEN_EXPIRE_TIMEOUT));
+    this(sign, config.networkTokenExpireTimeout());
   }
 
   protected OTokenHandlerImpl(OTokenSign sign, long sessionLength) {

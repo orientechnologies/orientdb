@@ -21,7 +21,6 @@ package com.orientechnologies.orient.server.network.protocol.http;
 
 import com.orientechnologies.orient.client.binary.OBinaryRequestExecutor;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
@@ -56,10 +55,7 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocolHttpAbstract {
 
     super.config(iListener, server, iSocket, iConfiguration);
 
-    connection
-        .getData()
-        .setServerInfo(
-            iConfiguration.getValueAsString(OGlobalConfiguration.NETWORK_HTTP_SERVER_INFO));
+    connection.getData().setServerInfo(iConfiguration.networkHttpServerInfo());
   }
 
   @Override

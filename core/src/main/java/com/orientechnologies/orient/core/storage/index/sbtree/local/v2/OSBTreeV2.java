@@ -88,15 +88,13 @@ import java.util.stream.StreamSupport;
 public class OSBTreeV2<K, V> extends ODurableComponent implements OSBTree<K, V> {
   private static final int SPLITERATOR_CACHE_SIZE =
       OGlobalConfiguration.global().indexCursorPrefetchSize();
-  private static final int MAX_KEY_SIZE =
-      OGlobalConfiguration.SBTREE_MAX_KEY_SIZE.getValueAsInteger();
+  private static final int MAX_KEY_SIZE = OGlobalConfiguration.global().sbtreeMaxKeySize();
   private static final int MAX_EMBEDDED_VALUE_SIZE =
-      OGlobalConfiguration.SBTREE_MAX_EMBEDDED_VALUE_SIZE.getValueAsInteger();
+      OGlobalConfiguration.global().sbtreeMaxEmbeddedValueSize();
   private static final OAlwaysLessKey ALWAYS_LESS_KEY = new OAlwaysLessKey();
   private static final OAlwaysGreaterKey ALWAYS_GREATER_KEY = new OAlwaysGreaterKey();
 
-  private static final int MAX_PATH_LENGTH =
-      OGlobalConfiguration.SBTREE_MAX_DEPTH.getValueAsInteger();
+  private static final int MAX_PATH_LENGTH = OGlobalConfiguration.global().sbtreeMaxDepth();
 
   private static final long ROOT_INDEX = 0;
   private final Comparator<? super K> comparator = ODefaultComparator.INSTANCE;

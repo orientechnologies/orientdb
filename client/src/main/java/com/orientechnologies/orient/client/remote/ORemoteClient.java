@@ -266,10 +266,8 @@ public class ORemoteClient implements OStorageInfo {
     configuration = null;
 
     clientConfiguration = config;
-    connectionRetry =
-        clientConfiguration.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_RETRY);
-    connectionRetryDelay =
-        clientConfiguration.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_RETRY_DELAY);
+    connectionRetry = clientConfiguration.networkSocketRetry();
+    connectionRetryDelay = clientConfiguration.networkSocketRetryDelay();
     serverURLs = hosts;
 
     this.connectionManager = connectionManager;
@@ -1426,9 +1424,7 @@ public class ORemoteClient implements OStorageInfo {
                   new ORemotePushHandlerImpl(this, handler),
                   getCurrentServerURL(session),
                   connectionRetryDelay,
-                  configuration
-                      .getContextConfiguration()
-                      .getValueAsLong(OGlobalConfiguration.NETWORK_REQUEST_TIMEOUT));
+                  configuration.getContextConfiguration().networkRequestTimeout());
           pushThread.start();
           subscribeStorageConfiguration(session);
           subscribeDistributedConfiguration(session);
@@ -1712,8 +1708,7 @@ public class ORemoteClient implements OStorageInfo {
             request,
             "Error sending import request",
             0,
-            getClientConfiguration()
-                .getValueAsInteger(OGlobalConfiguration.NETWORK_REQUEST_TIMEOUT));
+            getClientConfiguration().networkRequestTimeout());
 
     for (String message : response.getMessages()) {
       listener.onMessage(message);

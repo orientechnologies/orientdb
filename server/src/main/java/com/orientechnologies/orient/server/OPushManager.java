@@ -12,7 +12,6 @@ import com.orientechnologies.orient.client.remote.message.OPushSchemaRequest;
 import com.orientechnologies.orient.client.remote.message.OPushSequencesRequest;
 import com.orientechnologies.orient.client.remote.message.OPushStorageConfigurationRequest;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OMetadataUpdateListener;
@@ -48,8 +47,7 @@ public class OPushManager implements OMetadataUpdateListener {
 
   public OPushManager(
       OContextConfiguration contextConfiguration, OClientConnectionManager sessions) {
-    int timeout =
-        contextConfiguration.getValueAsInteger(OGlobalConfiguration.NETWORK_REQUEST_TIMEOUT);
+    int timeout = contextConfiguration.networkRequestTimeout();
     executor =
         OThreadPoolExecutors.newScalingThreadPool(
             "Push Requests", 0, 5, 2000, timeout, TimeUnit.MILLISECONDS);

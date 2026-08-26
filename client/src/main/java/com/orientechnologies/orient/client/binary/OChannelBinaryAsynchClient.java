@@ -24,7 +24,6 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.enterprise.channel.OSocketFactory;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
@@ -55,7 +54,7 @@ public class OChannelBinaryAsynchClient extends OChannelBinary {
     try {
 
       serverURL = remoteHost + ":" + remotePort;
-      socketTimeout = config.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_TIMEOUT);
+      socketTimeout = config.networkSocketTimeout();
 
       try {
         socket.connect(new InetSocketAddress(remoteHost, remotePort), getSocketTimeout());

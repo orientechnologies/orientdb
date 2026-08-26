@@ -23,7 +23,6 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.enterprise.channel.OSocketFactory;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary;
 import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolException;
@@ -52,7 +51,7 @@ public class OChannelBinarySynchClient extends OChannelBinary {
     super(factory.createSocket(), iConfig);
     try {
 
-      socketTimeout = iConfig.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_TIMEOUT);
+      socketTimeout = iConfig.networkSocketTimeout();
 
       try {
         if (remoteHost.contains(":")) {

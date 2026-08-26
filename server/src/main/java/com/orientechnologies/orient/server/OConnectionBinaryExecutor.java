@@ -965,8 +965,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     connection.setTokenBased(request.isTokenBased());
     connection.getData().setCollectStats(request.isCollectStats());
 
-    if (!request.isTokenBased()
-        && !OGlobalConfiguration.NETWORK_BINARY_ALLOW_NO_TOKEN.getValueAsBoolean()) {
+    if (!request.isTokenBased() && !OGlobalConfiguration.global().networkBinaryAllowNoToken()) {
       logger.warn(
           "Session open with token flag false is not supported anymore please use token based"
               + " sessions");
@@ -1036,8 +1035,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     connection.getData().setProtocolVersion(request.getProtocolVersion());
     connection.getData().setClientId(request.getClientId());
     connection.getData().setSerializationImpl(request.getRecordFormat());
-    if (!request.isUseToken()
-        && !OGlobalConfiguration.NETWORK_BINARY_ALLOW_NO_TOKEN.getValueAsBoolean()) {
+    if (!request.isUseToken() && !OGlobalConfiguration.global().networkBinaryAllowNoToken()) {
       logger.warn(
           "Session open with token flag false is not supported anymore please use token based"
               + " sessions");

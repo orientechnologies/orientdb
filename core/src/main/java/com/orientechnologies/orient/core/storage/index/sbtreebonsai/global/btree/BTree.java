@@ -21,8 +21,7 @@ import java.util.stream.StreamSupport;
 
 public final class BTree extends ODurableComponent {
 
-  private static final int MAX_PATH_LENGTH =
-      OGlobalConfiguration.SBTREE_MAX_DEPTH.getValueAsInteger();
+  private static final int MAX_PATH_LENGTH = OGlobalConfiguration.global().sbtreeMaxDepth();
 
   private static final int ENTRY_POINT_INDEX = 0;
   private static final int ROOT_INDEX = 1;

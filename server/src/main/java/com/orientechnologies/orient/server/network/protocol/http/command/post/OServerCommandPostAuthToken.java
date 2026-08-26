@@ -3,7 +3,6 @@ package com.orientechnologies.orient.server.network.protocol.http.command.post;
 import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
@@ -37,10 +36,7 @@ public class OServerCommandPostAuthToken extends OServerCommandAbstract {
 
   private void init() {
 
-    if (tokenHandler == null
-        && server
-            .getContextConfiguration()
-            .getValueAsBoolean(OGlobalConfiguration.NETWORK_HTTP_USE_TOKEN)) {
+    if (tokenHandler == null && server.getContextConfiguration().networkHttpUseToken()) {
       tokenHandler = server.getTokenHandler();
     }
   }

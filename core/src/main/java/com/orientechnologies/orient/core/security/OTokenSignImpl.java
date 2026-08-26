@@ -5,7 +5,6 @@ import com.orientechnologies.common.exception.OSystemException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.metadata.security.jwt.OKeyProvider;
 import com.orientechnologies.orient.core.metadata.security.jwt.OTokenHeader;
@@ -36,9 +35,7 @@ public class OTokenSignImpl implements OTokenSign {
   }
 
   public OTokenSignImpl(OContextConfiguration config) {
-    this(
-        OTokenSignImpl.readKeyFromConfig(config),
-        config.getValueAsString(OGlobalConfiguration.NETWORK_TOKEN_ENCRYPTION_ALGORITHM));
+    this(OTokenSignImpl.readKeyFromConfig(config), config.networkTokenEncryptionAlgorithm());
   }
 
   public OTokenSignImpl(byte[] key, String algorithm) {
@@ -125,9 +122,8 @@ public class OTokenSignImpl implements OTokenSign {
 
   public static byte[] readKeyFromConfig(OContextConfiguration config) {
     byte[] key = null;
-    String configKey = config.getValueAsString(OGlobalConfiguration.NETWORK_TOKEN_SECRETKEY);
-    if (configKey == null || configKey.length() == 0)
-      configKey = config.getValueAsString(OGlobalConfiguration.OAUTH2_SECRETKEY);
+    String configKey = config.networkTokenSecretkey();
+    if (configKey == null || configKey.length() == 0) configKey = config.oauth2Secretkey();
 
     if (configKey != null && configKey.length() > 0) key = Base64.getUrlDecoder().decode(configKey);
 

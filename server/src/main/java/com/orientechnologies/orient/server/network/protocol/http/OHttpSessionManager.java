@@ -23,7 +23,6 @@ import com.orientechnologies.common.concur.resource.OSharedResourceAbstract;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.server.OServer;
 import java.security.SecureRandom;
 import java.util.HashMap;
@@ -44,11 +43,7 @@ public class OHttpSessionManager extends OSharedResourceAbstract {
   private Random random = new SecureRandom();
 
   public OHttpSessionManager(OServer server) {
-    expirationTime =
-        server
-                .getContextConfiguration()
-                .getValueAsInteger(OGlobalConfiguration.NETWORK_HTTP_SESSION_EXPIRE_TIMEOUT)
-            * 1000;
+    expirationTime = server.getContextConfiguration().networkHttpSessionExpireTimeout() * 1000;
 
     Orient.instance()
         .scheduleTask(

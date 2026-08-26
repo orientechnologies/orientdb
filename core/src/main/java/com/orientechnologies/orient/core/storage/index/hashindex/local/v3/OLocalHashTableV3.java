@@ -79,8 +79,7 @@ import java.util.List;
  * @since 12.03.13
  */
 public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashTable<K, V> {
-  private static final int MAX_KEY_SIZE =
-      OGlobalConfiguration.SBTREE_MAX_KEY_SIZE.getValueAsInteger();
+  private static final int MAX_KEY_SIZE = OGlobalConfiguration.global().sbtreeMaxKeySize();
 
   private static final long HASH_CODE_MIN_VALUE = 0;
   private static final long HASH_CODE_MAX_VALUE = 0xFFFFFFFFFFFFFFFFL;

@@ -19,15 +19,10 @@
  */
 package com.orientechnologies.orient.client.remote;
 
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.CLIENT_CHANNEL_IDLE_CLOSE;
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.CLIENT_CHANNEL_IDLE_TIMEOUT;
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.NETWORK_LOCK_TIMEOUT;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -58,10 +53,10 @@ public class ORemoteConnectionManager {
 
   public ORemoteConnectionManager(final OContextConfiguration conf, Timer timer) {
     connections = new ConcurrentHashMap<String, ORemoteConnectionPool>();
-    timeout = conf.getValueAsLong(NETWORK_LOCK_TIMEOUT);
-    int idleSecs = conf.getValueAsInteger(CLIENT_CHANNEL_IDLE_TIMEOUT);
+    timeout = conf.networkLockTimeout();
+    int idleSecs = conf.clientChannelIdleTimeout();
     this.idleTimeout = TimeUnit.MILLISECONDS.convert(idleSecs, TimeUnit.SECONDS);
-    if (conf.getValueAsBoolean(CLIENT_CHANNEL_IDLE_CLOSE)) {
+    if (conf.clientChannelIdleClose()) {
       idleTask =
           new TimerTask() {
             @Override
@@ -98,12 +93,8 @@ public class ORemoteConnectionManager {
       int maxPool = 8;
 
       if (clientConfiguration != null) {
-        final Object max =
-            clientConfiguration.getValue(OGlobalConfiguration.CLIENT_CHANNEL_MAX_POOL);
-        if (max != null) maxPool = Integer.parseInt(max.toString());
-
-        final Object netLockTimeout = clientConfiguration.getValue(NETWORK_LOCK_TIMEOUT);
-        if (netLockTimeout != null) localTimeout = Integer.parseInt(netLockTimeout.toString());
+        maxPool = clientConfiguration.clientChannelMaxPool();
+        localTimeout = clientConfiguration.networkLockTimeout();
       }
       int sepPos = url.indexOf(":");
       String host = url.substring(0, sepPos);

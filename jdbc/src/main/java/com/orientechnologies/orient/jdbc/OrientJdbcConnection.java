@@ -338,7 +338,7 @@ public class OrientJdbcConnection implements Connection {
   public void abort(Executor arg0) throws SQLException {}
 
   public int getNetworkTimeout() throws SQLException {
-    return OGlobalConfiguration.NETWORK_SOCKET_TIMEOUT.getValueAsInteger();
+    return OGlobalConfiguration.global().networkSocketTimeout();
   }
 
   /** No schema is supported. */

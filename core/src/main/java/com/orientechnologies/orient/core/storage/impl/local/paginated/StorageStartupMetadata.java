@@ -97,7 +97,7 @@ public class StorageStartupMetadata {
     }
 
     channel = createFile(filePath);
-    if (OGlobalConfiguration.FILE_LOCK.getValueAsBoolean()) {
+    if (OGlobalConfiguration.global().fileLock()) {
       lockFile();
     }
 
@@ -255,7 +255,7 @@ public class StorageStartupMetadata {
         }
       }
 
-      if (OGlobalConfiguration.FILE_LOCK.getValueAsBoolean()) {
+      if (OGlobalConfiguration.global().fileLock()) {
         lockFile();
       }
 

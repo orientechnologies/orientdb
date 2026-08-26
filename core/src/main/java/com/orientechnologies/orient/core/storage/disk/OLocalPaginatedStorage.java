@@ -20,8 +20,6 @@
 
 package com.orientechnologies.orient.core.storage.disk;
 
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.FILE_DELETE_DELAY;
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.FILE_DELETE_RETRY;
 import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog.MASTER_RECORD_EXTENSION;
 import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWriteAheadLog.WAL_SEGMENT_EXTENSION;
 
@@ -182,8 +180,8 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
 
     storagePath = Paths.get(OIOUtils.getPathFromDatabaseName(sp));
 
-    deleteMaxRetries = OGlobalConfiguration.FILE_DELETE_RETRY.getValueAsInteger();
-    deleteWaitTime = OGlobalConfiguration.FILE_DELETE_DELAY.getValueAsInteger();
+    deleteMaxRetries = OGlobalConfiguration.global().fileDeleteRetry();
+    deleteWaitTime = OGlobalConfiguration.global().fileDeleteDelay();
 
     startupMetadata =
         new StorageStartupMetadata(
@@ -341,7 +339,10 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
         logger.warn("Error while deleting storage %s on failed sync ", ed, name);
       }
       OLocalPaginatedStorage.deleteFilesFromDisc(
-          name, FILE_DELETE_RETRY.getValueAsInteger(), FILE_DELETE_DELAY.getValueAsInteger(), name);
+          name,
+          OGlobalConfiguration.global().fileDeleteRetry(),
+          OGlobalConfiguration.global().fileDeleteDelay(),
+          name);
       throw OException.wrapException(new OStorageException("Error during restore from backup"), e);
 
     } finally {

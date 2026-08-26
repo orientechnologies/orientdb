@@ -21,7 +21,6 @@
 package com.orientechnologies.orient.client.remote;
 
 import static com.orientechnologies.orient.client.remote.ORemoteClient.ADDRESS_SEPARATOR;
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.NETWORK_SOCKET_RETRY;
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
@@ -709,7 +708,7 @@ public class OrientDBRemote implements OrientDBInternal {
       String name, String user, String password, SessionOperation<T> operation) {
     checkOpen();
     ORemoteClientSession newSession = new ORemoteClientSession(-1);
-    int retry = configurations.getConfigurations().getValueAsInteger(NETWORK_SOCKET_RETRY);
+    int retry = configurations.getConfigurations().networkSocketRetry();
     while (retry > 0) {
       try {
         String url = buildUrl(name);

@@ -21,8 +21,6 @@
 package com.orientechnologies.orient.core.storage.impl.local;
 
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_TRANSACTION_SEQUENCE_SET_SIZE;
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.FILE_DELETE_DELAY;
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.FILE_DELETE_RETRY;
 
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
@@ -490,7 +488,7 @@ public abstract class OAbstractPaginatedStorage
 
   private static void checkPageSizeAndRelatedParametersInGlobalConfiguration() {
     final int pageSize = OGlobalConfiguration.global().diskCachePageSize() * 1024;
-    final int maxKeySize = OGlobalConfiguration.SBTREE_MAX_KEY_SIZE.getValueAsInteger();
+    final int maxKeySize = OGlobalConfiguration.global().sbtreeMaxKeySize();
 
     if (maxKeySize > pageSize / 4) {
       throw new OStorageException(
@@ -927,8 +925,7 @@ public abstract class OAbstractPaginatedStorage
               .setPageSize(
                   atomicOperation, OGlobalConfiguration.global().diskCachePageSize() * 1024);
           ((OClusterBasedStorageConfiguration) configuration)
-              .setMaxKeySize(
-                  atomicOperation, OGlobalConfiguration.SBTREE_MAX_KEY_SIZE.getValueAsInteger());
+              .setMaxKeySize(atomicOperation, OGlobalConfiguration.global().sbtreeMaxKeySize());
 
           generateDatabaseInstanceId(atomicOperation);
 
@@ -995,7 +992,7 @@ public abstract class OAbstractPaginatedStorage
 
   private void checkPageSizeAndRelatedParameters() {
     final int pageSize = OGlobalConfiguration.global().diskCachePageSize() * 1024;
-    final int maxKeySize = OGlobalConfiguration.SBTREE_MAX_KEY_SIZE.getValueAsInteger();
+    final int maxKeySize = OGlobalConfiguration.global().sbtreeMaxKeySize();
 
     if (configuration.getPageSize() != -1 && configuration.getPageSize() != pageSize) {
       throw new OStorageException(
@@ -5239,7 +5236,10 @@ public abstract class OAbstractPaginatedStorage
         logger.warn("Error while deleting storage %s on failed sync ", ed, name);
       }
       OLocalPaginatedStorage.deleteFilesFromDisc(
-          name, FILE_DELETE_RETRY.getValueAsInteger(), FILE_DELETE_DELAY.getValueAsInteger(), name);
+          name,
+          OGlobalConfiguration.global().fileDeleteRetry(),
+          OGlobalConfiguration.global().fileDeleteDelay(),
+          name);
       throw OException.wrapException(
           new OStorageException("Error during restore from incremental backup"), e);
 

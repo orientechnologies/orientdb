@@ -137,9 +137,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol
       throws IOException {
     configuration = iConfiguration;
 
-    final boolean installDefaultCommands =
-        iConfiguration.getValueAsBoolean(
-            OGlobalConfiguration.NETWORK_HTTP_INSTALL_DEFAULT_COMMANDS);
+    final boolean installDefaultCommands = iConfiguration.networkHttpInstallDefaultCommands();
     if (installDefaultCommands) registerStatelessCommands(iListener);
 
     final String addHeaders =
@@ -150,17 +148,12 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol
     connection = iServer.getClientConnectionManager().connect(this);
 
     server = iServer;
-    requestMaxContentLength =
-        iConfiguration.getValueAsInteger(OGlobalConfiguration.NETWORK_HTTP_MAX_CONTENT_LENGTH);
-    socketTimeout = iConfiguration.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_TIMEOUT);
-    responseCharSet =
-        iConfiguration.getValueAsString(OGlobalConfiguration.NETWORK_HTTP_CONTENT_CHARSET);
+    requestMaxContentLength = iConfiguration.networkHttpMaxContentLength();
+    socketTimeout = iConfiguration.networkSocketTimeout();
+    responseCharSet = iConfiguration.networkHttpContentCharset();
 
-    jsonResponseError =
-        iConfiguration.getValueAsBoolean(OGlobalConfiguration.NETWORK_HTTP_JSON_RESPONSE_ERROR);
-    sameSiteCookie =
-        iConfiguration.getValueAsBoolean(
-            OGlobalConfiguration.NETWORK_HTTP_SESSION_COOKIE_SAME_SITE);
+    jsonResponseError = iConfiguration.networkHttpJsonResponseError();
+    sameSiteCookie = iConfiguration.networkHttpSessionCookieSameSite();
 
     channel = new OChannelTextServer(iSocket, iConfiguration);
     channel.connected();
@@ -180,9 +173,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol
     connection.getData().setCommandDetail(null);
 
     final String callbackF;
-    if (server
-            .getContextConfiguration()
-            .getValueAsBoolean(OGlobalConfiguration.NETWORK_HTTP_JSONP_ENABLED)
+    if (server.getContextConfiguration().networkHttpJsonpEnabled()
         && request.getParameters() != null
         && request.getParameters().containsKey(OHttpUtils.CALLBACK_PARAMETER_NAME))
       callbackF = request.getParameters().get(OHttpUtils.CALLBACK_PARAMETER_NAME);
@@ -786,11 +777,9 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol
         }
         requestContent.append(c);
         // review this number: NETWORK_HTTP_MAX_CONTENT_LENGTH should refer to the body only...
-        if (OGlobalConfiguration.NETWORK_HTTP_MAX_CONTENT_LENGTH.getValueAsInteger() > -1
+        if (OGlobalConfiguration.global().networkHttpMaxContentLength() > -1
             && requestContent.length()
-                >= 10000
-                    + OGlobalConfiguration.NETWORK_HTTP_MAX_CONTENT_LENGTH.getValueAsInteger()
-                        * 2) {
+                >= 10000 + OGlobalConfiguration.global().networkHttpMaxContentLength() * 2) {
           while (channel.inStream.available() > 0) {
             channel.read();
           }

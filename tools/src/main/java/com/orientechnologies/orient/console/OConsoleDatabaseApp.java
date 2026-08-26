@@ -1402,8 +1402,7 @@ public class OConsoleDatabaseApp extends OConsoleApplication
     try {
       final OServerConfigurationManager serverCfg = new OServerConfigurationManager(serverCfgFile);
 
-      final String defAlgo =
-          OGlobalConfiguration.SECURITY_USER_PASSWORD_DEFAULT_ALGORITHM.getValueAsString();
+      final String defAlgo = OGlobalConfiguration.global().securityUserPasswordDefaultAlgorithm();
 
       final String hashedPassword = OSecurityManager.createHash(iServerUserPasswd, defAlgo, true);
 

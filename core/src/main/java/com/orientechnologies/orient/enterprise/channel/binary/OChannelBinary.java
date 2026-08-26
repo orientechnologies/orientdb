@@ -23,7 +23,6 @@ import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.enterprise.channel.OChannel;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinary.WrapStreams;
 import java.io.BufferedInputStream;
@@ -58,11 +57,10 @@ public abstract class OChannelBinary extends OChannel {
       throws IOException {
     super(socket, config);
     this.socket.setKeepAlive(true);
-    maxChunkSize =
-        config.getValueAsInteger(OGlobalConfiguration.NETWORK_BINARY_MAX_CONTENT_LENGTH) * 1024;
-    debug = config.getValueAsBoolean(OGlobalConfiguration.NETWORK_BINARY_DEBUG);
-    responseTimeout = config.getValueAsInteger(OGlobalConfiguration.NETWORK_REQUEST_TIMEOUT);
-    networkTimeout = config.getValueAsInteger(OGlobalConfiguration.NETWORK_SOCKET_TIMEOUT);
+    maxChunkSize = config.networkBinaryMaxContentLength() * 1024;
+    debug = config.networkBinaryDebug();
+    responseTimeout = config.networkRequestTimeout();
+    networkTimeout = config.networkSocketTimeout();
 
     if (debug) logger.info("%s - Connected", this.socket.getRemoteSocketAddress());
   }

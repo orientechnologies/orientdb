@@ -55,8 +55,7 @@ public class OSecurityManager {
   private static Map<String, byte[]> SALT_CACHE = null;
 
   static {
-    final int cacheSize =
-        OGlobalConfiguration.SECURITY_USER_PASSWORD_SALT_CACHE_SIZE.getValueAsInteger();
+    final int cacheSize = OGlobalConfiguration.global().securityUserPasswordSaltCacheSize();
     if (cacheSize > 0) {
       SALT_CACHE = Collections.synchronizedMap(new OLRUCache<String, byte[]>(cacheSize));
     }
@@ -172,8 +171,8 @@ public class OSecurityManager {
   public static String createHashWithSalt(final String iPassword) {
     return createHashWithSalt(
         iPassword,
-        OGlobalConfiguration.SECURITY_USER_PASSWORD_SALT_ITERATIONS.getValueAsInteger(),
-        OGlobalConfiguration.SECURITY_USER_PASSWORD_DEFAULT_ALGORITHM.getValueAsString());
+        OGlobalConfiguration.global().securityUserPasswordSaltIterations(),
+        OGlobalConfiguration.global().securityUserPasswordDefaultAlgorithm());
   }
 
   public static String createHashWithSalt(
