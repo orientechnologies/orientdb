@@ -63,10 +63,9 @@ public final class OByteBufferPool implements OByteBufferPoolMXBean {
 
     int bufferSize;
     if (contextConfiguration != null) {
-      bufferSize =
-          contextConfiguration.getValueAsInteger(OGlobalConfiguration.DISK_CACHE_PAGE_SIZE);
+      bufferSize = contextConfiguration.diskCachePageSize();
     } else {
-      bufferSize = OGlobalConfiguration.DISK_CACHE_PAGE_SIZE.getValueAsInteger();
+      bufferSize = OGlobalConfiguration.global().diskCachePageSize();
     }
 
     final OByteBufferPool newInstance = new OByteBufferPool(bufferSize * 1024);
@@ -111,7 +110,7 @@ public final class OByteBufferPool implements OByteBufferPoolMXBean {
   public OByteBufferPool(int pageSize) {
     this.pageSize = pageSize;
     this.allocator = ODirectMemoryAllocator.instance();
-    this.poolSize = OGlobalConfiguration.DIRECT_MEMORY_POOL_LIMIT.getValueAsInteger();
+    this.poolSize = OGlobalConfiguration.global().directMemoryPoolLimit();
   }
 
   /**

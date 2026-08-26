@@ -39,7 +39,7 @@ public class OUnsafeBinaryConverter implements OBinaryConverter {
   private static final long BYTE_ARRAY_OFFSET;
 
   private static final boolean useOnlyAlignedAccess =
-      OGlobalConfiguration.DIRECT_MEMORY_ONLY_ALIGNED_ACCESS.getValueAsBoolean();
+      OGlobalConfiguration.global().directMemoryOnlyAlignedAccess();
 
   static {
     theUnsafe =

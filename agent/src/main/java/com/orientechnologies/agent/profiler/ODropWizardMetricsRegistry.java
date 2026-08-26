@@ -84,16 +84,14 @@ public class ODropWizardMetricsRegistry implements OMetricsRegistry {
     this.settings = settings;
     this.metrics =
         new ConcurrentLinkedHashMap.Builder<String, OMetric>()
-            .maximumWeightedCapacity(
-                OGlobalConfiguration.ENTERPRISE_METRICS_MAX.getValueAsInteger())
+            .maximumWeightedCapacity(OGlobalConfiguration.global().enterpriseMetricsMax())
             .build();
     this.registry =
         new MetricRegistry() {
           @Override
           protected ConcurrentMap<String, Metric> buildMap() {
             return new ConcurrentLinkedHashMap.Builder<String, Metric>()
-                .maximumWeightedCapacity(
-                    OGlobalConfiguration.ENTERPRISE_METRICS_MAX.getValueAsInteger())
+                .maximumWeightedCapacity(OGlobalConfiguration.global().enterpriseMetricsMax())
                 .build();
           }
         };

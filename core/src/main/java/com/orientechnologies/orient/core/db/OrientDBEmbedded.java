@@ -144,7 +144,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
 
     initAutoClose();
 
-    long timeout = getLongConfig(OGlobalConfiguration.COMMAND_TIMEOUT);
+    long timeout = getContextConfigurations().commandTimeout();
     timeoutChecker = new OCommandTimeoutChecker(timeout, this);
     systemDatabase = new OSystemDatabase(this);
     securitySystem = new ODefaultSecuritySystem();
@@ -192,21 +192,21 @@ public class OrientDBEmbedded implements OrientDBInternal {
 
   private void initAutoClose() {
 
-    boolean autoClose = getBoolConfig(OGlobalConfiguration.AUTO_CLOSE_AFTER_DELAY);
+    boolean autoClose = getContextConfigurations().autoCloseAfterDelay();
     if (autoClose) {
-      int autoCloseDelay = getIntConfig(OGlobalConfiguration.AUTO_CLOSE_DELAY);
+      int autoCloseDelay = getContextConfigurations().autoCloseDelay();
       final long delay = autoCloseDelay * 60 * 1000;
       initAutoClose(delay);
     }
   }
 
   private ExecutorService newIoExecutor() {
-    if (getBoolConfig(OGlobalConfiguration.EXECUTOR_POOL_IO_ENABLED)) {
+    if (getContextConfigurations().executorPoolIoEnabled()) {
       int ioSize = excutorMaxSize(OGlobalConfiguration.EXECUTOR_POOL_IO_MAX_SIZE);
       ExecutorService exec =
           OThreadPoolExecutors.newScalingThreadPool(
               "IO", allGroups, excutorBaseSize(ioSize), ioSize, ioSize, 30, TimeUnit.MINUTES);
-      if (getBoolConfig(OGlobalConfiguration.EXECUTOR_DEBUG_TRACE_SOURCE)) {
+      if (getContextConfigurations().executorDebugTraceSource()) {
         exec = new OSourceTraceExecutorService(exec);
       }
       return exec;
@@ -226,10 +226,14 @@ public class OrientDBEmbedded implements OrientDBInternal {
     ExecutorService exec =
         OThreadPoolExecutors.newScalingThreadPool(
             "Executor", allGroups, excutorBaseSize(size), size, size, 30, TimeUnit.MINUTES);
-    if (getBoolConfig(OGlobalConfiguration.EXECUTOR_DEBUG_TRACE_SOURCE)) {
+    if (getContextConfigurations().executorDebugTraceSource()) {
       exec = new OSourceTraceExecutorService(exec);
     }
     return exec;
+  }
+
+  public OContextConfiguration getContextConfigurations() {
+    return this.configurations.getConfigurations();
   }
 
   protected boolean getBoolConfig(OGlobalConfiguration config) {
@@ -273,8 +277,8 @@ public class OrientDBEmbedded implements OrientDBInternal {
   }
 
   protected OCachedDatabasePoolFactory createCachedDatabasePoolFactory(OrientDBConfig config) {
-    int capacity = getIntConfig(OGlobalConfiguration.DB_CACHED_POOL_CAPACITY);
-    long timeout = getIntConfig(OGlobalConfiguration.DB_CACHED_POOL_CLEAN_UP_TIMEOUT);
+    int capacity = getContextConfigurations().dbCachedPoolCapacity();
+    long timeout = getContextConfigurations().dbCachedPoolCleanUpTimeout();
     return new OCachedDatabasePoolFactoryImpl(this, capacity, timeout);
   }
 

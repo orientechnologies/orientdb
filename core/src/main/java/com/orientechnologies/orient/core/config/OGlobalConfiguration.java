@@ -1710,4 +1710,17 @@ public enum OGlobalConfiguration implements OConfiguration { // ENVIRONMENT
   public Object getValue(OGlobalConfiguration gc) {
     return gc.getValue();
   }
+
+  private static final OConfiguration global =
+      new OConfiguration() {
+
+        @Override
+        public Object getValue(OGlobalConfiguration gc) {
+          return gc.getValue();
+        }
+      };
+
+  public static OConfiguration global() {
+    return global;
+  }
 }

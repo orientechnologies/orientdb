@@ -51,8 +51,7 @@ public class OperationResponseManager implements ODistributedResponseManager {
   @Override
   public boolean waitForSynchronousResponses() throws InterruptedException {
     return waitingFor.await(
-        OGlobalConfiguration.DISTRIBUTED_HEARTBEAT_TIMEOUT.getValueAsInteger(),
-        TimeUnit.MILLISECONDS);
+        OGlobalConfiguration.global().distributedHeartbeatTimeout(), TimeUnit.MILLISECONDS);
   }
 
   @Override

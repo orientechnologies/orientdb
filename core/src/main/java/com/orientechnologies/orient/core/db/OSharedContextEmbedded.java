@@ -1,13 +1,10 @@
 package com.orientechnologies.orient.core.db;
 
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_TRANSACTION_SEQUENCE_SET_SIZE;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.viewmanager.ViewManager;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -86,12 +83,8 @@ public class OSharedContextEmbedded extends OSharedContext {
   }
 
   protected void init(OStorage storage) {
-    stringCache =
-        new OStringCache(
-            orientDB
-                .getConfigurations()
-                .getConfigurations()
-                .getValueAsInteger(OGlobalConfiguration.DB_STRING_CAHCE_SIZE));
+    stringCache = new OStringCache(orientDB.getContextConfigurations().dbStringCahceSize());
+
     schema = new OSchemaEmbedded(this);
     security = orientDB.getSecuritySystem().newSecurity(storage.getName());
     indexManager = new OIndexManagerShared(storage);
@@ -100,29 +93,16 @@ public class OSharedContextEmbedded extends OSharedContext {
     sequenceLibrary = new OSequenceLibraryImpl();
     liveQueryOps = new OLiveQueryHook.OLiveQueryOps();
     liveQueryOpsV2 = new OLiveQueryHookV2.OLiveQueryOps();
-    statementCache =
-        new OStatementCache(
-            orientDB
-                .getConfigurations()
-                .getConfigurations()
-                .getValueAsInteger(OGlobalConfiguration.STATEMENT_CACHE_SIZE));
+    statementCache = new OStatementCache(orientDB.getContextConfigurations().statementCacheSize());
 
     executionPlanCache =
-        new OExecutionPlanCache(
-            orientDB
-                .getConfigurations()
-                .getConfigurations()
-                .getValueAsInteger(OGlobalConfiguration.STATEMENT_CACHE_SIZE));
+        new OExecutionPlanCache(orientDB.getContextConfigurations().statementCacheSize());
     registerListener(executionPlanCache);
 
     queryStats = new OQueryStats();
     activeDistributedQueries = new HashMap<>();
     viewManager = new ViewManager(orientDB, storage.getName());
-    int sequenceSize =
-        orientDB
-            .getConfigurations()
-            .getConfigurations()
-            .getValueAsInteger(DISTRIBUTED_TRANSACTION_SEQUENCE_SET_SIZE);
+    int sequenceSize = orientDB.getContextConfigurations().distributedTransactionSequenceSetSize();
 
     transactionSequence = new ODistributedSynchronizedSequence(orientDB.getNodeId(), sequenceSize);
   }

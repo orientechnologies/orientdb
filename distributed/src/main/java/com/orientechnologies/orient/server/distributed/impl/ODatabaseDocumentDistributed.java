@@ -1,7 +1,5 @@
 package com.orientechnologies.orient.server.distributed.impl;
 
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_AUTORETRY_DELAY;
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY;
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_REPLICATION_PROTOCOL_VERSION;
 import static com.orientechnologies.orient.server.distributed.impl.TxContextStatus.FAILED;
 import static com.orientechnologies.orient.server.distributed.impl.TxContextStatus.SUCCESS;
@@ -315,7 +313,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
   @Override
   public void internalCommit(OTransactionInternal iTx) {
-    int protocolVersion = DISTRIBUTED_REPLICATION_PROTOCOL_VERSION.getValueAsInteger();
+    int protocolVersion = OGlobalConfiguration.global().distributedReplicationProtocolVersion();
     if (OScenarioThreadLocal.instance().isRunModeDistributed()
         || (iTx.isSequenceTransaction() && protocolVersion == 2)) {
       // Exclusive for handling schema manipulation, remove after refactor for distributed schema
@@ -335,7 +333,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
   @Override
   public void internalCommitPreallocate(OTransactionOptimistic iTx) {
-    int protocolVersion = DISTRIBUTED_REPLICATION_PROTOCOL_VERSION.getValueAsInteger();
+    int protocolVersion = OGlobalConfiguration.global().distributedReplicationProtocolVersion();
     if (OScenarioThreadLocal.instance().isRunModeDistributed()
         || (iTx.isSequenceTransaction() && protocolVersion == 2)) {
       // Exclusive for handling schema manipulation, remove after refactor for distributed schema
@@ -373,12 +371,8 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       ODistributedServerManager dManager = getDistributedManager();
       getContext().checkNodeIsMaster(getLocalNodeId(), getName(), "Transaction Commit");
 
-      int nretry =
-          this.getConfiguration()
-              .getValueAsInteger(OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY);
-      int delay =
-          this.getConfiguration()
-              .getValueAsInteger(OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_AUTORETRY_DELAY);
+      int nretry = this.getConfiguration().distributedConcurrentTxMaxAutoretry();
+      int delay = this.getConfiguration().distributedConcurrentTxAutoretryDelay();
       ODistributedTxCoordinator txManager =
           new ODistributedTxCoordinator(
               getName(), dManager, localDistributedDatabase, getLocalNodeId(), nretry, delay);
@@ -488,8 +482,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       register(requestId, localDistributedDatabase, txContext);
     } catch (OConcurrentCreateException ex) {
       if (retryCount >= 0
-          && retryCount
-              < getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY)) {
+          && retryCount < getConfiguration().distributedConcurrentTxMaxAutoretry()) {
         if (ex.getExpectedRid().getClusterPosition() > ex.getActualRid().getClusterPosition()) {
           logger.debug(
               "Allocation of rid not match, expected:%s actual:%s waiting for re-enqueue"
@@ -504,8 +497,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       throw ex;
     } catch (OConcurrentModificationException ex) {
       if (retryCount >= 0
-          && retryCount
-              < getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY)) {
+          && retryCount < getConfiguration().distributedConcurrentTxMaxAutoretry()) {
         if (ex.getEnhancedRecordVersion() > ex.getEnhancedDatabaseVersion()) {
           logger.info(
               "Persistent version not match, record:%s expected:%s actual:%s waiting for"
@@ -521,8 +513,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     } catch (ORecordNotFoundException e) {
       // This error can happen only in deserialization before locks happen, no need to unlock
       if (retryCount >= 0
-          && retryCount
-              < getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY)) {
+          && retryCount < getConfiguration().distributedConcurrentTxMaxAutoretry()) {
         return false;
       }
       txContext.setStatus(FAILED);
@@ -552,9 +543,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
   private void waitQuorumOnline() {
     if (this.neverWaited) {
-      long waitTime =
-          getConfiguration()
-              .getValueAsLong(OGlobalConfiguration.DISTRIBUTED_DATABASE_ONLINE_GRACE_PERIOD);
+      long waitTime = getConfiguration().distributedDatabaseOnlineGracePeriod();
 
       try {
         getContext()
@@ -641,8 +630,8 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         }
         return true;
       } else { // commit although first phase failed
-        int nretry = getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY);
-        int delay = getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_AUTORETRY_DELAY);
+        int nretry = getConfiguration().distributedConcurrentTxMaxAutoretry();
+        int delay = getConfiguration().distributedConcurrentTxAutoretryDelay();
 
         Random random = new Random();
         for (int i = 0; i < nretry; i++) {
@@ -945,12 +934,8 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     waitQuorumOnline();
     var transactionSequence = getSharedContext().getTransactionSequence();
     // The plus 1 is for make sure it runs once even if retry is 0
-    int nretry =
-        getConfiguration()
-            .getValueAsInteger(OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY);
-    int retryDelay =
-        this.getConfiguration()
-            .getValueAsInteger(OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_AUTORETRY_DELAY);
+    int nretry = getConfiguration().distributedConcurrentTxMaxAutoretry();
+    int retryDelay = this.getConfiguration().distributedConcurrentTxAutoretryDelay();
 
     var retryInfo = new ORetryInfo(nretry, retryDelay);
 
@@ -1340,8 +1325,8 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         storage.metadataOnly(afterMetadata.metadata());
         afterMetadata.notifyMetadataRead();
       } else {
-        int nretry = getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY);
-        int delay = getConfiguration().getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_AUTORETRY_DELAY);
+        int nretry = getConfiguration().distributedConcurrentTxMaxAutoretry();
+        int delay = getConfiguration().distributedConcurrentTxAutoretryDelay();
 
         Random random = new Random();
         for (int i = 0; i < nretry; i++) {

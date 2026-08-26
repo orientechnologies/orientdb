@@ -81,7 +81,7 @@ public enum OAnsiCode {
   }
 
   static {
-    final String ansiSupport = OGlobalConfiguration.LOG_SUPPORTS_ANSI.getValueAsString();
+    final String ansiSupport = OGlobalConfiguration.global().logSupportsAnsi();
     if ("true".equalsIgnoreCase(ansiSupport))
       // FORCE ANSI SUPPORT
       supportsColors = true;

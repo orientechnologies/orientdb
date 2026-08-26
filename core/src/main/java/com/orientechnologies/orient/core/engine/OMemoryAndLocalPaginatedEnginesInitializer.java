@@ -93,28 +93,28 @@ public class OMemoryAndLocalPaginatedEnginesInitializer {
       logger.infoNoDb(
           "Because OrientDB is running inside a container %s of memory will be left unallocated"
               + " according to the setting '%s' not taking into account heap memory",
-          OGlobalConfiguration.MEMORY_LEFT_TO_CONTAINER.getValueAsString(),
+          OGlobalConfiguration.global().memoryLeftToContainer(),
           OGlobalConfiguration.MEMORY_LEFT_TO_CONTAINER.getKey());
 
       diskCacheInMB =
           (calculateMemoryLeft(
                       osMemory.memoryLimit,
                       OGlobalConfiguration.MEMORY_LEFT_TO_CONTAINER.getKey(),
-                      OGlobalConfiguration.MEMORY_LEFT_TO_CONTAINER.getValueAsString())
+                      OGlobalConfiguration.global().memoryLeftToContainer())
                   - jvmMaxMemory)
               / (1024 * 1024);
     } else {
       logger.infoNoDb(
           "Because OrientDB is running outside a container %s of memory will be left "
               + "unallocated according to the setting '%s' not taking into account heap memory",
-          OGlobalConfiguration.MEMORY_LEFT_TO_OS.getValueAsString(),
+          OGlobalConfiguration.global().memoryLeftToOs(),
           OGlobalConfiguration.MEMORY_LEFT_TO_OS.getKey());
 
       diskCacheInMB =
           (calculateMemoryLeft(
                       osMemory.memoryLimit,
                       OGlobalConfiguration.MEMORY_LEFT_TO_OS.getKey(),
-                      OGlobalConfiguration.MEMORY_LEFT_TO_OS.getValueAsString())
+                      OGlobalConfiguration.global().memoryLeftToOs())
                   - jvmMaxMemory)
               / (1024 * 1024);
     }

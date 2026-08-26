@@ -491,8 +491,7 @@ public class OEnterpriseProfiler extends OAbstractProfiler
 
             @Override
             public void run() {
-              final String dumpType =
-                  OGlobalConfiguration.PROFILER_AUTODUMP_TYPE.getValueAsString();
+              final String dumpType = OGlobalConfiguration.global().profilerAutodumpType();
 
               final StringBuilder output = new StringBuilder();
               output.append(
@@ -634,8 +633,8 @@ public class OEnterpriseProfiler extends OAbstractProfiler
           });
     }
 
-    if (OGlobalConfiguration.PROFILER_AUTODUMP_INTERVAL.getValueAsInteger() > 0)
-      setAutoDump(OGlobalConfiguration.PROFILER_AUTODUMP_INTERVAL.getValueAsInteger());
+    if (OGlobalConfiguration.global().profilerAutodumpInterval() > 0)
+      setAutoDump(OGlobalConfiguration.global().profilerAutodumpInterval());
     else {
       // CREATE AUTO PAUSE TASK TO STOP RECORDING IF STUDIO IS NOT ASKING FOR METRICS
       autoPause =

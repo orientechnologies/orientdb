@@ -139,13 +139,13 @@ public class OSecurityManager {
       transformed =
           createHashWithSalt(
               iInput,
-              OGlobalConfiguration.SECURITY_USER_PASSWORD_SALT_ITERATIONS.getValueAsInteger(),
+              OGlobalConfiguration.global().securityUserPasswordSaltIterations(),
               algorithm);
     } else if (PBKDF2_SHA256_ALGORITHM.equalsIgnoreCase(algorithm)) {
       transformed =
           createHashWithSalt(
               iInput,
-              OGlobalConfiguration.SECURITY_USER_PASSWORD_SALT_ITERATIONS.getValueAsInteger(),
+              OGlobalConfiguration.global().securityUserPasswordSaltIterations(),
               algorithm);
     } else throw new IllegalArgumentException("Algorithm '" + algorithm + "' is not supported");
 
@@ -191,9 +191,7 @@ public class OSecurityManager {
 
   public static boolean checkPasswordWithSalt(final String iPassword, final String iHash) {
     return checkPasswordWithSalt(
-        iPassword,
-        iHash,
-        OGlobalConfiguration.SECURITY_USER_PASSWORD_DEFAULT_ALGORITHM.getValueAsString());
+        iPassword, iHash, OGlobalConfiguration.global().securityUserPasswordDefaultAlgorithm());
   }
 
   public static boolean checkPasswordWithSalt(

@@ -813,7 +813,7 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
         String configFile =
             OSystemVariableResolver.resolveSystemVariables("${ORIENTDB_HOME}/config/security.json");
 
-        String ssf = OGlobalConfiguration.SERVER_SECURITY_FILE.getValueAsString();
+        String ssf = OGlobalConfiguration.global().serverSecurityFile();
         if (ssf != null) configFile = ssf;
 
         File f = new File(configFile);

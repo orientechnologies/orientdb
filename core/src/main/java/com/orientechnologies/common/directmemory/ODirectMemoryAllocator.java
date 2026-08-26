@@ -69,15 +69,13 @@ public class ODirectMemoryAllocator implements ODirectMemoryAllocatorMXBean {
                     });
   }
 
-  private static final boolean PROFILE_MEMORY =
-      OGlobalConfiguration.MEMORY_PROFILING.getValueAsBoolean();
+  private static final boolean PROFILE_MEMORY = OGlobalConfiguration.global().memoryProfiling();
 
   private static final int MEMORY_STATISTICS_PRINTING_INTERVAL =
-      OGlobalConfiguration.MEMORY_PROFILING_REPORT_INTERVAL.getValueAsInteger();
+      OGlobalConfiguration.global().memoryProfilingReportInterval();
 
   /** Whether we should track memory leaks during application execution */
-  private static final boolean TRACK =
-      OGlobalConfiguration.DIRECT_MEMORY_TRACK_MODE.getValueAsBoolean();
+  private static final boolean TRACK = OGlobalConfiguration.global().directMemoryTrackMode();
 
   /** Holder for singleton instance */
   private static final AtomicReference<ODirectMemoryAllocator> INSTANCE_HOLDER =

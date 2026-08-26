@@ -47,7 +47,7 @@ public class OLocalRecordCache {
     underlying =
         Orient.instance()
             .getLocalRecordCache()
-            .newInstance(OGlobalConfiguration.CACHE_LOCAL_IMPL.getValueAsString());
+            .newInstance(OGlobalConfiguration.global().cacheLocalImpl());
   }
 
   public void startup(ODatabaseSession db) {

@@ -377,8 +377,7 @@ public class OGraphRepair {
                 vertex.removeField(fieldName);
               } else if (!ridbag.isEmbedded()
                   && ridbag.size()
-                      < OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD
-                          .getValueAsInteger()) {
+                      < OGlobalConfiguration.global().ridBagSbtreebonsaiToEmbeddedThreshold()) {
                 vertex.setDirty();
               }
               for (Iterator<?> it = ridbag.rawIterator(); it.hasNext(); ) {

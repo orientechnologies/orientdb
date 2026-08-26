@@ -182,7 +182,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
   private ExecutorService newNetIoExecutor() {
     int ioSize = excutorMaxSize(OGlobalConfiguration.EXECUTOR_POOL_MAX_SIZE);
     ExecutorService exec = OThreadPoolExecutors.newThreadPool("NetIO", allGroups, ioSize, ioSize);
-    if (getBoolConfig(OGlobalConfiguration.EXECUTOR_DEBUG_TRACE_SOURCE)) {
+    if (getContextConfigurations().executorDebugTraceSource()) {
       exec = new OSourceTraceExecutorService(exec);
     }
     return exec;
@@ -232,7 +232,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
     reconciliateState();
     this.nodeState.getOps().executeOnEnstablish(() -> execute(this::loadAllDatabases));
 
-    var period = getLongConfig(OGlobalConfiguration.DISTRIBUTED_CHECK_HEALTH_EVERY);
+    var period = getContextConfigurations().distributedCheckHealthEvery();
     if (period >= 0) {
       logger.warn("invalid value for health check period using default value");
       period = 10000l;
@@ -655,7 +655,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   private boolean checkDbAvailableOpen(String name) {
-    long waitTime = getLongConfig(OGlobalConfiguration.DISTRIBUTED_DATABASE_ONLINE_GRACE_PERIOD);
+    long waitTime = getContextConfigurations().distributedDatabaseOnlineGracePeriod();
     try {
       if (this.nodeState == null) {
         return true;
@@ -995,8 +995,8 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   public ORetryInfo newRetryInfo() {
-    int retryCountDown = getIntConfig(OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY);
-    int delay = getIntConfig(OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_AUTORETRY_DELAY);
+    int retryCountDown = getContextConfigurations().distributedConcurrentTxMaxAutoretry();
+    int delay = getContextConfigurations().distributedConcurrentTxAutoretryDelay();
     return newRetryInfo(retryCountDown, delay);
   }
 
@@ -1264,7 +1264,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
       if (state.getAcceptMode() instanceof OCanSyncAccept.NonBlockingSync) {
         storage.incrementalSync(out);
       } else if (state.getAcceptMode() instanceof OCanSyncAccept.BlockingSync) {
-        int compression = getIntConfig(OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION);
+        int compression = getContextConfigurations().distributedDeploydbTaskCompression();
         storage.backup(out, null, null, null, compression, 0);
       } else if (state.getAcceptMode() instanceof OCanSyncAccept.DeltaSync d) {
         List<OTransactionId> transactions =
@@ -1728,7 +1728,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   private void checkDisconnectedNodes() {
-    var time = getLongConfig(OGlobalConfiguration.DISTRIBUTED_HEARTBEAT_TIMEOUT);
+    var time = getContextConfigurations().distributedHeartbeatTimeout();
     var offlineNodes = getNodeState().getOps().checkOffline(time);
     for (var offlineNode : offlineNodes) {
       disconnected(offlineNode);
@@ -1736,7 +1736,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   private void checkOperationsTimeout() {
-    var timeOutSync = getLongConfig(OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_SYNCH_TIMEOUT);
+    var timeOutSync = getContextConfigurations().distributedDeploydbTaskSynchTimeout();
     getNodeState().getOps().checkTimeoutSync(timeOutSync);
   }
 
@@ -1798,7 +1798,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
     if (isDistributedDisabled()) {
       return true;
     }
-    long waitTime = getLongConfig(OGlobalConfiguration.DISTRIBUTED_DATABASE_ONLINE_GRACE_PERIOD);
+    long waitTime = getContextConfigurations().distributedDatabaseOnlineGracePeriod();
     return getNodeState().getOps().waitSelfOnline(database, Optional.of(waitTime));
   }
 
@@ -1825,7 +1825,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
 
   @Override
   public void gracefulWaitFullStartup() throws InterruptedException {
-    long waitTime = getLongConfig(OGlobalConfiguration.DISTRIBUTED_DATABASE_ONLINE_GRACE_PERIOD);
+    long waitTime = getContextConfigurations().distributedDatabaseOnlineGracePeriod();
     if (nodeState != null) {
       this.nodeState.getOps().waitForEnstablish(Optional.of(waitTime));
     }

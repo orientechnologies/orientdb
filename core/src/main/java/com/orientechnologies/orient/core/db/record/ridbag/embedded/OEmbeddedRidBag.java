@@ -507,8 +507,7 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
   public void addEntry(final OIdentifiable identifiable) {
     if (entries.length == entriesLength) {
       if (entriesLength == 0) {
-        final int cfgValue =
-            OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getValueAsInteger();
+        final int cfgValue = OGlobalConfiguration.global().ridBagEmbeddedToSbtreebonsaiThreshold();
         entries = new Object[cfgValue > 0 ? Math.min(cfgValue, 40) : 40];
       } else {
         final Object[] oldEntries = entries;

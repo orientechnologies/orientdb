@@ -234,7 +234,7 @@ public class Orient extends OListenerManger<OOrientListener> {
         signalHandler.installDefaultSignals();
       }
 
-      if (OGlobalConfiguration.ENVIRONMENT_DUMP_CFG_AT_STARTUP.getValueAsBoolean())
+      if (OGlobalConfiguration.global().environmentDumpCfgAtStartup())
         OGlobalConfiguration.dumpConfiguration(System.out);
 
       active = true;

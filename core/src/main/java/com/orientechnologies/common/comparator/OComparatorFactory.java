@@ -56,7 +56,7 @@ public class OComparatorFactory {
    */
   @SuppressWarnings("unchecked")
   public <T> Comparator<T> getComparator(Class<T> clazz) {
-    boolean useUnsafe = OGlobalConfiguration.MEMORY_USE_UNSAFE.getValueAsBoolean();
+    boolean useUnsafe = OGlobalConfiguration.global().memoryUseUnsafe();
 
     if (clazz.equals(byte[].class)) {
       if (useUnsafe && unsafeWasDetected)

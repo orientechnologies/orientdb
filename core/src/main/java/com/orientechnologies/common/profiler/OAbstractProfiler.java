@@ -373,7 +373,7 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract
 
   @Override
   public void onStartup() {
-    if (OGlobalConfiguration.PROFILER_ENABLED.getValueAsBoolean())
+    if (OGlobalConfiguration.global().profilerEnabled())
       // ACTIVATE RECORDING OF THE PROFILER
       startRecording();
     installMemoryChecker();
@@ -431,12 +431,12 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract
 
   @Override
   public String dump() {
-    return dumpEnvironment(OGlobalConfiguration.PROFILER_AUTODUMP_TYPE.getValueAsString());
+    return dumpEnvironment(OGlobalConfiguration.global().profilerAutodumpType());
   }
 
   @Override
   public void dump(final PrintStream out) {
-    out.println(dumpEnvironment(OGlobalConfiguration.PROFILER_AUTODUMP_TYPE.getValueAsString()));
+    out.println(dumpEnvironment(OGlobalConfiguration.global().profilerAutodumpType()));
   }
 
   @Override
@@ -508,8 +508,7 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract
                   () -> {
                     final StringBuilder output = new StringBuilder();
 
-                    final String dumpType =
-                        OGlobalConfiguration.PROFILER_AUTODUMP_TYPE.getValueAsString();
+                    final String dumpType = OGlobalConfiguration.global().profilerAutodumpType();
 
                     output.append(
                         "\n"
@@ -611,8 +610,7 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract
   }
 
   protected void installMemoryChecker() {
-    final long memoryCheckInterval =
-        OGlobalConfiguration.PROFILER_MEMORYCHECK_INTERVAL.getValueAsLong();
+    final long memoryCheckInterval = OGlobalConfiguration.global().profilerMemorycheckInterval();
 
     if (memoryCheckInterval > 0)
       Orient.instance().scheduleTask(new MemoryChecker(), memoryCheckInterval, memoryCheckInterval);

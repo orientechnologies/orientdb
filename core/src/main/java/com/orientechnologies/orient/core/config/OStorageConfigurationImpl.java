@@ -244,21 +244,20 @@ public class OStorageConfigurationImpl implements OStorageConfiguration {
     getContextConfiguration()
         .setValue(
             OGlobalConfiguration.CLASS_MINIMUM_CLUSTERS,
-            OGlobalConfiguration.CLASS_MINIMUM_CLUSTERS.getValueAsInteger()); // 0 = AUTOMATIC
+            OGlobalConfiguration.global().classMinimumClusters()); // 0 = AUTOMATIC
 
     autoInitClusters();
 
     recordSerializer = null;
     recordSerializerVersion = 0;
     indexEngines = new ConcurrentHashMap<>();
-    validation = getContextConfiguration().getValueAsBoolean(OGlobalConfiguration.DB_VALIDATION);
+    validation = getContextConfiguration().dbValidation();
 
     binaryFormatVersion = CURRENT_BINARY_FORMAT_VERSION;
   }
 
   private void autoInitClusters() {
-    if (getContextConfiguration().getValueAsInteger(OGlobalConfiguration.CLASS_MINIMUM_CLUSTERS)
-        == 0) {
+    if (getContextConfiguration().classMinimumClusters() == 0) {
       final int cpus = Runtime.getRuntime().availableProcessors();
       getContextConfiguration()
           .setValue(OGlobalConfiguration.CLASS_MINIMUM_CLUSTERS, cpus > 64 ? 64 : cpus);
@@ -505,7 +504,7 @@ public class OStorageConfigurationImpl implements OStorageConfiguration {
                     aa,
                     clusterCompression,
                     clusterEncryption,
-                    configuration.getValueAsString(OGlobalConfiguration.STORAGE_ENCRYPTION_KEY),
+                    configuration.storageEncryptionKey(),
                     clusterConflictStrategy,
                     status,
                     clusterBinaryVersion);

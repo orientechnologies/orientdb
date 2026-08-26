@@ -1682,7 +1682,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         indexDefinition = new OSimpleKeyIndexDefinition(OType.STRING);
       }
 
-      boolean oldValue = OGlobalConfiguration.INDEX_IGNORE_NULL_VALUES_DEFAULT.getValueAsBoolean();
+      boolean oldValue = OGlobalConfiguration.global().indexIgnoreNullValuesDefault();
       OGlobalConfiguration.INDEX_IGNORE_NULL_VALUES_DEFAULT.setValue(
           indexDefinition.isNullValuesIgnored());
       final OIndex index =

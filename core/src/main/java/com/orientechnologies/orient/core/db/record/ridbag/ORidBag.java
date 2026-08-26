@@ -510,19 +510,15 @@ public class ORidBag
     if (ODatabaseRecordThreadLocal.instance().isDefined()
         && !ODatabaseRecordThreadLocal.instance().get().isClosed()) {
       OContextConfiguration conf = ODatabaseRecordThreadLocal.instance().get().getConfiguration();
-      topThreshold =
-          conf.getValueAsInteger(OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD);
+      topThreshold = conf.ridBagEmbeddedToSbtreebonsaiThreshold();
 
-      bottomThreshold =
-          conf.getValueAsInteger(OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD);
+      bottomThreshold = conf.ridBagSbtreebonsaiToEmbeddedThreshold();
 
     } else {
 
-      topThreshold =
-          OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getValueAsInteger();
+      topThreshold = OGlobalConfiguration.global().ridBagEmbeddedToSbtreebonsaiThreshold();
 
-      bottomThreshold =
-          OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.getValueAsInteger();
+      bottomThreshold = OGlobalConfiguration.global().ridBagSbtreebonsaiToEmbeddedThreshold();
     }
   }
 

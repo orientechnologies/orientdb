@@ -48,7 +48,7 @@ public class OMemory {
    * @return the total maximum size of all OrientDB caches in bytes.
    */
   private static long getMaxCacheMemorySize() {
-    return OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * 1024 * 1024;
+    return OGlobalConfiguration.global().diskCacheSize() * 1024 * 1024;
   }
 
   /**
@@ -81,7 +81,7 @@ public class OMemory {
    *       <ul/>
    */
   public static void fixCommonConfigurationProblems() {
-    long diskCacheSize = OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong();
+    long diskCacheSize = OGlobalConfiguration.global().diskCacheSize();
 
     final int max32BitCacheSize = 512;
     if (getJavaBitWidth() == 32 && diskCacheSize > max32BitCacheSize) {
