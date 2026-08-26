@@ -5,6 +5,7 @@ import java.util.List;
 public class OConfig {
   private String databases;
   private String backup;
+  private ODefaultDatabaseConfig defaultDatabaseConfig;
   private OConfigSecurity security;
   private List<OConfigNetwork> network;
   private List<OConfigPlugin> plugin;
