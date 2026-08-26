@@ -29,7 +29,7 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-public class OContextConfiguration implements Serializable {
+public class OContextConfiguration implements Serializable, OConfiguration {
   private final Map<String, Object> config = new ConcurrentHashMap<String, Object>();
 
   /**

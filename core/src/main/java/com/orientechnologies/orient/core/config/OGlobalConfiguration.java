@@ -40,7 +40,7 @@ import java.util.Map.Entry;
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-public enum OGlobalConfiguration { // ENVIRONMENT
+public enum OGlobalConfiguration implements OConfiguration { // ENVIRONMENT
   ENVIRONMENT_DUMP_CFG_AT_STARTUP(
       "environment.dumpCfgAtStartup",
       "Dumps the configuration during application startup",
@@ -1704,5 +1704,10 @@ public enum OGlobalConfiguration { // ENVIRONMENT
     public void change(final Object iCurrentValue, final Object iNewValue) {
       Orient.instance().getProfiler().setAutoDump((Integer) iNewValue);
     }
+  }
+
+  @Override
+  public Object getValue(OGlobalConfiguration gc) {
+    return gc.getValue();
   }
 }
