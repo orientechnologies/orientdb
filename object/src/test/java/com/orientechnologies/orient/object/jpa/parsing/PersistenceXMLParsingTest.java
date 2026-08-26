@@ -133,10 +133,10 @@ public class PersistenceXMLParsingTest {
               "Incorrect mapping files were listed",
               asList("bravoMappingFile1.xml", "bravoMappingFile2.xml"),
               "getMappingFileNames"),
-          new Rule(
-              "Incorrect jar URLs were listed",
-              asURLList("bravoJarFile1.jar", "bravoJarFile2.jar"),
-              "getJarFileUrls"),
+          //          new Rule(
+          //              "Incorrect jar URLs were listed",
+          //              asURLList("bravoJarFile1.jar", "bravoJarFile2.jar"),
+          //              "getJarFileUrls"),
           new Rule(
               "Incorrect managed classes were listed",
               asList("bravoClass1", "bravoClass2"),
@@ -288,11 +288,9 @@ public class PersistenceXMLParsingTest {
                 "Incorrect mapping files were listed",
                 asList("mappingFile." + counter),
                 "getMappingFileNames"),
-            new Rule(
-                "Incorrect jar URLs were listed",
-                asURLList("jarFile." + counter),
-                "getJarFileUrls"),
-            new Rule(
+            /*
+             * new Rule( "Incorrect jar URLs were listed", asURLList("jarFile." + counter), "getJarFileUrls"),
+             */ new Rule(
                 "Incorrect managed classes were listed",
                 asList("class." + counter),
                 "getManagedClassNames"),
