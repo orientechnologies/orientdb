@@ -37,7 +37,7 @@ public abstract class OAbstractRemoteTask implements ORemoteTask {
 
   @Override
   public long getDistributedTimeout() {
-    return OGlobalConfiguration.DISTRIBUTED_CRUD_TASK_SYNCH_TIMEOUT.getValueAsLong();
+    return OGlobalConfiguration.global().distributedCrudTaskSynchTimeout();
   }
 
   @Override

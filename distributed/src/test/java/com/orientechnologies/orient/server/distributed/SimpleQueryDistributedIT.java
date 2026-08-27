@@ -61,7 +61,7 @@ public class SimpleQueryDistributedIT {
 
     // Query order by
     OClass v2 = session.createVertexClass("V2");
-    int records = (OGlobalConfiguration.QUERY_REMOTE_RESULTSET_PAGE_SIZE.getValueAsInteger() + 10);
+    int records = (OGlobalConfiguration.global().queryRemoteResultsetPageSize() + 10);
     for (int i = 0; i < records; i++) {
       vertex = session.newVertex("V2");
       vertex.setProperty("name", "one");

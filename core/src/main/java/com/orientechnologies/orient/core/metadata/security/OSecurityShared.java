@@ -19,7 +19,6 @@
  */
 package com.orientechnologies.orient.core.metadata.security;
 
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
@@ -623,8 +622,7 @@ public class OSecurityShared implements OSecurityInternal {
   }
 
   private OUser createDefaultUsers(final ODatabaseSession session) {
-    boolean createDefUsers =
-        session.getConfiguration().getValueAsBoolean(OGlobalConfiguration.CREATE_DEFAULT_USERS);
+    boolean createDefUsers = session.getConfiguration().createDefaultUsers();
 
     OUser adminUser = null;
     // This will return the global value if a local storage context configuration value does not

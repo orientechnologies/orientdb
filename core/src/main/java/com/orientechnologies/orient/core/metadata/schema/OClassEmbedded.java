@@ -4,7 +4,6 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OArrays;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
@@ -885,9 +884,7 @@ public class OClassEmbedded extends OClassImpl {
     if (this.isAbstract()) return;
 
     if (getClusterIds().length < availableNodes.size()) {
-      boolean enabledCreateCluster =
-          db.getConfiguration()
-              .getValueAsBoolean(OGlobalConfiguration.DISTRIBUTED_AUTO_CREATE_CLUSTERS);
+      boolean enabledCreateCluster = db.getConfiguration().distributedAutoCreateClusters();
       if (canCreateNewClusters && enabledCreateCluster) {
         int toCreate = availableNodes.size() - getClusterIds().length;
         // CREATE A NEW CLUSTER WHERE THE LOCAL NODE IS THE MASTER

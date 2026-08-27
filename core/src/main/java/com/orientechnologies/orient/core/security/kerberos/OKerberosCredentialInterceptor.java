@@ -105,17 +105,17 @@ public class OKerberosCredentialInterceptor implements OCredentialInterceptor {
 
     // Defaults to the environment variable.
     String config = System.getenv("KRB5_CONFIG");
-    String ckc = OGlobalConfiguration.CLIENT_KRB5_CONFIG.getValueAsString();
+    String ckc = OGlobalConfiguration.global().clientKrb5Config();
     if (ckc != null) config = ckc;
 
     // Defaults to the environment variable.
     String ccname = System.getenv("KRB5CCNAME");
-    String ccn = OGlobalConfiguration.CLIENT_KRB5_CCNAME.getValueAsString();
+    String ccn = OGlobalConfiguration.global().clientKrb5Ccname();
     if (ccn != null) ccname = ccn;
 
     // Defaults to the environment variable.
     String ktname = System.getenv("KRB5_CLIENT_KTNAME");
-    String ckn = OGlobalConfiguration.CLIENT_KRB5_KTNAME.getValueAsString();
+    String ckn = OGlobalConfiguration.global().clientKrb5Ktname();
     if (ckn != null) ktname = ckn;
 
     if (config == null)

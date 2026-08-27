@@ -16,7 +16,6 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.util.OCallable;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.id.ONodeId;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabaseState;
@@ -34,16 +33,11 @@ public class HARemoveNodeFromCfgIT extends AbstractServerClusterTxTest {
 
   @Test
   public void test() throws Exception {
-    OGlobalConfiguration.DISTRIBUTED_AUTO_REMOVE_OFFLINE_SERVERS.setValue(100);
-    try {
-      useTransactions = true;
-      count = 10;
-      init(SERVERS);
-      prepare(false);
-      execute();
-    } finally {
-      OGlobalConfiguration.DISTRIBUTED_AUTO_REMOVE_OFFLINE_SERVERS.setValue(100);
-    }
+    useTransactions = true;
+    count = 10;
+    init(SERVERS);
+    prepare(false);
+    execute();
   }
 
   @Override

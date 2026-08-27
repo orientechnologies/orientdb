@@ -501,7 +501,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
   private void initExecutor() {
     // START ALL THE WORKER THREADS (CONFIGURABLE)
-    int totalWorkers = OGlobalConfiguration.DISTRIBUTED_DB_WORKERTHREADS.getValueAsInteger();
+    int totalWorkers = OGlobalConfiguration.global().distributedDbWorkerthreads();
     if (totalWorkers < 0) {
       throw new ODistributedException(
           "Cannot create configured distributed workers (" + totalWorkers + ")");
@@ -522,10 +522,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
               "OrientDB DistributedWorker node=%s db=%s", getLocalNodeName(), databaseName);
       ExecutorService exec =
           OThreadPoolExecutors.newScalingThreadPool(name, 0, totalWorkers, 0, 1, TimeUnit.HOURS);
-      if (context
-          .getConfigurations()
-          .getConfigurations()
-          .getValueAsBoolean(OGlobalConfiguration.EXECUTOR_DEBUG_TRACE_SOURCE)) {
+      if (context.getContextConfigurations().executorDebugTraceSource()) {
         exec = new OSourceTraceExecutorService(exec);
       }
 
@@ -534,7 +531,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   private void startTxTimeoutTimerTask() {
-    final long timeout = OGlobalConfiguration.DISTRIBUTED_TX_EXPIRE_TIMEOUT.getValueAsLong();
+    final long timeout = OGlobalConfiguration.global().distributedTxExpireTimeout();
     txTimeoutTask = context.periodicExecute(() -> checkTxTimeout(), timeout / 3);
   }
 
@@ -542,7 +539,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     ODatabaseDocumentInternal database = null;
     try {
       final long now = System.currentTimeMillis();
-      final long timeout = OGlobalConfiguration.DISTRIBUTED_TX_EXPIRE_TIMEOUT.getValueAsLong();
+      final long timeout = OGlobalConfiguration.global().distributedTxExpireTimeout();
 
       for (final Iterator<ODistributedTxContext> it = activeTxContexts.values().iterator();
           it.hasNext(); ) {

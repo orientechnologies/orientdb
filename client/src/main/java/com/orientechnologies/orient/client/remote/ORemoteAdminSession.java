@@ -3,7 +3,6 @@ package com.orientechnologies.orient.client.remote;
 import com.orientechnologies.orient.client.remote.message.ORemoteResultSet;
 import com.orientechnologies.orient.client.remote.message.OServerQueryRequest;
 import com.orientechnologies.orient.client.remote.message.OServerQueryResponse;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.OAdminSession;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37Client;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
@@ -22,10 +21,7 @@ public class ORemoteAdminSession implements OAdminSession {
   @Override
   public OResultSet execute(String statement, Map<String, Object> params) {
 
-    int recordsPerPage =
-        context
-            .getContextConfiguration()
-            .getValueAsInteger(OGlobalConfiguration.QUERY_REMOTE_RESULTSET_PAGE_SIZE);
+    int recordsPerPage = context.getContextConfiguration().queryRemoteResultsetPageSize();
     if (recordsPerPage <= 0) {
       recordsPerPage = 100;
     }
@@ -53,10 +49,7 @@ public class ORemoteAdminSession implements OAdminSession {
   @Override
   public OResultSet execute(String statement, Object... params) {
 
-    int recordsPerPage =
-        context
-            .getContextConfiguration()
-            .getValueAsInteger(OGlobalConfiguration.QUERY_REMOTE_RESULTSET_PAGE_SIZE);
+    int recordsPerPage = context.getContextConfiguration().queryRemoteResultsetPageSize();
     if (recordsPerPage <= 0) {
       recordsPerPage = 100;
     }

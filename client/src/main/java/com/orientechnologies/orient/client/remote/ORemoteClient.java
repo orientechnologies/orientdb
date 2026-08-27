@@ -113,7 +113,6 @@ import com.orientechnologies.orient.client.remote.message.OUnsubscribeRequest;
 import com.orientechnologies.orient.client.remote.message.push.OStorageConfigurationPayload;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategy;
@@ -509,7 +508,7 @@ public class ORemoteClient implements OStorageInfo {
           session.connectionUserPassword = iUserPassword;
         }
 
-        String strategy = conf.getValueAsString(OGlobalConfiguration.CLIENT_CONNECTION_STRATEGY);
+        String strategy = conf.clientConnectionStrategy();
         if (strategy != null)
           connectionStrategy = CONNECTION_STRATEGY.valueOf(strategy.toUpperCase(Locale.ENGLISH));
 
@@ -819,7 +818,7 @@ public class ORemoteClient implements OStorageInfo {
   }
 
   public ORemoteQueryResult query(ODatabaseDocumentRemote db, String query, Object[] args) {
-    int recordsPerPage = OGlobalConfiguration.QUERY_REMOTE_RESULTSET_PAGE_SIZE.getValueAsInteger();
+    int recordsPerPage = db.getConfiguration().queryRemoteResultsetPageSize();
     if (recordsPerPage <= 0) {
       recordsPerPage = 100;
     }
@@ -847,7 +846,7 @@ public class ORemoteClient implements OStorageInfo {
   public ORemoteQueryResult query(ODatabaseDocumentRemote db, String query, Map args) {
     ORemoteClientSession session = db.getSession();
 
-    int recordsPerPage = OGlobalConfiguration.QUERY_REMOTE_RESULTSET_PAGE_SIZE.getValueAsInteger();
+    int recordsPerPage = db.getConfiguration().queryRemoteResultsetPageSize();
     if (recordsPerPage <= 0) {
       recordsPerPage = 100;
     }
@@ -873,7 +872,8 @@ public class ORemoteClient implements OStorageInfo {
 
   public ORemoteQueryResult command(ODatabaseDocumentRemote db, String query, Object[] args) {
     ORemoteClientSession session = db.getSession();
-    int recordsPerPage = OGlobalConfiguration.QUERY_REMOTE_RESULTSET_PAGE_SIZE.getValueAsInteger();
+    int recordsPerPage = db.getConfiguration().queryRemoteResultsetPageSize();
+    ;
     if (recordsPerPage <= 0) {
       recordsPerPage = 100;
     }
@@ -899,7 +899,7 @@ public class ORemoteClient implements OStorageInfo {
 
   public ORemoteQueryResult command(ODatabaseDocumentRemote db, String query, Map args) {
     ORemoteClientSession session = db.getSession();
-    int recordsPerPage = OGlobalConfiguration.QUERY_REMOTE_RESULTSET_PAGE_SIZE.getValueAsInteger();
+    int recordsPerPage = db.getConfiguration().queryRemoteResultsetPageSize();
     if (recordsPerPage <= 0) {
       recordsPerPage = 100;
     }
@@ -926,7 +926,7 @@ public class ORemoteClient implements OStorageInfo {
   public ORemoteQueryResult execute(
       ODatabaseDocumentRemote db, String language, String query, Object[] args) {
     ORemoteClientSession session = db.getSession();
-    int recordsPerPage = OGlobalConfiguration.QUERY_REMOTE_RESULTSET_PAGE_SIZE.getValueAsInteger();
+    int recordsPerPage = db.getConfiguration().queryRemoteResultsetPageSize();
     if (recordsPerPage <= 0) {
       recordsPerPage = 100;
     }
@@ -955,15 +955,11 @@ public class ORemoteClient implements OStorageInfo {
   public ORemoteQueryResult execute(
       ODatabaseDocumentRemote db, String language, String query, Map args) {
     ORemoteClientSession session = db.getSession();
-    int recordsPerPage =
-        db.getConfiguration()
-            .getValueAsInteger(OGlobalConfiguration.QUERY_REMOTE_RESULTSET_PAGE_SIZE);
+    int recordsPerPage = db.getConfiguration().queryRemoteResultsetPageSize();
     if (recordsPerPage <= 0) {
       recordsPerPage = 100;
     }
-    boolean sendExecutionPlan =
-        db.getConfiguration()
-            .getValueAsBoolean(OGlobalConfiguration.QUERY_REMOTE_SEND_EXECUTION_PLAN);
+    boolean sendExecutionPlan = db.getConfiguration().queryRemoteSendExecutionPlan();
     OQueryRequest request =
         OQueryRequest.executeMap(language, query, args, db.getSerializer(), recordsPerPage);
     request.setIncludePlan(sendExecutionPlan);
@@ -994,9 +990,7 @@ public class ORemoteClient implements OStorageInfo {
 
   public void fetchNextPage(ODatabaseDocumentRemote db, ORemoteResultSet rs) {
     ORemoteClientSession session = db.getSession();
-    int recordsPerPage =
-        db.getConfiguration()
-            .getValueAsInteger(OGlobalConfiguration.QUERY_REMOTE_RESULTSET_PAGE_SIZE);
+    int recordsPerPage = db.getConfiguration().queryRemoteResultsetPageSize();
     if (recordsPerPage <= 0) {
       recordsPerPage = 100;
     }
@@ -1595,12 +1589,10 @@ public class ORemoteClient implements OStorageInfo {
     boolean retry;
     logger.warn(
         "DB is frozen will wait for %d ms. and then retry.",
-        getClientConfiguration().getValue(OGlobalConfiguration.CLIENT_DB_RELEASE_WAIT_TIMEOUT));
+        getClientConfiguration().clientDbReleaseWaitTimeout());
     retry = true;
     try {
-      Thread.sleep(
-          getClientConfiguration()
-              .getValueAsInteger(OGlobalConfiguration.CLIENT_DB_RELEASE_WAIT_TIMEOUT));
+      Thread.sleep(getClientConfiguration().clientDbReleaseWaitTimeout());
     } catch (InterruptedException ie) {
       retry = false;
 

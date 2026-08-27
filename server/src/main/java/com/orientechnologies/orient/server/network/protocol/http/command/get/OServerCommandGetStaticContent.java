@@ -288,9 +288,7 @@ public class OServerCommandGetStaticContent extends OServerCommandConfigurableAb
       return;
     }
 
-    if (server
-        .getContextConfiguration()
-        .getValueAsBoolean(OGlobalConfiguration.SERVER_CACHE_FILE_STATIC)) {
+    if (server.getContextConfiguration().serverCacheFileStatic()) {
       final OStaticContentCachedEntry cachedEntry = cacheContents.get(path);
       if (cachedEntry != null) {
         staticContent.is = new ByteArrayInputStream(cachedEntry.content);

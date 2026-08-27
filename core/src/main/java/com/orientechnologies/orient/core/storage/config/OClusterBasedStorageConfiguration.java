@@ -309,12 +309,10 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
   public int getMinimumClusters() {
     lock.readLock().lock();
     try {
-      final int mc =
-          getContextConfiguration().getValueAsInteger(OGlobalConfiguration.CLASS_MINIMUM_CLUSTERS);
+      final int mc = getContextConfiguration().classMinimumClusters();
       if (mc == 0) {
         autoInitClusters();
-        return (Integer)
-            getContextConfiguration().getValue(OGlobalConfiguration.CLASS_MINIMUM_CLUSTERS);
+        return getContextConfiguration().classMinimumClusters();
       }
       return mc;
     } finally {
@@ -1871,7 +1869,7 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
         .contains(OGlobalConfiguration.CLASS_MINIMUM_CLUSTERS.getKey())) {
       configuration.setValue(
           OGlobalConfiguration.CLASS_MINIMUM_CLUSTERS,
-          OGlobalConfiguration.CLASS_MINIMUM_CLUSTERS.getValueAsInteger()); // 0 = AUTOMATIC
+          OGlobalConfiguration.global().classMinimumClusters()); // 0 = AUTOMATIC
     }
     autoInitClusters();
 
@@ -1934,8 +1932,7 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
   }
 
   private void autoInitClusters() {
-    if (getContextConfiguration().getValueAsInteger(OGlobalConfiguration.CLASS_MINIMUM_CLUSTERS)
-        == 0) {
+    if (getContextConfiguration().classMinimumClusters() == 0) {
       getContextConfiguration().setValue(OGlobalConfiguration.CLASS_MINIMUM_CLUSTERS, 8);
     }
   }

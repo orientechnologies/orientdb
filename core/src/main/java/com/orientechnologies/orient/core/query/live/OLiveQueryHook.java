@@ -67,7 +67,7 @@ public class OLiveQueryHook {
 
   public static Integer subscribe(
       Integer token, OLiveQueryListener iListener, ODatabaseDocumentEmbedded db) {
-    if (Boolean.FALSE.equals(db.getConfiguration().getValue(QUERY_LIVE_SUPPORT))) {
+    if (Boolean.FALSE.equals(db.getConfiguration().queryLiveSupport())) {
       logger.warn(
           "Live query support is disabled impossible to subscribe a listener, set '%s' to true"
               + " for enable the live query support",
@@ -86,7 +86,7 @@ public class OLiveQueryHook {
   }
 
   public static void unsubscribe(Integer id, ODatabaseDocumentEmbedded db) {
-    if (Boolean.FALSE.equals(db.getConfiguration().getValue(QUERY_LIVE_SUPPORT))) {
+    if (Boolean.FALSE.equals(db.getConfiguration().queryLiveSupport())) {
       logger.warn(
           "Live query support is disabled impossible to unsubscribe a listener, set '%s' to"
               + " true for enable the live query support",
@@ -109,7 +109,7 @@ public class OLiveQueryHook {
     if (ops.pendingOps.isEmpty()) {
       return;
     }
-    if (Boolean.FALSE.equals(iDatabase.getConfiguration().getValue(QUERY_LIVE_SUPPORT))) return;
+    if (Boolean.FALSE.equals(iDatabase.getConfiguration().queryLiveSupport())) return;
 
     List<ORecordOperation> list;
     synchronized (ops.pendingOps) {
@@ -127,8 +127,7 @@ public class OLiveQueryHook {
   public static void removePendingDatabaseOps(ODatabaseDocumentEmbedded iDatabase) {
     try {
       if (iDatabase.isClosed()
-          || Boolean.FALSE.equals(iDatabase.getConfiguration().getValue(QUERY_LIVE_SUPPORT)))
-        return;
+          || Boolean.FALSE.equals(iDatabase.getConfiguration().queryLiveSupport())) return;
       OLiveQueryOps ops = getOpsReference(iDatabase);
       synchronized (ops.pendingOps) {
         ops.pendingOps.remove(iDatabase);
@@ -143,7 +142,7 @@ public class OLiveQueryHook {
     ODatabaseDocument db = database;
     OLiveQueryOps ops = getOpsReference(database);
     if (!ops.queueThread.hasListeners()) return;
-    if (Boolean.FALSE.equals(database.getConfiguration().getValue(QUERY_LIVE_SUPPORT))) return;
+    if (Boolean.FALSE.equals(database.getConfiguration().queryLiveSupport())) return;
     ORecordOperation result = new ORecordOperation(iDocument, iType);
     synchronized (ops.pendingOps) {
       List<ORecordOperation> list = ops.pendingOps.get(db);

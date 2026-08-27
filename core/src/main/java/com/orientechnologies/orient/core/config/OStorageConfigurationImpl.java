@@ -1046,12 +1046,10 @@ public class OStorageConfigurationImpl implements OStorageConfiguration {
   public int getMinimumClusters() {
     lock.readLock().lock();
     try {
-      final int mc =
-          getContextConfiguration().getValueAsInteger(OGlobalConfiguration.CLASS_MINIMUM_CLUSTERS);
+      final int mc = getContextConfiguration().classMinimumClusters();
       if (mc == 0) {
         autoInitClusters();
-        return (Integer)
-            getContextConfiguration().getValue(OGlobalConfiguration.CLASS_MINIMUM_CLUSTERS);
+        return getContextConfiguration().classMinimumClusters();
       }
       return mc;
     } finally {

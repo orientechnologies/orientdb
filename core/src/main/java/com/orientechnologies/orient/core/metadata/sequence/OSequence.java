@@ -50,8 +50,7 @@ public abstract class OSequence {
   public static final Long DEFAULT_LIMIT_VALUE = null;
   public static final boolean DEFAULT_RECYCLABLE_VALUE = false;
 
-  protected static final int DEF_MAX_RETRY =
-      OGlobalConfiguration.SEQUENCE_MAX_RETRY.getValueAsInteger();
+  protected static final int DEF_MAX_RETRY = OGlobalConfiguration.global().sequenceMaxRetry();
   public static final String CLASS_NAME = "OSequence";
 
   private static final String FIELD_START = "start";
@@ -74,7 +73,7 @@ public abstract class OSequence {
   public static final SequenceOrderType DEFAULT_ORDER_TYPE = SequenceOrderType.ORDER_POSITIVE;
 
   protected static int replicationProtocolVersion =
-      OGlobalConfiguration.DISTRIBUTED_REPLICATION_PROTOCOL_VERSION.getValue();
+      OGlobalConfiguration.global().distributedReplicationProtocolVersion();
 
   public static class CreateParams {
     protected Long start = DEFAULT_START;
@@ -570,12 +569,7 @@ public abstract class OSequence {
       } catch (OConcurrentModificationException ignore) {
         try {
           Thread.sleep(
-              1
-                  + new Random()
-                      .nextInt(
-                          getDatabase()
-                              .getConfiguration()
-                              .getValueAsInteger(OGlobalConfiguration.SEQUENCE_RETRY_DELAY)));
+              1 + new Random().nextInt(getDatabase().getConfiguration().sequenceRetryDelay()));
         } catch (InterruptedException ignored) {
           Thread.currentThread().interrupt();
           break;

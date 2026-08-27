@@ -114,8 +114,7 @@ public class OServerQueryResponse implements OBinaryResponse {
       OChannelDataOutput channel,
       ORecordSerializer recordSerializer)
       throws IOException {
-    if (executionPlan.isPresent()
-        && OGlobalConfiguration.QUERY_REMOTE_SEND_EXECUTION_PLAN.getValueAsBoolean()) {
+    if (executionPlan.isPresent() && OGlobalConfiguration.global().queryRemoteSendExecutionPlan()) {
       channel.writeBoolean(true);
       OMessageHelper.writeResult(executionPlan.get().toResult(), channel, recordSerializer);
     } else {

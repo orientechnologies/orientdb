@@ -21,7 +21,7 @@ import java.util.Set;
 public class OSecurityEngine {
 
   private static OPredicateCache cache =
-      new OPredicateCache(OGlobalConfiguration.STATEMENT_CACHE_SIZE.getValueAsInteger());
+      new OPredicateCache(OGlobalConfiguration.global().statementCacheSize());
 
   /**
    * Calculates a predicate for a security resource. It also takes into consideration the security

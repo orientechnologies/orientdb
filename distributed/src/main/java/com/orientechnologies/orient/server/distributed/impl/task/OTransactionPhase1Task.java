@@ -6,7 +6,6 @@ import com.orientechnologies.orient.client.remote.message.OMessageHelper;
 import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationRequest;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.OCancellableTimer;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
@@ -166,7 +165,7 @@ public class OTransactionPhase1Task extends OAbstractRemoteTask implements OLock
     }
     if (res1 == null) {
       final int autoRetryDelay =
-          OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_AUTORETRY_DELAY.getValueAsInteger();
+          database.getConfiguration().distributedConcurrentTxAutoretryDelay();
       retryCount++;
       ((ODatabaseDocumentDistributed) database)
           .getDistributedShared()

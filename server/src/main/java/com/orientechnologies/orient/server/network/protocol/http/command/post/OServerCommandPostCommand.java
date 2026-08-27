@@ -20,7 +20,6 @@
 package com.orientechnologies.orient.server.network.protocol.http.command.post;
 
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
@@ -111,8 +110,7 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
       int i = 0;
       List response = new ArrayList();
       TimerTask commandInterruptTimer = null;
-      if (db.getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT) > 0
-          && !language.equalsIgnoreCase("sql")) {
+      if (db.getConfiguration().commandTimeout() > 0 && !language.equalsIgnoreCase("sql")) {
         //        commandInterruptTimer = ((ODatabaseInternal) db).createInterruptTimerTask();
         //        if (commandInterruptTimer != null) {
         //          ((ODatabaseInternal) db)

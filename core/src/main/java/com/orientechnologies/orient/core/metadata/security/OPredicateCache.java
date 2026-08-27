@@ -34,7 +34,7 @@ public class OPredicateCache {
    * @return true if the corresponding executor is present in the cache
    */
   public boolean contains(String statement) {
-    if (OGlobalConfiguration.STATEMENT_CACHE_SIZE.getValueAsInteger() == 0) {
+    if (OGlobalConfiguration.global().statementCacheSize() == 0) {
       return false;
     }
 
@@ -48,7 +48,7 @@ public class OPredicateCache {
    * @return the corresponding executor, taking it from the internal cache, if it exists
    */
   public OOrBlock get(String statement) {
-    if (OGlobalConfiguration.STATEMENT_CACHE_SIZE.getValueAsInteger() == 0) {
+    if (OGlobalConfiguration.global().statementCacheSize() == 0) {
       return parse(statement);
     }
 
@@ -74,7 +74,7 @@ public class OPredicateCache {
   }
 
   public void clear() {
-    if (OGlobalConfiguration.STATEMENT_CACHE_SIZE.getValueAsInteger() == 0) {
+    if (OGlobalConfiguration.global().statementCacheSize() == 0) {
       return;
     }
 

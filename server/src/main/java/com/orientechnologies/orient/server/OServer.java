@@ -344,8 +344,10 @@ public class OServer {
       OGlobalConfiguration.dumpConfiguration(System.out);
     }
 
-    databaseDirectory =
-        contextConfiguration.getValue("server.database.path", serverRootDirectory + "/databases/");
+    databaseDirectory = contextConfiguration.serverDatabasePath();
+    if (databaseDirectory == null) {
+      databaseDirectory = serverRootDirectory + "/databases/";
+    }
     databaseDirectory =
         OFileUtils.getPath(OSystemVariableResolver.resolveSystemVariables(databaseDirectory));
     databaseDirectory = databaseDirectory.replace("//", "/");
@@ -646,8 +648,7 @@ public class OServer {
 
   /** Opens all the available server's databases. */
   protected void loadDatabases() {
-    if (!getContextConfiguration()
-        .getValueAsBoolean(OGlobalConfiguration.SERVER_OPEN_ALL_DATABASES_AT_STARTUP)) return;
+    if (!getContextConfiguration().serverOpenAllDatabasesAtStartup()) return;
     getDatabases().loadAllDatabases();
   }
 

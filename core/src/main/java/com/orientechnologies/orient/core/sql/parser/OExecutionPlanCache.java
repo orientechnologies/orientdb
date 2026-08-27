@@ -25,7 +25,7 @@ public class OExecutionPlanCache implements OMetadataUpdateListener {
   int mapSize;
 
   protected long lastInvalidation = -1;
-  protected long lastGlobalTimeout = OGlobalConfiguration.COMMAND_TIMEOUT.getValueAsLong();
+  protected long lastGlobalTimeout = OGlobalConfiguration.global().commandTimeout();
 
   /** @param size the size of the cache */
   public OExecutionPlanCache(int size) {
@@ -56,7 +56,7 @@ public class OExecutionPlanCache implements OMetadataUpdateListener {
    * @return true if the corresponding executor is present in the cache
    */
   public boolean contains(String statement) {
-    if (OGlobalConfiguration.STATEMENT_CACHE_SIZE.getValueAsInteger() == 0) {
+    if (OGlobalConfiguration.global().statementCacheSize() == 0) {
       return false;
     }
     synchronized (map) {
@@ -108,7 +108,7 @@ public class OExecutionPlanCache implements OMetadataUpdateListener {
       return;
     }
 
-    if (OGlobalConfiguration.STATEMENT_CACHE_SIZE.getValueAsInteger() == 0) {
+    if (OGlobalConfiguration.global().statementCacheSize() == 0) {
       return;
     }
 
@@ -129,8 +129,7 @@ public class OExecutionPlanCache implements OMetadataUpdateListener {
       String statement, OCommandContext ctx, ODatabaseDocumentInternal db) {
     OInternalExecutionPlan result;
 
-    long currentGlobalTimeout =
-        db.getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT);
+    long currentGlobalTimeout = db.getConfiguration().commandTimeout();
     if (currentGlobalTimeout != this.lastGlobalTimeout) {
       invalidate();
     }
@@ -139,7 +138,7 @@ public class OExecutionPlanCache implements OMetadataUpdateListener {
     if (statement == null) {
       return null;
     }
-    if (OGlobalConfiguration.STATEMENT_CACHE_SIZE.getValueAsInteger() == 0) {
+    if (OGlobalConfiguration.global().statementCacheSize() == 0) {
       return null;
     }
     synchronized (map) {
@@ -155,7 +154,7 @@ public class OExecutionPlanCache implements OMetadataUpdateListener {
   }
 
   public void invalidate() {
-    if (OGlobalConfiguration.STATEMENT_CACHE_SIZE.getValueAsInteger() == 0) {
+    if (OGlobalConfiguration.global().statementCacheSize() == 0) {
       lastInvalidation = System.currentTimeMillis();
       return;
     }

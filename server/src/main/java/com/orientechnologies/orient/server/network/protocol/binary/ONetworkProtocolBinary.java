@@ -38,7 +38,6 @@ import com.orientechnologies.orient.client.remote.message.OError37Response;
 import com.orientechnologies.orient.client.remote.message.OErrorResponse;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.ONetworkMessage;
 import com.orientechnologies.orient.core.exception.OCoreException;
@@ -96,10 +95,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
   public ONetworkProtocolBinary(OServer server, final String iThreadName) {
     super(server.getThreadGroup(), iThreadName);
     this.server = server;
-    String level =
-        server
-            .getContextConfiguration()
-            .getValueAsString(OGlobalConfiguration.SERVER_LOG_DUMP_CLIENT_EXCEPTION_LEVEL);
+    String level = server.getContextConfiguration().serverLogDumpClientExceptionLevel();
     if (level != null) {
       level = level.toUpperCase();
       try {
@@ -112,10 +108,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       logClientExceptions = OLogger.Level.DEBUG;
     }
     logClientFullStackTrace =
-        server
-            .getContextConfiguration()
-            .getValueAsBoolean(
-                OGlobalConfiguration.SERVER_LOG_DUMP_CLIENT_EXCEPTION_FULLSTACKTRACE);
+        server.getContextConfiguration().serverLogDumpClientExceptionFullstacktrace();
   }
 
   /** Internal varialbe injection useful for testing. */

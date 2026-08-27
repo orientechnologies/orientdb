@@ -440,8 +440,8 @@ public interface OConfiguration {
     return getValueAsString(OGlobalConfiguration.PROFILER_AUTODUMP_TYPE);
   }
 
-  default int profilerMaxvalues() {
-    return getValueAsInteger(OGlobalConfiguration.PROFILER_MAXVALUES);
+  default long profilerMaxvalues() {
+    return getValueAsLong(OGlobalConfiguration.PROFILER_MAXVALUES);
   }
 
   default long profilerMemorycheckInterval() {
@@ -480,26 +480,6 @@ public interface OConfiguration {
     return getValueAsBoolean(OGlobalConfiguration.QUERY_REMOTE_SEND_EXECUTION_PLAN);
   }
 
-  default boolean queryParallelAuto() {
-    return getValueAsBoolean(OGlobalConfiguration.QUERY_PARALLEL_AUTO);
-  }
-
-  default long queryParallelMinimumRecords() {
-    return getValueAsLong(OGlobalConfiguration.QUERY_PARALLEL_MINIMUM_RECORDS);
-  }
-
-  default int queryParallelResultQueueSize() {
-    return getValueAsInteger(OGlobalConfiguration.QUERY_PARALLEL_RESULT_QUEUE_SIZE);
-  }
-
-  default long queryScanThresholdTip() {
-    return getValueAsLong(OGlobalConfiguration.QUERY_SCAN_THRESHOLD_TIP);
-  }
-
-  default long queryLimitThresholdTip() {
-    return getValueAsLong(OGlobalConfiguration.QUERY_LIMIT_THRESHOLD_TIP);
-  }
-
   default long queryMaxHeapElementsAllowedPerOp() {
     return getValueAsLong(OGlobalConfiguration.QUERY_MAX_HEAP_ELEMENTS_ALLOWED_PER_OP);
   }
@@ -510,10 +490,6 @@ public interface OConfiguration {
 
   default int statementCacheSize() {
     return getValueAsInteger(OGlobalConfiguration.STATEMENT_CACHE_SIZE);
-  }
-
-  default String sqlGraphConsistencyMode() {
-    return getValueAsString(OGlobalConfiguration.SQL_GRAPH_CONSISTENCY_MODE);
   }
 
   default int clientChannelMaxPool() {
@@ -572,10 +548,6 @@ public interface OConfiguration {
     return getValueAsBoolean(OGlobalConfiguration.SERVER_LOG_DUMP_CLIENT_EXCEPTION_FULLSTACKTRACE);
   }
 
-  default boolean serverBackwardCompatibility() {
-    return getValueAsBoolean(OGlobalConfiguration.SERVER_BACKWARD_COMPATIBILITY);
-  }
-
   default long distributedDumpStatsEvery() {
     return getValueAsLong(OGlobalConfiguration.DISTRIBUTED_DUMP_STATS_EVERY);
   }
@@ -585,27 +557,12 @@ public interface OConfiguration {
   }
 
   default long distributedMaxStartupDelay() {
+    // TODO: use in in the right places
     return getValueAsLong(OGlobalConfiguration.DISTRIBUTED_MAX_STARTUP_DELAY);
-  }
-
-  default long distributedCommandTaskSynchTimeout() {
-    return getValueAsLong(OGlobalConfiguration.DISTRIBUTED_COMMAND_TASK_SYNCH_TIMEOUT);
-  }
-
-  default long distributedCommandQuickTaskSynchTimeout() {
-    return getValueAsLong(OGlobalConfiguration.DISTRIBUTED_COMMAND_QUICK_TASK_SYNCH_TIMEOUT);
-  }
-
-  default long distributedCommandLongTaskSynchTimeout() {
-    return getValueAsLong(OGlobalConfiguration.DISTRIBUTED_COMMAND_LONG_TASK_SYNCH_TIMEOUT);
   }
 
   default long distributedDeploydbTaskSynchTimeout() {
     return getValueAsLong(OGlobalConfiguration.DISTRIBUTED_DEPLOYDB_TASK_SYNCH_TIMEOUT);
-  }
-
-  default long distributedDeploychunkTaskSynchTimeout() {
-    return getValueAsLong(OGlobalConfiguration.DISTRIBUTED_DEPLOYCHUNK_TASK_SYNCH_TIMEOUT);
   }
 
   default int distributedDeploydbTaskCompression() {
@@ -640,10 +597,6 @@ public interface OConfiguration {
     return getValueAsLong(OGlobalConfiguration.DISTRIBUTED_CHECK_HEALTH_EVERY);
   }
 
-  default long distributedAutoRemoveOfflineServers() {
-    return getValueAsLong(OGlobalConfiguration.DISTRIBUTED_AUTO_REMOVE_OFFLINE_SERVERS);
-  }
-
   default long distributedPublishNodeStatusEvery() {
     return getValueAsLong(OGlobalConfiguration.DISTRIBUTED_PUBLISH_NODE_STATUS_EVERY);
   }
@@ -654,10 +607,6 @@ public interface OConfiguration {
 
   default int distributedDbWorkerthreads() {
     return getValueAsInteger(OGlobalConfiguration.DISTRIBUTED_DB_WORKERTHREADS);
-  }
-
-  default String distributedBackupDirectory() {
-    return getValueAsString(OGlobalConfiguration.DISTRIBUTED_BACKUP_DIRECTORY);
   }
 
   default int distributedConcurrentTxMaxAutoretry() {

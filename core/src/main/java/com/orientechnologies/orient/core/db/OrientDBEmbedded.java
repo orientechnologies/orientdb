@@ -20,8 +20,6 @@
 
 package com.orientechnologies.orient.core.db;
 
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.WARNING_DEFAULT_USERS;
-
 import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
@@ -435,7 +433,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
             || ("writer".equals(user) && "writer".equals(password))
             || ("root".equals(user) && "root".equals(password))
             || ("orientdb".equals(user) && "orientdb".equals(password)))
-        && WARNING_DEFAULT_USERS.getValueAsBoolean()) {
+        && getContextConfigurations().warningDefaultUsers()) {
       logger.warnNoDb(
           String.format(
               "IMPORTANT! Using default password is unsafe, please change password for user"

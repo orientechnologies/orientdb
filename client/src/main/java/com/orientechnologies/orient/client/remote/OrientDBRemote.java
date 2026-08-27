@@ -132,10 +132,7 @@ public class OrientDBRemote implements OrientDBInternal {
     orient.addOrientDB(this);
     cachedPoolFactory = createCachedDatabasePoolFactory(this.configurations);
     urls = new ORemoteURLs(hosts, this.configurations.getConfigurations());
-    int size =
-        this.configurations
-            .getConfigurations()
-            .getValueAsInteger(OGlobalConfiguration.EXECUTOR_POOL_MAX_SIZE);
+    int size = this.configurations.getConfigurations().executorPoolIoMaxSize();
     if (size == -1) {
       size = Runtime.getRuntime().availableProcessors() / 2;
     }
@@ -586,9 +583,7 @@ public class OrientDBRemote implements OrientDBInternal {
   @Override
   public OResultSet executeServerStatement(
       String statement, String user, String pw, Object... params) {
-    int recordsPerPage =
-        getContextConfiguration()
-            .getValueAsInteger(OGlobalConfiguration.QUERY_REMOTE_RESULTSET_PAGE_SIZE);
+    int recordsPerPage = getContextConfiguration().queryRemoteResultsetPageSize();
     if (recordsPerPage <= 0) {
       recordsPerPage = 100;
     }
@@ -616,9 +611,7 @@ public class OrientDBRemote implements OrientDBInternal {
   @Override
   public OResultSet executeServerStatement(
       String statement, String user, String pw, Map<String, Object> params) {
-    int recordsPerPage =
-        getContextConfiguration()
-            .getValueAsInteger(OGlobalConfiguration.QUERY_REMOTE_RESULTSET_PAGE_SIZE);
+    int recordsPerPage = getContextConfiguration().queryRemoteResultsetPageSize();
     if (recordsPerPage <= 0) {
       recordsPerPage = 100;
     }

@@ -46,7 +46,7 @@ public class OLiveQueryQueueThreadV2 extends Thread {
 
   @Override
   public void run() {
-    final int batchSize = OGlobalConfiguration.QUERY_REMOTE_RESULTSET_PAGE_SIZE.getValueAsInteger();
+    final int batchSize = OGlobalConfiguration.global().queryRemoteResultsetPageSize();
     final BlockingQueue<OLiveQueryHookV2.OLiveQueryOp> queue = ops.getQueue();
 
     long totalEventsServed = 0;

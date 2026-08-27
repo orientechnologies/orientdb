@@ -44,7 +44,7 @@ public class OrderByStep extends AbstractExecutionStep {
   private List<OResult> init(OExecutionStepInternal p, OCommandContext ctx) {
     List<OResult> cachedResult = new ArrayList<>();
     final long maxElementsAllowed =
-        OGlobalConfiguration.QUERY_MAX_HEAP_ELEMENTS_ALLOWED_PER_OP.getValueAsLong();
+        ctx.getDatabase().getConfiguration().queryMaxHeapElementsAllowedPerOp();
     boolean sorted = true;
     OExecutionStream lastBatch = p.start(ctx);
     if (timeoutMillis > 0) {

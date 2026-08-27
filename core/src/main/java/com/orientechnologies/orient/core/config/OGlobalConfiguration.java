@@ -834,39 +834,6 @@ public enum OGlobalConfiguration implements OConfiguration { // ENVIRONMENT
       Boolean.class,
       false),
 
-  QUERY_PARALLEL_AUTO(
-      "query.parallelAuto",
-      "Auto enable parallel query, if requirements are met",
-      Boolean.class,
-      false),
-
-  QUERY_PARALLEL_MINIMUM_RECORDS(
-      "query.parallelMinimumRecords",
-      "Minimum number of records to activate parallel query automatically",
-      Long.class,
-      300000),
-
-  QUERY_PARALLEL_RESULT_QUEUE_SIZE(
-      "query.parallelResultQueueSize",
-      "Size of the queue that holds results on parallel execution. The queue is blocking, so in"
-          + " case the queue is full, the query threads will be in a wait state",
-      Integer.class,
-      20000),
-
-  QUERY_SCAN_THRESHOLD_TIP(
-      "query.scanThresholdTip",
-      "If the total number of records scanned in a query exceeds this setting, then a warning is"
-          + " given. (Use 0 to disable)",
-      Long.class,
-      50000),
-
-  QUERY_LIMIT_THRESHOLD_TIP(
-      "query.limitThresholdTip",
-      "If the total number of returned records exceeds this value, then a warning is given. (Use 0"
-          + " to disable)",
-      Long.class,
-      10000),
-
   QUERY_MAX_HEAP_ELEMENTS_ALLOWED_PER_OP(
       "query.maxHeapElementsAllowedPerOp",
       "Maximum number of elements (records) allowed in a single query for memory-intensive"
@@ -888,19 +855,6 @@ public enum OGlobalConfiguration implements OConfiguration { // ENVIRONMENT
       "Number of parsed SQL statements kept in cache. Zero means cache disabled",
       Integer.class,
       100),
-
-  // GRAPH
-  SQL_GRAPH_CONSISTENCY_MODE(
-      "sql.graphConsistencyMode",
-      "Consistency mode for graphs. It can be 'tx' (default), 'notx_sync_repair' and"
-          + " 'notx_async_repair'. 'tx' uses transactions to maintain consistency. Instead both"
-          + " 'notx_sync_repair' and 'notx_async_repair' do not use transactions, and the"
-          + " consistency, in case of JVM crash, is guaranteed by a database repair operation that"
-          + " run at startup. With 'notx_sync_repair' the repair is synchronous, so the database"
-          + " comes online after the repair is ended, while with 'notx_async_repair' the repair is"
-          + " a background process",
-      String.class,
-      "tx"),
 
   /**
    * Maximum size of pool of network channels between client and server. A channel is a TCP/IP
@@ -986,15 +940,6 @@ public enum OGlobalConfiguration implements OConfiguration { // ENVIRONMENT
       Boolean.FALSE,
       true),
 
-  @Deprecated
-  SERVER_BACKWARD_COMPATIBILITY(
-      "server.backwardCompatibility",
-      "guarantee that the server use global context for search the database instance",
-      Boolean.class,
-      Boolean.FALSE,
-      true,
-      false),
-
   // DISTRIBUTED
   /** @Since 2.2.18 */
   DISTRIBUTED_DUMP_STATS_EVERY(
@@ -1018,39 +963,11 @@ public enum OGlobalConfiguration implements OConfiguration { // ENVIRONMENT
       10000l,
       true),
 
-  DISTRIBUTED_COMMAND_TASK_SYNCH_TIMEOUT(
-      "distributed.commandTaskTimeout",
-      "Maximum timeout (in ms) to wait for command distributed tasks",
-      Long.class,
-      2 * 60 * 1000l,
-      true),
-
-  DISTRIBUTED_COMMAND_QUICK_TASK_SYNCH_TIMEOUT(
-      "distributed.commandQuickTaskTimeout",
-      "Maximum timeout (in ms) to wait for quick command distributed tasks",
-      Long.class,
-      5 * 1000l,
-      true),
-
-  DISTRIBUTED_COMMAND_LONG_TASK_SYNCH_TIMEOUT(
-      "distributed.commandLongTaskTimeout",
-      "Maximum timeout (in ms) to wait for Long-running distributed tasks",
-      Long.class,
-      24 * 60 * 60 * 1000,
-      true),
-
   DISTRIBUTED_DEPLOYDB_TASK_SYNCH_TIMEOUT(
       "distributed.deployDbTaskTimeout",
       "Maximum timeout (in ms) to wait for database deployment",
       Long.class,
       1200000l,
-      true),
-
-  DISTRIBUTED_DEPLOYCHUNK_TASK_SYNCH_TIMEOUT(
-      "distributed.deployChunkTaskTimeout",
-      "Maximum timeout (in ms) to wait for database chunk deployment",
-      Long.class,
-      60000l,
       true),
 
   DISTRIBUTED_DEPLOYDB_TASK_COMPRESSION(
@@ -1112,16 +1029,6 @@ public enum OGlobalConfiguration implements OConfiguration { // ENVIRONMENT
       Long.class,
       10000l),
 
-  /** Since 2.2.4 */
-  DISTRIBUTED_AUTO_REMOVE_OFFLINE_SERVERS(
-      "distributed.autoRemoveOfflineServers",
-      "This is the amount of time (in ms) the server has to be OFFLINE, before it is automatically"
-          + " removed from the distributed configuration. -1 = never, 0 = immediately, >0 the"
-          + " actual time to wait",
-      Long.class,
-      0,
-      true),
-
   /** @Since 2.2.0 */
   DISTRIBUTED_PUBLISH_NODE_STATUS_EVERY(
       "distributed.publishNodeStatusEvery",
@@ -1148,15 +1055,6 @@ public enum OGlobalConfiguration implements OConfiguration { // ENVIRONMENT
           + " automatic",
       Integer.class,
       0),
-
-  /** @Since 2.1.3 */
-  @OApi(maturity = OApi.MATURITY.NEW)
-  DISTRIBUTED_BACKUP_DIRECTORY(
-      "distributed.backupDirectory",
-      "Directory where the copy of an existent database is saved, before it is downloaded from the"
-          + " cluster. Leave it empty to avoid the backup.",
-      String.class,
-      "../backup/databases"),
 
   /** @Since 2.1 */
   @OApi(maturity = OApi.MATURITY.NEW)

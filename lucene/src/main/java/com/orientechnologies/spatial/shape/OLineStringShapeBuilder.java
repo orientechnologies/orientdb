@@ -46,7 +46,7 @@ public class OLineStringShapeBuilder extends OComplexShapeBuilder<JtsGeometry> {
     OClass lineString = schema.createAbstractClass(getName(), superClass(db));
     lineString.createProperty(COORDINATES, OType.EMBEDDEDLIST, OType.EMBEDDEDLIST);
 
-    if (OGlobalConfiguration.SPATIAL_ENABLE_DIRECT_WKT_READER.getValueAsBoolean()) {
+    if (OGlobalConfiguration.global().spatialEnableDirectWktReader()) {
       OClass lineStringZ = schema.createAbstractClass(getName() + "Z", superClass(db));
       lineStringZ.createProperty(COORDINATES, OType.EMBEDDEDLIST, OType.EMBEDDEDLIST);
     }

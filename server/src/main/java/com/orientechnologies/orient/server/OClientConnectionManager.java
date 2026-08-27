@@ -25,7 +25,6 @@ import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValue;
 import com.orientechnologies.common.profiler.OProfiler.METRIC_TYPE;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.security.OParsedToken;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
 import com.orientechnologies.orient.enterprise.channel.binary.OTokenSecurityException;
@@ -60,7 +59,7 @@ public class OClientConnectionManager {
   private OServer server;
 
   public OClientConnectionManager(OServer server) {
-    final int delay = OGlobalConfiguration.SERVER_CHANNEL_CLEAN_DELAY.getValueAsInteger();
+    final int delay = server.getContextConfiguration().serverChannelCleanDelay();
 
     timerTask =
         Orient.instance()
@@ -423,10 +422,7 @@ public class OClientConnectionManager {
 
     for (ONetworkProtocol protocol : toWait) {
       try {
-        protocol.join(
-            server
-                .getContextConfiguration()
-                .getValueAsInteger(OGlobalConfiguration.SERVER_CHANNEL_CLEAN_DELAY));
+        protocol.join(server.getContextConfiguration().serverChannelCleanDelay());
         if (protocol.isAlive()) {
           protocol.interrupt();
           protocol.join();

@@ -50,27 +50,27 @@ public class OProfilerData {
   private static final OLogger logger = OLogManager.instance().logger(OProfilerData.class);
   private final ConcurrentLinkedHashMap<String, Long> counters =
       new ConcurrentLinkedHashMap.Builder()
-          .maximumWeightedCapacity(OGlobalConfiguration.PROFILER_MAXVALUES.getValueAsInteger())
+          .maximumWeightedCapacity(OGlobalConfiguration.global().profilerMaxvalues())
           .build();
   private final ConcurrentLinkedHashMap<String, OProfilerEntry> chronos =
       new ConcurrentLinkedHashMap.Builder()
-          .maximumWeightedCapacity(OGlobalConfiguration.PROFILER_MAXVALUES.getValueAsInteger())
+          .maximumWeightedCapacity(OGlobalConfiguration.global().profilerMaxvalues())
           .build();
   private final ConcurrentLinkedHashMap<String, OProfilerEntry> stats =
       new ConcurrentLinkedHashMap.Builder()
-          .maximumWeightedCapacity(OGlobalConfiguration.PROFILER_MAXVALUES.getValueAsInteger())
+          .maximumWeightedCapacity(OGlobalConfiguration.global().profilerMaxvalues())
           .build();
   private final ConcurrentLinkedHashMap<String, AtomicInteger> tips =
       new ConcurrentLinkedHashMap.Builder()
-          .maximumWeightedCapacity(OGlobalConfiguration.PROFILER_MAXVALUES.getValueAsInteger())
+          .maximumWeightedCapacity(OGlobalConfiguration.global().profilerMaxvalues())
           .build();
   private final ConcurrentLinkedHashMap<String, Long> tipsTimestamp =
       new ConcurrentLinkedHashMap.Builder()
-          .maximumWeightedCapacity(OGlobalConfiguration.PROFILER_MAXVALUES.getValueAsInteger())
+          .maximumWeightedCapacity(OGlobalConfiguration.global().profilerMaxvalues())
           .build();
   private final ConcurrentLinkedHashMap<String, OAbstractProfiler.OProfilerHookStatic> hooks =
       new ConcurrentLinkedHashMap.Builder()
-          .maximumWeightedCapacity(OGlobalConfiguration.PROFILER_MAXVALUES.getValueAsInteger())
+          .maximumWeightedCapacity(OGlobalConfiguration.global().profilerMaxvalues())
           .build();
 
   private long recordingFrom = 0;

@@ -128,7 +128,7 @@ public class OLiveQueryHookV2 {
 
   public static Integer subscribe(
       Integer token, OLiveQueryListenerV2 iListener, ODatabaseDocumentEmbedded db) {
-    if (Boolean.FALSE.equals(db.getConfiguration().getValue(QUERY_LIVE_SUPPORT))) {
+    if (Boolean.FALSE.equals(db.getConfiguration().queryLiveSupport())) {
       logger.warn(
           "Live query support is disabled impossible to subscribe a listener, set '%s' to true"
               + " for enable the live query support",
@@ -147,7 +147,7 @@ public class OLiveQueryHookV2 {
   }
 
   public static void unsubscribe(Integer id, ODatabaseDocumentEmbedded db) {
-    if (Boolean.FALSE.equals(db.getConfiguration().getValue(QUERY_LIVE_SUPPORT))) {
+    if (Boolean.FALSE.equals(db.getConfiguration().queryLiveSupport())) {
       logger.warn(
           "Live query support is disabled impossible to unsubscribe a listener, set '%s' to"
               + " true for enable the live query support",
@@ -170,7 +170,7 @@ public class OLiveQueryHookV2 {
       return;
     }
     List<OLiveQueryOp> list;
-    if (Boolean.FALSE.equals(database.getConfiguration().getValue(QUERY_LIVE_SUPPORT))) return;
+    if (Boolean.FALSE.equals(database.getConfiguration().queryLiveSupport())) return;
     synchronized (ops.pendingOps) {
       list = ops.pendingOps.remove(database);
     }
@@ -186,7 +186,7 @@ public class OLiveQueryHookV2 {
   public static void removePendingDatabaseOps(ODatabaseDocumentEmbedded database) {
     try {
       if (database.isClosed()
-          || Boolean.FALSE.equals(database.getConfiguration().getValue(QUERY_LIVE_SUPPORT))) return;
+          || Boolean.FALSE.equals(database.getConfiguration().queryLiveSupport())) return;
       OLiveQueryOps ops = getOpsReference(database);
       synchronized (ops.pendingOps) {
         ops.pendingOps.remove(database);
@@ -201,7 +201,7 @@ public class OLiveQueryHookV2 {
     ODatabaseDocument db = database;
     OLiveQueryOps ops = getOpsReference(database);
     if (!ops.hasListeners()) return;
-    if (Boolean.FALSE.equals(database.getConfiguration().getValue(QUERY_LIVE_SUPPORT))) return;
+    if (Boolean.FALSE.equals(database.getConfiguration().queryLiveSupport())) return;
 
     Set<String> projectionsToLoad = calculateProjections(ops);
 

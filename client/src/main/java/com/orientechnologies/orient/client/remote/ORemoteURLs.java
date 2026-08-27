@@ -1,12 +1,9 @@
 package com.orientechnologies.orient.client.remote;
 
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.CLIENT_CONNECTION_FETCH_HOST_LIST;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.client.remote.ORemoteClient.CONNECTION_STRATEGY;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import java.util.ArrayList;
@@ -69,13 +66,13 @@ public class ORemoteURLs {
 
     // REGISTER THE REMOTE SERVER+PORT
     if (!host.contains(":")) {
-      if (clientConfiguration.getValueAsBoolean(OGlobalConfiguration.CLIENT_USE_SSL)) {
+      if (clientConfiguration.clientUseSsl()) {
         host += ":" + getDefaultSSLPort();
       } else {
         host += ":" + getDefaultPort();
       }
     } else if (host.split(":").length < 2 || host.split(":")[1].trim().length() == 0) {
-      if (clientConfiguration.getValueAsBoolean(OGlobalConfiguration.CLIENT_USE_SSL)) {
+      if (clientConfiguration.clientUseSsl()) {
         host += getDefaultSSLPort();
       } else {
         host += getDefaultPort();
@@ -285,7 +282,7 @@ public class ORemoteURLs {
 
   public synchronized void updateDistributedNodes(
       List<String> hosts, OContextConfiguration clientConfiguration) {
-    if (!clientConfiguration.getValueAsBoolean(CLIENT_CONNECTION_FETCH_HOST_LIST)) {
+    if (!clientConfiguration.clientConnectionFetchHostList()) {
       List<String> definedHosts = initialServerURLs;
       for (String host : definedHosts) {
         addHost(host, clientConfiguration);

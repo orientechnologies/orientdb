@@ -61,11 +61,11 @@ public class OSymmetricKeyCI implements OCredentialInterceptor {
     // These are all used as defaults if the JSON document is missing any fields.
 
     // Defaults to "AES".
-    String algorithm = OGlobalConfiguration.CLIENT_CI_KEYALGORITHM.getValueAsString();
+    String algorithm = OGlobalConfiguration.global().clientCiKeyalgorithm();
     // Defaults to "AES/CBC/PKCS5Padding".
-    String transform = OGlobalConfiguration.CLIENT_CI_CIPHERTRANSFORM.getValueAsString();
-    String keystoreFile = OGlobalConfiguration.CLIENT_CI_KEYSTORE_FILE.getValueAsString();
-    String keystorePassword = OGlobalConfiguration.CLIENT_CI_KEYSTORE_PASSWORD.getValueAsString();
+    String transform = OGlobalConfiguration.global().clientCiCiphertransform();
+    String keystoreFile = OGlobalConfiguration.global().clientCiKeystoreFile();
+    String keystorePassword = OGlobalConfiguration.global().clientCiKeystorePassword();
 
     ODocument jsonDoc = null;
 

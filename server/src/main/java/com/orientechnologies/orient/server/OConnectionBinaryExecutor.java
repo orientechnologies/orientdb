@@ -1297,7 +1297,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     if (request.isIncludePlan() || irs.isExplain()) {
       plan = rs.getExecutionPlan();
       irs.setIncludePlan(true);
-    } else if (OGlobalConfiguration.QUERY_REMOTE_SEND_EXECUTION_PLAN.getValueAsBoolean()) {
+    } else if (database.getConfiguration().queryRemoteSendExecutionPlan()) {
       plan = rs.getExecutionPlan();
     } else {
       plan = Optional.empty();
@@ -1345,14 +1345,14 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
       // be
       // sent as it is, not streamed
       while (rs.hasNext() && (rs.isDetached() || i < request.getRecordsPerPage())) {
-        rsCopy.add((OResult) rs.next());
+        rsCopy.add(rs.next());
         i++;
       }
       boolean hasNext = rs.hasNext();
       Optional<OExecutionPlan> plan;
       if (rs.isIncludePlan() || rs.isExplain()) {
         plan = rs.getExecutionPlan();
-      } else if (OGlobalConfiguration.QUERY_REMOTE_SEND_EXECUTION_PLAN.getValueAsBoolean()) {
+      } else if (database.getConfiguration().queryRemoteSendExecutionPlan()) {
         plan = rs.getExecutionPlan();
       } else {
         plan = Optional.empty();

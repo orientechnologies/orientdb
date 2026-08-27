@@ -36,7 +36,7 @@ public class OSessionSequenceLibrary extends OSequenceLibraryAbstract {
   private static final OLogger logger =
       OLogManager.instance().logger(OSessionSequenceLibrary.class);
   private static final int replicationProtocolVersion =
-      OGlobalConfiguration.DISTRIBUTED_REPLICATION_PROTOCOL_VERSION.getValue();
+      OGlobalConfiguration.global().distributedReplicationProtocolVersion();
 
   public OSessionSequenceLibrary(
       final OSequenceLibraryImpl iDelegate, final ODatabaseDocumentInternal iDatabase) {

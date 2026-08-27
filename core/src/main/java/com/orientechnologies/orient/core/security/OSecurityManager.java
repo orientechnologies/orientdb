@@ -305,7 +305,7 @@ public class OSecurityManager {
     OCredentialInterceptor ci = null;
 
     try {
-      String ciClass = OGlobalConfiguration.CLIENT_CREDENTIAL_INTERCEPTOR.getValueAsString();
+      String ciClass = OGlobalConfiguration.global().clientCredentialInterceptor();
 
       if (ciClass != null) {
         Class<?> cls = Class.forName(ciClass); // Throws a ClassNotFoundException if not found.

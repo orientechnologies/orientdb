@@ -165,7 +165,7 @@ public class OHazelcastClusterMetadataManager
 
     publishLocalNodeConfiguration();
 
-    final long delay = OGlobalConfiguration.DISTRIBUTED_PUBLISH_NODE_STATUS_EVERY.getValueAsLong();
+    final long delay = OGlobalConfiguration.global().distributedPublishNodeStatusEvery();
     if (delay > 0) {
       publishLocalNodeConfigurationTask =
           ctx.periodicExecute(this::publishLocalNodeConfiguration, delay);

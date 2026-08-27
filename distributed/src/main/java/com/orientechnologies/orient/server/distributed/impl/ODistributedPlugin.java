@@ -31,7 +31,6 @@ import com.orientechnologies.orient.core.OSignalHandler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.OCancellableTimer;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -168,7 +167,7 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
       clusterManager.startupHazelcastPlugin();
 
       OContextConfiguration ctx = serverInstance.getContextConfiguration();
-      final long statsDelay = ctx.getValueAsLong(OGlobalConfiguration.DISTRIBUTED_DUMP_STATS_EVERY);
+      final long statsDelay = ctx.distributedDumpStatsEvery();
       if (statsDelay > 0) {
         haStatsTask = databases.periodicExecute(this::dumpStats, statsDelay);
       }

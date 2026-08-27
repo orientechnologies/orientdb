@@ -50,7 +50,7 @@ public class OPointShapeBuilder extends OShapeBuilder<Point> {
     coordinates.setMin("2");
     coordinates.setMax("2");
 
-    if (OGlobalConfiguration.SPATIAL_ENABLE_DIRECT_WKT_READER.getValueAsBoolean()) {
+    if (OGlobalConfiguration.global().spatialEnableDirectWktReader()) {
       OClass pointz = schema.createAbstractClass(getName() + "Z", superClass(db));
       OProperty coordinatesz = pointz.createProperty(COORDINATES, OType.EMBEDDEDLIST, OType.DOUBLE);
       coordinatesz.setMin("3");

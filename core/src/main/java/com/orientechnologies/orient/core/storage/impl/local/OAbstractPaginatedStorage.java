@@ -20,8 +20,6 @@
 
 package com.orientechnologies.orient.core.storage.impl.local;
 
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_TRANSACTION_SEQUENCE_SET_SIZE;
-
 import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
 import com.orientechnologies.common.concur.lock.OLockManager;
@@ -896,8 +894,7 @@ public abstract class OAbstractPaginatedStorage
     transaction = new ThreadLocal<>();
 
     preCreateSteps();
-    int sequenceSize =
-        contextConfiguration.getValueAsInteger(DISTRIBUTED_TRANSACTION_SEQUENCE_SET_SIZE);
+    int sequenceSize = contextConfiguration.distributedTransactionSequenceSetSize();
     var initSequence = OTransactionSequenceManager.initData(sequenceSize);
 
     modifyWithAtomicOperation(

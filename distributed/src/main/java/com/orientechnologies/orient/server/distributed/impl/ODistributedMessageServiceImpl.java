@@ -202,7 +202,7 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
   protected void purgePendingMessages() {
     final long now = System.nanoTime();
 
-    final long timeout = OGlobalConfiguration.DISTRIBUTED_ASYNCH_RESPONSES_TIMEOUT.getValueAsLong();
+    final long timeout = OGlobalConfiguration.global().distributedAsynchResponsesTimeout();
 
     for (Iterator<Entry<Long, ODistributedResponseManager>> it =
             responsesByRequestIds.entrySet().iterator();

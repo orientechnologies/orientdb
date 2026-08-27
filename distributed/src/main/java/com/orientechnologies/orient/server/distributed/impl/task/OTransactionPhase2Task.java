@@ -1,11 +1,8 @@
 package com.orientechnologies.orient.server.distributed.impl.task;
 
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY;
-
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.id.ONodeId;
 import com.orientechnologies.orient.core.id.ORID;
@@ -130,12 +127,9 @@ public class OTransactionPhase2Task extends OAbstractRemoteTask implements OLock
     if (success) {
       if (!((ODatabaseDocumentDistributed) database).commit2pc(firstPhaseId, false, requestId)) {
         final int autoRetryDelay =
-            OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_AUTORETRY_DELAY.getValueAsInteger();
+            database.getConfiguration().distributedConcurrentTxAutoretryDelay();
         retryCount++;
-        if (retryCount
-            < database
-                .getConfiguration()
-                .getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY)) {
+        if (retryCount < database.getConfiguration().distributedConcurrentTxMaxAutoretry()) {
           logger.info(
               "Received second phase but not yet first phase for commit tx:%s, re-enqueue"
                   + " second phase",
@@ -164,12 +158,9 @@ public class OTransactionPhase2Task extends OAbstractRemoteTask implements OLock
     } else {
       if (!((ODatabaseDocumentDistributed) database).rollback2pc(firstPhaseId)) {
         final int autoRetryDelay =
-            OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_AUTORETRY_DELAY.getValueAsInteger();
+            database.getConfiguration().distributedConcurrentTxAutoretryDelay();
         retryCount++;
-        if (retryCount
-            < database
-                .getConfiguration()
-                .getValueAsInteger(DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY)) {
+        if (retryCount < database.getConfiguration().distributedConcurrentTxMaxAutoretry()) {
           logger.info("Received second phase but not yet first phase, re-enqueue second phase");
           ((ODatabaseDocumentDistributed) database)
               .getDistributedShared()

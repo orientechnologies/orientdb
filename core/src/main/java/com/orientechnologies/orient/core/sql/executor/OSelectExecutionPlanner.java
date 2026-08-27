@@ -2,7 +2,6 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
@@ -107,14 +106,9 @@ public class OSelectExecutionPlanner {
     info.limit = this.statement.getLimit();
     info.lockRecord = this.statement.getLockRecord();
     info.timeout = this.statement.getTimeout() == null ? null : this.statement.getTimeout().copy();
-    if (info.timeout == null
-        && ctx.getDatabase().getConfiguration().getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT)
-            > 0) {
+    if (info.timeout == null && ctx.getDatabase().getConfiguration().commandTimeout() > 0) {
       info.timeout = new OTimeout(-1);
-      info.timeout.setVal(
-          ctx.getDatabase()
-              .getConfiguration()
-              .getValueAsLong(OGlobalConfiguration.COMMAND_TIMEOUT));
+      info.timeout.setVal(ctx.getDatabase().getConfiguration().commandTimeout());
     }
   }
 

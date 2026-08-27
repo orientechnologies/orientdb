@@ -51,8 +51,7 @@ public class ORecordSerializerFactory {
     register(ORecordSerializerNetworkV37.NAME, ORecordSerializerNetworkV37.INSTANCE);
     register(ORecordSerializerNetworkV37Client.NAME, ORecordSerializerNetworkV37Client.INSTANCE);
 
-    defaultRecordSerializer =
-        getFormat(OGlobalConfiguration.DB_DOCUMENT_SERIALIZER.getValueAsString());
+    defaultRecordSerializer = getFormat(OGlobalConfiguration.global().dbDocumentSerializer());
     if (defaultRecordSerializer == null)
       throw new ODatabaseException(
           "Impossible to find serializer with name "

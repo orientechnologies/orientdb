@@ -93,7 +93,7 @@ public class OGossipTask extends OAbstractRemoteTask {
    */
   @Override
   public long getDistributedTimeout() {
-    return OGlobalConfiguration.DISTRIBUTED_HEARTBEAT_TIMEOUT.getValueAsLong();
+    return OGlobalConfiguration.global().distributedHeartbeatTimeout();
   }
 
   @Override

@@ -19,8 +19,6 @@
  */
 package com.orientechnologies.orient.console;
 
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.WARNING_DEFAULT_USERS;
-
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.console.OConsoleApplication;
 import com.orientechnologies.common.console.OConsoleProperties;
@@ -205,7 +203,7 @@ public class OConsoleDatabaseApp extends OConsoleApplication
     if ((("admin".equals(user) && "admin".equals(password))
             || ("reader".equals(user) && "reader".equals(password))
             || ("writer".equals(user) && "writer".equals(password)))
-        && WARNING_DEFAULT_USERS.getValueAsBoolean()) {
+        && OGlobalConfiguration.global().warningDefaultUsers()) {
       message(
           String.format(
               "IMPORTANT! Using default password is unsafe, please change password for user '%s' on"

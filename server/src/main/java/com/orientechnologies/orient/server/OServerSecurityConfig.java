@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.server;
 
 import com.orientechnologies.common.parser.OSystemVariableResolver;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.security.OSecurityConfig;
 import com.orientechnologies.orient.core.security.OSyslog;
 import com.orientechnologies.orient.server.config.OServerConfigurationManager;
@@ -38,10 +37,7 @@ public class OServerSecurityConfig implements OSecurityConfig {
     String configFile =
         OSystemVariableResolver.resolveSystemVariables("${ORIENTDB_HOME}/config/security.json");
 
-    String ssf =
-        server
-            .getContextConfiguration()
-            .getValueAsString(OGlobalConfiguration.SERVER_SECURITY_FILE);
+    String ssf = server.getContextConfiguration().serverSecurityFile();
     if (ssf != null) configFile = ssf;
     return configFile;
   }

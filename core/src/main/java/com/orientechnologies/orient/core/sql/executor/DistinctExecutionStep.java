@@ -21,9 +21,8 @@ public class DistinctExecutionStep extends AbstractExecutionStep {
 
     maxElementsAllowed =
         db == null
-            ? OGlobalConfiguration.QUERY_MAX_HEAP_ELEMENTS_ALLOWED_PER_OP.getValueAsLong()
-            : db.getConfiguration()
-                .getValueAsLong(OGlobalConfiguration.QUERY_MAX_HEAP_ELEMENTS_ALLOWED_PER_OP);
+            ? OGlobalConfiguration.global().queryMaxHeapElementsAllowedPerOp()
+            : db.getConfiguration().queryMaxHeapElementsAllowedPerOp();
   }
 
   @Override
