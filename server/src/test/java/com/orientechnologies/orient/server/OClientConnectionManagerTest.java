@@ -6,6 +6,7 @@ import static org.junit.Assert.assertNotSame;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 
+import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.metadata.security.OToken;
 import com.orientechnologies.orient.core.security.OParsedToken;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
@@ -37,6 +38,7 @@ public class OClientConnectionManagerTest {
     Mockito.when(handler.validateBinaryToken(Mockito.any(OParsedToken.class))).thenReturn(true);
     Mockito.when(protocol.getServer()).thenReturn(server);
     Mockito.when(server.getTokenHandler()).thenReturn(handler);
+    Mockito.when(server.getContextConfiguration()).thenReturn(new OContextConfiguration());
   }
 
   @Test
