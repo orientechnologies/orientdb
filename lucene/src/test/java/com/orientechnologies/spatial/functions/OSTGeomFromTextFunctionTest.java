@@ -1,5 +1,6 @@
 package com.orientechnologies.spatial.functions;
 
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.spatial.BaseSpatialLuceneTest;
@@ -14,7 +15,7 @@ public class OSTGeomFromTextFunctionTest extends BaseSpatialLuceneTest {
 
   @Test
   public void test() {
-    boolean prevValue = OGlobalConfiguration.SPATIAL_ENABLE_DIRECT_WKT_READER.getValueAsBoolean();
+    boolean prevValue = OConfiguration.global().spatialEnableDirectWktReader();
     OGlobalConfiguration.SPATIAL_ENABLE_DIRECT_WKT_READER.setValue(true);
     try {
       OSTGeomFromTextFunction func = new OSTGeomFromTextFunction();

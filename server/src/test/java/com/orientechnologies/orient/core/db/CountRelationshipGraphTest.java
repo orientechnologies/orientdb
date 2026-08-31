@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.db;
 
 import static org.junit.Assert.assertEquals;
 
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.record.ODirection;
 import com.orientechnologies.orient.core.record.OVertex;
@@ -15,7 +16,7 @@ public class CountRelationshipGraphTest extends AbstractRemoteTest {
   private int old;
 
   public void setup() throws Exception {
-    old = OGlobalConfiguration.INDEX_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getValueAsInteger();
+    old = OConfiguration.global().indexEmbeddedToSbtreebonsaiThreshold();
     OGlobalConfiguration.INDEX_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(-1);
     super.setup();
     orientdb =

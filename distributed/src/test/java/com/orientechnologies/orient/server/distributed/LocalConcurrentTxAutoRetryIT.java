@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.setup.ServerRun;
 import org.junit.Ignore;
@@ -33,8 +34,7 @@ public class LocalConcurrentTxAutoRetryIT extends AbstractDistributedConcurrentT
   public void test() throws Exception {
     expectedConcurrentException = false;
 
-    final int oldAutoRetry =
-        OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY.getValueAsInteger();
+    final int oldAutoRetry = OConfiguration.global().distributedConcurrentTxMaxAutoretry();
     OGlobalConfiguration.DISTRIBUTED_CONCURRENT_TX_MAX_AUTORETRY.setValue(100);
 
     // final int oldLockTimeout =

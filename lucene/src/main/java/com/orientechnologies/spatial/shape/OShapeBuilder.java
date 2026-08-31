@@ -15,7 +15,7 @@
  */
 package com.orientechnologies.spatial.shape;
 
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -180,9 +180,7 @@ public abstract class OShapeBuilder<T extends Shape> {
     T parsed = fromText(wkt);
     return toDoc(
         parsed,
-        OGlobalConfiguration.SPATIAL_ENABLE_DIRECT_WKT_READER.getValueAsBoolean()
-            ? wktReader.read(wkt)
-            : null);
+        OConfiguration.global().spatialEnableDirectWktReader() ? wktReader.read(wkt) : null);
   }
 
   public int getSRID(Shape shape) {

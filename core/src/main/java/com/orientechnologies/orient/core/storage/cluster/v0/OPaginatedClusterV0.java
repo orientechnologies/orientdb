@@ -15,9 +15,6 @@
  */
 package com.orientechnologies.orient.core.storage.cluster.v0;
 
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISK_CACHE_PAGE_SIZE;
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY;
-
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -28,6 +25,7 @@ import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.compression.OCompression;
 import com.orientechnologies.orient.core.compression.OCompressionFactory;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
 import com.orientechnologies.orient.core.config.OStoragePaginatedClusterConfiguration;
@@ -64,9 +62,9 @@ import java.util.Optional;
 public final class OPaginatedClusterV0 extends OPaginatedCluster {
   private static final OLogger logger = OLogManager.instance().logger(OPaginatedClusterV0.class);
   private static final int BINARY_VERSION = 0;
-  private static final int DISK_PAGE_SIZE = DISK_CACHE_PAGE_SIZE.getValueAsInteger();
+  private static final int DISK_PAGE_SIZE = OConfiguration.global().diskCachePageSize();
   private static final int LOWEST_FREELIST_BOUNDARY =
-      PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY.getValueAsInteger();
+      OConfiguration.global().paginatedStorageLowestFreelistBoundary();
   private static final int FREE_LIST_SIZE = DISK_PAGE_SIZE - LOWEST_FREELIST_BOUNDARY;
   private static final int PAGE_INDEX_OFFSET = 16;
   private static final int RECORD_POSITION_MASK = 0xFFFF;
@@ -1505,7 +1503,7 @@ public final class OPaginatedClusterV0 extends OPaginatedCluster {
       final int contentSize, final OAtomicOperation atomicOperation) throws IOException {
     while (true) {
       int freePageIndex = contentSize / ONE_KB;
-      freePageIndex -= PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY.getValueAsInteger();
+      freePageIndex -= OConfiguration.global().paginatedStorageLowestFreelistBoundary();
       if (freePageIndex < 0) {
         freePageIndex = 0;
       }

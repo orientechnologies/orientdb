@@ -17,6 +17,7 @@
 package com.orientechnologies.orient.test.database.auto;
 
 import com.orientechnologies.orient.client.remote.OrientDBRemote;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
@@ -61,10 +62,8 @@ public class OSBTreeRidBagTest extends ORidBagTest {
 
   @BeforeMethod
   public void beforeMethod() throws IOException {
-    topThreshold =
-        OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getValueAsInteger();
-    bottomThreshold =
-        OGlobalConfiguration.RID_BAG_SBTREEBONSAI_TO_EMBEDDED_THRESHOLD.getValueAsInteger();
+    topThreshold = OConfiguration.global().ridBagEmbeddedToSbtreebonsaiThreshold();
+    bottomThreshold = OConfiguration.global().ridBagSbtreebonsaiToEmbeddedThreshold();
 
     if (database.isRemote()) {
       OrientDBRemote internal = (OrientDBRemote) OrientDBInternal.extract(baseContext);
@@ -167,8 +166,7 @@ public class OSBTreeRidBagTest extends ORidBagTest {
   }
 
   public void testRidBagConversion() {
-    final int oldThreshold =
-        OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getValueAsInteger();
+    final int oldThreshold = OConfiguration.global().ridBagEmbeddedToSbtreebonsaiThreshold();
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(5);
 
     ODocument doc_1 = new ODocument();

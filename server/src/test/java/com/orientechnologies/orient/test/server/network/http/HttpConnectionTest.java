@@ -1,5 +1,6 @@
 package com.orientechnologies.orient.test.server.network.http;
 
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.io.IOException;
@@ -23,8 +24,7 @@ public class HttpConnectionTest extends BaseHttpDatabaseTest {
       // SKIP IT
       return;
 
-    final int originalMax =
-        OGlobalConfiguration.NETWORK_MAX_CONCURRENT_SESSIONS.getValueAsInteger();
+    final int originalMax = OConfiguration.global().networkMaxConcurrentSessions();
     try {
 
       int MAX = 10;
@@ -69,7 +69,7 @@ public class HttpConnectionTest extends BaseHttpDatabaseTest {
       // SKIP IT
       return;
 
-    final int max = OGlobalConfiguration.NETWORK_MAX_CONCURRENT_SESSIONS.getValueAsInteger();
+    final int max = OConfiguration.global().networkMaxConcurrentSessions();
 
     int TOTAL = max * 3;
 

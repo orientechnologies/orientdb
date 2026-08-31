@@ -1,11 +1,15 @@
 package com.orientechnologies.agent.services.metrics.server.resources;
 
 import com.orientechnologies.agent.profiler.OMetricsRegistry;
-import com.orientechnologies.agent.profiler.metrics.*;
+import com.orientechnologies.agent.profiler.metrics.GCMetric;
+import com.orientechnologies.agent.profiler.metrics.MemoryMetric;
+import com.orientechnologies.agent.profiler.metrics.OMetric;
+import com.orientechnologies.agent.profiler.metrics.OMetricSet;
+import com.orientechnologies.agent.profiler.metrics.ThreadsMetric;
 import com.orientechnologies.agent.services.metrics.OGlobalMetrics;
 import com.orientechnologies.agent.services.metrics.OrientDBMetric;
 import com.orientechnologies.enterprise.server.OEnterpriseServer;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import com.sun.management.OperatingSystemMXBean;
@@ -148,7 +152,7 @@ public class OrientDBServerResourcesMetrics implements OrientDBMetric {
     long diskCacheTotal = 0;
     for (OStorage stg : server.getDatabases().getStorages()) {
       if (stg instanceof OLocalPaginatedStorage) {
-        diskCacheTotal += OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * 1024 * 1024;
+        diskCacheTotal += OConfiguration.global().diskCacheSize() * 1024 * 1024;
         break;
       }
     }

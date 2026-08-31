@@ -19,7 +19,6 @@
  */
 package com.orientechnologies.orient.core.config;
 
-import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.profiler.OProfiler;
@@ -382,7 +381,7 @@ public enum OGlobalConfiguration { // ENVIRONMENT
       "Minimum amount of space on disk, which, when exceeded, "
           + "will cause the database to switch to read-only mode (in megabytes)",
       Long.class,
-      8 * WAL_MAX_SEGMENT_SIZE.getValueAsLong()),
+      8 * OConfiguration.global().walMaxSize()),
 
   @Deprecated
   PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY(
@@ -1470,33 +1469,10 @@ public enum OGlobalConfiguration { // ENVIRONMENT
     }
   }
 
-  public boolean getValueAsBoolean() {
-    final Object v = value != null && value != nullValue ? value : defValue;
-    return v instanceof Boolean ? (Boolean) v : Boolean.parseBoolean(v.toString());
-  }
-
   public String getValueAsString() {
     return value != null && value != nullValue
         ? value.toString()
         : defValue != null ? defValue.toString() : null;
-  }
-
-  public int getValueAsInteger() {
-    final Object v = value != null && value != nullValue ? value : defValue;
-    return (int)
-        (v instanceof Number ? ((Number) v).intValue() : OFileUtils.getSizeAsNumber(v.toString()));
-  }
-
-  public long getValueAsLong() {
-    final Object v = value != null && value != nullValue ? value : defValue;
-    return v instanceof Number
-        ? ((Number) v).longValue()
-        : OFileUtils.getSizeAsNumber(v.toString());
-  }
-
-  public float getValueAsFloat() {
-    final Object v = value != null && value != nullValue ? value : defValue;
-    return v instanceof Float ? (Float) v : Float.parseFloat(v.toString());
   }
 
   public String getKey() {

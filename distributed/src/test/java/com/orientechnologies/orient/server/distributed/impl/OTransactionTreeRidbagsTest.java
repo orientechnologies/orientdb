@@ -3,6 +3,7 @@ package com.orientechnologies.orient.server.distributed.impl;
 import static junit.framework.TestCase.assertTrue;
 import static org.junit.Assert.assertEquals;
 
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
@@ -50,7 +51,7 @@ public class OTransactionTreeRidbagsTest {
   @Before
   public void before()
       throws ClassNotFoundException, InstantiationException, IOException, IllegalAccessException {
-    pre = OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.getValueAsInteger();
+    pre = OConfiguration.global().ridBagEmbeddedToSbtreebonsaiThreshold();
     OGlobalConfiguration.RID_BAG_EMBEDDED_TO_SBTREEBONSAI_THRESHOLD.setValue(-1);
     server = new OServer(false);
     server.startup(getClass().getClassLoader().getResourceAsStream("orientdb-server-config.xml"));

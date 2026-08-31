@@ -4,7 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import com.orientechnologies.BaseMemoryInternalDatabase;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentAbstract;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -129,7 +129,7 @@ public abstract class ODocumentSchemafullSerializationTest extends BaseMemoryInt
     super.afterTest();
     ODatabaseDocumentAbstract.setDefaultSerializer(
         ORecordSerializerFactory.instance()
-            .getFormat(OGlobalConfiguration.DB_DOCUMENT_SERIALIZER.getValueAsString()));
+            .getFormat(OConfiguration.global().dbDocumentSerializer()));
   }
 
   @Test

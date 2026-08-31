@@ -10,7 +10,6 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.engine.OMemoryAndLocalPaginatedEnginesInitializer;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -65,17 +64,15 @@ public class OStorageEnginePaginatedLocal implements OStorageEngine {
   }
 
   private static long calculateReadCacheMaxMemory(final long cacheSize) {
-    return (long)
-        (cacheSize
-            * ((100 - OGlobalConfiguration.DISK_WRITE_CACHE_PART.getValueAsInteger()) / 100.0));
+    return (long) (cacheSize * ((100 - OConfiguration.global().diskWriteCachePart()) / 100.0));
   }
 
   private static int getOpenFilesLimit() {
-    if (OGlobalConfiguration.OPEN_FILES_LIMIT.getValueAsInteger() > 0) {
+    if (OConfiguration.global().openFilesLimit() > 0) {
       logger.infoNoDb(
           "Limit of open files for disk cache will be set to %d.",
-          OGlobalConfiguration.OPEN_FILES_LIMIT.getValueAsInteger());
-      return OGlobalConfiguration.OPEN_FILES_LIMIT.getValueAsInteger();
+          OConfiguration.global().openFilesLimit());
+      return OConfiguration.global().openFilesLimit();
     }
 
     final int defaultLimit = 512;
@@ -100,8 +97,7 @@ public class OStorageEnginePaginatedLocal implements OStorageEngine {
     OMemoryAndLocalPaginatedEnginesInitializer.INSTANCE.initialize();
 
     final long diskCacheSize =
-        calculateReadCacheMaxMemory(
-            OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * 1024 * 1024);
+        calculateReadCacheMaxMemory(OConfiguration.global().diskCacheSize() * 1024 * 1024);
     final int pageSize = OConfiguration.global().diskCachePageSize() * 1024;
 
     if (OConfiguration.global().directMemoryPreallocate()) {

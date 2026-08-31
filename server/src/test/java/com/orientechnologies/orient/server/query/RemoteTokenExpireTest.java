@@ -5,6 +5,7 @@ import static com.orientechnologies.orient.core.config.OGlobalConfiguration.QUER
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.client.remote.ORemoteClient;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabasePool;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
@@ -51,7 +52,7 @@ public class RemoteTokenExpireTest {
         RemoteTokenExpireTest.class.getSimpleName());
     session = orientDB.open(RemoteTokenExpireTest.class.getSimpleName(), "admin", "admin");
     session.createClass("Some");
-    oldPageSize = QUERY_REMOTE_RESULTSET_PAGE_SIZE.getValueAsInteger();
+    oldPageSize = OConfiguration.global().queryRemoteResultsetPageSize();
     QUERY_REMOTE_RESULTSET_PAGE_SIZE.setValue(10);
   }
 

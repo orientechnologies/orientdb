@@ -5,6 +5,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
 import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
@@ -29,7 +30,7 @@ public class OServerTest {
     prevPassword = System.setProperty("ORIENTDB_ROOT_PASSWORD", "rootPassword");
     prevOrientHome = System.setProperty("ORIENTDB_HOME", "./target/testhome");
 
-    allowJvmShutdownPrev = OGlobalConfiguration.ENVIRONMENT_ALLOW_JVM_SHUTDOWN.getValueAsBoolean();
+    allowJvmShutdownPrev = OConfiguration.global().environmentAllowJvmShutdown();
     OGlobalConfiguration.ENVIRONMENT_ALLOW_JVM_SHUTDOWN.setValue(false);
 
     conf = new OServerConfiguration();

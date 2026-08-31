@@ -25,7 +25,6 @@ import com.orientechnologies.common.profiler.OProfilerEntry;
 import com.orientechnologies.common.profiler.OProfilerListener;
 import com.orientechnologies.enterprise.server.OEnterpriseServer;
 import com.orientechnologies.orient.core.config.OConfiguration;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
@@ -701,7 +700,7 @@ public class OEnterpriseProfiler extends OAbstractProfiler
     for (OStorage stg : server.getDatabases().getStorages()) {
       if (stg instanceof OLocalPaginatedStorage) {
         diskCacheUsed += ((OLocalPaginatedStorage) stg).getReadCache().getUsedMemory();
-        diskCacheTotal += OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * 1024 * 1024;
+        diskCacheTotal += OConfiguration.global().diskCacheSize() * 1024 * 1024;
         break;
       }
     }

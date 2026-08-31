@@ -5,6 +5,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -32,7 +33,7 @@ public class RemoteQuerySupportTest extends BaseServerMemoryDatabase {
   public void beforeTest() {
     super.beforeTest();
     db.createClass("Some");
-    oldPageSize = QUERY_REMOTE_RESULTSET_PAGE_SIZE.getValueAsInteger();
+    oldPageSize = OConfiguration.global().queryRemoteResultsetPageSize();
     QUERY_REMOTE_RESULTSET_PAGE_SIZE.setValue(10);
   }
 

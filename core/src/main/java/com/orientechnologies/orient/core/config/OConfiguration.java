@@ -209,6 +209,12 @@ public interface OConfiguration {
     return getValueAsLong(OGlobalConfiguration.DISK_CACHE_FREE_SPACE_LIMIT);
   }
 
+  @Deprecated
+  default int paginatedStorageLowestFreelistBoundary() {
+    return getValueAsInteger(OGlobalConfiguration.PAGINATED_STORAGE_LOWEST_FREELIST_BOUNDARY);
+  }
+
+  @Deprecated
   default boolean recordDownsizingEnabled() {
     return getValueAsBoolean(OGlobalConfiguration.RECORD_DOWNSIZING_ENABLED);
   }

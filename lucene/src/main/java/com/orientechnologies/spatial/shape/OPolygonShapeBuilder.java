@@ -15,7 +15,7 @@
  */
 package com.orientechnologies.spatial.shape;
 
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -46,7 +46,7 @@ public class OPolygonShapeBuilder extends OComplexShapeBuilder<JtsGeometry> {
     OClass polygon = schema.createAbstractClass(getName(), superClass(db));
     polygon.createProperty(COORDINATES, OType.EMBEDDEDLIST, OType.EMBEDDEDLIST);
 
-    if (OGlobalConfiguration.SPATIAL_ENABLE_DIRECT_WKT_READER.getValueAsBoolean()) {
+    if (OConfiguration.global().spatialEnableDirectWktReader()) {
       OClass polygonZ = schema.createAbstractClass(getName() + "Z", superClass(db));
       polygonZ.createProperty(COORDINATES, OType.EMBEDDEDLIST, OType.EMBEDDEDLIST);
     }

@@ -28,7 +28,6 @@ import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.OOrientStartupListener;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OConfiguration;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import com.orientechnologies.orient.core.storage.cache.OWriteCache;
@@ -114,8 +113,7 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract
 
             final long totalDiskCacheUsedMemory =
                 (dk.getUsedMemory() + wk.getExclusiveWriteCachePagesSize()) / OFileUtils.MEGABYTE;
-            final long maxDiskCacheUsedMemory =
-                OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong();
+            final long maxDiskCacheUsedMemory = OConfiguration.global().diskCacheSize();
 
             // CHECK IF THERE IS MORE THAN 40% HEAP UNUSED AND DISK-CACHE IS 80% OF THE MAXIMUM SIZE
             if ((jvmTotMemory * 140 / 100) < jvmMaxMemory
@@ -123,7 +121,7 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract
 
               final long suggestedMaxHeap = jvmTotMemory * 120 / 100;
               final long suggestedDiskCache =
-                  OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong()
+                  OConfiguration.global().diskCacheSize()
                       + (jvmMaxMemory - suggestedMaxHeap) / OFileUtils.MEGABYTE;
 
               logger.info(
@@ -190,7 +188,7 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract
     for (OStorage stg : Orient.instance().getStorages()) {
       if (stg instanceof OLocalPaginatedStorage) {
         diskCacheUsed += ((OLocalPaginatedStorage) stg).getReadCache().getUsedMemory();
-        diskCacheTotal += OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * 1024 * 1024;
+        diskCacheTotal += OConfiguration.global().diskCacheSize() * 1024 * 1024;
         stgs++;
       }
     }

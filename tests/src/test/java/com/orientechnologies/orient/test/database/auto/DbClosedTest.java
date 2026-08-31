@@ -15,7 +15,7 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
@@ -35,7 +35,7 @@ public class DbClosedTest extends DocumentDBBaseTest {
   public void testRemoteConns() {
     if (!url.startsWith("remote:")) return;
 
-    final int max = OGlobalConfiguration.NETWORK_MAX_CONCURRENT_SESSIONS.getValueAsInteger();
+    final int max = OConfiguration.global().networkMaxConcurrentSessions();
     for (int i = 0; i < max * 2; ++i) {
       final ODatabase db = openSession("admin", "admin");
       db.close();

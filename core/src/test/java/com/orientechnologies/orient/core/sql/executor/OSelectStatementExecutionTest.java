@@ -8,6 +8,7 @@ import static org.junit.Assert.assertTrue;
 import com.orientechnologies.BaseMemoryDatabase;
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -1319,7 +1320,7 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
 
   @Test
   public void testFetchFromIndex() {
-    boolean oldAllowManual = OGlobalConfiguration.INDEX_ALLOW_MANUAL_INDEXES.getValueAsBoolean();
+    boolean oldAllowManual = OConfiguration.global().indexAllowManualIndexes();
     OGlobalConfiguration.INDEX_ALLOW_MANUAL_INDEXES.setValue(true);
     String className = "testFetchFromIndex";
     OClass clazz = db.getMetadata().getSchema().createClass(className);
@@ -4390,7 +4391,7 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
 
   @Test
   public void testHeapLimitForOrderBy() {
-    Long oldValue = OGlobalConfiguration.QUERY_MAX_HEAP_ELEMENTS_ALLOWED_PER_OP.getValueAsLong();
+    Long oldValue = OConfiguration.global().queryMaxHeapElementsAllowedPerOp();
     try {
       OGlobalConfiguration.QUERY_MAX_HEAP_ELEMENTS_ALLOWED_PER_OP.setValue(3);
 

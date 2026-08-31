@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.server.distributed.impl;
 
-import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DISTRIBUTED_REPLICATION_PROTOCOL_VERSION;
 import static com.orientechnologies.orient.server.distributed.impl.TxContextStatus.FAILED;
 import static com.orientechnologies.orient.server.distributed.impl.TxContextStatus.SUCCESS;
 import static com.orientechnologies.orient.server.distributed.impl.TxContextStatus.TIMEDOUT;
@@ -326,7 +325,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         default:
           throw new IllegalStateException(
               "Invalid distributed replicaiton protocol version: "
-                  + DISTRIBUTED_REPLICATION_PROTOCOL_VERSION.getValueAsInteger());
+                  + OConfiguration.global().distributedReplicationProtocolVersion());
       }
     }
   }
@@ -346,7 +345,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         default:
           throw new IllegalStateException(
               "Invalid distributed replicaiton protocol version: "
-                  + DISTRIBUTED_REPLICATION_PROTOCOL_VERSION.getValueAsInteger());
+                  + OConfiguration.global().distributedReplicationProtocolVersion());
       }
     }
   }

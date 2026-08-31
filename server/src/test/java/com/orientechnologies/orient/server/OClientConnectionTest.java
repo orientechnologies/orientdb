@@ -5,6 +5,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.enterprise.channel.binary.OTokenSecurityException;
@@ -50,7 +51,7 @@ public class OClientConnectionTest extends BaseMemoryInternalDatabase {
   @Test(expected = OTokenSecurityException.class)
   public void testExpiredToken() throws IOException, InterruptedException {
     OClientConnection conn = new OClientConnection(1, protocol);
-    long sessionTimeout = OGlobalConfiguration.NETWORK_TOKEN_EXPIRE_TIMEOUT.getValueAsLong();
+    long sessionTimeout = OConfiguration.global().networkTokenExpireTimeout();
     OGlobalConfiguration.NETWORK_TOKEN_EXPIRE_TIMEOUT.setValue(0);
     OTokenHandler handler = new OTokenHandlerImpl(server.getContextConfiguration());
     OGlobalConfiguration.NETWORK_TOKEN_EXPIRE_TIMEOUT.setValue(sessionTimeout);

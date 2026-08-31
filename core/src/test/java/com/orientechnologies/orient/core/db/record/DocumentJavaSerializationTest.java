@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.db.record;
 
 import static org.junit.Assert.assertEquals;
 
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentAbstract;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -25,7 +26,7 @@ public class DocumentJavaSerializationTest {
 
   @Before
   public void before() {
-    this.previousSerializerConf = OGlobalConfiguration.DB_DOCUMENT_SERIALIZER.getValueAsString();
+    this.previousSerializerConf = OConfiguration.global().dbDocumentSerializer();
     previousSerializerInstance = ODatabaseDocumentAbstract.getDefaultSerializer();
   }
 
