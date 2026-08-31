@@ -12,6 +12,7 @@ import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
 import org.junit.After;
 import org.junit.Before;
@@ -87,6 +88,34 @@ public class LightWeightEdgesTest {
       assertTrue(res.hasNext());
       OResult r = res.next();
       assertEquals(r.getProperty("name"), "aName");
+    }
+  }
+
+  @Test
+  public void testCreateDeleteLightWeight() {
+    OVertex v = session.newVertex("Vertex");
+    OVertex v1 = session.newVertex("Vertex");
+    v.setProperty("name", "aName");
+    v1.setProperty("name", "bName");
+    session.save(v);
+    session.save(v1);
+    session
+        .command(
+            "create edge `Edge` FROM (select from `Vertex` where name='aName' ) TO (select from"
+                + " `Vertex` where name='bName' )")
+        .close();
+    try (OResultSet res = session.query("select out_Edge from  `Vertex`")) {
+      OResult next = res.next();
+      assertEquals(((Collection<?>) next.getProperty("out_Edge")).size(), 1);
+    }
+    session
+        .command(
+            " delete edge `Edge` from (select from  `Vertex` where name='aName' ) to (select from "
+                + " `Vertex` where name='bName' )")
+        .close();
+    try (OResultSet res = session.query("select out_Edge from `Vertex`")) {
+      OResult next = res.next();
+      assertEquals(((Collection<?>) next.getProperty("out_Edge")).size(), 0);
     }
   }
 

@@ -24,9 +24,13 @@ public class DeleteStep extends AbstractExecutionStep {
   }
 
   private OResult mapResult(OResult result, OCommandContext ctx) {
-    Optional<ORID> id = result.getIdentity();
-    if (id.isPresent()) {
-      ctx.getDatabase().delete(id.get());
+    if (result.isElement()) {
+      ctx.getDatabase().delete(result.getElement().get());
+    } else {
+      Optional<ORID> id = result.getIdentity();
+      if (id.isPresent()) {
+        ctx.getDatabase().delete(id.get());
+      }
     }
     return result;
   }
