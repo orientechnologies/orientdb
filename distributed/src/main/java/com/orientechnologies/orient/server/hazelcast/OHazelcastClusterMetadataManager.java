@@ -21,7 +21,7 @@ import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.util.OCallableNoParamNoReturn;
 import com.orientechnologies.common.util.OCallableUtils;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.db.OCancellableTimer;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.id.ONodeId;
@@ -165,7 +165,7 @@ public class OHazelcastClusterMetadataManager
 
     publishLocalNodeConfiguration();
 
-    final long delay = OGlobalConfiguration.global().distributedPublishNodeStatusEvery();
+    final long delay = OConfiguration.global().distributedPublishNodeStatusEvery();
     if (delay > 0) {
       publishLocalNodeConfigurationTask =
           ctx.periodicExecute(this::publishLocalNodeConfiguration, delay);

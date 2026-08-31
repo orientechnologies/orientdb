@@ -21,6 +21,7 @@ package com.orientechnologies.common.directmemory;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import java.nio.ByteBuffer;
@@ -42,7 +43,7 @@ public final class OByteBufferPool implements OByteBufferPoolMXBean {
   private static final OLogger logger = OLogManager.instance().logger(OByteBufferPool.class);
 
   /** Whether we should track memory leaks during application execution */
-  private static final boolean TRACK = OGlobalConfiguration.global().directMemoryTrackMode();
+  private static final boolean TRACK = OConfiguration.global().directMemoryTrackMode();
 
   /**
    * Holder for singleton instance. We use {@link AtomicReference} instead of static constructor to
@@ -64,7 +65,7 @@ public final class OByteBufferPool implements OByteBufferPoolMXBean {
     if (contextConfiguration != null) {
       bufferSize = contextConfiguration.diskCachePageSize();
     } else {
-      bufferSize = OGlobalConfiguration.global().diskCachePageSize();
+      bufferSize = OConfiguration.global().diskCachePageSize();
     }
 
     final OByteBufferPool newInstance = new OByteBufferPool(bufferSize * 1024);
@@ -109,7 +110,7 @@ public final class OByteBufferPool implements OByteBufferPoolMXBean {
   public OByteBufferPool(int pageSize) {
     this.pageSize = pageSize;
     this.allocator = ODirectMemoryAllocator.instance();
-    this.poolSize = OGlobalConfiguration.global().directMemoryPoolLimit();
+    this.poolSize = OConfiguration.global().directMemoryPoolLimit();
   }
 
   /**

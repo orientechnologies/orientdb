@@ -1,6 +1,6 @@
 package com.orientechnologies.orient.core.metadata.security;
 
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.parser.OOrBlock;
@@ -34,7 +34,7 @@ public class OPredicateCache {
    * @return true if the corresponding executor is present in the cache
    */
   public boolean contains(String statement) {
-    if (OGlobalConfiguration.global().statementCacheSize() == 0) {
+    if (OConfiguration.global().statementCacheSize() == 0) {
       return false;
     }
 
@@ -48,7 +48,7 @@ public class OPredicateCache {
    * @return the corresponding executor, taking it from the internal cache, if it exists
    */
   public OOrBlock get(String statement) {
-    if (OGlobalConfiguration.global().statementCacheSize() == 0) {
+    if (OConfiguration.global().statementCacheSize() == 0) {
       return parse(statement);
     }
 
@@ -74,7 +74,7 @@ public class OPredicateCache {
   }
 
   public void clear() {
-    if (OGlobalConfiguration.global().statementCacheSize() == 0) {
+    if (OConfiguration.global().statementCacheSize() == 0) {
       return;
     }
 

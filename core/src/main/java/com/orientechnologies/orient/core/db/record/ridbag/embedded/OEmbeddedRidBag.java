@@ -25,7 +25,7 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.common.util.OResettable;
 import com.orientechnologies.common.util.OSizeable;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -507,7 +507,7 @@ public class OEmbeddedRidBag implements ORidBagDelegate {
   public void addEntry(final OIdentifiable identifiable) {
     if (entries.length == entriesLength) {
       if (entriesLength == 0) {
-        final int cfgValue = OGlobalConfiguration.global().ridBagEmbeddedToSbtreebonsaiThreshold();
+        final int cfgValue = OConfiguration.global().ridBagEmbeddedToSbtreebonsaiThreshold();
         entries = new Object[cfgValue > 0 ? Math.min(cfgValue, 40) : 40];
       } else {
         final Object[] oldEntries = entries;

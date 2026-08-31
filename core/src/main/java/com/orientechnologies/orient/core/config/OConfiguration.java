@@ -4,6 +4,15 @@ import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.storage.OChecksumMode;
 
 public interface OConfiguration {
+  static final OConfiguration global =
+      new OConfiguration() {
+
+        @Override
+        public Object getValue(OGlobalConfiguration gc) {
+          return gc.getValue();
+        }
+      };
+
   default boolean environmentDumpCfgAtStartup() {
     return getValueAsBoolean(OGlobalConfiguration.ENVIRONMENT_DUMP_CFG_AT_STARTUP);
   }
@@ -783,5 +792,9 @@ public interface OConfiguration {
       throw new ClassCastException(
           "Value " + value + " can not be cast to enumeration " + enumType.getSimpleName());
     }
+  }
+
+  static OConfiguration global() {
+    return OConfiguration.global;
   }
 }

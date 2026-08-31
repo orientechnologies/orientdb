@@ -23,8 +23,8 @@ import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OCallable;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -86,7 +86,7 @@ public abstract class OHttpResponseAbstract implements OHttpResponse {
   private boolean jsonErrorResponse = true;
   private boolean sameSiteCookie = true;
   private OClientConnection connection;
-  private boolean streaming = OGlobalConfiguration.global().networkHttpStreaming();
+  private boolean streaming = OConfiguration.global().networkHttpStreaming();
 
   public OHttpResponseAbstract(
       final OutputStream iOutStream,

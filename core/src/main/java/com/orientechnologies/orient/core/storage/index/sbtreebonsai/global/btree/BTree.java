@@ -2,7 +2,7 @@ package com.orientechnologies.orient.core.storage.index.sbtreebonsai.global.btre
 
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.util.ORawPair;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -21,7 +21,7 @@ import java.util.stream.StreamSupport;
 
 public final class BTree extends ODurableComponent {
 
-  private static final int MAX_PATH_LENGTH = OGlobalConfiguration.global().sbtreeMaxDepth();
+  private static final int MAX_PATH_LENGTH = OConfiguration.global().sbtreeMaxDepth();
 
   private static final int ENTRY_POINT_INDEX = 0;
   private static final int ROOT_INDEX = 1;

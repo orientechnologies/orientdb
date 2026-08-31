@@ -26,6 +26,7 @@ import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.ORawPair;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
@@ -941,7 +942,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
   }
 
   public static void manualIndexesWarning() {
-    if (!OGlobalConfiguration.global().indexAllowManualIndexes()) {
+    if (!OConfiguration.global().indexAllowManualIndexes()) {
       throw new OManualIndexesAreProhibited(
           "Manual indexes are deprecated, not supported any more and will be removed in next"
               + " versions if you still want to use them, please set global property `"
@@ -949,7 +950,7 @@ public abstract class OIndexAbstract implements OIndexInternal {
               + "` to `true`");
     }
 
-    if (OGlobalConfiguration.global().indexAllowManualIndexesWarning()) {
+    if (OConfiguration.global().indexAllowManualIndexesWarning()) {
       logger.warn(
           "Seems you use manual indexes. Manual indexes are deprecated, not supported any more"
               + " and will be removed in next versions if you do not want to see warning,"

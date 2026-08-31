@@ -3,7 +3,7 @@ package com.orientechnologies.orient.core.storage.index.hashindex.local.v3;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.util.OCommonConst;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.exception.OLocalHashTableV3Exception;
 import com.orientechnologies.orient.core.exception.OTooBigIndexKeyException;
@@ -79,7 +79,7 @@ import java.util.List;
  * @since 12.03.13
  */
 public class OLocalHashTableV3<K, V> extends ODurableComponent implements OHashTable<K, V> {
-  private static final int MAX_KEY_SIZE = OGlobalConfiguration.global().sbtreeMaxKeySize();
+  private static final int MAX_KEY_SIZE = OConfiguration.global().sbtreeMaxKeySize();
 
   private static final long HASH_CODE_MIN_VALUE = 0;
   private static final long HASH_CODE_MAX_VALUE = 0xFFFFFFFFFFFFFFFFL;

@@ -19,7 +19,7 @@
  */
 package com.orientechnologies.orient.server.distributed.task;
 
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.server.distributed.ORemoteTaskFactory;
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -37,7 +37,7 @@ public abstract class OAbstractRemoteTask implements ORemoteTask {
 
   @Override
   public long getDistributedTimeout() {
-    return OGlobalConfiguration.global().distributedCrudTaskSynchTimeout();
+    return OConfiguration.global().distributedCrudTaskSynchTimeout();
   }
 
   @Override

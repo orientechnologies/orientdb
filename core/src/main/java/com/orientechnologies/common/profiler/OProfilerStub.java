@@ -21,7 +21,7 @@
 package com.orientechnologies.common.profiler;
 
 import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -49,15 +49,15 @@ public class OProfilerStub extends OAbstractProfiler {
   public void startup() {
     counters =
         new ConcurrentLinkedHashMap.Builder()
-            .maximumWeightedCapacity(OGlobalConfiguration.global().profilerMaxvalues())
+            .maximumWeightedCapacity(OConfiguration.global().profilerMaxvalues())
             .build();
     tips =
         new ConcurrentLinkedHashMap.Builder()
-            .maximumWeightedCapacity(OGlobalConfiguration.global().profilerMaxvalues())
+            .maximumWeightedCapacity(OConfiguration.global().profilerMaxvalues())
             .build();
     tipsTimestamp =
         new ConcurrentLinkedHashMap.Builder()
-            .maximumWeightedCapacity(OGlobalConfiguration.global().profilerMaxvalues())
+            .maximumWeightedCapacity(OConfiguration.global().profilerMaxvalues())
             .build();
     super.startup();
   }
@@ -116,15 +116,15 @@ public class OProfilerStub extends OAbstractProfiler {
   public boolean startRecording() {
     counters =
         new ConcurrentLinkedHashMap.Builder()
-            .maximumWeightedCapacity(OGlobalConfiguration.global().profilerMaxvalues())
+            .maximumWeightedCapacity(OConfiguration.global().profilerMaxvalues())
             .build();
     tips =
         new ConcurrentLinkedHashMap.Builder()
-            .maximumWeightedCapacity(OGlobalConfiguration.global().profilerMaxvalues())
+            .maximumWeightedCapacity(OConfiguration.global().profilerMaxvalues())
             .build();
     tipsTimestamp =
         new ConcurrentLinkedHashMap.Builder()
-            .maximumWeightedCapacity(OGlobalConfiguration.global().profilerMaxvalues())
+            .maximumWeightedCapacity(OConfiguration.global().profilerMaxvalues())
             .build();
 
     if (super.startRecording()) {

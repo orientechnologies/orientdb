@@ -21,7 +21,7 @@ package com.orientechnologies.orient.server.distributed.impl;
 
 import com.orientechnologies.common.profiler.OProfilerEntry;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.id.ONodeId;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -202,7 +202,7 @@ public class ODistributedMessageServiceImpl implements ODistributedMessageServic
   protected void purgePendingMessages() {
     final long now = System.nanoTime();
 
-    final long timeout = OGlobalConfiguration.global().distributedAsynchResponsesTimeout();
+    final long timeout = OConfiguration.global().distributedAsynchResponsesTimeout();
 
     for (Iterator<Entry<Long, ODistributedResponseManager>> it =
             responsesByRequestIds.entrySet().iterator();

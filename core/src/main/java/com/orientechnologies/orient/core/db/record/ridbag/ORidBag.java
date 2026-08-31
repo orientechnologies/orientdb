@@ -23,6 +23,7 @@ package com.orientechnologies.orient.core.db.record.ridbag;
 import com.orientechnologies.common.collection.OCollection;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OUUIDSerializer;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -516,9 +517,9 @@ public class ORidBag
 
     } else {
 
-      topThreshold = OGlobalConfiguration.global().ridBagEmbeddedToSbtreebonsaiThreshold();
+      topThreshold = OConfiguration.global().ridBagEmbeddedToSbtreebonsaiThreshold();
 
-      bottomThreshold = OGlobalConfiguration.global().ridBagSbtreebonsaiToEmbeddedThreshold();
+      bottomThreshold = OConfiguration.global().ridBagSbtreebonsaiToEmbeddedThreshold();
     }
   }
 

@@ -22,7 +22,7 @@ package com.orientechnologies.orient.core.metadata.security;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.annotation.ODocumentInstance;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
@@ -81,7 +81,7 @@ public class OUser extends OIdentity implements OSecurityUser {
 
   public static final String encryptPassword(final String iPassword) {
     return OSecurityManager.createHash(
-        iPassword, OGlobalConfiguration.global().securityUserPasswordDefaultAlgorithm(), true);
+        iPassword, OConfiguration.global().securityUserPasswordDefaultAlgorithm(), true);
   }
 
   public static boolean encodePassword(

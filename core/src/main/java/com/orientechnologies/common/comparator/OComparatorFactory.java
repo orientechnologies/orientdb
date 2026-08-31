@@ -19,7 +19,7 @@
  */
 package com.orientechnologies.common.comparator;
 
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import java.util.Comparator;
 
 /**
@@ -56,7 +56,7 @@ public class OComparatorFactory {
    */
   @SuppressWarnings("unchecked")
   public <T> Comparator<T> getComparator(Class<T> clazz) {
-    boolean useUnsafe = OGlobalConfiguration.global().memoryUseUnsafe();
+    boolean useUnsafe = OConfiguration.global().memoryUseUnsafe();
 
     if (clazz.equals(byte[].class)) {
       if (useUnsafe && unsafeWasDetected)

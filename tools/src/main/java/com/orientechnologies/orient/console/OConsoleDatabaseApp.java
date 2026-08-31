@@ -40,6 +40,7 @@ import com.orientechnologies.orient.core.OSignalHandler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
@@ -203,7 +204,7 @@ public class OConsoleDatabaseApp extends OConsoleApplication
     if ((("admin".equals(user) && "admin".equals(password))
             || ("reader".equals(user) && "reader".equals(password))
             || ("writer".equals(user) && "writer".equals(password)))
-        && OGlobalConfiguration.global().warningDefaultUsers()) {
+        && OConfiguration.global().warningDefaultUsers()) {
       message(
           String.format(
               "IMPORTANT! Using default password is unsafe, please change password for user '%s' on"
@@ -1400,7 +1401,7 @@ public class OConsoleDatabaseApp extends OConsoleApplication
     try {
       final OServerConfigurationManager serverCfg = new OServerConfigurationManager(serverCfgFile);
 
-      final String defAlgo = OGlobalConfiguration.global().securityUserPasswordDefaultAlgorithm();
+      final String defAlgo = OConfiguration.global().securityUserPasswordDefaultAlgorithm();
 
       final String hashedPassword = OSecurityManager.createHash(iServerUserPasswd, defAlgo, true);
 

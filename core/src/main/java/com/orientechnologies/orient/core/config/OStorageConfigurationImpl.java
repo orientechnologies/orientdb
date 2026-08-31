@@ -244,7 +244,7 @@ public class OStorageConfigurationImpl implements OStorageConfiguration {
     getContextConfiguration()
         .setValue(
             OGlobalConfiguration.CLASS_MINIMUM_CLUSTERS,
-            OGlobalConfiguration.global().classMinimumClusters()); // 0 = AUTOMATIC
+            OConfiguration.global().classMinimumClusters()); // 0 = AUTOMATIC
 
     autoInitClusters();
 

@@ -5,7 +5,7 @@ import static com.orientechnologies.orient.enterprise.channel.binary.OChannelBin
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 
 public class OBinaryProtocolHelper {
@@ -22,12 +22,12 @@ public class OBinaryProtocolHelper {
       throw new ODatabaseException(message);
     }
 
-    if (OGlobalConfiguration.global().networkBinaryMinProtocolVersion() > protocolVersion) {
+    if (OConfiguration.global().networkBinaryMinProtocolVersion() > protocolVersion) {
       String message =
           String.format(
               "Backward compatibility support enabled from version %d your version is %d, check"
                   + " `%s` settings",
-              OGlobalConfiguration.global().networkBinaryMinProtocolVersion(),
+              OConfiguration.global().networkBinaryMinProtocolVersion(),
               protocolVersion,
               NETWORK_BINARY_MIN_PROTOCOL_VERSION.getKey());
       logger.error("%s", null, message);

@@ -26,6 +26,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.types.OModifiableLong;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import java.lang.ref.ReferenceQueue;
 import java.lang.reflect.Field;
@@ -69,13 +70,13 @@ public class ODirectMemoryAllocator implements ODirectMemoryAllocatorMXBean {
                     });
   }
 
-  private static final boolean PROFILE_MEMORY = OGlobalConfiguration.global().memoryProfiling();
+  private static final boolean PROFILE_MEMORY = OConfiguration.global().memoryProfiling();
 
   private static final int MEMORY_STATISTICS_PRINTING_INTERVAL =
-      OGlobalConfiguration.global().memoryProfilingReportInterval();
+      OConfiguration.global().memoryProfilingReportInterval();
 
   /** Whether we should track memory leaks during application execution */
-  private static final boolean TRACK = OGlobalConfiguration.global().directMemoryTrackMode();
+  private static final boolean TRACK = OConfiguration.global().directMemoryTrackMode();
 
   /** Holder for singleton instance */
   private static final AtomicReference<ODirectMemoryAllocator> INSTANCE_HOLDER =

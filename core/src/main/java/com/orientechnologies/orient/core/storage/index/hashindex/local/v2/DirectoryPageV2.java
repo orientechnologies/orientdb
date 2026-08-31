@@ -21,7 +21,7 @@
 package com.orientechnologies.orient.core.storage.index.hashindex.local.v2;
 
 import com.orientechnologies.common.serialization.types.OByteSerializer;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
 
@@ -33,7 +33,7 @@ public class DirectoryPageV2 extends ODurablePage {
   private static final int ITEMS_OFFSET = NEXT_FREE_POSITION;
 
   static final int NODES_PER_PAGE =
-      (OGlobalConfiguration.global().diskCachePageSize() * 1024 - ITEMS_OFFSET)
+      (OConfiguration.global().diskCachePageSize() * 1024 - ITEMS_OFFSET)
           / HashTableDirectory.BINARY_LEVEL_SIZE;
 
   public DirectoryPageV2(OCacheEntry cacheEntry) {

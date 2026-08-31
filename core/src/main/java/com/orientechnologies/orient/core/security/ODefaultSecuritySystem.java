@@ -23,6 +23,7 @@ import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
@@ -813,7 +814,7 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
         String configFile =
             OSystemVariableResolver.resolveSystemVariables("${ORIENTDB_HOME}/config/security.json");
 
-        String ssf = OGlobalConfiguration.global().serverSecurityFile();
+        String ssf = OConfiguration.global().serverSecurityFile();
         if (ssf != null) configFile = ssf;
 
         File f = new File(configFile);

@@ -4,7 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 
 import com.orientechnologies.BaseMemoryInternalDatabase;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
 import com.orientechnologies.orient.core.id.ORID;
@@ -27,7 +27,7 @@ public class SBTreeBagDeleteTest extends BaseMemoryInternalDatabase {
 
     ODocument doc = new ODocument();
     ORidBag bag = new ORidBag();
-    int size = OGlobalConfiguration.global().indexEmbeddedToSbtreebonsaiThreshold() * 2;
+    int size = OConfiguration.global().indexEmbeddedToSbtreebonsaiThreshold() * 2;
     for (int i = 0; i < size; i++) bag.add(new ORecordId(10, i));
     doc.field("bag", bag);
 
@@ -53,7 +53,7 @@ public class SBTreeBagDeleteTest extends BaseMemoryInternalDatabase {
   public void testDeleteRidbagNoTx() throws InterruptedException {
     ODocument doc = new ODocument();
     ORidBag bag = new ORidBag();
-    int size = OGlobalConfiguration.global().indexEmbeddedToSbtreebonsaiThreshold() * 2;
+    int size = OConfiguration.global().indexEmbeddedToSbtreebonsaiThreshold() * 2;
     for (int i = 0; i < size; i++) bag.add(new ORecordId(10, i));
     doc.field("bag", bag);
 

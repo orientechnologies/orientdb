@@ -27,7 +27,7 @@ import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
@@ -592,7 +592,7 @@ public class ODocument extends ORecordAbstract
     }
 
     if (fieldType == OType.CUSTOM) {
-      if (!OGlobalConfiguration.global().dbCustomSupport()) {
+      if (!OConfiguration.global().dbCustomSupport()) {
         throw new ODatabaseException(
             String.format(
                 "OType CUSTOM used by serializable types, for value  '%s' is not enabled, set"
@@ -1684,7 +1684,7 @@ public class ODocument extends ORecordAbstract
     }
 
     if (fieldType == OType.CUSTOM) {
-      if (!OGlobalConfiguration.global().dbCustomSupport()) {
+      if (!OConfiguration.global().dbCustomSupport()) {
         throw new ODatabaseException(
             String.format(
                 "OType CUSTOM used by serializable types, for value  '%s' is not enabled, set"
@@ -2336,7 +2336,7 @@ public class ODocument extends ORecordAbstract
       if (fields == null) fields = ordered ? new LinkedHashMap<>() : new HashMap<>();
 
       if (iFieldType == OType.CUSTOM) {
-        if (!OGlobalConfiguration.global().dbCustomSupport()) {
+        if (!OConfiguration.global().dbCustomSupport()) {
           throw new ODatabaseException(
               String.format(
                   "OType CUSTOM used by serializable types is not enabled, set `db.custom.support`"

@@ -9,6 +9,7 @@ import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import com.orientechnologies.orient.core.OCreateDatabaseUtil;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
@@ -2084,7 +2085,7 @@ public class ODocumentSerializerDeltaTest {
 
   @Test
   public void testDocumentWithCostum() {
-    boolean old = OGlobalConfiguration.global().dbCustomSupport();
+    boolean old = OConfiguration.global().dbCustomSupport();
     OGlobalConfiguration.DB_CUSTOM_SUPPORT.setValue(true);
     ODatabaseRecordThreadLocal.instance().remove();
     ODocument document = new ODocument();
@@ -2282,7 +2283,7 @@ public class ODocumentSerializerDeltaTest {
 
   @Test
   public void testSerializableValue() {
-    boolean old = OGlobalConfiguration.global().dbCustomSupport();
+    boolean old = OConfiguration.global().dbCustomSupport();
     OGlobalConfiguration.DB_CUSTOM_SUPPORT.setValue(true);
 
     ODocument document = new ODocument();

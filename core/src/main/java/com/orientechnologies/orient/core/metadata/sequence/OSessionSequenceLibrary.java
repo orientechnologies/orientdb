@@ -21,7 +21,7 @@ package com.orientechnologies.orient.core.metadata.sequence;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.metadata.sequence.OSequence.SEQUENCE_TYPE;
@@ -36,7 +36,7 @@ public class OSessionSequenceLibrary extends OSequenceLibraryAbstract {
   private static final OLogger logger =
       OLogManager.instance().logger(OSessionSequenceLibrary.class);
   private static final int replicationProtocolVersion =
-      OGlobalConfiguration.global().distributedReplicationProtocolVersion();
+      OConfiguration.global().distributedReplicationProtocolVersion();
 
   public OSessionSequenceLibrary(
       final OSequenceLibraryImpl iDelegate, final ODatabaseDocumentInternal iDatabase) {

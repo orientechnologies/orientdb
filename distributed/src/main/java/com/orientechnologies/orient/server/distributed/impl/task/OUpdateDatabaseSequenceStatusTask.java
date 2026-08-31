@@ -1,7 +1,7 @@
 package com.orientechnologies.orient.server.distributed.impl.task;
 
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
@@ -72,7 +72,7 @@ public class OUpdateDatabaseSequenceStatusTask extends OAbstractRemoteTask {
 
   @Override
   public long getDistributedTimeout() {
-    return OGlobalConfiguration.global().distributedHeartbeatTimeout();
+    return OConfiguration.global().distributedHeartbeatTimeout();
   }
 
   @Override

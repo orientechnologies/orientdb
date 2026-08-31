@@ -1,7 +1,7 @@
 package com.orientechnologies.orient.core.metadata.security;
 
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
@@ -21,7 +21,7 @@ import java.util.Set;
 public class OSecurityEngine {
 
   private static OPredicateCache cache =
-      new OPredicateCache(OGlobalConfiguration.global().statementCacheSize());
+      new OPredicateCache(OConfiguration.global().statementCacheSize());
 
   /**
    * Calculates a predicate for a security resource. It also takes into consideration the security

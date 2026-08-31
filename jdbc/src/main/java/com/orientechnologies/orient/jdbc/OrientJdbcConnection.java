@@ -15,6 +15,7 @@
  */
 package com.orientechnologies.orient.jdbc;
 
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
@@ -338,7 +339,7 @@ public class OrientJdbcConnection implements Connection {
   public void abort(Executor arg0) throws SQLException {}
 
   public int getNetworkTimeout() throws SQLException {
-    return OGlobalConfiguration.global().networkSocketTimeout();
+    return OConfiguration.global().networkSocketTimeout();
   }
 
   /** No schema is supported. */

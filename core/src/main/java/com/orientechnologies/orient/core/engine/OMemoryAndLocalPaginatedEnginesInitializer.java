@@ -24,6 +24,7 @@ import com.orientechnologies.common.jnr.ONative;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OMemory;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
 import java.util.Locale;
@@ -93,28 +94,28 @@ public class OMemoryAndLocalPaginatedEnginesInitializer {
       logger.infoNoDb(
           "Because OrientDB is running inside a container %s of memory will be left unallocated"
               + " according to the setting '%s' not taking into account heap memory",
-          OGlobalConfiguration.global().memoryLeftToContainer(),
+          OConfiguration.global().memoryLeftToContainer(),
           OGlobalConfiguration.MEMORY_LEFT_TO_CONTAINER.getKey());
 
       diskCacheInMB =
           (calculateMemoryLeft(
                       osMemory.memoryLimit,
                       OGlobalConfiguration.MEMORY_LEFT_TO_CONTAINER.getKey(),
-                      OGlobalConfiguration.global().memoryLeftToContainer())
+                      OConfiguration.global().memoryLeftToContainer())
                   - jvmMaxMemory)
               / (1024 * 1024);
     } else {
       logger.infoNoDb(
           "Because OrientDB is running outside a container %s of memory will be left "
               + "unallocated according to the setting '%s' not taking into account heap memory",
-          OGlobalConfiguration.global().memoryLeftToOs(),
+          OConfiguration.global().memoryLeftToOs(),
           OGlobalConfiguration.MEMORY_LEFT_TO_OS.getKey());
 
       diskCacheInMB =
           (calculateMemoryLeft(
                       osMemory.memoryLimit,
                       OGlobalConfiguration.MEMORY_LEFT_TO_OS.getKey(),
-                      OGlobalConfiguration.global().memoryLeftToOs())
+                      OConfiguration.global().memoryLeftToOs())
                   - jvmMaxMemory)
               / (1024 * 1024);
     }

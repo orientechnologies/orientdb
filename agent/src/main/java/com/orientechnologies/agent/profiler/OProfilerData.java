@@ -25,7 +25,7 @@ import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.profiler.OAbstractProfiler;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.profiler.OProfilerEntry;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
@@ -50,27 +50,27 @@ public class OProfilerData {
   private static final OLogger logger = OLogManager.instance().logger(OProfilerData.class);
   private final ConcurrentLinkedHashMap<String, Long> counters =
       new ConcurrentLinkedHashMap.Builder()
-          .maximumWeightedCapacity(OGlobalConfiguration.global().profilerMaxvalues())
+          .maximumWeightedCapacity(OConfiguration.global().profilerMaxvalues())
           .build();
   private final ConcurrentLinkedHashMap<String, OProfilerEntry> chronos =
       new ConcurrentLinkedHashMap.Builder()
-          .maximumWeightedCapacity(OGlobalConfiguration.global().profilerMaxvalues())
+          .maximumWeightedCapacity(OConfiguration.global().profilerMaxvalues())
           .build();
   private final ConcurrentLinkedHashMap<String, OProfilerEntry> stats =
       new ConcurrentLinkedHashMap.Builder()
-          .maximumWeightedCapacity(OGlobalConfiguration.global().profilerMaxvalues())
+          .maximumWeightedCapacity(OConfiguration.global().profilerMaxvalues())
           .build();
   private final ConcurrentLinkedHashMap<String, AtomicInteger> tips =
       new ConcurrentLinkedHashMap.Builder()
-          .maximumWeightedCapacity(OGlobalConfiguration.global().profilerMaxvalues())
+          .maximumWeightedCapacity(OConfiguration.global().profilerMaxvalues())
           .build();
   private final ConcurrentLinkedHashMap<String, Long> tipsTimestamp =
       new ConcurrentLinkedHashMap.Builder()
-          .maximumWeightedCapacity(OGlobalConfiguration.global().profilerMaxvalues())
+          .maximumWeightedCapacity(OConfiguration.global().profilerMaxvalues())
           .build();
   private final ConcurrentLinkedHashMap<String, OAbstractProfiler.OProfilerHookStatic> hooks =
       new ConcurrentLinkedHashMap.Builder()
-          .maximumWeightedCapacity(OGlobalConfiguration.global().profilerMaxvalues())
+          .maximumWeightedCapacity(OConfiguration.global().profilerMaxvalues())
           .build();
 
   private long recordingFrom = 0;

@@ -23,8 +23,8 @@ import com.orientechnologies.common.concur.lock.OLockException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.document.OQueryDatabaseState;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -777,9 +777,9 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol
         }
         requestContent.append(c);
         // review this number: NETWORK_HTTP_MAX_CONTENT_LENGTH should refer to the body only...
-        if (OGlobalConfiguration.global().networkHttpMaxContentLength() > -1
+        if (OConfiguration.global().networkHttpMaxContentLength() > -1
             && requestContent.length()
-                >= 10000 + OGlobalConfiguration.global().networkHttpMaxContentLength() * 2) {
+                >= 10000 + OConfiguration.global().networkHttpMaxContentLength() * 2) {
           while (channel.inStream.available() > 0) {
             channel.read();
           }

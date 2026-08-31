@@ -31,6 +31,7 @@ import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.profiler.OProfilerStub;
 import com.orientechnologies.orient.core.cache.OLocalRecordCacheFactory;
 import com.orientechnologies.orient.core.cache.OLocalRecordCacheFactoryImpl;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.conflict.ORecordConflictStrategyFactory;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
@@ -234,7 +235,7 @@ public class Orient extends OListenerManger<OOrientListener> {
         signalHandler.installDefaultSignals();
       }
 
-      if (OGlobalConfiguration.global().environmentDumpCfgAtStartup())
+      if (OConfiguration.global().environmentDumpCfgAtStartup())
         OGlobalConfiguration.dumpConfiguration(System.out);
 
       active = true;

@@ -3,7 +3,7 @@ package com.orientechnologies.orient.server.distributed.operation;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
@@ -73,7 +73,7 @@ public class NodeOperationTask implements ORemoteTask {
 
   @Override
   public long getDistributedTimeout() {
-    return OGlobalConfiguration.global().distributedHeartbeatTimeout();
+    return OConfiguration.global().distributedHeartbeatTimeout();
   }
 
   @Override

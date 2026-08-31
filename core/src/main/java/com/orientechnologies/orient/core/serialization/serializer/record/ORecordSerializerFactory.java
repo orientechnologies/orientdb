@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.serialization.serializer.record;
 
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerBinary;
@@ -51,7 +52,7 @@ public class ORecordSerializerFactory {
     register(ORecordSerializerNetworkV37.NAME, ORecordSerializerNetworkV37.INSTANCE);
     register(ORecordSerializerNetworkV37Client.NAME, ORecordSerializerNetworkV37Client.INSTANCE);
 
-    defaultRecordSerializer = getFormat(OGlobalConfiguration.global().dbDocumentSerializer());
+    defaultRecordSerializer = getFormat(OConfiguration.global().dbDocumentSerializer());
     if (defaultRecordSerializer == null)
       throw new ODatabaseException(
           "Impossible to find serializer with name "

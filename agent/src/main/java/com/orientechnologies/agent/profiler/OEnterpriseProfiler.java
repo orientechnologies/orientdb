@@ -24,6 +24,7 @@ import com.orientechnologies.common.profiler.OAbstractProfiler;
 import com.orientechnologies.common.profiler.OProfilerEntry;
 import com.orientechnologies.common.profiler.OProfilerListener;
 import com.orientechnologies.enterprise.server.OEnterpriseServer;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -491,7 +492,7 @@ public class OEnterpriseProfiler extends OAbstractProfiler
 
             @Override
             public void run() {
-              final String dumpType = OGlobalConfiguration.global().profilerAutodumpType();
+              final String dumpType = OConfiguration.global().profilerAutodumpType();
 
               final StringBuilder output = new StringBuilder();
               output.append(
@@ -633,8 +634,8 @@ public class OEnterpriseProfiler extends OAbstractProfiler
           });
     }
 
-    if (OGlobalConfiguration.global().profilerAutodumpInterval() > 0)
-      setAutoDump(OGlobalConfiguration.global().profilerAutodumpInterval());
+    if (OConfiguration.global().profilerAutodumpInterval() > 0)
+      setAutoDump(OConfiguration.global().profilerAutodumpInterval());
     else {
       // CREATE AUTO PAUSE TASK TO STOP RECORDING IF STUDIO IS NOT ASKING FOR METRICS
       autoPause =

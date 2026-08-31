@@ -1,6 +1,6 @@
 package com.orientechnologies.orient.core.storage.index.sbtreebonsai.global.btree;
 
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALChanges;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OWALPageChangesPortion;
 import java.nio.ByteBuffer;
@@ -82,7 +82,7 @@ public class EdgeKeySerializerTest {
 
     final OWALChanges walChanges = new OWALPageChangesPortion();
     final ByteBuffer buffer =
-        ByteBuffer.allocate(OGlobalConfiguration.global().diskCachePageSize() * 1024)
+        ByteBuffer.allocate(OConfiguration.global().diskCachePageSize() * 1024)
             .order(ByteOrder.nativeOrder());
 
     final byte[] rawKey = new byte[serializedSize];

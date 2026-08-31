@@ -28,7 +28,7 @@ import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.common.thread.OSourceTraceExecutorService;
 import com.orientechnologies.common.thread.OThreadPoolExecutors;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.db.OCancellableTimer;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OSystemDatabase;
@@ -501,7 +501,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
   private void initExecutor() {
     // START ALL THE WORKER THREADS (CONFIGURABLE)
-    int totalWorkers = OGlobalConfiguration.global().distributedDbWorkerthreads();
+    int totalWorkers = OConfiguration.global().distributedDbWorkerthreads();
     if (totalWorkers < 0) {
       throw new ODistributedException(
           "Cannot create configured distributed workers (" + totalWorkers + ")");
@@ -531,7 +531,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   private void startTxTimeoutTimerTask() {
-    final long timeout = OGlobalConfiguration.global().distributedTxExpireTimeout();
+    final long timeout = OConfiguration.global().distributedTxExpireTimeout();
     txTimeoutTask = context.periodicExecute(() -> checkTxTimeout(), timeout / 3);
   }
 
@@ -539,7 +539,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     ODatabaseDocumentInternal database = null;
     try {
       final long now = System.currentTimeMillis();
-      final long timeout = OGlobalConfiguration.global().distributedTxExpireTimeout();
+      final long timeout = OConfiguration.global().distributedTxExpireTimeout();
 
       for (final Iterator<ODistributedTxContext> it = activeTxContexts.values().iterator();
           it.hasNext(); ) {

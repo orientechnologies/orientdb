@@ -23,7 +23,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OApi;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -50,7 +50,7 @@ public abstract class OSequence {
   public static final Long DEFAULT_LIMIT_VALUE = null;
   public static final boolean DEFAULT_RECYCLABLE_VALUE = false;
 
-  protected static final int DEF_MAX_RETRY = OGlobalConfiguration.global().sequenceMaxRetry();
+  protected static final int DEF_MAX_RETRY = OConfiguration.global().sequenceMaxRetry();
   public static final String CLASS_NAME = "OSequence";
 
   private static final String FIELD_START = "start";
@@ -73,7 +73,7 @@ public abstract class OSequence {
   public static final SequenceOrderType DEFAULT_ORDER_TYPE = SequenceOrderType.ORDER_POSITIVE;
 
   protected static int replicationProtocolVersion =
-      OGlobalConfiguration.global().distributedReplicationProtocolVersion();
+      OConfiguration.global().distributedReplicationProtocolVersion();
 
   public static class CreateParams {
     protected Long start = DEFAULT_START;

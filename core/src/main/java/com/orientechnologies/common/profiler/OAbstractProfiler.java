@@ -27,6 +27,7 @@ import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.OOrientStartupListener;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.cache.OReadCache;
@@ -373,7 +374,7 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract
 
   @Override
   public void onStartup() {
-    if (OGlobalConfiguration.global().profilerEnabled())
+    if (OConfiguration.global().profilerEnabled())
       // ACTIVATE RECORDING OF THE PROFILER
       startRecording();
     installMemoryChecker();
@@ -431,12 +432,12 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract
 
   @Override
   public String dump() {
-    return dumpEnvironment(OGlobalConfiguration.global().profilerAutodumpType());
+    return dumpEnvironment(OConfiguration.global().profilerAutodumpType());
   }
 
   @Override
   public void dump(final PrintStream out) {
-    out.println(dumpEnvironment(OGlobalConfiguration.global().profilerAutodumpType()));
+    out.println(dumpEnvironment(OConfiguration.global().profilerAutodumpType()));
   }
 
   @Override
@@ -508,7 +509,7 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract
                   () -> {
                     final StringBuilder output = new StringBuilder();
 
-                    final String dumpType = OGlobalConfiguration.global().profilerAutodumpType();
+                    final String dumpType = OConfiguration.global().profilerAutodumpType();
 
                     output.append(
                         "\n"
@@ -610,7 +611,7 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract
   }
 
   protected void installMemoryChecker() {
-    final long memoryCheckInterval = OGlobalConfiguration.global().profilerMemorycheckInterval();
+    final long memoryCheckInterval = OConfiguration.global().profilerMemorycheckInterval();
 
     if (memoryCheckInterval > 0)
       Orient.instance().scheduleTask(new MemoryChecker(), memoryCheckInterval, memoryCheckInterval);

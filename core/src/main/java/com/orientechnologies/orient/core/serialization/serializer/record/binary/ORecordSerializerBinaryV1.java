@@ -28,7 +28,7 @@ import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.ODecimalSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
@@ -879,7 +879,7 @@ public class ORecordSerializerBinaryV1 implements ODocumentSerializer {
       case TRANSIENT:
         break;
       case CUSTOM:
-        if (!OGlobalConfiguration.global().dbCustomSupport()) {
+        if (!OConfiguration.global().dbCustomSupport()) {
           throw new ODatabaseException(
               String.format(
                   "OType CUSTOM used with serializable types, is not enabled, set"
@@ -1029,7 +1029,7 @@ public class ORecordSerializerBinaryV1 implements ODocumentSerializer {
         pointer = writeRidBag(bytes, (ORidBag) value, ctx);
         break;
       case CUSTOM:
-        if (!OGlobalConfiguration.global().dbCustomSupport()) {
+        if (!OConfiguration.global().dbCustomSupport()) {
           throw new ODatabaseException(
               String.format(
                   "OType CUSTOM used with serializable types, is not enabled, set"

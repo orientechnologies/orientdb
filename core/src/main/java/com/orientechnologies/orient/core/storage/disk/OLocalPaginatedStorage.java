@@ -35,8 +35,8 @@ import com.orientechnologies.common.serialization.types.OStringSerializer;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.compression.impl.OZIPCompressionUtil;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.OrientDBEmbedded;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.exception.OStorageException;
@@ -180,8 +180,8 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
 
     storagePath = Paths.get(OIOUtils.getPathFromDatabaseName(sp));
 
-    deleteMaxRetries = OGlobalConfiguration.global().fileDeleteRetry();
-    deleteWaitTime = OGlobalConfiguration.global().fileDeleteDelay();
+    deleteMaxRetries = OConfiguration.global().fileDeleteRetry();
+    deleteWaitTime = OConfiguration.global().fileDeleteDelay();
 
     startupMetadata =
         new StorageStartupMetadata(
@@ -340,8 +340,8 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
       }
       OLocalPaginatedStorage.deleteFilesFromDisc(
           name,
-          OGlobalConfiguration.global().fileDeleteRetry(),
-          OGlobalConfiguration.global().fileDeleteDelay(),
+          OConfiguration.global().fileDeleteRetry(),
+          OConfiguration.global().fileDeleteDelay(),
           name);
       throw OException.wrapException(new OStorageException("Error during restore from backup"), e);
 

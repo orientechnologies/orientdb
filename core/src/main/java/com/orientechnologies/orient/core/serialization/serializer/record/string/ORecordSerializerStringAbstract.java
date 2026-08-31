@@ -22,7 +22,7 @@ package com.orientechnologies.orient.core.serialization.serializer.record.string
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -90,7 +90,7 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
         }
 
       case CUSTOM:
-        if (!OGlobalConfiguration.global().dbCustomSupport()) {
+        if (!OConfiguration.global().dbCustomSupport()) {
           throw new ODatabaseException(
               String.format(
                   "OType CUSTOM used with serializable types, is not enabled, set"
@@ -298,7 +298,7 @@ public abstract class ORecordSerializerStringAbstract implements ORecordSerializ
         break;
 
       case CUSTOM:
-        if (!OGlobalConfiguration.global().dbCustomSupport()) {
+        if (!OConfiguration.global().dbCustomSupport()) {
           throw new ODatabaseException(
               String.format(
                   "OType CUSTOM used with serializable types, is not enabled, set"

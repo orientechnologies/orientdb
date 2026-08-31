@@ -1,6 +1,6 @@
 package com.orientechnologies.agent.operation;
 
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.id.ONodeId;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.ODistributedResponse;
@@ -51,7 +51,7 @@ public class OperationResponseManager implements ODistributedResponseManager {
   @Override
   public boolean waitForSynchronousResponses() throws InterruptedException {
     return waitingFor.await(
-        OGlobalConfiguration.global().distributedHeartbeatTimeout(), TimeUnit.MILLISECONDS);
+        OConfiguration.global().distributedHeartbeatTimeout(), TimeUnit.MILLISECONDS);
   }
 
   @Override

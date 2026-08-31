@@ -20,7 +20,7 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.orient.client.remote.OBinaryRequest;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.db.ONetworkMessage;
 import com.orientechnologies.orient.core.id.ONodeId;
 import java.util.concurrent.ExecutorService;
@@ -56,8 +56,8 @@ public class ORemoteServerController {
     logger.debugOut(
         local.getNode(), remote.getNode(), "Creating remote channel(s) to distributed server...");
 
-    int requestCannelCount = OGlobalConfiguration.global().distributedRequestChannels();
-    int responseCannelCount = OGlobalConfiguration.global().distributedResponseChannels();
+    int requestCannelCount = OConfiguration.global().distributedRequestChannels();
+    int responseCannelCount = OConfiguration.global().distributedResponseChannels();
     requestChannels = new ORemoteServerChannel[requestCannelCount];
     for (int i = 0; i < requestChannels.length; ++i) {
       var channel =

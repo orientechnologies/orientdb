@@ -15,6 +15,7 @@ import com.orientechnologies.orient.client.remote.message.OCommitResponse.OUpdat
 import com.orientechnologies.orient.client.remote.message.tx.ORecordOperationRequest;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -965,7 +966,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     connection.setTokenBased(request.isTokenBased());
     connection.getData().setCollectStats(request.isCollectStats());
 
-    if (!request.isTokenBased() && !OGlobalConfiguration.global().networkBinaryAllowNoToken()) {
+    if (!request.isTokenBased() && !OConfiguration.global().networkBinaryAllowNoToken()) {
       logger.warn(
           "Session open with token flag false is not supported anymore please use token based"
               + " sessions");
@@ -1035,7 +1036,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     connection.getData().setProtocolVersion(request.getProtocolVersion());
     connection.getData().setClientId(request.getClientId());
     connection.getData().setSerializationImpl(request.getRecordFormat());
-    if (!request.isUseToken() && !OGlobalConfiguration.global().networkBinaryAllowNoToken()) {
+    if (!request.isUseToken() && !OConfiguration.global().networkBinaryAllowNoToken()) {
       logger.warn(
           "Session open with token flag false is not supported anymore please use token based"
               + " sessions");

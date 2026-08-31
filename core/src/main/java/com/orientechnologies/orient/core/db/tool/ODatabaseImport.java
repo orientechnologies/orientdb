@@ -27,6 +27,7 @@ import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase.STATUS;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -1682,7 +1683,7 @@ public class ODatabaseImport extends ODatabaseImpExpAbstract {
         indexDefinition = new OSimpleKeyIndexDefinition(OType.STRING);
       }
 
-      boolean oldValue = OGlobalConfiguration.global().indexIgnoreNullValuesDefault();
+      boolean oldValue = OConfiguration.global().indexIgnoreNullValuesDefault();
       OGlobalConfiguration.INDEX_IGNORE_NULL_VALUES_DEFAULT.setValue(
           indexDefinition.isNullValuesIgnored());
       final OIndex index =

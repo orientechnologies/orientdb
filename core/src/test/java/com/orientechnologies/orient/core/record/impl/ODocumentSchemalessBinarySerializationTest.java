@@ -6,6 +6,7 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OrientDB;
@@ -672,7 +673,7 @@ public class ODocumentSchemalessBinarySerializationTest {
 
   @Test
   public void testDocumentWithCostum() {
-    boolean old = OGlobalConfiguration.global().dbCustomSupport();
+    boolean old = OConfiguration.global().dbCustomSupport();
     OGlobalConfiguration.DB_CUSTOM_SUPPORT.setValue(true);
     ODatabaseRecordThreadLocal.instance().remove();
     ODocument document = new ODocument();
@@ -853,7 +854,7 @@ public class ODocumentSchemalessBinarySerializationTest {
 
   @Test
   public void testSerializableValue() {
-    boolean old = OGlobalConfiguration.global().dbCustomSupport();
+    boolean old = OConfiguration.global().dbCustomSupport();
     OGlobalConfiguration.DB_CUSTOM_SUPPORT.setValue(true);
 
     ODocument document = new ODocument();

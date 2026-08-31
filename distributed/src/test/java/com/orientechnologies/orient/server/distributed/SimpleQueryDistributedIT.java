@@ -3,7 +3,7 @@ package com.orientechnologies.orient.server.distributed;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
@@ -61,7 +61,7 @@ public class SimpleQueryDistributedIT {
 
     // Query order by
     OClass v2 = session.createVertexClass("V2");
-    int records = (OGlobalConfiguration.global().queryRemoteResultsetPageSize() + 10);
+    int records = (OConfiguration.global().queryRemoteResultsetPageSize() + 10);
     for (int i = 0; i < records; i++) {
       vertex = session.newVertex("V2");
       vertex.setProperty("name", "one");

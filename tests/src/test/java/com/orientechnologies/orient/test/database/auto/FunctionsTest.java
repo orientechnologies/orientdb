@@ -15,7 +15,7 @@
  */
 package com.orientechnologies.orient.test.database.auto;
 
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
@@ -93,7 +93,7 @@ public class FunctionsTest extends DocumentDBBaseTest {
     database.command("create function testMTCall \"return 3;\" LANGUAGE Javascript").close();
 
     final int TOT = 1000;
-    final int threadNum = OGlobalConfiguration.global().scriptPool() * 3;
+    final int threadNum = OConfiguration.global().scriptPool() * 3;
     // System.out.println("Starting " + threadNum + " concurrent threads with scriptPool="
     // + OGlobalConfiguration.SCRIPT_POOL.getValueAsInteger() + " executing function for " + TOT + "
     // times");

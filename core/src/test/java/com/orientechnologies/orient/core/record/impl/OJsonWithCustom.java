@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.record.impl;
 import static org.junit.Assert.assertEquals;
 
 import com.orientechnologies.orient.core.OCreateDatabaseUtil;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.OrientDB;
@@ -16,7 +17,7 @@ public class OJsonWithCustom {
 
   @Test
   public void testCustomField() {
-    boolean old = OGlobalConfiguration.global().dbCustomSupport();
+    boolean old = OConfiguration.global().dbCustomSupport();
     OGlobalConfiguration.DB_CUSTOM_SUPPORT.setValue(true);
     ODocument doc = new ODocument();
     doc.field("test", String.class, OType.CUSTOM);
@@ -47,7 +48,7 @@ public class OJsonWithCustom {
 
   @Test
   public void testCustomSerialization() {
-    boolean old = OGlobalConfiguration.global().dbCustomSupport();
+    boolean old = OConfiguration.global().dbCustomSupport();
     OGlobalConfiguration.DB_CUSTOM_SUPPORT.setValue(true);
     try (final OrientDB orientDB =
         OCreateDatabaseUtil.createDatabase(

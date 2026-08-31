@@ -24,7 +24,7 @@ import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.util.ORawPair;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.exception.OTooBigIndexKeyException;
 import com.orientechnologies.orient.core.index.OCompositeKey;
@@ -87,14 +87,14 @@ import java.util.stream.StreamSupport;
  */
 public class OSBTreeV2<K, V> extends ODurableComponent implements OSBTree<K, V> {
   private static final int SPLITERATOR_CACHE_SIZE =
-      OGlobalConfiguration.global().indexCursorPrefetchSize();
-  private static final int MAX_KEY_SIZE = OGlobalConfiguration.global().sbtreeMaxKeySize();
+      OConfiguration.global().indexCursorPrefetchSize();
+  private static final int MAX_KEY_SIZE = OConfiguration.global().sbtreeMaxKeySize();
   private static final int MAX_EMBEDDED_VALUE_SIZE =
-      OGlobalConfiguration.global().sbtreeMaxEmbeddedValueSize();
+      OConfiguration.global().sbtreeMaxEmbeddedValueSize();
   private static final OAlwaysLessKey ALWAYS_LESS_KEY = new OAlwaysLessKey();
   private static final OAlwaysGreaterKey ALWAYS_GREATER_KEY = new OAlwaysGreaterKey();
 
-  private static final int MAX_PATH_LENGTH = OGlobalConfiguration.global().sbtreeMaxDepth();
+  private static final int MAX_PATH_LENGTH = OConfiguration.global().sbtreeMaxDepth();
 
   private static final long ROOT_INDEX = 0;
   private final Comparator<? super K> comparator = ODefaultComparator.INSTANCE;

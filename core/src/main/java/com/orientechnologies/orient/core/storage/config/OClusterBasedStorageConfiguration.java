@@ -8,6 +8,7 @@ import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OStringSerializer;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.config.IndexEngineData;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
@@ -1869,7 +1870,7 @@ public final class OClusterBasedStorageConfiguration implements OStorageConfigur
         .contains(OGlobalConfiguration.CLASS_MINIMUM_CLUSTERS.getKey())) {
       configuration.setValue(
           OGlobalConfiguration.CLASS_MINIMUM_CLUSTERS,
-          OGlobalConfiguration.global().classMinimumClusters()); // 0 = AUTOMATIC
+          OConfiguration.global().classMinimumClusters()); // 0 = AUTOMATIC
     }
     autoInitClusters();
 

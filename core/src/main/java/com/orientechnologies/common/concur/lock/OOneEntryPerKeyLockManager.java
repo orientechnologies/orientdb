@@ -21,7 +21,7 @@ package com.orientechnologies.common.concur.lock;
 
 import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
 import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -65,7 +65,7 @@ public class OOneEntryPerKeyLockManager<T> implements OLockManager<T> {
     this(
         iEnabled,
         iAcquireTimeout,
-        OGlobalConfiguration.global().environmentLockManagerConcurrencyLevel(),
+        OConfiguration.global().environmentLockManagerConcurrencyLevel(),
         amountOfCachedInstances);
   }
 

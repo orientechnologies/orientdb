@@ -22,6 +22,7 @@ package com.orientechnologies.common.util;
 import com.orientechnologies.common.jnr.ONative;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 
 /**
@@ -48,7 +49,7 @@ public class OMemory {
    * @return the total maximum size of all OrientDB caches in bytes.
    */
   private static long getMaxCacheMemorySize() {
-    return OGlobalConfiguration.global().diskCacheSize() * 1024 * 1024;
+    return OConfiguration.global().diskCacheSize() * 1024 * 1024;
   }
 
   /**
@@ -81,7 +82,7 @@ public class OMemory {
    *       <ul/>
    */
   public static void fixCommonConfigurationProblems() {
-    long diskCacheSize = OGlobalConfiguration.global().diskCacheSize();
+    long diskCacheSize = OConfiguration.global().diskCacheSize();
 
     final int max32BitCacheSize = 512;
     if (getJavaBitWidth() == 32 && diskCacheSize > max32BitCacheSize) {

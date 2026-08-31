@@ -23,7 +23,7 @@ import com.orientechnologies.common.collection.OLRUCache;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import java.io.UnsupportedEncodingException;
@@ -55,7 +55,7 @@ public class OSecurityManager {
   private static Map<String, byte[]> SALT_CACHE = null;
 
   static {
-    final int cacheSize = OGlobalConfiguration.global().securityUserPasswordSaltCacheSize();
+    final int cacheSize = OConfiguration.global().securityUserPasswordSaltCacheSize();
     if (cacheSize > 0) {
       SALT_CACHE = Collections.synchronizedMap(new OLRUCache<String, byte[]>(cacheSize));
     }
@@ -137,15 +137,11 @@ public class OSecurityManager {
     } else if (PBKDF2_ALGORITHM.equalsIgnoreCase(algorithm)) {
       transformed =
           createHashWithSalt(
-              iInput,
-              OGlobalConfiguration.global().securityUserPasswordSaltIterations(),
-              algorithm);
+              iInput, OConfiguration.global().securityUserPasswordSaltIterations(), algorithm);
     } else if (PBKDF2_SHA256_ALGORITHM.equalsIgnoreCase(algorithm)) {
       transformed =
           createHashWithSalt(
-              iInput,
-              OGlobalConfiguration.global().securityUserPasswordSaltIterations(),
-              algorithm);
+              iInput, OConfiguration.global().securityUserPasswordSaltIterations(), algorithm);
     } else throw new IllegalArgumentException("Algorithm '" + algorithm + "' is not supported");
 
     buffer.append(transformed);
@@ -171,8 +167,8 @@ public class OSecurityManager {
   public static String createHashWithSalt(final String iPassword) {
     return createHashWithSalt(
         iPassword,
-        OGlobalConfiguration.global().securityUserPasswordSaltIterations(),
-        OGlobalConfiguration.global().securityUserPasswordDefaultAlgorithm());
+        OConfiguration.global().securityUserPasswordSaltIterations(),
+        OConfiguration.global().securityUserPasswordDefaultAlgorithm());
   }
 
   public static String createHashWithSalt(
@@ -190,7 +186,7 @@ public class OSecurityManager {
 
   public static boolean checkPasswordWithSalt(final String iPassword, final String iHash) {
     return checkPasswordWithSalt(
-        iPassword, iHash, OGlobalConfiguration.global().securityUserPasswordDefaultAlgorithm());
+        iPassword, iHash, OConfiguration.global().securityUserPasswordDefaultAlgorithm());
   }
 
   public static boolean checkPasswordWithSalt(
@@ -305,7 +301,7 @@ public class OSecurityManager {
     OCredentialInterceptor ci = null;
 
     try {
-      String ciClass = OGlobalConfiguration.global().clientCredentialInterceptor();
+      String ciClass = OConfiguration.global().clientCredentialInterceptor();
 
       if (ciClass != null) {
         Class<?> cls = Class.forName(ciClass); // Throws a ClassNotFoundException if not found.

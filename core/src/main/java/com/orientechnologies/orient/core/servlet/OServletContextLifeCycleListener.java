@@ -22,7 +22,7 @@ package com.orientechnologies.orient.core.servlet;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import javax.servlet.ServletContextEvent;
 import javax.servlet.ServletContextListener;
 import javax.servlet.annotation.WebListener;
@@ -39,7 +39,7 @@ public class OServletContextLifeCycleListener implements ServletContextListener 
 
   @Override
   public void contextInitialized(ServletContextEvent sce) {
-    if (OGlobalConfiguration.global().initInServletContextListener()) {
+    if (OConfiguration.global().initInServletContextListener()) {
       logger.infoNoDb("Start web application is detected, OrientDB engine is staring up...");
       Orient.startUp(true);
       logger.infoNoDb("OrientDB engine is started");
@@ -48,7 +48,7 @@ public class OServletContextLifeCycleListener implements ServletContextListener 
 
   @Override
   public void contextDestroyed(ServletContextEvent sce) {
-    if (OGlobalConfiguration.global().initInServletContextListener()) {
+    if (OConfiguration.global().initInServletContextListener()) {
       final Orient orient = Orient.instance();
       if (orient != null) {
         logger.infoNoDb(

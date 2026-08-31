@@ -20,7 +20,7 @@
 
 package com.orientechnologies.orient.core.storage.ridbag.sbtree;
 
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -46,9 +46,9 @@ public class OIndexRIDContainer implements Set<OIdentifiable> {
   private final long fileId;
   private Set<OIdentifiable> underlying;
   private boolean isEmbedded;
-  private int topThreshold = OGlobalConfiguration.global().indexEmbeddedToSbtreebonsaiThreshold();
+  private int topThreshold = OConfiguration.global().indexEmbeddedToSbtreebonsaiThreshold();
   private final int bottomThreshold =
-      OGlobalConfiguration.global().indexSbtreebonsaiToEmbeddedThreshold();
+      OConfiguration.global().indexSbtreebonsaiToEmbeddedThreshold();
   private final boolean durableNonTxMode;
 
   /** Should be called inside of lock to ensure uniqueness of entity on disk !!! */

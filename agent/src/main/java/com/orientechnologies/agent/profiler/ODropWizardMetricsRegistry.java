@@ -39,7 +39,7 @@ import com.orientechnologies.agent.services.metrics.reporters.JMXReporter;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.enterprise.server.OEnterpriseServer;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.dropwizard.DropwizardExports;
 import java.io.File;
@@ -84,14 +84,14 @@ public class ODropWizardMetricsRegistry implements OMetricsRegistry {
     this.settings = settings;
     this.metrics =
         new ConcurrentLinkedHashMap.Builder<String, OMetric>()
-            .maximumWeightedCapacity(OGlobalConfiguration.global().enterpriseMetricsMax())
+            .maximumWeightedCapacity(OConfiguration.global().enterpriseMetricsMax())
             .build();
     this.registry =
         new MetricRegistry() {
           @Override
           protected ConcurrentMap<String, Metric> buildMap() {
             return new ConcurrentLinkedHashMap.Builder<String, Metric>()
-                .maximumWeightedCapacity(OGlobalConfiguration.global().enterpriseMetricsMax())
+                .maximumWeightedCapacity(OConfiguration.global().enterpriseMetricsMax())
                 .build();
           }
         };

@@ -21,7 +21,7 @@
 package com.orientechnologies.orient.core.storage.index.hashindex.local.v2;
 
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 
 /**
@@ -35,7 +35,7 @@ public final class DirectoryFirstPageV2 extends DirectoryPageV2 {
   private static final int ITEMS_OFFSET = TOMBSTONE_OFFSET + OIntegerSerializer.INT_SIZE;
 
   static final int NODES_PER_PAGE =
-      (OGlobalConfiguration.global().diskCachePageSize() * 1024 - ITEMS_OFFSET)
+      (OConfiguration.global().diskCachePageSize() * 1024 - ITEMS_OFFSET)
           / HashTableDirectory.BINARY_LEVEL_SIZE;
 
   public DirectoryFirstPageV2(OCacheEntry cacheEntry) {

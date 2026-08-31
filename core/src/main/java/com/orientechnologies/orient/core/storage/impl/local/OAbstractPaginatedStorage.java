@@ -56,6 +56,7 @@ import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.IndexEngineData;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OStorageClusterConfiguration;
@@ -485,8 +486,8 @@ public abstract class OAbstractPaginatedStorage
   }
 
   private static void checkPageSizeAndRelatedParametersInGlobalConfiguration() {
-    final int pageSize = OGlobalConfiguration.global().diskCachePageSize() * 1024;
-    final int maxKeySize = OGlobalConfiguration.global().sbtreeMaxKeySize();
+    final int pageSize = OConfiguration.global().diskCachePageSize() * 1024;
+    final int maxKeySize = OConfiguration.global().sbtreeMaxKeySize();
 
     if (maxKeySize > pageSize / 4) {
       throw new OStorageException(
@@ -919,10 +920,9 @@ public abstract class OAbstractPaginatedStorage
           ((OClusterBasedStorageConfiguration) configuration)
               .setCreationVersion(atomicOperation, OConstants.getVersion());
           ((OClusterBasedStorageConfiguration) configuration)
-              .setPageSize(
-                  atomicOperation, OGlobalConfiguration.global().diskCachePageSize() * 1024);
+              .setPageSize(atomicOperation, OConfiguration.global().diskCachePageSize() * 1024);
           ((OClusterBasedStorageConfiguration) configuration)
-              .setMaxKeySize(atomicOperation, OGlobalConfiguration.global().sbtreeMaxKeySize());
+              .setMaxKeySize(atomicOperation, OConfiguration.global().sbtreeMaxKeySize());
 
           generateDatabaseInstanceId(atomicOperation);
 
@@ -988,8 +988,8 @@ public abstract class OAbstractPaginatedStorage
   protected abstract void initIv() throws IOException;
 
   private void checkPageSizeAndRelatedParameters() {
-    final int pageSize = OGlobalConfiguration.global().diskCachePageSize() * 1024;
-    final int maxKeySize = OGlobalConfiguration.global().sbtreeMaxKeySize();
+    final int pageSize = OConfiguration.global().diskCachePageSize() * 1024;
+    final int maxKeySize = OConfiguration.global().sbtreeMaxKeySize();
 
     if (configuration.getPageSize() != -1 && configuration.getPageSize() != pageSize) {
       throw new OStorageException(
@@ -5234,8 +5234,8 @@ public abstract class OAbstractPaginatedStorage
       }
       OLocalPaginatedStorage.deleteFilesFromDisc(
           name,
-          OGlobalConfiguration.global().fileDeleteRetry(),
-          OGlobalConfiguration.global().fileDeleteDelay(),
+          OConfiguration.global().fileDeleteRetry(),
+          OConfiguration.global().fileDeleteDelay(),
           name);
       throw OException.wrapException(
           new OStorageException("Error during restore from incremental backup"), e);
@@ -5543,8 +5543,7 @@ public abstract class OAbstractPaginatedStorage
 
     long recordsProcessed = 0;
 
-    final int reportBatchSize =
-        OGlobalConfiguration.global().walReportAfterOperationsDuringRestore();
+    final int reportBatchSize = OConfiguration.global().walReportAfterOperationsDuringRestore();
     final Map<Long, List<OWALRecord>> operationUnits = new HashMap<>(1024);
     final Map<Long, byte[]> operationMetadata = new LinkedHashMap<>(1024);
 

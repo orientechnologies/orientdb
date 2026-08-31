@@ -27,7 +27,7 @@ import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.parser.OStringParser;
 import com.orientechnologies.common.util.OCommonConst;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
@@ -600,7 +600,7 @@ public class ORecordSerializerJSON extends ORecordSerializerStringAbstract {
           return OStringSerializerHelper.fieldTypeFromStream(iRecord, iType, iFieldValueAsString);
         case CUSTOM:
           {
-            if (!OGlobalConfiguration.global().dbCustomSupport()) {
+            if (!OConfiguration.global().dbCustomSupport()) {
               throw new ODatabaseException(
                   String.format(
                       "OType CUSTOM used with serializable types, is not enabled, set"

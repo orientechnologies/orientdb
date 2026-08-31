@@ -2,7 +2,7 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.config.OStorageConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OMetadataUpdateListener;
@@ -25,7 +25,7 @@ public class OExecutionPlanCache implements OMetadataUpdateListener {
   int mapSize;
 
   protected long lastInvalidation = -1;
-  protected long lastGlobalTimeout = OGlobalConfiguration.global().commandTimeout();
+  protected long lastGlobalTimeout = OConfiguration.global().commandTimeout();
 
   /** @param size the size of the cache */
   public OExecutionPlanCache(int size) {
@@ -56,7 +56,7 @@ public class OExecutionPlanCache implements OMetadataUpdateListener {
    * @return true if the corresponding executor is present in the cache
    */
   public boolean contains(String statement) {
-    if (OGlobalConfiguration.global().statementCacheSize() == 0) {
+    if (OConfiguration.global().statementCacheSize() == 0) {
       return false;
     }
     synchronized (map) {
@@ -108,7 +108,7 @@ public class OExecutionPlanCache implements OMetadataUpdateListener {
       return;
     }
 
-    if (OGlobalConfiguration.global().statementCacheSize() == 0) {
+    if (OConfiguration.global().statementCacheSize() == 0) {
       return;
     }
 
@@ -138,7 +138,7 @@ public class OExecutionPlanCache implements OMetadataUpdateListener {
     if (statement == null) {
       return null;
     }
-    if (OGlobalConfiguration.global().statementCacheSize() == 0) {
+    if (OConfiguration.global().statementCacheSize() == 0) {
       return null;
     }
     synchronized (map) {
@@ -154,7 +154,7 @@ public class OExecutionPlanCache implements OMetadataUpdateListener {
   }
 
   public void invalidate() {
-    if (OGlobalConfiguration.global().statementCacheSize() == 0) {
+    if (OConfiguration.global().statementCacheSize() == 0) {
       lastInvalidation = System.currentTimeMillis();
       return;
     }

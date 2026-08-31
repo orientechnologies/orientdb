@@ -26,7 +26,7 @@ import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
 import com.orientechnologies.common.serialization.types.OShortSerializer;
 import com.orientechnologies.common.util.ORawPair;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.exception.OTooBigIndexKeyException;
@@ -80,12 +80,12 @@ import java.util.stream.StreamSupport;
 public final class CellBTreeSingleValueV3<K> extends ODurableComponent
     implements OCellBTreeSingleValue<K> {
   private static final int SPLITERATOR_CACHE_SIZE =
-      OGlobalConfiguration.global().indexCursorPrefetchSize();
-  private static final int MAX_KEY_SIZE = OGlobalConfiguration.global().sbtreeMaxKeySize();
+      OConfiguration.global().indexCursorPrefetchSize();
+  private static final int MAX_KEY_SIZE = OConfiguration.global().sbtreeMaxKeySize();
   private static final OAlwaysLessKey ALWAYS_LESS_KEY = new OAlwaysLessKey();
   private static final OAlwaysGreaterKey ALWAYS_GREATER_KEY = new OAlwaysGreaterKey();
 
-  private static final int MAX_PATH_LENGTH = OGlobalConfiguration.global().sbtreeMaxDepth();
+  private static final int MAX_PATH_LENGTH = OConfiguration.global().sbtreeMaxDepth();
 
   private static final int ENTRY_POINT_INDEX = 0;
   private static final long ROOT_INDEX = 1;

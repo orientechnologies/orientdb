@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.common.concur.OTimeoutException;
 import com.orientechnologies.orient.core.command.OCommandContext;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -21,7 +22,7 @@ public class DistinctExecutionStep extends AbstractExecutionStep {
 
     maxElementsAllowed =
         db == null
-            ? OGlobalConfiguration.global().queryMaxHeapElementsAllowedPerOp()
+            ? OConfiguration.global().queryMaxHeapElementsAllowedPerOp()
             : db.getConfiguration().queryMaxHeapElementsAllowedPerOp();
   }
 

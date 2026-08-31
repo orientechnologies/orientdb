@@ -24,7 +24,7 @@ import static com.orientechnologies.orient.core.storage.impl.local.paginated.wal
 
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OShortSerializer;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.EmptyWALRecord;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.common.WriteableWALRecord;
 import java.lang.reflect.InvocationTargetException;
@@ -60,7 +60,7 @@ public final class OWALRecordsFactory {
 
   private static final LZ4Factory factory = LZ4Factory.fastestInstance();
   private static final int MIN_COMPRESSED_RECORD_SIZE =
-      OGlobalConfiguration.global().walMinCompressedRecordSize();
+      OConfiguration.global().walMinCompressedRecordSize();
 
   public static ByteBuffer toStream(final WriteableWALRecord walRecord) {
     final int contentSize = walRecord.serializedSize() + METADATA_SIZE;

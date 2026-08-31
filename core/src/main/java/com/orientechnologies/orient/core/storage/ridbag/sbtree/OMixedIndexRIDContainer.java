@@ -1,6 +1,6 @@
 package com.orientechnologies.orient.core.storage.ridbag.sbtree;
 
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -24,8 +24,7 @@ public class OMixedIndexRIDContainer implements Set<OIdentifiable> {
   private final Set<ORID> embeddedSet;
   private final OAbstractPaginatedStorage storage;
   private OIndexRIDContainerSBTree tree = null;
-  private final int topThreshold =
-      OGlobalConfiguration.global().indexEmbeddedToSbtreebonsaiThreshold();
+  private final int topThreshold = OConfiguration.global().indexEmbeddedToSbtreebonsaiThreshold();
 
   /** Should be called inside of lock to ensure uniqueness of entity on disk !!!
    * @param storage TODO*/

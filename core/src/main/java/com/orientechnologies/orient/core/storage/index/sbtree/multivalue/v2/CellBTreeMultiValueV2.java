@@ -27,7 +27,7 @@ import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.types.OModifiableLong;
 import com.orientechnologies.common.util.ORawPair;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.encryption.OEncryption;
 import com.orientechnologies.orient.core.exception.OTooBigIndexKeyException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -93,11 +93,11 @@ import java.util.stream.StreamSupport;
 public final class CellBTreeMultiValueV2<K> extends ODurableComponent
     implements OCellBTreeMultiValue<K> {
   private static final int M_ID_BATCH_SIZE = 131_072;
-  private static final int MAX_KEY_SIZE = OGlobalConfiguration.global().sbtreeMaxKeySize();
+  private static final int MAX_KEY_SIZE = OConfiguration.global().sbtreeMaxKeySize();
   private static final OAlwaysLessKey ALWAYS_LESS_KEY = new OAlwaysLessKey();
   private static final OAlwaysGreaterKey ALWAYS_GREATER_KEY = new OAlwaysGreaterKey();
 
-  private static final int MAX_PATH_LENGTH = OGlobalConfiguration.global().sbtreeMaxDepth();
+  private static final int MAX_PATH_LENGTH = OConfiguration.global().sbtreeMaxDepth();
 
   private static final int ENTRY_POINT_INDEX = 0;
   private static final long ROOT_INDEX = 1;
@@ -1825,7 +1825,7 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent
 
       keysCache.clear();
 
-      final int prefetchSize = OGlobalConfiguration.global().indexCursorPrefetchSize();
+      final int prefetchSize = OConfiguration.global().indexCursorPrefetchSize();
 
       atomicOperationsManager.acquireReadLock(CellBTreeMultiValueV2.this);
       try {
@@ -1954,7 +1954,7 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent
 
       dataCache.clear();
 
-      final int prefetchSize = OGlobalConfiguration.global().indexCursorPrefetchSize();
+      final int prefetchSize = OConfiguration.global().indexCursorPrefetchSize();
 
       atomicOperationsManager.acquireReadLock(CellBTreeMultiValueV2.this);
       try {
@@ -2171,7 +2171,7 @@ public final class CellBTreeMultiValueV2<K> extends ODurableComponent
 
       dataCache.clear();
 
-      final int prefetchSize = OGlobalConfiguration.global().indexCursorPrefetchSize();
+      final int prefetchSize = OConfiguration.global().indexCursorPrefetchSize();
       atomicOperationsManager.acquireReadLock(CellBTreeMultiValueV2.this);
       try {
         acquireSharedLock();

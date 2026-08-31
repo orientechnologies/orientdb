@@ -22,7 +22,7 @@ package com.orientechnologies.orient.core.cache;
 import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValue;
 import com.orientechnologies.common.profiler.OProfiler.METRIC_TYPE;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -47,7 +47,7 @@ public class OLocalRecordCache {
     underlying =
         Orient.instance()
             .getLocalRecordCache()
-            .newInstance(OGlobalConfiguration.global().cacheLocalImpl());
+            .newInstance(OConfiguration.global().cacheLocalImpl());
   }
 
   public void startup(ODatabaseSession db) {

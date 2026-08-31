@@ -23,7 +23,7 @@ package com.orientechnologies.orient.core.storage.index.versionmap;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
@@ -39,7 +39,7 @@ public final class OVersionPositionMapV0 extends OVersionPositionMap {
   private static final OLogger logger = OLogManager.instance().logger(OVersionPositionMapV0.class);
   private long fileId;
   private int numberOfPages;
-  public static final int PAGE_SIZE = OGlobalConfiguration.global().diskCachePageSize() * 1024;
+  public static final int PAGE_SIZE = OConfiguration.global().diskCachePageSize() * 1024;
 
   public OVersionPositionMapV0(
       final OAbstractPaginatedStorage storage,

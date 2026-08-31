@@ -25,6 +25,7 @@ import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.exception.OSBTreeBonsaiLocalException;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
@@ -40,7 +41,7 @@ import java.util.Map;
  */
 public final class OSBTreeBonsaiBucket<K, V> extends OBonsaiBucketAbstract {
   public static final int MAX_BUCKET_SIZE_BYTES =
-      OGlobalConfiguration.global().sbtreebonsaiBucketSize() * 1024;
+      OConfiguration.global().sbtreebonsaiBucketSize() * 1024;
 
   /**
    * Maximum size of key-value pair which can be put in SBTreeBonsai in bytes (24576000 by default)

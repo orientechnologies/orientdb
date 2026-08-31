@@ -8,6 +8,7 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.jnr.ONative;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
@@ -101,9 +102,9 @@ public class OStorageEnginePaginatedLocal implements OStorageEngine {
     final long diskCacheSize =
         calculateReadCacheMaxMemory(
             OGlobalConfiguration.DISK_CACHE_SIZE.getValueAsLong() * 1024 * 1024);
-    final int pageSize = OGlobalConfiguration.global().diskCachePageSize() * 1024;
+    final int pageSize = OConfiguration.global().diskCachePageSize() * 1024;
 
-    if (OGlobalConfiguration.global().directMemoryPreallocate()) {
+    if (OConfiguration.global().directMemoryPreallocate()) {
       final int pageCount = (int) (diskCacheSize / pageSize);
       logger.info("Allocation of %d pages.", pageCount);
 

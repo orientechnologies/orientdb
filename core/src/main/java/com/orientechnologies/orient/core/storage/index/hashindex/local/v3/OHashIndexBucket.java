@@ -24,7 +24,7 @@ import com.orientechnologies.common.serialization.types.OBinarySerializer;
 import com.orientechnologies.common.serialization.types.OByteSerializer;
 import com.orientechnologies.common.serialization.types.OIntegerSerializer;
 import com.orientechnologies.common.serialization.types.OLongSerializer;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.storage.cache.OCacheEntry;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.base.ODurablePage;
@@ -51,7 +51,7 @@ public final class OHashIndexBucket<K, V> extends ODurablePage
       NEXT_REMOVED_BUCKET_OFFSET + OLongSerializer.LONG_SIZE;
 
   private static final int MAX_BUCKET_SIZE_BYTES =
-      OGlobalConfiguration.global().diskCachePageSize() * 1024;
+      OConfiguration.global().diskCachePageSize() * 1024;
 
   private final OBinarySerializer<K> keySerializer;
   private final OBinarySerializer<V> valueSerializer;

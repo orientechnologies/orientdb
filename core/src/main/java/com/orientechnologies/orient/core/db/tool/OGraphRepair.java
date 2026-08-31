@@ -2,7 +2,7 @@ package com.orientechnologies.orient.core.db.tool;
 
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -377,7 +377,7 @@ public class OGraphRepair {
                 vertex.removeField(fieldName);
               } else if (!ridbag.isEmbedded()
                   && ridbag.size()
-                      < OGlobalConfiguration.global().ridBagSbtreebonsaiToEmbeddedThreshold()) {
+                      < OConfiguration.global().ridBagSbtreebonsaiToEmbeddedThreshold()) {
                 vertex.setDirty();
               }
               for (Iterator<?> it = ridbag.rawIterator(); it.hasNext(); ) {

@@ -20,7 +20,7 @@
 package com.orientechnologies.orient.core.security.symmetrickey;
 
 import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OCredentialInterceptor;
@@ -61,11 +61,11 @@ public class OSymmetricKeyCI implements OCredentialInterceptor {
     // These are all used as defaults if the JSON document is missing any fields.
 
     // Defaults to "AES".
-    String algorithm = OGlobalConfiguration.global().clientCiKeyalgorithm();
+    String algorithm = OConfiguration.global().clientCiKeyalgorithm();
     // Defaults to "AES/CBC/PKCS5Padding".
-    String transform = OGlobalConfiguration.global().clientCiCiphertransform();
-    String keystoreFile = OGlobalConfiguration.global().clientCiKeystoreFile();
-    String keystorePassword = OGlobalConfiguration.global().clientCiKeystorePassword();
+    String transform = OConfiguration.global().clientCiCiphertransform();
+    String keystoreFile = OConfiguration.global().clientCiKeystoreFile();
+    String keystorePassword = OConfiguration.global().clientCiKeystorePassword();
 
     ODocument jsonDoc = null;
 
