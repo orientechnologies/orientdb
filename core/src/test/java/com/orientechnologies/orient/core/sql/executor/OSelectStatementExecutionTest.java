@@ -5108,15 +5108,18 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
     db.command("create index ParamItem.oldid NOTUNIQUE").close();
     db.command("insert into ParamItem set oldid = 5").close();
     db.command("insert into ParamItem set oldid = 3").close();
-    List<Long> ids = List.of(5L, 3L);
+    List<Long> ids = new ArrayList<Long>();
+    ids.add(5L);
+    ids.add(3L);
     OResultSet res = db.command("select from ParamItem " + "where oldid in [?]", (Object) ids);
     assertEquals(res.stream().count(), 2);
     res = db.query("select from ParamItem " + "where oldid in [?]", (Object) ids);
     assertEquals(res.stream().count(), 2);
     res = db.command("select from ParamItem " + "where oldid in ?", (Object) ids);
     assertEquals(res.stream().count(), 2);
-    res =
-        db.command("select from ParamItem " + "where oldid in :ids", java.util.Map.of("ids", ids));
+    Map<String, List<Long>> mapPars = new HashMap<String, List<Long>>();
+    mapPars.put("ids", ids);
+    res = db.command("select from ParamItem " + "where oldid in :ids", mapPars);
     assertEquals(res.stream().count(), 2);
   }
 }
