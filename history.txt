@@ -27,6 +27,17 @@
 This document contains the last changes of OrientDB Community Edition.
 
 
+
+-----------------------------------------------------------------------------------------------------------------------------------
+version 3.2.56 - (September, 2 2026)
+
+# Core 
+- Fix use of `@this` in condition comparing with record ids , issue #10835
+- Fix use of in syntax with square brackets with multiple value parameter in the query parser.
+- Fix delete of lightweight edge in query engine, issue #10781
+- Fix ordering of null value in the query engine issue #10807
+- Updated tool and object dependencies
+
 -----------------------------------------------------------------------------------------------------------------------------------
 version 3.2.55 - (July, 21 2026)
 
