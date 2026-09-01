@@ -470,7 +470,7 @@
                 <!-- Can't update this without updating the formatter, 
                     can't update the formatter becasuse is not compatible with jdk17
                 -->
-                <version>3.9.0</version>
+                <version>3.10.1</version>
                 <configuration>
                     <java>
                         <googleJavaFormat>
