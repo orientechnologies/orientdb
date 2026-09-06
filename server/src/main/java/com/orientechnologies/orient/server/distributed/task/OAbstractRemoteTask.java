@@ -48,13 +48,6 @@ public abstract class OAbstractRemoteTask implements ORemoteTask {
   }
 
   @Override
-  public long getTotalTimeout(final int iTotalNodes) {
-    if (iTotalNodes <= 0) return getDistributedTimeout();
-
-    return getDistributedTimeout() * iTotalNodes;
-  }
-
-  @Override
   public boolean hasResponse() {
     return true;
   }

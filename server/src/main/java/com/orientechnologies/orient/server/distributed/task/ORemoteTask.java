@@ -57,8 +57,6 @@ public interface ORemoteTask {
 
   long getSynchronousTimeout(final int iSynchNodes);
 
-  long getTotalTimeout(final int iTotalNodes);
-
   OAbstractRemoteTask.RESULT_STRATEGY getResultStrategy();
 
   boolean isIdempotent();

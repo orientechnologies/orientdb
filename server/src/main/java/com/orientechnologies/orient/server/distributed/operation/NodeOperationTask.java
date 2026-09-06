@@ -82,11 +82,6 @@ public class NodeOperationTask implements ORemoteTask {
   }
 
   @Override
-  public long getTotalTimeout(int iTotalNodes) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public RESULT_STRATEGY getResultStrategy() {
     throw new UnsupportedOperationException();
   }

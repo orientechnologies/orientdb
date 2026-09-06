@@ -44,12 +44,6 @@ public class ODefaultRemoteTaskFactoryV3 implements ORemoteTaskFactory {
       case ORestartServerTask.FACTORYID: // 10
         return new ORestartServerTask();
 
-      case OGossipTask.FACTORYID: // 16
-        return new OGossipTask();
-
-      case OUpdateDatabaseConfigurationTask.FACTORYID: // 24
-        return new OUpdateDatabaseConfigurationTask();
-
       case OEnterpriseStatsTask.FACTORYID: // 29
         return new OEnterpriseStatsTask();
 

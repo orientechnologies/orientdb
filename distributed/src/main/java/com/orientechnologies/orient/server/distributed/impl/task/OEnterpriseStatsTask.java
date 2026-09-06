@@ -82,11 +82,6 @@ public class OEnterpriseStatsTask extends OAbstractRemoteTask {
   }
 
   @Override
-  public long getTotalTimeout(final int iTotalNodes) {
-    return getDistributedTimeout();
-  }
-
-  @Override
   public String getName() {
     return "enterprise_stats";
   }
