@@ -45,7 +45,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicInteger;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
@@ -169,10 +168,6 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract
 
     Orient.instance().registerWeakOrientStartupListener(this);
   }
-
-  protected abstract void setTip(String iMessage, AtomicInteger counter);
-
-  protected abstract AtomicInteger getTip(String iMessage);
 
   public static String dumpEnvironment(final String dumpType) {
     final StringBuilder buffer = new StringBuilder();
@@ -380,20 +375,6 @@ public abstract class OAbstractProfiler extends OSharedResourceAbstract
 
   public void shutdown() {
     stopRecording();
-  }
-
-  public int reportTip(final String iMessage) {
-    AtomicInteger counter = getTip(iMessage);
-    if (counter == null) {
-      // DUMP THE MESSAGE ONLY THE FIRST TIME
-      logger.info("[TIP] %s", iMessage);
-
-      counter = new AtomicInteger(0);
-    }
-
-    setTip(iMessage, counter);
-
-    return counter.incrementAndGet();
   }
 
   public boolean startRecording() {

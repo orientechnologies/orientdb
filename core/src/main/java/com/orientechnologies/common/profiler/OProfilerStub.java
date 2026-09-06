@@ -27,13 +27,10 @@ import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class OProfilerStub extends OAbstractProfiler {
 
   protected ConcurrentMap<String, Long> counters;
-  private ConcurrentLinkedHashMap<String, AtomicInteger> tips;
-  private ConcurrentLinkedHashMap<String, Long> tipsTimestamp;
 
   public OProfilerStub() {}
 
@@ -51,14 +48,6 @@ public class OProfilerStub extends OAbstractProfiler {
         new ConcurrentLinkedHashMap.Builder()
             .maximumWeightedCapacity(OConfiguration.global().profilerMaxvalues())
             .build();
-    tips =
-        new ConcurrentLinkedHashMap.Builder()
-            .maximumWeightedCapacity(OConfiguration.global().profilerMaxvalues())
-            .build();
-    tipsTimestamp =
-        new ConcurrentLinkedHashMap.Builder()
-            .maximumWeightedCapacity(OConfiguration.global().profilerMaxvalues())
-            .build();
     super.startup();
   }
 
@@ -68,36 +57,7 @@ public class OProfilerStub extends OAbstractProfiler {
     if (counters != null) {
       counters.clear();
     }
-    if (tips != null) {
-      tips.clear();
-    }
-    if (tipsTimestamp != null) {
-      tipsTimestamp.clear();
-    }
     super.shutdown();
-  }
-
-  @Override
-  protected void setTip(final String iMessage, final AtomicInteger counter) {
-    if (!isRecording()) {
-      // profiler is not started
-      return;
-    }
-
-    tips.put(iMessage, counter);
-    tipsTimestamp.put(iMessage, System.currentTimeMillis());
-  }
-
-  @Override
-  protected AtomicInteger getTip(final String iMessage) {
-    if (!isRecording()) {
-      // profiler is not started.
-      return null;
-    }
-
-    if (iMessage == null) return null;
-
-    return tips.get(iMessage);
   }
 
   @Override
@@ -115,14 +75,6 @@ public class OProfilerStub extends OAbstractProfiler {
 
   public boolean startRecording() {
     counters =
-        new ConcurrentLinkedHashMap.Builder()
-            .maximumWeightedCapacity(OConfiguration.global().profilerMaxvalues())
-            .build();
-    tips =
-        new ConcurrentLinkedHashMap.Builder()
-            .maximumWeightedCapacity(OConfiguration.global().profilerMaxvalues())
-            .build();
-    tipsTimestamp =
         new ConcurrentLinkedHashMap.Builder()
             .maximumWeightedCapacity(OConfiguration.global().profilerMaxvalues())
             .build();
@@ -146,26 +98,7 @@ public class OProfilerStub extends OAbstractProfiler {
   public String dump() {
     if (recordingFrom < 0) return "<no recording>";
 
-    final StringBuilder buffer = new StringBuilder(super.dump());
-
-    if (tips.size() == 0) return "";
-
-    buffer.append("TIPS:");
-
-    buffer.append(String.format("\n%100s +------------+", ""));
-    buffer.append(String.format("\n%100s | Value      |", "Name"));
-    buffer.append(String.format("\n%100s +------------+", ""));
-
-    final List<String> names = new ArrayList<String>(tips.keySet());
-    Collections.sort(names);
-
-    for (String n : names) {
-      final AtomicInteger v = tips.get(n);
-      buffer.append(String.format("\n%-100s | %10d |", n, v.intValue()));
-    }
-
-    buffer.append(String.format("\n%100s +------------+", ""));
-    return buffer.toString();
+    return super.dump();
   }
 
   public void updateCounter(

@@ -122,8 +122,6 @@ public interface OProfiler extends OService {
 
   void dump(PrintStream out);
 
-  int reportTip(String iMessage);
-
   void registerListener(OProfilerListener listener);
 
   void unregisterListener(OProfilerListener listener);

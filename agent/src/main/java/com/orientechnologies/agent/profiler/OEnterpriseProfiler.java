@@ -48,7 +48,6 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -115,16 +114,6 @@ public class OEnterpriseProfiler extends OAbstractProfiler
     hooks.clear();
 
     lastSnapshot.set(null);
-  }
-
-  @Override
-  protected void setTip(final String iMessage, final AtomicInteger counter) {
-    realTime.setTip(iMessage, counter);
-  }
-
-  @Override
-  protected AtomicInteger getTip(final String iMessage) {
-    return realTime.getTip(iMessage);
   }
 
   @Override
@@ -305,7 +294,7 @@ public class OEnterpriseProfiler extends OAbstractProfiler
                 + "Free memory: %2.2fMb (%2.2f%%) - Total memory: %2.2fMb - Max memory: %2.2fMb -"
                 + " CPUs: %d",
             freeMem,
-            (freeMem * 100 / (float) maxMem),
+            (freeMem * 100f / maxMem),
             totMem,
             maxMem,
             Runtime.getRuntime().availableProcessors()));
