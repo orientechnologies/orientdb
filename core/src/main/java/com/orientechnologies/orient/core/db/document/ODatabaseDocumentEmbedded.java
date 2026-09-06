@@ -310,7 +310,8 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
 
   public void callOnCreateListeners() {
     // WAKE UP DB LIFECYCLE LISTENER
-    for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners();
+    for (Iterator<ODatabaseLifecycleListener> it =
+            getSharedContext().getOrientDB().getDbLifecycleListeners();
         it.hasNext(); ) it.next().onCreate(getDatabaseOwner());
 
     // WAKE UP LISTENERS

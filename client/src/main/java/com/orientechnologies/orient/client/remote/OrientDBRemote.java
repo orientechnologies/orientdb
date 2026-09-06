@@ -68,6 +68,7 @@ import com.orientechnologies.orient.core.db.OCancellableTimer;
 import com.orientechnologies.orient.core.db.OCancellableTimerTask;
 import com.orientechnologies.orient.core.db.OCreateDatabaseParameters;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.ODatabasePoolImpl;
 import com.orientechnologies.orient.core.db.ODatabasePoolInternal;
 import com.orientechnologies.orient.core.db.ODatabaseTask;
@@ -95,6 +96,7 @@ import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -801,5 +803,10 @@ public class OrientDBRemote implements OrientDBInternal {
   @Override
   public ONodeId getNodeId() {
     return new ONodeId("$$remote_unknown_id");
+  }
+
+  @Override
+  public Iterator<ODatabaseLifecycleListener> getDbLifecycleListeners() {
+    return Orient.instance().getDbLifecycleListeners();
   }
 }

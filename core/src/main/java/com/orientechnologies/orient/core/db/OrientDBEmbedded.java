@@ -700,8 +700,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
     ODatabaseDocumentInternal current = ODatabaseRecordThreadLocal.instance().getIfDefined();
     try {
       ODatabaseDocumentInternal db = openNoAuthenticate(name, user);
-      for (Iterator<ODatabaseLifecycleListener> it = orient.getDbLifecycleListeners();
-          it.hasNext(); ) {
+      for (Iterator<ODatabaseLifecycleListener> it = getDbLifecycleListeners(); it.hasNext(); ) {
         it.next().onDrop(db);
       }
       db.callOnDropListeners();
@@ -1179,5 +1178,9 @@ public class OrientDBEmbedded implements OrientDBInternal {
 
   public ONodeId resolveNodeId(String name) {
     return new ONodeId(name);
+  }
+
+  public Iterator<ODatabaseLifecycleListener> getDbLifecycleListeners() {
+    return Orient.instance().getDbLifecycleListeners();
   }
 }

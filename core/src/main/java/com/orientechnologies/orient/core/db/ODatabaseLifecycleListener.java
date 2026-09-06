@@ -43,16 +43,12 @@ public interface ODatabaseLifecycleListener {
   }
 
   default void onCreate(ODatabaseInternal iDatabase) {}
-  ;
 
   default void onOpen(ODatabaseInternal iDatabase) {}
-  ;
 
   default void onClose(ODatabaseInternal iDatabase) {}
-  ;
 
   default void onDrop(ODatabaseInternal iDatabase) {}
-  ;
 
   @Deprecated
   default void onCreateClass(ODatabaseInternal iDatabase, OClass iClass) {}
@@ -60,8 +56,10 @@ public interface ODatabaseLifecycleListener {
   @Deprecated
   default void onDropClass(ODatabaseInternal iDatabase, OClass iClass) {}
 
+  @Deprecated
   default void onCreateView(ODatabaseInternal database, OView view) {}
 
+  @Deprecated
   default void onDropView(ODatabaseInternal database, OView cls) {}
 
   /**

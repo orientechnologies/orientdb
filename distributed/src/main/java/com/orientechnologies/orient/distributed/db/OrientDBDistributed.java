@@ -569,8 +569,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
     ODatabaseDocumentInternal current = ODatabaseRecordThreadLocal.instance().getIfDefined();
     try (ODatabaseDocumentInternal db = openNoAuthenticate(name, null)) {
 
-      for (Iterator<ODatabaseLifecycleListener> it = orient.getDbLifecycleListeners();
-          it.hasNext(); ) {
+      for (Iterator<ODatabaseLifecycleListener> it = getDbLifecycleListeners(); it.hasNext(); ) {
         it.next().onDrop(db);
       }
       db.callOnDropListeners();
@@ -1968,8 +1967,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
     nodeCfg.setLatencies(getMessageService().getNodesLatencies());
     nodeCfg.setMessages(getMessageService().getNodesMessages());
 
-    for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners();
-        it.hasNext(); ) {
+    for (Iterator<ODatabaseLifecycleListener> it = getDbLifecycleListeners(); it.hasNext(); ) {
       final ODatabaseLifecycleListener listener = it.next();
       if (listener != null) listener.onLocalNodeConfigurationRequest(nodeCfg);
     }

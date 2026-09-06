@@ -35,6 +35,7 @@ import java.io.InputStream;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -432,4 +433,6 @@ public interface OrientDBInternal extends AutoCloseable, OSchedulerInternal {
   }
 
   OAdminSession admin(String user, String password);
+
+  Iterator<ODatabaseLifecycleListener> getDbLifecycleListeners();
 }

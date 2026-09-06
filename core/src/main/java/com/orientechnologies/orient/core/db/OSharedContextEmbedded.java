@@ -372,7 +372,7 @@ public class OSharedContextEmbedded extends OSharedContext {
     return storage;
   }
 
-  public OrientDBInternal getOrientDB() {
+  public OrientDBEmbedded getOrientDB() {
     return orientDB;
   }
 

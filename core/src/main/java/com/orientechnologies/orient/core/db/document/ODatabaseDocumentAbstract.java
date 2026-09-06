@@ -27,7 +27,6 @@ import com.orientechnologies.common.listener.OListenerManger;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OCallable;
-import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.cache.OLocalRecordCache;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OStorageEntryConfiguration;
@@ -198,7 +197,8 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   }
 
   private void wakeupOnOpenDbLifecycleListeners() {
-    for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners();
+    for (Iterator<ODatabaseLifecycleListener> it =
+            getSharedContext().getOrientDB().getDbLifecycleListeners();
         it.hasNext(); ) {
       it.next().onOpen(getDatabaseOwner());
     }
@@ -215,7 +215,8 @@ public abstract class ODatabaseDocumentAbstract extends OListenerManger<ODatabas
   }
 
   private void wakeupOnCloseDbLifecycleListeners() {
-    for (Iterator<ODatabaseLifecycleListener> it = Orient.instance().getDbLifecycleListeners();
+    for (Iterator<ODatabaseLifecycleListener> it =
+            getSharedContext().getOrientDB().getDbLifecycleListeners();
         it.hasNext(); ) {
       it.next().onClose(getDatabaseOwner());
     }
