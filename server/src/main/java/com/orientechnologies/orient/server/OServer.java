@@ -99,7 +99,7 @@ public class OServer {
   protected volatile boolean running = false;
   protected volatile boolean rejectRequests = true;
   protected OServerConfigurationManager serverCfg;
-  protected OContextConfiguration contextConfiguration;
+  protected OContextConfiguration contextConfiguration = new OContextConfiguration();
   protected OServerShutdownHook shutdownHook;
   protected Map<String, Class<? extends ONetworkProtocol>> networkProtocols =
       new HashMap<String, Class<? extends ONetworkProtocol>>();
@@ -821,8 +821,6 @@ public class OServer {
     final OServerConfiguration cfg = serverCfg.getConfiguration();
 
     // FILL THE CONTEXT CONFIGURATION WITH SERVER'S PARAMETERS
-    contextConfiguration = new OContextConfiguration();
-
     if (cfg.properties != null)
       for (OServerEntryConfiguration prop : cfg.properties)
         contextConfiguration.setValue(prop.name, prop.value);
