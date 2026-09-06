@@ -74,10 +74,6 @@ public class OPredicateCache {
   }
 
   public void clear() {
-    if (OConfiguration.global().statementCacheSize() == 0) {
-      return;
-    }
-
     synchronized (map) {
       map.clear();
     }

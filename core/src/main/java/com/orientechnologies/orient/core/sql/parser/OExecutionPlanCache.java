@@ -138,7 +138,7 @@ public class OExecutionPlanCache implements OMetadataUpdateListener {
     if (statement == null) {
       return null;
     }
-    if (OConfiguration.global().statementCacheSize() == 0) {
+    if (db.getConfiguration().statementCacheSize() == 0) {
       return null;
     }
     synchronized (map) {

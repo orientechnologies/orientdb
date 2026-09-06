@@ -31,7 +31,6 @@ import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValu
 import com.orientechnologies.common.profiler.OProfiler.METRIC_TYPE;
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.core.Orient;
-import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
@@ -152,7 +151,8 @@ public class OServer {
 
     Orient.instance().startup();
 
-    if (OConfiguration.global().profilerEnabled() && !Orient.instance().getProfiler().isRecording())
+    if (getContextConfiguration().profilerEnabled()
+        && !Orient.instance().getProfiler().isRecording())
       Orient.instance().getProfiler().startRecording();
 
     if (shutdownEngineOnExit) {

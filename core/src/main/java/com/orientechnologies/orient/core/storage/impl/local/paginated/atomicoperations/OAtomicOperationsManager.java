@@ -53,8 +53,7 @@ public class OAtomicOperationsManager {
 
   private final OAbstractPaginatedStorage storage;
   private final OWriteAheadLog writeAheadLog;
-  private final OOneEntryPerKeyLockManager<String> lockManager =
-      new OOneEntryPerKeyLockManager<>(true, -1, OConfiguration.global().componentsLockCache());
+  private final OOneEntryPerKeyLockManager<String> lockManager;
   private final OReadCache readCache;
   private final OWriteCache writeCache;
 
@@ -74,6 +73,8 @@ public class OAtomicOperationsManager {
 
     this.idGen = storage.getIdGen();
     this.atomicOperationsTable = atomicOperationsTable;
+    lockManager =
+        new OOneEntryPerKeyLockManager<>(true, -1, OConfiguration.global().componentsLockCache());
   }
 
   public OAtomicOperation startAtomicOperation(final byte[] metadata) throws IOException {

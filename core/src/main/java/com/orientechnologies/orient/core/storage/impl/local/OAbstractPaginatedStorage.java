@@ -988,8 +988,8 @@ public abstract class OAbstractPaginatedStorage
   protected abstract void initIv() throws IOException;
 
   private void checkPageSizeAndRelatedParameters() {
-    final int pageSize = OConfiguration.global().diskCachePageSize() * 1024;
-    final int maxKeySize = OConfiguration.global().sbtreeMaxKeySize();
+    final int pageSize = configuration.getContextConfiguration().diskCachePageSize() * 1024;
+    final int maxKeySize = configuration.getContextConfiguration().sbtreeMaxKeySize();
 
     if (configuration.getPageSize() != -1 && configuration.getPageSize() != pageSize) {
       throw new OStorageException(
@@ -5234,8 +5234,8 @@ public abstract class OAbstractPaginatedStorage
       }
       OLocalPaginatedStorage.deleteFilesFromDisc(
           name,
-          OConfiguration.global().fileDeleteRetry(),
-          OConfiguration.global().fileDeleteDelay(),
+          getConfiguration().getContextConfiguration().fileDeleteRetry(),
+          getConfiguration().getContextConfiguration().fileDeleteDelay(),
           name);
       throw OException.wrapException(
           new OStorageException("Error during restore from incremental backup"), e);

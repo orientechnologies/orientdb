@@ -11,7 +11,6 @@ import com.orientechnologies.common.io.OIOException;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
-import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.OSharedContext;
 import com.orientechnologies.orient.core.db.OSharedContextEmbedded;
@@ -312,7 +311,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
   @Override
   public void internalCommit(OTransactionInternal iTx) {
-    int protocolVersion = OConfiguration.global().distributedReplicationProtocolVersion();
+    int protocolVersion = getConfiguration().distributedReplicationProtocolVersion();
     if (OScenarioThreadLocal.instance().isRunModeDistributed()
         || (iTx.isSequenceTransaction() && protocolVersion == 2)) {
       // Exclusive for handling schema manipulation, remove after refactor for distributed schema
@@ -325,14 +324,14 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         default:
           throw new IllegalStateException(
               "Invalid distributed replicaiton protocol version: "
-                  + OConfiguration.global().distributedReplicationProtocolVersion());
+                  + getConfiguration().distributedReplicationProtocolVersion());
       }
     }
   }
 
   @Override
   public void internalCommitPreallocate(OTransactionOptimistic iTx) {
-    int protocolVersion = OConfiguration.global().distributedReplicationProtocolVersion();
+    int protocolVersion = getConfiguration().distributedReplicationProtocolVersion();
     if (OScenarioThreadLocal.instance().isRunModeDistributed()
         || (iTx.isSequenceTransaction() && protocolVersion == 2)) {
       // Exclusive for handling schema manipulation, remove after refactor for distributed schema
@@ -345,7 +344,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         default:
           throw new IllegalStateException(
               "Invalid distributed replicaiton protocol version: "
-                  + OConfiguration.global().distributedReplicationProtocolVersion());
+                  + getConfiguration().distributedReplicationProtocolVersion());
       }
     }
   }

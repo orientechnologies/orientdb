@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.spatial.shape;
 
-import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -50,7 +49,7 @@ public class OPointShapeBuilder extends OShapeBuilder<Point> {
     coordinates.setMin("2");
     coordinates.setMax("2");
 
-    if (OConfiguration.global().spatialEnableDirectWktReader()) {
+    if (db.getConfiguration().spatialEnableDirectWktReader()) {
       OClass pointz = schema.createAbstractClass(getName() + "Z", superClass(db));
       OProperty coordinatesz = pointz.createProperty(COORDINATES, OType.EMBEDDEDLIST, OType.DOUBLE);
       coordinatesz.setMin("3");

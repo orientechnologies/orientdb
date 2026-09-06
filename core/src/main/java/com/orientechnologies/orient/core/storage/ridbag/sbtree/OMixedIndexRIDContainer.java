@@ -1,6 +1,5 @@
 package com.orientechnologies.orient.core.storage.ridbag.sbtree;
 
-import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -24,12 +23,14 @@ public class OMixedIndexRIDContainer implements Set<OIdentifiable> {
   private final Set<ORID> embeddedSet;
   private final OAbstractPaginatedStorage storage;
   private OIndexRIDContainerSBTree tree = null;
-  private final int topThreshold = OConfiguration.global().indexEmbeddedToSbtreebonsaiThreshold();
+  private final int topThreshold;
 
   /** Should be called inside of lock to ensure uniqueness of entity on disk !!!
    * @param storage TODO*/
   public OMixedIndexRIDContainer(
       String name, AtomicLong bonsayFileId, OAbstractPaginatedStorage storage) {
+    topThreshold =
+        storage.getConfiguration().getContextConfiguration().indexEmbeddedToSbtreebonsaiThreshold();
     long gotFileId = bonsayFileId.get();
     if (gotFileId == 0) {
       gotFileId = resolveFileIdByName(name + INDEX_FILE_EXTENSION, storage);
@@ -48,6 +49,8 @@ public class OMixedIndexRIDContainer implements Set<OIdentifiable> {
     this.tree = tree;
     final ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().get();
     storage = (OAbstractPaginatedStorage) db.getStorage();
+    topThreshold =
+        storage.getConfiguration().getContextConfiguration().indexEmbeddedToSbtreebonsaiThreshold();
   }
 
   private static long resolveFileIdByName(String fileName, OAbstractPaginatedStorage storage) {

@@ -340,8 +340,8 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
       }
       OLocalPaginatedStorage.deleteFilesFromDisc(
           name,
-          OConfiguration.global().fileDeleteRetry(),
-          OConfiguration.global().fileDeleteDelay(),
+          getConfiguration().getContextConfiguration().fileDeleteRetry(),
+          getConfiguration().getContextConfiguration().fileDeleteDelay(),
           name);
       throw OException.wrapException(new OStorageException("Error during restore from backup"), e);
 

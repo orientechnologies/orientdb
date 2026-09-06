@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.spatial.shape;
 
-import com.orientechnologies.orient.core.config.OConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
@@ -24,7 +23,11 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-import org.locationtech.jts.geom.*;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.LineString;
+import org.locationtech.jts.geom.LinearRing;
+import org.locationtech.jts.geom.Polygon;
 import org.locationtech.spatial4j.shape.jts.JtsGeometry;
 
 /** Created by enricorisa on 24/04/14. */
@@ -46,7 +49,7 @@ public class OPolygonShapeBuilder extends OComplexShapeBuilder<JtsGeometry> {
     OClass polygon = schema.createAbstractClass(getName(), superClass(db));
     polygon.createProperty(COORDINATES, OType.EMBEDDEDLIST, OType.EMBEDDEDLIST);
 
-    if (OConfiguration.global().spatialEnableDirectWktReader()) {
+    if (db.getConfiguration().spatialEnableDirectWktReader()) {
       OClass polygonZ = schema.createAbstractClass(getName() + "Z", superClass(db));
       polygonZ.createProperty(COORDINATES, OType.EMBEDDEDLIST, OType.EMBEDDEDLIST);
     }
