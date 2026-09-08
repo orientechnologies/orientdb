@@ -1,3 +1,10 @@
 package com.orientechnologies.orient.core.config;
 
-public class OConfigPlugin {}
+import com.fasterxml.jackson.databind.JsonNode;
+
+public class OConfigPlugin {
+
+  private String name;
+  private boolean enabled;
+  private JsonNode parameters;
+}

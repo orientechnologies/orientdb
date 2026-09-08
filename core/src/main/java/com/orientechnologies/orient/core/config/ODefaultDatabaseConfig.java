@@ -6,5 +6,8 @@ public class ODefaultDatabaseConfig {
   private String timeZone;
   private String locale;
   private int minumumCluster;
+  private String clusterSelection;
   private String conflictStragegy;
+  private boolean useLightweightEdges;
+  private boolean validation;
 }
