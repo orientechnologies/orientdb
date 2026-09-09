@@ -24,7 +24,7 @@ import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OService;
-import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.OCancellableTimer;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServer;
@@ -47,7 +47,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -63,11 +62,8 @@ public class OServerPluginManager implements OService {
   private ConcurrentHashMap<String, OServerPluginInfo> activePlugins =
       new ConcurrentHashMap<String, OServerPluginInfo>();
   private ConcurrentHashMap<String, String> loadedPlugins = new ConcurrentHashMap<String, String>();
-  private volatile TimerTask autoReloadTimerTask;
+  private volatile OCancellableTimer autoReloadTimerTask;
   private String directory;
-
-  protected List<OPluginLifecycleListener> pluginListeners =
-      new ArrayList<OPluginLifecycleListener>();
 
   public void config(OServer iServer) {
     server = iServer;
@@ -94,8 +90,7 @@ public class OServerPluginManager implements OService {
     if (loadAtStartup) updatePlugins();
 
     if (hotReload) {
-      autoReloadTimerTask =
-          Orient.instance().scheduleTask(this::updatePlugins, CHECK_DELAY, CHECK_DELAY);
+      autoReloadTimerTask = server.getDatabases().periodicExecute(this::updatePlugins, CHECK_DELAY);
     }
   }
 
@@ -135,9 +130,7 @@ public class OServerPluginManager implements OService {
 
       final OServerPluginInfo removedPlugin = activePlugins.remove(pluginName);
       if (removedPlugin != null) {
-        callListenerBeforeShutdown(removedPlugin.getInstance());
         removedPlugin.shutdown();
-        callListenerAfterShutdown(removedPlugin.getInstance());
       }
     }
   }
@@ -149,9 +142,7 @@ public class OServerPluginManager implements OService {
       logger.info("- %s", pluginInfoEntry.getKey());
       final OServerPluginInfo plugin = pluginInfoEntry.getValue();
       try {
-        callListenerBeforeShutdown(plugin.getInstance());
         plugin.shutdown(false);
-        callListenerAfterShutdown(plugin.getInstance());
       } catch (Exception t) {
         logger.error("Error during server plugin %s shutdown", t, plugin);
       }
@@ -188,9 +179,7 @@ public class OServerPluginManager implements OService {
 
       // SHUTDOWN PREVIOUS INSTANCE
       try {
-        callListenerBeforeShutdown(currentPluginData.getInstance());
         currentPluginData.shutdown();
-        callListenerAfterShutdown(currentPluginData.getInstance());
         activePlugins.remove(loadedPlugins.remove(pluginFileName));
 
       } catch (Exception e) {
@@ -275,20 +264,12 @@ public class OServerPluginManager implements OService {
         classToLoad.getDeclaredMethod(
             "config", OServer.class, OServerParameterConfiguration[].class);
 
-    callListenerBeforeConfig(instance, params);
-
     configMethod.invoke(instance, server, params);
-
-    callListenerAfterConfig(instance, params);
 
     // STARTUP()
     final Method startupMethod = classToLoad.getDeclaredMethod("startup");
 
-    callListenerBeforeStartup(instance);
-
     startupMethod.invoke(instance);
-
-    callListenerAfterStartup(instance);
 
     return instance;
   }
@@ -401,79 +382,6 @@ public class OServerPluginManager implements OService {
 
     } catch (Exception e) {
       logger.error("Error on installing dynamic plugin '%s'", e, pluginName);
-    }
-  }
-
-  public OServerPluginManager registerLifecycleListener(final OPluginLifecycleListener iListener) {
-    pluginListeners.add(iListener);
-    return this;
-  }
-
-  public OServerPluginManager unregisterLifecycleListener(
-      final OPluginLifecycleListener iListener) {
-    pluginListeners.remove(iListener);
-    return this;
-  }
-
-  public void callListenerBeforeConfig(
-      final OServerPlugin plugin, final OServerParameterConfiguration[] cfg) {
-    for (OPluginLifecycleListener l : pluginListeners) {
-      try {
-        l.onBeforeConfig(plugin, cfg);
-      } catch (Exception ex) {
-        logger.error("callListenerBeforeConfig() ", ex);
-      }
-    }
-  }
-
-  public void callListenerAfterConfig(
-      final OServerPlugin plugin, final OServerParameterConfiguration[] cfg) {
-    for (OPluginLifecycleListener l : pluginListeners) {
-      try {
-        l.onAfterConfig(plugin, cfg);
-      } catch (Exception ex) {
-        logger.error("callListenerAfterConfig() ", ex);
-      }
-    }
-  }
-
-  public void callListenerBeforeStartup(final OServerPlugin plugin) {
-    for (OPluginLifecycleListener l : pluginListeners) {
-      try {
-        l.onBeforeStartup(plugin);
-      } catch (Exception ex) {
-        logger.error("callListenerBeforeStartup() ", ex);
-      }
-    }
-  }
-
-  public void callListenerAfterStartup(final OServerPlugin plugin) {
-    for (OPluginLifecycleListener l : pluginListeners) {
-      try {
-        l.onAfterStartup(plugin);
-      } catch (Exception ex) {
-        logger.error("callListenerAfterStartup()", ex);
-      }
-    }
-  }
-
-  public void callListenerBeforeShutdown(final OServerPlugin plugin) {
-    for (OPluginLifecycleListener l : pluginListeners) {
-      try {
-        l.onBeforeShutdown(plugin);
-      } catch (Exception ex) {
-        logger.error("callListenerBeforeShutdown()", ex);
-      }
-    }
-  }
-
-  public void callListenerAfterShutdown(final OServerPlugin plugin) {
-    for (OPluginLifecycleListener l : pluginListeners) {
-      try {
-        l.onAfterShutdown(plugin);
-      } catch (Exception ex) {
-        logger.error("callListenerAfterShutdown()", ex);
-      }
     }
   }
 }

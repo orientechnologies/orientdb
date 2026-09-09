@@ -53,8 +53,6 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpAbstract;
-import com.orientechnologies.orient.server.plugin.OPluginLifecycleListener;
-import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
 import java.io.IOException;
 import java.io.InputStream;
@@ -66,10 +64,7 @@ import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 
 public class OEnterpriseAgent extends OServerPluginAbstract
-    implements ODatabaseLifecycleListener,
-        OPluginLifecycleListener,
-        OServerLifecycleListener,
-        OEnterpriseEndpoint {
+    implements ODatabaseLifecycleListener, OServerLifecycleListener, OEnterpriseEndpoint {
   private static final OLogger logger = OLogManager.instance().logger(OEnterpriseAgent.class);
 
   private static final String PLUGIN_NAME = "enterprise-agent";
@@ -94,9 +89,6 @@ public class OEnterpriseAgent extends OServerPluginAbstract
 
     enterpriseServer = new OEnterpriseServerImpl(server, this);
 
-    if (oServer.getPluginManager() != null) {
-      oServer.getPluginManager().registerLifecycleListener(this);
-    }
     registerAndInitServices();
   }
 
@@ -134,9 +126,6 @@ public class OEnterpriseAgent extends OServerPluginAbstract
   public void shutdown() {
     if (enabled) {
       uninstallCommands();
-      if (server.getPluginManager() != null) {
-        server.getPluginManager().unregisterLifecycleListener(this);
-      }
       Orient.instance().removeDbLifecycleListener(this);
     }
   }
@@ -232,21 +221,6 @@ public class OEnterpriseAgent extends OServerPluginAbstract
         enterpriseVersion, OConstants.getVersion());
     return false;
   }
-
-  // OPluginLifecycleListener
-  public void onBeforeConfig(
-      final OServerPlugin plugin, final OServerParameterConfiguration[] cfg) {}
-
-  public void onAfterConfig(
-      final OServerPlugin plugin, final OServerParameterConfiguration[] cfg) {}
-
-  public void onBeforeStartup(final OServerPlugin plugin) {}
-
-  public void onAfterStartup(final OServerPlugin plugin) {}
-
-  public void onBeforeShutdown(final OServerPlugin plugin) {}
-
-  public void onAfterShutdown(final OServerPlugin plugin) {}
 
   @Override
   public void onBeforeClientRequest(final OClientConnection iConnection, final byte iRequestType) {}

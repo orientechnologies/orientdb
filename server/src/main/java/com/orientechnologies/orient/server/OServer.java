@@ -53,6 +53,7 @@ import com.orientechnologies.orient.server.config.OServerConfiguration;
 import com.orientechnologies.orient.server.config.OServerConfigurationManager;
 import com.orientechnologies.orient.server.config.OServerEntryConfiguration;
 import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
+import com.orientechnologies.orient.server.config.OServerNetworkConfiguration;
 import com.orientechnologies.orient.server.config.OServerNetworkListenerConfiguration;
 import com.orientechnologies.orient.server.config.OServerNetworkProtocolConfiguration;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
@@ -101,10 +102,6 @@ public class OServer {
   protected OServerConfigurationManager serverCfg;
   protected OContextConfiguration contextConfiguration = new OContextConfiguration();
   protected OServerShutdownHook shutdownHook;
-  protected Map<String, Class<? extends ONetworkProtocol>> networkProtocols =
-      new HashMap<String, Class<? extends ONetworkProtocol>>();
-  protected Map<String, OServerSocketFactory> networkSocketFactories =
-      new HashMap<String, OServerSocketFactory>();
   protected List<OServerNetworkListener> networkListeners = Collections.emptyList();
   protected List<OServerLifecycleListener> lifecycleListeners =
       new ArrayList<OServerLifecycleListener>();
@@ -428,47 +425,10 @@ public class OServer {
               this.databases.getSecuritySystem().getTokenSign(), this.getContextConfiguration());
 
       if (configuration.getNetwork() != null) {
-        // REGISTER/CREATE SOCKET FACTORIES
-        if (configuration.getNetwork().getSockets() != null) {
-          for (OServerSocketFactoryConfiguration f : configuration.getNetwork().getSockets()) {
-            try {
-              Class<? extends OServerSocketFactory> fClass =
-                  (Class<? extends OServerSocketFactory>) loadClass(f.getImplementation());
-              OServerSocketFactory factory = fClass.getConstructor().newInstance();
-              factory.config(f.getName(), f.getParameters());
-              networkSocketFactories.put(f.getName(), factory);
-            } catch (OConfigurationException e) {
-              logger.error("Error creating socket factory", e);
-            } catch (InvocationTargetException e) {
-              logger.error("Error creating socket factory", e);
-            } catch (NoSuchMethodException e) {
-              logger.error("Error creating socket factory", e);
-            }
-          }
-        }
-
-        // REGISTER PROTOCOLS
-        for (OServerNetworkProtocolConfiguration p : configuration.getNetwork().getProtocols())
-          networkProtocols.put(
-              p.getName(), (Class<? extends ONetworkProtocol>) loadClass(p.getImplementation()));
-
-        // STARTUP LISTENERS
-        List<OServerNetworkListener> listener = new ArrayList<>();
-        for (OServerNetworkListenerConfiguration l : configuration.getNetwork().getListeners()) {
-          listener.add(
-              new OServerNetworkListener(
-                  this,
-                  networkSocketFactories.get(l.getSocket()),
-                  l.getIpAddress(),
-                  l.getPortRange(),
-                  l.getProtocol(),
-                  networkProtocols.get(l.getProtocol()),
-                  l.getParameters(),
-                  l.getCommands()));
-        }
-        this.networkListeners = listener;
-
-      } else logger.warn("Network configuration was not found");
+        this.networkListeners = initListeners(configuration.getNetwork());
+      } else {
+        logger.warn("Network configuration was not found");
+      }
 
       try {
         loadStorages();
@@ -505,6 +465,55 @@ public class OServer {
       Thread.currentThread().interrupt();
     }
     return this;
+  }
+
+  protected List<OServerNetworkListener> initListeners(
+      final OServerNetworkConfiguration networkConf)
+      throws ClassNotFoundException, InstantiationException, IllegalAccessException {
+    // REGISTER/CREATE SOCKET FACTORIES
+    Map<String, OServerSocketFactory> networkSocketFactories =
+        new HashMap<String, OServerSocketFactory>();
+
+    if (networkConf.getSockets() != null) {
+      for (OServerSocketFactoryConfiguration f : networkConf.getSockets()) {
+        try {
+          Class<? extends OServerSocketFactory> fClass =
+              (Class<? extends OServerSocketFactory>) loadClass(f.getImplementation());
+          OServerSocketFactory factory = fClass.getConstructor().newInstance();
+          factory.config(f.getName(), f.getParameters());
+          networkSocketFactories.put(f.getName(), factory);
+        } catch (OConfigurationException e) {
+          logger.error("Error creating socket factory", e);
+        } catch (InvocationTargetException e) {
+          logger.error("Error creating socket factory", e);
+        } catch (NoSuchMethodException e) {
+          logger.error("Error creating socket factory", e);
+        }
+      }
+    }
+    Map<String, Class<? extends ONetworkProtocol>> networkProtocols =
+        new HashMap<String, Class<? extends ONetworkProtocol>>();
+
+    // REGISTER PROTOCOLS
+    for (OServerNetworkProtocolConfiguration p : networkConf.getProtocols())
+      networkProtocols.put(
+          p.getName(), (Class<? extends ONetworkProtocol>) loadClass(p.getImplementation()));
+
+    // STARTUP LISTENERS
+    List<OServerNetworkListener> listener = new ArrayList<>();
+    for (OServerNetworkListenerConfiguration l : networkConf.getListeners()) {
+      listener.add(
+          new OServerNetworkListener(
+              this,
+              networkSocketFactories.get(l.getSocket()),
+              l.getIpAddress(),
+              l.getPortRange(),
+              l.getProtocol(),
+              networkProtocols.get(l.getProtocol()),
+              l.getParameters(),
+              l.getCommands()));
+    }
+    return listener;
   }
 
   private void logHttpServerInfo() {
@@ -578,12 +587,6 @@ public class OServer {
               logger.error("Error during shutdown of listener %s.", e, l);
             }
           }
-        }
-
-        if (networkProtocols.size() > 0) {
-          // PROTOCOL SHUTDOWN
-          logger.info("Shutting down protocols");
-          networkProtocols.clear();
         }
 
         for (OServerLifecycleListener l : lifecycleListeners)
@@ -688,10 +691,6 @@ public class OServer {
 
   public OServerConfiguration getConfiguration() {
     return serverCfg.getConfiguration();
-  }
-
-  public Map<String, Class<? extends ONetworkProtocol>> getNetworkProtocols() {
-    return networkProtocols;
   }
 
   public List<OServerNetworkListener> getNetworkListeners() {
@@ -1069,9 +1068,7 @@ public class OServer {
           pluginManager.registerPlugin(
               new OServerPluginInfo(plugin.getName(), null, null, null, plugin, null, 0, null));
 
-          pluginManager.callListenerBeforeConfig(plugin, h.getParameters());
           plugin.config(this, h.getParameters());
-          pluginManager.callListenerAfterConfig(plugin, h.getParameters());
 
           plugins.add(plugin);
         } catch (IllegalArgumentException
@@ -1084,9 +1081,7 @@ public class OServer {
 
       // START ALL THE CONFIGURED PLUGINS
       for (OServerPlugin plugin : plugins) {
-        pluginManager.callListenerBeforeStartup(plugin);
         plugin.startup();
-        pluginManager.callListenerAfterStartup(plugin);
       }
     }
   }
