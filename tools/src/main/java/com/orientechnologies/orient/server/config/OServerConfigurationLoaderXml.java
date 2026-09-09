@@ -78,20 +78,20 @@ public class OServerConfigurationLoaderXml {
           logger.error("Server configuration file not found: %s", null, file);
           return rootClass.getConstructor(OServerConfigurationLoaderXml.class).newInstance(this);
         }
-        obj.location = file.getAbsolutePath();
+        obj.setLocation(file.getAbsolutePath());
       } else {
         obj = rootClass.cast(unmarshaller.unmarshal(inputStream));
-        obj.location = "memory";
+        obj.setLocation("memory");
       }
 
       // AUTO CONFIGURE SYSTEM CONFIGURATION
       OGlobalConfiguration config;
-      if (obj.properties != null)
-        for (OServerEntryConfiguration prop : obj.properties) {
+      if (obj.getProperties() != null)
+        for (OServerEntryConfiguration prop : obj.getProperties()) {
           try {
-            config = OGlobalConfiguration.findByKey(prop.name);
+            config = OGlobalConfiguration.findByKey(prop.getName());
             if (config != null) {
-              config.setValue(prop.value);
+              config.setValue(prop.getValue());
             }
           } catch (Exception e) {
           }

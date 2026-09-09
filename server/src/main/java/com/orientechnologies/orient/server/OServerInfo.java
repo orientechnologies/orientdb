@@ -147,12 +147,12 @@ public class OServerInfo {
       throws IOException {
     json.beginCollection(2, true, "properties");
 
-    OServerEntryConfiguration[] confProperties = server.getConfiguration().properties;
+    OServerEntryConfiguration[] confProperties = server.getConfiguration().getProperties();
     if (confProperties != null) {
       for (OServerEntryConfiguration entry : confProperties) {
         json.beginObject(3, true, null);
-        json.writeAttribute(4, false, "name", entry.name);
-        json.writeAttribute(4, false, "value", entry.value);
+        json.writeAttribute(4, false, "name", entry.getName());
+        json.writeAttribute(4, false, "value", entry.getValue());
         json.endObject(3, true);
       }
     }

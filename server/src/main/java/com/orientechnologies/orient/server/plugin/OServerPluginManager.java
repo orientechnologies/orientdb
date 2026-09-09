@@ -80,13 +80,13 @@ public class OServerPluginManager implements OService {
     directory =
         OSystemVariableResolver.resolveSystemVariables("${ORIENTDB_HOME}", ".") + "/plugins/";
 
-    if (server.getConfiguration() != null && server.getConfiguration().properties != null)
-      for (OServerEntryConfiguration p : server.getConfiguration().properties) {
-        if (p.name.equals("plugin.hotReload")) hotReload = Boolean.parseBoolean(p.value);
-        else if (p.name.equals("plugin.dynamic")) dynamic = Boolean.parseBoolean(p.value);
-        else if (p.name.equals("plugin.loadAtStartup"))
-          loadAtStartup = Boolean.parseBoolean(p.value);
-        else if (p.name.equals("plugin.directory")) directory = p.value;
+    if (server.getConfiguration() != null && server.getConfiguration().getProperties() != null)
+      for (OServerEntryConfiguration p : server.getConfiguration().getProperties()) {
+        if (p.getName().equals("plugin.hotReload")) hotReload = Boolean.parseBoolean(p.getValue());
+        else if (p.getName().equals("plugin.dynamic")) dynamic = Boolean.parseBoolean(p.getValue());
+        else if (p.getName().equals("plugin.loadAtStartup"))
+          loadAtStartup = Boolean.parseBoolean(p.getValue());
+        else if (p.getName().equals("plugin.directory")) directory = p.getValue();
       }
 
     if (!dynamic) return;

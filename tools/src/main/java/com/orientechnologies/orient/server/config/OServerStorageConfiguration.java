@@ -19,12 +19,15 @@
  */
 package com.orientechnologies.orient.server.config;
 
+import jakarta.xml.bind.annotation.XmlAccessType;
+import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlAttribute;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlType;
 
 @XmlRootElement(name = "storage")
 @XmlType(propOrder = {"loadOnStartup", "userPassword", "userName", "path", "name"})
+@XmlAccessorType(XmlAccessType.FIELD)
 public class OServerStorageConfiguration {
 
   @XmlAttribute(required = true)
@@ -40,4 +43,44 @@ public class OServerStorageConfiguration {
   public boolean loadOnStartup;
 
   public OServerStorageConfiguration() {}
+
+  public String getName() {
+    return name;
+  }
+
+  public void setName(String name) {
+    this.name = name;
+  }
+
+  public String getPath() {
+    return path;
+  }
+
+  public void setPath(String path) {
+    this.path = path;
+  }
+
+  public String getUserName() {
+    return userName;
+  }
+
+  public void setUserName(String userName) {
+    this.userName = userName;
+  }
+
+  public String getUserPassword() {
+    return userPassword;
+  }
+
+  public void setUserPassword(String userPassword) {
+    this.userPassword = userPassword;
+  }
+
+  public boolean isLoadOnStartup() {
+    return loadOnStartup;
+  }
+
+  public void setLoadOnStartup(boolean loadOnStartup) {
+    this.loadOnStartup = loadOnStartup;
+  }
 }

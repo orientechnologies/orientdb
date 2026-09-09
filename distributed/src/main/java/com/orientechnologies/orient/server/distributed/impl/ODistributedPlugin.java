@@ -736,9 +736,9 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
     // SALVE THE NODE NAME IN CONFIGURATION
     boolean found = false;
     final OServerConfiguration cfg = serverInstance.getConfiguration();
-    for (OServerHandlerConfiguration h : cfg.handlers) {
-      if (h.clazz.equals(getClass().getName())) {
-        for (OServerParameterConfiguration p : h.parameters) {
+    for (OServerHandlerConfiguration h : cfg.getHandlers()) {
+      if (h.getClazz().equals(getClass().getName())) {
+        for (OServerParameterConfiguration p : h.getParameters()) {
           if (p.name.equals("nodeName")) {
             found = true;
             p.value = this.nodeName;
@@ -747,8 +747,8 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
         }
 
         if (!found) {
-          h.parameters = OArrays.copyOf(h.parameters, h.parameters.length + 1);
-          h.parameters[h.parameters.length - 1] =
+          h.setParameters(OArrays.copyOf(h.getParameters(), h.getParameters().length + 1));
+          h.getParameters()[h.getParameters().length - 1] =
               new OServerParameterConfiguration("nodeName", this.nodeName);
         }
 

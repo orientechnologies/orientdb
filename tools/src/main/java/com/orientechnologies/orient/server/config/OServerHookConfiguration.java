@@ -24,15 +24,40 @@ import jakarta.xml.bind.annotation.*;
 
 @XmlRootElement(name = "hook")
 @XmlType(propOrder = {"parameters", "clazz", "position"})
+@XmlAccessorType(XmlAccessType.FIELD)
 public class OServerHookConfiguration {
 
   @XmlAttribute(name = "class", required = true)
-  public String clazz;
+  private String clazz;
 
   @XmlAttribute(name = "position")
-  public String position = ORecordHook.HOOK_POSITION.REGULAR.name();
+  private String position = ORecordHook.HOOK_POSITION.REGULAR.name();
 
   @XmlElementWrapper
   @XmlElementRef(type = OServerParameterConfiguration.class)
-  public OServerParameterConfiguration[] parameters;
+  private OServerParameterConfiguration[] parameters;
+
+  public String getClazz() {
+    return clazz;
+  }
+
+  public void setClazz(String clazz) {
+    this.clazz = clazz;
+  }
+
+  public OServerParameterConfiguration[] getParameters() {
+    return parameters;
+  }
+
+  public void setParameters(OServerParameterConfiguration[] parameters) {
+    this.parameters = parameters;
+  }
+
+  public String getPosition() {
+    return position;
+  }
+
+  public void setPosition(String position) {
+    this.position = position;
+  }
 }

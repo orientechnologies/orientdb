@@ -18,22 +18,23 @@ public class OServerConfigurationRewrite {
   }
 
   private void migrateDistributed(OServerConfiguration load, boolean removeOld) throws IOException {
-    Iterator<OServerHandlerConfiguration> iter = load.handlers.iterator();
+    Iterator<OServerHandlerConfiguration> iter = load.getHandlers().iterator();
     while (iter.hasNext()) {
       OServerHandlerConfiguration handler = iter.next();
-      if (handler.clazz.equals(
-          "com.orientechnologies.orient.server.distributed.impl.ODistributedPlugin")) {
+      if (handler
+          .getClazz()
+          .equals("com.orientechnologies.orient.server.distributed.impl.ODistributedPlugin")) {
         if (removeOld) {
           iter.remove();
         }
-        load.distributed = new OServerDistributedConfiguration();
+        load.setDistributed(new OServerDistributedConfiguration());
 
-        for (OServerParameterConfiguration par : handler.parameters) {
+        for (OServerParameterConfiguration par : handler.getParameters()) {
           if ("enabled".equalsIgnoreCase(par.name)) {
-            load.distributed.enabled = Boolean.valueOf(par.value);
+            load.getDistributed().setEnabled(Boolean.valueOf(par.value));
           }
           if ("nodeName".equalsIgnoreCase(par.name)) {
-            load.distributed.nodeName = par.value;
+            load.getDistributed().setNodeName(par.value);
           }
           if ("configuration.db.default".equalsIgnoreCase(par.name)) {
             String config = Files.readString(Path.of(par.value));
@@ -41,15 +42,15 @@ public class OServerConfigurationRewrite {
             c.fromJSON(config);
             String quorumValue = c.getProperty("writeQuorum");
             if ("majority".equals(quorumValue)) {
-              load.distributed.quorum = 2;
+              load.getDistributed().setQuorum(2);
             } else {
               try {
-                load.distributed.quorum = Integer.valueOf(quorumValue);
+                load.getDistributed().setQuorum(Integer.valueOf(quorumValue));
               } catch (NumberFormatException e) {
               }
             }
-            if (load.distributed.quorum == 0) {
-              load.distributed.quorum = 2;
+            if (load.getDistributed().getQuorum() == 0) {
+              load.getDistributed().setQuorum(2);
             }
           }
         }

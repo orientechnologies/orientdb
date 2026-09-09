@@ -55,7 +55,7 @@ public class OConfigurableHooksManager implements ODatabaseLifecycleListener {
   private List<OServerHookConfiguration> configuredHooks;
 
   public OConfigurableHooksManager(final OServerConfiguration iCfg) {
-    configuredHooks = iCfg.hooks;
+    configuredHooks = iCfg.getHooks();
     if (configuredHooks != null && !configuredHooks.isEmpty())
       Orient.instance().addDbLifecycleListener(this);
   }
@@ -83,8 +83,9 @@ public class OConfigurableHooksManager implements ODatabaseLifecycleListener {
       final ODatabase<?> db = (ODatabase<?>) iDatabase;
       for (OServerHookConfiguration hook : configuredHooks) {
         try {
-          final ORecordHook.HOOK_POSITION pos = ORecordHook.HOOK_POSITION.valueOf(hook.position);
-          Class<?> klass = Class.forName(hook.clazz);
+          final ORecordHook.HOOK_POSITION pos =
+              ORecordHook.HOOK_POSITION.valueOf(hook.getPosition());
+          Class<?> klass = Class.forName(hook.getClazz());
           final ORecordHook h;
           Constructor constructor = null;
           try {
@@ -98,25 +99,25 @@ public class OConfigurableHooksManager implements ODatabaseLifecycleListener {
           } else {
             h = (ORecordHook) klass.newInstance();
           }
-          if (hook.parameters != null && hook.parameters.length > 0)
+          if (hook.getParameters() != null && hook.getParameters().length > 0)
             try {
               final Method m =
                   h.getClass()
                       .getDeclaredMethod(
                           "config", new Class[] {OServerParameterConfiguration[].class});
-              m.invoke(h, new Object[] {hook.parameters});
+              m.invoke(h, new Object[] {hook.getParameters()});
             } catch (Exception e) {
               logger.warn(
                   "[configure] Failed to configure hook '%s'. Parameters specified but hook don"
                       + " support parameters. Should have a method config with parameters"
                       + " OServerParameterConfiguration[] ",
-                  hook.clazz);
+                  hook.getClazz());
             }
           db.registerHook(h, pos);
         } catch (Exception e) {
           logger.error(
               "[configure] Failed to configure hook '%s' due to the an error : ",
-              e, hook.clazz, e.getMessage());
+              e, hook.getClazz(), e.getMessage());
         }
       }
     }

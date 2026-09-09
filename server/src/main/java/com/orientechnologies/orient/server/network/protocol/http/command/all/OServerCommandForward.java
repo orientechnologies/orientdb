@@ -41,7 +41,7 @@ public class OServerCommandForward extends OServerCommandAbstract {
 
     // LOAD HTTP CACHE CONFIGURATION
     for (OServerEntryConfiguration par : iConfiguration.parameters) {
-      if (par.name.equals("to")) forwardTo = par.value;
+      if (par.getName().equals("to")) forwardTo = par.getValue();
     }
   }
 

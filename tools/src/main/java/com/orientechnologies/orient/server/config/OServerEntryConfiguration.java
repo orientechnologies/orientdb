@@ -19,21 +19,40 @@
  */
 package com.orientechnologies.orient.server.config;
 
+import jakarta.xml.bind.annotation.XmlAccessType;
+import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlAttribute;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlType;
 
 @XmlRootElement(name = "entry")
 @XmlType(propOrder = {"value", "name"})
+@XmlAccessorType(XmlAccessType.FIELD)
 public class OServerEntryConfiguration {
-  @XmlAttribute public String name;
+  @XmlAttribute private String name;
 
-  @XmlAttribute public String value;
+  @XmlAttribute private String value;
 
   public OServerEntryConfiguration() {}
 
   public OServerEntryConfiguration(final String iName, final String iValue) {
-    name = iName;
-    value = iValue;
+    setName(iName);
+    setValue(iValue);
+  }
+
+  public String getValue() {
+    return value;
+  }
+
+  public void setValue(String value) {
+    this.value = value;
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  public void setName(String name) {
+    this.name = name;
   }
 }

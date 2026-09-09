@@ -19,6 +19,8 @@
  */
 package com.orientechnologies.orient.server.config;
 
+import jakarta.xml.bind.annotation.XmlAccessType;
+import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlAnyElement;
 import jakarta.xml.bind.annotation.XmlElementRef;
 import jakarta.xml.bind.annotation.XmlElementWrapper;
@@ -27,21 +29,38 @@ import java.util.ArrayList;
 import java.util.List;
 
 @XmlRootElement(name = "security")
+@XmlAccessorType(XmlAccessType.FIELD)
 public class OServerSecurityConfiguration {
   @XmlElementWrapper
   @XmlAnyElement
   @XmlElementRef(type = OServerUserConfiguration.class)
-  public List<OServerUserConfiguration> users;
+  private List<OServerUserConfiguration> users;
 
   @XmlElementWrapper
   @XmlAnyElement
   @XmlElementRef(type = OServerNetworkListenerConfiguration.class)
-  public List<OServerResourceConfiguration> resources;
+  private List<OServerResourceConfiguration> resources;
 
   public OServerSecurityConfiguration() {}
 
   public OServerSecurityConfiguration(Object iObject) {
-    users = new ArrayList<OServerUserConfiguration>();
-    resources = new ArrayList<OServerResourceConfiguration>();
+    setUsers(new ArrayList<OServerUserConfiguration>());
+    setResources(new ArrayList<OServerResourceConfiguration>());
+  }
+
+  public List<OServerResourceConfiguration> getResources() {
+    return resources;
+  }
+
+  public void setResources(List<OServerResourceConfiguration> resources) {
+    this.resources = resources;
+  }
+
+  public List<OServerUserConfiguration> getUsers() {
+    return users;
+  }
+
+  public void setUsers(List<OServerUserConfiguration> users) {
+    this.users = users;
   }
 }

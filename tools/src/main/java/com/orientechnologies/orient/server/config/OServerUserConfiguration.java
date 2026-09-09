@@ -20,26 +20,29 @@
 package com.orientechnologies.orient.server.config;
 
 import com.orientechnologies.orient.core.security.OGlobalUser;
+import jakarta.xml.bind.annotation.XmlAccessType;
+import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlAttribute;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlType;
 
 @XmlRootElement(name = "user")
 @XmlType(propOrder = {"resources", "password", "name"})
+@XmlAccessorType(XmlAccessType.FIELD)
 public class OServerUserConfiguration implements OGlobalUser {
-  @XmlAttribute public String name;
+  @XmlAttribute private String name;
 
-  @XmlAttribute public String password;
+  @XmlAttribute private String password;
 
-  @XmlAttribute public String resources;
+  @XmlAttribute private String resources;
 
   public OServerUserConfiguration() {}
 
   public OServerUserConfiguration(
       final String iName, final String iPassword, final String iResources) {
-    name = iName;
-    password = iPassword;
-    resources = iResources;
+    setName(iName);
+    setPassword(iPassword);
+    setResources(iResources);
   }
 
   @Override
@@ -54,5 +57,17 @@ public class OServerUserConfiguration implements OGlobalUser {
 
   public String getResources() {
     return resources;
+  }
+
+  public void setResources(String resources) {
+    this.resources = resources;
+  }
+
+  public void setPassword(String password) {
+    this.password = password;
+  }
+
+  public void setName(String name) {
+    this.name = name;
   }
 }

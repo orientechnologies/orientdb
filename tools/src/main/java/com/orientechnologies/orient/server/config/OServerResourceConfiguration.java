@@ -19,21 +19,40 @@
  */
 package com.orientechnologies.orient.server.config;
 
+import jakarta.xml.bind.annotation.XmlAccessType;
+import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlAttribute;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlType;
 
 @XmlRootElement(name = "resource")
 @XmlType(propOrder = {"resources", "roles"})
+@XmlAccessorType(XmlAccessType.FIELD)
 public class OServerResourceConfiguration {
-  @XmlAttribute public String name;
+  @XmlAttribute private String name;
 
-  @XmlAttribute public String roles;
+  @XmlAttribute private String roles;
 
   public OServerResourceConfiguration() {}
 
   public OServerResourceConfiguration(final String iName, final String iRoles) {
-    name = iName;
-    roles = iRoles;
+    setName(iName);
+    setRoles(iRoles);
+  }
+
+  public String getRoles() {
+    return roles;
+  }
+
+  public void setRoles(String roles) {
+    this.roles = roles;
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  public void setName(String name) {
+    this.name = name;
   }
 }

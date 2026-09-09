@@ -28,19 +28,19 @@ public class OServerConfigurationManagerTest {
     final OServerConfigurationManager cfgManager =
         new OServerConfigurationManager(new OServerConfiguration());
 
-    Assert.assertNull(cfgManager.getConfiguration().users);
+    Assert.assertNull(cfgManager.getConfiguration().getUsers());
 
     // ADD USERS AND REMOVE FROM THE END
     cfgManager.setUser("a0", "b", "c");
 
-    Assert.assertNotNull(cfgManager.getConfiguration().users);
-    Assert.assertEquals(cfgManager.getConfiguration().users.length, 1);
+    Assert.assertNotNull(cfgManager.getConfiguration().getUsers());
+    Assert.assertEquals(cfgManager.getConfiguration().getUsers().length, 1);
 
     cfgManager.setUser("a1", "b", "c");
     cfgManager.setUser("a2", "b", "c");
     cfgManager.setUser("a3", "b", "c");
 
-    Assert.assertEquals(cfgManager.getConfiguration().users.length, 4);
+    Assert.assertEquals(cfgManager.getConfiguration().getUsers().length, 4);
 
     Assert.assertEquals(cfgManager.getUsers().size(), 4);
 
@@ -56,42 +56,42 @@ public class OServerConfigurationManagerTest {
     cfgManager.dropUser("A1");
     cfgManager.dropUser("A0");
 
-    Assert.assertEquals(cfgManager.getConfiguration().users.length, 0);
+    Assert.assertEquals(cfgManager.getConfiguration().getUsers().length, 0);
 
     // ADD USERS AND REMOVE FROM THE BEGINNING
     cfgManager.setUser("a0", "b", "c");
 
-    Assert.assertEquals(cfgManager.getConfiguration().users.length, 1);
+    Assert.assertEquals(cfgManager.getConfiguration().getUsers().length, 1);
 
     cfgManager.setUser("a1", "b", "c");
     cfgManager.setUser("a2", "b", "c");
     cfgManager.setUser("a3", "b", "c");
 
-    Assert.assertEquals(cfgManager.getConfiguration().users.length, 4);
+    Assert.assertEquals(cfgManager.getConfiguration().getUsers().length, 4);
 
     cfgManager.dropUser("A0");
     cfgManager.dropUser("A1");
     cfgManager.dropUser("A2");
     cfgManager.dropUser("A3");
 
-    Assert.assertEquals(cfgManager.getConfiguration().users.length, 0);
+    Assert.assertEquals(cfgManager.getConfiguration().getUsers().length, 0);
 
     // ADD USERS AND REMOVE FROM THE MIDDLE
     cfgManager.setUser("a0", "b", "c");
 
-    Assert.assertEquals(cfgManager.getConfiguration().users.length, 1);
+    Assert.assertEquals(cfgManager.getConfiguration().getUsers().length, 1);
 
     cfgManager.setUser("a1", "b", "c");
     cfgManager.setUser("a2", "b", "c");
     cfgManager.setUser("a3", "b", "c");
 
-    Assert.assertEquals(cfgManager.getConfiguration().users.length, 4);
+    Assert.assertEquals(cfgManager.getConfiguration().getUsers().length, 4);
 
     cfgManager.dropUser("A2");
     cfgManager.dropUser("A1");
     cfgManager.dropUser("A0");
     cfgManager.dropUser("A3");
 
-    Assert.assertEquals(cfgManager.getConfiguration().users.length, 0);
+    Assert.assertEquals(cfgManager.getConfiguration().getUsers().length, 0);
   }
 }

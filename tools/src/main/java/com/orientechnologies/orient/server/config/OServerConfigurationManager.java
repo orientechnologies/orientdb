@@ -71,15 +71,15 @@ public class OServerConfigurationManager {
 
     int userPositionInArray = -1;
 
-    if (configuration.users == null) {
-      configuration.users = new OServerUserConfiguration[1];
+    if (configuration.getUsers() == null) {
+      configuration.setUsers(new OServerUserConfiguration[1]);
       userPositionInArray = 0;
     } else {
       // LOOK FOR EXISTENT USER
-      for (int i = 0; i < configuration.users.length; ++i) {
-        final OServerUserConfiguration u = configuration.users[i];
+      for (int i = 0; i < configuration.getUsers().length; ++i) {
+        final OServerUserConfiguration u = configuration.getUsers()[i];
 
-        if (u != null && iServerUserName.equalsIgnoreCase(u.name)) {
+        if (u != null && iServerUserName.equalsIgnoreCase(u.getName())) {
           // FOUND
           userPositionInArray = i;
           break;
@@ -88,12 +88,13 @@ public class OServerConfigurationManager {
 
       if (userPositionInArray == -1) {
         // NOT FOUND
-        userPositionInArray = configuration.users.length;
-        configuration.users = Arrays.copyOf(configuration.users, configuration.users.length + 1);
+        userPositionInArray = configuration.getUsers().length;
+        configuration.setUsers(
+            Arrays.copyOf(configuration.getUsers(), configuration.getUsers().length + 1));
       }
     }
 
-    configuration.users[userPositionInArray] =
+    configuration.getUsers()[userPositionInArray] =
         new OServerUserConfiguration(iServerUserName, iServerUserPasswd, iPermissions);
 
     return this;
@@ -112,9 +113,9 @@ public class OServerConfigurationManager {
 
     checkForAutoReloading();
 
-    if (configuration.users != null) {
-      for (OServerUserConfiguration user : configuration.users) {
-        if (iServerUserName.equalsIgnoreCase(user.name)) {
+    if (configuration.getUsers() != null) {
+      for (OServerUserConfiguration user : configuration.getUsers()) {
+        if (iServerUserName.equalsIgnoreCase(user.getName())) {
           // FOUND
           return user;
         }
@@ -136,22 +137,22 @@ public class OServerConfigurationManager {
     checkForAutoReloading();
 
     // LOOK FOR EXISTENT USER
-    for (int i = 0; i < configuration.users.length; ++i) {
-      final OServerUserConfiguration u = configuration.users[i];
+    for (int i = 0; i < configuration.getUsers().length; ++i) {
+      final OServerUserConfiguration u = configuration.getUsers()[i];
 
-      if (u != null && iServerUserName.equalsIgnoreCase(u.name)) {
+      if (u != null && iServerUserName.equalsIgnoreCase(u.getName())) {
         // FOUND
         final OServerUserConfiguration[] newArray =
-            new OServerUserConfiguration[configuration.users.length - 1];
+            new OServerUserConfiguration[configuration.getUsers().length - 1];
         // COPY LEFT PART
         for (int k = 0; k < i; ++k) {
-          newArray[k] = configuration.users[k];
+          newArray[k] = configuration.getUsers()[k];
         }
         // COPY RIGHT PART
         for (int k = i; k < newArray.length; ++k) {
-          newArray[k] = configuration.users[k + 1];
+          newArray[k] = configuration.getUsers()[k + 1];
         }
-        configuration.users = newArray;
+        configuration.setUsers(newArray);
         break;
       }
     }
@@ -161,9 +162,9 @@ public class OServerConfigurationManager {
     checkForAutoReloading();
 
     final HashSet<OServerUserConfiguration> result = new HashSet<OServerUserConfiguration>();
-    if (configuration.users != null) {
-      for (int i = 0; i < configuration.users.length; ++i) {
-        if (configuration.users[i] != null) result.add(configuration.users[i]);
+    if (configuration.getUsers() != null) {
+      for (int i = 0; i < configuration.getUsers().length; ++i) {
+        if (configuration.getUsers()[i] != null) result.add(configuration.getUsers()[i]);
       }
     }
 

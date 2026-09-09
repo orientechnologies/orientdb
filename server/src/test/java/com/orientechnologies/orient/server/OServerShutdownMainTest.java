@@ -36,16 +36,22 @@ public class OServerShutdownMainTest {
     allowJvmShutdownPrev = OConfiguration.global().environmentAllowJvmShutdown();
     OGlobalConfiguration.ENVIRONMENT_ALLOW_JVM_SHUTDOWN.setValue(false);
     OServerConfiguration conf = new OServerConfiguration();
-    conf.network = new OServerNetworkConfiguration();
+    conf.setNetwork(new OServerNetworkConfiguration());
 
-    conf.network.protocols = new ArrayList<OServerNetworkProtocolConfiguration>();
-    conf.network.protocols.add(
-        new OServerNetworkProtocolConfiguration("binary", ONetworkProtocolBinary.class.getName()));
-    conf.network.protocols.add(
-        new OServerNetworkProtocolConfiguration("http", ONetworkProtocolHttpDb.class.getName()));
+    conf.getNetwork().setProtocols(new ArrayList<OServerNetworkProtocolConfiguration>());
+    conf.getNetwork()
+        .getProtocols()
+        .add(
+            new OServerNetworkProtocolConfiguration(
+                "binary", ONetworkProtocolBinary.class.getName()));
+    conf.getNetwork()
+        .getProtocols()
+        .add(
+            new OServerNetworkProtocolConfiguration(
+                "http", ONetworkProtocolHttpDb.class.getName()));
 
-    conf.network.listeners = new ArrayList<OServerNetworkListenerConfiguration>();
-    conf.network.listeners.add(new OServerNetworkListenerConfiguration());
+    conf.getNetwork().setListeners(new ArrayList<OServerNetworkListenerConfiguration>());
+    conf.getNetwork().getListeners().add(new OServerNetworkListenerConfiguration());
 
     server = new OServer(false);
     server.startup(conf);

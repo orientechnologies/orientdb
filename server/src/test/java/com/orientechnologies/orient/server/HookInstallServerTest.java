@@ -69,9 +69,9 @@ public class HookInstallServerTest {
                 .getResourceAsStream(
                     "com/orientechnologies/orient/server/network/orientdb-server-config.xml"));
     OServerHookConfiguration hc = new OServerHookConfiguration();
-    hc.clazz = MyHook.class.getName();
-    ret.getConfiguration().hooks = new ArrayList<OServerHookConfiguration>();
-    ret.getConfiguration().hooks.add(hc);
+    hc.setClazz(MyHook.class.getName());
+    ret.getConfiguration().setHooks(new ArrayList<OServerHookConfiguration>());
+    ret.getConfiguration().getHooks().add(hc);
     server.startup(ret.getConfiguration());
     server.activate();
 

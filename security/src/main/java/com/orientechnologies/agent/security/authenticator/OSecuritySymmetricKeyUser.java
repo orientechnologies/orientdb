@@ -105,11 +105,11 @@ public class OSecuritySymmetricKeyUser extends OServerUserConfiguration
     if (resources == null)
       throw new OSecurityAuthenticatorException("OSecuritySymmetricKeyUser() resources is null");
 
-    super.name = username;
-    super.resources = resources;
+    setName(username);
+    setResources(resources);
 
     String password = userDoc.field("password");
-    if (password == null) super.password = "";
+    if (password == null) setPassword("");
 
     ODocument props = userDoc.field("properties");
 

@@ -32,7 +32,7 @@ public class RemoteTransactionHookTest {
     server.setServerRootDirectory(SERVER_DIRECTORY);
     server.startup(getClass().getResourceAsStream("orientdb-server-config.xml"));
     OServerHookConfiguration hookConfig = new OServerHookConfiguration();
-    hookConfig.clazz = CountCallHookServer.class.getName();
+    hookConfig.setClazz(CountCallHookServer.class.getName());
     server.getHookManager().addHook(hookConfig);
     server.activate();
 

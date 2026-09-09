@@ -42,12 +42,12 @@ public class OServerDatabaseOperationsTest {
           InstantiationException {
     OServerConfiguration conf = new OServerConfiguration();
 
-    conf.handlers = new ArrayList<OServerHandlerConfiguration>();
+    conf.setHandlers(new ArrayList<OServerHandlerConfiguration>());
     OServerUserConfiguration rootUser = new OServerUserConfiguration();
-    rootUser.name = "root";
-    rootUser.password = "root";
-    rootUser.resources = "server.listDatabases";
-    conf.users = new OServerUserConfiguration[] {rootUser};
+    rootUser.setName("root");
+    rootUser.setPassword("root");
+    rootUser.setResources("server.listDatabases");
+    conf.setUsers(new OServerUserConfiguration[] {rootUser});
     server = new OServer(false);
     server.setServerRootDirectory(SERVER_DIRECTORY);
     server.startup(conf);

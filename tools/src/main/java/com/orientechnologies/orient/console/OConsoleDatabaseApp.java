@@ -1469,7 +1469,7 @@ public class OConsoleDatabaseApp extends OConsoleApplication
       if (users.isEmpty()) message("\nNo users found");
       else
         for (OServerUserConfiguration u : users) {
-          message("\n- '%s', permissions: %s", u.name, u.resources);
+          message("\n- '%s', permissions: %s", u.getName(), u.getResources());
         }
 
     } catch (Exception e) {

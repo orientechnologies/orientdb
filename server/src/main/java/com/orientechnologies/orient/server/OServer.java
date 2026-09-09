@@ -369,10 +369,10 @@ public class OServer {
             .setSecurityConfig(new OServerSecurityConfig(this, this.serverCfg));
 
     OServerConfiguration configuration = getConfiguration();
-    if (configuration.distributed != null && configuration.distributed.enabled) {
+    if (configuration.getDistributed() != null && configuration.getDistributed().getEnabled()) {
       builder =
           ODistributedConfig.buildNodeConfig(
-              builder, ODistributedConfig.fromEnv(configuration.distributed), configuration);
+              builder, ODistributedConfig.fromEnv(configuration.getDistributed()), configuration);
     }
 
     try {
@@ -427,10 +427,10 @@ public class OServer {
           new OTokenHandlerImpl(
               this.databases.getSecuritySystem().getTokenSign(), this.getContextConfiguration());
 
-      if (configuration.network != null) {
+      if (configuration.getNetwork() != null) {
         // REGISTER/CREATE SOCKET FACTORIES
-        if (configuration.network.sockets != null) {
-          for (OServerSocketFactoryConfiguration f : configuration.network.sockets) {
+        if (configuration.getNetwork().getSockets() != null) {
+          for (OServerSocketFactoryConfiguration f : configuration.getNetwork().getSockets()) {
             try {
               Class<? extends OServerSocketFactory> fClass =
                   (Class<? extends OServerSocketFactory>) loadClass(f.implementation);
@@ -448,13 +448,13 @@ public class OServer {
         }
 
         // REGISTER PROTOCOLS
-        for (OServerNetworkProtocolConfiguration p : configuration.network.protocols)
+        for (OServerNetworkProtocolConfiguration p : configuration.getNetwork().getProtocols())
           networkProtocols.put(
               p.name, (Class<? extends ONetworkProtocol>) loadClass(p.implementation));
 
         // STARTUP LISTENERS
         List<OServerNetworkListener> listener = new ArrayList<>();
-        for (OServerNetworkListenerConfiguration l : configuration.network.listeners) {
+        for (OServerNetworkListenerConfiguration l : configuration.getNetwork().getListeners()) {
           listener.add(
               new OServerNetworkListener(
                   this,
@@ -821,9 +821,9 @@ public class OServer {
     final OServerConfiguration cfg = serverCfg.getConfiguration();
 
     // FILL THE CONTEXT CONFIGURATION WITH SERVER'S PARAMETERS
-    if (cfg.properties != null)
-      for (OServerEntryConfiguration prop : cfg.properties)
-        contextConfiguration.setValue(prop.name, prop.value);
+    if (cfg.getProperties() != null)
+      for (OServerEntryConfiguration prop : cfg.getProperties())
+        contextConfiguration.setValue(prop.getName(), prop.getValue());
 
     hookManager = new OConfigurableHooksManager(cfg);
   }
@@ -848,8 +848,8 @@ public class OServer {
   protected void loadStorages() {
     final OServerConfiguration configuration = serverCfg.getConfiguration();
 
-    if (configuration.storages == null) return;
-    for (OServerStorageConfiguration stg : configuration.storages) {
+    if (configuration.getStorages() == null) return;
+    for (OServerStorageConfiguration stg : configuration.getStorages()) {
       if (stg.loadOnStartup) {
         String url = stg.path;
         if (url.endsWith("/")) url = url.substring(0, url.length() - 1);
@@ -1030,16 +1030,16 @@ public class OServer {
     // PLUGINS CONFIGURED IN XML
     final OServerConfiguration configuration = serverCfg.getConfiguration();
 
-    if (configuration.handlers != null) {
+    if (configuration.getHandlers() != null) {
       // ACTIVATE PLUGINS
       final List<OServerPlugin> plugins = new ArrayList<OServerPlugin>();
 
-      for (OServerHandlerConfiguration h : configuration.handlers) {
-        if (h.parameters != null) {
+      for (OServerHandlerConfiguration h : configuration.getHandlers()) {
+        if (h.getParameters() != null) {
           // CHECK IF IT'S ENABLED
           boolean enabled = true;
 
-          for (OServerParameterConfiguration p : h.parameters) {
+          for (OServerParameterConfiguration p : h.getParameters()) {
             if (p.name.equals("enabled")) {
               enabled = false;
 
@@ -1061,7 +1061,7 @@ public class OServer {
         }
         try {
           final OServerPlugin plugin =
-              (OServerPlugin) loadClass(h.clazz).getConstructor().newInstance();
+              (OServerPlugin) loadClass(h.getClazz()).getConstructor().newInstance();
 
           if (plugin instanceof ODistributedServerManager)
             distributedManager = (ODistributedServerManager) plugin;
@@ -1069,16 +1069,16 @@ public class OServer {
           pluginManager.registerPlugin(
               new OServerPluginInfo(plugin.getName(), null, null, null, plugin, null, 0, null));
 
-          pluginManager.callListenerBeforeConfig(plugin, h.parameters);
-          plugin.config(this, h.parameters);
-          pluginManager.callListenerAfterConfig(plugin, h.parameters);
+          pluginManager.callListenerBeforeConfig(plugin, h.getParameters());
+          plugin.config(this, h.getParameters());
+          pluginManager.callListenerAfterConfig(plugin, h.getParameters());
 
           plugins.add(plugin);
         } catch (IllegalArgumentException
             | SecurityException
             | InvocationTargetException
             | NoSuchMethodException e) {
-          logger.error("Failed instantiating plugin with class %s", e, h.clazz);
+          logger.error("Failed instantiating plugin with class %s", e, h.getClazz());
         }
       }
 

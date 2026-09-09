@@ -17,7 +17,7 @@ public class ODistributedConfig {
     final OServerDistributedConfiguration config;
     if (distributed == null) {
       config = new OServerDistributedConfiguration();
-      config.enabled = false;
+      config.setEnabled(false);
     } else {
       config = distributed;
     }
@@ -30,35 +30,35 @@ public class ODistributedConfig {
   public static void validateConfiguration(OServerDistributedConfiguration configuration)
       throws OConfigurationException {
 
-    if (configuration.enabled) {
+    if (configuration.getEnabled()) {
 
-      if (configuration.nodeName == null) {
+      if (configuration.getNodeName() == null) {
         throw new OConfigurationException("Node name not specified in the configuration");
       }
 
-      if (configuration.group.name == null) {
+      if (configuration.getGroup().getName() == null) {
         throw new OConfigurationException("Group name not specified in the configuration");
       }
-      if (configuration.group.password == null) {
+      if (configuration.getGroup().getPassword() == null) {
         throw new OConfigurationException("Group password not specified in the configuration");
       }
-      if (configuration.quorum == null) {
+      if (configuration.getQuorum() == null) {
         throw new OConfigurationException("Quorum not specified in the configuration");
       }
 
-      if (configuration.network.multicast.enabled) {
+      if (configuration.getNetwork().getMulticast().isEnabled()) {
 
-        if (configuration.network.multicast.ip == null) {
+        if (configuration.getNetwork().getMulticast().getIp() == null) {
           throw new OConfigurationException(
               "Address not specified in the configuration of multicast");
         }
 
-        if (configuration.network.multicast.port == null) {
+        if (configuration.getNetwork().getMulticast().getPort() == null) {
           throw new OConfigurationException(
               "Address not specified in the configuration of multicast");
         }
 
-        if (configuration.network.multicast.discoveryPorts == null) {
+        if (configuration.getNetwork().getMulticast().getDiscoveryPorts() == null) {
           throw new OConfigurationException(
               "Address not specified in the configuration of multicast");
         }
@@ -72,23 +72,24 @@ public class ODistributedConfig {
       OServerConfiguration configuration) {
     var nodeConfigurationBuilder = configBuilder.getNodeConfigurationBuilder();
     nodeConfigurationBuilder
-        .setNodeName(distributed.nodeName)
-        .setQuorum(distributed.quorum)
-        .setGroupName(distributed.group.name)
-        .setGroupPassword(distributed.group.password);
+        .setNodeName(distributed.getNodeName())
+        .setQuorum(distributed.getQuorum())
+        .setGroupName(distributed.getGroup().getName())
+        .setGroupPassword(distributed.getGroup().getPassword());
 
-    OServerDistributedNetworkMulticastConfiguration multicast = distributed.network.multicast;
+    OServerDistributedNetworkMulticastConfiguration multicast =
+        distributed.getNetwork().getMulticast();
 
     nodeConfigurationBuilder.setMulticast(
         OMulticastConfguration.builder()
-            .setEnabled(multicast.enabled)
-            .setIp(multicast.ip)
-            .setPort(multicast.port)
-            .setDiscoveryPorts(multicast.discoveryPorts)
+            .setEnabled(multicast.isEnabled())
+            .setIp(multicast.getIp())
+            .setPort(multicast.getPort())
+            .setDiscoveryPorts(multicast.getDiscoveryPorts())
             .build());
 
     var listenerBuilder = OLocalBinaryListenersConfig.builder();
-    for (OServerNetworkListenerConfiguration listener : configuration.network.listeners) {
+    for (OServerNetworkListenerConfiguration listener : configuration.getNetwork().getListeners()) {
       if ("ONetworkProtocolBinary".equals(listener.protocol)) {
         listenerBuilder.addListener(
             listener.ipAddress, OServerNetworkListener.getPorts(listener.portRange));

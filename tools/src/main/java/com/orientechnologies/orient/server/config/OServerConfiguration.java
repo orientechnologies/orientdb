@@ -20,6 +20,8 @@
 package com.orientechnologies.orient.server.config;
 
 import com.orientechnologies.orient.server.config.distributed.OServerDistributedConfiguration;
+import jakarta.xml.bind.annotation.XmlAccessType;
+import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlElementRef;
 import jakarta.xml.bind.annotation.XmlElementWrapper;
 import jakarta.xml.bind.annotation.XmlRootElement;
@@ -27,41 +29,42 @@ import jakarta.xml.bind.annotation.XmlTransient;
 import java.util.List;
 
 @XmlRootElement(name = "orient-server")
+@XmlAccessorType(XmlAccessType.FIELD)
 public class OServerConfiguration {
   public static final String FILE_NAME = "server-config.xml";
   // private static final String HEADER = "OrientDB Server configuration";
   public static final OServerStorageConfiguration[] EMPTY_CONFIG_ARRAY =
       new OServerStorageConfiguration[0];
-  @XmlTransient public String location;
+  @XmlTransient private String location;
 
   @XmlElementWrapper
   @XmlElementRef(type = OServerHandlerConfiguration.class)
-  public List<OServerHandlerConfiguration> handlers;
+  private List<OServerHandlerConfiguration> handlers;
 
   @XmlElementWrapper
   @XmlElementRef(type = OServerHookConfiguration.class)
-  public List<OServerHookConfiguration> hooks;
+  private List<OServerHookConfiguration> hooks;
 
   @XmlElementRef(type = OServerNetworkConfiguration.class)
-  public OServerNetworkConfiguration network;
+  private OServerNetworkConfiguration network;
 
   @XmlElementWrapper
   @XmlElementRef(type = OServerStorageConfiguration.class)
-  public OServerStorageConfiguration[] storages;
+  private OServerStorageConfiguration[] storages;
 
   @XmlElementWrapper(required = false)
   @XmlElementRef(type = OServerUserConfiguration.class)
-  public OServerUserConfiguration[] users;
+  private OServerUserConfiguration[] users;
 
   @XmlElementRef(type = OServerSecurityConfiguration.class)
-  public OServerSecurityConfiguration security;
+  private OServerSecurityConfiguration security;
 
   @XmlElementWrapper
   @XmlElementRef(type = OServerEntryConfiguration.class)
-  public OServerEntryConfiguration[] properties;
+  private OServerEntryConfiguration[] properties;
 
   @XmlElementRef(type = OServerDistributedConfiguration.class)
-  public OServerDistributedConfiguration distributed;
+  private OServerDistributedConfiguration distributed;
 
   public boolean isAfterFirstTime;
 
@@ -77,15 +80,16 @@ public class OServerConfiguration {
   public OServerConfiguration() {}
 
   public OServerConfiguration(OServerConfigurationLoaderXml iFactory) {
-    location = FILE_NAME;
-    network = new OServerNetworkConfiguration(iFactory);
-    storages = EMPTY_CONFIG_ARRAY;
-    security = new OServerSecurityConfiguration(iFactory);
+    setLocation(FILE_NAME);
+    setNetwork(new OServerNetworkConfiguration(iFactory));
+    setStorages(EMPTY_CONFIG_ARRAY);
+    setSecurity(new OServerSecurityConfiguration(iFactory));
   }
 
   public String getStoragePath(String iURL) {
-    if (storages != null)
-      for (OServerStorageConfiguration stg : storages) if (stg.name.equals(iURL)) return stg.path;
+    if (getStorages() != null)
+      for (OServerStorageConfiguration stg : getStorages())
+        if (stg.name.equals(iURL)) return stg.path;
 
     return null;
   }
@@ -106,12 +110,84 @@ public class OServerConfiguration {
    * @param iDefaultValue Default value returned if not found
    */
   public String getProperty(final String iName, final String iDefaultValue) {
-    if (properties == null) return null;
+    if (getProperties() == null) return null;
 
-    for (OServerEntryConfiguration p : properties) {
-      if (p.name.equals(iName)) return p.value;
+    for (OServerEntryConfiguration p : getProperties()) {
+      if (p.getName().equals(iName)) return p.getValue();
     }
 
     return null;
+  }
+
+  public OServerDistributedConfiguration getDistributed() {
+    return distributed;
+  }
+
+  public void setDistributed(OServerDistributedConfiguration distributed) {
+    this.distributed = distributed;
+  }
+
+  public OServerEntryConfiguration[] getProperties() {
+    return properties;
+  }
+
+  public void setProperties(OServerEntryConfiguration[] properties) {
+    this.properties = properties;
+  }
+
+  public OServerSecurityConfiguration getSecurity() {
+    return security;
+  }
+
+  public void setSecurity(OServerSecurityConfiguration security) {
+    this.security = security;
+  }
+
+  public OServerStorageConfiguration[] getStorages() {
+    return storages;
+  }
+
+  public void setStorages(OServerStorageConfiguration[] storages) {
+    this.storages = storages;
+  }
+
+  public OServerNetworkConfiguration getNetwork() {
+    return network;
+  }
+
+  public void setNetwork(OServerNetworkConfiguration network) {
+    this.network = network;
+  }
+
+  public List<OServerHookConfiguration> getHooks() {
+    return hooks;
+  }
+
+  public void setHooks(List<OServerHookConfiguration> hooks) {
+    this.hooks = hooks;
+  }
+
+  public List<OServerHandlerConfiguration> getHandlers() {
+    return handlers;
+  }
+
+  public void setHandlers(List<OServerHandlerConfiguration> handlers) {
+    this.handlers = handlers;
+  }
+
+  public String getLocation() {
+    return location;
+  }
+
+  public void setLocation(String location) {
+    this.location = location;
+  }
+
+  public OServerUserConfiguration[] getUsers() {
+    return users;
+  }
+
+  public void setUsers(OServerUserConfiguration[] users) {
+    this.users = users;
   }
 }

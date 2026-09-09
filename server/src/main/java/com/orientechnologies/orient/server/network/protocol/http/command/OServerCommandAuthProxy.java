@@ -42,9 +42,9 @@ public class OServerCommandAuthProxy extends OServerCommandPatternAbstract {
     userName = "";
     userPassword = "";
     for (OServerEntryConfiguration conf : iConfig.parameters) {
-      if (conf.name.equals(USERNAME_CONF)) userName = conf.value;
-      else if (conf.name.equals(USERPASSWORD_CONF)) userPassword = conf.value;
-      else if (conf.name.equals(DATABASE_CONF)) databaseName = conf.value;
+      if (conf.getName().equals(USERNAME_CONF)) userName = conf.getValue();
+      else if (conf.getName().equals(USERPASSWORD_CONF)) userPassword = conf.getValue();
+      else if (conf.getName().equals(DATABASE_CONF)) databaseName = conf.getValue();
     }
     authentication = userName + ":" + userPassword;
   }

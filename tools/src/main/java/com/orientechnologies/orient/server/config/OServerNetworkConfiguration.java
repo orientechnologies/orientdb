@@ -19,6 +19,8 @@
  */
 package com.orientechnologies.orient.server.config;
 
+import jakarta.xml.bind.annotation.XmlAccessType;
+import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlAnyElement;
 import jakarta.xml.bind.annotation.XmlElementRef;
 import jakarta.xml.bind.annotation.XmlElementWrapper;
@@ -27,32 +29,58 @@ import java.util.ArrayList;
 import java.util.List;
 
 @XmlRootElement(name = "network")
+@XmlAccessorType(XmlAccessType.FIELD)
 public class OServerNetworkConfiguration {
   @XmlElementWrapper
   @XmlAnyElement
   @XmlElementRef(type = OServerSocketFactoryConfiguration.class)
-  public List<OServerSocketFactoryConfiguration> sockets;
+  private List<OServerSocketFactoryConfiguration> sockets;
 
   @XmlElementWrapper
   @XmlAnyElement
   @XmlElementRef(type = OServerNetworkProtocolConfiguration.class)
-  public List<OServerNetworkProtocolConfiguration> protocols;
+  private List<OServerNetworkProtocolConfiguration> protocols;
 
   @XmlElementWrapper
   @XmlAnyElement
   @XmlElementRef(type = OServerNetworkListenerConfiguration.class)
-  public List<OServerNetworkListenerConfiguration> listeners;
+  private List<OServerNetworkListenerConfiguration> listeners;
 
   public OServerNetworkConfiguration() {}
 
   public OServerNetworkConfiguration(Object iObject) {
-    protocols = new ArrayList<OServerNetworkProtocolConfiguration>();
-    protocols.add(
-        new OServerNetworkProtocolConfiguration(
-            "binary",
-            "com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary"));
+    setProtocols(new ArrayList<OServerNetworkProtocolConfiguration>());
+    getProtocols()
+        .add(
+            new OServerNetworkProtocolConfiguration(
+                "binary",
+                "com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary"));
 
-    listeners = new ArrayList<OServerNetworkListenerConfiguration>();
-    listeners.add(new OServerNetworkListenerConfiguration());
+    setListeners(new ArrayList<OServerNetworkListenerConfiguration>());
+    getListeners().add(new OServerNetworkListenerConfiguration());
+  }
+
+  public List<OServerNetworkListenerConfiguration> getListeners() {
+    return listeners;
+  }
+
+  public void setListeners(List<OServerNetworkListenerConfiguration> listeners) {
+    this.listeners = listeners;
+  }
+
+  public List<OServerNetworkProtocolConfiguration> getProtocols() {
+    return protocols;
+  }
+
+  public void setProtocols(List<OServerNetworkProtocolConfiguration> protocols) {
+    this.protocols = protocols;
+  }
+
+  public List<OServerSocketFactoryConfiguration> getSockets() {
+    return sockets;
+  }
+
+  public void setSockets(List<OServerSocketFactoryConfiguration> sockets) {
+    this.sockets = sockets;
   }
 }
