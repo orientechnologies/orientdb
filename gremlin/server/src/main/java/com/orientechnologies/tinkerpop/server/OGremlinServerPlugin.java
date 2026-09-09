@@ -7,8 +7,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerLifecycleListener;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
-import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
-import com.orientechnologies.orient.server.plugin.OServerPluginConfigurable;
+import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.tinkerpop.server.config.OGraphConfig;
 import java.io.File;
 import java.io.FileInputStream;
@@ -26,8 +25,7 @@ import org.apache.tinkerpop.gremlin.server.Settings;
 import org.apache.tinkerpop.gremlin.server.util.ServerGremlinExecutor;
 
 /** Created by Enrico Risa on 06/09/2017. */
-public class OGremlinServerPlugin extends OServerPluginAbstract
-    implements OServerPluginConfigurable, OServerLifecycleListener {
+public class OGremlinServerPlugin implements OServerLifecycleListener, OServerPlugin {
   private static final OLogger logger = OLogManager.instance().logger(OGremlinServerPlugin.class);
 
   protected GremlinServer gremlinServer;
@@ -61,19 +59,6 @@ public class OGremlinServerPlugin extends OServerPluginAbstract
         OSystemVariableResolver.resolveSystemVariables("${ORIENTDB_HOME}/config/graph-config.json");
     return new FileInputStream(new File(aliasConfig));
   }
-
-  @Override
-  public ODocument getConfig() {
-    return config.getConfig();
-  }
-
-  @Override
-  public void changeConfig(ODocument document) {
-    config.reload(document);
-  }
-
-  @Override
-  public void onBeforeActivate() {}
 
   @Override
   public void onAfterActivate() {
@@ -111,9 +96,6 @@ public class OGremlinServerPlugin extends OServerPluginAbstract
     gremlinServer.stop().join();
     logger.info("Gremlin Server shutting down completed.");
   }
-
-  @Override
-  public void onAfterDeactivate() {}
 
   public void installCustomGraph(
       BaseConfiguration configuration, String graphName, String traversalName) {

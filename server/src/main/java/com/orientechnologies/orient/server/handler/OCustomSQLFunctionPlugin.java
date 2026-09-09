@@ -8,7 +8,7 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.functions.OCustomSQLFunctionFactory;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
-import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
+import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
@@ -20,7 +20,7 @@ import java.util.Map;
  *
  * @author Fabrizio Fortino
  */
-public class OCustomSQLFunctionPlugin extends OServerPluginAbstract {
+public class OCustomSQLFunctionPlugin implements OServerPlugin {
 
   private static final char PREFIX_NAME_SEPARATOR = '_';
 

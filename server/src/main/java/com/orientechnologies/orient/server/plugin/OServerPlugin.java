@@ -32,32 +32,37 @@ import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
  */
 public interface OServerPlugin extends OService {
   /** Callback invoked when a client connection begins. */
-  void onClientConnection(OClientConnection iConnection);
+  default void onClientConnection(OClientConnection iConnection) {}
 
   /** Callback invoked when a client connection ends. */
-  void onClientDisconnection(OClientConnection iConnection);
+  default void onClientDisconnection(OClientConnection iConnection) {}
 
   /** Callback invoked before a client request is processed. */
-  void onBeforeClientRequest(OClientConnection iConnection, byte iRequestType);
+  default void onBeforeClientRequest(OClientConnection iConnection, byte iRequestType) {}
 
   /** Callback invoked after a client request is processed. */
-  void onAfterClientRequest(OClientConnection iConnection, byte iRequestType);
+  default void onAfterClientRequest(OClientConnection iConnection, byte iRequestType) {}
 
   /**
    * Callback invoked when a client connection has errors.
    *
    * @param iThrowable Throwable instance received
    */
-  void onClientError(OClientConnection iConnection, Throwable iThrowable);
+  default void onClientError(OClientConnection iConnection, Throwable iThrowable) {}
 
   /** Configures the handler. Called at startup. */
-  void config(OServer oServer, OServerParameterConfiguration[] iParams);
+  default void config(OServer oServer, OServerParameterConfiguration[] iParams) {}
+  ;
 
   default void onSocketAccepted(ONetworkProtocol protocol) {}
 
   default void onSocketDestroyed(ONetworkProtocol protocol) {}
 
-  void sendShutdown();
+  default void sendShutdown() {
+    shutdown();
+  }
 
-  Object getContent(final String iURL);
+  default Object getContent(final String iURL) {
+    return null;
+  }
 }

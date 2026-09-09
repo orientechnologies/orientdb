@@ -1,10 +1,10 @@
 package com.orientechnologies.orient.server;
 
 import com.orientechnologies.orient.server.distributed.ODistributedException;
-import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
+import com.orientechnologies.orient.server.plugin.OServerPlugin;
 
 /** Created by frank on 21/01/2016. */
-public class OServerFailingOnStarupPluginStub extends OServerPluginAbstract {
+public class OServerFailingOnStarupPluginStub implements OServerPlugin {
 
   @Override
   public void startup() {

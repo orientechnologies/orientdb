@@ -64,7 +64,7 @@ import com.orientechnologies.orient.server.distributed.config.OClusterConfigurat
 import com.orientechnologies.orient.server.distributed.task.OAbstractRemoteTask;
 import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastClusterMetadataManager;
-import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
+import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -82,13 +82,14 @@ import sun.misc.Signal;
  *
  * @author Luca Garulli (l.garulli--at--orientechnologies.com)
  */
-public class ODistributedPlugin extends OServerPluginAbstract implements ODistributedServerManager {
+public class ODistributedPlugin implements OServerPlugin, ODistributedServerManager {
   private static final OLoggerDistributed logger =
       OLoggerDistributed.logger(ODistributedPlugin.class);
 
   protected static final String PAR_DEF_DISTRIB_DB_CONFIG = "configuration.db.default";
   protected static final String NODE_NAME_ENV = "ORIENTDB_NODE_NAME";
 
+  protected boolean enabled = true;
   private OServer serverInstance;
   private String nodeName = null;
   protected File defaultDatabaseConfigFile;

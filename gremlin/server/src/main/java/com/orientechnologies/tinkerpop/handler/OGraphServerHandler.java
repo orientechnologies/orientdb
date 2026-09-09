@@ -23,16 +23,15 @@ package com.orientechnologies.tinkerpop.handler;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
-import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpAbstract;
-import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
+import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.tinkerpop.command.OServerCommandPostCommandGremlin;
 import org.apache.tinkerpop.gremlin.orientdb.executor.OCommandGremlinExecutor;
 
-public class OGraphServerHandler extends OServerPluginAbstract {
+public class OGraphServerHandler implements OServerPlugin {
   private static final OLogger logger = OLogManager.instance().logger(OGraphServerHandler.class);
   private boolean enabled = true;
   private int graphPoolMax;
@@ -80,10 +79,5 @@ public class OGraphServerHandler extends OServerPluginAbstract {
   @Override
   public void shutdown() {
     if (!enabled) return;
-  }
-
-  @Override
-  public void onAfterClientRequest(OClientConnection connection, byte requestType) {
-    super.onAfterClientRequest(connection, requestType);
   }
 }

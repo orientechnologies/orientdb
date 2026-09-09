@@ -36,8 +36,7 @@ import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
-import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
-import com.orientechnologies.orient.server.plugin.OServerPluginConfigurable;
+import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -64,13 +63,14 @@ import java.util.concurrent.ConcurrentHashMap;
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
-public class OAutomaticBackup extends OServerPluginAbstract implements OServerPluginConfigurable {
+public class OAutomaticBackup implements OServerPlugin {
   private static final OLogger logger = OLogManager.instance().logger(OAutomaticBackup.class);
 
   private ODocument configuration;
 
   private Set<OAutomaticBackupListener> listeners =
       Collections.newSetFromMap(new ConcurrentHashMap<OAutomaticBackupListener, Boolean>());
+  protected boolean enabled = true;
 
   public enum VARIABLES {
     DBNAME,
@@ -457,15 +457,6 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
   public String getName() {
     return "automaticBackup";
   }
-
-  @Override
-  public ODocument getConfig() {
-    return configuration;
-  }
-
-  // TODO change current config and restart the automatic backup plugin
-  @Override
-  public void changeConfig(ODocument document) {}
 
   public void registerListener(OAutomaticBackupListener listener) {
     listeners.add(listener);

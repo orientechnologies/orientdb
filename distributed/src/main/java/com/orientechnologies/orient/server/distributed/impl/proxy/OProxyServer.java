@@ -5,13 +5,13 @@ import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
-import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
+import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class OProxyServer extends OServerPluginAbstract {
+public class OProxyServer implements OServerPlugin {
   private static final OLogger logger = OLogManager.instance().logger(OProxyServer.class);
   protected String remoteHost = "localhost";
   protected Map<Integer, Integer> ports = new HashMap<Integer, Integer>();
@@ -22,6 +22,7 @@ public class OProxyServer extends OServerPluginAbstract {
   protected String tracing = "byte";
   protected int readTimeout = 300;
   protected boolean waitUntilRemotePortsAreOpen = false;
+  protected boolean enabled = true;
 
   public OProxyServer() {}
 

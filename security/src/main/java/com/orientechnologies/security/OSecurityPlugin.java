@@ -19,13 +19,13 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
-import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
+import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.security.auditing.ODefaultAuditing;
 import com.orientechnologies.security.kerberos.OKerberosAuthenticator;
 import com.orientechnologies.security.ldap.OLDAPImporter;
 import com.orientechnologies.security.password.ODefaultPasswordValidator;
 
-public class OSecurityPlugin extends OServerPluginAbstract {
+public class OSecurityPlugin implements OServerPlugin {
   private static final OLogger logger = OLogManager.instance().logger(OSecurityPlugin.class);
   private OServer server;
 

@@ -37,7 +37,6 @@ import com.orientechnologies.orient.server.network.protocol.http.command.get.OSe
 import java.io.BufferedInputStream;
 import java.io.File;
 import java.io.InputStream;
-import java.lang.reflect.Method;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
@@ -258,19 +257,8 @@ public class OServerPluginManager implements OService {
     final Class<? extends OServerPlugin> classToLoad =
         (Class<? extends OServerPlugin>) pluginClassLoader.loadClass(iClassName);
     final OServerPlugin instance = classToLoad.newInstance();
-
-    // CONFIG()
-    final Method configMethod =
-        classToLoad.getDeclaredMethod(
-            "config", OServer.class, OServerParameterConfiguration[].class);
-
-    configMethod.invoke(instance, server, params);
-
-    // STARTUP()
-    final Method startupMethod = classToLoad.getDeclaredMethod("startup");
-
-    startupMethod.invoke(instance);
-
+    instance.config(server, params);
+    instance.startup();
     return instance;
   }
 

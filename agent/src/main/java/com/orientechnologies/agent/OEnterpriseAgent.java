@@ -53,7 +53,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerManager
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpAbstract;
-import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
+import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -63,8 +63,11 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
 
-public class OEnterpriseAgent extends OServerPluginAbstract
-    implements ODatabaseLifecycleListener, OServerLifecycleListener, OEnterpriseEndpoint {
+public class OEnterpriseAgent
+    implements OServerPlugin,
+        ODatabaseLifecycleListener,
+        OServerLifecycleListener,
+        OEnterpriseEndpoint {
   private static final OLogger logger = OLogManager.instance().logger(OEnterpriseAgent.class);
 
   private static final String PLUGIN_NAME = "enterprise-agent";
@@ -72,6 +75,7 @@ public class OEnterpriseAgent extends OServerPluginAbstract
   private static final String EE_VERSION = "version";
   private static final boolean PLUGIN_ENABLED_DEFAULT = false;
 
+  protected boolean enabled = true;
   private String enterpriseVersion = "";
   public OServer server;
   private Properties properties = new Properties();
@@ -234,9 +238,6 @@ public class OEnterpriseAgent extends OServerPluginAbstract
   }
 
   @Override
-  public void onBeforeActivate() {}
-
-  @Override
   public void onAfterActivate() {
     services.forEach((s) -> s.start());
   }
@@ -247,14 +248,6 @@ public class OEnterpriseAgent extends OServerPluginAbstract
         (s) -> {
           s.stop();
         });
-  }
-
-  @Override
-  public void onAfterDeactivate() {}
-
-  @Override
-  public void onAfterClientRequest(OClientConnection iConnection, byte iRequestType) {
-    super.onAfterClientRequest(iConnection, iRequestType);
   }
 
   public <T extends OEnterpriseService> Optional<T> getServiceByClass(Class<T> klass) {

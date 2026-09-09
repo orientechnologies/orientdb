@@ -26,7 +26,7 @@ import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.exception.OSecurityException;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
-import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
+import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Locale;
@@ -38,12 +38,13 @@ import java.util.Set;
  *
  * @author Luca
  */
-public class OServerSideScriptInterpreter extends OServerPluginAbstract {
+public class OServerSideScriptInterpreter implements OServerPlugin {
   private static final OLogger logger =
       OLogManager.instance().logger(OServerSideScriptInterpreter.class);
   protected Set<String> allowedLanguages = new HashSet<String>();
 
   protected OScriptInterceptor interceptor;
+  protected boolean enabled = true;
   private OServer server;
 
   @Override

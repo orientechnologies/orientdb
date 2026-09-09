@@ -27,7 +27,7 @@ package com.orientechnologies.common.util;
 public interface OService {
   String getName();
 
-  void startup();
+  default void startup() {}
 
-  void shutdown();
+  default void shutdown() {}
 }

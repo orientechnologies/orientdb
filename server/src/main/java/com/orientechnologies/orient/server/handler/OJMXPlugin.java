@@ -28,12 +28,12 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
-import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
+import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import java.lang.management.ManagementFactory;
 import javax.management.MBeanServer;
 import javax.management.ObjectName;
 
-public class OJMXPlugin extends OServerPluginAbstract {
+public class OJMXPlugin implements OServerPlugin {
   private static final OLogger logger = OLogManager.instance().logger(OJMXPlugin.class);
   private ObjectName onProfiler;
   private boolean profilerManaged;

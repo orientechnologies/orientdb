@@ -25,14 +25,14 @@ import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.security.OSyslog;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
-import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
+import com.orientechnologies.orient.server.plugin.OServerPlugin;
 
 /**
  * Provides a default implementation for syslog access.
  *
  * @author S. Colin Leister
  */
-public class ODefaultSyslog extends OServerPluginAbstract implements OSyslog {
+public class ODefaultSyslog implements OServerPlugin, OSyslog {
   private static final OLogger logger = OLogManager.instance().logger(ODefaultSyslog.class);
   private boolean debug = false;
   private String hostname = "localhost";
@@ -40,6 +40,7 @@ public class ODefaultSyslog extends OServerPluginAbstract implements OSyslog {
   private String appName = "OrientDB";
 
   private UdpSyslogMessageSender messageSender;
+  protected boolean enabled = true;
 
   // OSecurityComponent
 

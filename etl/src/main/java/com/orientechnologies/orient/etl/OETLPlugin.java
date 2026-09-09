@@ -29,7 +29,7 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpAbstract;
-import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
+import com.orientechnologies.orient.server.plugin.OServerPlugin;
 
 /**
  * OETLPlugin.
@@ -37,7 +37,7 @@ import com.orientechnologies.orient.server.plugin.OServerPluginAbstract;
  * @author Gabriele Ponzi
  * @email gabriele.ponzi--at--gmail.com
  */
-public class OETLPlugin extends OServerPluginAbstract {
+public class OETLPlugin implements OServerPlugin {
 
   private OServer server;
 
@@ -91,10 +91,5 @@ public class OETLPlugin extends OServerPluginAbstract {
   @Override
   public void config(OServer oServer, OServerParameterConfiguration[] iParams) {
     server = oServer;
-  }
-
-  @Override
-  public void shutdown() {
-    super.shutdown();
   }
 }
