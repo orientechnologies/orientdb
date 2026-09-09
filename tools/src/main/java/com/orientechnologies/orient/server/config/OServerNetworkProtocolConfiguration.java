@@ -19,24 +19,43 @@
  */
 package com.orientechnologies.orient.server.config;
 
+import jakarta.xml.bind.annotation.XmlAccessType;
+import jakarta.xml.bind.annotation.XmlAccessorType;
 import jakarta.xml.bind.annotation.XmlAttribute;
 import jakarta.xml.bind.annotation.XmlRootElement;
 import jakarta.xml.bind.annotation.XmlType;
 
 @XmlRootElement(name = "protocol")
 @XmlType(propOrder = {"implementation", "name"})
+@XmlAccessorType(XmlAccessType.FIELD)
 public class OServerNetworkProtocolConfiguration {
+
+  @XmlAttribute(required = true)
+  private String name;
+
+  @XmlAttribute(required = true)
+  private String implementation;
 
   public OServerNetworkProtocolConfiguration() {}
 
   public OServerNetworkProtocolConfiguration(String name, String implementation) {
-    this.name = name;
+    this.setName(name);
+    this.setImplementation(implementation);
+  }
+
+  public String getImplementation() {
+    return implementation;
+  }
+
+  public void setImplementation(String implementation) {
     this.implementation = implementation;
   }
 
-  @XmlAttribute(required = true)
-  public String name;
+  public String getName() {
+    return name;
+  }
 
-  @XmlAttribute(required = true)
-  public String implementation;
+  public void setName(String name) {
+    this.name = name;
+  }
 }

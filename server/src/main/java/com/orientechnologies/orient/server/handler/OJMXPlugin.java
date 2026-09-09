@@ -43,12 +43,12 @@ public class OJMXPlugin extends OServerPluginAbstract {
   @Override
   public void config(final OServer oServer, final OServerParameterConfiguration[] iParams) {
     for (OServerParameterConfiguration param : iParams) {
-      if (param.name.equalsIgnoreCase("enabled")) {
-        if (!Boolean.parseBoolean(param.value))
+      if (param.getName().equalsIgnoreCase("enabled")) {
+        if (!Boolean.parseBoolean(param.getValue()))
           // DISABLE IT
           return;
-      } else if (param.name.equalsIgnoreCase("profilerManaged"))
-        profilerManaged = Boolean.parseBoolean(param.value);
+      } else if (param.getName().equalsIgnoreCase("profilerManaged"))
+        profilerManaged = Boolean.parseBoolean(param.getValue());
     }
 
     logger.info("JMX plugin installed and active: profilerManaged=%s", profilerManaged);

@@ -79,8 +79,8 @@ public class OHazelcastClusterMetadataManager
     this.nodeName = nodeName;
     this.serverInstance = server;
     for (OServerParameterConfiguration param : params) {
-      if (param.name.equalsIgnoreCase("configuration.hazelcast")) {
-        hazelcastConfigFile = OSystemVariableResolver.resolveSystemVariables(param.value);
+      if (param.getName().equalsIgnoreCase("configuration.hazelcast")) {
+        hazelcastConfigFile = OSystemVariableResolver.resolveSystemVariables(param.getValue());
         hazelcastConfigFile = OFileUtils.getPath(hazelcastConfigFile);
         // If hazelcastConfig is null, use the file system XML config.
         if (hazelcastConfig == null) {

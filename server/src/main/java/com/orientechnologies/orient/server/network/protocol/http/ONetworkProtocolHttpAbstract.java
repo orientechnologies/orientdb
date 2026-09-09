@@ -956,7 +956,7 @@ public abstract class ONetworkProtocolHttpAbstract extends ONetworkProtocol
       try {
         cmdManager.registerCommand(OServerNetworkListener.createCommand(server, c));
       } catch (Exception e) {
-        logger.error("Error on creating stateful command '%s'", e, c.implementation);
+        logger.error("Error on creating stateful command '%s'", e, c.getImplementation());
       }
 
     for (OServerCommand c : iListener.getStatelessCommands()) cmdManager.registerCommand(c);

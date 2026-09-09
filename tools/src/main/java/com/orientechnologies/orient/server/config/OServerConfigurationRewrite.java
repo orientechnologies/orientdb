@@ -30,14 +30,14 @@ public class OServerConfigurationRewrite {
         load.setDistributed(new OServerDistributedConfiguration());
 
         for (OServerParameterConfiguration par : handler.getParameters()) {
-          if ("enabled".equalsIgnoreCase(par.name)) {
-            load.getDistributed().setEnabled(Boolean.valueOf(par.value));
+          if ("enabled".equalsIgnoreCase(par.getName())) {
+            load.getDistributed().setEnabled(Boolean.valueOf(par.getValue()));
           }
-          if ("nodeName".equalsIgnoreCase(par.name)) {
-            load.getDistributed().setNodeName(par.value);
+          if ("nodeName".equalsIgnoreCase(par.getName())) {
+            load.getDistributed().setNodeName(par.getValue());
           }
-          if ("configuration.db.default".equalsIgnoreCase(par.name)) {
-            String config = Files.readString(Path.of(par.value));
+          if ("configuration.db.default".equalsIgnoreCase(par.getName())) {
+            String config = Files.readString(Path.of(par.getValue()));
             var c = new ODocument();
             c.fromJSON(config);
             String quorumValue = c.getProperty("writeQuorum");

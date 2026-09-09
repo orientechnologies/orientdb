@@ -93,7 +93,7 @@ public class OServerNetworkListener extends Thread {
 
     if (iCommands != null) {
       for (int i = 0; i < iCommands.length; ++i) {
-        if (iCommands[i].stateful)
+        if (iCommands[i].isStateful())
           // SAVE STATEFUL COMMAND CFG
           registerStatefulCommand(iCommands[i]);
         else
@@ -134,7 +134,7 @@ public class OServerNetworkListener extends Thread {
     try {
       final Constructor<OServerCommand> c =
           (Constructor<OServerCommand>)
-              Class.forName(iCommand.implementation)
+              Class.forName(iCommand.getImplementation())
                   .getConstructor(OServerCommandConfiguration.class);
       final OServerCommand cmd = c.newInstance(new Object[] {iCommand});
       cmd.configure(server);
@@ -142,7 +142,7 @@ public class OServerNetworkListener extends Thread {
     } catch (Exception e) {
       throw new IllegalArgumentException(
           "Cannot create custom command invoking the constructor: "
-              + iCommand.implementation
+              + iCommand.getImplementation()
               + "("
               + iCommand
               + ")",
@@ -326,7 +326,7 @@ public class OServerNetworkListener extends Thread {
 
     // SEARCH IN STATEFUL COMMANDS
     for (OServerCommandConfiguration cmd : statefulCommands) {
-      if (cmd.implementation.equals(iCommandClass.getName())) return cmd;
+      if (cmd.getImplementation().equals(iCommandClass.getName())) return cmd;
     }
 
     return null;
@@ -397,7 +397,7 @@ public class OServerNetworkListener extends Thread {
     if (iParameters != null && iParameters.length > 0) {
       // CONVERT PARAMETERS IN MAP TO INTIALIZE THE CONTEXT-CONFIGURATION
       for (OServerParameterConfiguration param : iParameters)
-        configuration.setValue(param.name, param.value);
+        configuration.setValue(param.getName(), param.getValue());
     }
 
     socketBufferSize = configuration.networkSocketBufferSize();

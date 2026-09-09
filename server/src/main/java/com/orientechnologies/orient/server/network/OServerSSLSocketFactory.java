@@ -60,20 +60,20 @@ public class OServerSSLSocketFactory extends OServerSocketFactory {
 
     super.config(name, iParameters);
     for (OServerParameterConfiguration param : iParameters) {
-      if (param.name.equalsIgnoreCase(PARAM_NETWORK_SSL_CLIENT_AUTH)) {
-        clientAuth = Boolean.parseBoolean(param.value);
-      } else if (param.name.equalsIgnoreCase(PARAM_NETWORK_SSL_KEYSTORE)) {
-        keyStorePath = param.value;
-      } else if (param.name.equalsIgnoreCase(PARAM_NETWORK_SSL_KEYSTORE_PASSWORD)) {
-        keyStorePassword = param.value;
-      } else if (param.name.equalsIgnoreCase(PARAM_NETWORK_SSL_KEYSTORE_TYPE)) {
-        keyStoreType = param.value;
-      } else if (param.name.equalsIgnoreCase(PARAM_NETWORK_SSL_TRUSTSTORE)) {
-        trustStorePath = param.value;
-      } else if (param.name.equalsIgnoreCase(PARAM_NETWORK_SSL_TRUSTSTORE_PASSWORD)) {
-        trustStorePassword = param.value;
-      } else if (param.name.equalsIgnoreCase(PARAM_NETWORK_SSL_TRUSTSTORE_TYPE)) {
-        trustStoreType = param.value;
+      if (param.getName().equalsIgnoreCase(PARAM_NETWORK_SSL_CLIENT_AUTH)) {
+        clientAuth = Boolean.parseBoolean(param.getValue());
+      } else if (param.getName().equalsIgnoreCase(PARAM_NETWORK_SSL_KEYSTORE)) {
+        keyStorePath = param.getValue();
+      } else if (param.getName().equalsIgnoreCase(PARAM_NETWORK_SSL_KEYSTORE_PASSWORD)) {
+        keyStorePassword = param.getValue();
+      } else if (param.getName().equalsIgnoreCase(PARAM_NETWORK_SSL_KEYSTORE_TYPE)) {
+        keyStoreType = param.getValue();
+      } else if (param.getName().equalsIgnoreCase(PARAM_NETWORK_SSL_TRUSTSTORE)) {
+        trustStorePath = param.getValue();
+      } else if (param.getName().equalsIgnoreCase(PARAM_NETWORK_SSL_TRUSTSTORE_PASSWORD)) {
+        trustStorePassword = param.getValue();
+      } else if (param.getName().equalsIgnoreCase(PARAM_NETWORK_SSL_TRUSTSTORE_TYPE)) {
+        trustStoreType = param.getValue();
       }
     }
 

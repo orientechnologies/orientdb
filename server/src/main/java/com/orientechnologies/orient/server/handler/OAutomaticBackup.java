@@ -104,8 +104,8 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
     configuration = new ODocument();
 
     for (OServerParameterConfiguration param : iParams) {
-      if (param.name.equalsIgnoreCase("config") && param.value.trim().length() > 0) {
-        configFile = param.value.trim();
+      if (param.getName().equalsIgnoreCase("config") && param.getValue().trim().length() > 0) {
+        configFile = param.getValue().trim();
 
         final File f = new File(OSystemVariableResolver.resolveSystemVariables(configFile));
         if (!f.exists())
@@ -116,26 +116,30 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
         break;
 
         // LEGACY <v2.2: CONVERT ALL SETTINGS IN JSON
-      } else if (param.name.equalsIgnoreCase("enabled")) {
-        configuration.field("enabled", Boolean.parseBoolean(param.value));
-      } else if (param.name.equalsIgnoreCase("delay")) configuration.field("delay", param.value);
-      else if (param.name.equalsIgnoreCase("firstTime")) {
-        configuration.field("firstTime", param.value);
-      } else if (param.name.equalsIgnoreCase("target.directory"))
-        configuration.field("targetDirectory", param.value);
-      else if (param.name.equalsIgnoreCase("db.include") && param.value.trim().length() > 0)
-        configuration.field("dbInclude", param.value);
-      else if (param.name.equalsIgnoreCase("db.exclude") && param.value.trim().length() > 0)
-        configuration.field("dbExclude", param.value);
-      else if (param.name.equalsIgnoreCase("target.fileName"))
-        configuration.field("targetFileName", param.value);
-      else if (param.name.equalsIgnoreCase("bufferSize"))
-        configuration.field("bufferSize", Integer.parseInt(param.value));
-      else if (param.name.equalsIgnoreCase("compressionLevel"))
-        configuration.field("compressionLevel", Integer.parseInt(param.value));
-      else if (param.name.equalsIgnoreCase("mode")) configuration.field("mode", param.value);
-      else if (param.name.equalsIgnoreCase("exportOptions"))
-        configuration.field("exportOptions", param.value);
+      } else if (param.getName().equalsIgnoreCase("enabled")) {
+        configuration.field("enabled", Boolean.parseBoolean(param.getValue()));
+      } else if (param.getName().equalsIgnoreCase("delay"))
+        configuration.field("delay", param.getValue());
+      else if (param.getName().equalsIgnoreCase("firstTime")) {
+        configuration.field("firstTime", param.getValue());
+      } else if (param.getName().equalsIgnoreCase("target.directory"))
+        configuration.field("targetDirectory", param.getValue());
+      else if (param.getName().equalsIgnoreCase("db.include")
+          && param.getValue().trim().length() > 0)
+        configuration.field("dbInclude", param.getValue());
+      else if (param.getName().equalsIgnoreCase("db.exclude")
+          && param.getValue().trim().length() > 0)
+        configuration.field("dbExclude", param.getValue());
+      else if (param.getName().equalsIgnoreCase("target.fileName"))
+        configuration.field("targetFileName", param.getValue());
+      else if (param.getName().equalsIgnoreCase("bufferSize"))
+        configuration.field("bufferSize", Integer.parseInt(param.getValue()));
+      else if (param.getName().equalsIgnoreCase("compressionLevel"))
+        configuration.field("compressionLevel", Integer.parseInt(param.getValue()));
+      else if (param.getName().equalsIgnoreCase("mode"))
+        configuration.field("mode", param.getValue());
+      else if (param.getName().equalsIgnoreCase("exportOptions"))
+        configuration.field("exportOptions", param.getValue());
     }
 
     // LOAD CFG FROM JSON FILE. THIS FILE, IF SPECIFIED, OVERWRITE DEFAULT AND XML SETTINGS

@@ -90,9 +90,9 @@ public class ODistributedConfig {
 
     var listenerBuilder = OLocalBinaryListenersConfig.builder();
     for (OServerNetworkListenerConfiguration listener : configuration.getNetwork().getListeners()) {
-      if ("ONetworkProtocolBinary".equals(listener.protocol)) {
+      if ("ONetworkProtocolBinary".equals(listener.getProtocol())) {
         listenerBuilder.addListener(
-            listener.ipAddress, OServerNetworkListener.getPorts(listener.portRange));
+            listener.getIpAddress(), OServerNetworkListener.getPorts(listener.getPortRange()));
       }
     }
     nodeConfigurationBuilder = nodeConfigurationBuilder.setListeners(listenerBuilder.build());

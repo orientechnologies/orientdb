@@ -433,10 +433,10 @@ public class OServer {
           for (OServerSocketFactoryConfiguration f : configuration.getNetwork().getSockets()) {
             try {
               Class<? extends OServerSocketFactory> fClass =
-                  (Class<? extends OServerSocketFactory>) loadClass(f.implementation);
+                  (Class<? extends OServerSocketFactory>) loadClass(f.getImplementation());
               OServerSocketFactory factory = fClass.getConstructor().newInstance();
-              factory.config(f.name, f.parameters);
-              networkSocketFactories.put(f.name, factory);
+              factory.config(f.getName(), f.getParameters());
+              networkSocketFactories.put(f.getName(), factory);
             } catch (OConfigurationException e) {
               logger.error("Error creating socket factory", e);
             } catch (InvocationTargetException e) {
@@ -450,7 +450,7 @@ public class OServer {
         // REGISTER PROTOCOLS
         for (OServerNetworkProtocolConfiguration p : configuration.getNetwork().getProtocols())
           networkProtocols.put(
-              p.name, (Class<? extends ONetworkProtocol>) loadClass(p.implementation));
+              p.getName(), (Class<? extends ONetworkProtocol>) loadClass(p.getImplementation()));
 
         // STARTUP LISTENERS
         List<OServerNetworkListener> listener = new ArrayList<>();
@@ -458,13 +458,13 @@ public class OServer {
           listener.add(
               new OServerNetworkListener(
                   this,
-                  networkSocketFactories.get(l.socket),
-                  l.ipAddress,
-                  l.portRange,
-                  l.protocol,
-                  networkProtocols.get(l.protocol),
-                  l.parameters,
-                  l.commands));
+                  networkSocketFactories.get(l.getSocket()),
+                  l.getIpAddress(),
+                  l.getPortRange(),
+                  l.getProtocol(),
+                  networkProtocols.get(l.getProtocol()),
+                  l.getParameters(),
+                  l.getCommands()));
         }
         this.networkListeners = listener;
 
@@ -1040,10 +1040,10 @@ public class OServer {
           boolean enabled = true;
 
           for (OServerParameterConfiguration p : h.getParameters()) {
-            if (p.name.equals("enabled")) {
+            if (p.getName().equals("enabled")) {
               enabled = false;
 
-              String value = OSystemVariableResolver.resolveSystemVariables(p.value);
+              String value = OSystemVariableResolver.resolveSystemVariables(p.getValue());
               if (value != null) {
                 value = value.trim();
 

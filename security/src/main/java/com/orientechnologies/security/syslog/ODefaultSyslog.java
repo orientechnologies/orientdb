@@ -66,19 +66,19 @@ public class ODefaultSyslog extends OServerPluginAbstract implements OSyslog {
     enabled = false;
 
     for (OServerParameterConfiguration param : iParams) {
-      if (param.name.equalsIgnoreCase("enabled")) {
-        enabled = Boolean.parseBoolean(param.value);
+      if (param.getName().equalsIgnoreCase("enabled")) {
+        enabled = Boolean.parseBoolean(param.getValue());
         if (!enabled)
           // IGNORE THE REST OF CFG
           return;
-      } else if (param.name.equalsIgnoreCase("debug")) {
-        debug = Boolean.parseBoolean(param.value);
-      } else if (param.name.equalsIgnoreCase("hostname")) {
-        hostname = param.value;
-      } else if (param.name.equalsIgnoreCase("port")) {
-        port = Integer.parseInt(param.value);
-      } else if (param.name.equalsIgnoreCase("appName")) {
-        appName = param.value;
+      } else if (param.getName().equalsIgnoreCase("debug")) {
+        debug = Boolean.parseBoolean(param.getValue());
+      } else if (param.getName().equalsIgnoreCase("hostname")) {
+        hostname = param.getValue();
+      } else if (param.getName().equalsIgnoreCase("port")) {
+        port = Integer.parseInt(param.getValue());
+      } else if (param.getName().equalsIgnoreCase("appName")) {
+        appName = param.getValue();
       }
     }
   }

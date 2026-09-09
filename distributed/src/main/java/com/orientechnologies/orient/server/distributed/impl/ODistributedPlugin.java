@@ -116,19 +116,20 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
     oServer.setVariable("ODistributedAbstractPlugin", this);
 
     for (OServerParameterConfiguration param : iParams) {
-      if (param.name.equalsIgnoreCase("enabled")) {
-        if (!Boolean.parseBoolean(OSystemVariableResolver.resolveSystemVariables(param.value))) {
+      if (param.getName().equalsIgnoreCase("enabled")) {
+        if (!Boolean.parseBoolean(
+            OSystemVariableResolver.resolveSystemVariables(param.getValue()))) {
           // DISABLE IT
           enabled = false;
           return;
         }
-      } else if (param.name.equalsIgnoreCase("nodeName")) {
-        nodeName = param.value;
+      } else if (param.getName().equalsIgnoreCase("nodeName")) {
+        nodeName = param.getValue();
         if (nodeName.contains("."))
           throw new OConfigurationException(
               "Illegal node name '" + nodeName + "'. '.' is not allowed in node name");
-      } else if (param.name.startsWith(PAR_DEF_DISTRIB_DB_CONFIG)) {
-        setDefaultDatabaseConfigFile(param.value);
+      } else if (param.getName().startsWith(PAR_DEF_DISTRIB_DB_CONFIG)) {
+        setDefaultDatabaseConfigFile(param.getValue());
       }
     }
 
@@ -739,9 +740,9 @@ public class ODistributedPlugin extends OServerPluginAbstract implements ODistri
     for (OServerHandlerConfiguration h : cfg.getHandlers()) {
       if (h.getClazz().equals(getClass().getName())) {
         for (OServerParameterConfiguration p : h.getParameters()) {
-          if (p.name.equals("nodeName")) {
+          if (p.getName().equals("nodeName")) {
             found = true;
-            p.value = this.nodeName;
+            p.setValue(this.nodeName);
             break;
           }
         }

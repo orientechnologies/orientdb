@@ -42,12 +42,12 @@ public class OGraphServerHandler extends OServerPluginAbstract {
   public void config(final OServer server, OServerParameterConfiguration[] iParams) {
     graphPoolMax = server.getContextConfiguration().dbPoolMax();
     for (OServerParameterConfiguration param : iParams) {
-      if (param.name.equalsIgnoreCase("enabled")) {
-        if (!Boolean.parseBoolean(param.value))
+      if (param.getName().equalsIgnoreCase("enabled")) {
+        if (!Boolean.parseBoolean(param.getValue()))
           // DISABLE IT
           return;
-      } else if (param.name.equalsIgnoreCase("graph.pool.max"))
-        graphPoolMax = Integer.parseInt(param.value);
+      } else if (param.getName().equalsIgnoreCase("graph.pool.max"))
+        graphPoolMax = Integer.parseInt(param.getValue());
     }
 
     OCommandGremlinExecutor executor =

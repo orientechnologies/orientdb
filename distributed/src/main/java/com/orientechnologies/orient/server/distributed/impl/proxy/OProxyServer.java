@@ -72,17 +72,18 @@ public class OProxyServer extends OServerPluginAbstract {
   @Override
   public void config(final OServer server, final OServerParameterConfiguration[] params) {
     for (OServerParameterConfiguration param : params) {
-      if (param.name.equalsIgnoreCase("enabled")) enabled = Boolean.parseBoolean(param.value);
-      else if (param.name.equalsIgnoreCase("remoteHost")) remoteHost = param.value;
-      else if (param.name.equalsIgnoreCase("tracing")) {
-        if (!"none".equalsIgnoreCase(param.value)
-            && !"byte".equalsIgnoreCase(param.value)
-            && !"hex".equalsIgnoreCase(param.value))
-          logger.error("Invalid tracing value: %s", null, param.value);
-        else tracing = param.value;
+      if (param.getName().equalsIgnoreCase("enabled"))
+        enabled = Boolean.parseBoolean(param.getValue());
+      else if (param.getName().equalsIgnoreCase("remoteHost")) remoteHost = param.getValue();
+      else if (param.getName().equalsIgnoreCase("tracing")) {
+        if (!"none".equalsIgnoreCase(param.getValue())
+            && !"byte".equalsIgnoreCase(param.getValue())
+            && !"hex".equalsIgnoreCase(param.getValue()))
+          logger.error("Invalid tracing value: %s", null, param.getValue());
+        else tracing = param.getValue();
 
-      } else if (param.name.equalsIgnoreCase("ports")) {
-        setPorts(param.value);
+      } else if (param.getName().equalsIgnoreCase("ports")) {
+        setPorts(param.getValue());
       }
     }
   }

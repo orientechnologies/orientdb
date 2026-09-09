@@ -27,9 +27,9 @@ public abstract class OServerCommandAuthenticatedPatternAbstract
   private String[] pattern;
 
   public OServerCommandAuthenticatedPatternAbstract(final OServerCommandConfiguration iConfig) {
-    if (iConfig.pattern == null) throw new IllegalArgumentException("Command pattern missed");
+    if (iConfig.getPattern() == null) throw new IllegalArgumentException("Command pattern missed");
 
-    pattern = iConfig.pattern.split(" ");
+    pattern = iConfig.getPattern().split(" ");
   }
 
   public OServerCommandAuthenticatedPatternAbstract(String[] pattern) {

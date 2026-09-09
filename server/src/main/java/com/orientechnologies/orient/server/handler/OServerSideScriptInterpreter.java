@@ -51,17 +51,17 @@ public class OServerSideScriptInterpreter extends OServerPluginAbstract {
 
     this.server = iServer;
     for (OServerParameterConfiguration param : iParams) {
-      if (param.name.equalsIgnoreCase("enabled")) {
-        if (Boolean.parseBoolean(param.value))
+      if (param.getName().equalsIgnoreCase("enabled")) {
+        if (Boolean.parseBoolean(param.getValue()))
           // ENABLE IT
           enabled = true;
-      } else if (param.name.equalsIgnoreCase("allowedLanguages")) {
+      } else if (param.getName().equalsIgnoreCase("allowedLanguages")) {
         allowedLanguages =
-            new HashSet<>(Arrays.asList(param.value.toLowerCase(Locale.ENGLISH).split(",")));
-      } else if (param.name.equalsIgnoreCase("allowedPackages")) {
+            new HashSet<>(Arrays.asList(param.getValue().toLowerCase(Locale.ENGLISH).split(",")));
+      } else if (param.getName().equalsIgnoreCase("allowedPackages")) {
         OrientDBInternal.extract(iServer.getContext())
             .getScriptManager()
-            .addAllowedPackages(new HashSet<>(Arrays.asList(param.value.split(","))));
+            .addAllowedPackages(new HashSet<>(Arrays.asList(param.getValue().split(","))));
       }
     }
   }

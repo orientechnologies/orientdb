@@ -36,12 +36,12 @@ public class OServerCommandAuthProxy extends OServerCommandPatternAbstract {
 
   public OServerCommandAuthProxy(OServerCommandConfiguration iConfig) {
     super(iConfig);
-    if (iConfig.parameters.length != 3)
+    if (iConfig.getParameters().length != 3)
       throw new OConfigurationException("AuthProxy Command requires database access data.");
 
     userName = "";
     userPassword = "";
-    for (OServerEntryConfiguration conf : iConfig.parameters) {
+    for (OServerEntryConfiguration conf : iConfig.getParameters()) {
       if (conf.getName().equals(USERNAME_CONF)) userName = conf.getValue();
       else if (conf.getName().equals(USERPASSWORD_CONF)) userPassword = conf.getValue();
       else if (conf.getName().equals(DATABASE_CONF)) databaseName = conf.getValue();

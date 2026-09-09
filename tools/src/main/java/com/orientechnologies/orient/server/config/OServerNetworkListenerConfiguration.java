@@ -23,24 +23,73 @@ import jakarta.xml.bind.annotation.*;
 
 @XmlRootElement(name = "listener")
 @XmlType(propOrder = {"commands", "parameters", "protocol", "socket", "portRange", "ipAddress"})
+@XmlAccessorType(XmlAccessType.FIELD)
 public class OServerNetworkListenerConfiguration {
 
   @XmlAttribute(name = "ip-address", required = true)
-  public String ipAddress = "127.0.0.1";
+  private String ipAddress = "127.0.0.1";
 
   @XmlAttribute(name = "port-range")
-  public String portRange = "2424-2430";
+  private String portRange = "2424-2430";
 
-  @XmlAttribute public String protocol = "binary";
+  @XmlAttribute private String protocol = "binary";
 
-  @XmlAttribute public String socket = "default";
+  @XmlAttribute private String socket = "default";
 
   @XmlElementWrapper
   @XmlElementRef(type = OServerParameterConfiguration.class)
-  public OServerParameterConfiguration[] parameters;
+  private OServerParameterConfiguration[] parameters;
 
   @XmlElementWrapper(required = false)
   @XmlAnyElement
   @XmlElementRef(type = OServerCommandConfiguration.class)
-  public OServerCommandConfiguration[] commands;
+  private OServerCommandConfiguration[] commands;
+
+  public OServerCommandConfiguration[] getCommands() {
+    return commands;
+  }
+
+  public void setCommands(OServerCommandConfiguration[] commands) {
+    this.commands = commands;
+  }
+
+  public OServerParameterConfiguration[] getParameters() {
+    return parameters;
+  }
+
+  public void setParameters(OServerParameterConfiguration[] parameters) {
+    this.parameters = parameters;
+  }
+
+  public String getSocket() {
+    return socket;
+  }
+
+  public void setSocket(String socket) {
+    this.socket = socket;
+  }
+
+  public String getProtocol() {
+    return protocol;
+  }
+
+  public void setProtocol(String protocol) {
+    this.protocol = protocol;
+  }
+
+  public String getPortRange() {
+    return portRange;
+  }
+
+  public void setPortRange(String portRange) {
+    this.portRange = portRange;
+  }
+
+  public String getIpAddress() {
+    return ipAddress;
+  }
+
+  public void setIpAddress(String ipAddress) {
+    this.ipAddress = ipAddress;
+  }
 }

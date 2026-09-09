@@ -91,10 +91,10 @@ public class OServerCommandGetStaticContent extends OServerCommandConfigurableAb
   }
 
   public OServerCommandGetStaticContent(final OServerCommandConfiguration iConfiguration) {
-    super(iConfiguration.pattern);
+    super(iConfiguration.getPattern());
 
     // LOAD HTTP CACHE CONFIGURATION
-    for (OServerEntryConfiguration par : iConfiguration.parameters) {
+    for (OServerEntryConfiguration par : iConfiguration.getParameters()) {
       if (par.getName().startsWith(CONFIG_HTTP_CACHE)) {
         final String filter = par.getName().substring(CONFIG_HTTP_CACHE.length());
         if (filter.equalsIgnoreCase("default")) cacheHttpDefault = par.getValue();

@@ -23,17 +23,50 @@ import jakarta.xml.bind.annotation.*;
 
 @XmlRootElement(name = "command")
 @XmlType(propOrder = {"parameters", "implementation", "pattern"})
+@XmlAccessorType(XmlAccessType.FIELD)
 public class OServerCommandConfiguration {
   @XmlAttribute(required = true)
-  public String pattern;
+  private String pattern;
 
   @XmlAttribute(required = true)
-  public String implementation;
+  private String implementation;
 
   @XmlAttribute(required = false)
-  public boolean stateful;
+  private boolean stateful;
 
   @XmlElementWrapper(required = false)
   @XmlElementRef(type = OServerEntryConfiguration.class)
-  public OServerEntryConfiguration[] parameters;
+  private OServerEntryConfiguration[] parameters;
+
+  public OServerEntryConfiguration[] getParameters() {
+    return parameters;
+  }
+
+  public void setParameters(OServerEntryConfiguration[] parameters) {
+    this.parameters = parameters;
+  }
+
+  public boolean isStateful() {
+    return stateful;
+  }
+
+  public void setStateful(boolean stateful) {
+    this.stateful = stateful;
+  }
+
+  public String getImplementation() {
+    return implementation;
+  }
+
+  public void setImplementation(String implementation) {
+    this.implementation = implementation;
+  }
+
+  public String getPattern() {
+    return pattern;
+  }
+
+  public void setPattern(String pattern) {
+    this.pattern = pattern;
+  }
 }

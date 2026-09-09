@@ -37,8 +37,8 @@ public class OCustomSQLFunctionPlugin extends OServerPluginAbstract {
 
     final File configFile =
         Arrays.stream(iParams)
-            .filter(p -> p.name.equalsIgnoreCase("config"))
-            .map(p -> p.value.trim())
+            .filter(p -> p.getName().equalsIgnoreCase("config"))
+            .map(p -> p.getValue().trim())
             .map(OSystemVariableResolver::resolveSystemVariables)
             .map(File::new)
             .filter(File::exists)

@@ -19,22 +19,47 @@ import jakarta.xml.bind.annotation.*;
 
 @XmlRootElement(name = "socket")
 @XmlType(propOrder = {"parameters", "implementation", "name"})
+@XmlAccessorType(XmlAccessType.FIELD)
 public class OServerSocketFactoryConfiguration {
+
+  @XmlAttribute(required = true)
+  private String name;
+
+  @XmlAttribute(required = true)
+  private String implementation;
+
+  @XmlElementWrapper
+  @XmlElementRef(type = OServerParameterConfiguration.class)
+  private OServerParameterConfiguration[] parameters;
 
   public OServerSocketFactoryConfiguration() {}
 
   public OServerSocketFactoryConfiguration(String name, String implementation) {
-    this.name = name;
+    this.setName(name);
+    this.setImplementation(implementation);
+  }
+
+  public OServerParameterConfiguration[] getParameters() {
+    return parameters;
+  }
+
+  public void setParameters(OServerParameterConfiguration[] parameters) {
+    this.parameters = parameters;
+  }
+
+  public String getImplementation() {
+    return implementation;
+  }
+
+  public void setImplementation(String implementation) {
     this.implementation = implementation;
   }
 
-  @XmlAttribute(required = true)
-  public String name;
+  public String getName() {
+    return name;
+  }
 
-  @XmlAttribute(required = true)
-  public String implementation;
-
-  @XmlElementWrapper
-  @XmlElementRef(type = OServerParameterConfiguration.class)
-  public OServerParameterConfiguration[] parameters;
+  public void setName(String name) {
+    this.name = name;
+  }
 }
