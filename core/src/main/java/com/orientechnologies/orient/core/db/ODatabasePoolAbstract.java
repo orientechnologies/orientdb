@@ -84,6 +84,10 @@ public abstract class ODatabasePoolAbstract<DB extends ODatabaseInternal> extend
             }
           }
         }
+      } catch (Exception e) {
+        OLogManager.instance().warn(this, "Exception on database eviction from pool", e);
+      } catch (Error e) {
+        OLogManager.instance().error(this, "Error on database eviction from pool", e);
       } finally {
         unlock();
       }

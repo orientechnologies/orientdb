@@ -50,6 +50,7 @@ import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
 import com.orientechnologies.orient.core.db.OSystemDatabase;
+import com.orientechnologies.orient.core.db.OTimerTask;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
@@ -128,7 +129,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.TimerTask;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
@@ -170,8 +170,8 @@ public class ODistributedPlugin extends OServerPluginAbstract
   private volatile String lastServerDump = "";
   protected CountDownLatch serverStarted = new CountDownLatch(1);
 
-  private TimerTask haStatsTask = null;
-  private TimerTask healthCheckerTask = null;
+  private OTimerTask haStatsTask = null;
+  private OTimerTask healthCheckerTask = null;
   protected OSignalHandler.OSignalListener signalListener;
 
   private final OHazelcastClusterMetadataManager clusterManager;
@@ -301,13 +301,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
 
       final long statsDelay = OGlobalConfiguration.DISTRIBUTED_DUMP_STATS_EVERY.getValueAsLong();
       if (statsDelay > 0) {
-        haStatsTask =
-            new TimerTask() {
-              @Override
-              public void run() {
-                ODistributedPlugin.this.dumpStats();
-              }
-            };
+        haStatsTask = new OTimerTask(this::dumpStats);
         serverInstance.getDatabases().schedule(haStatsTask, statsDelay, statsDelay);
       }
 
@@ -316,12 +310,10 @@ public class ODistributedPlugin extends OServerPluginAbstract
       if (healthChecker > 0) {
         OClusterHealthChecker checkTask = new OClusterHealthChecker(this, healthChecker);
         healthCheckerTask =
-            new TimerTask() {
-              @Override
-              public void run() {
-                serverInstance.getDatabases().execute(checkTask);
-              }
-            };
+            new OTimerTask(
+                () -> {
+                  serverInstance.getDatabases().execute(checkTask);
+                });
         serverInstance.getDatabases().schedule(healthCheckerTask, healthChecker, healthChecker);
       }
 

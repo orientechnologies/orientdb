@@ -8,6 +8,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.OLiveQueryResultListener;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
+import com.orientechnologies.orient.core.db.OTimerTask;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
@@ -46,7 +47,6 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
-import java.util.TimerTask;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -81,7 +81,7 @@ public class ViewManager {
   private final ConcurrentMap<String, Long> lastChangePerClass = new ConcurrentHashMap<>();
   private final Set<String> refreshing = Collections.synchronizedSet(new HashSet<>());
 
-  private volatile TimerTask timerTask;
+  private volatile OTimerTask timerTask;
   private volatile boolean closed = false;
 
   public ViewManager(OrientDBInternal orientDb, String dbName) {
@@ -141,18 +141,16 @@ public class ViewManager {
 
   private void schedule() {
     this.timerTask =
-        new TimerTask() {
-          @Override
-          public void run() {
-            if (closed) return;
-            orientDB.executeNoAuthorizationOnActive(
-                dbName,
-                (db) -> {
-                  ViewManager.this.updateViews((ODatabaseDocumentInternal) db);
-                  return null;
-                });
-          }
-        };
+        new OTimerTask(
+            () -> {
+              if (closed) return;
+              orientDB.executeNoAuthorizationOnActive(
+                  dbName,
+                  (db) -> {
+                    ViewManager.this.updateViews((ODatabaseDocumentInternal) db);
+                    return null;
+                  });
+            });
     this.orientDB.schedule(timerTask, 1000, 1000);
   }
 

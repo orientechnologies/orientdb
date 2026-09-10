@@ -4,6 +4,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.OTimerTask;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OSyncSource;
 import com.orientechnologies.orient.core.storage.impl.local.paginated.wal.OLogSequenceNumber;
@@ -21,7 +22,6 @@ import java.io.PipedInputStream;
 import java.io.PipedOutputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.TimerTask;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -38,7 +38,7 @@ public class OBackgroundBackup implements Runnable, OSyncSource {
   private final CountDownLatch finished = new CountDownLatch(1);
   private volatile InputStream inputStream;
   public volatile boolean valid = true;
-  private TimerTask timerTask;
+  private OTimerTask timerTask;
   private volatile long lastRead;
 
   public OBackgroundBackup(
@@ -196,19 +196,17 @@ public class OBackgroundBackup implements Runnable, OSyncSource {
             .getConfiguration()
             .getValueAsLong(OGlobalConfiguration.DISTRIBUTED_DEPLOYCHUNK_TASK_SYNCH_TIMEOUT);
     timerTask =
-        new TimerTask() {
-          @Override
-          public void run() {
-            if (System.currentTimeMillis() - lastRead > timeout * 3) {
-              try {
-                inputStream.close();
-                this.cancel();
-              } catch (IOException e) {
-                e.printStackTrace();
+        new OTimerTask(
+            () -> {
+              if (System.currentTimeMillis() - lastRead > timeout * 3) {
+                try {
+                  inputStream.close();
+                  timerTask.cancel();
+                } catch (IOException e) {
+                  e.printStackTrace();
+                }
               }
-            }
-          }
-        };
+            });
     database.getSharedContext().getOrientDB().schedule(timerTask, timeout, timeout);
   }
 

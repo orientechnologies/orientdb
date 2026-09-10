@@ -69,6 +69,7 @@ import com.orientechnologies.orient.core.db.ODatabasePoolInternal;
 import com.orientechnologies.orient.core.db.ODatabaseTask;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OSharedContext;
+import com.orientechnologies.orient.core.db.OTimerTask;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -91,7 +92,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -530,11 +530,11 @@ public class OrientDBRemote implements OrientDBInternal {
     return context;
   }
 
-  public void schedule(TimerTask task, long delay, long period) {
+  public void schedule(OTimerTask task, long delay, long period) {
     timer.schedule(task, delay, period);
   }
 
-  public void scheduleOnce(TimerTask task, long delay) {
+  public void scheduleOnce(OTimerTask task, long delay) {
     timer.schedule(task, delay);
   }
 

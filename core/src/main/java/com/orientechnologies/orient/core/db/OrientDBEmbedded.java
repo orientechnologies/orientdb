@@ -89,7 +89,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
   private final ExecutorService executor;
   private final ExecutorService ioExecutor;
   private final Timer timer;
-  private TimerTask autoCloseTimer = null;
+  private OTimerTask autoCloseTimer = null;
   private final OScriptManager scriptManager = new OScriptManager();
   private final OSystemDatabase systemDatabase;
   private final ODefaultSecuritySystem securitySystem;
@@ -254,12 +254,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
   public void initAutoClose(long delay) {
     final long scheduleTime = delay / 3;
     autoCloseTimer =
-        new TimerTask() {
-          @Override
-          public void run() {
-            OrientDBEmbedded.this.execute(() -> checkAndCloseStorages(delay));
-          }
-        };
+        new OTimerTask(() -> OrientDBEmbedded.this.execute(() -> checkAndCloseStorages(delay)));
     schedule(autoCloseTimer, scheduleTime, scheduleTime);
   }
 
@@ -1124,11 +1119,11 @@ public class OrientDBEmbedded implements OrientDBInternal {
     return true;
   }
 
-  public void schedule(TimerTask task, long delay, long period) {
+  public void schedule(OTimerTask task, long delay, long period) {
     timer.schedule(task, delay, period);
   }
 
-  public void scheduleOnce(TimerTask task, long delay) {
+  public void scheduleOnce(OTimerTask task, long delay) {
     timer.schedule(task, delay);
   }
 

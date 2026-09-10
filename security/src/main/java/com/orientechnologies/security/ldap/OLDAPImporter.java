@@ -17,6 +17,7 @@ package com.orientechnologies.security.ldap;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.db.ODatabase;
+import com.orientechnologies.orient.core.db.OTimerTask;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -27,7 +28,14 @@ import com.orientechnologies.orient.core.security.OSecurityComponent;
 import com.orientechnologies.orient.core.security.OSecuritySystem;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.Timer;
+import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.naming.directory.DirContext;
 import javax.security.auth.Subject;
@@ -744,10 +752,9 @@ public class OLDAPImporter implements OSecurityComponent {
     return false;
   }
 
-  private class ImportTask extends TimerTask {
-    @Override
-    public void run() {
-      importLDAP();
+  private class ImportTask extends OTimerTask {
+    public ImportTask() {
+      super(OLDAPImporter.this::importLDAP);
     }
   }
 }

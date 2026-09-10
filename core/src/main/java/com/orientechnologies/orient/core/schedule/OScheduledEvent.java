@@ -20,6 +20,7 @@ import com.orientechnologies.common.concur.ONeedRetryException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.core.command.script.OCommandScriptException;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.OTimerTask;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.exception.ORecordNotFoundException;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -56,7 +57,7 @@ public class OScheduledEvent extends ODocumentWrapper {
   private OFunction function;
   private final AtomicBoolean running;
   private OCronExpression cron;
-  private volatile TimerTask timer;
+  private volatile OTimerTask timer;
   private final AtomicLong nextExecutionId;
 
   /** Creates a scheduled event object from a configuration. */
@@ -121,7 +122,7 @@ public class OScheduledEvent extends ODocumentWrapper {
     }
     ScheduledTimerTask task = new ScheduledTimerTask(this, database, user, orientDB);
     task.schedule();
-    timer = task;
+    timer = task.task;
     return this;
   }
 
@@ -169,12 +170,13 @@ public class OScheduledEvent extends ODocumentWrapper {
     return function;
   }
 
-  private static class ScheduledTimerTask extends TimerTask {
+  private static class ScheduledTimerTask implements Runnable {
 
     private final OScheduledEvent event;
     private final String database;
     private final String user;
     private final OrientDBInternal orientDB;
+    private OTimerTask task;
 
     private ScheduledTimerTask(
         OScheduledEvent event, String database, String user, OrientDBInternal orientDB) {
@@ -190,7 +192,8 @@ public class OScheduledEvent extends ODocumentWrapper {
         Date now = new Date();
         long time = event.cron.getNextValidTimeAfter(now).getTime();
         long delay = time - now.getTime();
-        orientDB.scheduleOnce(this, delay);
+        this.task = new OTimerTask(this);
+        orientDB.scheduleOnce(task, delay);
       }
     }
 

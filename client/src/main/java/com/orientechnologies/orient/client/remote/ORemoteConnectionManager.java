@@ -27,6 +27,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.orient.client.binary.OChannelBinaryAsynchClient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
+import com.orientechnologies.orient.core.db.OTimerTask;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -58,13 +59,7 @@ public class ORemoteConnectionManager {
     int idleSecs = clientConfiguration.getValueAsInteger(CLIENT_CHANNEL_IDLE_TIMEOUT);
     this.idleTimeout = TimeUnit.MILLISECONDS.convert(idleSecs, TimeUnit.SECONDS);
     if (clientConfiguration.getValueAsBoolean(CLIENT_CHANNEL_IDLE_CLOSE)) {
-      idleTask =
-          new TimerTask() {
-            @Override
-            public void run() {
-              checkIdle();
-            }
-          };
+      idleTask = new OTimerTask(this::checkIdle);
       long delay = this.idleTimeout / 3;
       timer.schedule(this.idleTask, delay, delay);
     } else {

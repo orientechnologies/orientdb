@@ -18,6 +18,7 @@ package com.orientechnologies.security.kerberos;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
+import com.orientechnologies.orient.core.db.OTimerTask;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.OImmutableUser;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
@@ -30,7 +31,6 @@ import com.orientechnologies.orient.server.security.OSecurityAuthenticatorExcept
 import java.util.Base64;
 import java.util.Map;
 import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.security.auth.Subject;
 import javax.security.auth.login.Configuration;
@@ -507,17 +507,15 @@ public class OKerberosAuthenticator extends OSecurityAuthenticatorAbstract {
     }
   }
 
-  private class ExpirationTask extends TimerTask {
-    @Override
-    public void run() {
-      checkTicketExpirations();
+  private class ExpirationTask extends OTimerTask {
+    public ExpirationTask() {
+      super(OKerberosAuthenticator.this::checkTicketExpirations);
     }
   }
 
-  private class RenewalTask extends TimerTask {
-    @Override
-    public void run() {
-      createClientSubject();
+  private class RenewalTask extends OTimerTask {
+    public RenewalTask() {
+      super(OKerberosAuthenticator.this::createClientSubject);
     }
   }
 }

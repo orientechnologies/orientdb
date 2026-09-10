@@ -3,23 +3,16 @@ package com.orientechnologies.orient.core.db;
 import java.util.Iterator;
 import java.util.Map.Entry;
 import java.util.Optional;
-import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class OCommandTimeoutChecker {
   private final boolean active;
   private final long maxMills;
   private final ConcurrentHashMap<Thread, Long> running = new ConcurrentHashMap<>();
-  private final TimerTask timer;
+  private final OTimerTask timer;
 
   public OCommandTimeoutChecker(long timeout, OSchedulerInternal scheduler) {
-    this.timer =
-        new TimerTask() {
-          @Override
-          public void run() {
-            OCommandTimeoutChecker.this.check();
-          }
-        };
+    this.timer = new OTimerTask(this::check);
     this.maxMills = timeout;
     if (timeout > 0) {
       scheduler.schedule(timer, timeout / 10, timeout / 10);

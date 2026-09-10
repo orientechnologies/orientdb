@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.OSystemDatabase;
+import com.orientechnologies.orient.core.db.OTimerTask;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OSyncSource;
@@ -68,7 +69,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.SortedSet;
-import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -94,7 +94,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       new ConcurrentHashMap<>(64);
   private AtomicLong totalSentRequests = new AtomicLong();
   private AtomicLong totalReceivedRequests = new AtomicLong();
-  private TimerTask txTimeoutTask = null;
+  private OTimerTask txTimeoutTask = null;
   private volatile boolean running = true;
   private volatile boolean parsing = true;
   private AtomicLong operationsRunnig = new AtomicLong(0);
@@ -266,16 +266,12 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       int retryCount,
       int autoRetryDelay) {
     context.scheduleOnce(
-        new TimerTask() {
-
-          @Override
-          public void run() {
-            processRequest(
-                new ODistributedRequest(
-                    getManager(), senderNodeId, msgSequence, databaseName, payload),
-                false);
-          }
-        },
+        new OTimerTask(
+            () ->
+                processRequest(
+                    new ODistributedRequest(
+                        getManager(), senderNodeId, msgSequence, databaseName, payload),
+                    false)),
         autoRetryDelay * retryCount);
   }
 
@@ -659,13 +655,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   }
 
   private void startTxTimeoutTimerTask() {
-    txTimeoutTask =
-        new TimerTask() {
-          @Override
-          public void run() {
-            context.execute(() -> checkTxTimeout());
-          }
-        };
+    txTimeoutTask = new OTimerTask(() -> context.execute(() -> checkTxTimeout()));
     final long timeout = OGlobalConfiguration.DISTRIBUTED_TX_EXPIRE_TIMEOUT.getValueAsLong();
     context.schedule(txTimeoutTask, timeout / 3, timeout / 3);
   }

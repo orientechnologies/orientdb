@@ -14,7 +14,6 @@ import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.query.OSQLSynchQuery;
 import com.orientechnologies.orient.core.storage.impl.local.OAbstractPaginatedStorage;
 import java.util.List;
-import java.util.TimerTask;
 import java.util.UUID;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
@@ -600,27 +599,12 @@ public class OrientDBEmbeddedTests {
                 .build());
     OrientDBInternal internal = OrientDBInternal.extract(orientDb);
     CountDownLatch latch = new CountDownLatch(2);
-    internal.schedule(
-        new TimerTask() {
-          @Override
-          public void run() {
-            latch.countDown();
-          }
-        },
-        10,
-        10);
+    internal.schedule(new OTimerTask(latch::countDown), 10, 10);
 
     assertTrue(latch.await(80, TimeUnit.MILLISECONDS));
 
     CountDownLatch once = new CountDownLatch(1);
-    internal.scheduleOnce(
-        new TimerTask() {
-          @Override
-          public void run() {
-            once.countDown();
-          }
-        },
-        10);
+    internal.scheduleOnce(new OTimerTask(latch::countDown), 10);
 
     assertTrue(once.await(80, TimeUnit.MILLISECONDS));
   }

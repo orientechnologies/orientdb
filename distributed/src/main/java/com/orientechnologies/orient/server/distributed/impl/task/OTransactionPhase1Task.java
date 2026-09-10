@@ -8,6 +8,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.OTimerTask;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OConcurrentCreateException;
@@ -60,7 +61,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.SortedSet;
-import java.util.TimerTask;
 import java.util.TreeSet;
 
 /** @author luigi dell'aquila (l.dellaquila - at - orientdb.com) */
@@ -75,7 +75,7 @@ public class OTransactionPhase1Task extends OAbstractRemoteTask implements OLock
   private SortedSet<OTransactionUniqueKey> uniqueIndexKeys;
   private transient int retryCount = 0;
   private volatile boolean finished;
-  private TimerTask notYetFinishedTask;
+  private OTimerTask notYetFinishedTask;
   private OTransactionId transactionId;
 
   public OTransactionPhase1Task() {
@@ -434,22 +434,19 @@ public class OTransactionPhase1Task extends OAbstractRemoteTask implements OLock
       OrientDBInternal databases =
           distributedDatabase.getManager().getServerInstance().getDatabases();
       notYetFinishedTask =
-          new TimerTask() {
-            @Override
-            public void run() {
-
-              databases.execute(
-                  () -> {
-                    if (!finished) {
-                      ODistributedDatabaseImpl.sendResponseBack(
-                          this,
-                          distributedDatabase.getManager(),
-                          request.getId(),
-                          new OTransactionPhase1TaskResult(new OTxStillRunning()));
-                    }
-                  });
-            }
-          };
+          new OTimerTask(
+              () -> {
+                databases.execute(
+                    () -> {
+                      if (!finished) {
+                        ODistributedDatabaseImpl.sendResponseBack(
+                            this,
+                            distributedDatabase.getManager(),
+                            request.getId(),
+                            new OTransactionPhase1TaskResult(new OTxStillRunning()));
+                      }
+                    });
+              });
       databases.schedule(notYetFinishedTask, getDistributedTimeout(), getDistributedTimeout());
     }
     if (distributedDatabase instanceof ODistributedDatabaseImpl) {

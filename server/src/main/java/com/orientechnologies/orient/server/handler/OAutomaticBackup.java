@@ -30,6 +30,7 @@ import com.orientechnologies.common.parser.OVariableParserListener;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
+import com.orientechnologies.orient.core.db.OTimerTask;
 import com.orientechnologies.orient.core.db.tool.ODatabaseExport;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -54,7 +55,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
-import java.util.TimerTask;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -272,14 +272,8 @@ public class OAutomaticBackup extends OServerPluginAbstract implements OServerPl
             }
           };
 
-      TimerTask task =
-          new TimerTask() {
+      OTimerTask task = new OTimerTask(() -> serverInstance.getDatabases().execute(timerTask));
 
-            @Override
-            public void run() {
-              serverInstance.getDatabases().execute(timerTask);
-            }
-          };
       if (firstTime == null) {
         serverInstance.getDatabases().schedule(task, delay, delay);
       } else {
