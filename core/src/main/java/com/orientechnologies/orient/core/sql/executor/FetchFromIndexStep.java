@@ -423,9 +423,11 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
     } else {
       if (!index.getDefinition().isNullValuesIgnored()) {
         stream = getStreamForNullKey();
+        Stream<ORawPair<Object, ORID>> valueStream = index.descStream();
+        nextStreams.add(valueStream);
+      } else {
+        stream = index.descStream();
       }
-      Stream<ORawPair<Object, ORID>> valueStream = index.descStream();
-      nextStreams.add(valueStream);
     }
     cursorToIterator();
 
