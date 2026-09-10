@@ -53,7 +53,7 @@ public class OCachedDatabasePoolFactoryImpl implements OCachedDatabasePoolFactor
     timer =
         new OTimerTask(
             () -> {
-              if (!closed) {
+              if (closed) {
                 timer.cancel();
               } else {
                 cleanUpCache();

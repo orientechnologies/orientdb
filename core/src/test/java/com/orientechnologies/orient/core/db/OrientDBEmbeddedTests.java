@@ -604,7 +604,7 @@ public class OrientDBEmbeddedTests {
     assertTrue(latch.await(80, TimeUnit.MILLISECONDS));
 
     CountDownLatch once = new CountDownLatch(1);
-    internal.scheduleOnce(new OTimerTask(latch::countDown), 10);
+    internal.scheduleOnce(new OTimerTask(once::countDown), 10);
 
     assertTrue(once.await(80, TimeUnit.MILLISECONDS));
   }
