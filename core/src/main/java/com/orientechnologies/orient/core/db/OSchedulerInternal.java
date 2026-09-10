@@ -1,15 +1,14 @@
 package com.orientechnologies.orient.core.db;
 
 import java.util.Date;
-import java.util.TimerTask;
 
 public interface OSchedulerInternal {
 
-  void schedule(TimerTask task, long delay, long period);
+  void schedule(OTimerTask task, long delay, long period);
 
-  void scheduleOnce(TimerTask task, long delay);
+  void scheduleOnce(OTimerTask task, long delay);
 
-  default void scheduleFrom(TimerTask task, Date firstTime, long period) {
+  default void scheduleFrom(OTimerTask task, Date firstTime, long period) {
     schedule(task, Math.max(0, firstTime.getTime() - System.currentTimeMillis()), period);
   }
 

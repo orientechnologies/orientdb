@@ -31,6 +31,7 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.db.OCancellableTimer;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OSystemDatabase;
+import com.orientechnologies.orient.core.db.OTimerTask;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.impl.local.OSyncSource;
@@ -60,7 +61,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.SortedSet;
-import java.util.TimerTask;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
@@ -271,16 +271,13 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       int retryCount,
       int autoRetryDelay) {
     context.scheduleOnce(
-        new TimerTask() {
-
-          @Override
-          public void run() {
-            processRequest(
-                new ODistributedRequest(
-                    context.getTaskFactoryManager(), requestId, databaseName, payload),
-                false);
-          }
-        },
+        new OTimerTask(
+            () -> {
+              processRequest(
+                  new ODistributedRequest(
+                      context.getTaskFactoryManager(), requestId, databaseName, payload),
+                  false);
+            }),
         autoRetryDelay * retryCount);
   }
 

@@ -34,6 +34,7 @@ import com.orientechnologies.lucene.tx.OLuceneTxChangesSingleRid;
 import com.orientechnologies.orient.core.config.IndexEngineData;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.OTimerTask;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.id.OContextualRecordId;
@@ -57,7 +58,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.TimerTask;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Stream;
@@ -95,7 +95,7 @@ public abstract class OLuceneIndexEngineAbstract implements OLuceneIndexEngine {
   protected ODocument metadata;
   protected Version version;
   protected Map<String, Boolean> collectionFields = new HashMap<>();
-  private TimerTask commitTask;
+  private OTimerTask commitTask;
   private final AtomicBoolean closed;
   private final OStorage storage;
   private volatile long reopenToken;
@@ -167,30 +167,27 @@ public abstract class OLuceneIndexEngineAbstract implements OLuceneIndexEngine {
 
   private void scheduleCommitTask() {
     commitTask =
-        new TimerTask() {
-
-          @Override
-          public void run() {
-            OLuceneIndexEngineAbstract.this
-                .storage
-                .getContext()
-                .execute(
-                    () -> {
-                      if (shouldClose()) {
-                        synchronized (OLuceneIndexEngineAbstract.this) {
-                          // while on lock the index was opened
-                          if (!shouldClose()) return;
-                          doClose(false);
+        new OTimerTask(
+            () -> {
+              OLuceneIndexEngineAbstract.this
+                  .storage
+                  .getContext()
+                  .execute(
+                      () -> {
+                        if (shouldClose()) {
+                          synchronized (OLuceneIndexEngineAbstract.this) {
+                            // while on lock the index was opened
+                            if (!shouldClose()) return;
+                            doClose(false);
+                          }
                         }
-                      }
-                      if (!closed.get()) {
+                        if (!closed.get()) {
 
-                        logger.debug("Flushing index: %s", indexName());
-                        flush();
-                      }
-                    });
-          }
-        };
+                          logger.debug("Flushing index: %s", indexName());
+                          flush();
+                        }
+                      });
+            });
     this.storage.getContext().schedule(commitTask, firstFlushAfter, flushIndexInterval);
     ;
   }

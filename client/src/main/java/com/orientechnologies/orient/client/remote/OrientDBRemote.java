@@ -75,6 +75,7 @@ import com.orientechnologies.orient.core.db.ODatabaseTask;
 import com.orientechnologies.orient.core.db.ODatabaseTaskNoResult;
 import com.orientechnologies.orient.core.db.ODatabaseType;
 import com.orientechnologies.orient.core.db.OSharedContext;
+import com.orientechnologies.orient.core.db.OTimerTask;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
@@ -101,7 +102,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
@@ -498,36 +498,24 @@ public class OrientDBRemote implements OrientDBInternal {
     return new OSharedContextRemote(storage, this);
   }
 
-  public void schedule(TimerTask task, long delay, long period) {
+  public void schedule(OTimerTask task, long delay, long period) {
     timer.schedule(task, delay, period);
   }
 
-  public void scheduleOnce(TimerTask task, long delay) {
+  public void scheduleOnce(OTimerTask task, long delay) {
     timer.schedule(task, delay);
   }
 
   @Override
   public OCancellableTimer delayExecute(Runnable toExecuted, long delay) {
-    TimerTask tt =
-        new TimerTask() {
-          @Override
-          public void run() {
-            execute(toExecuted);
-          }
-        };
+    OTimerTask tt = new OTimerTask(() -> execute(toExecuted));
     timer.schedule(tt, delay);
     return new OCancellableTimerTask(tt);
   }
 
   @Override
   public OCancellableTimer periodicExecute(Runnable toExecuted, long periodic) {
-    TimerTask tt =
-        new TimerTask() {
-          @Override
-          public void run() {
-            execute(toExecuted);
-          }
-        };
+    OTimerTask tt = new OTimerTask(() -> execute(toExecuted));
     timer.schedule(tt, periodic, periodic);
     return new OCancellableTimerTask(tt);
   }
@@ -536,13 +524,7 @@ public class OrientDBRemote implements OrientDBInternal {
   public OCancellableTimerTask scheduleExecuteFrom(
       Runnable toExecuted, Date firstTime, long period) {
     long first = Math.max(0, firstTime.getTime() - System.currentTimeMillis());
-    TimerTask tt =
-        new TimerTask() {
-          @Override
-          public void run() {
-            execute(toExecuted);
-          }
-        };
+    OTimerTask tt = new OTimerTask(() -> execute(toExecuted));
     timer.schedule(tt, first, period);
     return new OCancellableTimerTask(tt);
   }

@@ -67,7 +67,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
@@ -955,36 +954,24 @@ public class OrientDBEmbedded implements OrientDBInternal {
     return true;
   }
 
-  public void schedule(TimerTask task, long delay, long period) {
+  public void schedule(OTimerTask task, long delay, long period) {
     timer.schedule(task, delay, period);
   }
 
-  public void scheduleOnce(TimerTask task, long delay) {
+  public void scheduleOnce(OTimerTask task, long delay) {
     timer.schedule(task, delay);
   }
 
   @Override
   public OCancellableTimer delayExecute(Runnable toExecuted, long delayMills) {
-    TimerTask tt =
-        new TimerTask() {
-          @Override
-          public void run() {
-            execute(toExecuted);
-          }
-        };
+    OTimerTask tt = new OTimerTask(() -> execute(toExecuted));
     timer.schedule(tt, delayMills);
     return new OCancellableTimerTask(tt);
   }
 
   @Override
   public OCancellableTimer periodicExecute(Runnable toExecuted, long periodicMills) {
-    TimerTask tt =
-        new TimerTask() {
-          @Override
-          public void run() {
-            execute(toExecuted);
-          }
-        };
+    OTimerTask tt = new OTimerTask(() -> execute(toExecuted));
     timer.schedule(tt, periodicMills, periodicMills);
     return new OCancellableTimerTask(tt);
   }
@@ -993,13 +980,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
   public OCancellableTimerTask scheduleExecuteFrom(
       Runnable toExecuted, Date firstTime, long period) {
     long first = Math.max(0, firstTime.getTime() - System.currentTimeMillis());
-    TimerTask tt =
-        new TimerTask() {
-          @Override
-          public void run() {
-            execute(toExecuted);
-          }
-        };
+    OTimerTask tt = new OTimerTask(() -> execute(toExecuted));
     timer.schedule(tt, first, period);
     return new OCancellableTimerTask(tt);
   }

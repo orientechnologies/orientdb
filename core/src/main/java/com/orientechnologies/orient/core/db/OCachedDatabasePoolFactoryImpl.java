@@ -3,7 +3,6 @@ package com.orientechnologies.orient.core.db;
 import com.googlecode.concurrentlinkedhashmap.ConcurrentLinkedHashMap;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.security.OSecurityManager;
-import java.util.TimerTask;
 
 /**
  * Default implementation of {@link OCachedDatabasePoolFactory}
@@ -26,6 +25,7 @@ public class OCachedDatabasePoolFactoryImpl implements OCachedDatabasePoolFactor
   private final ConcurrentLinkedHashMap<String, ODatabasePoolInternal> poolCache;
   private final OrientDBInternal orientDB;
   private final long timeout;
+  private OTimerTask task;
 
   /**
    * @param orientDB instance of {@link OrientDB} which will be used for create new database pools
@@ -45,21 +45,21 @@ public class OCachedDatabasePoolFactoryImpl implements OCachedDatabasePoolFactor
     scheduleCleanUpCache(createCleanUpTask());
   }
 
-  protected void scheduleCleanUpCache(TimerTask task) {
+  protected void scheduleCleanUpCache(OTimerTask task) {
     orientDB.schedule(task, timeout, timeout);
   }
 
-  private TimerTask createCleanUpTask() {
-    return new TimerTask() {
-      @Override
-      public void run() {
-        if (closed) {
-          cancel();
-        } else {
-          cleanUpCache();
-        }
-      }
-    };
+  private OTimerTask createCleanUpTask() {
+    task =
+        new OTimerTask(
+            () -> {
+              if (closed) {
+                task.cancel();
+              } else {
+                cleanUpCache();
+              }
+            });
+    return task;
   }
 
   private void cleanUpCache() {
