@@ -388,7 +388,7 @@ public class OEnterpriseServerImpl
                               .orElse(true))
                   .collect(Collectors.toList());
             })
-        .orElse(new ArrayList());
+        .orElse(new ArrayList<>());
   }
 
   @Override

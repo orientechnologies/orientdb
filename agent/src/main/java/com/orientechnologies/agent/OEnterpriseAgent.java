@@ -226,9 +226,6 @@ public class OEnterpriseAgent
     return false;
   }
 
-  @Override
-  public void onBeforeClientRequest(final OClientConnection iConnection, final byte iRequestType) {}
-
   public boolean isDistributed() {
     return server.getDatabases().isDistributed();
   }
