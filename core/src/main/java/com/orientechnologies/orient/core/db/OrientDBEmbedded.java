@@ -1058,7 +1058,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
   }
 
   protected OResultSetReady executeAdminStatement(String script, Map<String, Object> args) {
-    OAdminStatement statement = OSQLEngine.parseAdminStatement(script, this);
+    OAdminStatement statement = OSQLEngine.parseAdminStatement(script);
     var ctx = new OBasicAdminCommandContext(this, (Map) args);
     OAdminExecutionPlan executionPlan = statement.createExecutionPlan(ctx);
     var original = new OServerResultSet(executionPlan.start(ctx), ctx, executionPlan);
@@ -1076,7 +1076,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
   }
 
   protected OResultSet executeAdminStatement(String script, Object... args) {
-    OAdminStatement statement = OSQLEngine.parseAdminStatement(script, this);
+    OAdminStatement statement = OSQLEngine.parseAdminStatement(script);
     var ctx = new OBasicAdminCommandContext(this, args);
     OAdminExecutionPlan executionPlan = statement.createExecutionPlan(ctx);
     var original = new OServerResultSet(executionPlan.start(ctx), ctx, executionPlan);

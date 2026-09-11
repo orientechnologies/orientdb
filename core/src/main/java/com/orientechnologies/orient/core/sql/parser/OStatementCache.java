@@ -2,8 +2,6 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.OSharedContextEmbedded;
 import com.orientechnologies.orient.core.sql.OCommandSQLParsingException;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -54,22 +52,21 @@ public class OStatementCache {
    *     through statement parsing
    * @return a statement executor from the cache
    */
-  public static OStatement get(String statement, ODatabaseDocumentInternal db) {
-    if (db == null) {
-      return parse(statement, db);
+  public static OStatement get(String statement, OStatementCache resource) {
+    if (resource == null) {
+      return parse(statement);
     }
 
-    OStatementCache resource = ((OSharedContextEmbedded) db.getSharedContext()).getStatementCache();
-    return resource.getStatement(statement, db);
+    return resource.getStatement(statement);
   }
 
   /**
    * @param statement an SQL statement
    * @return the corresponding executor, taking it from the internal cache, if it exists
    */
-  public OStatement getStatement(String statement, ODatabaseDocumentInternal db) {
+  public OStatement getStatement(String statement) {
     if (mapSize == 0) {
-      return parse(statement, db);
+      return parse(statement);
     }
 
     OStatement result;
@@ -81,7 +78,7 @@ public class OStatementCache {
       }
     }
     if (result == null) {
-      result = parse(statement, db);
+      result = parse(statement);
       synchronized (map) {
         map.put(statement, result);
       }
@@ -93,12 +90,10 @@ public class OStatementCache {
    * parses an SQL statement and returns the corresponding executor
    *
    * @param statement the SQL statement
-   * @param db TODO
    * @return the corresponding executor
    * @throws OCommandSQLParsingException if the input parameter is not a valid SQL statement
    */
-  protected static OStatement parse(String statement, ODatabaseDocumentInternal db)
-      throws OCommandSQLParsingException {
+  protected static OStatement parse(String statement) throws OCommandSQLParsingException {
     try {
 
       OrientSql osql = new OrientSql(statement);

@@ -24,8 +24,6 @@ import static com.orientechnologies.common.util.OClassLoaderHelper.lookupProvide
 import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.exception.OException;
-import com.orientechnologies.common.log.OLogManager;
-import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.common.util.OCollections;
 import com.orientechnologies.orient.core.collate.OCollate;
@@ -33,7 +31,6 @@ import com.orientechnologies.orient.core.collate.OCollateFactory;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.OExecutionThreadLocal;
-import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandInterruptedException;
 import com.orientechnologies.orient.core.record.OElement;
@@ -64,7 +61,6 @@ import java.util.Optional;
 import java.util.Set;
 
 public class OSQLEngine {
-  private static final OLogger logger = OLogManager.instance().logger(OSQLEngine.class);
   protected static final OSQLEngine INSTANCE = new OSQLEngine();
   private static volatile List<OSQLFunctionFactory> FUNCTION_FACTORIES = null;
   private static List<OSQLMethodFactory> METHOD_FACTORIES = null;
@@ -72,11 +68,11 @@ public class OSQLEngine {
   private static List<OCollateFactory> COLLATE_FACTORIES = null;
   private static ClassLoader orientClassLoader = OSQLEngine.class.getClassLoader();
 
-  public static OStatement parse(String query, ODatabaseDocumentInternal db) {
-    return OStatementCache.get(query, db);
+  public static OStatement parse(String query, OStatementCache cache) {
+    return OStatementCache.get(query, cache);
   }
 
-  public static OAdminStatement parseAdminStatement(String statement, OrientDBInternal db) {
+  public static OAdminStatement parseAdminStatement(String statement) {
     try {
       OrientSql osql = new OrientSql(statement);
       OAdminStatement result = osql.parseAdminStatement();

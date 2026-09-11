@@ -15,7 +15,9 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHookV2;
 import com.orientechnologies.orient.core.query.live.OLiveQueryListenerV2;
+import com.orientechnologies.orient.core.query.live.OLiveQueryOp;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
+import com.orientechnologies.orient.core.sql.parser.OFromItem;
 import com.orientechnologies.orient.core.sql.parser.OSelectStatement;
 import com.orientechnologies.orient.core.sql.parser.OStatement;
 import com.orientechnologies.orient.core.sql.parser.OWhereClause;
@@ -60,26 +62,32 @@ public class LiveQueryListenerImpl implements OLiveQueryListenerV2 {
     if (query.trim().toLowerCase().startsWith("live ")) {
       query = query.trim().substring(5);
     }
-    OStatement stm = OSQLEngine.parse(query, db);
+    OStatement stm = OSQLEngine.parse(query, db.getSharedContext().getStatementCache());
     if (!(stm instanceof OSelectStatement)) {
       throw new OCommandExecutionException(
           "Only SELECT statement can be used as a live query: " + query);
     }
     this.statement = (OSelectStatement) stm;
+    OCommandContext ctx = new OBasicCommandContext(db);
+    if (iArgs != null)
+    // BIND ARGUMENTS INTO CONTEXT TO ACCESS FROM ANY POINT (EVEN FUNCTIONS)
+    {
+      for (Map.Entry<Object, Object> arg : iArgs.entrySet()) {
+        ctx.setVariable(arg.getKey().toString(), arg.getValue());
+      }
+    }
     validateStatement(statement);
-    if (statement.getTarget().getItem().getIdentifier() != null) {
-      this.className = statement.getTarget().getItem().getIdentifier().getStringValue();
+    OFromItem targetItem = statement.getTarget().getItem();
+    if (targetItem.getIdentifier() != null) {
+      this.className = targetItem.getIdentifier().getStringValue();
       if (!db.getMetadata().getImmutableSchemaSnapshot().existsClass(className)) {
         throw new OCommandExecutionException(
             "Class " + className + " not found in the schema: " + query);
       }
-    } else if (statement.getTarget().getItem().getRids() != null) {
+    } else if (targetItem.getRids() != null) {
       this.rids =
-          statement.getTarget().getItem().getRids().stream()
-              .map(
-                  x ->
-                      x.toRecordId(
-                          new OResultInternal(), new OBasicCommandContext((ODatabaseSession) db)))
+          targetItem.getRids().stream()
+              .map(x -> x.toRecordId(new OResultInternal(), ctx))
               .collect(Collectors.toList());
     }
     execInSeparateDatabase(
@@ -89,18 +97,21 @@ public class LiveQueryListenerImpl implements OLiveQueryListenerV2 {
             return execDb = db.copy();
           }
         });
-
     synchronized (random) {
       token = random.nextInt(); // TODO do something better ;-)!
     }
     OLiveQueryHookV2.subscribe(token, this, db);
+  }
 
-    OCommandContext ctx = new OBasicCommandContext();
-    if (iArgs != null)
-    // BIND ARGUMENTS INTO CONTEXT TO ACCESS FROM ANY POINT (EVEN FUNCTIONS)
-    {
-      for (Map.Entry<Object, Object> arg : iArgs.entrySet()) {
-        ctx.setVariable(arg.getKey().toString(), arg.getValue());
+  protected void execInSeparateDatabase(final OCallable iCallback) {
+    final ODatabaseDocumentInternal prevDb = ODatabaseRecordThreadLocal.instance().getIfDefined();
+    try {
+      iCallback.call(null);
+    } finally {
+      if (prevDb != null) {
+        ODatabaseRecordThreadLocal.instance().set(prevDb);
+      } else {
+        ODatabaseRecordThreadLocal.instance().remove();
       }
     }
   }
@@ -133,24 +144,25 @@ public class LiveQueryListenerImpl implements OLiveQueryListenerV2 {
   }
 
   @Override
-  public void onLiveResults(List<OLiveQueryHookV2.OLiveQueryOp> iRecords) {
+  public void onLiveResults(List<OLiveQueryOp> iRecords) {
     execDb.activateOnCurrentThread();
 
-    for (OLiveQueryHookV2.OLiveQueryOp iRecord : iRecords) {
+    for (OLiveQueryOp iRecord : iRecords) {
       OResultInternal record;
-      if (iRecord.type == ORecordOperation.CREATED || iRecord.type == ORecordOperation.UPDATED) {
-        record = copy(iRecord.after);
-        if (iRecord.type == ORecordOperation.UPDATED) {
-          OResultInternal before = copy(iRecord.before);
+      if (iRecord.getType() == ORecordOperation.CREATED
+          || iRecord.getType() == ORecordOperation.UPDATED) {
+        record = copy(iRecord.getAfter());
+        if (iRecord.getType() == ORecordOperation.UPDATED) {
+          OResultInternal before = copy(iRecord.getBefore());
           record.setMetadata(BEFORE_METADATA_KEY, before);
         }
       } else {
-        record = copy(iRecord.before);
+        record = copy(iRecord.getBefore());
         record.setMetadata(BEFORE_METADATA_KEY, record);
       }
 
       if (filter(record)) {
-        switch (iRecord.type) {
+        switch (iRecord.getType()) {
           case ORecordOperation.DELETED:
             record.setMetadata(BEFORE_METADATA_KEY, null);
             clientListener.onDelete(execDb, applyProjections(execDb, record));
@@ -224,7 +236,7 @@ public class LiveQueryListenerImpl implements OLiveQueryListenerV2 {
     if (where == null) {
       return true;
     }
-    OBasicCommandContext ctx = new OBasicCommandContext((ODatabaseSession) this.execDb);
+    OBasicCommandContext ctx = new OBasicCommandContext(this.execDb);
     ctx.setInputParameters(params);
     return where.matchesFilters(record, ctx);
   }
@@ -252,19 +264,6 @@ public class LiveQueryListenerImpl implements OLiveQueryListenerV2 {
   @Override
   public void onLiveResultEnd() {
     clientListener.onEnd(execDb);
-  }
-
-  protected void execInSeparateDatabase(final OCallable iCallback) {
-    final ODatabaseDocumentInternal prevDb = ODatabaseRecordThreadLocal.instance().getIfDefined();
-    try {
-      iCallback.call(null);
-    } finally {
-      if (prevDb != null) {
-        ODatabaseRecordThreadLocal.instance().set(prevDb);
-      } else {
-        ODatabaseRecordThreadLocal.instance().remove();
-      }
-    }
   }
 
   public OSelectStatement getStatement() {

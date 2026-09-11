@@ -10,6 +10,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.OLiveQueryResultListener;
 import com.orientechnologies.orient.core.db.OScenarioThreadLocal;
+import com.orientechnologies.orient.core.db.OSharedContextEmbedded;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
@@ -633,7 +634,10 @@ public class ViewManager {
 
     private void updateViewRow(
         OElement viewRow, OResult origin, OView view, ODatabaseDocumentInternal db) {
-      OStatement stm = OStatementCache.get(view.getQuery(), db);
+      OStatement stm =
+          OStatementCache.get(
+              view.getQuery(),
+              ((OSharedContextEmbedded) db.getSharedContext()).getStatementCache());
       if (stm instanceof OSelectStatement) {
         OProjection projection = ((OSelectStatement) stm).getProjection();
         if (projection == null

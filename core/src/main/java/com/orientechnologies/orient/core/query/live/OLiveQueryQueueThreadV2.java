@@ -31,10 +31,10 @@ public class OLiveQueryQueueThreadV2 extends Thread {
   private static final OLogger logger =
       OLogManager.instance().logger(OLiveQueryQueueThreadV2.class);
 
-  private final OLiveQueryHookV2.OLiveQueryOps ops;
+  private final OLiveQueryOps ops;
   private volatile boolean stopped = false;
 
-  public OLiveQueryQueueThreadV2(OLiveQueryHookV2.OLiveQueryOps ops) {
+  public OLiveQueryQueueThreadV2(OLiveQueryOps ops) {
     setName("LiveQueryQueueThreadV2");
     this.ops = ops;
     this.setDaemon(true);
@@ -47,15 +47,15 @@ public class OLiveQueryQueueThreadV2 extends Thread {
   @Override
   public void run() {
     final int batchSize = OConfiguration.global().queryRemoteResultsetPageSize();
-    final BlockingQueue<OLiveQueryHookV2.OLiveQueryOp> queue = ops.getQueue();
+    final BlockingQueue<OLiveQueryOp> queue = ops.getQueue();
 
     long totalEventsServed = 0;
     while (!stopped) {
-      final List<OLiveQueryHookV2.OLiveQueryOp> items = new ArrayList<>(batchSize);
+      final List<OLiveQueryOp> items = new ArrayList<>(batchSize);
       try {
         items.add(queue.take()); // Blocking wait for start of batch
         while (items.size() < batchSize) {
-          final OLiveQueryHookV2.OLiveQueryOp next = queue.poll(); // Fill batch until queue empty
+          final OLiveQueryOp next = queue.poll(); // Fill batch until queue empty
           if (next == null) {
             break;
           }

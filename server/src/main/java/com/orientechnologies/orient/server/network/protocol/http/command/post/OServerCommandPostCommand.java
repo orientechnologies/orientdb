@@ -20,11 +20,11 @@
 package com.orientechnologies.orient.server.network.protocol.http.command.post;
 
 import com.orientechnologies.orient.core.command.OBasicCommandContext;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.ODatabaseStats;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
@@ -33,11 +33,17 @@ import com.orientechnologies.orient.core.sql.parser.OLimit;
 import com.orientechnologies.orient.core.sql.parser.OMatchStatement;
 import com.orientechnologies.orient.core.sql.parser.OSelectStatement;
 import com.orientechnologies.orient.core.sql.parser.OStatement;
+import com.orientechnologies.orient.core.sql.parser.OStatementCache;
 import com.orientechnologies.orient.core.sql.parser.OTraverseStatement;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.TimerTask;
 
 public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbstract {
   private static final String[] NAMES = {"GET|command/*", "POST|command/*"};
@@ -100,7 +106,11 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
     try {
       db = getProfiledDatabaseInstance(iRequest);
       ((ODatabaseInternal) db).resetRecordLoadStats();
-      OStatement stm = parseStatement(language, text, db);
+      OStatement stm =
+          parseStatement(
+              language,
+              text,
+              ((ODatabaseDocumentEmbedded) db).getSharedContext().getStatementCache());
       OResultSet result = executeStatement(language, text, params, db);
       limit = getLimitFromStatement((ODatabaseSession) db, stm, limit);
       String localFetchPlan = getFetchPlanFromStatement(stm);
@@ -177,10 +187,10 @@ public class OServerCommandPostCommand extends OServerCommandAuthenticatedDbAbst
     return null;
   }
 
-  public static OStatement parseStatement(String language, String text, ODatabaseDocument db) {
+  public static OStatement parseStatement(String language, String text, OStatementCache cache) {
     try {
       if (language != null && language.equalsIgnoreCase("sql")) {
-        return OSQLEngine.parse(text, (ODatabaseDocumentInternal) db);
+        return OSQLEngine.parse(text, cache);
       }
     } catch (Exception e) {
     }

@@ -546,7 +546,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
     getSharedContext().getOrientDB().startCommand(Optional.empty());
     try {
       preQueryStart();
-      OStatement statement = OSQLEngine.parse(query, this);
+      OStatement statement = OSQLEngine.parse(query, getSharedContext().getStatementCache());
       if (!statement.isIdempotent()) {
         throw new OCommandExecutionException(
             "Cannot execute query on non idempotent statement: " + query);
@@ -566,7 +566,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
     getSharedContext().getOrientDB().startCommand(Optional.empty());
     preQueryStart();
     try {
-      OStatement statement = OSQLEngine.parse(query, this);
+      OStatement statement = OSQLEngine.parse(query, getSharedContext().getStatementCache());
       if (!statement.isIdempotent()) {
         throw new OCommandExecutionException(
             "Cannot execute query on non idempotent statement: " + query);
@@ -587,7 +587,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
     getSharedContext().getOrientDB().startCommand(Optional.empty());
     preQueryStart();
     try {
-      OStatement statement = OSQLEngine.parse(query, this);
+      OStatement statement = OSQLEngine.parse(query, getSharedContext().getStatementCache());
       OResultSet original = statement.execute(this, args, true);
       OResultSet result;
       if (!statement.isIdempotent()) {
@@ -616,7 +616,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
     getSharedContext().getOrientDB().startCommand(Optional.empty());
     preQueryStart();
     try {
-      OStatement statement = OSQLEngine.parse(query, this);
+      OStatement statement = OSQLEngine.parse(query, getSharedContext().getStatementCache());
       OResultSet original = statement.execute(this, params, true);
       // fetch all, close and detach
       List<ODocument> result = original.stream().map((x) -> (ODocument) x.toElement()).toList();
@@ -637,7 +637,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
     getSharedContext().getOrientDB().startCommand(Optional.empty());
     preQueryStart();
     try {
-      OStatement statement = OSQLEngine.parse(query, this);
+      OStatement statement = OSQLEngine.parse(query, getSharedContext().getStatementCache());
       OResultSet original = statement.execute(this, params, true);
       // fetch all, close and detach
       List<ODocument> result = original.stream().map((x) -> (ODocument) x.toElement()).toList();
@@ -689,7 +689,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
     try {
       preQueryStart();
 
-      OStatement statement = OSQLEngine.parse(query, this);
+      OStatement statement = OSQLEngine.parse(query, getSharedContext().getStatementCache());
       OResultSet original = statement.execute(this, args, true);
       OResultSet result;
       if (!statement.isIdempotent()) {

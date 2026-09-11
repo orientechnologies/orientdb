@@ -22,7 +22,7 @@ import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
 import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibraryImpl;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
-import com.orientechnologies.orient.core.query.live.OLiveQueryHookV2;
+import com.orientechnologies.orient.core.query.live.OLiveQueryOps;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -57,7 +57,7 @@ public class OSharedContextEmbedded extends OSharedContext {
   protected OSchedulerImpl scheduler;
   protected OSequenceLibraryImpl sequenceLibrary;
   protected OLiveQueryHook.OLiveQueryOps liveQueryOps;
-  protected OLiveQueryHookV2.OLiveQueryOps liveQueryOpsV2;
+  protected OLiveQueryOps liveQueryOpsV2;
   protected OStatementCache statementCache;
   protected OExecutionPlanCache executionPlanCache;
   protected OQueryStats queryStats;
@@ -92,7 +92,7 @@ public class OSharedContextEmbedded extends OSharedContext {
     scheduler = new OSchedulerImpl(orientDB);
     sequenceLibrary = new OSequenceLibraryImpl();
     liveQueryOps = new OLiveQueryHook.OLiveQueryOps();
-    liveQueryOpsV2 = new OLiveQueryHookV2.OLiveQueryOps();
+    liveQueryOpsV2 = new OLiveQueryOps();
     statementCache = new OStatementCache(orientDB.getContextConfigurations().statementCacheSize());
 
     executionPlanCache =
@@ -352,7 +352,7 @@ public class OSharedContextEmbedded extends OSharedContext {
     return liveQueryOps;
   }
 
-  public OLiveQueryHookV2.OLiveQueryOps getLiveQueryOpsV2() {
+  public OLiveQueryOps getLiveQueryOpsV2() {
     return liveQueryOpsV2;
   }
 
