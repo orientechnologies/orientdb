@@ -42,7 +42,6 @@ import com.orientechnologies.orient.core.metadata.schema.OView;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceAction;
-import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHookV2;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -611,7 +610,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         try {
           txContext.commit(this);
           localDistributedDatabase.popTxContext(transactionId);
-          OLiveQueryHook.notifyForTxChanges(this);
           OLiveQueryHookV2.notifyForTxChanges(this);
         } catch (OTransactionAlreadyPresentException e) {
           // DO Nothing already present
@@ -623,7 +621,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           getContext().execute(this::maybeSync);
           throw e;
         } finally {
-          OLiveQueryHook.removePendingDatabaseOps(this);
           OLiveQueryHookV2.removePendingDatabaseOps(this);
         }
         return true;
@@ -668,7 +665,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           try {
             txContext.commit(this);
             localDistributedDatabase.popTxContext(transactionId);
-            OLiveQueryHook.notifyForTxChanges(this);
             OLiveQueryHookV2.notifyForTxChanges(this);
             return true;
           } catch (OTransactionAlreadyPresentException e) {
@@ -682,7 +678,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
             throw e;
           } finally {
-            OLiveQueryHook.removePendingDatabaseOps(this);
             OLiveQueryHookV2.removePendingDatabaseOps(this);
           }
         } else {
@@ -712,7 +707,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     ODistributedTxContext txContext = localDistributedDatabase.popTxContext(transactionId);
     if (txContext != null) {
       txContext.destroy();
-      OLiveQueryHook.removePendingDatabaseOps(this);
       OLiveQueryHookV2.removePendingDatabaseOps(this);
       return true;
     }

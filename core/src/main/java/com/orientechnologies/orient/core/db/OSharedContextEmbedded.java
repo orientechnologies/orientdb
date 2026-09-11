@@ -21,7 +21,6 @@ import com.orientechnologies.orient.core.metadata.schema.OSchemaEmbedded;
 import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
 import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibraryImpl;
-import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
 import com.orientechnologies.orient.core.query.live.OLiveQueryOps;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -56,7 +55,6 @@ public class OSharedContextEmbedded extends OSharedContext {
   protected OFunctionLibraryImpl functionLibrary;
   protected OSchedulerImpl scheduler;
   protected OSequenceLibraryImpl sequenceLibrary;
-  protected OLiveQueryHook.OLiveQueryOps liveQueryOps;
   protected OLiveQueryOps liveQueryOpsV2;
   protected OStatementCache statementCache;
   protected OExecutionPlanCache executionPlanCache;
@@ -91,7 +89,6 @@ public class OSharedContextEmbedded extends OSharedContext {
     functionLibrary = new OFunctionLibraryImpl();
     scheduler = new OSchedulerImpl(orientDB);
     sequenceLibrary = new OSequenceLibraryImpl();
-    liveQueryOps = new OLiveQueryHook.OLiveQueryOps();
     liveQueryOpsV2 = new OLiveQueryOps();
     statementCache = new OStatementCache(orientDB.getContextConfigurations().statementCacheSize());
 
@@ -157,7 +154,6 @@ public class OSharedContextEmbedded extends OSharedContext {
     sequenceLibrary.close();
     statementCache.clear();
     executionPlanCache.invalidate();
-    liveQueryOps.close();
     liveQueryOpsV2.close();
     activeDistributedQueries.values().forEach(x -> x.close());
   }
@@ -189,7 +185,6 @@ public class OSharedContextEmbedded extends OSharedContext {
     sequenceLibrary.close();
     statementCache.clear();
     executionPlanCache.invalidate();
-    liveQueryOps.close();
     liveQueryOpsV2.close();
     activeDistributedQueries.values().forEach(x -> x.close());
     return Optional.empty();
@@ -346,10 +341,6 @@ public class OSharedContextEmbedded extends OSharedContext {
 
   public OSequenceLibraryImpl getSequenceLibrary() {
     return sequenceLibrary;
-  }
-
-  public OLiveQueryHook.OLiveQueryOps getLiveQueryOps() {
-    return liveQueryOps;
   }
 
   public OLiveQueryOps getLiveQueryOpsV2() {

@@ -7,7 +7,6 @@ import com.orientechnologies.orient.core.db.OStringCache;
 import com.orientechnologies.orient.core.db.viewmanager.ViewManager;
 import com.orientechnologies.orient.core.metadata.function.OFunctionLibraryImpl;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibraryImpl;
-import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
 import com.orientechnologies.orient.core.query.live.OLiveQueryOps;
 import com.orientechnologies.orient.core.schedule.OSchedulerImpl;
 import com.orientechnologies.orient.core.sql.executor.OQueryStats;
@@ -38,7 +37,6 @@ public class OSharedContextDistributed extends OSharedContextEmbedded {
     functionLibrary = new OFunctionLibraryImpl();
     scheduler = new OSchedulerImpl(orientDB);
     sequenceLibrary = new OSequenceLibraryImpl();
-    liveQueryOps = new OLiveQueryHook.OLiveQueryOps();
     liveQueryOpsV2 = new OLiveQueryOps();
     statementCache = new OStatementCache(orientDB.getContextConfigurations().statementCacheSize());
 

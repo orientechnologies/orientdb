@@ -44,7 +44,6 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OImmutableClass;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.sequence.OSessionSequenceLibrary;
-import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHookV2;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -687,7 +686,6 @@ public class OTransactionOptimistic extends OTransactionAbstract implements OTra
       case ORecordOperation.CREATED:
         {
           final ODocument doc = (ODocument) change.getRecord();
-          OLiveQueryHook.addOp(doc, ORecordOperation.CREATED, (ODatabaseDocumentEmbedded) database);
           OLiveQueryHookV2.addOp(
               doc, ORecordOperation.CREATED, (ODatabaseDocumentEmbedded) database);
           final OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(doc);
@@ -712,8 +710,6 @@ public class OTransactionOptimistic extends OTransactionAbstract implements OTra
           final OIdentifiable updateRecord = change.getRecord();
           if (updateRecord instanceof ODocument) {
             final ODocument updateDoc = (ODocument) updateRecord;
-            OLiveQueryHook.addOp(
-                updateDoc, ORecordOperation.UPDATED, (ODatabaseDocumentEmbedded) database);
             OLiveQueryHookV2.addOp(
                 updateDoc, ORecordOperation.UPDATED, (ODatabaseDocumentEmbedded) database);
             final OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(updateDoc);
@@ -755,7 +751,6 @@ public class OTransactionOptimistic extends OTransactionAbstract implements OTra
               database.getSharedContext().getScheduler().removeEventInternal(eventName);
             }
           }
-          OLiveQueryHook.addOp(doc, ORecordOperation.DELETED, (ODatabaseDocumentEmbedded) database);
           OLiveQueryHookV2.addOp(
               doc, ORecordOperation.DELETED, (ODatabaseDocumentEmbedded) database);
         }

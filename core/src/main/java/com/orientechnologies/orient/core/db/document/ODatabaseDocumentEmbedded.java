@@ -83,7 +83,7 @@ import com.orientechnologies.orient.core.metadata.security.OUser;
 import com.orientechnologies.orient.core.metadata.security.auth.OAuthenticationInfo;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceAction;
 import com.orientechnologies.orient.core.metadata.sequence.OSessionSequenceLibrary;
-import com.orientechnologies.orient.core.query.live.OLiveQueryHook;
+import com.orientechnologies.orient.core.query.live.LiveQueryListenerImpl;
 import com.orientechnologies.orient.core.query.live.OLiveQueryHookV2;
 import com.orientechnologies.orient.core.query.live.OLiveQueryListenerV2;
 import com.orientechnologies.orient.core.query.live.OLiveQueryMonitorEmbedded;
@@ -99,7 +99,6 @@ import com.orientechnologies.orient.core.schedule.OScheduledEvent;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializer;
 import com.orientechnologies.orient.core.serialization.serializer.record.ORecordSerializerFactory;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
-import com.orientechnologies.orient.core.sql.executor.LiveQueryListenerImpl;
 import com.orientechnologies.orient.core.sql.executor.OInternalExecutionPlan;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.executor.OResultSetInternal;
@@ -1148,7 +1147,6 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
         }
         getSharedContext().getViewManager().recordAdded(clazz, doc, this);
       }
-      OLiveQueryHook.addOp(doc, ORecordOperation.CREATED, this);
       OLiveQueryHookV2.addOp(doc, ORecordOperation.CREATED, this);
     }
     callbackHooks(ORecordHook.TYPE.AFTER_CREATE, id);
@@ -1177,7 +1175,6 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
 
         getSharedContext().getViewManager().recordUpdated(clazz, doc, this);
       }
-      OLiveQueryHook.addOp(doc, ORecordOperation.UPDATED, this);
       OLiveQueryHookV2.addOp(doc, ORecordOperation.UPDATED, this);
     }
     callbackHooks(ORecordHook.TYPE.AFTER_UPDATE, id);
@@ -1206,7 +1203,6 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
         }
         getSharedContext().getViewManager().recordDeleted(clazz, doc, this);
       }
-      OLiveQueryHook.addOp(doc, ORecordOperation.DELETED, this);
       OLiveQueryHookV2.addOp(doc, ORecordOperation.DELETED, this);
     }
     callbackHooks(ORecordHook.TYPE.AFTER_DELETE, id);
@@ -1265,14 +1261,12 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
   @Override
   protected void afterCommitOperations() {
     super.afterCommitOperations();
-    OLiveQueryHook.notifyForTxChanges(this);
     OLiveQueryHookV2.notifyForTxChanges(this);
   }
 
   @Override
   protected void afterRollbackOperations() {
     super.afterRollbackOperations();
-    OLiveQueryHook.removePendingDatabaseOps(this);
     OLiveQueryHookV2.removePendingDatabaseOps(this);
   }
 
