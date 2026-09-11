@@ -52,7 +52,6 @@ public interface OServerPlugin extends OService {
 
   /** Configures the handler. Called at startup. */
   default void config(OServer oServer, OServerParameterConfiguration[] iParams) {}
-  ;
 
   default void onSocketAccepted(ONetworkProtocol protocol) {}
 
@@ -63,6 +62,10 @@ public interface OServerPlugin extends OService {
   }
 
   default Object getContent(final String iURL) {
+    return null;
+  }
+
+  default Class<?> getConfigClass() {
     return null;
   }
 }
