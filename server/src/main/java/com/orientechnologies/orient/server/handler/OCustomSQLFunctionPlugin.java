@@ -11,7 +11,6 @@ import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -26,6 +25,8 @@ public class OCustomSQLFunctionPlugin implements OServerPlugin {
 
   private ODocument configuration;
 
+  private OCustomSQLFunctionPluginConfig config;
+
   @Override
   public String getName() {
     return "custom-sql-functions-manager";
@@ -33,20 +34,15 @@ public class OCustomSQLFunctionPlugin implements OServerPlugin {
 
   @Override
   public void config(OServer oServer, OServerParameterConfiguration[] iParams) {
+    config = OCustomSQLFunctionPluginConfig.fromParameters(iParams);
     configuration = new ODocument();
 
-    final File configFile =
-        Arrays.stream(iParams)
-            .filter(p -> p.getName().equalsIgnoreCase("config"))
-            .map(p -> p.getValue().trim())
-            .map(OSystemVariableResolver::resolveSystemVariables)
-            .map(File::new)
-            .filter(File::exists)
-            .findFirst()
-            .orElseThrow(
-                () ->
-                    new OConfigurationException(
-                        "Custom SQL functions configuration file not found"));
+    var filePath = config.getConfig();
+    filePath = OSystemVariableResolver.resolveSystemVariables(filePath);
+    final File configFile = new File(filePath);
+    if (!configFile.exists()) {
+      new OConfigurationException("Custom SQL functions configuration file not found");
+    }
 
     try {
       String configurationContent = OIOUtils.readFileAsString(configFile);

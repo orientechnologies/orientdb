@@ -96,7 +96,7 @@ public class OProxyChannel extends Thread {
           targetOutput.write(request, 0, bytesRead);
           targetOutput.flush();
 
-          if (!listener.getServer().tracing.equalsIgnoreCase("none"))
+          if (!listener.getServer().getTracing().equalsIgnoreCase("none"))
             logger.info(
                 "Proxy channel: REQUEST(%d) %s:%d->[localhost:%d]->%s:%d = %d[%s]",
                 requestCount,
@@ -198,7 +198,7 @@ public class OProxyChannel extends Thread {
                 sourceOutput.write(response, 0, bytesRead);
                 sourceOutput.flush();
 
-                if (!listener.getServer().tracing.equalsIgnoreCase("none"))
+                if (!listener.getServer().getTracing().equalsIgnoreCase("none"))
                   logger.info(
                       "Proxy channel: RESPONSE(%d) %s:%d->[localhost:%d]->%s:%d = %d[%s]",
                       responseCount,
@@ -222,14 +222,14 @@ public class OProxyChannel extends Thread {
   }
 
   private String formatBytes(final byte[] request, final int total) {
-    if ("none".equalsIgnoreCase(listener.getServer().tracing)) return "";
+    if ("none".equalsIgnoreCase(listener.getServer().getTracing())) return "";
 
     final StringBuilder buffer = new StringBuilder();
     for (int i = 0; i < total; ++i) {
       if (i > 0) buffer.append(',');
 
-      if ("byte".equalsIgnoreCase(listener.getServer().tracing)) buffer.append(request[i]);
-      else if ("hex".equalsIgnoreCase(listener.getServer().tracing))
+      if ("byte".equalsIgnoreCase(listener.getServer().getTracing())) buffer.append(request[i]);
+      else if ("hex".equalsIgnoreCase(listener.getServer().getTracing()))
         buffer.append(String.format("0x%x", request[i]));
     }
     return buffer.toString();

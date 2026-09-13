@@ -2,27 +2,22 @@ package com.orientechnologies.orient.server.distributed.impl.proxy;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 public class OProxyServer implements OServerPlugin {
   private static final OLogger logger = OLogManager.instance().logger(OProxyServer.class);
-  protected String remoteHost = "localhost";
-  protected Map<Integer, Integer> ports = new HashMap<Integer, Integer>();
   protected int bufferSize = 16384;
 
   protected List<OProxyServerListener> serverThreads = new ArrayList<OProxyServerListener>();
   protected volatile boolean running = false;
-  protected String tracing = "byte";
-  protected int readTimeout = 300;
   protected boolean waitUntilRemotePortsAreOpen = false;
-  protected boolean enabled = true;
+  protected OProxyServerConfig config;
+  protected int readTimeout = 300;
 
   public OProxyServer() {}
 
@@ -33,17 +28,17 @@ public class OProxyServer implements OServerPlugin {
 
   @Override
   public void startup() {
-    if (!enabled) return;
+    if (!config.isEnabled()) return;
 
     running = true;
 
-    for (Map.Entry<Integer, Integer> ports : this.ports.entrySet()) {
+    for (Map.Entry<Integer, Integer> ports : config.getPorts().entrySet()) {
       final int localPort = ports.getKey();
       final int remotePort = ports.getValue();
 
       logger.info(
           "Proxy server: configuring proxy connection from localhost:%d -> %s:%d...",
-          localPort, remoteHost, remotePort);
+          localPort, config.getRemoteHost(), remotePort);
 
       try {
         final OProxyServerListener serverThread =
@@ -72,42 +67,7 @@ public class OProxyServer implements OServerPlugin {
 
   @Override
   public void config(final OServer server, final OServerParameterConfiguration[] params) {
-    for (OServerParameterConfiguration param : params) {
-      if (param.getName().equalsIgnoreCase("enabled"))
-        enabled = Boolean.parseBoolean(param.getValue());
-      else if (param.getName().equalsIgnoreCase("remoteHost")) remoteHost = param.getValue();
-      else if (param.getName().equalsIgnoreCase("tracing")) {
-        if (!"none".equalsIgnoreCase(param.getValue())
-            && !"byte".equalsIgnoreCase(param.getValue())
-            && !"hex".equalsIgnoreCase(param.getValue()))
-          logger.error("Invalid tracing value: %s", null, param.getValue());
-        else tracing = param.getValue();
-
-      } else if (param.getName().equalsIgnoreCase("ports")) {
-        setPorts(param.getValue());
-      }
-    }
-  }
-
-  public void setPorts(final String portsAsString) {
-    ports.clear();
-
-    final String[] pairs = portsAsString.split(",");
-    for (String pair : pairs) {
-      final String[] fromTo = pair.split("->");
-      if (fromTo.length != 2)
-        throw new OConfigurationException(
-            "Proxy server: port configuration is not valid. Format: portFrom->portTo");
-      ports.put(Integer.parseInt(fromTo[0]), Integer.parseInt(fromTo[1]));
-    }
-  }
-
-  public boolean isEnabled() {
-    return enabled;
-  }
-
-  public void setEnabled(boolean enabled) {
-    this.enabled = enabled;
+    config = OProxyServerConfig.fromParameters(params);
   }
 
   public int getBufferSize() {
@@ -116,26 +76,6 @@ public class OProxyServer implements OServerPlugin {
 
   public void setBufferSize(int bufferSize) {
     this.bufferSize = bufferSize;
-  }
-
-  public String getTracing() {
-    return tracing;
-  }
-
-  public void setTracing(String tracing) {
-    this.tracing = tracing;
-  }
-
-  public int getReadTimeout() {
-    return readTimeout;
-  }
-
-  public void setReadTimeout(int readTimeout) {
-    this.readTimeout = readTimeout;
-  }
-
-  public String getRemoteHost() {
-    return remoteHost;
   }
 
   public boolean isRunning() {
@@ -151,15 +91,32 @@ public class OProxyServer implements OServerPlugin {
   }
 
   public String formatBytes(final byte[] request, final int total) {
-    if ("none".equalsIgnoreCase(tracing)) return "";
+    if ("none".equalsIgnoreCase(config.getTracing())) return "";
 
     final StringBuilder buffer = new StringBuilder();
     for (int i = 0; i < total; ++i) {
       if (i > 0) buffer.append(',');
 
-      if ("byte".equalsIgnoreCase(tracing)) buffer.append(request[i]);
-      else if ("hex".equalsIgnoreCase(tracing)) buffer.append(String.format("0x%x", request[i]));
+      if ("byte".equalsIgnoreCase(config.getTracing())) buffer.append(request[i]);
+      else if ("hex".equalsIgnoreCase(config.getTracing()))
+        buffer.append(String.format("0x%x", request[i]));
     }
     return buffer.toString();
+  }
+
+  public void setPorts(final String portsAsString) {
+    this.config.setPorts(portsAsString);
+  }
+
+  public void setTracing(String tracing) {
+    this.config.setTracing(tracing);
+  }
+
+  public String getTracing() {
+    return this.config.getTracing();
+  }
+
+  public String getRemoteHost() {
+    return this.config.getRemoteHost();
   }
 }

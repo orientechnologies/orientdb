@@ -34,13 +34,8 @@ import com.orientechnologies.orient.server.plugin.OServerPlugin;
  */
 public class ODefaultSyslog implements OServerPlugin, OSyslog {
   private static final OLogger logger = OLogManager.instance().logger(ODefaultSyslog.class);
-  private boolean debug = false;
-  private String hostname = "localhost";
-  private int port = 514; // Default syslog UDP port.
-  private String appName = "OrientDB";
-
   private UdpSyslogMessageSender messageSender;
-  protected boolean enabled = true;
+  private ODefaultSyslogConfig config;
 
   // OSecurityComponent
 
@@ -53,8 +48,8 @@ public class ODefaultSyslog implements OServerPlugin, OSyslog {
         // _MessageSender.setDefaultAppName(_AppName);
         // _MessageSender.setDefaultFacility(Facility.USER);
         // _MessageSender.setDefaultSeverity(Severity.INFORMATIONAL);
-        messageSender.setSyslogServerHostname(hostname);
-        messageSender.setSyslogServerPort(port);
+        messageSender.setSyslogServerHostname(config.getHostname());
+        messageSender.setSyslogServerPort(config.getPort());
         messageSender.setMessageFormat(MessageFormat.RFC_3164); // optional, default is RFC 3164
       }
     } catch (Exception ex) {
@@ -64,24 +59,7 @@ public class ODefaultSyslog implements OServerPlugin, OSyslog {
 
   @Override
   public void config(OServer oServer, OServerParameterConfiguration[] iParams) {
-    enabled = false;
-
-    for (OServerParameterConfiguration param : iParams) {
-      if (param.getName().equalsIgnoreCase("enabled")) {
-        enabled = Boolean.parseBoolean(param.getValue());
-        if (!enabled)
-          // IGNORE THE REST OF CFG
-          return;
-      } else if (param.getName().equalsIgnoreCase("debug")) {
-        debug = Boolean.parseBoolean(param.getValue());
-      } else if (param.getName().equalsIgnoreCase("hostname")) {
-        hostname = param.getValue();
-      } else if (param.getName().equalsIgnoreCase("port")) {
-        port = Integer.parseInt(param.getValue());
-      } else if (param.getName().equalsIgnoreCase("appName")) {
-        appName = param.getValue();
-      }
-    }
+    config = ODefaultSyslogConfig.fromParameters(iParams);
   }
 
   @Override
@@ -91,7 +69,7 @@ public class ODefaultSyslog implements OServerPlugin, OSyslog {
 
   // OSecurityComponent
   public boolean isEnabled() {
-    return enabled;
+    return config.isEnabled();
   }
 
   // OSyslog
@@ -114,7 +92,7 @@ public class ODefaultSyslog implements OServerPlugin, OSyslog {
         sysMsg.setFacility(Facility.USER);
         sysMsg.setSeverity(Severity.INFORMATIONAL);
 
-        sysMsg.setAppName(appName);
+        sysMsg.setAppName(config.getAppName());
 
         // Sylog ignores these settings.
         // if(operation != null) sysMsg.setMsgId(operation);

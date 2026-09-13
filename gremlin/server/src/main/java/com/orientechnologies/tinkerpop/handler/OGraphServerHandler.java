@@ -33,28 +33,21 @@ import org.apache.tinkerpop.gremlin.orientdb.executor.OCommandGremlinExecutor;
 
 public class OGraphServerHandler implements OServerPlugin {
   private static final OLogger logger = OLogManager.instance().logger(OGraphServerHandler.class);
-  private boolean enabled = true;
-  private int graphPoolMax;
   private OServer server;
+  private OGraphServerHandlerConfig config;
 
   @Override
   public void config(final OServer server, OServerParameterConfiguration[] iParams) {
-    graphPoolMax = server.getContextConfiguration().dbPoolMax();
-    for (OServerParameterConfiguration param : iParams) {
-      if (param.getName().equalsIgnoreCase("enabled")) {
-        if (!Boolean.parseBoolean(param.getValue()))
-          // DISABLE IT
-          return;
-      } else if (param.getName().equalsIgnoreCase("graph.pool.max"))
-        graphPoolMax = Integer.parseInt(param.getValue());
+    var graphPoolMax = server.getContextConfiguration().dbPoolMax();
+    config = OGraphServerHandlerConfig.fromParameters(iParams);
+    if (config.getGraphPoolMax() != null) {
+      graphPoolMax = config.getGraphPoolMax();
     }
-
     OCommandGremlinExecutor executor =
         (OCommandGremlinExecutor)
             OrientDBInternal.extract(server.getContext())
                 .getScriptManager()
                 .getScriptExecutor("gremlin");
-    enabled = true;
     logger.info(
         "Installed GREMLIN language v.%s - graph.pool.max=%d",
         executor.getEngineVersion(), graphPoolMax);
@@ -72,12 +65,12 @@ public class OGraphServerHandler implements OServerPlugin {
     final OServerNetworkListener listener =
         server.getListenerByProtocol(ONetworkProtocolHttpAbstract.class);
 
-    if (!enabled) return;
+    if (!config.isEnabled()) return;
     if (listener != null) listener.registerStatelessCommand(new OServerCommandPostCommandGremlin());
   }
 
   @Override
   public void shutdown() {
-    if (!enabled) return;
+    if (!config.isEnabled()) return;
   }
 }

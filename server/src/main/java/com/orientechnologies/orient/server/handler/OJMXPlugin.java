@@ -36,27 +36,20 @@ import javax.management.ObjectName;
 public class OJMXPlugin implements OServerPlugin {
   private static final OLogger logger = OLogManager.instance().logger(OJMXPlugin.class);
   private ObjectName onProfiler;
-  private boolean profilerManaged;
+  private OJMXPluginConfig config;
 
   public OJMXPlugin() {}
 
   @Override
   public void config(final OServer oServer, final OServerParameterConfiguration[] iParams) {
-    for (OServerParameterConfiguration param : iParams) {
-      if (param.getName().equalsIgnoreCase("enabled")) {
-        if (!Boolean.parseBoolean(param.getValue()))
-          // DISABLE IT
-          return;
-      } else if (param.getName().equalsIgnoreCase("profilerManaged"))
-        profilerManaged = Boolean.parseBoolean(param.getValue());
-    }
+    config = OJMXPluginConfig.fromParamenters(iParams);
 
-    logger.info("JMX plugin installed and active: profilerManaged=%s", profilerManaged);
+    logger.info("JMX plugin installed and active: profilerManaged=%s", config.isProfilerManaged());
 
     final MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
 
     try {
-      if (profilerManaged) {
+      if (config.isProfilerManaged()) {
         // REGISTER THE PROFILER
         onProfiler = new ObjectName("com.orientechnologies.common.profiler:type=OProfilerMXBean");
         if (mBeanServer.isRegistered(onProfiler)) mBeanServer.unregisterMBean(onProfiler);
