@@ -450,11 +450,6 @@ public class OrientDBRemote implements OrientDBInternal {
   }
 
   @Override
-  public void initCustomStorage(String name, String baseUrl, String userName, String userPassword) {
-    throw new UnsupportedOperationException("Custom storage is not supported in remote");
-  }
-
-  @Override
   public Collection<OStorage> getStorages() {
     throw new UnsupportedOperationException("List storage is not supported in remote");
   }

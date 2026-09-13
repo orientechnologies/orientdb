@@ -138,26 +138,6 @@ public class OrientDBEmbeddedTests {
   }
 
   @Test
-  public void testRegisterDatabase() {
-    final OrientDB orient = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
-    orient.execute("create system user admin identified by 'admin' role root");
-    final OrientDBEmbedded orientDb = (OrientDBEmbedded) orient.getInternal();
-    assertEquals(orientDb.listDatabases("", "").size(), 0);
-    orientDb.initCustomStorage("database1", "./target/databases/database1", "", "");
-    try (final ODatabaseSession db = orientDb.open("database1", "admin", "admin")) {
-      assertEquals("database1", db.getName());
-    }
-    orientDb.initCustomStorage("database2", "./target/databases/database2", "", "");
-
-    try (final ODatabaseSession db = orientDb.open("database2", "admin", "admin")) {
-      assertEquals("database2", db.getName());
-    }
-    orientDb.drop("database1", null, null);
-    orientDb.drop("database2", null, null);
-    orientDb.close();
-  }
-
-  @Test
   public void testCopyOpenedDatabase() {
     try (final OrientDB orientDb =
         OCreateDatabaseUtil.createDatabase(

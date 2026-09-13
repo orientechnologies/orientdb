@@ -325,8 +325,6 @@ public interface OrientDBInternal extends AutoCloseable, OSchedulerInternal {
 
   ODatabaseDocumentInternal openNoAuthorization(String name);
 
-  void initCustomStorage(String name, String baseUrl, String userName, String userPassword);
-
   void loadAllDatabases();
 
   void removeShutdownHook();

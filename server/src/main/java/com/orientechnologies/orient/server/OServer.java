@@ -58,7 +58,6 @@ import com.orientechnologies.orient.server.config.OServerNetworkListenerConfigur
 import com.orientechnologies.orient.server.config.OServerNetworkProtocolConfiguration;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.config.OServerSocketFactoryConfiguration;
-import com.orientechnologies.orient.server.config.OServerStorageConfiguration;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.config.ODistributedConfig;
@@ -431,7 +430,6 @@ public class OServer {
       }
 
       try {
-        loadStorages();
         loadUsers();
         loadDatabases();
       } catch (IOException e) {
@@ -685,10 +683,6 @@ public class OServer {
         .authenticateAndAuthorize(iUserName, iPassword, iResourceToCheck);
   }
 
-  public boolean existsStoragePath(final String iURL) {
-    return serverCfg.getConfiguration().getStoragePath(iURL) != null;
-  }
-
   public OServerConfiguration getConfiguration() {
     return serverCfg.getConfiguration();
   }
@@ -841,38 +835,6 @@ public class OServer {
     configuration.isAfterFirstTime = true;
 
     createDefaultServerUsers();
-  }
-
-  /** Load configured storages. */
-  protected void loadStorages() {
-    final OServerConfiguration configuration = serverCfg.getConfiguration();
-
-    if (configuration.getStorages() == null) return;
-    for (OServerStorageConfiguration stg : configuration.getStorages()) {
-      if (stg.loadOnStartup) {
-        String url = stg.path;
-        if (url.endsWith("/")) url = url.substring(0, url.length() - 1);
-        url = url.replace('\\', '/');
-
-        int typeIndex = url.indexOf(':');
-        if (typeIndex <= 0)
-          throw new OConfigurationException(
-              "Error in database URL: the engine was not specified. Syntax is: "
-                  + Orient.URL_SYNTAX
-                  + ". URL was: "
-                  + url);
-
-        String remoteUrl = url.substring(typeIndex + 1);
-        int index = remoteUrl.lastIndexOf('/');
-        String baseUrl;
-        if (index > 0) {
-          baseUrl = remoteUrl.substring(0, index);
-        } else {
-          baseUrl = "./";
-        }
-        databases.initCustomStorage(stg.name, baseUrl, stg.userName, stg.userPassword);
-      }
-    }
   }
 
   protected void createDefaultServerUsers() throws IOException {

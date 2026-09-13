@@ -49,13 +49,11 @@ import com.orientechnologies.orient.core.sql.executor.resultset.OServerResultSet
 import com.orientechnologies.orient.core.sql.parser.OAdminStatement;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageEngine;
-import com.orientechnologies.orient.core.storage.OStorageEngine.RegisterResult;
 import com.orientechnologies.orient.core.storage.config.OClusterBasedStorageConfiguration;
 import com.orientechnologies.orient.core.storage.disk.OLocalPaginatedStorage;
 import java.io.File;
 import java.io.InputStream;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
@@ -893,20 +891,6 @@ public class OrientDBEmbedded implements OrientDBInternal {
             }
           }
         }
-      }
-    }
-  }
-
-  public synchronized void initCustomStorage(
-      String name, String path, String userName, String userPassword) {
-    synchronized (this) {
-      Path p = Paths.get(path);
-      RegisterResult registerd =
-          getDefaultEngine().registerLocal(this, name, p, getConfigurations().getConfigurations());
-      if (registerd.created()) {
-        newCreateSessionInstance(registerd.storage(), configurations);
-      } else {
-        newSessionInstance(name, configurations).close();
       }
     }
   }
