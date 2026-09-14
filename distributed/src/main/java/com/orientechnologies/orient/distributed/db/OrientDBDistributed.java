@@ -1407,10 +1407,10 @@ public class OrientDBDistributed extends OrientDBEmbedded
       if (status != null) {
         return status.toSatus();
       } else {
-        return null;
+        return DB_STATUS.NOT_AVAILABLE;
       }
     } else {
-      return null;
+      return DB_STATUS.NOT_AVAILABLE;
     }
   }
 
