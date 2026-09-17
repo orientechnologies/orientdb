@@ -16,7 +16,6 @@
 package com.orientechnologies.orient.core.sql.method;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 
 /**
@@ -54,23 +53,6 @@ public interface OSQLMethod extends Comparable<OSQLMethod> {
   /**
    * Process a record.
    *
-   * @param iThis
-   * @param iCurrentRecord : current record
-   * @param iContext execution context
-   * @param ioResult : field value
-   * @param iParams : function parameters, number is ensured to be within minParams and maxParams.
-   * @return evaluation result
-   */
-  Object execute(
-      Object iThis,
-      OIdentifiable iCurrentRecord,
-      OCommandContext iContext,
-      Object ioResult,
-      Object[] iParams);
-
-  /**
-   * Process a record.
-   *
    * @param self
    * @param current : current record
    * @param context execution context
@@ -78,9 +60,6 @@ public interface OSQLMethod extends Comparable<OSQLMethod> {
    * @param iParams : function parameters, number is ensured to be within minParams and maxParams.
    * @return evaluation result
    */
-  default Object execute(
-      Object self, OResult current, OCommandContext context, Object ioResult, Object[] params) {
-    var cur = current == null ? null : current.getElement().orElse(null);
-    return execute(self, cur, context, ioResult, params);
-  }
+  Object execute(
+      Object self, OResult current, OCommandContext context, Object ioResult, Object[] params);
 }

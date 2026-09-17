@@ -17,7 +17,6 @@
 package com.orientechnologies.orient.core.sql.functions.conversion;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.query.live.LiveQueryListenerImpl;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.method.misc.OAbstractSQLMethod;
@@ -47,7 +46,7 @@ public class OSQLMethodBeforeUpdate extends OAbstractSQLMethod {
   @Override
   public Object execute(
       Object iThis,
-      OIdentifiable iCurrentRecord,
+      OResult iCurrentRecord,
       OCommandContext iContext,
       Object ioResult,
       Object[] iParams) {

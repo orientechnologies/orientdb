@@ -17,7 +17,7 @@
 package com.orientechnologies.orient.core.sql.method.misc;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 
 /**
  * Returns the value's Java type.
@@ -35,7 +35,7 @@ public class OSQLMethodJavaType extends OAbstractSQLMethod {
   @Override
   public Object execute(
       Object iThis,
-      OIdentifiable iCurrentRecord,
+      OResult iCurrentRecord,
       OCommandContext iContext,
       Object ioResult,
       Object[] iParams) {

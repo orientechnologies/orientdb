@@ -17,9 +17,9 @@
 package com.orientechnologies.orient.core.sql.functions.text;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.method.misc.OAbstractSQLMethod;
 
 /**
@@ -44,7 +44,7 @@ public class OSQLMethodFromJSON extends OAbstractSQLMethod {
   @Override
   public Object execute(
       Object iThis,
-      OIdentifiable iCurrentRecord,
+      OResult iCurrentRecord,
       OCommandContext iContext,
       Object ioResult,
       Object[] iParams) {
@@ -52,7 +52,7 @@ public class OSQLMethodFromJSON extends OAbstractSQLMethod {
       if (iParams.length > 0) {
         final ODocument doc = new ODocument().fromJSON(iThis.toString(), iParams[0].toString());
         if (iParams[0].toString().contains("embedded"))
-          ODocumentInternal.addOwner(doc, iCurrentRecord.getRecord());
+          ODocumentInternal.addOwner(doc, iCurrentRecord.getElement().get().getRecord());
 
         return doc;
       }

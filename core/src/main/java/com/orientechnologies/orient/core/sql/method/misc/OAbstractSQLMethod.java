@@ -15,8 +15,7 @@
  */
 package com.orientechnologies.orient.core.sql.method.misc;
 
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.method.OSQLMethod;
 
 /** @author Johann Sorel (Geomatys) */
@@ -83,7 +82,7 @@ public abstract class OAbstractSQLMethod implements OSQLMethod {
     return maxparams;
   }
 
-  protected Object getParameterValue(final OIdentifiable iRecord, final String iValue) {
+  protected Object getParameterValue(final OResult iRecord, final String iValue) {
     if (iValue == null) {
       return null;
     }
@@ -97,7 +96,7 @@ public abstract class OAbstractSQLMethod implements OSQLMethod {
       return null;
     }
     // SEARCH FOR FIELD
-    return ((ODocument) iRecord.getRecord()).field(iValue);
+    return iRecord.getProperty(iValue);
   }
 
   @Override

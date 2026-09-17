@@ -48,7 +48,7 @@ public class OSQLMethodField extends OAbstractSQLMethod {
   @Override
   public Object execute(
       Object iThis,
-      final OIdentifiable iCurrentRecord,
+      final OResult iCurrentRecord,
       final OCommandContext iContext,
       Object ioResult,
       final Object[] iParams) {

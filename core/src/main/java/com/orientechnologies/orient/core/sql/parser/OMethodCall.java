@@ -4,7 +4,6 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
-import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
@@ -137,13 +136,9 @@ public class OMethodCall extends SimpleNode {
       OSQLMethod method,
       Object targetObjects,
       OCommandContext ctx,
-      Object val,
+      OResult val,
       List<Object> paramValues) {
-    if (val instanceof OResult) {
-      val = ((OResult) val).getElement().orElse(null);
-    }
-    return method.execute(
-        targetObjects, (OIdentifiable) val, ctx, targetObjects, paramValues.toArray());
+    return method.execute(targetObjects, val, ctx, targetObjects, paramValues.toArray());
   }
 
   private static Object invokeGraphFunction(
@@ -183,21 +178,17 @@ public class OMethodCall extends SimpleNode {
   }
 
   private static List<Object> resolveParams(
-      Object targetObjects, OCommandContext ctx, List<OExpression> iParams, Object val) {
+      Object targetObjects, OCommandContext ctx, List<OExpression> iParams, OResult val) {
     List<Object> paramValues = new ArrayList<Object>();
     for (OExpression expr : iParams) {
-      if (val instanceof OIdentifiable) {
-        paramValues.add(expr.execute(new OResultInternal((OIdentifiable) val), ctx));
-      } else if (val instanceof OResult) {
-        paramValues.add(expr.execute((OResult) val, ctx));
+      if (val != null) {
+        paramValues.add(expr.execute(val, ctx));
       } else if (targetObjects instanceof OIdentifiable) {
         paramValues.add(expr.execute(new OResultInternal((OIdentifiable) targetObjects), ctx));
       } else if (targetObjects instanceof OResult) {
         paramValues.add(expr.execute((OResult) targetObjects, ctx));
-      } else if (val == null) {
-        paramValues.add(expr.execute((OResult) null, ctx));
       } else {
-        throw new OCommandExecutionException("Invalild value for $current: " + val);
+        paramValues.add(expr.execute((OResult) null, ctx));
       }
     }
     return paramValues;
