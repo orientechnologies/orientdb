@@ -1,7 +1,7 @@
 package com.orientechnologies.orient.core.sql.functions.text;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionConfigurableAbstract;
 
 public class OSQLFunctionConcat extends OSQLFunctionConfigurableAbstract {
@@ -15,7 +15,7 @@ public class OSQLFunctionConcat extends OSQLFunctionConfigurableAbstract {
   @Override
   public Object execute(
       Object iThis,
-      OIdentifiable iCurrentRecord,
+      OResult current,
       Object iCurrentResult,
       Object[] iParams,
       OCommandContext iContext) {

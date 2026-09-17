@@ -20,7 +20,7 @@
 package com.orientechnologies.orient.core.sql.functions.misc;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 import java.util.UUID;
 
@@ -40,7 +40,7 @@ public class OSQLFunctionUUID extends OSQLFunctionAbstract {
 
   public Object execute(
       Object iThis,
-      final OIdentifiable iCurrentRecord,
+      final OResult current,
       final Object iCurrentResult,
       final Object[] iParams,
       OCommandContext iContext) {

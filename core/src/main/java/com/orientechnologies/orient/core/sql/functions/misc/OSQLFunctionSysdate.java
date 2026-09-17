@@ -20,7 +20,7 @@
 package com.orientechnologies.orient.core.sql.functions.misc;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 import com.orientechnologies.orient.core.util.ODateHelper;
 import java.text.SimpleDateFormat;
@@ -47,7 +47,7 @@ public class OSQLFunctionSysdate extends OSQLFunctionAbstract {
 
   public Object execute(
       Object iThis,
-      final OIdentifiable iCurrentRecord,
+      final OResult current,
       Object iCurrentResult,
       final Object[] iParams,
       OCommandContext iContext) {

@@ -68,7 +68,7 @@ public class OSQLFunctionTraversedElement extends OSQLFunctionConfigurableAbstra
 
   public Object execute(
       Object iThis,
-      final OIdentifiable iCurrentRecord,
+      final OResult current,
       Object iCurrentResult,
       final Object[] iParams,
       final OCommandContext iContext) {

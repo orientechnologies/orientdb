@@ -4,8 +4,8 @@ import com.orientechnologies.enterprise.server.OEnterpriseServer;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.security.ORule;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 
 /** Created by Enrico Risa on 23/07/2018. */
@@ -22,7 +22,7 @@ public class KillSessionFunction extends OSQLEnterpriseFunction {
   @Override
   public Object exec(
       Object iThis,
-      OIdentifiable iCurrentRecord,
+      OResult current,
       Object iCurrentResult,
       Object[] iParams,
       OCommandContext iContext) {

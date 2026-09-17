@@ -1,7 +1,7 @@
 package com.orientechnologies.orient.core.sql.functions.math;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import java.util.List;
 
 /**
@@ -25,7 +25,7 @@ public class OSQLFunctionInterval extends OSQLFunctionMathAbstract {
   @SuppressWarnings({"rawtypes", "unchecked"})
   public Object execute(
       Object iThis,
-      final OIdentifiable iRecord,
+      final OResult iRecord,
       final Object iCurrentResult,
       final Object[] iParams,
       OCommandContext iContext) {

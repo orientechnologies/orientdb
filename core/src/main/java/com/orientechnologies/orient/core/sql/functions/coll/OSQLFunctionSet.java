@@ -21,8 +21,8 @@ package com.orientechnologies.orient.core.sql.functions.coll;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -46,7 +46,7 @@ public class OSQLFunctionSet extends OSQLFunctionMultiValueAbstract<Set<Object>>
 
   public Object execute(
       Object iThis,
-      final OIdentifiable iCurrentRecord,
+      final OResult current,
       Object iCurrentResult,
       final Object[] iParams,
       OCommandContext iContext) {

@@ -13,6 +13,7 @@ import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.OMetadataInternal;
+import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -64,17 +65,14 @@ public class OLuceneSearchMoreLikeThisFunction extends OSQLFunctionAbstract
 
   @Override
   public Object execute(
-      Object iThis,
-      OIdentifiable iCurrentRecord,
-      Object iCurrentResult,
-      Object[] params,
-      OCommandContext ctx) {
+      Object iThis, OResult current, Object iCurrentResult, Object[] params, OCommandContext ctx) {
 
-    // TODO: slow implementation can be made faster
-    if (!(iCurrentRecord instanceof ODocument)) {
+    if (!current.isElement()) {
       return false;
     }
-    String className = ((ODocument) iCurrentRecord).getClassName();
+    var curEl = current.getElement().get();
+    var identity = curEl.getIdentity();
+    String className = curEl.getSchemaType().map(OClass::getName).orElse(null);
     OLuceneFullTextIndex index = this.searchForIndex(ctx, className);
 
     if (index == null) return Collections.emptySet();
@@ -119,7 +117,7 @@ public class OLuceneSearchMoreLikeThisFunction extends OSQLFunctionAbstract
       luceneResultSet = rids.collect(Collectors.toSet());
     }
 
-    return luceneResultSet.contains(iCurrentRecord);
+    return luceneResultSet.contains(identity);
   }
 
   @Override

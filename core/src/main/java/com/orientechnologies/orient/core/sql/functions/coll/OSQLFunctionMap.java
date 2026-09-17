@@ -20,7 +20,7 @@
 package com.orientechnologies.orient.core.sql.functions.coll;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -41,7 +41,7 @@ public class OSQLFunctionMap extends OSQLFunctionMultiValueAbstract<Map<Object, 
   @SuppressWarnings("unchecked")
   public Object execute(
       Object iThis,
-      final OIdentifiable iCurrentRecord,
+      final OResult current,
       Object iCurrentResult,
       final Object[] iParams,
       OCommandContext iContext) {

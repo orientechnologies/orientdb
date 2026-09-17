@@ -20,7 +20,7 @@
 package com.orientechnologies.orient.core.sql.functions.coll;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -64,7 +64,7 @@ public class OSQLFunctionSymmetricDifference extends OSQLFunctionMultiValueAbstr
   @SuppressWarnings("unchecked")
   public Object execute(
       Object iThis,
-      OIdentifiable iCurrentRecord,
+      OResult current,
       Object iCurrentResult,
       final Object[] iParams,
       OCommandContext iContext) {

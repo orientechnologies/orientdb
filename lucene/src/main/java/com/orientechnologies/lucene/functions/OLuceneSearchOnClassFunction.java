@@ -53,11 +53,7 @@ public class OLuceneSearchOnClassFunction extends OLuceneSearchFunctionTemplate 
 
   @Override
   public Object execute(
-      Object iThis,
-      OIdentifiable iCurrentRecord,
-      Object iCurrentResult,
-      Object[] params,
-      OCommandContext ctx) {
+      Object iThis, OResult current, Object iCurrentResult, Object[] params, OCommandContext ctx) {
 
     OResult result;
     if (iThis instanceof OResult) {
@@ -85,7 +81,8 @@ public class OLuceneSearchOnClassFunction extends OLuceneSearchFunctionTemplate 
             .map(s -> element.getProperty(s))
             .collect(Collectors.toList());
 
-    for (IndexableField field : index.buildDocument(key, iCurrentRecord).getFields()) {
+    for (IndexableField field :
+        index.buildDocument(key, current.getElement().orElse(null)).getFields()) {
       memoryIndex.addField(field, index.indexAnalyzer());
     }
 

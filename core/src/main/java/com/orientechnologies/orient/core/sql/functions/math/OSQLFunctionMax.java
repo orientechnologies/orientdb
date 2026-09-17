@@ -20,8 +20,8 @@
 package com.orientechnologies.orient.core.sql.functions.math;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import java.util.Collection;
 import java.util.List;
 
@@ -43,7 +43,7 @@ public class OSQLFunctionMax extends OSQLFunctionMathAbstract {
   @SuppressWarnings({"unchecked", "rawtypes"})
   public Object execute(
       Object iThis,
-      final OIdentifiable iCurrentRecord,
+      final OResult current,
       Object iCurrentResult,
       final Object[] iParams,
       OCommandContext iContext) {

@@ -35,7 +35,7 @@ public abstract class OSQLFunctionMove extends OSQLFunctionConfigurableAbstract 
 
   public Object execute(
       final Object iThis,
-      final OIdentifiable iCurrentRecord,
+      final OResult current,
       final Object iCurrentResult,
       final Object[] iParameters,
       final OCommandContext iContext) {

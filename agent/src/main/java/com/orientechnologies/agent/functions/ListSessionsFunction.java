@@ -2,8 +2,8 @@ package com.orientechnologies.agent.functions;
 
 import com.orientechnologies.enterprise.server.OEnterpriseServer;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.security.ORule;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.server.OClientConnectionStats;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
@@ -26,7 +26,7 @@ public class ListSessionsFunction extends OSQLEnterpriseFunction {
   @Override
   public Object exec(
       Object iThis,
-      OIdentifiable iCurrentRecord,
+      OResult current,
       Object iCurrentResult,
       Object[] iParams,
       OCommandContext iContext) {

@@ -16,6 +16,7 @@ import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.OEdgeToVertexIterable;
 import com.orientechnologies.orient.core.sql.OSQLHelper;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.functions.math.OSQLFunctionMathAbstract;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -73,12 +74,12 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
 
   public List<ORID> execute(
       Object iThis,
-      final OIdentifiable iCurrentRecord,
+      final OResult current,
       final Object iCurrentResult,
       final Object[] iParams,
       final OCommandContext iContext) {
 
-    final ORecord record = iCurrentRecord != null ? iCurrentRecord.getRecord() : null;
+    final ORecord record = current != null ? current.getElement().orElse(null) : null;
 
     final OShortestPathContext ctx = new OShortestPathContext();
 

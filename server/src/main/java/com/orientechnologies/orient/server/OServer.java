@@ -139,8 +139,6 @@ public class OServer {
 
     OLogManager.instance().installCustomFormatter();
 
-    defaultSettings();
-
     threadGroup = new ThreadGroup("OrientDB Server");
 
     System.setProperty("com.sun.management.jmxremote", "true");
@@ -756,11 +754,6 @@ public class OServer {
     return this;
   }
 
-  public void addTemporaryUser(
-      final String iName, final String iPassword, final String iPermissions) {
-    databases.getSecuritySystem().addTemporaryUser(iName, iPassword, iPermissions);
-  }
-
   public OServer registerLifecycleListener(final OServerLifecycleListener iListener) {
     lifecycleListeners.add(iListener);
     return this;
@@ -1047,8 +1040,6 @@ public class OServer {
       }
     }
   }
-
-  protected void defaultSettings() {}
 
   public OTokenHandler getTokenHandler() {
     return tokenHandler;

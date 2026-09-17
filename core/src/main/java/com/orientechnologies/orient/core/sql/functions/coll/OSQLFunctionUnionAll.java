@@ -23,6 +23,7 @@ import com.orientechnologies.common.collection.OMultiCollectionIterator;
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
@@ -44,7 +45,7 @@ public class OSQLFunctionUnionAll extends OSQLFunctionMultiValueAbstract<Collect
 
   public Object execute(
       final Object iThis,
-      final OIdentifiable iCurrentRecord,
+      final OResult current,
       final Object iCurrentResult,
       final Object[] iParams,
       OCommandContext iContext) {

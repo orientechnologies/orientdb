@@ -37,7 +37,7 @@ public class OSTDWithinFunction extends OSpatialFunctionAbstractIndexable {
   @Override
   public Object execute(
       Object iThis,
-      OIdentifiable iCurrentRecord,
+      OResult current,
       Object iCurrentResult,
       Object[] iParams,
       OCommandContext iContext) {

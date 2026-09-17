@@ -21,7 +21,7 @@ package com.orientechnologies.orient.core.sql.functions.stat;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 import java.util.HashMap;
 import java.util.List;
@@ -77,7 +77,7 @@ public class OSQLFunctionVariance extends OSQLFunctionAbstract {
   @Override
   public Object execute(
       Object iThis,
-      OIdentifiable iCurrentRecord,
+      OResult current,
       Object iCurrentResult,
       Object[] iParams,
       OCommandContext iContext) {

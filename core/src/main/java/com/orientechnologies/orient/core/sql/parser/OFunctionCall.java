@@ -103,17 +103,6 @@ public class OFunctionCall extends SimpleNode {
   private Object execute(OResult targetObjects, OCommandContext ctx, String name) {
     List<Object> paramValues = new ArrayList<Object>();
 
-    Object record = null;
-
-    if (targetObjects != null) {
-      record = targetObjects.toElement();
-    }
-    if (record == null) {
-      OResult current = ctx == null ? null : ctx.getCurrent();
-      if (current != null) {
-        record = current.toElement();
-      }
-    }
     for (OExpression expr : this.params) {
       paramValues.add(expr.execute(targetObjects, ctx));
     }
@@ -123,21 +112,7 @@ public class OFunctionCall extends SimpleNode {
 
       validateFunctionParams(function, paramValues);
 
-      if (record instanceof OIdentifiable) {
-        return function.execute(
-            targetObjects, (OIdentifiable) record, null, paramValues.toArray(), ctx);
-      } else if (record instanceof OResult) {
-        return function.execute(
-            targetObjects,
-            ((OResult) record).getElement().orElse(null),
-            null,
-            paramValues.toArray(),
-            ctx);
-      } else if (record == null) {
-        return function.execute(targetObjects, null, null, paramValues.toArray(), ctx);
-      } else {
-        throw new OCommandExecutionException("Invalid value for $current: " + record);
-      }
+      return function.execute(targetObjects, ctx.getCurrent(), null, paramValues.toArray(), ctx);
     } else {
       throw new OCommandExecutionException("Function not found: " + name);
     }

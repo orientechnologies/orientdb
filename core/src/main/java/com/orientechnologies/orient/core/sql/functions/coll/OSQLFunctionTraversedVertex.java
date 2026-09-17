@@ -20,7 +20,7 @@
 package com.orientechnologies.orient.core.sql.functions.coll;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 
 /**
  * Returns a traversed element from the stack. Use it with SQL traverse only.
@@ -36,7 +36,7 @@ public class OSQLFunctionTraversedVertex extends OSQLFunctionTraversedElement {
 
   public Object execute(
       Object iThis,
-      final OIdentifiable iCurrentRecord,
+      final OResult current,
       Object iCurrentResult,
       final Object[] iParams,
       final OCommandContext iContext) {

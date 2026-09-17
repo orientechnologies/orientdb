@@ -141,7 +141,7 @@ public class OLuceneCrossClassSearchFunction extends OSQLFunctionAbstract
   @Override
   public Object execute(
       Object iThis,
-      OIdentifiable currentRecord,
+      OResult currentRecord,
       Object currentResult,
       Object[] params,
       OCommandContext ctx) {

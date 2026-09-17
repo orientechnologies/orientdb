@@ -21,7 +21,7 @@ package com.orientechnologies.orient.core.sql.functions.coll;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionConfigurableAbstract;
 
 /**
@@ -39,7 +39,7 @@ public class OSQLFunctionFirst extends OSQLFunctionConfigurableAbstract {
 
   public Object execute(
       Object iThis,
-      final OIdentifiable iCurrentRecord,
+      final OResult current,
       Object iCurrentResult,
       final Object[] iParams,
       final OCommandContext iContext) {

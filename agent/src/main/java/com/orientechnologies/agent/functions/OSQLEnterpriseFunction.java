@@ -1,11 +1,11 @@
 package com.orientechnologies.agent.functions;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunctionAbstract;
 import com.orientechnologies.orient.server.OClientConnection;
 
@@ -19,7 +19,7 @@ public abstract class OSQLEnterpriseFunction extends OSQLFunctionAbstract {
   @Override
   public Object execute(
       Object iThis,
-      OIdentifiable iCurrentRecord,
+      OResult current,
       Object iCurrentResult,
       Object[] iParams,
       OCommandContext iContext) {
@@ -28,7 +28,7 @@ public abstract class OSQLEnterpriseFunction extends OSQLFunctionAbstract {
     if (user != null
         && user.checkIfAllowed(genericPermission(), specificPermission(), ORole.PERMISSION_EXECUTE)
             != null) {
-      return exec(this, iCurrentRecord, iCurrentResult, iParams, iContext);
+      return exec(this, current, iCurrentResult, iParams, iContext);
     } else {
       String usr = user != null ? user.getName() : "null";
       throw new OSecurityAccessException(
@@ -50,7 +50,7 @@ public abstract class OSQLEnterpriseFunction extends OSQLFunctionAbstract {
 
   public abstract Object exec(
       Object iThis,
-      OIdentifiable iCurrentRecord,
+      OResult current,
       Object iCurrentResult,
       Object[] iParams,
       OCommandContext iContext);

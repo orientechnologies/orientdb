@@ -20,8 +20,8 @@
 package com.orientechnologies.orient.core.sql.functions.graph;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.record.OVertex;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.Map;
@@ -46,12 +46,12 @@ public class OSQLFunctionDijkstra extends OSQLFunctionPathFinder {
 
   public LinkedList<OVertex> execute(
       final Object iThis,
-      final OIdentifiable iCurrentRecord,
+      final OResult current,
       final Object iCurrentResult,
       final Object[] iParams,
       final OCommandContext iContext) {
     return new OSQLFunctionAstar()
-        .execute(this, iCurrentRecord, iCurrentResult, toAStarParams(iParams), iContext);
+        .execute(this, current, iCurrentResult, toAStarParams(iParams), iContext);
   }
 
   private Object[] toAStarParams(Object[] iParams) {

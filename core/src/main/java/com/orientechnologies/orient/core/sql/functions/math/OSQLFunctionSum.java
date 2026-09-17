@@ -21,8 +21,8 @@ package com.orientechnologies.orient.core.sql.functions.math;
 
 import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import java.util.List;
 
 /**
@@ -42,7 +42,7 @@ public class OSQLFunctionSum extends OSQLFunctionMathAbstract {
 
   public Object execute(
       Object iThis,
-      final OIdentifiable iCurrentRecord,
+      final OResult current,
       Object iCurrentResult,
       final Object[] iParams,
       OCommandContext iContext) {

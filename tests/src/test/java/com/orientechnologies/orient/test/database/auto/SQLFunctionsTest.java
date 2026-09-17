@@ -475,7 +475,7 @@ public class SQLFunctionsTest extends DocumentDBBaseTest {
               @Override
               public Object execute(
                   Object iThis,
-                  OIdentifiable iCurrentRecord,
+                  OResult current,
                   Object iCurrentResult,
                   final Object[] iParams,
                   OCommandContext iContext) {

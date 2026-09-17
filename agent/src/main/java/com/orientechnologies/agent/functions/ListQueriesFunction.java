@@ -2,8 +2,8 @@ package com.orientechnologies.agent.functions;
 
 import com.orientechnologies.enterprise.server.OEnterpriseServer;
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.metadata.security.ORule;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import java.util.Optional;
 
 /** Created by Enrico Risa on 23/07/2018. */
@@ -20,7 +20,7 @@ public class ListQueriesFunction extends OSQLEnterpriseFunction {
   @Override
   public Object exec(
       Object iThis,
-      OIdentifiable iCurrentRecord,
+      OResult current,
       Object iCurrentResult,
       Object[] iParams,
       OCommandContext iContext) {

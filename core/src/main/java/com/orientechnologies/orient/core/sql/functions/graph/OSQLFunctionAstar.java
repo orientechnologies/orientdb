@@ -79,14 +79,14 @@ public class OSQLFunctionAstar extends OSQLFunctionHeuristicPathFinderAbstract {
 
   public LinkedList<OVertex> execute(
       final Object iThis,
-      final OIdentifiable iCurrentRecord,
+      final OResult current,
       final Object iCurrentResult,
       final Object[] iParams,
       final OCommandContext iContext) {
     context = iContext;
     final OSQLFunctionAstar context = this;
 
-    final ORecord record = iCurrentRecord != null ? iCurrentRecord.getRecord() : null;
+    final ORecord record = current != null ? current.getElement().orElse(null) : null;
 
     Object source = iParams[0];
     if (OMultiValue.isMultiValue(source)) {

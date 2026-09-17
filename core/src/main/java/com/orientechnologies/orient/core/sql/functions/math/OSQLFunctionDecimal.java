@@ -20,7 +20,7 @@
 package com.orientechnologies.orient.core.sql.functions.math;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.List;
@@ -40,7 +40,7 @@ public class OSQLFunctionDecimal extends OSQLFunctionMathAbstract {
 
   public Object execute(
       Object iThis,
-      final OIdentifiable iRecord,
+      final OResult iRecord,
       final Object iCurrentResult,
       final Object[] iParams,
       OCommandContext iContext) {
