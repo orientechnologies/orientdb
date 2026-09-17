@@ -17,6 +17,7 @@ package com.orientechnologies.orient.core.sql.method;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 
 /**
  * Methods can be used on various objects with different number of arguments. SQL syntax :
@@ -66,4 +67,20 @@ public interface OSQLMethod extends Comparable<OSQLMethod> {
       OCommandContext iContext,
       Object ioResult,
       Object[] iParams);
+
+  /**
+   * Process a record.
+   *
+   * @param self
+   * @param current : current record
+   * @param context execution context
+   * @param ioResult : field value
+   * @param iParams : function parameters, number is ensured to be within minParams and maxParams.
+   * @return evaluation result
+   */
+  default Object execute(
+      Object self, OResult current, OCommandContext context, Object ioResult, Object[] params) {
+    var cur = current == null ? null : current.getElement().orElse(null);
+    return execute(self, cur, context, ioResult, params);
+  }
 }

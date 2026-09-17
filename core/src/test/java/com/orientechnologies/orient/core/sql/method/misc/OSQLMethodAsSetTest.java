@@ -3,7 +3,12 @@ package com.orientechnologies.orient.core.sql.method.misc;
 import static org.junit.Assert.assertEquals;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import java.util.*;
+import com.orientechnologies.orient.core.sql.executor.OResult;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Random;
+import java.util.Set;
 import java.util.stream.IntStream;
 import org.junit.Assert;
 import org.junit.Before;
@@ -31,14 +36,14 @@ public class OSQLMethodAsSetTest {
     HashSet<Object> aSet = new HashSet<Object>();
     aSet.add(1);
     aSet.add("2");
-    Object result = function.execute(null, null, null, aSet, null);
+    Object result = function.execute(null, (OResult) null, null, aSet, null);
     assertEquals(result, aSet);
   }
 
   @Test
   public void testNull() {
     // The expected behavior is to return an empty set.
-    Object result = function.execute(null, null, null, null, null);
+    Object result = function.execute(null, (OResult) null, null, null, null);
     assertEquals(result, new HashSet<Object>());
   }
 
@@ -49,7 +54,7 @@ public class OSQLMethodAsSetTest {
     ArrayList<Object> aCollection = new ArrayList<Object>();
     aCollection.add(1);
     aCollection.add("2");
-    Object result = function.execute(null, null, null, aCollection, null);
+    Object result = function.execute(null, (OResult) null, null, aCollection, null);
 
     HashSet<Object> expected = new HashSet<Object>();
     expected.add(1);
@@ -65,7 +70,7 @@ public class OSQLMethodAsSetTest {
     values.add("2");
 
     TestIterable<Object> anIterable = new TestIterable<Object>(values);
-    Object result = function.execute(null, null, null, anIterable, null);
+    Object result = function.execute(null, (OResult) null, null, anIterable, null);
 
     HashSet<Object> expected = new HashSet<Object>();
     expected.add(1);
@@ -82,7 +87,7 @@ public class OSQLMethodAsSetTest {
     values.add("2");
 
     TestIterable<Object> anIterable = new TestIterable<Object>(values);
-    Object result = function.execute(null, null, null, anIterable.iterator(), null);
+    Object result = function.execute(null, (OResult) null, null, anIterable.iterator(), null);
 
     HashSet<Object> expected = new HashSet<Object>();
     expected.add(1);
@@ -98,7 +103,7 @@ public class OSQLMethodAsSetTest {
     doc.field("f1", 1);
     doc.field("f2", 2);
 
-    Object result = function.execute(null, null, null, doc, null);
+    Object result = function.execute(null, (OResult) null, null, doc, null);
 
     HashSet<Object> expected = new HashSet<Object>();
     expected.add(doc);
@@ -110,7 +115,7 @@ public class OSQLMethodAsSetTest {
     // The expected behavior is to return a set with only the single
     // element in it.
 
-    Object result = function.execute(null, null, null, Integer.valueOf(4), null);
+    Object result = function.execute(null, (OResult) null, null, Integer.valueOf(4), null);
     HashSet<Object> expected = new HashSet<Object>();
     expected.add(Integer.valueOf(4));
     assertEquals(result, expected);
@@ -127,7 +132,7 @@ public class OSQLMethodAsSetTest {
     Collections.shuffle(values, rnd);
 
     TestIterable<Integer> anIterable = new TestIterable<>(values);
-    Object result = function.execute(null, null, null, anIterable, null);
+    Object result = function.execute(null, (OResult) null, null, anIterable, null);
 
     Assert.assertTrue(result instanceof Set<?>);
     Assert.assertEquals(values, ((Set<?>) result).stream().toList());

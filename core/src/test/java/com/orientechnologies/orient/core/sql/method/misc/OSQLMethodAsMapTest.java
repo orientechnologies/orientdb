@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.sql.method.misc;
 import static org.junit.Assert.assertEquals;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import java.util.ArrayList;
 import java.util.HashMap;
 import org.junit.Before;
@@ -30,14 +31,14 @@ public class OSQLMethodAsMapTest {
     HashMap<Object, Object> aMap = new HashMap<Object, Object>();
     aMap.put("p1", 1);
     aMap.put("p2", 2);
-    Object result = function.execute(null, null, null, aMap, null);
+    Object result = function.execute(null, (OResult) null, null, aMap, null);
     assertEquals(result, aMap);
   }
 
   @Test
   public void testNull() {
     // The expected behavior is to return an empty map.
-    Object result = function.execute(null, null, null, null, null);
+    Object result = function.execute(null, (OResult) null, null, null, null);
     assertEquals(result, new HashMap<Object, Object>());
   }
 
@@ -48,7 +49,7 @@ public class OSQLMethodAsMapTest {
     doc.field("f1", 1);
     doc.field("f2", 2);
 
-    Object result = function.execute(null, null, null, doc, null);
+    Object result = function.execute(null, (OResult) null, null, doc, null);
 
     assertEquals(result, doc.toMap());
   }
@@ -64,7 +65,7 @@ public class OSQLMethodAsMapTest {
     aCollection.add("p2");
     aCollection.add(2);
 
-    Object result = function.execute(null, null, null, aCollection, null);
+    Object result = function.execute(null, (OResult) null, null, aCollection, null);
 
     HashMap<Object, Object> expected = new HashMap<Object, Object>();
     expected.put("p1", 1);
@@ -83,7 +84,7 @@ public class OSQLMethodAsMapTest {
     aCollection.add("p2");
     aCollection.add(2);
 
-    Object result = function.execute(null, null, null, aCollection.iterator(), null);
+    Object result = function.execute(null, (OResult) null, null, aCollection.iterator(), null);
 
     HashMap<Object, Object> expected = new HashMap<Object, Object>();
     expected.put("p1", 1);
@@ -93,7 +94,7 @@ public class OSQLMethodAsMapTest {
 
   public void testOtherValue() {
     // The expected behavior is to return null.
-    Object result = function.execute(null, null, null, Integer.valueOf(4), null);
+    Object result = function.execute(null, (OResult) null, null, Integer.valueOf(4), null);
     assertEquals(result, null);
   }
 }

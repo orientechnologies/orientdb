@@ -3,6 +3,7 @@ package com.orientechnologies.orient.core.sql.method.misc;
 import static org.junit.Assert.assertEquals;
 
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.sql.executor.OResult;
 import java.util.ArrayList;
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -31,14 +32,14 @@ public class OSQLMethodAsListTest {
     ArrayList<Object> aList = new ArrayList<Object>();
     aList.add(1);
     aList.add("2");
-    Object result = function.execute(null, null, null, aList, null);
+    Object result = function.execute(null, (OResult) null, null, aList, null);
     assertEquals(result, aList);
   }
 
   @Test
   public void testNull() {
     // The expected behavior is to return an empty list.
-    Object result = function.execute(null, null, null, null, null);
+    Object result = function.execute(null, (OResult) null, null, null, null);
     assertEquals(result, new ArrayList<Object>());
   }
 
@@ -49,7 +50,7 @@ public class OSQLMethodAsListTest {
     Set<Object> aCollection = new LinkedHashSet<Object>();
     aCollection.add(1);
     aCollection.add("2");
-    Object result = function.execute(null, null, null, aCollection, null);
+    Object result = function.execute(null, (OResult) null, null, aCollection, null);
 
     ArrayList<Object> expected = new ArrayList<Object>();
     expected.add(1);
@@ -65,7 +66,7 @@ public class OSQLMethodAsListTest {
     expected.add("2");
 
     TestIterable<Object> anIterable = new TestIterable<Object>(expected);
-    Object result = function.execute(null, null, null, anIterable, null);
+    Object result = function.execute(null, (OResult) null, null, anIterable, null);
 
     assertEquals(result, expected);
   }
@@ -78,7 +79,7 @@ public class OSQLMethodAsListTest {
     expected.add("2");
 
     TestIterable<Object> anIterable = new TestIterable<Object>(expected);
-    Object result = function.execute(null, null, null, anIterable.iterator(), null);
+    Object result = function.execute(null, (OResult) null, null, anIterable.iterator(), null);
 
     assertEquals(result, expected);
   }
@@ -90,7 +91,7 @@ public class OSQLMethodAsListTest {
     doc.field("f1", 1);
     doc.field("f2", 2);
 
-    Object result = function.execute(null, null, null, doc, null);
+    Object result = function.execute(null, (OResult) null, null, doc, null);
 
     ArrayList<Object> expected = new ArrayList<Object>();
     expected.add(doc);
@@ -102,7 +103,7 @@ public class OSQLMethodAsListTest {
     // The expected behavior is to return a list with only the single
     // element in it.
 
-    Object result = function.execute(null, null, null, Integer.valueOf(4), null);
+    Object result = function.execute(null, (OResult) null, null, Integer.valueOf(4), null);
     ArrayList<Object> expected = new ArrayList<Object>();
     expected.add(Integer.valueOf(4));
     assertEquals(result, expected);
