@@ -2903,9 +2903,11 @@ public final class OWOWCache extends OAbstractWriteCache
           chunk.add(new OQuarto<>(version, copy, directPointer, pointer));
 
           if (chunksSize + chunk.size() >= pagesFlushLimit) {
-            chunks.add(chunk);
-            chunksSize += chunk.size();
-            chunk = new ArrayList<>();
+            if (!chunk.isEmpty()) {
+              chunks.add(chunk);
+              chunksSize += chunk.size();
+              chunk = new ArrayList<>();
+            }
 
             lastPageIndex = -1;
             lastFileId = -1;
@@ -3056,6 +3058,7 @@ public final class OWOWCache extends OAbstractWriteCache
             ioResults.clear();
             acquiredFiles.clear();
           } else {
+            logger.debug("failing to acquire lock on file %s for flush", entry.getKey());
             Thread.yield();
           }
         }
