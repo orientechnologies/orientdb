@@ -100,7 +100,7 @@ public class StorageStartupMetadata {
     if (OConfiguration.global().fileLock()) {
       lockFile();
     }
-
+    new Exception("Made Dirty here").printStackTrace();
     dirtyFlag = true;
     lastTxId = -1;
     this.openedAtVersion = openedAtVersion;
@@ -300,6 +300,7 @@ public class StorageStartupMetadata {
 
     dirtyFlag = true;
     this.openedAtVersion = openedAtVersion;
+    new Exception("Made Dirty here").printStackTrace();
 
     update(serialize());
   }
@@ -308,6 +309,7 @@ public class StorageStartupMetadata {
     if (!dirtyFlag) return;
 
     dirtyFlag = false;
+    new Exception("Dirty Cleanded here").printStackTrace();
     update(serialize());
   }
 
@@ -321,6 +323,7 @@ public class StorageStartupMetadata {
     this.lastTxId = lastTxId;
     this.txMetadata = txMetadata;
     dirtyFlag = false;
+    new Exception("Dirty Cleanded here").printStackTrace();
     update(serialize());
   }
 
