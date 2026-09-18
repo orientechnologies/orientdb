@@ -68,6 +68,8 @@ public class OZIPCompressionUtil {
       throws IOException {
     final Path outdir = Path.of(out).toAbsolutePath();
     boolean atLeastOneFile = false;
+
+    logger.debug("Starting extracting zip archive");
     try (ZipInputStream zin = new ZipInputStream(in)) {
       ZipEntry entry;
       String name;
@@ -98,6 +100,8 @@ public class OZIPCompressionUtil {
         extractFile(zin, outdir, name, iListener);
       }
     }
+    logger.debug("Extracting zip archive complete");
+
     return atLeastOneFile;
   }
 
@@ -108,6 +112,8 @@ public class OZIPCompressionUtil {
       final OCommandOutputListener iListener)
       throws IOException {
     if (iListener != null) iListener.onMessage("\n- Uncompressing file " + name + "...");
+
+    logger.debug("Extracting file '%s' from zip", name);
 
     try (BufferedOutputStream out =
         new BufferedOutputStream(new FileOutputStream(outdir.resolve(name).toFile()))) {
@@ -136,7 +142,6 @@ public class OZIPCompressionUtil {
       final OCommandOutputListener iOutput,
       final List<String> iCompressedFiles)
       throws IOException {
-
     File f = new File(path);
     if (!f.exists()) {
       String entryName = path.substring(baseFolderName.length() + 1);
@@ -200,6 +205,8 @@ public class OZIPCompressionUtil {
       throws IOException {
     final ZipOutputStream zipOutputStream = new ZipOutputStream(output);
     zipOutputStream.setComment("OrientDB Backup executed on " + new Date());
+
+    logger.debug("Start creating zip archive");
     try {
       zipOutputStream.setLevel(compressionLevel);
       for (Map.Entry<String, String> entry : fileNames.entrySet())
@@ -207,6 +214,8 @@ public class OZIPCompressionUtil {
     } finally {
       zipOutputStream.close();
     }
+
+    logger.debug("Zip archive completed");
   }
 
   private static void addFile(
@@ -219,6 +228,7 @@ public class OZIPCompressionUtil {
 
     if (iOutput != null) iOutput.onMessage("\n- Compressing file " + entryName + "...");
 
+    logger.debug("Adding file '%s' to zip archive", entryName);
     final ZipEntry ze = new ZipEntry(entryName);
     zos.putNextEntry(ze);
     try {

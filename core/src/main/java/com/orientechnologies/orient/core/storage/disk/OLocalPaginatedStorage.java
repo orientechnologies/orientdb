@@ -291,6 +291,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
         }
 
         startupMetadata.setTxMetadata(getLastMetadata().orElse(null));
+        logger.debug("Starting zip archive");
         final OutputStream bo = bufferSize > 0 ? new BufferedOutputStream(out, bufferSize) : out;
         try (final ZipOutputStream zos = new ZipOutputStream(bo)) {
           zos.setComment("OrientDB Backup executed on " + new Date());
@@ -310,6 +311,7 @@ public class OLocalPaginatedStorage extends OAbstractPaginatedStorage {
           if (freezeLSN != null) {
             writeAheadLog.removeCutTillLimit(freezeLSN);
           }
+          logger.debug("Zip archive complete");
         }
 
       } finally {
