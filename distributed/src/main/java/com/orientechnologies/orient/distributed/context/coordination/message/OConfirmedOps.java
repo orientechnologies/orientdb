@@ -46,4 +46,9 @@ public class OConfirmedOps implements OStructuralMessage {
     }
     return new OConfirmedOps(ops);
   }
+
+  @Override
+  public String toString() {
+    return "OConfirmedOps [ops=" + ops + "]";
+  }
 }

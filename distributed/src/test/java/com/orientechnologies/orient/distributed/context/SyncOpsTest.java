@@ -117,8 +117,8 @@ public class SyncOpsTest {
     var nodeTo = new ONodeId("node2");
     var syncId = new OSyncId(dbId, nodeTo);
 
-    var sender = new OSyncState(syncId, nodeFrom, mode);
-    var receiver = new OSyncState(syncId, nodeFrom, mode);
+    var sender = new OSyncState(null, syncId, nodeFrom, mode);
+    var receiver = new OSyncState(null, syncId, nodeFrom, mode);
     var pass = new PassTrough(sender, receiver);
 
     OutputStream out = new OutputStreamMessages(pass, sender);
@@ -215,8 +215,8 @@ public class SyncOpsTest {
     var nodeTo = new ONodeId("node2");
     var syncId = new OSyncId(dbId, nodeTo);
 
-    var sender = new OSyncState(syncId, nodeFrom, mode);
-    var receiver = new OSyncState(syncId, nodeFrom, mode);
+    var sender = new OSyncState(null, syncId, nodeFrom, mode);
+    var receiver = new OSyncState(null, syncId, nodeFrom, mode);
     var pass = new FailPassTrough(sender, receiver, messageCount);
 
     OutputStream out = new OutputStreamMessages(pass, sender);
@@ -268,8 +268,8 @@ public class SyncOpsTest {
     Optional<OSharedContextEmbedded> sdc = ctx.getSharedDatabaseContext("test");
     var txs = sdc.get().getTransactionSequence();
 
-    var sender = new OSyncState(syncId, nodeFrom, new OCanSyncAccept.DeltaSync(preStatus));
-    var receiver = new OSyncState(syncId, nodeFrom, new OCanSyncAccept.DeltaSync(preStatus));
+    var sender = new OSyncState(null, syncId, nodeFrom, new OCanSyncAccept.DeltaSync(preStatus));
+    var receiver = new OSyncState(null, syncId, nodeFrom, new OCanSyncAccept.DeltaSync(preStatus));
     var pass = new PassTrough(sender, receiver);
 
     OutputStream out = new OutputStreamMessages(pass, sender);

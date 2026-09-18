@@ -13,6 +13,7 @@ import java.util.concurrent.TimeUnit;
 public class OSyncState {
   private static final OLoggerDistributed logger = OLoggerDistributed.logger(OSyncState.class);
 
+  private final ONodeId current;
   private final OSyncId syncId;
   private final ONodeId sender;
   private final OCanSyncAccept acceptMode;
@@ -23,7 +24,8 @@ public class OSyncState {
   private volatile boolean close = false;
   private volatile long lastTimeMessageReceived;
 
-  public OSyncState(OSyncId syncId, ONodeId sender, OCanSyncAccept acceptMode) {
+  public OSyncState(ONodeId current, OSyncId syncId, ONodeId sender, OCanSyncAccept acceptMode) {
+    this.current = current;
     this.syncId = syncId;
     this.sender = sender;
     this.acceptMode = acceptMode;
@@ -68,8 +70,12 @@ public class OSyncState {
   }
 
   public synchronized void receiveData(byte[] data, long sequential, boolean finished) {
-    logger.debug(
-        "receiving buffer size %d sequential %d finished %b", data.length, sequential, finished);
+    logger.debugNode(
+        current,
+        "receiving buffer size %d sequential %d finished %b",
+        data.length,
+        sequential,
+        finished);
     receiverStream.receive(data, sequential, finished);
     if (finished) {
       this.close = true;
@@ -103,7 +109,7 @@ public class OSyncState {
   }
 
   public synchronized void requestNext(boolean close) {
-    logger.debug("requesting next buffer for %s", syncId);
+    logger.debugNode(current, "requesting next buffer for %s", syncId);
     canNext = true;
     if (close) {
       this.close = close;
@@ -113,7 +119,7 @@ public class OSyncState {
 
   public synchronized void close() {
     if (!this.close) {
-      logger.debug("closing sync %s sender %s", syncId, this.sender);
+      logger.debugNode(current, "closing sync %s sender %s", syncId, this.sender);
       this.close = true;
       if (this.receiverStream != null) {
         try {

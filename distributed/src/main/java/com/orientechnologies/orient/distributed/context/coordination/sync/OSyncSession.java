@@ -35,7 +35,7 @@ public class OSyncSession {
   public Optional<OSyncState> startSync(ONodeId sender, OSyncId syncId, OCanSyncAccept canSync) {
     assert this.syncId.equals(syncId);
     if (canSync.isSync() && this.state.isEmpty()) {
-      this.state = Optional.of(new OSyncState(syncId, sender, canSync));
+      this.state = Optional.of(new OSyncState(syncId.getReceiver(), syncId, sender, canSync));
       return this.state;
     } else {
       nodes.remove(sender);
@@ -50,7 +50,7 @@ public class OSyncSession {
     assert this.syncId.equals(syncId);
     if (canSync.isSync()) {
       if (this.state.isEmpty()) {
-        this.state = Optional.of(new OSyncState(syncId, sender, canSync));
+        this.state = Optional.of(new OSyncState(sender, syncId, sender, canSync));
         Set<ONodeId> others = new HashSet<>(this.nodes);
         others.remove(sender);
         return Optional.of(new OCanSyncResult(this.state.get(), others));

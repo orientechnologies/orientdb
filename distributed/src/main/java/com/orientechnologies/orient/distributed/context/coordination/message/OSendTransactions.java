@@ -11,22 +11,22 @@ import java.util.List;
 
 public class OSendTransactions implements OStructuralMessage {
 
-  private final ONodeId nodeId;
+  private final ONodeId receiver;
   private final List<OTransactionId> transactions;
 
   public OSendTransactions(ONodeId nodeId, List<OTransactionId> transactions) {
-    this.nodeId = nodeId;
+    this.receiver = nodeId;
     this.transactions = transactions;
   }
 
   @Override
   public void execute(OrientDBDistributed ctx) {
-    ctx.sendTopologyTransactions(this.nodeId, this.transactions);
+    ctx.sendTopologyTransactions(this.receiver, this.transactions);
   }
 
   @Override
   public void serialize(DataOutput out) throws IOException {
-    this.nodeId.writeNetwork(out);
+    this.receiver.writeNetwork(out);
     out.writeInt(transactions.size());
     for (var tx : transactions) {
       tx.writeNetwork(out);
@@ -48,11 +48,16 @@ public class OSendTransactions implements OStructuralMessage {
     return new OSendTransactions(nodeId, transactions);
   }
 
-  public ONodeId getNodeId() {
-    return nodeId;
+  public ONodeId getReceiver() {
+    return receiver;
   }
 
   public List<OTransactionId> getTransactions() {
     return transactions;
+  }
+
+  @Override
+  public String toString() {
+    return " SendTransactions [receiver=" + receiver + ", transactions=" + transactions + "]";
   }
 }

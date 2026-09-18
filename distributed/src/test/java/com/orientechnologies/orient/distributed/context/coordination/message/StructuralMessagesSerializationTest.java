@@ -304,7 +304,7 @@ public class StructuralMessagesSerializationTest {
     var txs = List.of(newTxId());
     var operation = new OSendTransactions(node, txs);
     OSendTransactions read = writeRead(operation);
-    assertEquals(read.getNodeId(), node);
+    assertEquals(read.getReceiver(), node);
     assertEquals(read.getTransactions(), txs);
   }
 
