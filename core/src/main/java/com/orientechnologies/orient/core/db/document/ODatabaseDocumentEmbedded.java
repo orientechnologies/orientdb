@@ -934,6 +934,10 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
           changed = ORestrictedAccessHook.onRecordBeforeCreate(doc, this);
         }
         if (clazz.isFunction()) {
+          checkSecurity(
+              ORule.ResourceGeneric.FUNCTION,
+              ORole.PERMISSION_CREATE,
+              (String) doc.getProperty("name"));
           OFunctionLibraryImpl.validateFunctionRecord(doc);
         }
         ODocumentInternal.setPropertyEncryption(doc, OPropertyEncryptionNone.instance());
@@ -987,6 +991,11 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
                     + ": the resource has restricted access");
         }
         if (clazz.isFunction()) {
+          checkSecurity(
+              ORule.ResourceGeneric.FUNCTION,
+              ORole.PERMISSION_UPDATE,
+              (String) doc.getProperty("name"));
+
           OFunctionLibraryImpl.validateFunctionRecord(doc);
         }
         if (!getSharedContext().getSecurity().canUpdate(this, doc)) {
@@ -1097,6 +1106,12 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
                 "Cannot delete record "
                     + doc.getIdentity()
                     + ": the resource has restricted access");
+        }
+        if (clazz.isFunction()) {
+          checkSecurity(
+              ORule.ResourceGeneric.FUNCTION,
+              ORole.PERMISSION_DELETE,
+              (String) doc.getProperty("name"));
         }
         if (!getSharedContext().getSecurity().canDelete(this, doc)) {
           throw new OSecurityException(
