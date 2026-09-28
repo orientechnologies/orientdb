@@ -31,6 +31,8 @@ import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
 import com.orientechnologies.orient.core.metadata.schema.OType;
+import com.orientechnologies.orient.core.metadata.security.ORole;
+import com.orientechnologies.orient.core.metadata.security.ORule;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
@@ -123,9 +125,9 @@ public class OFunctionLibraryImpl {
 
   public synchronized OFunction createFunction(
       ODatabaseDocumentInternal database, final String iName) {
+    database.checkSecurity(ORule.ResourceGeneric.FUNCTION, ORole.PERMISSION_CREATE, iName);
     init(database);
-    reloadIfNeeded(ODatabaseRecordThreadLocal.instance().get());
-
+    reloadIfNeeded(database);
     final OFunction f = new OFunction().setName(iName);
     try {
       f.save(database);
@@ -164,6 +166,8 @@ public class OFunctionLibraryImpl {
 
   public synchronized void dropFunction(OFunction function) {
     ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.instance().get();
+    database.checkSecurity(
+        ORule.ResourceGeneric.FUNCTION, ORole.PERMISSION_DELETE, function.getName());
     reloadIfNeeded(database);
     String name = function.getName();
     ODocument doc = function.getDocument();
@@ -173,6 +177,8 @@ public class OFunctionLibraryImpl {
 
   public synchronized void dropFunction(String iName) {
     ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.instance().get();
+    database.checkSecurity(ORule.ResourceGeneric.FUNCTION, ORole.PERMISSION_DELETE, iName);
+
     reloadIfNeeded(database);
     OFunction function = getFunction(iName);
     ODocument doc = function.getDocument();
@@ -182,8 +188,9 @@ public class OFunctionLibraryImpl {
 
   public void updatedFunction(ODocument function) {
     ODatabaseDocumentInternal database = ODatabaseRecordThreadLocal.instance().get();
-    reloadIfNeeded(database);
     String oldName = (String) function.getOriginalValue("name");
+    database.checkSecurity(ORule.ResourceGeneric.FUNCTION, ORole.PERMISSION_UPDATE, oldName);
+    reloadIfNeeded(database);
     if (oldName != null) {
       functions.remove(oldName.toUpperCase(Locale.ENGLISH));
     }
