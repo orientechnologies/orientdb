@@ -23,7 +23,7 @@
             <filtered>true</filtered>
         </fileSet>
         <fileSet>
-            <directory>${basedir}/../server/script</directory>
+            <directory>${basedir}/../../server/script</directory>
             <outputDirectory>bin</outputDirectory>
             <includes>
                 <include>*.sh</include>
