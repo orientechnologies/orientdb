@@ -6,7 +6,6 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.ODatabaseListener;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.orientechnologies.orient.core.db.OSharedContext;
 import com.orientechnologies.orient.core.db.OSharedContextEmbedded;
 import com.orientechnologies.orient.core.db.viewmanager.ViewCreationListener;
 import com.orientechnologies.orient.core.db.viewmanager.ViewManager;
@@ -33,7 +32,7 @@ import java.util.Map;
 /** Created by tglman on 13/06/17. */
 public class OSchemaEmbedded extends OSchemaShared {
 
-  public OSchemaEmbedded(OSharedContext sharedContext) {
+  public OSchemaEmbedded() {
     super();
   }
 

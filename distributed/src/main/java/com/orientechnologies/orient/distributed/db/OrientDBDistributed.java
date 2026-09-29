@@ -524,7 +524,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
         synchronized (this) {
           embedded = newSessionInstance(name, config);
         }
-        context.reInit(context.getStorage(), embedded);
+        context.reInit(embedded);
         distributedSetOnline(context);
         ODatabaseRecordThreadLocal.instance().remove();
         return true;

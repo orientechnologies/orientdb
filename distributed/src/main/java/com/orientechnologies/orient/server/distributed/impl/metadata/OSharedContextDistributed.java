@@ -29,10 +29,10 @@ public class OSharedContextDistributed extends OSharedContextEmbedded {
     super(storage, orientDB);
   }
 
-  protected void init(OStorage storage) {
+  protected void init() {
     stringCache = new OStringCache(orientDB.getContextConfigurations().dbStringCacheSize());
-    schema = new OSchemaDistributed(this);
-    security = orientDB.getSecuritySystem().newSecurity(storage.getName());
+    schema = new OSchemaDistributed();
+    security = orientDB.getSecuritySystem().newSecurity();
     indexManager = new OIndexManagerDistributed(storage);
     functionLibrary = new OFunctionLibraryImpl();
     scheduler = new OSchedulerImpl(orientDB);

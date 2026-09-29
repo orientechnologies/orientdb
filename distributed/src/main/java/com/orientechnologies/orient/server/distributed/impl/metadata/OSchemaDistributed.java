@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.server.distributed.impl.metadata;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
-import com.orientechnologies.orient.core.db.OSharedContext;
 import com.orientechnologies.orient.core.id.ONodeId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
@@ -18,8 +17,8 @@ import java.util.stream.Collectors;
 /** Created by tglman on 22/06/17. */
 public class OSchemaDistributed extends OSchemaEmbedded {
 
-  public OSchemaDistributed(OSharedContext sharedContext) {
-    super(sharedContext);
+  public OSchemaDistributed() {
+    super();
   }
 
   protected OClassImpl createClassInstance(String className, int[] clusterIds) {

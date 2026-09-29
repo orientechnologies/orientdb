@@ -19,7 +19,6 @@ import com.orientechnologies.orient.core.metadata.function.OFunctionLibraryImpl;
 import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibraryImpl;
 import com.orientechnologies.orient.core.schedule.OSchedulerImpl;
-import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageInfo;
 import java.util.HashMap;
 import java.util.Map;
@@ -172,7 +171,7 @@ public class OSharedContextRemote extends OSharedContext {
     return resource;
   }
 
-  public synchronized void reInit(OStorage storage, ODatabaseDocumentInternal database) {
+  public synchronized void reInit(ODatabaseDocumentInternal database) {
     throw new UnsupportedOperationException();
   }
 

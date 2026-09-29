@@ -1090,7 +1090,7 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
   }
 
   @Override
-  public OSecurityInternal newSecurity(String database) {
+  public OSecurityInternal newSecurity() {
     return new OSecurityShared(this);
   }
 

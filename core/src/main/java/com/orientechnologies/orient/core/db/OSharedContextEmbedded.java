@@ -77,14 +77,14 @@ public class OSharedContextEmbedded extends OSharedContext {
             listener.onStorageConfigurationUpdate(storage.getName(), update);
           }
         });
-    init(storage);
+    init();
   }
 
-  protected void init(OStorage storage) {
+  protected void init() {
     stringCache = new OStringCache(orientDB.getContextConfigurations().dbStringCacheSize());
 
-    schema = new OSchemaEmbedded(this);
-    security = orientDB.getSecuritySystem().newSecurity(storage.getName());
+    schema = new OSchemaEmbedded();
+    security = orientDB.getSecuritySystem().newSecurity();
     indexManager = new OIndexManagerShared(storage);
     functionLibrary = new OFunctionLibraryImpl();
     scheduler = new OSchedulerImpl(orientDB);
@@ -162,6 +162,9 @@ public class OSharedContextEmbedded extends OSharedContext {
   public void unload() {
     Optional<Future<Void>> future;
     synchronized (this) {
+      if (!loaded) {
+        return;
+      }
       future = internalUnload();
       loaded = false;
     }
@@ -251,10 +254,9 @@ public class OSharedContextEmbedded extends OSharedContext {
     return viewManager;
   }
 
-  public synchronized void reInit(OStorage storage, ODatabaseDocumentInternal database) {
+  public synchronized void reInit(ODatabaseDocumentInternal database) {
     this.unload();
-    this.storage = storage;
-    this.init(storage);
+    this.init();
     ((OSessionMetadata) database.getMetadata()).init(this);
     this.load(database);
   }

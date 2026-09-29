@@ -145,7 +145,7 @@ public interface OSecuritySystem {
 
   void addTemporaryUser(String user, String password, String resources);
 
-  OSecurityInternal newSecurity(String database);
+  OSecurityInternal newSecurity();
 
   OSecurityUser authenticate(ODatabaseSession session, OAuthenticationInfo authenticationInfo);
 

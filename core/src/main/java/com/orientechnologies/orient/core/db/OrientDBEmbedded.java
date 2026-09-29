@@ -563,7 +563,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
         synchronized (this) {
           embedded = newSessionInstance(name, getConfigurations());
         }
-        context.reInit(context.getStorage(), embedded);
+        context.reInit(embedded);
         distributedSetOnline(context);
         return true;
       } else {
@@ -612,7 +612,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
     }
     storage.restoreFromIncrementalBackup(path);
     embedded.callOnCreateListeners();
-    embedded.getSharedContext().reInit(storage, embedded);
+    embedded.getSharedContext().reInit(embedded);
     ODatabaseRecordThreadLocal.instance().remove();
   }
 

@@ -9,7 +9,6 @@ import com.orientechnologies.orient.core.metadata.schema.OSchemaShared;
 import com.orientechnologies.orient.core.metadata.security.OSecurityInternal;
 import com.orientechnologies.orient.core.metadata.sequence.OSequenceLibraryImpl;
 import com.orientechnologies.orient.core.schedule.OSchedulerImpl;
-import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.storage.OStorageInfo;
 import java.util.concurrent.Callable;
 
@@ -47,7 +46,7 @@ public abstract class OSharedContext extends OListenerManger<OMetadataUpdateList
 
   public abstract <T> T getResource(final String name, final Callable<T> factory);
 
-  public abstract void reInit(OStorage storage, ODatabaseDocumentInternal database);
+  public abstract void reInit(ODatabaseDocumentInternal database);
 
   public abstract OStringCache getStringCache();
 
