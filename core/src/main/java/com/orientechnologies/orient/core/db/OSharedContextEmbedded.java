@@ -1,10 +1,12 @@
 package com.orientechnologies.orient.core.db;
 
+import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.profiler.OProfiler;
 import com.orientechnologies.orient.core.Orient;
+import com.orientechnologies.orient.core.db.document.ODatabaseDocumentEmbedded;
 import com.orientechnologies.orient.core.db.viewmanager.ViewManager;
 import com.orientechnologies.orient.core.exception.ODatabaseException;
 import com.orientechnologies.orient.core.id.ORID;
@@ -33,6 +35,7 @@ import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.transaction.ODistributedSynchronizedSequence;
 import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.tx.OTxMetadataHolderSyncOrder;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -156,6 +159,35 @@ public class OSharedContextEmbedded extends OSharedContext {
     executionPlanCache.invalidate();
     liveQueryOpsV2.close();
     activeDistributedQueries.values().forEach(x -> x.close());
+  }
+
+  public boolean networkRestore(InputStream in) {
+    try {
+      unload();
+      if (getStorage().restoreNetwork(in)) {
+        ODatabaseDocumentEmbedded embedded;
+        embedded = getOrientDB().newSessionInstance(this, getOrientDB().getConfigurations());
+        reInit(embedded);
+        embedded.close();
+        return true;
+      } else {
+        if (getStorage().exists()) {
+          getStorage().delete();
+        }
+        return false;
+      }
+    } catch (OModificationOperationProhibitedException e) {
+      throw e;
+    } catch (Exception e) {
+      logger.warn(
+          "%s failed blocking sync of database %s",
+          e, getOrientDB().getNodeId(), storage.getName());
+      close();
+      if (getStorage().exists()) {
+        getStorage().delete();
+      }
+      return false;
+    }
   }
 
   @Override
@@ -410,5 +442,34 @@ public class OSharedContextEmbedded extends OSharedContext {
 
   public long getLastCloseTime() {
     return lastCloseTime;
+  }
+
+  public boolean nonBlockingSync(InputStream backupStream) {
+    try {
+      unload();
+      boolean restored = getStorage().restoreFullIncrementalBackup(backupStream);
+      if (restored) {
+        ODatabaseDocumentEmbedded embedded;
+        embedded = getOrientDB().newSessionInstance(this, getOrientDB().getConfigurations());
+        reInit(embedded);
+        embedded.close();
+        return true;
+      } else {
+        if (getStorage().exists()) {
+          getStorage().delete();
+        }
+        close();
+        return false;
+      }
+    } catch (OModificationOperationProhibitedException e) {
+      throw e;
+    } catch (Exception e) {
+      logger.warn("failed non blocking sync of database %s", e, getStorage().getName());
+      if (getStorage().exists()) {
+        getStorage().delete();
+      }
+      close();
+      return false;
+    }
   }
 }

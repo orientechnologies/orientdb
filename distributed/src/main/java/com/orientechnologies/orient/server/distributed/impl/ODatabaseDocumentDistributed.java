@@ -1445,6 +1445,8 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           getName(),
           schema.getClasses().size());
 
+    } catch (OException e) {
+      logger.error("Error on auto assign allocation", e);
     } finally {
       context.getSchema().releaseSchemaWriteLock(this);
     }

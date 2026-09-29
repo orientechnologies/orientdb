@@ -2,7 +2,6 @@ package com.orientechnologies.orient.distributed.db;
 
 import com.orientechnologies.common.concur.OOfflineNodeException;
 import com.orientechnologies.common.concur.lock.OInterruptedException;
-import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.thread.OCompletedFuture;
 import com.orientechnologies.common.thread.OSourceTraceExecutorService;
@@ -406,11 +405,10 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   @Override
-  protected ODatabaseDocumentEmbedded newSessionInstance(String database, OrientDBConfig config) {
+  protected ODatabaseDocumentEmbedded newSessionInstance(
+      OSharedContextEmbedded sharedContext, OrientDBConfig config) {
     ODatabaseDocumentEmbedded embedded;
-    OSharedContextEmbedded sharedContext =
-        getOrCreateSharedContext(database, config.getConfigurations());
-    if (isDistributedDisabled(database)) {
+    if (isDistributedDisabled(sharedContext.getStorage().getName())) {
       embedded = new ODatabaseDocumentEmbedded(sharedContext);
       embedded.init(config);
     } else {
@@ -506,47 +504,20 @@ public class OrientDBDistributed extends OrientDBEmbedded
     if (!isOpen()) {
       return false;
     }
-    try {
-      OSharedContextEmbedded context =
-          sharedContexts.computeIfAbsent(
-              name,
-              k -> {
-                var storage =
-                    getDefaultEngine()
-                        .createForRestoreLocal(
-                            OrientDBDistributed.this, databaseId, k, config.getConfigurations());
-                return createSharedContext(storage);
-              });
-      context.unload();
-      boolean restored = context.getStorage().restoreFullIncrementalBackup(backupStream);
-      if (restored) {
-        ODatabaseDocumentEmbedded embedded;
-        synchronized (this) {
-          embedded = newSessionInstance(name, config);
-        }
-        context.reInit(embedded);
-        distributedSetOnline(context);
-        ODatabaseRecordThreadLocal.instance().remove();
-        return true;
-      } else {
-        synchronized (this) {
-          var ctx = sharedContexts.remove(name);
-          if (ctx != null) {
-            ctx.close();
-          }
-        }
-        return false;
-      }
-    } catch (OModificationOperationProhibitedException e) {
-      throw e;
-    } catch (Exception e) {
-      logger.warnNode(getNodeId(), "failed non blocking sync of database %s", e, name);
-      synchronized (this) {
-        var ctx = sharedContexts.remove(name);
-        if (ctx != null) {
-          ctx.close();
-        }
-      }
+    OSharedContextEmbedded context =
+        sharedContexts.computeIfAbsent(
+            name,
+            k -> {
+              var storage =
+                  getDefaultEngine()
+                      .createForRestoreLocal(this, databaseId, k, config.getConfigurations());
+              return createSharedContext(storage);
+            });
+    boolean restored = context.nonBlockingSync(backupStream);
+    if (restored) {
+      return true;
+    } else {
+      sharedContexts.remove(name);
       return false;
     }
   }
@@ -849,11 +820,6 @@ public class OrientDBDistributed extends OrientDBEmbedded
     } else {
       return false;
     }
-  }
-
-  @Override
-  public void distributedSetOnline(OSharedContextEmbedded ctx) {
-    ((OSharedContextDistributed) ctx).getDistributedContext().setOnline();
   }
 
   public Set<String> getActiveDatabases() {
@@ -1231,7 +1197,10 @@ public class OrientDBDistributed extends OrientDBEmbedded
       }
       return success;
     } catch (IOException | InterruptedException | ExecutionException | TimeoutException e) {
-      logger.debugNode(getNodeId(), "Error on close of sync", e);
+      logger.debugNode(getNodeId(), "Error on sync", e);
+      return false;
+    } catch (Exception e) {
+      logger.errorNode(getNodeId(), "Error on sync", e);
       return false;
     } finally {
       logger.debugNode(getNodeId(), "Completing sync %s", state.getSyncId());

@@ -20,7 +20,6 @@
 
 package com.orientechnologies.orient.core.db;
 
-import com.orientechnologies.common.concur.lock.OModificationOperationProhibitedException;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
@@ -323,6 +322,11 @@ public class OrientDBEmbedded implements OrientDBInternal {
   protected ODatabaseDocumentEmbedded newSessionInstance(String database, OrientDBConfig config) {
     OSharedContextEmbedded sharedContext =
         getOrCreateSharedContext(database, config.getConfigurations());
+    return newSessionInstance(sharedContext, config);
+  }
+
+  protected ODatabaseDocumentEmbedded newSessionInstance(
+      OSharedContextEmbedded sharedContext, OrientDBConfig config) {
     ODatabaseDocumentEmbedded embedded = new ODatabaseDocumentEmbedded(sharedContext);
     embedded.init(config);
     return embedded;
@@ -542,43 +546,22 @@ public class OrientDBEmbedded implements OrientDBInternal {
     ODatabaseRecordThreadLocal.instance().remove();
   }
 
-  protected void distributedSetOnline(OSharedContextEmbedded context) {}
-
   @Override
   public boolean networkRestore(String name, ODatabaseId databaseId, InputStream in) {
     checkDatabaseName(name);
     OContextConfiguration config = getConfigurations().getConfigurations();
-    try {
-      OSharedContextEmbedded context =
-          sharedContexts.computeIfAbsent(
-              name,
-              k -> {
-                var storage = getDefaultEngine().createForRestoreLocal(this, databaseId, k, config);
-                return createSharedContext(storage);
-              });
+    OSharedContextEmbedded context =
+        sharedContexts.computeIfAbsent(
+            name,
+            k -> {
+              var storage = getDefaultEngine().createForRestoreLocal(this, databaseId, k, config);
+              return createSharedContext(storage);
+            });
 
-      context.unload();
-      if (context.getStorage().restoreNetwork(in)) {
-        ODatabaseDocumentEmbedded embedded;
-        synchronized (this) {
-          embedded = newSessionInstance(name, getConfigurations());
-        }
-        context.reInit(embedded);
-        distributedSetOnline(context);
-        return true;
-      } else {
-        return false;
-      }
-    } catch (OModificationOperationProhibitedException e) {
-      throw e;
-    } catch (Exception e) {
-      logger.warn("%s failed blocking sync of database %s", getNodeId(), e, name);
-      synchronized (this) {
-        var ctx = sharedContexts.remove(name);
-        if (ctx != null) {
-          ctx.close();
-        }
-      }
+    if (context.networkRestore(in)) {
+      return true;
+    } else {
+      sharedContexts.remove(name);
       return false;
     }
   }

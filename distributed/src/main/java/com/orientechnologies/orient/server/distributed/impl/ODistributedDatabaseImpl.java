@@ -487,10 +487,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
     profiler.unregisterHookValue("distributed.db." + databaseName + ".recordLocks");
   }
 
-  public void initFirstOpen(ODatabaseDocumentInternal session) {
-    resume();
-  }
-
   protected String getLocalNodeName() {
     return localNodeName;
   }

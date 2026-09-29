@@ -59,7 +59,7 @@ public class OSharedContextDistributed extends OSharedContextEmbedded {
     OScenarioThreadLocal.executeAsDistributed(
         () -> {
           super.internalLoad(database);
-          distributedContext.initFirstOpen(database);
+          distributedContext.setOnline();
           return null;
         });
   }
@@ -98,7 +98,7 @@ public class OSharedContextDistributed extends OSharedContextEmbedded {
     OScenarioThreadLocal.executeAsDistributed(
         () -> {
           super.internalCreate(database);
-          distributedContext.initFirstOpen(database);
+          distributedContext.setOnline();
           return null;
         });
   }
