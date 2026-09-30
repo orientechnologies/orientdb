@@ -125,12 +125,12 @@ public class OFlowSimulator implements ODatabaseStateChangeListener, ONodeStateU
     for (int i = 0; i < firstFlow.size(); i++) {
       var nodeToFirst = firstFlow.get(i);
       var context = contexts.get(nodeToFirst);
-      var firstResult = validateMessage(message, context);
+      var firstResult = context.propose(message);
       resultsFirst.add(new ORawPair<>(nodeToFirst, firstResult));
 
       var nodeToSecond = secondFlow.get(i);
       var secondContext = contexts.get(nodeToSecond);
-      var secondResult = validateMessage(secondMessage, secondContext);
+      var secondResult = secondContext.propose(secondMessage);
       resultsSecond.add(new ORawPair<>(nodeToSecond, secondResult));
     }
     // First Phase report responses to coordinator.
@@ -177,12 +177,12 @@ public class OFlowSimulator implements ODatabaseStateChangeListener, ONodeStateU
     for (int i = 0; i < firstFlow.size(); i++) {
       var nodeToFirst = firstFlow.get(i);
       var context = contexts.get(nodeToFirst);
-      var firstResult = validateMessage(message, context);
+      var firstResult = context.propose(message);
       resultsFirst.add(new ORawPair<>(nodeToFirst, firstResult));
 
       var nodeToSecond = secondFlow.get(i);
       var secondContext = contexts.get(nodeToSecond);
-      var secondResult = validateMessage(secondMessage, secondContext);
+      var secondResult = secondContext.propose(secondMessage);
       resultsSecond.add(new ORawPair<>(nodeToSecond, secondResult));
     }
     // First Phase report responses to coordinator.
@@ -220,7 +220,7 @@ public class OFlowSimulator implements ODatabaseStateChangeListener, ONodeStateU
     List<ORawPair<ONodeId, Optional<OAcceptResult>>> results = new ArrayList<>();
     for (var nodeTo : partecipatingNodes) {
       var context = contexts.get(nodeTo);
-      var result = validateMessage(message, context);
+      var result = context.propose(message);
       results.add(new ORawPair<>(nodeTo, result));
     }
     // First Phase report responses to coordinator.
@@ -272,21 +272,6 @@ public class OFlowSimulator implements ODatabaseStateChangeListener, ONodeStateU
       coordinator.getOps().nodeSuccess(result.first, message.getPromiseId());
     } else {
       coordinator.getOps().nodeFailure(result.first, message.getPromiseId(), result.second.get());
-    }
-  }
-
-  protected Optional<OAcceptResult> validateMessage(
-      ODistributedMessage message, TestOperationContext context) {
-    Optional<OAcceptResult> result = context.getOps().receive(message);
-    if (result.isEmpty()) {
-      Optional<OAcceptResult> res = message.validate(context);
-      if (res.isPresent()) {
-        // This is canceling the promise right away because is not accepted by the data
-        context.getOps().cancelPromise(message.getPromiseId());
-      }
-      return res;
-    } else {
-      return result;
     }
   }
 
