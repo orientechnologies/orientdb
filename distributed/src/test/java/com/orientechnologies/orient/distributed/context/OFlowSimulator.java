@@ -352,4 +352,20 @@ public class OFlowSimulator implements ODatabaseStateChangeListener, ONodeStateU
   public Map<ONodeId, TestOperationContext> getContexts() {
     return contexts;
   }
+
+  public boolean checkOffline(int timeMills) {
+    for (TestOperationContext ctx : contexts.values()) {
+      if (!ctx.getOps().checkOffline(timeMills).isEmpty()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  public void pingAll(ONodeId node) {
+    for (TestOperationContext ctx : contexts.values()) {
+      // Give the self status ... not really testing here the sync...
+      ctx.getOps().receivePing(node, ctx.getOps().getTransactionSequenceState());
+    }
+  }
 }
