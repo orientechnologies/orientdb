@@ -35,7 +35,6 @@ import com.orientechnologies.orient.core.tx.OTransactionInternal;
 import com.orientechnologies.orient.distributed.context.retryable.ORetryInfo;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ODistributedTxContext;
 import com.orientechnologies.orient.server.distributed.impl.lock.OLockGuard;
 import com.orientechnologies.orient.server.distributed.impl.task.OLockKeySource;
@@ -74,7 +73,6 @@ public class ODistributedTxCoordinator {
 
   public ODistributedTxCoordinator(
       final String dbName,
-      final ODistributedServerManager manager,
       final ODistributedDatabase iDDatabase,
       ONodeId nodeName,
       int maxRetries,

@@ -111,13 +111,10 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   private static final OLoggerDistributed logger =
       OLoggerDistributed.logger(ODatabaseDocumentDistributed.class);
 
-  private final ODistributedPlugin distributedManager;
   private boolean neverWaited = true;
 
-  public ODatabaseDocumentDistributed(
-      OSharedContextEmbedded sharedContext, ODistributedPlugin distributedPlugin) {
+  public ODatabaseDocumentDistributed(OSharedContextEmbedded sharedContext) {
     super(sharedContext);
-    this.distributedManager = distributedPlugin;
   }
 
   /**
@@ -158,8 +155,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
   @Override
   public ODatabaseDocumentDistributed copy() {
-    ODatabaseDocumentDistributed database =
-        new ODatabaseDocumentDistributed(getSharedContext(), distributedManager);
+    ODatabaseDocumentDistributed database = new ODatabaseDocumentDistributed(getSharedContext());
     database.init(getConfig());
     String user;
     if (getUser() != null) {
@@ -195,18 +191,18 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       throw new OCommandExecutionException("OrientDB is not started in distributed mode");
 
     Map<String, Object> row = new HashMap<>();
-    if (servers) row.put("servers", distributedManager.getClusterConfiguration());
+    if (servers) row.put("servers", getContext().getClusterConfiguration());
     if (db) row.put("database", getDistributedInfo().toElement());
     if (latency)
       row.put(
           "latency",
           ODistributedOutput.formatLatency(
-              distributedManager, distributedManager.getClusterConfiguration()));
+              getContext().getNodeName(), getContext().getClusterConfiguration()));
     if (messages)
       row.put(
           "messages",
           ODistributedOutput.formatMessages(
-              distributedManager, distributedManager.getClusterConfiguration()));
+              getContext().getNodeName(), getContext().getClusterConfiguration()));
 
     return row;
   }
@@ -365,14 +361,13 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         }
       }
       ODistributedDatabase localDistributedDatabase = getDistributedShared();
-      ODistributedServerManager dManager = getDistributedManager();
       getContext().checkNodeIsMaster(getLocalNodeId(), getName(), "Transaction Commit");
 
       int nretry = this.getConfiguration().distributedConcurrentTxMaxAutoretry();
       int delay = this.getConfiguration().distributedConcurrentTxAutoretryDelay();
       ODistributedTxCoordinator txManager =
           new ODistributedTxCoordinator(
-              getName(), dManager, localDistributedDatabase, getLocalNodeId(), nretry, delay);
+              getName(), localDistributedDatabase, getLocalNodeId(), nretry, delay);
       int quorum = getContext().getNodeState().getOps().getDatabaseQuorum(getDatabaseId());
 
       final int availableNodes = getContext().getOnlineMains(getName());
@@ -906,10 +901,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
         .findFirst()
         .map(OEnterpriseEndpoint.class::cast)
         .orElse(null);
-  }
-
-  public ODistributedServerManager getDistributedManager() {
-    return distributedManager;
   }
 
   public void sendDDLCommand(String command, boolean excludeLocal) {

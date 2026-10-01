@@ -54,8 +54,7 @@ public class ODistributedTxCoordinatorTest {
     ODistributedTxResponseManager responseManager = mock(ODistributedTxResponseManager.class);
 
     ODistributedTxCoordinator coordinator =
-        new ODistributedTxCoordinator(
-            dbName, serverManager, distributedDatabase, localNode, 5, 100);
+        new ODistributedTxCoordinator(dbName, distributedDatabase, localNode, 5, 100);
     coordinator.setResponseManager(responseManager);
 
     when(context.getAvailableNodeNotLocalIds(any())).thenReturn(new HashSet<>(remoteNodes));

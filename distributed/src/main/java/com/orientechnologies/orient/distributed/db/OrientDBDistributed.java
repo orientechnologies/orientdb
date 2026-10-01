@@ -423,7 +423,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
       embedded = new ODatabaseDocumentEmbedded(sharedContext);
       embedded.init(config);
     } else {
-      embedded = new ODatabaseDocumentDistributed(sharedContext, plugin);
+      embedded = new ODatabaseDocumentDistributed(sharedContext);
       embedded.init(config);
     }
     return embedded;
@@ -456,7 +456,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
       embedded = new ODatabaseDocumentEmbedded(sharedContext);
       embedded.internalCreate(config, sharedContext);
     } else {
-      embedded = new ODatabaseDocumentDistributed(sharedContext, plugin);
+      embedded = new ODatabaseDocumentDistributed(sharedContext);
       embedded.internalCreate(config, sharedContext);
     }
     return embedded;
@@ -475,7 +475,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
         if (isDistributedDisabled(sharedContext.getStorage().getName())) {
           embedded = new ODatabaseDocumentEmbedded(sharedContext);
         } else {
-          embedded = new ODatabaseDocumentDistributed(sharedContext, plugin);
+          embedded = new ODatabaseDocumentDistributed(sharedContext);
         }
         OrientDBConfig config = solveConfig(null);
         embedded.init(config);
@@ -499,7 +499,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
       embedded = new ODatabaseDocumentEmbeddedPooled(pool, sharedContext);
       embedded.init(pool.getConfig());
     } else {
-      embedded = new ODatabaseDocumentDistributedPooled(pool, sharedContext, plugin);
+      embedded = new ODatabaseDocumentDistributedPooled(pool, sharedContext);
       embedded.init(pool.getConfig());
     }
     return embedded;

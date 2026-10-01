@@ -71,7 +71,6 @@ import com.orientechnologies.orient.server.distributed.ORemoteServerController;
 import com.orientechnologies.orient.server.distributed.config.OClusterConfiguration;
 import com.orientechnologies.orient.server.network.protocol.binary.HandshakeInfo;
 import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
-import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.tx.OTransactionOptimisticProxy;
 import com.orientechnologies.orient.server.tx.OTransactionOptimisticServer;
 import java.io.File;
@@ -231,10 +230,9 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
     if (operation == null) throw new IllegalArgumentException("Cluster operation is null");
 
     if (operation.equals("status")) {
-      final OServerPlugin plugin = server.getPlugin("cluster");
-
-      if (plugin != null && plugin instanceof ODistributedServerManager) {
-        clusterConfig = ((ODistributedServerManager) plugin).getClusterConfiguration();
+      var ctx = server.getDatabases();
+      if (ctx instanceof OServerAware sa) {
+        clusterConfig = sa.getClusterConfiguration();
       } else {
         clusterConfig = new OClusterConfiguration();
       }
@@ -1079,11 +1077,11 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
       tokenToSend = token;
     } else tokenToSend = OCommonConst.EMPTY_BYTE_ARRAY;
 
-    final OServerPlugin plugin = server.getPlugin("cluster");
     byte[] distriConf = null;
     OClusterConfiguration distributedCfg;
-    if (plugin instanceof ODistributedServerManager) {
-      distributedCfg = ((ODistributedServerManager) plugin).getClusterConfiguration();
+    var ctx = server.getDatabases();
+    if (ctx instanceof OServerAware sa) {
+      distributedCfg = sa.getClusterConfiguration();
 
       var distributedInfo = db.getDistributedInfo();
       var clConfig = distributedCfg.getDocument();

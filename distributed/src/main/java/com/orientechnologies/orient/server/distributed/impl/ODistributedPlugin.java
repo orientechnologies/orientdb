@@ -378,7 +378,9 @@ public class ODistributedPlugin implements OServerPlugin, ODistributedServerMana
   public void dumpServersStatus() {
     final OClusterConfiguration cfg = getClusterConfiguration();
 
-    final String compactStatus = ODistributedOutput.getCompactServerStatus(this, cfg);
+    final String compactStatus =
+        ODistributedOutput.getCompactServerStatus(
+            (OrientDBDistributed) this.getServerInstance().getDatabases(), cfg);
 
     if (!lastServerDump.equals(compactStatus)) {
       lastServerDump = compactStatus;
@@ -420,8 +422,8 @@ public class ODistributedPlugin implements OServerPlugin, ODistributedServerMana
       Collections.sort(dbs);
       final StringBuilder buffer = new StringBuilder(8192);
 
-      buffer.append(ODistributedOutput.formatLatency(this, clusterCfg));
-      buffer.append(ODistributedOutput.formatMessages(this, clusterCfg));
+      buffer.append(ODistributedOutput.formatLatency(this.getLocalNodeName(), clusterCfg));
+      buffer.append(ODistributedOutput.formatMessages(this.getLocalNodeName(), clusterCfg));
 
       OLogManager.instance().flush();
       for (String db : dbs) {

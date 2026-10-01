@@ -34,7 +34,6 @@ import com.orientechnologies.orient.distributed.context.coordination.topology.OT
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ODistributedTxContext;
 import com.orientechnologies.orient.server.distributed.config.OClusterConfiguration;
 import java.text.SimpleDateFormat;
@@ -136,8 +135,7 @@ public class ODistributedOutput {
     return buffer.toString();
   }
 
-  public static String formatLatency(
-      final ODistributedPlugin manager, final OClusterConfiguration distribCfg) {
+  public static String formatLatency(final String manager, final OClusterConfiguration distribCfg) {
     final List<OIdentifiable> rows = new ArrayList<OIdentifiable>();
 
     final Collection<ONodeConfig> members = distribCfg.getMembers();
@@ -203,13 +201,13 @@ public class ODistributedOutput {
   }
 
   public static String formatMessages(
-      final ODistributedPlugin manager, final OClusterConfiguration distribCfg) {
-    return formatMessageBetweenServers(manager, distribCfg)
-        + formatMessageStats(manager, distribCfg);
+      final String localServerName, final OClusterConfiguration distribCfg) {
+    return formatMessageBetweenServers(localServerName, distribCfg)
+        + formatMessageStats(localServerName, distribCfg);
   }
 
   public static String formatMessageBetweenServers(
-      final ODistributedPlugin manager, final OClusterConfiguration distribCfg) {
+      final String localServerName, final OClusterConfiguration distribCfg) {
     final List<OIdentifiable> rows = new ArrayList<OIdentifiable>();
 
     final Collection<ONodeConfig> members = distribCfg.getMembers();
@@ -238,7 +236,7 @@ public class ODistributedOutput {
           orderedServers.add(serverName);
 
           table.setColumnAlignment(
-              formatServerName(manager, serverName), OTableFormatter.ALIGNMENT.RIGHT);
+              formatServerName(localServerName, serverName), OTableFormatter.ALIGNMENT.RIGHT);
         }
       }
       Collections.sort(orderedServers);
@@ -262,16 +260,16 @@ public class ODistributedOutput {
         final ODocument row = new ODocument();
         rows.add(row);
 
-        row.field("Servers", formatServerName(manager, fromServer));
+        row.field("Servers", formatServerName(localServerName, fromServer));
 
         long total = 0;
         var latencies = fromMember.getLatencies();
         if (latencies == null) continue;
         Collections.sort(latencies, (x, y) -> x.node().getNode().compareTo(y.node().getNode()));
         for (var latency : latencies) {
-          String serverLabel = formatServerName(manager, latency.node().getNode());
+          String serverLabel = formatServerName(localServerName, latency.node().getNode());
           String value = String.format("%.2f", (latency.stats().average() / 1000000f));
-          row.field(formatServerName(manager, latency.node().getNode()), value);
+          row.field(formatServerName(localServerName, latency.node().getNode()), value);
           long entries = latency.stats().entries();
           total += entries;
 
@@ -290,7 +288,7 @@ public class ODistributedOutput {
 
       rowTotals.field("Servers", "TOTAL");
       for (String fromServer : orderedServers) {
-        fromServer = formatServerName(manager, fromServer);
+        fromServer = formatServerName(localServerName, fromServer);
         rowTotals.field(fromServer, String.format("%,d", (Number) rowTotals.field(fromServer)));
       }
       rowTotals.field("TOTAL", String.format("%,d", (Number) rowTotals.field("TOTAL")));
@@ -304,7 +302,7 @@ public class ODistributedOutput {
   }
 
   public static String formatMessageStats(
-      final ODistributedPlugin manager, final OClusterConfiguration distribCfg) {
+      final String localServerName, final OClusterConfiguration distribCfg) {
     final List<OIdentifiable> rows = new ArrayList<OIdentifiable>();
 
     final Collection<ONodeConfig> members = distribCfg.getMembers();
@@ -361,7 +359,7 @@ public class ODistributedOutput {
         final ODocument row = new ODocument();
         rows.add(row);
 
-        row.field("Servers", formatServerName(manager, server));
+        row.field("Servers", formatServerName(localServerName, server));
 
         var messages = member.getMessages();
         if (messages == null) continue;
@@ -423,7 +421,7 @@ public class ODistributedOutput {
    * @return
    */
   public static String getCompactServerStatus(
-      final ODistributedServerManager manager, final OClusterConfiguration distribCfg) {
+      final OrientDBDistributed ctx, final OClusterConfiguration distribCfg) {
     final StringBuilder buffer = new StringBuilder();
 
     final Collection<ONodeConfig> members = distribCfg.getMembers();
@@ -447,8 +445,6 @@ public class ODistributedOutput {
           buffer.append("{");
           int dbCount = 0;
           for (String dbName : databases) {
-            OrientDBDistributed ctx =
-                (OrientDBDistributed) manager.getServerInstance().getDatabases();
             final ODistributedConfiguration dbCfg = ctx.getExistingDistributedConfiguration(dbName);
 
             if (dbCfg == null) continue;
@@ -471,9 +467,8 @@ public class ODistributedOutput {
     return buffer.toString();
   }
 
-  protected static String formatServerName(
-      final ODistributedPlugin manager, final String fromServer) {
-    return fromServer + (manager.getLocalNodeName().equals(fromServer) ? "*" : "");
+  protected static String formatServerName(final String localServerName, final String fromServer) {
+    return fromServer + (localServerName.equals(fromServer) ? "*" : "");
   }
 
   public static Object formatNewRecordLocks(final ODistributedPlugin manager, final String db) {
