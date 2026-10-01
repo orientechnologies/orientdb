@@ -237,6 +237,49 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
     };
   }
 
+  public synchronized boolean successRecover(OTransactionIdPromise promise) {
+    SuccessResult result = sequenceManager.notifySuccess(promise);
+    return switch (result) {
+      case VALID -> {
+        yield true;
+      }
+      case VALID_MISSING -> {
+        yield true;
+      }
+      case ALREADY_PRESENT -> {
+        yield false;
+      }
+      case ALREADY_PROMISED -> {
+        yield true;
+      }
+      case MISSING_PREVIOUS -> {
+        yield false;
+      }
+    };
+  }
+
+  public synchronized boolean receiveRecover(OTransactionIdPromise promise) {
+    ValidationResult result = sequenceManager.validate(promise);
+    return switch (result) {
+      case VALID -> {
+        // valid so apply it
+        yield true;
+      }
+      case ALREADY_PRESENT -> {
+        // Already present ... do nothing
+        yield false;
+      }
+      case ALREADY_PROMISED -> {
+        // is promised apply it
+        yield true;
+      }
+      case MISSING_PREVIOUS -> {
+        // will need to re-send anyway
+        yield false;
+      }
+    };
+  }
+
   @Override
   public synchronized void cancelPromise(OTransactionIdPromise promise) {
     boolean promised = sequenceManager.notifyFailure(promise);
@@ -281,7 +324,7 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
       }
       case MISSING_PREVIOUS -> {
         // wait for previous one
-        yield OConfirmResult.missingPrevious();
+        yield OConfirmResult.missingPrevious(promise);
       }
     };
   }
@@ -714,10 +757,14 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   }
 
   @Override
-  public synchronized List<OTransactionId> receivePing(
-      ONodeId nodeId, OTransactionSequenceStatus status) {
+  public synchronized boolean receivePing(ONodeId nodeId, OTransactionSequenceStatus status) {
     this.topology.ping(nodeId);
-    return this.sequenceManager.checkSelfStatus(status);
+    return this.sequenceManager.checkSelfStatusAnyMissing(status);
+  }
+
+  @Override
+  public synchronized List<OTransactionId> transactionsToSend(OTransactionSequenceStatus status) {
+    return this.sequenceManager.checkOtherStatus(status);
   }
 
   @Override

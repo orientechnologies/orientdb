@@ -2,8 +2,8 @@ package com.orientechnologies.orient.distributed.context;
 
 import com.orientechnologies.orient.core.id.OGroupId;
 import com.orientechnologies.orient.core.id.ONodeId;
-import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
+import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import com.orientechnologies.orient.distributed.context.coordination.OConfirmResult;
 import com.orientechnologies.orient.distributed.context.coordination.OCoordinatedDistributedOps;
 import com.orientechnologies.orient.distributed.context.coordination.OCoordinatedDistributedOpsImpl;
@@ -120,7 +120,8 @@ public class ONodeState {
     this.state.applied(promise.getId());
   }
 
-  public List<ODistributedMessage> recover(List<OTransactionId> ids) {
+  public List<ODistributedMessage> recover(OTransactionSequenceStatus status) {
+    var ids = this.coordinated.transactionsToSend(status);
     return this.log.recover(ids);
   }
 
@@ -164,14 +165,16 @@ public class ONodeState {
     coordinated.cancelPromise(promise);
   }
 
-  public void recover(List<OConfirmedRetryOp> ops, OrientDBDistributed context) {
-    for (var op : ops) {
-      var result = this.coordinated.receive(op);
-      assert result.isEmpty();
-      var res = op.validate(context);
-      assert res.isEmpty();
-      this.log.log(op);
-      op.apply(context);
+  public void recover(List<OConfirmedRetryOp> txs, OrientDBDistributed context) {
+    for (var op : txs) {
+      if (getOps().receiveRecover(op.getPromiseId())) {
+        var res = op.validate(context);
+        if (res.isEmpty()) {
+          this.log.log(op);
+          getOps().successRecover(op.getPromiseId());
+          op.apply(context);
+        }
+      }
     }
   }
 }

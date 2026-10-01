@@ -301,11 +301,11 @@ public class StructuralMessagesSerializationTest {
   @Test
   public void sendTransactions() throws IOException {
     var node = newNodeId();
-    var txs = List.of(newTxId());
+    var txs = new OTransactionSequenceStatus(new long[] {1, 2, 3});
     var operation = new OSendTransactions(node, txs);
     OSendTransactions read = writeRead(operation);
     assertEquals(read.getReceiver(), node);
-    assertEquals(read.getTransactions(), txs);
+    assertEquals(read.getState(), txs);
   }
 
   @Test

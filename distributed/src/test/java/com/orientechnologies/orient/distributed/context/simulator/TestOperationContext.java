@@ -107,4 +107,9 @@ public class TestOperationContext implements OOperationContext {
       }
     } while (!complete);
   }
+
+  @Override
+  public void checkMissing(ONodeId requestTo) {
+    // TODO Auto-generated method stub
+  }
 }

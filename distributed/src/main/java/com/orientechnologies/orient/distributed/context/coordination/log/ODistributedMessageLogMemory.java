@@ -26,9 +26,9 @@ public class ODistributedMessageLogMemory implements ODistributedMessageLog {
     Set<OTransactionId> toSearch = new HashSet<>(ids);
     var iterator = this.log.listIterator();
     List<ODistributedMessage> found = new ArrayList<>();
-    while (iterator.hasPrevious()) {
+    while (iterator.hasPrevious() && !toSearch.isEmpty()) {
       ODistributedMessage message = iterator.previous();
-      if (toSearch.contains(message.getPromiseId().getId())) {
+      if (toSearch.remove(message.getPromiseId().getId())) {
         found.add(message);
       }
     }

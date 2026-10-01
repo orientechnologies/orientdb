@@ -59,7 +59,9 @@ public class OTransactionSequenceManagerTest {
 
     OTransactionSequenceStatus status = sequenceManager.currentStatus();
 
+    assertTrue(sequenceManagerRecv.checkSelfStatusAnyMissing(status));
     List<OTransactionId> list = sequenceManagerRecv.checkSelfStatus(status);
+
     assertNotNull(list);
     assertTrue(
         list.contains(new OTransactionId(two.getId().getPosition(), two.getId().getSequence())));
@@ -86,7 +88,9 @@ public class OTransactionSequenceManagerTest {
 
     OTransactionSequenceStatus status = sequenceManager.currentStatus();
 
+    assertTrue(sequenceManagerRecv.checkSelfStatusAnyMissing(status));
     List<OTransactionId> list = sequenceManagerRecv.checkSelfStatus(status);
+
     assertNotNull(list);
     assertTrue(
         list.contains(new OTransactionId(two.getId().getPosition(), two.getId().getSequence())));
@@ -115,8 +119,10 @@ public class OTransactionSequenceManagerTest {
 
     OTransactionSequenceStatus status = sequenceManager.currentStatus();
 
-    // this will for sure contain two, it may even cantain three
+    // this will for sure contain two, it may even contain three
+    assertTrue(sequenceManagerRecv.checkSelfStatusAnyMissing(status));
     List<OTransactionId> list = sequenceManagerRecv.checkSelfStatus(status);
+
     assertNotNull(list);
     assertTrue(
         list.contains(new OTransactionId(two.getId().getPosition(), two.getId().getSequence())));
@@ -147,8 +153,10 @@ public class OTransactionSequenceManagerTest {
 
     OTransactionSequenceStatus status = sequenceManager.currentStatus();
 
-    // this will for sure contain two, it may even cantain three
+    // this will for sure contain two, it may even contain three
+    assertTrue(sequenceManagerRecv.checkSelfStatusAnyMissing(status));
     List<OTransactionId> list = sequenceManagerRecv.checkSelfStatus(status);
+
     assertNotNull(list);
     assertTrue(
         list.contains(new OTransactionId(two.getId().getPosition(), two.getId().getSequence())));
@@ -234,7 +242,9 @@ public class OTransactionSequenceManagerTest {
 
     OTransactionSequenceStatus status = sequenceManager.currentStatus();
 
-    // this will for sure contain two, it may even cantain three
+    // this will for sure contain two, it may even contain three
+    assertTrue(sequenceManagerRecv.checkSelfStatusAnyMissing(status));
+
     List<OTransactionId> list = sequenceManagerRecv.checkSelfStatus(status);
     assertNotNull(list);
     // assertTrue(list.contains(two));

@@ -36,6 +36,10 @@ public interface OCoordinatedDistributedOps {
 
   Optional<OAcceptResult> receive(ODistributedMessage message);
 
+  boolean successRecover(OTransactionIdPromise promise);
+
+  boolean receiveRecover(OTransactionIdPromise promise);
+
   void nodeSuccess(ONodeId node, OTransactionIdPromise promise);
 
   void nodeFailure(ONodeId node, OTransactionIdPromise promise, OAcceptResult acceptResult);
@@ -210,7 +214,9 @@ public interface OCoordinatedDistributedOps {
 
   OTransactionSequenceStatus getTransactionSequenceState();
 
-  List<OTransactionId> receivePing(ONodeId nodeId, OTransactionSequenceStatus status);
+  boolean receivePing(ONodeId nodeId, OTransactionSequenceStatus status);
+
+  List<OTransactionId> transactionsToSend(OTransactionSequenceStatus otherStatus);
 
   Set<ONodeId> checkOffline(long time);
 

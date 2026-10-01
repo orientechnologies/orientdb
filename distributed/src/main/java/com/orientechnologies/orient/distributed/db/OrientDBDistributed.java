@@ -1685,13 +1685,13 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   public void receivePing(ONodeId nodeId, OTransactionSequenceStatus status) {
-    var transactions = getNodeState().getOps().receivePing(nodeId, status);
-    if (!transactions.isEmpty()) {
-      requestTransactions(nodeId, transactions);
+    var missingTransactios = getNodeState().getOps().receivePing(nodeId, status);
+    if (missingTransactios) {
+      requestTransactions(nodeId, getNodeState().getOps().getTransactionSequenceState());
     }
   }
 
-  private void requestTransactions(ONodeId nodeId, List<OTransactionId> transactions) {
+  private void requestTransactions(ONodeId nodeId, OTransactionSequenceStatus transactions) {
     sendMessage(nodeId, new OSendTransactions(getNodeId(), transactions));
   }
 
@@ -1965,7 +1965,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
     }
   }
 
-  public void sendTopologyTransactions(ONodeId nodeId, List<OTransactionId> transactions) {
+  public void sendTopologyTransactions(ONodeId nodeId, OTransactionSequenceStatus transactions) {
     var messages = this.getNodeState().recover(transactions);
     var ops =
         messages.stream().map(m -> new OConfirmedRetryOp(m.getPromiseId(), m.getOp())).toList();
@@ -2083,5 +2083,10 @@ public class OrientDBDistributed extends OrientDBEmbedded
   @Override
   public void cancel(OTransactionIdPromise promise) {
     getNodeState().cancel(promise, this);
+  }
+
+  @Override
+  public void checkMissing(ONodeId requestTo) {
+    requestTransactions(requestTo, getNodeState().getOps().getTransactionSequenceState());
   }
 }

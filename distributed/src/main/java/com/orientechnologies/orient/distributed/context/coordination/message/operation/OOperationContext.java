@@ -45,4 +45,6 @@ public interface OOperationContext {
   void confirm(OTransactionIdPromise promise);
 
   void cancel(OTransactionIdPromise promise);
+
+  void checkMissing(ONodeId requestTo);
 }

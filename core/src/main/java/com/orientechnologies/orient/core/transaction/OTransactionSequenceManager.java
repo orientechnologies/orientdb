@@ -145,6 +145,20 @@ public class OTransactionSequenceManager {
     }
   }
 
+  public synchronized boolean checkSelfStatusAnyMissing(OTransactionSequenceStatus sequenceStatus) {
+    long[] status = sequenceStatus.getStatus();
+    for (int i = 0; i < status.length; i++) {
+      if (this.sequentials[i] < status[i]) {
+        if (this.promisedSequential[i] == null) {
+          return true;
+        } else if (this.promisedSequential[i].getId().getSequence() != status[i]) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   public synchronized List<OTransactionId> checkSelfStatus(
       OTransactionSequenceStatus sequenceStatus) {
     long[] status = sequenceStatus.getStatus();

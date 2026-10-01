@@ -70,10 +70,10 @@ public sealed interface OConfirmResult
     }
   }
 
-  public record MissingPrevious() implements OConfirmResult {
+  public record MissingPrevious(OTransactionIdPromise promise) implements OConfirmResult {
     @Override
     public boolean apply(OOperationContext ctx) {
-      // Mark it as complete ?? but it need to recover actually
+      ctx.checkMissing(promise.getCoordinator());
       return true;
     }
   }
@@ -94,8 +94,8 @@ public sealed interface OConfirmResult
     return new AlreadyPresent();
   }
 
-  public static OConfirmResult missingPrevious() {
-    return new MissingPrevious();
+  public static OConfirmResult missingPrevious(OTransactionIdPromise promise) {
+    return new MissingPrevious(promise);
   }
 
   /** Applied the operation based on the kind of result,
