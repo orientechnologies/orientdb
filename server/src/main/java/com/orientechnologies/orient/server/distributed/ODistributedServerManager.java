@@ -23,9 +23,7 @@ import com.orientechnologies.orient.core.id.ONodeId;
 import com.orientechnologies.orient.distributed.ONodeConfig;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.config.OClusterConfiguration;
-import com.orientechnologies.orient.server.distributed.task.ORemoteTask;
 import java.io.File;
-import java.util.Collection;
 
 /**
  * Server cluster interface to abstract cluster behavior.
@@ -78,50 +76,13 @@ public interface ODistributedServerManager {
 
   ODistributedDatabase getDatabase(String name);
 
-  ODistributedStrategy getDistributedStrategy();
-
-  void setDistributedStrategy(ODistributedStrategy streatgy);
-
-  long getNextMessageIdCounter();
-
   String getLocalNodeName();
 
   OClusterConfiguration getClusterConfiguration();
 
   ONodeConfig getNodeConfigurationByUuid(String iNode, boolean useCache);
 
-  /**
-   * Sends a distributed request against multiple servers.
-   *
-   * @param iDatabaseName
-   * @param iTargetNodeNames
-   * @param iTask
-   * @return
-   */
-  ODistributedResponse sendRequest(
-      String iDatabaseName, Collection<ONodeId> iTargetNodeNames, ORemoteTask iTask);
-
-  /**
-   * Sends a distributed request against multiple servers.
-   *
-   * @param iDatabaseName
-   * @param node
-   * @param iTask
-   * @return
-   */
-  ODistributedResponse sendSingleRequest(String iDatabaseName, ONodeId node, ORemoteTask iTask);
-
-  ODistributedResponse sendRequest(
-      String iDatabaseName,
-      Collection<ONodeId> iTargetNodeNames,
-      ORemoteTask iTask,
-      ODistributedRequestId messageId,
-      Object localResult,
-      ODistributedResponseManagerFactory responseManagerFactory);
-
   File getDefaultDatabaseConfigFile();
 
   void notifyClients(String databaseName);
-
-  ODistributedRequestId nextRequestId();
 }

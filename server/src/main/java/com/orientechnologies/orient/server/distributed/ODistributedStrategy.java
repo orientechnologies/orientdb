@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.id.ONodeId;
 import java.util.Collection;
 import java.util.Set;
@@ -33,7 +34,7 @@ public interface ODistributedStrategy {
   void validateConfiguration(ODistributedConfiguration cfg);
 
   Set<ONodeId> getNodesConcurInQuorum(
-      ODistributedServerManager manager,
+      OrientDBInternal ctx,
       String databaseName,
       ODistributedRequest request,
       Collection<ONodeId> iNodes);

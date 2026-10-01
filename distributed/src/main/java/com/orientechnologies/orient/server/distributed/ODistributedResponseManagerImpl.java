@@ -23,10 +23,10 @@ import com.orientechnologies.common.collection.OMultiValue;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
-import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.exception.OConcurrentCreateException;
 import com.orientechnologies.orient.core.id.ONodeId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
 import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
 import java.util.ArrayList;
@@ -58,7 +58,6 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
 
   public static final int ADDITIONAL_TIMEOUT_CLUSTER_SHAPE = 10000;
   private static final String NO_RESPONSE = "waiting-for-response";
-  private final ODistributedServerManager dManager;
   private final ODistributedRequest request;
   private final long sentOn;
   private final Set<ONodeId> nodesConcurInQuorum;
@@ -69,7 +68,7 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
   private final Lock synchronousResponsesLock = new ReentrantLock();
   private final CountDownLatch synchronousResponsesArrived = new CountDownLatch(1);
   private final int quorum;
-  private final OrientDBInternal ctx;
+  private final OrientDBDistributed ctx;
   private final boolean waitForLocalNode;
   private ODistributedResponse localResponse;
   private volatile int receivedResponses = 0;
@@ -78,8 +77,7 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
   private AtomicBoolean canceled = new AtomicBoolean(false);
 
   public ODistributedResponseManagerImpl(
-      ODistributedServerManager iManager,
-      OrientDBInternal ctx,
+      OrientDBDistributed ctx,
       ODistributedRequest iRequest,
       Collection<ONodeId> expectedResponses,
       Set<ONodeId> iNodesConcurInQuorum,
@@ -88,7 +86,6 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
       long iSynchTimeout,
       boolean iGroupResponsesByResult) {
     this.ctx = ctx;
-    this.dManager = iManager;
     this.request = iRequest;
     this.sentOn = System.nanoTime();
     this.quorum = iQuorum;
@@ -133,7 +130,7 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
         return false;
       }
 
-      dManager.getMessageService().updateLatency(executorNode, sentOn);
+      ctx.getMessageService().updateLatency(executorNode, sentOn);
 
       responses.put(executorNode, response);
       receivedResponses++;
@@ -312,7 +309,7 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
               missingResponses++;
               // ANALYZE THE NODE WITHOUT A RESPONSE
               final ODistributedServerManager.DB_STATUS dbStatus =
-                  dManager.getDatabaseStatus(curr.getKey(), getDatabaseName());
+                  ctx.getDatabaseStatus(curr.getKey(), getDatabaseName());
 
               missingResponseNodeStatuses.put(curr.getKey(), dbStatus);
 

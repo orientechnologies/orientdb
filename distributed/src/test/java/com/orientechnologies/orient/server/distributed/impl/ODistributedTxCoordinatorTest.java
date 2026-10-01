@@ -61,6 +61,7 @@ public class ODistributedTxCoordinatorTest {
     when(context.getAvailableNodeNotLocalIds(any())).thenReturn(new HashSet<>(remoteNodes));
     when(databaseDocument.getName()).thenReturn(dbName);
     when(databaseDocument.getContext()).thenReturn(context);
+    when(distributedDatabase.getContext()).thenReturn(context);
     when(databaseDocument.getSharedContext()).thenReturn(sharedContext);
     when(tx.getIndexOperations()).thenReturn(new HashMap<>());
     when(sharedContext.getTransactionSequence()).thenReturn(seq);
@@ -73,14 +74,14 @@ public class ODistributedTxCoordinatorTest {
     coordinator.commit(databaseDocument, tx);
 
     InOrder inOrder =
-        inOrder(distributedDatabase, databaseDocument, serverManager, responseManager);
+        inOrder(context, distributedDatabase, databaseDocument, serverManager, responseManager);
 
     inOrder.verify(distributedDatabase).startOperation();
     inOrder.verify(distributedDatabase).localLock(any());
     inOrder.verify(databaseDocument).beginDistributedTx(any(), any(), eq(tx), eq(true), anyInt());
     inOrder.verify(distributedDatabase).localUnlock(any());
     inOrder
-        .verify(serverManager)
+        .verify(context)
         .sendRequest(
             eq(dbName),
             argThat(targetNodes -> CollectionUtils.isEqualCollection(targetNodes, remoteNodes)),
@@ -90,7 +91,7 @@ public class ODistributedTxCoordinatorTest {
             any());
     inOrder.verify(responseManager).getDistributedTxFinalResponse();
     inOrder
-        .verify(serverManager)
+        .verify(context)
         .sendRequest(
             eq(dbName),
             argThat(targetNodes -> CollectionUtils.isEqualCollection(targetNodes, remoteNodes)),

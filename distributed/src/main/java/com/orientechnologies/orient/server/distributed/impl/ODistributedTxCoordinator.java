@@ -64,7 +64,6 @@ public class ODistributedTxCoordinator {
       OLogManager.instance().logger(ODistributedTxCoordinator.class);
   public static final String LOCAL_RESULT_SUCCESS = "OK";
 
-  private final ODistributedServerManager dManager;
   private final ODistributedDatabaseImpl localDistributedDatabase;
   private ODistributedTxResponseManager responseManager;
   // ID and name of the node where this tx coordinator is running
@@ -80,7 +79,6 @@ public class ODistributedTxCoordinator {
       ONodeId nodeName,
       int maxRetries,
       int retryDelay) {
-    this.dManager = manager;
     this.dbName = dbName;
     this.localDistributedDatabase = (ODistributedDatabaseImpl) iDDatabase;
     this.nodeId = nodeName;
@@ -241,31 +239,33 @@ public class ODistributedTxCoordinator {
 
     iTx.setStatus(OTransaction.TXSTATUS.COMMITTING);
     // SYNCHRONOUS CALL: REPLICATE IT
-    dManager.sendRequest(
-        dbName,
-        nodes,
-        txTask,
-        requestId,
-        localResult,
-        ((iRequest,
-            iNodes,
-            task,
-            nodesConcurToTheQuorum,
-            availableNodes,
-            expectedResponses,
-            quorum,
-            groupByResponse,
-            waitLocalNode) -> {
-          responseManager =
-              new ODistributedTxResponseManagerImpl(
-                  txTask,
-                  iNodes,
-                  nodesConcurToTheQuorum,
-                  availableNodes,
-                  expectedResponses,
-                  quorum);
-          return responseManager;
-        }));
+    localDistributedDatabase
+        .getContext()
+        .sendRequest(
+            dbName,
+            nodes,
+            txTask,
+            requestId,
+            localResult,
+            ((iRequest,
+                iNodes,
+                task,
+                nodesConcurToTheQuorum,
+                availableNodes,
+                expectedResponses,
+                quorum,
+                groupByResponse,
+                waitLocalNode) -> {
+              responseManager =
+                  new ODistributedTxResponseManagerImpl(
+                      txTask,
+                      iNodes,
+                      nodesConcurToTheQuorum,
+                      availableNodes,
+                      expectedResponses,
+                      quorum);
+              return responseManager;
+            }));
 
     handleResponse(requestId, responseManager, sentNodes, database, iTx, txTask);
   }
@@ -458,7 +458,7 @@ public class ODistributedTxCoordinator {
   }
 
   private void sendPhase2Task(Set<ONodeId> nodes, OTransactionPhase2Task task) {
-    dManager.sendRequest(dbName, nodes, task);
+    localDistributedDatabase.getContext().sendRequest(dbName, nodes, task);
   }
 
   protected OTransactionPhase1Task createTxPhase1Task(

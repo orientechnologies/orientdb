@@ -20,12 +20,12 @@
 package com.orientechnologies.orient.server.distributed.impl;
 
 import com.orientechnologies.orient.core.command.OCommandDistributedReplicateRequest;
+import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.id.ONodeId;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ODistributedStrategy;
 import java.util.Collection;
 import java.util.HashSet;
@@ -53,11 +53,11 @@ public class ODefaultDistributedStrategy implements ODistributedStrategy {
 
   @Override
   public Set<ONodeId> getNodesConcurInQuorum(
-      final ODistributedServerManager manager,
+      final OrientDBInternal ctxi,
       final String databaseName,
       final ODistributedRequest request,
       final Collection<ONodeId> iNodes) {
-    OrientDBDistributed ctx = (OrientDBDistributed) manager.getServerInstance().getDatabases();
+    OrientDBDistributed ctx = (OrientDBDistributed) ctxi;
     final Set<ONodeId> nodesConcurToTheQuorum = new HashSet<>();
     if (request.getTask().getQuorumType() == OCommandDistributedReplicateRequest.QUORUM_TYPE.WRITE
         || request.getTask().getQuorumType()

@@ -230,14 +230,13 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
 
     if (server.getDatabases() instanceof OrientDBDistributed dc) {
       final ODistributedResponse dResponse =
-          dc.getPlugin()
-              .sendRequest(
-                  null,
-                  OMultiValue.getSingletonList(id),
-                  new OEnterpriseStatsTask(),
-                  dc.nextRequestId(),
-                  ODistributedRequest.EXECUTION_MODE.RESPONSE,
-                  null);
+          dc.sendRequest(
+              null,
+              OMultiValue.getSingletonList(id),
+              new OEnterpriseStatsTask(),
+              dc.nextRequestId(),
+              ODistributedRequest.EXECUTION_MODE.RESPONSE,
+              null);
       final Object payload = dResponse.getPayload();
 
       if (payload != null && payload instanceof Map) {
@@ -269,14 +268,13 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
       }
 
       final ODistributedResponse dResponse =
-          dc.getPlugin()
-              .sendRequest(
-                  databases.iterator().next(),
-                  servers,
-                  new OEnterpriseStatsTask(),
-                  dc.nextRequestId(),
-                  ODistributedRequest.EXECUTION_MODE.RESPONSE,
-                  null);
+          dc.sendRequest(
+              databases.iterator().next(),
+              servers,
+              new OEnterpriseStatsTask(),
+              dc.nextRequestId(),
+              ODistributedRequest.EXECUTION_MODE.RESPONSE,
+              null);
       final Object payload = dResponse.getPayload();
 
       if (payload instanceof Map) {
@@ -339,14 +337,13 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
       for (ONodeConfig document : documents) servers.add(document.getNodeId());
 
       final ODistributedResponse dResponse =
-          dc.getPlugin()
-              .sendRequest(
-                  null,
-                  servers,
-                  new OEnterpriseStatsTask(),
-                  dc.nextRequestId(),
-                  ODistributedRequest.EXECUTION_MODE.RESPONSE,
-                  null);
+          dc.sendRequest(
+              null,
+              servers,
+              new OEnterpriseStatsTask(),
+              dc.nextRequestId(),
+              ODistributedRequest.EXECUTION_MODE.RESPONSE,
+              null);
       final Object payload = dResponse.getPayload();
 
       if (payload != null && payload instanceof Map) {

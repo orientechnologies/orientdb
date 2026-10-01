@@ -237,7 +237,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
     final String databaseName = getName();
 
-    return distributedManager.sendSingleRequest(databaseName, nodeName, task);
+    return getContext().sendSingleRequest(databaseName, nodeName, task);
   }
 
   @Override
@@ -1064,12 +1064,12 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
       ODistributedRequestId messageId,
       ORawPair<OTransactionIdPromise, OTransactionIdPromise> ids,
       boolean apply) {
-    ODistributedServerManager dManager = getDistributedManager();
     ODistributedResponse response =
-        dManager.sendRequest(
-            getName(),
-            nodes,
-            new OSQLCommandTaskSecondPhase(messageId, ids.getFirst(), ids.getSecond(), apply));
+        getContext()
+            .sendRequest(
+                getName(),
+                nodes,
+                new OSQLCommandTaskSecondPhase(messageId, ids.getFirst(), ids.getSecond(), apply));
     if (response != null && response.getPayload() instanceof RuntimeException) {
       throw (RuntimeException) response.getPayload();
     }
@@ -1077,13 +1077,12 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
 
   private ODistributedTxResponseManagerImpl sendTask(
       Collection<ONodeId> nodes, ORemoteTask task, Object localResult, ODistributedRequestId next) {
-    ODistributedServerManager dManager = getDistributedManager();
     final class HoldResponseManager {
       ODistributedTxResponseManagerImpl responseManager;
     }
 
     final HoldResponseManager holder = new HoldResponseManager();
-    ((ODistributedPlugin) dManager)
+    getContext()
         .sendRequest(
             getName(),
             nodes,
