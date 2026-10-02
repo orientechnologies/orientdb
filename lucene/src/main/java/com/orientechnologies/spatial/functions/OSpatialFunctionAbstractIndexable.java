@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.functions.OIndexableSQLFunction;
 import com.orientechnologies.orient.core.sql.parser.OBinaryCompareOperator;
+import com.orientechnologies.orient.core.sql.parser.OEqualsCompareOperator;
 import com.orientechnologies.orient.core.sql.parser.OExpression;
 import com.orientechnologies.orient.core.sql.parser.OFromClause;
 import com.orientechnologies.orient.core.sql.parser.OFromItem;
@@ -162,7 +163,7 @@ public abstract class OSpatialFunctionAbstractIndexable extends OSpatialFunction
       OCommandContext ctx,
       OExpression... args) {
 
-    if (!isValidBinaryOperator(operator)) {
+    if (!isValidBinaryOperator(operator, rightValue)) {
       return false;
     }
     OLuceneSpatialIndex index = searchForIndex(target, args, ctx);
@@ -206,5 +207,11 @@ public abstract class OSpatialFunctionAbstractIndexable extends OSpatialFunction
 
   protected boolean isValidBinaryOperator(OBinaryCompareOperator operator) {
     return operator instanceof OLtOperator || operator instanceof OLeOperator;
+  }
+
+  protected boolean isValidBinaryOperator(
+      OBinaryCompareOperator operator, Object rightValue) {
+    return isValidBinaryOperator(operator)
+        || (operator instanceof OEqualsCompareOperator && Boolean.TRUE.equals(rightValue));
   }
 }
