@@ -70,9 +70,9 @@ public class LuceneSpatialDWithinTest extends BaseSpatialLuceneTest {
         db.query(
             "SELECT from Polygon where ST_DWithin(geometry, ST_GeomFromText('POLYGON((12 0, 14 0, 14 6, 12 6, 12 0))'), 2.0) = true");
 
-    //    Assert.assertEquals(1, resultSet.estimateSize());
-
-    resultSet.stream().forEach(r -> System.out.println("r = " + r));
+    String executionPlan = resultSet.getExecutionPlan().get().prettyPrint(0, 0);
+    Assert.assertTrue(executionPlan, executionPlan.contains("FETCH FROM INDEXED FUNCTION"));
+    Assert.assertEquals(1, resultSet.stream().count());
     resultSet.close();
   }
 }
