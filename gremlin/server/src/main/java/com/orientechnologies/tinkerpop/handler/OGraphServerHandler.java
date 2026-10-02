@@ -22,7 +22,6 @@ package com.orientechnologies.tinkerpop.handler;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
-import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
@@ -45,9 +44,7 @@ public class OGraphServerHandler implements OServerPlugin {
     }
     OCommandGremlinExecutor executor =
         (OCommandGremlinExecutor)
-            OrientDBInternal.extract(server.getContext())
-                .getScriptManager()
-                .getScriptExecutor("gremlin");
+            server.getDatabases().getScriptManager().getScriptExecutor("gremlin");
     logger.info(
         "Installed GREMLIN language v.%s - graph.pool.max=%d",
         executor.getEngineVersion(), graphPoolMax);

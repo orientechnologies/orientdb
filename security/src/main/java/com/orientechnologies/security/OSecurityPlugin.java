@@ -17,6 +17,7 @@ package com.orientechnologies.security;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
+import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
@@ -27,11 +28,11 @@ import com.orientechnologies.security.password.ODefaultPasswordValidator;
 
 public class OSecurityPlugin implements OServerPlugin {
   private static final OLogger logger = OLogManager.instance().logger(OSecurityPlugin.class);
-  private OServer server;
+  private OrientDBInternal context;
 
   @Override
   public void config(OServer server, OServerParameterConfiguration[] iParams) {
-    this.server = server;
+    this.context = server.getDatabases();
   }
 
   @Override
@@ -54,11 +55,11 @@ public class OSecurityPlugin implements OServerPlugin {
   // A security plugin should register its components so that OSecuritySystem has access to them.
   private void registerSecurityComponents() {
     try {
-      if (server.getSecurity() != null) {
-        server.getSecurity().registerSecurityClass(ODefaultAuditing.class);
-        server.getSecurity().registerSecurityClass(ODefaultPasswordValidator.class);
-        server.getSecurity().registerSecurityClass(OKerberosAuthenticator.class);
-        server.getSecurity().registerSecurityClass(OLDAPImporter.class);
+      if (context.getSecuritySystem() != null) {
+        context.getSecuritySystem().registerSecurityClass(ODefaultAuditing.class);
+        context.getSecuritySystem().registerSecurityClass(ODefaultPasswordValidator.class);
+        context.getSecuritySystem().registerSecurityClass(OKerberosAuthenticator.class);
+        context.getSecuritySystem().registerSecurityClass(OLDAPImporter.class);
       }
     } catch (Throwable th) {
       logger.error("registerSecurityComponents() ", th);
@@ -67,11 +68,11 @@ public class OSecurityPlugin implements OServerPlugin {
 
   private void unregisterSecurityComponents() {
     try {
-      if (server.getSecurity() != null) {
-        server.getSecurity().unregisterSecurityClass(ODefaultAuditing.class);
-        server.getSecurity().unregisterSecurityClass(ODefaultPasswordValidator.class);
-        server.getSecurity().unregisterSecurityClass(OKerberosAuthenticator.class);
-        server.getSecurity().unregisterSecurityClass(OLDAPImporter.class);
+      if (context.getSecuritySystem() != null) {
+        context.getSecuritySystem().unregisterSecurityClass(ODefaultAuditing.class);
+        context.getSecuritySystem().unregisterSecurityClass(ODefaultPasswordValidator.class);
+        context.getSecuritySystem().unregisterSecurityClass(OKerberosAuthenticator.class);
+        context.getSecuritySystem().unregisterSecurityClass(OLDAPImporter.class);
       }
     } catch (Throwable th) {
       logger.error("unregisterSecurityComponents()", th);

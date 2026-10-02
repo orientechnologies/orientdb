@@ -45,12 +45,11 @@ public class OServerSideScriptInterpreter implements OServerPlugin {
 
   protected OScriptInterceptor interceptor;
   protected boolean enabled = true;
-  private OServer server;
+  private OrientDBInternal context;
 
   @Override
   public void config(final OServer iServer, OServerParameterConfiguration[] iParams) {
-
-    this.server = iServer;
+    this.context = iServer.getDatabases();
     for (OServerParameterConfiguration param : iParams) {
       if (param.getName().equalsIgnoreCase("enabled")) {
         if (Boolean.parseBoolean(param.getValue()))
@@ -60,7 +59,7 @@ public class OServerSideScriptInterpreter implements OServerPlugin {
         allowedLanguages =
             new HashSet<>(Arrays.asList(param.getValue().toLowerCase(Locale.ENGLISH).split(",")));
       } else if (param.getName().equalsIgnoreCase("allowedPackages")) {
-        OrientDBInternal.extract(iServer.getContext())
+        context
             .getScriptManager()
             .addAllowedPackages(new HashSet<>(Arrays.asList(param.getValue().split(","))));
       }
@@ -82,7 +81,7 @@ public class OServerSideScriptInterpreter implements OServerPlugin {
           checkLanguage(language);
         };
 
-    OrientDBInternal.extract(server.getContext())
+    context
         .getScriptManager()
         .getScriptExecutors()
         .entrySet()
@@ -98,7 +97,7 @@ public class OServerSideScriptInterpreter implements OServerPlugin {
     if (!enabled) return;
 
     if (interceptor != null) {
-      OrientDBInternal.extract(server.getContext())
+      context
           .getScriptManager()
           .getScriptExecutors()
           .entrySet()

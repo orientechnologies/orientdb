@@ -75,12 +75,12 @@ public class OAutomaticBackup implements OServerPlugin {
 
   private String configFile = "${ORIENTDB_HOME}/config/automatic-backup.json";
 
-  private OServer serverInstance;
+  private OrientDBInternal context;
   private OAtomaticBackupConfig config;
 
   @Override
   public void config(final OServer iServer, final OServerParameterConfiguration[] iParams) {
-    serverInstance = iServer;
+    context = iServer.getDatabases();
 
     if (iParams.length != 0) {
       for (OServerParameterConfiguration param : iParams) {
@@ -168,11 +168,10 @@ public class OAutomaticBackup implements OServerPlugin {
               + " targetDirectory=%s",
           config.getDelay(), config.getFirstTime(), config.getTargetDirectory());
 
-      OrientDBInternal ctx = serverInstance.getDatabases();
       if (config.getFirstTime() == null) {
-        ctx.periodicExecute(this::executeBackup, config.getDelay());
+        context.periodicExecute(this::executeBackup, config.getDelay());
       } else {
-        ctx.scheduleExecuteFrom(this::executeBackup, config.getFirstTime(), config.getDelay());
+        context.scheduleExecuteFrom(this::executeBackup, config.getFirstTime(), config.getDelay());
       }
     } else {
       logger.info("Automatic Backup plugin is disabled");
@@ -185,8 +184,7 @@ public class OAutomaticBackup implements OServerPlugin {
     int ok = 0;
     int errors = 0;
 
-    OrientDBInternal ctx = serverInstance.getDatabases();
-    final Set<String> databases = ctx.listDatabases(null, null);
+    final Set<String> databases = context.listDatabases(null, null);
     for (String dbName : databases) {
 
       boolean include;
@@ -199,7 +197,7 @@ public class OAutomaticBackup implements OServerPlugin {
       if (include) {
         ODatabaseDocumentInternal db = null;
         try {
-          db = ctx.openNoAuthorization(dbName);
+          db = context.openNoAuthorization(dbName);
 
           final long begin = System.currentTimeMillis();
 

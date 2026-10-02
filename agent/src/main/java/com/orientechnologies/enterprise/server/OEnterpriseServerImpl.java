@@ -32,7 +32,6 @@ import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerLifecycleListener;
-import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
@@ -188,10 +187,6 @@ public class OEnterpriseServerImpl
   public void onClientError(OClientConnection oClientConnection, Throwable throwable) {
     this.listeners.forEach((l) -> l.onClientError(oClientConnection, throwable));
   }
-
-  @Override
-  public void config(
-      OServer oServer, OServerParameterConfiguration[] oServerParameterConfigurations) {}
 
   @Override
   public void sendShutdown() {}
