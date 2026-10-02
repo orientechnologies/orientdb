@@ -729,7 +729,8 @@ public class OSelectExecutionPlanner {
     for (OIndex classIndex : clazz.getClassIndexes()) {
       List<String> fields = classIndex.getDefinition().getFields();
       if (fields.size() == 1
-          && fields.get(0).equals(binaryCondition.getLeft().getDefaultAlias().getStringValue())) {
+          && fields.get(0).equals(binaryCondition.getLeft().getDefaultAlias().getStringValue())
+          && classIndex.getInternal().canBeUsedInEqualityOperators()) {
         OExpression expr = ((OBinaryCondition) condition).getRight();
         result.chain(
             new CountFromIndexWithKeyStep(
