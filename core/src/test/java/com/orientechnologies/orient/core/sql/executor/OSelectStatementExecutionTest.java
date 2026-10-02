@@ -5169,6 +5169,22 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
   }
 
   @Test
+  public void testIgnoreDictionaryIndexes() {
+    db.command("CREATE CLASS k1").close();
+    db.command("CREATE PROPERTY k1.f STRING").close();
+    db.command("CREATE INDEX k1_f ON k1 (f) DICTIONARY").close();
+    for (int i = 0; i < 5; i++) {
+      db.command("INSERT INTO k1 SET f = 'dup'").close();
+    }
+    assertEquals(db.query("SELECT FROM k1 WHERE f = 'dup'").stream().count(), 5);
+    try (OResultSet res = db.query("SELECT count(*) FROM k1 WHERE f = 'dup'")) {
+      assertEquals((long) res.next().getProperty("count(*)"), 5L);
+    }
+    assertEquals(db.query("SELECT FROM k1 WHERE f IN ['dup']").stream().count(), 5);
+    assertEquals(db.query("SELECT FROM k1 WHERE f > 'a'").stream().count(), 5);
+  }
+
+  @Test
   public void testInBracketsCase() {
     db.command("create class ParamItem").close();
     db.command("create property ParamItem.oldid LONG").close();
