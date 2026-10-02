@@ -122,8 +122,8 @@ public class OClassIndexFinder implements OIndexFinder {
     List<OIndexCandidate> candidates = new ArrayList<>();
     for (OIndex index : indexes) {
       if (index.getInternal().canBeUsedInEqualityOperators()
-              && index.getDefinition().getFields().size() == 1
-          || !index.getDefinition().isNullValuesIgnored()) {
+          && (index.getDefinition().getFields().size() == 1
+              || !index.getDefinition().isNullValuesIgnored())) {
         OIndexCandidate candidate = newCandidate(value, last, Operation.Eq, index, requireDistinct);
         if (cand.isPresent()) {
           OIndexCandidateChain candC = (OIndexCandidateChain) cand.get();
