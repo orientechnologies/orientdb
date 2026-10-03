@@ -87,8 +87,8 @@ public enum OAnsiCode {
       supportsColors = true;
     else if ("auto".equalsIgnoreCase(ansiSupport)) {
       // AUTOMATIC CHECK
-      if (System.console() != null && !System.getProperty("os.name").contains("Windows"))
-        supportsColors = true;
+      if (System.console() != null && !System.getProperty("os.name").contains("Windows")
+          || System.getProperty("java.vendor").contains("Eclipse")) supportsColors = true;
       else supportsColors = false;
     } else
       // DO NOT SUPPORT ANSI
