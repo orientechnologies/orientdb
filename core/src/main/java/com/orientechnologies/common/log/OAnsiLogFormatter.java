@@ -51,7 +51,9 @@ public class OAnsiLogFormatter extends OLogFormatter {
       if (level == SEVERE) buffer.append("$ANSI{red ");
       else if (level == Level.WARNING) buffer.append("$ANSI{yellow ");
       else if (level == Level.INFO) buffer.append("$ANSI{green ");
-      else if (level == Level.CONFIG) buffer.append("$ANSI{green ");
+      else if (level == Level.FINE) buffer.append("$ANSI{magenta ");
+      else if (level == Level.FINER) buffer.append("$ANSI{magenta ");
+      else if (level == Level.FINEST) buffer.append("$ANSI{magenta ");
       else if (level == Level.CONFIG) buffer.append("$ANSI{white ");
     }
 
