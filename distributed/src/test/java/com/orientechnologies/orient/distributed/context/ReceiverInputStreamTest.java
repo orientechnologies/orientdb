@@ -50,11 +50,11 @@ public class ReceiverInputStreamTest {
     OReceiverInputStream stream = new OReceiverInputStream((a, b) -> {}, sync);
     var future = backgroundReceiver(stream);
     var orig = new byte[10];
-    for (byte i = 0; i < 10; i += 2) {
+    for (byte i = 0; i < 10; i += (byte) 2) {
       stream.receive(new byte[] {i}, i, i == 9);
       orig[i] = i;
     }
-    for (byte i = 1; i < 10; i += 2) {
+    for (byte i = 1; i < 10; i += (byte) 2) {
       stream.receive(new byte[] {i}, i, i == 9);
       orig[i] = i;
     }
