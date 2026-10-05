@@ -29,7 +29,7 @@ This document contains the last changes of OrientDB Community Edition.
 
 
 -----------------------------------------------------------------------------------------------------------------------------------
-version 3.2.57t` - (October, 5 2026)
+version 3.2.57 - (October, 5 2026)
 
 # Core
 - Removed automatic usage of dictionary indexes in query engine
