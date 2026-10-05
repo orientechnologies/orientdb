@@ -209,8 +209,7 @@ public abstract class OSpatialFunctionAbstractIndexable extends OSpatialFunction
     return operator instanceof OLtOperator || operator instanceof OLeOperator;
   }
 
-  protected boolean isValidBinaryOperator(
-      OBinaryCompareOperator operator, Object rightValue) {
+  protected boolean isValidBinaryOperator(OBinaryCompareOperator operator, Object rightValue) {
     return isValidBinaryOperator(operator)
         || (operator instanceof OEqualsCompareOperator && Boolean.TRUE.equals(rightValue));
   }
