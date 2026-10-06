@@ -9,8 +9,8 @@ public class OConfig {
   // private String pluginsPath;
   private ODefaultDatabaseConfig defaultDatabaseConfig;
   private OConfigSecurity security;
-  private List<OConfigNetwork> network;
-  private List<OConfigPlugin> plugin;
+  private List<OConfigNetwork> listeners;
+  private OConfigPlugins plugins;
   private OConfigDistributed distributed;
   private List<OHookConfig> hooks;
   // This is mostly for legacy support,
@@ -31,5 +31,17 @@ public class OConfig {
 
   public String getBackup() {
     return backup;
+  }
+
+  public void setPlugins(OConfigPlugins plugins) {
+    this.plugins = plugins;
+  }
+
+  public List<OConfigNetwork> getListeners() {
+    return listeners;
+  }
+
+  public void setListeners(List<OConfigNetwork> listeners) {
+    this.listeners = listeners;
   }
 }
