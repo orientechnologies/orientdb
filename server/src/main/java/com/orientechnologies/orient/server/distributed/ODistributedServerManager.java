@@ -19,7 +19,6 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import com.orientechnologies.orient.core.id.ONodeId;
 import com.orientechnologies.orient.distributed.ONodeConfig;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.config.OClusterConfiguration;
@@ -45,21 +44,10 @@ public interface ODistributedServerManager {
     OFFLINE,
 
     /**
-     * The database is in synchronization status. This status is set when a synchronization (full or
-     * delta) is requested. The node tha accepts the synchronization, is in SYNCHRONIZING mode too.
-     * During this status the server receive requests that will be enqueue until the database is
-     * ready. Server in SYNCHRONIZING status do not concur in the quorum.
-     */
-    SYNCHRONIZING,
-
-    /**
      * The database is ONLINE as fully operative. During this status the server is considered in the
      * quorum (if the server's role is MASTER)
      */
     ONLINE,
-
-    /** The database is ONLINE, but is not involved in the quorum. */
-    BACKUP
   }
 
   OServer getServerInstance();
@@ -69,10 +57,6 @@ public interface ODistributedServerManager {
   ODistributedServerManager registerLifecycleListener(ODistributedLifecycleListener iListener);
 
   ODistributedServerManager unregisterLifecycleListener(ODistributedLifecycleListener iListener);
-
-  DB_STATUS getDatabaseStatus(ONodeId iNode, String iDatabaseName);
-
-  ODistributedMessageService getMessageService();
 
   ODistributedDatabase getDatabase(String name);
 

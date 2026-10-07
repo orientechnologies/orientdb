@@ -7,10 +7,8 @@ import java.io.IOException;
 
 public enum ODatabaseState {
   NotAvailable,
-  Synchronizing,
   Online,
-  Offline,
-  Backup;
+  Offline;
 
   public static ODatabaseState readNetwork(DataInput input) throws IOException {
     short s = input.readShort();
@@ -28,18 +26,13 @@ public enum ODatabaseState {
         return ODatabaseState.Online;
       case OFFLINE:
         return ODatabaseState.Offline;
-
-      case BACKUP:
-        return ODatabaseState.Backup;
       case NOT_AVAILABLE:
         return ODatabaseState.NotAvailable;
-      case SYNCHRONIZING:
-        return ODatabaseState.Synchronizing;
     }
     return null;
   }
 
-  public ODistributedServerManager.DB_STATUS toSatus() {
+  public ODistributedServerManager.DB_STATUS toStatus() {
     switch (this) {
       case Online:
         {
@@ -49,17 +42,9 @@ public enum ODatabaseState {
         {
           return ODistributedServerManager.DB_STATUS.OFFLINE;
         }
-      case Backup:
-        {
-          return ODistributedServerManager.DB_STATUS.BACKUP;
-        }
       case NotAvailable:
         {
           return ODistributedServerManager.DB_STATUS.NOT_AVAILABLE;
-        }
-      case Synchronizing:
-        {
-          return ODistributedServerManager.DB_STATUS.SYNCHRONIZING;
         }
     }
     return null;

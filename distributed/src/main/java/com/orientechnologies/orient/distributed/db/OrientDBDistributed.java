@@ -338,7 +338,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
     execute(
         () -> {
           if (plugin != null) {
-            plugin.onDatabaseEvent(node, db, state.toSatus());
+            plugin.onDatabaseEvent(node, db, state.toStatus());
           }
         });
   }
@@ -1370,7 +1370,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
     if (dbID.isPresent()) {
       ODatabaseState status = getDatabaseState(dbID.get(), nodeId);
       if (status != null) {
-        return status.toSatus();
+        return status.toStatus();
       }
     }
     return DB_STATUS.NOT_AVAILABLE;
@@ -1385,7 +1385,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
     if (dbID.isPresent()) {
       ODatabaseState status = getDatabaseState(dbID.get(), getNodeId());
       if (status != null) {
-        return status.toSatus();
+        return status.toStatus();
       } else {
         return DB_STATUS.NOT_AVAILABLE;
       }
@@ -1529,7 +1529,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
     for (Iterator<ONodeId> it = iNodes.iterator(); it.hasNext(); ) {
       final ONodeId node = it.next();
       ODatabaseState state = topology.getState(id.get(), node);
-      DB_STATUS s = state.toSatus();
+      DB_STATUS s = state.toStatus();
       boolean matchState = false;
       for (DB_STATUS st : statuses) {
         if (s == st) matchState = true;
@@ -2187,12 +2187,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
 
         if (checkNodesAreOnline) {
           availableNodes =
-              getNodesWithStatus(
-                  nodes,
-                  databaseName,
-                  ODistributedServerManager.DB_STATUS.ONLINE,
-                  ODistributedServerManager.DB_STATUS.BACKUP,
-                  ODistributedServerManager.DB_STATUS.SYNCHRONIZING);
+              getNodesWithStatus(nodes, databaseName, ODistributedServerManager.DB_STATUS.ONLINE);
         }
 
         // all online masters

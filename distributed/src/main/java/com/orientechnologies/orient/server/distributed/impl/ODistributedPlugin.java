@@ -43,7 +43,6 @@ import com.orientechnologies.orient.server.config.OServerConfiguration;
 import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedLifecycleListener;
-import com.orientechnologies.orient.server.distributed.ODistributedMessageService;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ODistributedStartupException;
 import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
@@ -230,11 +229,6 @@ public class ODistributedPlugin implements OServerPlugin, ODistributedServerMana
   @Override
   public String toString() {
     return nodeName;
-  }
-
-  @Override
-  public ODistributedMessageService getMessageService() {
-    return ((OrientDBDistributed) serverInstance.getDatabases()).getMessageService();
   }
 
   public void notifyClients(String databaseName) {
@@ -454,12 +448,6 @@ public class ODistributedPlugin implements OServerPlugin, ODistributedServerMana
 
   public void notifyNodeLeft(ONodeId joinedNodeName) {
     for (ODistributedLifecycleListener l : listeners) l.onNodeLeft(joinedNodeName.getNode());
-  }
-
-  @Override
-  public DB_STATUS getDatabaseStatus(ONodeId iNode, String iDatabaseName) {
-    return ((OrientDBDistributed) serverInstance.getDatabases())
-        .getDatabaseStatus(iNode, iDatabaseName);
   }
 
   // Called to notify this server, that a node has been removed from the cluster

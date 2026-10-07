@@ -293,7 +293,6 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
           currentTimeout = synchTimeout - elapsed;
 
           // CHECK IF ANY NODE ARE UNREACHABLE IN THE MEANWHILE
-          int synchronizingNodes = 0;
           int missingActiveNodes = 0;
 
           Map<ONodeId, ODistributedServerManager.DB_STATUS> missingResponseNodeStatuses =
@@ -314,11 +313,6 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
               missingResponseNodeStatuses.put(curr.getKey(), dbStatus);
 
               switch (dbStatus) {
-                case BACKUP:
-                case SYNCHRONIZING:
-                  synchronizingNodes++;
-                  missingActiveNodes++;
-                  break;
                 case ONLINE:
                   missingActiveNodes++;
                   break;
@@ -334,15 +328,6 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
           if (missingActiveNodes == 0) {
             // NO MORE ACTIVE NODES TO WAIT
             break;
-          }
-
-          if (synchronizingNodes > 0) {
-            // SOME NODE IS SYNCHRONIZING: WAIT FOR THEM
-            // currentTimeout = synchTimeout;
-            // ODistributedServerLog.debug(this, dManager.getLocalNodeName(), null, DIRECTION.NONE,
-            // "%d nodes are in synchronization mode during request (%s): enlarge timeout +%dms,
-            // wait again for %dms",
-            // synchronizingNodes, request, synchTimeout, currentTimeout);
           }
 
         } finally {
