@@ -1,0 +1,2 @@
+com.orientechnologies.tinkerpop.handler.OGremlinPluginLoader
+com.orientechnologies.tinkerpop.server.OGremlinServerPluginLoader

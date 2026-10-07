@@ -1,0 +1,2 @@
+com.orientechnologies.security.OSecurityPluginLoader
+com.orientechnologies.security.syslog.ODefaultSyslogLoader

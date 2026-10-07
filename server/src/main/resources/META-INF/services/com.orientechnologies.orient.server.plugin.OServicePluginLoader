@@ -1,0 +1,4 @@
+com.orientechnologies.orient.server.handler.OAutomaticBackupLoader
+com.orientechnologies.orient.server.handler.OCustomSQLFunctionPluginLoader
+com.orientechnologies.orient.server.handler.OJMXPluginLoader
+com.orientechnologies.orient.server.handler.OServerSideScriptInterpreterLoader
