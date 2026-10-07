@@ -369,11 +369,7 @@ public class OServer {
               builder, ODistributedConfig.fromEnv(configuration.getDistributed()), configuration);
     }
 
-    try {
-      databases = OrientDBInternal.distributed(this.databaseDirectory, builder.build());
-    } catch (ODatabaseException ex) {
-      databases = OrientDBInternal.embedded(this.databaseDirectory, builder.build());
-    }
+    databases = OrientDBInternal.distributedOrEmbedded(this.databaseDirectory, builder.build());
 
     if (databases instanceof OServerAware) {
       ((OServerAware) databases).init(this);

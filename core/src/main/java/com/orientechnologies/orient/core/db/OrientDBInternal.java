@@ -20,7 +20,6 @@
 
 package com.orientechnologies.orient.core.db;
 
-import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
 import com.orientechnologies.orient.core.command.script.OScriptManager;
@@ -32,8 +31,6 @@ import com.orientechnologies.orient.core.security.OSecuritySystem;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.storage.OStorage;
 import java.io.InputStream;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
 import java.util.Iterator;
 import java.util.Map;
@@ -57,12 +54,39 @@ public interface OrientDBInternal extends AutoCloseable, OSchedulerInternal {
    * @return the new Orient Factory.
    */
   static OrientDBInternal fromUrl(String url, OrientDBConfig configuration) {
-    String what = url.substring(0, url.indexOf(':'));
-    if ("embedded".equals(what))
-      return embedded(url.substring(url.indexOf(':') + 1), configuration);
-    else if ("remote".equals(what))
-      return remote(url.substring(url.indexOf(':') + 1).split(";"), configuration);
-    throw new ODatabaseException("not supported database type");
+    int pos;
+    String what;
+    if ((pos = url.indexOf(':')) > 0) {
+      what = url.substring(0, pos);
+    } else {
+      what = url;
+    }
+    if ("embedded".equals(what) || "memory".equals(what) || "plocal".equals(what)) {
+      what = "embedded";
+    }
+    String infos = url.substring(url.indexOf(':') + 1);
+    var loaders = OrientDBLoader.loaders();
+    var loader = loaders.get(what);
+    if (loader != null) {
+      return loader.load(infos, configuration, Orient.instance());
+    } else {
+      if ("remote".equals(what)) {
+        throw new ODatabaseException("OrientDB client API missing");
+      } else if ("distributed".equals(what)) {
+        throw new ODatabaseException("OrientDB distributed module missing");
+      } else {
+        throw new IllegalArgumentException("Wrong url:`" + url + "`");
+      }
+    }
+  }
+
+  static OrientDBInternal distributedOrEmbedded(String directory, OrientDBConfig configuration) {
+    var loaders = OrientDBLoader.loaders();
+    var loader = loaders.get("distributed");
+    if (loader == null) {
+      loader = loaders.get("embedded");
+    }
+    return loader.load(directory, configuration, Orient.instance());
   }
 
   default OrientDB newOrientDB() {
@@ -85,31 +109,13 @@ public interface OrientDBInternal extends AutoCloseable, OSchedulerInternal {
    * @return a new remote databases factory
    */
   static OrientDBInternal remote(String[] hosts, OrientDBConfig configuration) {
-    OrientDBInternal factory;
-
-    try {
-      String className = "com.orientechnologies.orient.client.remote.OrientDBRemote";
-      ClassLoader loader;
-      if (configuration != null) {
-        loader = configuration.getClassLoader();
-      } else {
-        loader = OrientDBInternal.class.getClassLoader();
-      }
-      Class<?> kass = loader.loadClass(className);
-      Constructor<?> constructor =
-          kass.getConstructor(String[].class, OrientDBConfig.class, Orient.class);
-      factory = (OrientDBInternal) constructor.newInstance(hosts, configuration, Orient.instance());
-    } catch (ClassNotFoundException
-        | NoSuchMethodException
-        | IllegalAccessException
-        | InstantiationException e) {
-      throw OException.wrapException(new ODatabaseException("OrientDB client API missing"), e);
-    } catch (InvocationTargetException e) {
-      //noinspection ThrowInsideCatchBlockWhichIgnoresCaughtException
-      throw OException.wrapException(
-          new ODatabaseException("Error creating OrientDB remote factory"), e.getTargetException());
+    var loaders = OrientDBLoader.loaders();
+    var loader = loaders.get("remote");
+    if (loader != null) {
+      return loader.load(String.join(";", hosts), configuration, Orient.instance());
+    } else {
+      throw new ODatabaseException("OrientDB client API missing");
     }
-    return factory;
   }
 
   /**
@@ -125,39 +131,13 @@ public interface OrientDBInternal extends AutoCloseable, OSchedulerInternal {
   }
 
   static OrientDBInternal distributed(String directoryPath, OrientDBConfig configuration) {
-    OrientDBInternal factory;
-
-    try {
-      ClassLoader loader;
-      if (configuration != null) {
-        loader = configuration.getClassLoader();
-      } else {
-        loader = OrientDBInternal.class.getClassLoader();
-      }
-      Class<?> kass;
-      try {
-        String className = "com.orientechnologies.orient.distributed.db.OrientDBDistributed";
-        kass = loader.loadClass(className);
-      } catch (ClassNotFoundException e) {
-        String className = "com.orientechnologies.orient.distributed.OrientDBDistributed";
-        kass = loader.loadClass(className);
-      }
-      Constructor<?> constructor =
-          kass.getConstructor(String.class, OrientDBConfig.class, Orient.class);
-      factory =
-          (OrientDBInternal)
-              constructor.newInstance(directoryPath, configuration, Orient.instance());
-    } catch (ClassNotFoundException
-        | NoSuchMethodException
-        | IllegalAccessException
-        | InstantiationException e) {
-      throw OException.wrapException(new ODatabaseException("OrientDB distributed API missing"), e);
-    } catch (InvocationTargetException e) {
-      //noinspection ThrowInsideCatchBlockWhichIgnoresCaughtException
-      throw OException.wrapException(
-          new ODatabaseException("Error creating OrientDB remote factory"), e.getTargetException());
+    var loaders = OrientDBLoader.loaders();
+    var loader = loaders.get("distributed");
+    if (loader != null) {
+      return loader.load(directoryPath, configuration, Orient.instance());
+    } else {
+      throw new ODatabaseException("OrientDB distributed module missing");
     }
-    return factory;
   }
 
   /**
