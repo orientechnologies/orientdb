@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.server.OServerAware;
 import com.orientechnologies.orient.setup.ServerRun;
 import java.util.concurrent.Callable;
 import java.util.concurrent.CountDownLatch;
@@ -58,7 +59,7 @@ public class HaRemoveServerIT extends AbstractServerClusterTest {
     final String offlineNodeName = serverInstance.get(1).getServerInstance().getNodeId().getNode();
 
     ODistributedServerManager distributedManager =
-        firstServer.getServerInstance().getDistributedManager();
+        ((OServerAware) firstServer.getServerInstance().getDatabases()).getDistributedManager();
 
     final AtomicReference<ODistributedServerManager.DB_STATUS> ref =
         new AtomicReference<ODistributedServerManager.DB_STATUS>(

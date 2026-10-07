@@ -12,7 +12,6 @@ import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
 import com.orientechnologies.orient.server.OClientConnection;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommand;
 import java.util.*;
 import java.util.function.Function;
@@ -53,8 +52,6 @@ public interface OEnterpriseServer {
   OSystemDatabase getSystemDatabase();
 
   NodesManager getNodesManager();
-
-  ODistributedServerManager getDistributedManager();
 
   boolean existsDatabase(String databaseName);
 

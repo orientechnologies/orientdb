@@ -26,6 +26,7 @@ import static org.junit.Assert.fail;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OPair;
+import com.orientechnologies.orient.server.OServerAware;
 import com.orientechnologies.orient.setup.ServerRun;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -87,7 +88,9 @@ public class DistributedLifecycleListenerIT extends AbstractServerClusterTest
 
   @Override
   protected void onServerStarted(ServerRun server) {
-    server.getServerInstance().getDistributedManager().registerLifecycleListener(this);
+    ((OServerAware) server.getServerInstance().getDatabases())
+        .getDistributedManager()
+        .registerLifecycleListener(this);
   }
 
   @Override

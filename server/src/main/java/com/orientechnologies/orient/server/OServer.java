@@ -59,7 +59,6 @@ import com.orientechnologies.orient.server.config.OServerNetworkProtocolConfigur
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.config.OServerSocketFactoryConfiguration;
 import com.orientechnologies.orient.server.config.OServerUserConfiguration;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.config.ODistributedConfig;
 import com.orientechnologies.orient.server.handler.OConfigurableHooksManager;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
@@ -106,7 +105,6 @@ public class OServer {
       new ArrayList<OServerLifecycleListener>();
   protected OServerPluginManager pluginManager;
   protected OConfigurableHooksManager hookManager;
-  protected ODistributedServerManager distributedManager;
   private final Map<String, Object> variables = new HashMap<String, Object>();
   private String serverRootDirectory;
   private String databaseDirectory;
@@ -791,10 +789,6 @@ public class OServer {
     return getDatabases().openNoAuthorization(database);
   }
 
-  public ODistributedServerManager getDistributedManager() {
-    return distributedManager;
-  }
-
   public void setServerRootDirectory(final String rootDirectory) {
     this.serverRootDirectory = rootDirectory;
   }
@@ -1012,9 +1006,6 @@ public class OServer {
         try {
           final OServerPlugin plugin =
               (OServerPlugin) loadClass(h.getClazz()).getConstructor().newInstance();
-
-          if (plugin instanceof ODistributedServerManager)
-            distributedManager = (ODistributedServerManager) plugin;
 
           pluginManager.registerPlugin(
               new OServerPluginInfo(plugin.getName(), null, null, null, plugin, null, 0, null));

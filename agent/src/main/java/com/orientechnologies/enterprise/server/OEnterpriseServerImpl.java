@@ -32,7 +32,6 @@ import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerLifecycleListener;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpAbstract;
@@ -151,11 +150,6 @@ public class OEnterpriseServerImpl
 
   public NodesManager getNodesManager() {
     return nodesManager;
-  }
-
-  @Override
-  public ODistributedServerManager getDistributedManager() {
-    return server.getDistributedManager();
   }
 
   @Override

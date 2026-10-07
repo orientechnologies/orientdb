@@ -17,6 +17,7 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
+import com.orientechnologies.orient.server.OServerAware;
 import com.orientechnologies.orient.setup.ServerRun;
 import java.util.HashSet;
 import java.util.Set;
@@ -50,8 +51,7 @@ public class DistributedListenerIT extends AbstractServerClusterTxTest {
     super.onServerStarted(server);
 
     // INSTALL ON FIRST SERVER ONLY THE SERVER MONITOR TO CHECK IF HAS BEEN RESTARTED
-    server
-        .server
+    ((OServerAware) server.getServerInstance().getDatabases())
         .getDistributedManager()
         .registerLifecycleListener(
             new ODistributedLifecycleListener() {

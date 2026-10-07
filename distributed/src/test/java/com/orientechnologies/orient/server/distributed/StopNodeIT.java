@@ -20,6 +20,7 @@ import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
+import com.orientechnologies.orient.server.OServerAware;
 import com.orientechnologies.orient.setup.ServerRun;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -71,8 +72,7 @@ public class StopNodeIT extends AbstractServerClusterTxTest {
 
     if (serverStarted == 0) {
       // INSTALL ON FIRST SERVER ONLY THE SERVER MONITOR TO CHECK IF HAS BEEN RESTARTED
-      server
-          .getServerInstance()
+      ((OServerAware) server.getServerInstance().getDatabases())
           .getDistributedManager()
           .registerLifecycleListener(
               new ODistributedLifecycleListener() {
