@@ -132,18 +132,18 @@ public class OServerNetworkListener extends Thread {
 
   @SuppressWarnings("unchecked")
   public static OServerCommand createCommand(
-      final OServer server, final OServerCommandConfiguration iCommand) {
+      final OServer server, final OServerCommandConfiguration command) {
     var loaders = OServerCommandLoader.loadersByClassName();
-    var loader = loaders.get(iCommand.getImplementation());
+    var loader = loaders.get(command.getImplementation());
     if (loader == null) {
       throw new OConfigurationException(
           "Cannot create custom command missing loader for : "
-              + iCommand.getImplementation()
+              + command.getImplementation()
               + "("
-              + iCommand
+              + command
               + ")");
     }
-    final OServerCommand cmd = loader.newInstance(iCommand);
+    final OServerCommand cmd = loader.newInstance(command);
     cmd.configure(server);
     return cmd;
   }

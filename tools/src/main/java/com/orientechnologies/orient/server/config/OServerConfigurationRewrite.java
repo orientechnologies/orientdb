@@ -2,6 +2,7 @@ package com.orientechnologies.orient.server.config;
 
 import com.orientechnologies.orient.core.config.OConfig;
 import com.orientechnologies.orient.core.config.OConfigNetwork;
+import com.orientechnologies.orient.core.config.OConfigNetworkTls;
 import com.orientechnologies.orient.core.config.OConfigPlugins;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.config.distributed.OServerDistributedConfiguration;
@@ -46,10 +47,40 @@ public class OServerConfigurationRewrite {
       newListener.setHost(listener.getIpAddress());
       newListener.setProtocol(listener.getProtocol());
       var sock = sockets.get(listener.getSocket());
-      // TODO: copy SSL settings ecc.
+      newListener.setTls(migrateTlsConfig(sock.getParameters()));
       listeners.add(newListener);
+      if (listener.getProtocol().equals("http")) {
+        var commands = listener.getCommands();
+      }
     }
     return listeners;
+  }
+
+  private OConfigNetworkTls migrateTlsConfig(OServerParameterConfiguration[] parameters) {
+    if (parameters.length == 0) {
+      return null;
+    }
+    OConfigNetworkTls tls = new OConfigNetworkTls();
+
+    for (OServerParameterConfiguration param : parameters) {
+      if (param.getName().equalsIgnoreCase("network.ssl.clientAuth")) {
+        tls.setClientAuth(Boolean.parseBoolean(param.getValue()));
+      } else if (param.getName().equalsIgnoreCase("network.ssl.keyStore")) {
+        tls.setKeyStorePath(param.getValue());
+      } else if (param.getName().equalsIgnoreCase("network.ssl.keyStorePassword")) {
+        tls.setKeyStorePassword(param.getValue());
+      } else if (param.getName().equalsIgnoreCase("network.ssl.keyStoreType")) {
+        tls.setKeyStoreType(param.getValue());
+      } else if (param.getName().equalsIgnoreCase("network.ssl.trustStore")) {
+        tls.setTrustStorePath(param.getValue());
+      } else if (param.getName().equalsIgnoreCase("network.ssl.trustStorePassword")) {
+        tls.setTrustStorePassword(param.getValue());
+      } else if (param.getName().equalsIgnoreCase("network.ssl.trustStoreType")) {
+        tls.setTrustStoreType(param.getValue());
+      }
+    }
+
+    return tls;
   }
 
   protected OConfigPlugins migratePlugins(OServerConfiguration configuration) {
