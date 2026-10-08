@@ -14,4 +14,9 @@ public class OEnterpriseAgentLoader implements OServerPluginLoader {
   public OServerPlugin newInstance() {
     return new OEnterpriseAgent();
   }
+
+  @Override
+  public String getPluginClassName() {
+    return OEnterpriseAgent.class.getName();
+  }
 }

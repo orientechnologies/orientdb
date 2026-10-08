@@ -14,4 +14,9 @@ public class ODefaultSyslogLoader implements OServerPluginLoader {
   public OServerPlugin newInstance() {
     return new ODefaultSyslog();
   }
+
+  @Override
+  public String getPluginClassName() {
+    return ODefaultSyslog.class.getName();
+  }
 }

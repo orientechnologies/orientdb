@@ -14,4 +14,9 @@ public class ODistributedPluginLoader implements OServerPluginLoader {
   public OServerPlugin newInstance() {
     return new ODistributedPlugin();
   }
+
+  @Override
+  public String getPluginClassName() {
+    return ODistributedPlugin.class.getName();
+  }
 }

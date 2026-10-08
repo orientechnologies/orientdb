@@ -14,4 +14,9 @@ public class OServerSideScriptInterpreterLoader implements OServerPluginLoader {
   public OServerPlugin newInstance() {
     return new OServerSideScriptInterpreter();
   }
+
+  @Override
+  public String getPluginClassName() {
+    return OServerSideScriptInterpreter.class.getName();
+  }
 }

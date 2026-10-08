@@ -14,4 +14,9 @@ public class OSecurityPluginLoader implements OServerPluginLoader {
   public OServerPlugin newInstance() {
     return new OSecurityPlugin();
   }
+
+  @Override
+  public String getPluginClassName() {
+    return OSecurityPlugin.class.getName();
+  }
 }

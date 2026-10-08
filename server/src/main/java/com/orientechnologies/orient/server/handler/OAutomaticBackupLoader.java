@@ -14,4 +14,9 @@ public class OAutomaticBackupLoader implements OServerPluginLoader {
   public OServerPlugin newInstance() {
     return new OAutomaticBackup();
   }
+
+  @Override
+  public String getPluginClassName() {
+    return OAutomaticBackup.class.getName();
+  }
 }

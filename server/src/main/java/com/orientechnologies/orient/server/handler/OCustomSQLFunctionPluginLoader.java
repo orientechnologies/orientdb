@@ -14,4 +14,9 @@ public class OCustomSQLFunctionPluginLoader implements OServerPluginLoader {
   public OServerPlugin newInstance() {
     return new OCustomSQLFunctionPlugin();
   }
+
+  @Override
+  public String getPluginClassName() {
+    return OCustomSQLFunctionPlugin.class.getName();
+  }
 }

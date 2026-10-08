@@ -14,4 +14,9 @@ public class OProxyServerLoader implements OServerPluginLoader {
   public OServerPlugin newInstance() {
     return new OProxyServer();
   }
+
+  @Override
+  public String getPluginClassName() {
+    return OProxyServer.class.getName();
+  }
 }

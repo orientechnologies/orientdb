@@ -14,4 +14,9 @@ public class OJMXPluginLoader implements OServerPluginLoader {
   public OServerPlugin newInstance() {
     return new OJMXPlugin();
   }
+
+  @Override
+  public String getPluginClassName() {
+    return OJMXPlugin.class.getName();
+  }
 }

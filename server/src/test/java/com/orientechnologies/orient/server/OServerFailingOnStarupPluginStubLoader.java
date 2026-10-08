@@ -14,4 +14,9 @@ public class OServerFailingOnStarupPluginStubLoader implements OServerPluginLoad
   public OServerPlugin newInstance() {
     return new OServerFailingOnStarupPluginStub();
   }
+
+  @Override
+  public String getPluginClassName() {
+    return OServerFailingOnStarupPluginStub.class.getName();
+  }
 }

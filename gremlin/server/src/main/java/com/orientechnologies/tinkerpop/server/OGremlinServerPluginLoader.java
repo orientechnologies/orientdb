@@ -14,4 +14,9 @@ public class OGremlinServerPluginLoader implements OServerPluginLoader {
   public OServerPlugin newInstance() {
     return new OGremlinServerPlugin();
   }
+
+  @Override
+  public String getPluginClassName() {
+    return OGremlinServerPlugin.class.getName();
+  }
 }

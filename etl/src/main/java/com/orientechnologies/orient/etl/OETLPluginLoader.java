@@ -14,4 +14,9 @@ public class OETLPluginLoader implements OServerPluginLoader {
   public OServerPlugin newInstance() {
     return new OETLPlugin();
   }
+
+  @Override
+  public String getPluginClassName() {
+    return OETLPlugin.class.getName();
+  }
 }
