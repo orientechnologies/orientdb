@@ -101,6 +101,7 @@ import com.orientechnologies.orient.server.OServerAware;
 import com.orientechnologies.orient.server.distributed.ODistributedConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedDatabase;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
+import com.orientechnologies.orient.server.distributed.ODistributedLifecycleListener;
 import com.orientechnologies.orient.server.distributed.ODistributedMessageService;
 import com.orientechnologies.orient.server.distributed.ODistributedRequest;
 import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
@@ -179,6 +180,8 @@ public class OrientDBDistributed extends OrientDBEmbedded
   // LOCAL MSG COUNTER FOR LEGACY IMPLEMENTATIONS WILL BE REMOVED IN FUTURE
   protected AtomicLong localMessageIdCounter = new AtomicLong();
   protected ODistributedStrategy defaultStrategy = new ODefaultDistributedStrategy();
+  protected List<ODistributedLifecycleListener> listeners =
+      Collections.synchronizedList(new ArrayList<>());
 
   public OrientDBDistributed(String directoryPath, OrientDBConfig config, Orient instance) {
     super(directoryPath, config, instance);
@@ -336,8 +339,16 @@ public class OrientDBDistributed extends OrientDBEmbedded
     String db = getNodeState().getOps().getDatabaseTopology().getDatabaseName(dbId);
     execute(
         () -> {
-          if (plugin != null) {
-            plugin.onDatabaseEvent(nodeId, db, state.toStatus());
+          for (ODistributedLifecycleListener l : listeners) {
+            try {
+              l.onDatabaseChangeStatus(nodeId, db, state.toStatus());
+            } catch (Exception e) {
+              // IGNORE IT
+              logger.debug("Exception on ODistributedLifecycleListener invoke", e);
+            }
+            if (plugin != null) {
+              plugin.notifyClients(db);
+            }
           }
         });
   }
@@ -1053,22 +1064,16 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   private void notifyLegacyNodeJoinListener(ONodeId node) {
-    if (plugin == null) return;
     execute(
         () -> {
-          if (plugin != null) {
-            plugin.notifyNodeJoined(node);
-          }
+          for (ODistributedLifecycleListener l : listeners) l.onNodeJoined(node);
         });
   }
 
   private void notifyLegacyNodeLeftListener(ONodeId node) {
-    if (plugin == null) return;
     execute(
         () -> {
-          if (plugin != null) {
-            plugin.notifyNodeLeft(node);
-          }
+          for (ODistributedLifecycleListener l : listeners) l.onNodeLeft(node);
         });
   }
 
@@ -2460,5 +2465,24 @@ public class OrientDBDistributed extends OrientDBEmbedded
       }
     }
     return waitLocalNode;
+  }
+
+  public void registerLifecycleListener(ODistributedLifecycleListener iListener) {
+    if (iListener == null) {
+      throw new NullPointerException();
+    }
+    listeners.add(iListener);
+  }
+
+  public void unregisterLifecycleListener(ODistributedLifecycleListener iListener) {
+    listeners.remove(iListener);
+  }
+
+  public void notifyNodeJoined(ONodeId joinedNodeName) {
+    for (ODistributedLifecycleListener l : listeners) l.onNodeJoined(joinedNodeName);
+  }
+
+  public void notifyNodeLeft(ONodeId joinedNodeName) {
+    for (ODistributedLifecycleListener l : listeners) l.onNodeLeft(joinedNodeName);
   }
 }

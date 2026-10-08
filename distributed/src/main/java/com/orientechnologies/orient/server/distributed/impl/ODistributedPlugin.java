@@ -76,7 +76,6 @@ public class ODistributedPlugin implements OServerPlugin, ODistributedServerMana
   private OServer serverInstance;
   private String nodeName = null;
   protected File defaultDatabaseConfigFile;
-  protected List<ODistributedLifecycleListener> listeners = new ArrayList<>();
 
   protected static final int DEPLOY_DB_MAX_RETRIES = 10;
   protected Set<String> installingDatabases =
@@ -176,17 +175,16 @@ public class ODistributedPlugin implements OServerPlugin, ODistributedServerMana
   @Override
   public ODistributedPlugin registerLifecycleListener(
       final ODistributedLifecycleListener iListener) {
-    if (iListener == null) {
-      throw new NullPointerException();
-    }
-    listeners.add(iListener);
+    OrientDBDistributed context = (OrientDBDistributed) serverInstance.getDatabases();
+    context.registerLifecycleListener(iListener);
     return this;
   }
 
   @Override
   public ODistributedPlugin unregisterLifecycleListener(
       final ODistributedLifecycleListener iListener) {
-    listeners.remove(iListener);
+    OrientDBDistributed context = (OrientDBDistributed) serverInstance.getDatabases();
+    context.unregisterLifecycleListener(iListener);
     return this;
   }
 
@@ -247,24 +245,6 @@ public class ODistributedPlugin implements OServerPlugin, ODistributedServerMana
       }
     }
     serverInstance.getPushManager().pushDistributedConfig(databaseName, hosts);
-  }
-
-  public void onDatabaseEvent(
-      final ONodeId node, final String databaseName, final DB_STATUS status) {
-    notifyClients(databaseName);
-    invokeOnDatabaseStatusChange(node, databaseName, status);
-  }
-
-  public void invokeOnDatabaseStatusChange(
-      final ONodeId node, final String databaseName, final DB_STATUS status) {
-    // NOTIFY DB/NODE IS CHANGING STATUS
-    for (ODistributedLifecycleListener l : listeners) {
-      try {
-        l.onDatabaseChangeStatus(node, databaseName, status);
-      } catch (Exception e) {
-        // IGNORE IT
-      }
-    }
   }
 
   protected void assignNodeName() {
@@ -435,19 +415,8 @@ public class ODistributedPlugin implements OServerPlugin, ODistributedServerMana
   public void onNodeJoined(ONodeId joinedNodeId, String url) {
     ((OrientDBDistributed) serverInstance.getDatabases()).connected(joinedNodeId, url);
 
-    // NOTIFY NODE WAS ADDED SUCCESSFULLY
-    notifyNodeJoined(joinedNodeId);
-
     // FORCE THE ALIGNMENT FOR ALL THE ONLINE DATABASES AFTER THE JOIN ONLY IF AUTO-DEPLOY IS SET
     dumpServersStatus();
-  }
-
-  public void notifyNodeJoined(ONodeId joinedNodeName) {
-    for (ODistributedLifecycleListener l : listeners) l.onNodeJoined(joinedNodeName);
-  }
-
-  public void notifyNodeLeft(ONodeId joinedNodeName) {
-    for (ODistributedLifecycleListener l : listeners) l.onNodeLeft(joinedNodeName);
   }
 
   // Called to notify this server, that a node has been removed from the cluster
@@ -460,11 +429,6 @@ public class ODistributedPlugin implements OServerPlugin, ODistributedServerMana
     if (!enabled) return null;
 
     return ((OrientDBDistributed) serverInstance.getDatabases()).getClusterConfiguration();
-  }
-
-  @Override
-  public ONodeConfig getNodeConfigurationByUuid(String iNode, boolean useCache) {
-    return clusterManager.getNodeConfigurationByUuid(iNode, useCache);
   }
 
   @Override

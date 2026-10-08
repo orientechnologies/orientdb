@@ -19,7 +19,6 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
-import com.orientechnologies.orient.distributed.ONodeConfig;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.config.OClusterConfiguration;
 import java.io.File;
@@ -63,8 +62,6 @@ public interface ODistributedServerManager {
   String getLocalNodeName();
 
   OClusterConfiguration getClusterConfiguration();
-
-  ONodeConfig getNodeConfigurationByUuid(String iNode, boolean useCache);
 
   File getDefaultDatabaseConfigFile();
 
