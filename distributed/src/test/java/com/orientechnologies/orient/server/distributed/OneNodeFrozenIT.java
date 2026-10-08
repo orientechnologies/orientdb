@@ -21,7 +21,7 @@ import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.id.ONodeId;
-import com.orientechnologies.orient.server.OServerAware;
+import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.setup.ServerRun;
 import java.util.ArrayList;
 import java.util.concurrent.Callable;
@@ -63,8 +63,7 @@ public class OneNodeFrozenIT extends AbstractServerClusterTxTest {
 
     if (serverStarted == 0) {
       // INSTALL ON FIRST SERVER ONLY THE SERVER MONITOR TO CHECK IF HAS BEEN RESTARTED
-      ((OServerAware) server.getServerInstance().getDatabases())
-          .getDistributedManager()
+      ((OrientDBDistributed) server.getServerInstance().getDatabases())
           .registerLifecycleListener(
               new ODistributedLifecycleListener() {
 

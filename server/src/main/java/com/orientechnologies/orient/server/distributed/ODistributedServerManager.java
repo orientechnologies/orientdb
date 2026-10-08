@@ -53,10 +53,6 @@ public interface ODistributedServerManager {
 
   boolean isEnabled();
 
-  ODistributedServerManager registerLifecycleListener(ODistributedLifecycleListener iListener);
-
-  ODistributedServerManager unregisterLifecycleListener(ODistributedLifecycleListener iListener);
-
   ODistributedDatabase getDatabase(String name);
 
   String getLocalNodeName();

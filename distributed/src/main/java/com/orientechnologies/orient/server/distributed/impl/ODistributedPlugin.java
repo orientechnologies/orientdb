@@ -42,7 +42,6 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerConfiguration;
 import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
-import com.orientechnologies.orient.server.distributed.ODistributedLifecycleListener;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ODistributedStartupException;
 import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
@@ -170,22 +169,6 @@ public class ODistributedPlugin implements OServerPlugin, ODistributedServerMana
     }
 
     dumpServersStatus();
-  }
-
-  @Override
-  public ODistributedPlugin registerLifecycleListener(
-      final ODistributedLifecycleListener iListener) {
-    OrientDBDistributed context = (OrientDBDistributed) serverInstance.getDatabases();
-    context.registerLifecycleListener(iListener);
-    return this;
-  }
-
-  @Override
-  public ODistributedPlugin unregisterLifecycleListener(
-      final ODistributedLifecycleListener iListener) {
-    OrientDBDistributed context = (OrientDBDistributed) serverInstance.getDatabases();
-    context.unregisterLifecycleListener(iListener);
-    return this;
   }
 
   @Override

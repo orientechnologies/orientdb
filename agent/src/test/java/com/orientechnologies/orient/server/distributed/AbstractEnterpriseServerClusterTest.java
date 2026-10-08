@@ -24,7 +24,6 @@ import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.record.impl.ODocument;
-import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -302,44 +301,6 @@ public abstract class AbstractEnterpriseServerClusterTest {
 
       try {
         Thread.sleep(200);
-      } catch (InterruptedException e) {
-        // IGNORE IT
-      }
-    }
-  }
-
-  protected void waitForDatabaseIsOffline(
-      final String serverName, final String dbName, final long timeout) {
-    final long startTime = System.currentTimeMillis();
-    while (((OrientDBDistributed) serverInstance.get(0).getServerInstance().getDatabases())
-        .isNodeOnline(serverName, dbName)) {
-
-      if (timeout > 0 && System.currentTimeMillis() - startTime > timeout) {
-        logger.error("TIMEOUT on waitForDatabaseIsOffline condition (timeout=%d)", null, timeout);
-        break;
-      }
-
-      try {
-        Thread.sleep(1000);
-      } catch (InterruptedException e) {
-        // IGNORE IT
-      }
-    }
-  }
-
-  protected void waitForDatabaseIsOnline(
-      final String serverName, final String dbName, final long timeout) {
-    final long startTime = System.currentTimeMillis();
-    while (!((OrientDBDistributed) serverInstance.get(0).getServerInstance().getDatabases())
-        .isNodeOnline(serverName, dbName)) {
-
-      if (timeout > 0 && System.currentTimeMillis() - startTime > timeout) {
-        logger.error("TIMEOUT on waitForDatabaseIsOnLine (timeout=%d)", null, timeout);
-        break;
-      }
-
-      try {
-        Thread.sleep(1000);
       } catch (InterruptedException e) {
         // IGNORE IT
       }

@@ -27,7 +27,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OPair;
 import com.orientechnologies.orient.core.id.ONodeId;
-import com.orientechnologies.orient.server.OServerAware;
+import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.setup.ServerRun;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -89,8 +89,7 @@ public class DistributedLifecycleListenerIT extends AbstractServerClusterTest
 
   @Override
   protected void onServerStarted(ServerRun server) {
-    ((OServerAware) server.getServerInstance().getDatabases())
-        .getDistributedManager()
+    ((OrientDBDistributed) server.getServerInstance().getDatabases())
         .registerLifecycleListener(this);
   }
 

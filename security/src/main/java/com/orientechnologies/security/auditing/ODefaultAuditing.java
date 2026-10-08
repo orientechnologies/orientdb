@@ -441,10 +441,8 @@ public class ODefaultAuditing
     timer.scheduleAtFixedRate(retainTask, delay, period);
 
     Orient.instance().addDbLifecycleListener(this);
-    if (context instanceof OServerAware) {
-      if (((OServerAware) context).getDistributedManager() != null) {
-        ((OServerAware) context).getDistributedManager().registerLifecycleListener(this);
-      }
+    if (context instanceof OServerAware sa) {
+      sa.registerLifecycleListener(this);
     }
 
     if (systemDbImporter != null && systemDbImporter.isEnabled()) {
@@ -506,10 +504,8 @@ public class ODefaultAuditing
       systemDbImporter.shutdown();
     }
 
-    if (context instanceof OServerAware) {
-      if (((OServerAware) context).getDistributedManager() != null) {
-        ((OServerAware) context).getDistributedManager().unregisterLifecycleListener(this);
-      }
+    if (context instanceof OServerAware sa) {
+      sa.unregisterLifecycleListener(this);
     }
 
     Orient.instance().removeDbLifecycleListener(this);

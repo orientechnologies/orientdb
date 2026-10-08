@@ -5,8 +5,7 @@ import com.orientechnologies.agent.http.command.OServerCommandDistributedManager
 import com.orientechnologies.agent.profiler.OEnterpriseProfiler;
 import com.orientechnologies.agent.services.OEnterpriseService;
 import com.orientechnologies.enterprise.server.OEnterpriseServer;
-import com.orientechnologies.orient.server.OServerAware;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
+import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 
 public class ODistributedService implements OEnterpriseService {
 
@@ -25,13 +24,10 @@ public class ODistributedService implements OEnterpriseService {
         .getServiceByClass(OAgentProfilerService.class)
         .ifPresent(
             (e) -> {
-              if (this.server.getDatabases() instanceof OServerAware sa) {
-                ODistributedServerManager distributedManager = sa.getDistributedManager();
-                if (distributedManager != null) {
-                  OEnterpriseProfiler profiler = e.getProfiler();
-                  if (profiler != null) {
-                    distributedManager.registerLifecycleListener(profiler);
-                  }
+              if (this.server.getDatabases() instanceof OrientDBDistributed ctx) {
+                OEnterpriseProfiler profiler = e.getProfiler();
+                if (profiler != null) {
+                  ctx.registerLifecycleListener(profiler);
                 }
               }
             });

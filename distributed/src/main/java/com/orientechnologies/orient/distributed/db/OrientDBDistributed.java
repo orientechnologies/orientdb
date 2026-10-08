@@ -335,7 +335,6 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   private void notifyLegacyStateListener(ODatabaseId dbId, ONodeId nodeId, ODatabaseState state) {
-    if (plugin == null) return;
     String db = getNodeState().getOps().getDatabaseTopology().getDatabaseName(dbId);
     execute(
         () -> {
@@ -707,11 +706,6 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   @Override
-  public ODistributedServerManager getDistributedManager() {
-    return this.plugin;
-  }
-
-  @Override
   public boolean deltaSync(String dbName, InputStream backupStream, OrientDBConfig config) {
     if (ONewDeltaSyncImporter.importDelta(this, dbName, backupStream, getNodeName())) {
       getDatabase(dbName).setOnline();
@@ -819,7 +813,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
     delayExecute(() -> operation.execute(this, exec, result), delay);
   }
 
-  private Future<Optional<OAcceptResult>> setDatabaseState(
+  public Future<Optional<OAcceptResult>> setDatabaseState(
       ODatabaseId dbId, ONodeId node, ODatabaseState state) {
     return retryOperation(new OSetDatabaseStateRetryOperation(node, dbId, state));
   }
@@ -1369,6 +1363,21 @@ public class OrientDBDistributed extends OrientDBEmbedded
     }
   }
 
+  public ODatabaseState getDatabaseState(ONodeId nodeId, String dbName) {
+    Optional<ODatabaseId> dbID = getNodeState().getDatabaseTopology().getDatabaseId(dbName);
+    if (dbID.isPresent()) {
+      ODatabaseState status = getDatabaseState(dbID.get(), nodeId);
+      if (status != null) {
+        return status;
+      }
+    }
+    return ODatabaseState.NotAvailable;
+  }
+
+  public ODatabaseState getDatabaseState(String node, String dbName) {
+    return getDatabaseState(getNodeId(node), dbName);
+  }
+
   public DB_STATUS getDatabaseStatus(ONodeId nodeId, String dbName) {
     Optional<ODatabaseId> dbID = getNodeState().getDatabaseTopology().getDatabaseId(dbName);
     if (dbID.isPresent()) {
@@ -1527,16 +1536,17 @@ public class OrientDBDistributed extends OrientDBEmbedded
 
   /** Returns the nodes with the requested status. */
   public int getNodesWithStatus(
-      final Collection<ONodeId> iNodes, final String databaseName, final DB_STATUS... statuses) {
+      final Collection<ONodeId> iNodes,
+      final String databaseName,
+      final ODatabaseState... statuses) {
     Optional<ODatabaseId> id = getNodeState().getDatabaseTopology().getDatabaseId(databaseName);
     ODatabasesTopology topology = getNodeState().getDatabaseTopology();
     for (Iterator<ONodeId> it = iNodes.iterator(); it.hasNext(); ) {
       final ONodeId node = it.next();
       ODatabaseState state = topology.getState(id.get(), node);
-      DB_STATUS s = state.toStatus();
       boolean matchState = false;
-      for (DB_STATUS st : statuses) {
-        if (s == st) matchState = true;
+      for (ODatabaseState st : statuses) {
+        if (state == st) matchState = true;
       }
       if (!matchState) it.remove();
     }
@@ -1544,13 +1554,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   public boolean isNodeOnline(String targetNode, String databaseName) {
-    return DB_STATUS.ONLINE.equals(getDatabaseStatus(targetNode, databaseName));
-  }
-
-  public boolean isNodeAvailable(String targetNode, String databaseName) {
-    final ODistributedServerManager.DB_STATUS s = getDatabaseStatus(targetNode, databaseName);
-    return s != ODistributedServerManager.DB_STATUS.OFFLINE
-        && s != ODistributedServerManager.DB_STATUS.NOT_AVAILABLE;
+    return ODatabaseState.Online.equals(getDatabaseState(targetNode, databaseName));
   }
 
   public void sendMergeOperation(ONodeId requestToMerge, OCompleteExecution execution) {
@@ -2190,8 +2194,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
         // NODES
 
         if (checkNodesAreOnline) {
-          availableNodes =
-              getNodesWithStatus(nodes, databaseName, ODistributedServerManager.DB_STATUS.ONLINE);
+          availableNodes = getNodesWithStatus(nodes, databaseName, ODatabaseState.Online);
         }
 
         // all online masters

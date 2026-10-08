@@ -26,6 +26,7 @@ import com.orientechnologies.orient.core.command.OCommandDistributedReplicateReq
 import com.orientechnologies.orient.core.exception.OConcurrentCreateException;
 import com.orientechnologies.orient.core.id.ONodeId;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabaseState;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.distributed.task.ODistributedOperationException;
 import com.orientechnologies.orient.server.distributed.task.ODistributedRecordLockedException;
@@ -295,7 +296,7 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
           // CHECK IF ANY NODE ARE UNREACHABLE IN THE MEANWHILE
           int missingActiveNodes = 0;
 
-          Map<ONodeId, ODistributedServerManager.DB_STATUS> missingResponseNodeStatuses =
+          Map<ONodeId, ODatabaseState> missingResponseNodeStatuses =
               new HashMap<>(responses.size());
 
           int missingResponses = 0;
@@ -307,13 +308,12 @@ public class ODistributedResponseManagerImpl implements ODistributedResponseMana
             if (curr.getValue() == NO_RESPONSE) {
               missingResponses++;
               // ANALYZE THE NODE WITHOUT A RESPONSE
-              final ODistributedServerManager.DB_STATUS dbStatus =
-                  ctx.getDatabaseStatus(curr.getKey(), getDatabaseName());
+              var dbStatus = ctx.getDatabaseState(curr.getKey(), getDatabaseName());
 
               missingResponseNodeStatuses.put(curr.getKey(), dbStatus);
 
               switch (dbStatus) {
-                case ONLINE:
+                case Online:
                   missingActiveNodes++;
                   break;
               }

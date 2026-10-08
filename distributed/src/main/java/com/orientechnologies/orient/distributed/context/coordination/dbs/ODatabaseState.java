@@ -6,18 +6,23 @@ import java.io.DataOutput;
 import java.io.IOException;
 
 public enum ODatabaseState {
-  NotAvailable,
-  Online,
-  Offline;
+  NotAvailable((byte) 1),
+  Online((byte) 2),
+  Offline((byte) 3);
+
+  private byte stableId;
+
+  private ODatabaseState(byte stableId) {
+    this.stableId = stableId;
+  }
 
   public static ODatabaseState readNetwork(DataInput input) throws IOException {
-    short s = input.readShort();
-    return ODatabaseState.values()[s];
+    byte id = input.readByte();
+    return ODatabaseState.fromStableId(id);
   }
 
   public void writeNetwork(DataOutput out) throws IOException {
-    // TODO: make sure this is network compatible
-    out.writeShort(this.ordinal());
+    out.writeByte(this.stableId);
   }
 
   public static ODatabaseState from(ODistributedServerManager.DB_STATUS status) {
@@ -30,6 +35,22 @@ public enum ODatabaseState {
         return ODatabaseState.NotAvailable;
     }
     return null;
+  }
+
+  public static ODatabaseState fromLegacyString(String legacy) {
+    if ("online".equalsIgnoreCase(legacy)) return ODatabaseState.Online;
+    else if ("offline".equalsIgnoreCase(legacy)) return ODatabaseState.Offline;
+    else if ("not_available".equalsIgnoreCase(legacy)) return ODatabaseState.NotAvailable;
+    return null;
+  }
+
+  private static ODatabaseState fromStableId(byte id) {
+    return switch (id) {
+      case 1 -> NotAvailable;
+      case 2 -> Online;
+      case 3 -> Offline;
+      default -> null;
+    };
   }
 
   public ODistributedServerManager.DB_STATUS toStatus() {
