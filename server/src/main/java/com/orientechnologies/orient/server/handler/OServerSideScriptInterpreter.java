@@ -41,29 +41,19 @@ import java.util.Set;
 public class OServerSideScriptInterpreter implements OServerPlugin {
   private static final OLogger logger =
       OLogManager.instance().logger(OServerSideScriptInterpreter.class);
-  protected Set<String> allowedLanguages = new HashSet<String>();
-
   protected OScriptInterceptor interceptor;
   protected boolean enabled = true;
   private OrientDBInternal context;
-
+  private OServerSideScriptInterpreterConfig config;
+  
+  
   @Override
   public void config(final OServer iServer, OServerParameterConfiguration[] iParams) {
     this.context = iServer.getDatabases();
-    for (OServerParameterConfiguration param : iParams) {
-      if (param.getName().equalsIgnoreCase("enabled")) {
-        if (Boolean.parseBoolean(param.getValue()))
-          // ENABLE IT
-          enabled = true;
-      } else if (param.getName().equalsIgnoreCase("allowedLanguages")) {
-        allowedLanguages =
-            new HashSet<>(Arrays.asList(param.getValue().toLowerCase(Locale.ENGLISH).split(",")));
-      } else if (param.getName().equalsIgnoreCase("allowedPackages")) {
-        context
-            .getScriptManager()
-            .addAllowedPackages(new HashSet<>(Arrays.asList(param.getValue().split(","))));
-      }
-    }
+    config = OServerSideScriptInterpreterConfig.fromParameters(iParams);
+    context
+    .getScriptManager()
+    .addAllowedPackages(config.getAllowedPackages());
   }
 
   @Override
@@ -89,7 +79,7 @@ public class OServerSideScriptInterpreter implements OServerPlugin {
     logger.warn(
         "Authenticated clients can execute any kind of code into the server by using the"
             + " following allowed languages: %s",
-        allowedLanguages);
+        config.getAllowedLanguages());
   }
 
   @Override
@@ -106,10 +96,7 @@ public class OServerSideScriptInterpreter implements OServerPlugin {
   }
 
   private void checkLanguage(final String language) {
-    if (allowedLanguages.contains(language)) return;
-
-    if ("js".equals(language) && allowedLanguages.contains("javascript")) return;
-
+    if (config.getAllowedLanguages().contains(language)) return;
     throw new OSecurityException("Language '" + language + "' is not allowed to be executed");
   }
 }
