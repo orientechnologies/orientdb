@@ -24,6 +24,7 @@ import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.OSystemDatabase;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
+import com.orientechnologies.orient.core.id.ONodeId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -301,18 +302,18 @@ public class ODefaultAuditing
 
   //////
 
-  public void onNodeJoined(String iNode) {
+  public void onNodeJoined(ONodeId node) {
     if (distribConfig != null && distribConfig.isEnabled(OAuditingOperation.NODEJOINED))
       log(
           OAuditingOperation.NODEJOINED,
-          distribConfig.formatMessage(OAuditingOperation.NODEJOINED, iNode));
+          distribConfig.formatMessage(OAuditingOperation.NODEJOINED, node.getNode()));
   }
 
-  public void onNodeLeft(String iNode) {
+  public void onNodeLeft(ONodeId node) {
     if (distribConfig != null && distribConfig.isEnabled(OAuditingOperation.NODELEFT))
       log(
           OAuditingOperation.NODELEFT,
-          distribConfig.formatMessage(OAuditingOperation.NODELEFT, iNode));
+          distribConfig.formatMessage(OAuditingOperation.NODELEFT, node.getNode()));
   }
 
   @Deprecated

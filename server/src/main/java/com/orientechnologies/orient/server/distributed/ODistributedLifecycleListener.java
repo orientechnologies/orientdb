@@ -19,6 +19,8 @@
  */
 package com.orientechnologies.orient.server.distributed;
 
+import com.orientechnologies.orient.core.id.ONodeId;
+
 /**
  * Distributed lifecycle interface to catch event from the distributed cluster.
  *
@@ -28,26 +30,26 @@ public interface ODistributedLifecycleListener {
   /**
    * Called right after a node joined the cluster.
    *
-   * @param iNode Node name that is joining
+   * @param node Node name that is joining
    */
-  default void onNodeJoined(String iNode) {}
+  default void onNodeJoined(ONodeId node) {}
 
   /**
    * Called right after a node left the cluster.
    *
-   * @param iNode Node name that left
+   * @param node Node name that left
    */
-  default void onNodeLeft(String iNode) {}
+  default void onNodeLeft(ONodeId node) {}
 
   /**
    * Called upon change of database status on a node. Available statuses are defined in
    * ODistributedServerManager.DB_STATUS.
    *
-   * @param iNode The node name
+   * @param node The node name
    * @param iDatabaseName Database name
    * @param iNewStatus The new status
    * @since 2.2.0
    */
   default void onDatabaseChangeStatus(
-      String iNode, String iDatabaseName, ODistributedServerManager.DB_STATUS iNewStatus) {}
+      ONodeId node, String iDatabaseName, ODistributedServerManager.DB_STATUS iNewStatus) {}
 }

@@ -26,6 +26,7 @@ import static org.junit.Assert.fail;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OPair;
+import com.orientechnologies.orient.core.id.ONodeId;
 import com.orientechnologies.orient.server.OServerAware;
 import com.orientechnologies.orient.setup.ServerRun;
 import java.util.ArrayList;
@@ -53,24 +54,24 @@ public class DistributedLifecycleListenerIT extends AbstractServerClusterTest
   private final CountDownLatch ended = new CountDownLatch(SERVERS - 1);
 
   @Override
-  public void onNodeJoined(String iNode) {
+  public void onNodeJoined(ONodeId node) {
     afterNodeJoin.incrementAndGet();
     started.countDown();
   }
 
   @Override
-  public void onNodeLeft(String iNode) {
+  public void onNodeLeft(ONodeId node) {
     nodeLeft.incrementAndGet();
     ended.countDown();
   }
 
   @Override
   public void onDatabaseChangeStatus(
-      String iNode, String iDatabaseName, ODistributedServerManager.DB_STATUS iNewStatus) {
-    logger.info("CHANGE OF STATUS node=%s db=%s status-%s", iNode, iDatabaseName, iNewStatus);
+      ONodeId node, String iDatabaseName, ODistributedServerManager.DB_STATUS iNewStatus) {
+    logger.info("CHANGE OF STATUS node=%s db=%s status-%s", node, iDatabaseName, iNewStatus);
     changeStatus.add(
         new OPair<String, ODistributedServerManager.DB_STATUS>(
-            iNode + "." + iDatabaseName, iNewStatus));
+            node + "." + iDatabaseName, iNewStatus));
   }
 
   public String getDatabaseName() {

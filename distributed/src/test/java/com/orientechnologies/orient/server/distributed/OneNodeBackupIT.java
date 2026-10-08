@@ -16,6 +16,7 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.id.ONodeId;
 import com.orientechnologies.orient.server.OServerAware;
 import com.orientechnologies.orient.setup.ServerRun;
 import java.io.File;
@@ -69,16 +70,16 @@ public class OneNodeBackupIT extends AbstractServerClusterTxTest {
               new ODistributedLifecycleListener() {
 
                 @Override
-                public void onNodeJoined(String iNode) {}
+                public void onNodeJoined(ONodeId node) {}
 
                 @Override
-                public void onNodeLeft(String iNode) {
+                public void onNodeLeft(ONodeId node) {
                   nodeLefts.incrementAndGet();
                 }
 
                 @Override
                 public void onDatabaseChangeStatus(
-                    String iNode,
+                    ONodeId node,
                     String iDatabaseName,
                     ODistributedServerManager.DB_STATUS iNewStatus) {}
               });

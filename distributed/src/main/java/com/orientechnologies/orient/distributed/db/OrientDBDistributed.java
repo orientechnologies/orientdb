@@ -333,12 +333,11 @@ public class OrientDBDistributed extends OrientDBEmbedded
 
   private void notifyLegacyStateListener(ODatabaseId dbId, ONodeId nodeId, ODatabaseState state) {
     if (plugin == null) return;
-    String node = nodeId.getNode();
     String db = getNodeState().getOps().getDatabaseTopology().getDatabaseName(dbId);
     execute(
         () -> {
           if (plugin != null) {
-            plugin.onDatabaseEvent(node, db, state.toStatus());
+            plugin.onDatabaseEvent(nodeId, db, state.toStatus());
           }
         });
   }

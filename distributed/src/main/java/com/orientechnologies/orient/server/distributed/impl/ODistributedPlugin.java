@@ -250,13 +250,13 @@ public class ODistributedPlugin implements OServerPlugin, ODistributedServerMana
   }
 
   public void onDatabaseEvent(
-      final String nodeName, final String databaseName, final DB_STATUS status) {
+      final ONodeId node, final String databaseName, final DB_STATUS status) {
     notifyClients(databaseName);
-    invokeOnDatabaseStatusChange(nodeName, databaseName, status);
+    invokeOnDatabaseStatusChange(node, databaseName, status);
   }
 
   public void invokeOnDatabaseStatusChange(
-      final String node, final String databaseName, final DB_STATUS status) {
+      final ONodeId node, final String databaseName, final DB_STATUS status) {
     // NOTIFY DB/NODE IS CHANGING STATUS
     for (ODistributedLifecycleListener l : listeners) {
       try {
@@ -443,11 +443,11 @@ public class ODistributedPlugin implements OServerPlugin, ODistributedServerMana
   }
 
   public void notifyNodeJoined(ONodeId joinedNodeName) {
-    for (ODistributedLifecycleListener l : listeners) l.onNodeJoined(joinedNodeName.getNode());
+    for (ODistributedLifecycleListener l : listeners) l.onNodeJoined(joinedNodeName);
   }
 
   public void notifyNodeLeft(ONodeId joinedNodeName) {
-    for (ODistributedLifecycleListener l : listeners) l.onNodeLeft(joinedNodeName.getNode());
+    for (ODistributedLifecycleListener l : listeners) l.onNodeLeft(joinedNodeName);
   }
 
   // Called to notify this server, that a node has been removed from the cluster

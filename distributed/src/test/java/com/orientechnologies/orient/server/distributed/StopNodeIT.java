@@ -19,6 +19,7 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.id.ONodeId;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.OServerAware;
 import com.orientechnologies.orient.setup.ServerRun;
@@ -44,7 +45,7 @@ public class StopNodeIT extends AbstractServerClusterTxTest {
   static final int SERVERS = 3;
   volatile boolean inserting = true;
   volatile int serverStarted = 0;
-  private final Set<String> nodeReJoined = new HashSet<String>();
+  private final Set<ONodeId> nodeReJoined = new HashSet<>();
   private final AtomicInteger nodeLefts = new AtomicInteger();
 
   @Test
@@ -78,15 +79,15 @@ public class StopNodeIT extends AbstractServerClusterTxTest {
               new ODistributedLifecycleListener() {
 
                 @Override
-                public void onNodeJoined(String iNode) {
-                  nodeReJoined.add(iNode);
+                public void onNodeJoined(ONodeId node) {
+                  nodeReJoined.add(node);
                 }
 
                 @Override
-                public void onNodeLeft(String iNode) {
+                public void onNodeLeft(ONodeId node) {
                   nodeReJoined.clear();
                   nodeLefts.incrementAndGet();
-                  logger.info("NODE LEFT %s = %d", iNode, nodeLefts.get());
+                  logger.info("NODE LEFT %s = %d", node, nodeLefts.get());
                 }
               });
     }

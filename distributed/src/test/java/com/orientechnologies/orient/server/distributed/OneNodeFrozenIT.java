@@ -20,6 +20,7 @@ import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.id.ONodeId;
 import com.orientechnologies.orient.server.OServerAware;
 import com.orientechnologies.orient.setup.ServerRun;
 import java.util.ArrayList;
@@ -68,15 +69,15 @@ public class OneNodeFrozenIT extends AbstractServerClusterTxTest {
               new ODistributedLifecycleListener() {
 
                 @Override
-                public void onNodeJoined(String iNode) {}
+                public void onNodeJoined(ONodeId node) {}
 
                 @Override
-                public void onNodeLeft(String iNode) {
+                public void onNodeLeft(ONodeId node) {
                   nodeLefts.incrementAndGet();
                 }
 
                 public void onDatabaseChangeStatus(
-                    String iNode,
+                    ONodeId node,
                     String iDatabaseName,
                     ODistributedServerManager.DB_STATUS iNewStatus) {}
               });

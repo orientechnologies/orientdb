@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.id.ONodeId;
 import com.orientechnologies.orient.server.OServerAware;
 import com.orientechnologies.orient.setup.ServerRun;
 import java.util.concurrent.Callable;
@@ -73,11 +74,11 @@ public class HaRemoveServerIT extends AbstractServerClusterTest {
 
             @Override
             public void onDatabaseChangeStatus(
-                String iNode,
+                ONodeId node,
                 String iDatabaseName,
                 ODistributedServerManager.DB_STATUS iNewStatus) {
 
-              if (iNode.equals(offlineNodeName)) {
+              if (node.equals(offlineNodeName)) {
                 ref.set(iNewStatus);
                 latch.countDown();
               }

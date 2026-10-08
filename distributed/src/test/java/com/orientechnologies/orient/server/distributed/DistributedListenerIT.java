@@ -17,6 +17,7 @@ package com.orientechnologies.orient.server.distributed;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
+import com.orientechnologies.orient.core.id.ONodeId;
 import com.orientechnologies.orient.server.OServerAware;
 import com.orientechnologies.orient.setup.ServerRun;
 import java.util.HashSet;
@@ -57,13 +58,13 @@ public class DistributedListenerIT extends AbstractServerClusterTxTest {
             new ODistributedLifecycleListener() {
 
               public void onDatabaseChangeStatus(
-                  String iNode,
+                  ONodeId node,
                   String iDatabaseName,
                   ODistributedServerManager.DB_STATUS iNewStatus) {
-                logger.info("Node %s DB %s Status %s", null, iNode, iDatabaseName, iNewStatus);
+                logger.info("Node %s DB %s Status %s", null, node, iDatabaseName, iNewStatus);
 
                 if (iNewStatus == ODistributedServerManager.DB_STATUS.ONLINE) {
-                  final String dbName = iNode + ":" + iDatabaseName;
+                  final String dbName = node + ":" + iDatabaseName;
                   if (restartExecuted) afterRestartdbOnline.add(dbName);
                 }
               }
