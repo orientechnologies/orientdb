@@ -413,4 +413,6 @@ public interface OrientDBInternal extends AutoCloseable, OSchedulerInternal {
   OAdminSession admin(String user, String password);
 
   Iterator<ODatabaseLifecycleListener> getDbLifecycleListeners();
+
+  default void notifyNeworkState() {}
 }

@@ -345,11 +345,37 @@ public class OrientDBDistributed extends OrientDBEmbedded
               // IGNORE IT
               logger.debug("Exception on ODistributedLifecycleListener invoke", e);
             }
-            if (plugin != null) {
-              plugin.notifyClients(db);
-            }
+            notifyClients(db);
           }
         });
+  }
+
+  @Override
+  public void notifyNeworkState() {
+    execute(this::notifyAllDatabasesToClents);
+  }
+
+  private void notifyAllDatabasesToClents() {
+    for (var db : listLodadedDatabases()) {
+      notifyClients(db);
+    }
+  }
+
+  public void notifyClients(String databaseName) {
+    List<String> hosts = new ArrayList<>();
+    for (ONodeId name : getOps().getNetworkTopology().getMembers()) {
+      ONodeConfig memberConfig = getNodeConfiguration(name);
+      if (memberConfig != null) {
+        final Collection<ONodeListenerConfig> listeners = memberConfig.getListeners();
+        if (listeners != null)
+          for (ONodeListenerConfig listener : listeners) {
+            if (listener.getProtocol().equals("ONetworkProtocolBinary")) {
+              hosts.add(listener.getListen());
+            }
+          }
+      }
+    }
+    server.getPushManager().pushDistributedConfig(databaseName, hosts);
   }
 
   public void dumpNodeInfo() {

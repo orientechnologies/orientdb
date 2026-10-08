@@ -212,24 +212,6 @@ public class ODistributedPlugin implements OServerPlugin, ODistributedServerMana
     return nodeName;
   }
 
-  public void notifyClients(String databaseName) {
-    List<String> hosts = new ArrayList<>();
-    var ctx = (OrientDBDistributed) serverInstance.getDatabases();
-    for (ONodeId name : ctx.getOps().getNetworkTopology().getMembers()) {
-      ONodeConfig memberConfig = ctx.getNodeConfiguration(name);
-      if (memberConfig != null) {
-        final Collection<ONodeListenerConfig> listeners = memberConfig.getListeners();
-        if (listeners != null)
-          for (ONodeListenerConfig listener : listeners) {
-            if (listener.getProtocol().equals("ONetworkProtocolBinary")) {
-              hosts.add(listener.getListen());
-            }
-          }
-      }
-    }
-    serverInstance.getPushManager().pushDistributedConfig(databaseName, hosts);
-  }
-
   protected void assignNodeName() {
     // ORIENTDB_NODE_NAME ENV VARIABLE OR JVM SETTING
     nodeName = OSystemVariableResolver.resolveVariable(NODE_NAME_ENV);

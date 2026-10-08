@@ -60,6 +60,4 @@ public interface ODistributedServerManager {
   OClusterConfiguration getClusterConfiguration();
 
   File getDefaultDatabaseConfigFile();
-
-  void notifyClients(String databaseName);
 }

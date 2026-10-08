@@ -66,7 +66,6 @@ import com.orientechnologies.orient.core.tx.OTransaction;
 import com.orientechnologies.orient.core.tx.OTransactionNoTx;
 import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
 import com.orientechnologies.orient.enterprise.channel.binary.OChannelBinaryProtocol;
-import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ORemoteServerController;
 import com.orientechnologies.orient.server.distributed.config.OClusterConfiguration;
 import com.orientechnologies.orient.server.network.protocol.binary.HandshakeInfo;
@@ -1569,16 +1568,7 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
         (ONetworkProtocolBinary) connection.getProtocol(), connection);
 
     OrientDBInternal databases = server.getDatabases();
-    Set<String> dbs = databases.listLodadedDatabases();
-    ODistributedServerManager plugin = server.getPlugin("cluster");
-    if (plugin != null) {
-      databases.execute(
-          () -> {
-            for (String db : dbs) {
-              plugin.notifyClients(db);
-            }
-          });
-    }
+    databases.notifyNeworkState();
     return new OSubscribeDistributedConfigurationResponse();
   }
 
