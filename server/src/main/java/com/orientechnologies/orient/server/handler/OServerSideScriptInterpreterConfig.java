@@ -2,6 +2,7 @@ package com.orientechnologies.orient.server.handler;
 
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
@@ -9,8 +10,8 @@ import java.util.Set;
 public class OServerSideScriptInterpreterConfig {
 
   private boolean enabled;
-  private Set<String> allowedLanguages;
-  private Set<String> allowedPackages;
+  private Set<String> allowedLanguages = Collections.emptySet();
+  private Set<String> allowedPackages = Collections.emptySet();
 
   public static OServerSideScriptInterpreterConfig fromParameters(
       OServerParameterConfiguration[] iParams) {
@@ -23,6 +24,9 @@ public class OServerSideScriptInterpreterConfig {
       } else if (param.getName().equalsIgnoreCase("allowedLanguages")) {
         config.allowedLanguages =
             new HashSet<>(Arrays.asList(param.getValue().toLowerCase(Locale.ENGLISH).split(",")));
+        if (config.allowedLanguages.contains("javascript")) {
+          config.allowedLanguages.add("js");
+        }
       } else if (param.getName().equalsIgnoreCase("allowedPackages")) {
         config.allowedPackages = new HashSet<>(Arrays.asList(param.getValue().split(",")));
       }
