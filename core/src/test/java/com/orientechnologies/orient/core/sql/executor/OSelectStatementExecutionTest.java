@@ -2366,6 +2366,46 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
   }
 
   @Test
+  public void testLetParentCurrentWithIndexedTarget() {
+    db.command("CREATE CLASS LetParentNode").close();
+    db.command("CREATE PROPERTY LetParentNode.id STRING").close();
+    db.command("CREATE INDEX LetParentNode.id ON LetParentNode (id) UNIQUE").close();
+    db.command("INSERT INTO LetParentNode SET id = 'n0'").close();
+    db.command("INSERT INTO LetParentNode SET id = 'n1'").close();
+    db.command("CREATE CLASS LetParentLink").close();
+    db.command("INSERT INTO LetParentLink SET src_id = 'n0', dst_id = 'n1'").close();
+
+    try (OResultSet result =
+        db.query(
+            "SELECT id, $h.v AS v FROM LetParentNode LET $h = (SELECT dst_id AS v FROM"
+                + " LetParentLink WHERE src_id = $parent.$current.id) WHERE id = 'n0'")) {
+      Assert.assertTrue(
+          result.getExecutionPlan().get().getSteps().stream()
+              .anyMatch(x -> x instanceof FetchFromIndexStep));
+      Assert.assertTrue(result.hasNext());
+      OResult item = result.next();
+      Assert.assertEquals("n0", item.getProperty("id"));
+      Assert.assertEquals(Arrays.asList("n1"), item.getProperty("v"));
+      Assert.assertFalse(result.hasNext());
+    }
+
+    try (OResultSet result =
+        db.query(
+            "SELECT id, (SELECT $parent.$current.id AS x FROM LetParentNode LIMIT 1) AS v FROM"
+                + " LetParentNode ORDER BY id")) {
+      for (String id : new String[] {"n0", "n1"}) {
+        Assert.assertTrue(result.hasNext());
+        OResult item = result.next();
+        Assert.assertEquals(id, item.getProperty("id"));
+        List<OResult> v = item.getProperty("v");
+        Assert.assertEquals(1, v.size());
+        Assert.assertEquals(id, v.get(0).getProperty("x"));
+      }
+      Assert.assertFalse(result.hasNext());
+    }
+  }
+
+  @Test
   public void testLetWithTraverseFunction() {
     String vertexClassName = "testLetWithTraverseFunction";
     String edgeClassName = "testLetWithTraverseFunctioEdge";
