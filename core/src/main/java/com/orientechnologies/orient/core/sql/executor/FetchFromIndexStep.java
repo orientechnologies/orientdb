@@ -452,7 +452,6 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
           && !(indexDef instanceof OIndexDefinitionMultiValue)) {
         secondValue = ((List) secondValue).get(0);
       }
-      secondValue = unboxOResult(secondValue);
       // TODO unwind collections!
       Object thirdValue = thirdValueCombinations.get(i).execute((OResult) null, ctx);
       if (thirdValue instanceof List
@@ -461,6 +460,12 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
           && !(indexDef instanceof OIndexDefinitionMultiValue)) {
         thirdValue = ((List) thirdValue).get(0);
       }
+      if (isEmptyCollectionResult(secondValue) && isEmptyCollectionResult(thirdValue)) {
+        // a subquery row that projects an empty collection, eg. `field IN (SELECT aList FROM
+        // ...)`, does not provide any key to look up
+        continue;
+      }
+      secondValue = unboxOResult(secondValue);
       thirdValue = unboxOResult(thirdValue);
 
       try {
@@ -589,6 +594,14 @@ public class FetchFromIndexStep extends AbstractExecutionStep {
       }
     }
     return value;
+  }
+
+  private static boolean isEmptyCollectionResult(Object value) {
+    if (value instanceof OResult) {
+      Object unboxed = unboxOResult(value);
+      return unboxed instanceof Collection && ((Collection<?>) unboxed).isEmpty();
+    }
+    return false;
   }
 
   private List<OCollection> cartesianProduct(OCollection key, boolean isOrderAsc) {

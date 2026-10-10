@@ -4938,6 +4938,45 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
   }
 
   @Test
+  public void testIndexInSubqueryWithEmptyCollection() {
+    for (String indexType : new String[] {"UNIQUE_HASH_INDEX", "UNIQUE", "NOTUNIQUE"}) {
+      String className = "testIndexInSubqueryWithEmptyCollection_" + indexType;
+      db.command("CREATE CLASS " + className).close();
+      db.command("CREATE PROPERTY " + className + ".id STRING").close();
+      db.command("CREATE INDEX " + className + ".id ON " + className + " (id) " + indexType)
+          .close();
+      db.command("INSERT INTO " + className + " SET id = 'a', l = ['b']").close();
+      db.command("INSERT INTO " + className + " SET id = 'b', l = []").close();
+      // a record without id, the empty list must not be used to look up the null key
+      db.command("INSERT INTO " + className + " SET l = ['a']").close();
+
+      try (OResultSet rs =
+          db.query(
+              "SELECT id FROM " + className + " WHERE id IN (SELECT l FROM " + className + ")")) {
+        Assert.assertTrue(
+            rs.getExecutionPlan().get().getSteps().stream()
+                .anyMatch(x -> x instanceof FetchFromIndexStep));
+        List<String> ids =
+            rs.stream()
+                .map(x -> (String) x.getProperty("id"))
+                .sorted()
+                .collect(Collectors.toList());
+        Assert.assertEquals(Arrays.asList("a", "b"), ids);
+      }
+
+      try (OResultSet rs =
+          db.query(
+              "SELECT id FROM "
+                  + className
+                  + " WHERE id IN (SELECT l FROM "
+                  + className
+                  + " WHERE id = 'b')")) {
+        Assert.assertFalse(rs.hasNext());
+      }
+    }
+  }
+
+  @Test
   public void testExclude() {
     String className = "TestExclude";
     db.getMetadata().getSchema().createClass(className);
