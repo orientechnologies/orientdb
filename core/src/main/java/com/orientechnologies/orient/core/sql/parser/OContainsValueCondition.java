@@ -216,7 +216,7 @@ public class OContainsValueCondition extends OBooleanExpression {
     if (condition != null && condition.refersToParent()) {
       return true;
     }
-    if (expression != null && condition.refersToParent()) {
+    if (expression != null && expression.refersToParent()) {
       return true;
     }
     return false;

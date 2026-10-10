@@ -4415,6 +4415,45 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
   }
 
   @Test
+  public void testContainsValueInSubquery() {
+    db.command("CREATE CLASS ContainsValueSub").close();
+    db.command("CREATE PROPERTY ContainsValueSub.id STRING").close();
+    db.command("CREATE PROPERTY ContainsValueSub.m EMBEDDEDMAP LONG").close();
+    db.command("INSERT INTO ContainsValueSub SET id = 'r0', m = {'k1': 1099511627776, 'k2': 3}")
+        .close();
+    db.command("INSERT INTO ContainsValueSub SET id = 'r1', m = {'k1': 5}").close();
+
+    try (OResultSet result =
+        db.query(
+            "SELECT id FROM ContainsValueSub WHERE id IN (SELECT id FROM ContainsValueSub WHERE m"
+                + " CONTAINSVALUE 1099511627776)")) {
+      Assert.assertTrue(result.hasNext());
+      Assert.assertEquals("r0", result.next().getProperty("id"));
+      Assert.assertFalse(result.hasNext());
+    }
+
+    try (OResultSet result =
+        db.query(
+            "SELECT id FROM ContainsValueSub WHERE id NOT IN (SELECT id FROM ContainsValueSub"
+                + " WHERE m CONTAINSVALUE 1099511627776)")) {
+      Assert.assertTrue(result.hasNext());
+      Assert.assertEquals("r1", result.next().getProperty("id"));
+      Assert.assertFalse(result.hasNext());
+    }
+
+    try (OResultSet result =
+        db.query(
+            "SELECT id, $a.size() AS n FROM ContainsValueSub LET $a = (SELECT id FROM"
+                + " ContainsValueSub WHERE m CONTAINSVALUE 1099511627776)")) {
+      for (int i = 0; i < 2; i++) {
+        Assert.assertTrue(result.hasNext());
+        Assert.assertEquals(1, (int) result.next().getProperty("n"));
+      }
+      Assert.assertFalse(result.hasNext());
+    }
+  }
+
+  @Test
   public void testListOfMapsContains() {
     String className = "testListOfMapsContains";
 
