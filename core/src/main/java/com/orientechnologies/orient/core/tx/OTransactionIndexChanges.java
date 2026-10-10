@@ -88,9 +88,9 @@ public class OTransactionIndexChanges {
     if (from != null && to != null) {
       interval = changesPerKey.subMap(from, fromInclusive, to, toInclusive);
     } else if (from != null) {
-      interval = changesPerKey.headMap(from, fromInclusive);
+      interval = changesPerKey.tailMap(from, fromInclusive);
     } else if (to != null) {
-      interval = changesPerKey.tailMap(to, toInclusive);
+      interval = changesPerKey.headMap(to, toInclusive);
     } else {
       interval = changesPerKey;
     }

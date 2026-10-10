@@ -69,6 +69,51 @@ public class TransactionQueryIndexTests {
     res.close();
   }
 
+  @Test
+  public void testOneSidedRangeNotUnique() {
+    testOneSidedRange("RangeNotUnique", OClass.INDEX_TYPE.NOTUNIQUE);
+  }
+
+  @Test
+  public void testOneSidedRangeUnique() {
+    testOneSidedRange("RangeUnique", OClass.INDEX_TYPE.UNIQUE);
+  }
+
+  private void testOneSidedRange(String className, OClass.INDEX_TYPE indexType) {
+    OClass clazz = database.createClass(className);
+    clazz.createProperty("name", OType.STRING);
+    clazz.createProperty("value", OType.LONG).createIndex(indexType);
+
+    database.command("insert into " + className + " set name = 'a', value = -7").close();
+    database.command("insert into " + className + " set name = 'b', value = 5").close();
+
+    database.begin();
+    database.command("update " + className + " set value = -100 where name = 'b'").close();
+    assertEquals(2, countWhere(className, "value < 0"));
+    assertEquals(2, countWhere(className, "value <= -7"));
+    assertEquals(1, countWhere(className, "value < -7"));
+    assertEquals(2, countWhere(className, "value > -200"));
+    assertEquals(1, countWhere(className, "value >= -7"));
+    assertEquals(0, countWhere(className, "value > 0"));
+    database.rollback();
+
+    database.begin();
+    database.command("update " + className + " set value = 100 where name = 'a'").close();
+    assertEquals(2, countWhere(className, "value > 0"));
+    assertEquals(2, countWhere(className, "value >= 5"));
+    assertEquals(1, countWhere(className, "value > 5"));
+    assertEquals(2, countWhere(className, "value < 200"));
+    assertEquals(1, countWhere(className, "value <= 5"));
+    assertEquals(0, countWhere(className, "value < 0"));
+    database.rollback();
+  }
+
+  private long countWhere(String className, String condition) {
+    try (OResultSet res = database.query("select from " + className + " where " + condition)) {
+      return res.stream().count();
+    }
+  }
+
   @After
   public void after() {
     database.close();
