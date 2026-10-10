@@ -43,10 +43,11 @@ public class GetValueFromIndexEntryStep extends AbstractExecutionStep {
     }
 
     return new OLimitedResultSet(
-        new OFilterResultSet(() -> fetchNext(ctx, nRecords), this::filterMap), nRecords);
+        new OFilterResultSet(() -> fetchNext(ctx, nRecords), (result) -> filterMap(ctx, result)),
+        nRecords);
   }
 
-  private OResult filterMap(OResult result) {
+  private OResult filterMap(OCommandContext ctx, OResult result) {
     long begin = profilingEnabled ? System.nanoTime() : 0;
     try {
       Object finalVal = result.getProperty("rid");
@@ -60,13 +61,18 @@ public class GetValueFromIndexEntryStep extends AbstractExecutionStep {
           return null;
         }
       }
+      OResult value;
       if (finalVal instanceof OIdentifiable) {
-        return new OResultInternal((OIdentifiable) finalVal);
-
+        value = new OResultInternal((OIdentifiable) finalVal);
       } else if (finalVal instanceof OResult) {
-        return (OResult) finalVal;
+        value = (OResult) finalVal;
+      } else {
+        return null;
       }
-      return null;
+      // the previous step set $current to the index entry, expose the actual record instead, as
+      // the fetch from class/cluster steps do, so that e.g. $parent.$current in subqueries works
+      ctx.setVariable("$current", value);
+      return value;
     } finally {
       if (profilingEnabled) {
         cost += (System.nanoTime() - begin);
