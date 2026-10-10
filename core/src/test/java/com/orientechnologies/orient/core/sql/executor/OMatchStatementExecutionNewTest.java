@@ -12,6 +12,7 @@ import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.OVertex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.OCommandSQL;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -2352,6 +2353,79 @@ public class OMatchStatementExecutionNewTest extends BaseMemoryDatabase {
 
     try (OResultSet rs = db.query(query)) {
       Assert.assertEquals(1L, rs.stream().count());
+    }
+  }
+
+  @Test
+  public void testEdgeClassFilterOnReverseTraversal() {
+    String prefix = "testEdgeClassFilterOnReverseTraversal_";
+    db.command("CREATE CLASS " + prefix + "A EXTENDS V").close();
+    db.command("CREATE CLASS " + prefix + "B EXTENDS V").close();
+    db.command("CREATE CLASS " + prefix + "X EXTENDS E").close();
+    db.command("CREATE CLASS " + prefix + "SubX EXTENDS " + prefix + "X").close();
+    db.command("CREATE CLASS " + prefix + "Y EXTENDS E").close();
+    // more A than B records, so that the planner starts from B and traverses the edges in reverse
+    db.command("CREATE VERTEX " + prefix + "A SET name = 'a1'").close();
+    db.command("CREATE VERTEX " + prefix + "A SET name = 'a2'").close();
+    db.command("CREATE VERTEX " + prefix + "A SET name = 'a3'").close();
+    db.command("CREATE VERTEX " + prefix + "B SET name = 'b1'").close();
+    for (String edgeClass : new String[] {"X", "SubX", "Y"}) {
+      db.command(
+              "CREATE EDGE "
+                  + prefix
+                  + edgeClass
+                  + " FROM (SELECT FROM "
+                  + prefix
+                  + "A WHERE name = 'a1') TO (SELECT FROM "
+                  + prefix
+                  + "B WHERE name = 'b1')")
+          .close();
+    }
+
+    for (String target : new String[] {"{class: " + prefix + "B, as: b}", "{as: b}"}) {
+      String query =
+          "MATCH {class: "
+              + prefix
+              + "A, as: a}.outE('"
+              + prefix
+              + "X'){as: e}.inV()"
+              + target
+              + " RETURN e.@class AS cls";
+      try (OResultSet rs = db.query(query)) {
+        Set<String> classes = new HashSet<>();
+        while (rs.hasNext()) {
+          Assert.assertTrue(classes.add(rs.next().getProperty("cls")));
+        }
+        Assert.assertEquals(new HashSet<>(Arrays.asList(prefix + "X", prefix + "SubX")), classes);
+      }
+
+      query =
+          "MATCH {class: "
+              + prefix
+              + "A, as: a}.bothE('"
+              + prefix
+              + "Y'){as: e}.bothV()"
+              + target.replace("as: b", "as: b, where: (name = 'b1')")
+              + " RETURN e.@class AS cls";
+      try (OResultSet rs = db.query(query)) {
+        Assert.assertTrue(rs.hasNext());
+        Assert.assertEquals(prefix + "Y", rs.next().getProperty("cls"));
+        Assert.assertFalse(rs.hasNext());
+      }
+    }
+
+    String query =
+        "MATCH {class: "
+            + prefix
+            + "B, as: b}.inE('"
+            + prefix
+            + "Y'){as: e}.outV(){class: "
+            + prefix
+            + "A, as: a, where: (name = 'a1')} RETURN e.@class AS cls";
+    try (OResultSet rs = db.query(query)) {
+      Assert.assertTrue(rs.hasNext());
+      Assert.assertEquals(prefix + "Y", rs.next().getProperty("cls"));
+      Assert.assertFalse(rs.hasNext());
     }
   }
 

@@ -2,11 +2,16 @@
 /* JavaCCOptions:MULTI=true,NODE_USES_PARSER=false,VISITOR=true,TRACK_TOKENS=true,NODE_PREFIX=O,NODE_EXTENDS=,NODE_FACTORY=,SUPPORT_CLASS_VISIBILITY_PUBLIC=true */
 package com.orientechnologies.orient.core.sql.parser;
 
+import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
+import com.orientechnologies.orient.core.record.OEdge;
+import com.orientechnologies.orient.core.record.OElement;
+import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.sql.OSQLEngine;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
@@ -241,6 +246,9 @@ public class OMethodCall extends SimpleNode {
     }
 
     if (straightName.equalsIgnoreCase("outE")) {
+      if (!isEdgeOfRequestedClass(targetObjects, ctx)) {
+        return null;
+      }
       return executeGraphFunction(targetObjects, ctx, "outV", params, null);
     }
 
@@ -249,6 +257,9 @@ public class OMethodCall extends SimpleNode {
     }
 
     if (straightName.equalsIgnoreCase("inE")) {
+      if (!isEdgeOfRequestedClass(targetObjects, ctx)) {
+        return null;
+      }
       return executeGraphFunction(targetObjects, ctx, "inV", params, null);
     }
 
@@ -257,6 +268,9 @@ public class OMethodCall extends SimpleNode {
     }
 
     if (straightName.equalsIgnoreCase("bothE")) {
+      if (!isEdgeOfRequestedClass(targetObjects, ctx)) {
+        return null;
+      }
       return executeGraphFunction(targetObjects, ctx, "bothV", params, null);
     }
 
@@ -265,6 +279,48 @@ public class OMethodCall extends SimpleNode {
     }
 
     throw new UnsupportedOperationException("Invalid reverse traversal: " + methodName);
+  }
+
+  /**
+   * The reverse of an edge traversal like <code>outE('X')</code> starts from the edge itself and
+   * moves to its vertex, so the edge class filter has to be checked on the starting edge, the same
+   * way the straight traversal only returns edges of the requested classes.
+   */
+  private boolean isEdgeOfRequestedClass(Object targetObjects, OCommandContext ctx) {
+    if (params.isEmpty()) {
+      return true;
+    }
+    OEdge edge = toEdge(targetObjects);
+    if (edge == null) {
+      return true;
+    }
+    List<Object> paramValues =
+        resolveParams(targetObjects, ctx, params, ctx.getVariable("$current"));
+    if (paramValues.get(0) == null) {
+      return true;
+    }
+    String[] labels =
+        OMultiValue.array(paramValues.toArray(), String.class, OIOUtils::getStringContent);
+    return edge.isLabeled(labels);
+  }
+
+  private static OEdge toEdge(Object target) {
+    if (target instanceof OEdge) {
+      return (OEdge) target;
+    }
+    OElement element = null;
+    if (target instanceof OResult) {
+      element = ((OResult) target).getElement().orElse(null);
+    } else if (target instanceof OIdentifiable) {
+      ORecord record = ((OIdentifiable) target).getRecord();
+      if (record instanceof OElement) {
+        element = (OElement) record;
+      }
+    }
+    if (element == null) {
+      return null;
+    }
+    return element.asEdge().orElse(null);
   }
 
   public static ODatabaseDocumentInternal getDatabase() {
