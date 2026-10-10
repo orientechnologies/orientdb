@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.core.query;
 
 import java.util.Locale;
+import java.util.regex.Pattern;
 
 public class OQueryHelper {
   protected static final String WILDCARD_ANYCHAR = "?";
@@ -52,6 +53,7 @@ public class OQueryHelper {
     iValue = iValue.replace(WILDCARD_ANY, ".*");
     iValue = iValue.replace(WILDCARD_ANYCHAR, ".");
 
-    return currentValue.matches(iValue);
+    // DOTALL lets the wildcards also match line terminators (\n, \r, ...)
+    return Pattern.compile(iValue, Pattern.DOTALL).matcher(currentValue).matches();
   }
 }

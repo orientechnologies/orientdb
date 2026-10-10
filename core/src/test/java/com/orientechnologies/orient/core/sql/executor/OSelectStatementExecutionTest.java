@@ -4609,6 +4609,35 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
   }
 
   @Test
+  public void testLikeWildcardsMatchLineTerminators() {
+    String className = "testLikeWildcardsMatchLineTerminators";
+
+    db.createClassIfNotExist(className);
+
+    for (String value : new String[] {"ab", "a\tb", "a\nb", "a\rb", "a\r\nb"}) {
+      OElement elem = db.newElement(className);
+      elem.setProperty("name", value);
+      elem.save();
+    }
+
+    try (OResultSet result = db.query("select from " + className + " where name LIKE 'a%'")) {
+      Assert.assertEquals(5, result.stream().count());
+    }
+    try (OResultSet result = db.query("select from " + className + " where name LIKE '%b'")) {
+      Assert.assertEquals(5, result.stream().count());
+    }
+    try (OResultSet result = db.query("select from " + className + " where name LIKE '%a%'")) {
+      Assert.assertEquals(5, result.stream().count());
+    }
+    try (OResultSet result = db.query("select from " + className + " where name LIKE 'a?b'")) {
+      Assert.assertEquals(3, result.stream().count());
+    }
+    try (OResultSet result = db.query("select from " + className + " where name LIKE 'a??b'")) {
+      Assert.assertEquals(1, result.stream().count());
+    }
+  }
+
+  @Test
   public void testCountGroupBy() {
     // issue #9288
     String className = "testCountGroupBy";
