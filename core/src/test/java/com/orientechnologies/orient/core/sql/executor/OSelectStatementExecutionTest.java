@@ -5466,4 +5466,70 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
     }
     assertEquals(3, countIn);
   }
+
+  /**
+   * Issue #10886: a one-sided range query served by an index missed in-transaction UPDATEs that
+   * moved a row's indexed value into the range. The two-sided and non-index variants worked, so
+   * the regression was specific to the index streamEntries{Minor,Major} transaction overlay.
+   *
+   * <p>This test does not reproduce the failure on the 4.x develop branch — the behaviour has
+   * been corrected since the 3.2.x branch where the issue was first reported. It stays as a
+   * regression anchor so any future rewrite of the TX-index-stream path trips over it.
+   */
+  @Test
+  public void test_issue10886_indexOneSidedRangeAfterUpdate() {
+    db.command("CREATE CLASS T10886").close();
+    db.command("CREATE PROPERTY T10886.id STRING").close();
+    db.command("CREATE PROPERTY T10886.f LONG").close();
+    db.command("CREATE INDEX t10886_f ON T10886 (f) NOTUNIQUE").close();
+    db.command("INSERT INTO T10886 SET id = 'b', f = -7").close();
+    db.command("INSERT INTO T10886 SET id = 'c', f = 5").close();
+
+    // Reproducer from the issue report — multi-statement SQL script, LET inside a transaction
+    // that is rolled back. The one-sided index-served range in the LET subquery must see the
+    // in-transaction UPDATE.
+    String script =
+        "BEGIN;\n"
+            + "UPDATE T10886 SET f = -100 WHERE id = 'c';\n"
+            + "LET $r = (SELECT id FROM T10886 WHERE f < 0);\n"
+            + "ROLLBACK;\n"
+            + "RETURN $r;\n";
+    List<String> ids = new ArrayList<>();
+    try (OResultSet rs = db.execute("sql", script)) {
+      while (rs.hasNext()) {
+        OResult r = rs.next();
+        Object v = r.getProperty("id");
+        if (v != null) {
+          ids.add(v.toString());
+        } else {
+          // RETURN $r may emit a single row whose property is the subquery result list.
+          for (String p : r.getPropertyNames()) {
+            Object pv = r.getProperty(p);
+            if (pv instanceof Collection) {
+              for (Object o : (Collection<?>) pv) {
+                if (o instanceof OResult) {
+                  Object vid = ((OResult) o).getProperty("id");
+                  if (vid != null) {
+                    ids.add(vid.toString());
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    Collections.sort(ids);
+    assertEquals(List.of("b", "c"), ids);
+
+    // Confirm the ROLLBACK really unwound the UPDATE — otherwise [b, c] would also pass
+    // without the in-tx overlay actually working.
+    List<String> postIds = new ArrayList<>();
+    try (OResultSet rs = db.query("SELECT id FROM T10886 WHERE f < 0")) {
+      while (rs.hasNext()) {
+        postIds.add(rs.next().getProperty("id"));
+      }
+    }
+    assertEquals(List.of("b"), postIds);
+  }
 }
