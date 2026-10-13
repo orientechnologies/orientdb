@@ -5426,4 +5426,44 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
     assertEquals(List.of("c", "e"), descNulls);
     assertEquals(List.of("d", "a", "b"), desc.subList(2, 5));
   }
+
+  /**
+   * Issue #10880: a DICTIONARY index returns at most one entry per key, so it must not be used
+   * to serve equality/IN lookups — otherwise `WHERE f = 'dup'` on three rows all with f='dup'
+   * returns only one of the three. Range queries are unaffected because they already fall back
+   * to a cluster scan.
+   */
+  @Test
+  public void test_issue10880_dictionaryIndexDuplicateMatches() {
+    db.command("CREATE CLASS K10880").close();
+    db.command("CREATE PROPERTY K10880.f STRING").close();
+    db.command("CREATE INDEX k10880_f ON K10880 (f) DICTIONARY").close();
+    db.command("INSERT INTO K10880 SET f = 'dup'").close();
+    db.command("INSERT INTO K10880 SET f = 'dup'").close();
+    db.command("INSERT INTO K10880 SET f = 'dup'").close();
+
+    int countEq = 0;
+    try (OResultSet rs = db.query("SELECT FROM K10880 WHERE f = 'dup'")) {
+      while (rs.hasNext()) {
+        rs.next();
+        countEq++;
+      }
+    }
+    assertEquals(3, countEq);
+
+    long countAgg;
+    try (OResultSet rs = db.query("SELECT count(*) as c FROM K10880 WHERE f = 'dup'")) {
+      countAgg = ((Number) rs.next().getProperty("c")).longValue();
+    }
+    assertEquals(3L, countAgg);
+
+    int countIn = 0;
+    try (OResultSet rs = db.query("SELECT FROM K10880 WHERE f IN ['dup']")) {
+      while (rs.hasNext()) {
+        rs.next();
+        countIn++;
+      }
+    }
+    assertEquals(3, countIn);
+  }
 }

@@ -388,7 +388,13 @@ public class OClassIndexFinder implements OIndexFinder {
     for (OIndex index : indexes) {
       if (index.getDefinition().getFields().contains(field)) {
         if (!OClass.INDEX_TYPE.FULLTEXT.name().equalsIgnoreCase(index.getType())
-            && !index.getAlgorithm().equalsIgnoreCase("LUCENE")) {
+            && !index.getAlgorithm().equalsIgnoreCase("LUCENE")
+            // Issue #10880: DICTIONARY indexes only keep one entry per key, so they cannot
+            // serve equality/IN lookups when duplicates exist — matching rows beyond the one
+            // kept in the index would be silently dropped. Exclude them from automatic index
+            // selection; range queries already bypass the index path.
+            && !OClass.INDEX_TYPE.DICTIONARY.name().equalsIgnoreCase(index.getType())
+            && !OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.name().equalsIgnoreCase(index.getType())) {
           selected.add(index);
         }
       }
