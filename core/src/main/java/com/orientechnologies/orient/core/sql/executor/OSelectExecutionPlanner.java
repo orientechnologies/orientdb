@@ -1950,6 +1950,11 @@ public class OSelectExecutionPlanner {
         clazz.getIndexes().stream()
             .filter(i -> i.supportsOrderedIterations())
             .filter(i -> i.getDefinition() != null)
+            // Issue #10885: indexes created with ignoreNullValues=true do not contain null-valued
+            // rows, so they cannot serve an unfiltered ORDER BY — the result would silently drop
+            // every row whose indexed field is null (and in DESC order the index stream also fails
+            // to produce the non-null rows). Fall back to a plain fetch + sort instead.
+            .filter(i -> !i.getDefinition().isNullValuesIgnored())
             .collect(Collectors.toList())) {
       List<String> indexFields = idx.getDefinition().getFields();
       if (indexFields.size() < info.orderBy.getItems().size()) {

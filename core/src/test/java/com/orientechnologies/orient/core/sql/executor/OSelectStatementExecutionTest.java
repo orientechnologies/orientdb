@@ -32,6 +32,7 @@ import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -332,6 +333,8 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
 
   @Test
   public void testSelectOrderByIndexIgnoreNullDesc() {
+    // Issue #10885: ORDER BY must not drop null-valued rows just because the chosen index was
+    // created with ignoreNullValues=true. All rows must be returned; nulls sort first in DESC.
     String className = "testSelectOrderByIndexNullDesc";
     OClass cl = db.getMetadata().getSchema().createClass(className);
     ODocument metadata = new ODocument();
@@ -349,22 +352,30 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
     OResultSet result = db.query("select from " + className + " order by name desc");
     printExecutionPlan(result);
 
+    int seen = 0;
+    int nullsSeen = 0;
     String lastName = null;
-    for (int i = 0; i < 15; i++) {
-      Assert.assertTrue(result.hasNext());
+    while (result.hasNext()) {
       OResult item = result.next();
       Assert.assertNotNull(item);
       String thisName = item.getProperty("name");
-      assertTrue(thisName != null);
-      if (lastName != null) Assert.assertTrue(lastName.compareTo(thisName) >= 0);
-      lastName = thisName;
+      if (thisName == null) {
+        nullsSeen++;
+      } else {
+        if (lastName != null) Assert.assertTrue(lastName.compareTo(thisName) >= 0);
+        lastName = thisName;
+      }
+      seen++;
     }
-    Assert.assertFalse(result.hasNext());
+    assertEquals(30, seen);
+    assertEquals(15, nullsSeen);
     result.close();
   }
 
   @Test
   public void testSelectOrderByIndexIgnoreNullAsc() {
+    // Issue #10885: ORDER BY must not drop null-valued rows just because the chosen index was
+    // created with ignoreNullValues=true. All rows must be returned; nulls sort last in ASC.
     String className = "testSelectOrderByIndexNullAsc";
     OClass cl = db.getMetadata().getSchema().createClass(className);
     ODocument metadata = new ODocument();
@@ -382,17 +393,23 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
     OResultSet result = db.query("select from " + className + " order by name asc");
     printExecutionPlan(result);
 
+    int seen = 0;
+    int nullsSeen = 0;
     String lastName = null;
-    for (int i = 0; i < 15; i++) {
-      Assert.assertTrue(result.hasNext());
+    while (result.hasNext()) {
       OResult item = result.next();
       Assert.assertNotNull(item);
       String thisName = item.getProperty("name");
-      assertTrue(thisName != null);
-      if (lastName != null) assertTrue(lastName.compareTo(thisName) <= 0);
-      lastName = thisName;
+      if (thisName == null) {
+        nullsSeen++;
+      } else {
+        if (lastName != null) assertTrue(lastName.compareTo(thisName) <= 0);
+        lastName = thisName;
+      }
+      seen++;
     }
-    Assert.assertFalse(result.hasNext());
+    assertEquals(30, seen);
+    assertEquals(15, nullsSeen);
     result.close();
   }
 
@@ -5361,5 +5378,52 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
       Object r = rs.next().getProperty("r");
       assertEquals(List.of(List.of("c", "d")), r);
     }
+  }
+
+  /**
+   * Issue #10885: when an index is created with {@code ignoreNullValues:true}, {@code ORDER BY}
+   * served by the index dropped both the non-null rows that should appear and the null rows.
+   * Expected: ASC returns non-null rows first in ascending order, then nulls; DESC puts nulls
+   * first, then non-nulls descending — matching the no-index ORDER BY semantics.
+   */
+  @Test
+  public void test_issue10885_orderByFromIndexWithIgnoreNullValues() {
+    db.command("CREATE CLASS T10885").close();
+    db.command("CREATE PROPERTY T10885.f LONG").close();
+    db.command("CREATE PROPERTY T10885.g STRING").close();
+    db.command(
+            "CREATE INDEX t10885_f ON T10885 (f) NOTUNIQUE METADATA {ignoreNullValues: true}")
+        .close();
+    db.command("INSERT INTO T10885 SET g = 'a', f = 5").close();
+    db.command("INSERT INTO T10885 SET g = 'b', f = 1").close();
+    db.command("INSERT INTO T10885 SET g = 'c'").close();
+    db.command("INSERT INTO T10885 SET g = 'd', f = 9").close();
+    db.command("INSERT INTO T10885 SET g = 'e'").close();
+
+    List<String> asc = new ArrayList<>();
+    try (OResultSet rs = db.query("SELECT g FROM T10885 ORDER BY f ASC")) {
+      while (rs.hasNext()) {
+        asc.add(rs.next().getProperty("g"));
+      }
+    }
+    // Non-null values ascending followed by nulls (sorted by g to keep ordering deterministic).
+    assertEquals(5, asc.size());
+    assertEquals(List.of("b", "a", "d"), asc.subList(0, 3));
+    List<String> ascNulls = new ArrayList<>(asc.subList(3, 5));
+    Collections.sort(ascNulls);
+    assertEquals(List.of("c", "e"), ascNulls);
+
+    List<String> desc = new ArrayList<>();
+    try (OResultSet rs = db.query("SELECT g FROM T10885 ORDER BY f DESC")) {
+      while (rs.hasNext()) {
+        desc.add(rs.next().getProperty("g"));
+      }
+    }
+    assertEquals(5, desc.size());
+    // Nulls come first in DESC, then non-nulls descending.
+    List<String> descNulls = new ArrayList<>(desc.subList(0, 2));
+    Collections.sort(descNulls);
+    assertEquals(List.of("c", "e"), descNulls);
+    assertEquals(List.of("d", "a", "b"), desc.subList(2, 5));
   }
 }
