@@ -5237,4 +5237,62 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
       assertEquals(List.of("y", "z"), ids);
     }
   }
+
+  /**
+   * Issue #10888: scalar comparison operators (`=`, `<`, `>`, `<=`, `>=`) were asymmetric. The
+   * engine always converted the right operand to the left operand's type, so putting a String
+   * literal on the left and a typed column (DATETIME, INTEGER) on the right caused the engine
+   * to call `Date.toString()` / `Integer.toString()` on the column value and compare it as a
+   * String — producing wrong or empty results. The result of `col OP literal` and
+   * `literal OP col` must be the same.
+   */
+  @Test
+  public void test_issue10888_operandOrderSymmetry() {
+    db.command("CREATE CLASS D10888").close();
+    db.command("CREATE PROPERTY D10888.id STRING").close();
+    db.command("CREATE PROPERTY D10888.d DATETIME").close();
+    db.command("CREATE PROPERTY D10888.f INTEGER").close();
+    db.command(
+            "INSERT INTO D10888 SET id='a', d=DATE('2024-01-01 12:34:56','yyyy-MM-dd HH:mm:ss'), f=5")
+        .close();
+    db.command(
+            "INSERT INTO D10888 SET id='b', d=DATE('2024-06-01 00:00:00','yyyy-MM-dd HH:mm:ss'), f=10")
+        .close();
+
+    // DATETIME equality — symmetric.
+    List<String> colEqLit = new ArrayList<>();
+    try (OResultSet rs = db.query("SELECT id FROM D10888 WHERE d = '2024-01-01 12:34:56'")) {
+      rs.forEachRemaining(r -> colEqLit.add(r.getProperty("id")));
+    }
+    List<String> litEqCol = new ArrayList<>();
+    try (OResultSet rs = db.query("SELECT id FROM D10888 WHERE '2024-01-01 12:34:56' = d")) {
+      rs.forEachRemaining(r -> litEqCol.add(r.getProperty("id")));
+    }
+    assertEquals(List.of("a"), colEqLit);
+    assertEquals(colEqLit, litEqCol);
+
+    // DATETIME range — symmetric.
+    List<String> colGtLit = new ArrayList<>();
+    try (OResultSet rs = db.query("SELECT id FROM D10888 WHERE d > '2024-03-01 00:00:00'")) {
+      rs.forEachRemaining(r -> colGtLit.add(r.getProperty("id")));
+    }
+    List<String> litLtCol = new ArrayList<>();
+    try (OResultSet rs = db.query("SELECT id FROM D10888 WHERE '2024-03-01 00:00:00' < d")) {
+      rs.forEachRemaining(r -> litLtCol.add(r.getProperty("id")));
+    }
+    assertEquals(List.of("b"), colGtLit);
+    assertEquals(colGtLit, litLtCol);
+
+    // Numeric range — symmetric.
+    List<String> colGtInt = new ArrayList<>();
+    try (OResultSet rs = db.query("SELECT id FROM D10888 WHERE f > '6'")) {
+      rs.forEachRemaining(r -> colGtInt.add(r.getProperty("id")));
+    }
+    List<String> intLtCol = new ArrayList<>();
+    try (OResultSet rs = db.query("SELECT id FROM D10888 WHERE '6' < f")) {
+      rs.forEachRemaining(r -> intLtCol.add(r.getProperty("id")));
+    }
+    assertEquals(List.of("b"), colGtInt);
+    assertEquals(colGtInt, intLtCol);
+  }
 }

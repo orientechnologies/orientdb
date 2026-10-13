@@ -162,6 +162,19 @@ public class OEqualsCompareOperator extends SimpleNode implements OBinaryCompare
 
     // ALL OTHER CASES
     try {
+      // Symmetric type coercion for scalar comparison: when a String literal appears on one
+      // side and a non-String typed value on the other, coerce the String toward the typed
+      // value's type so that `col = 'lit'` and `'lit' = col` agree. The previous one-way
+      // "convert right to left" rule caused e.g. Date.toString() comparisons when a String
+      // literal was on the left of a DATETIME column (issue #10888).
+      if (iLeft instanceof String && !(iRight instanceof String)) {
+        final Object left = OType.convert(iLeft, iRight.getClass());
+        if (left == null) return false;
+        if (left instanceof byte[] && iRight instanceof byte[]) {
+          return Arrays.equals((byte[]) left, (byte[]) iRight);
+        }
+        return left.equals(iRight);
+      }
       final Object right = OType.convert(iRight, iLeft.getClass());
 
       if (right == null) return false;

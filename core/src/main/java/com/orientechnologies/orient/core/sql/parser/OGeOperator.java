@@ -54,6 +54,16 @@ public class OGeOperator extends SimpleNode implements OBinaryCompareOperator {
       Number[] couple = OType.castComparableNumber((Number) iLeft, (Number) iRight);
       iLeft = couple[0];
       iRight = couple[1];
+    } else if (iLeft instanceof String && !(iRight instanceof String)) {
+      // Symmetric coercion: convert the String literal to the typed side instead of calling
+      // toString() on the typed value (issue #10888).
+      try {
+        iLeft = OType.convert(iLeft, iRight.getClass());
+      } catch (RuntimeException e) {
+        iLeft = null;
+        logger.warn("Issue converting value to target type, ignoring value", e);
+      }
+      if (iLeft == null) return false;
     } else {
       try {
         iRight = OType.convert(iRight, iLeft.getClass());
