@@ -3,6 +3,7 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.collate.OCollate;
+import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -499,6 +500,17 @@ public class OBaseExpression extends OMathExpression {
       if (modifier == null) {
         return identifier.isDefinedFor(currentRecord);
       }
+      // Dotted path: `<identifier><modifier-chain>`. The path is "defined" iff each
+      // segment resolves to a value that actually has the next key. Prior to this
+      // fix, the presence of any modifier caused this method to return true
+      // unconditionally, making `<link>.f IS DEFINED` and `<map>.k IS DEFINED`
+      // always true regardless of whether the path resolved. See issue #10883.
+      if (!identifier.isDefinedFor(currentRecord)) {
+        return false;
+      }
+      Object current =
+          identifier.execute(currentRecord, new OBasicCommandContext());
+      return isModifierChainDefined(current, modifier, currentRecord);
     }
     return true;
   }
@@ -509,8 +521,113 @@ public class OBaseExpression extends OMathExpression {
       if (modifier == null) {
         return identifier.isDefinedFor(currentRecord);
       }
+      if (!identifier.isDefinedFor(currentRecord)) {
+        return false;
+      }
+      OResultInternal wrapper = new OResultInternal(currentRecord);
+      Object current = identifier.execute(wrapper, new OBasicCommandContext());
+      return isModifierChainDefined(current, modifier, wrapper);
     }
     return true;
+  }
+
+  private static boolean isModifierChainDefined(
+      Object current, OModifier mod, OResult currentRecord) {
+    OModifier m = mod;
+    while (m != null) {
+      if (m.suffix != null && m.suffix.identifier != null) {
+        String name = m.suffix.identifier.getStringValue();
+        if (current == null) {
+          return false;
+        }
+        if (current instanceof Map) {
+          if (!((Map<?, ?>) current).containsKey(name)) {
+            return false;
+          }
+          current = ((Map<?, ?>) current).get(name);
+        } else if (current instanceof OResult) {
+          OResult r = (OResult) current;
+          if (!r.hasProperty(name)) {
+            return false;
+          }
+          current = r.getProperty(name);
+        } else if (current instanceof OIdentifiable) {
+          Object rec = ((OIdentifiable) current).getRecord();
+          if (rec instanceof com.orientechnologies.orient.core.record.impl.ODocument) {
+            com.orientechnologies.orient.core.record.impl.ODocument doc =
+                (com.orientechnologies.orient.core.record.impl.ODocument) rec;
+            if (!doc.containsField(name)) {
+              return false;
+            }
+            current = doc.field(name);
+          } else if (rec instanceof OElement) {
+            OElement el = (OElement) rec;
+            if (!el.getPropertyNames().contains(name)) {
+              return false;
+            }
+            current = el.getProperty(name);
+          } else {
+            return false;
+          }
+        } else if (current instanceof Collection) {
+          // A modifier step over a collection is "defined" if every element has the
+          // field (matches the multivalue-projection semantics used elsewhere).
+          for (Object el : (Collection<?>) current) {
+            if (!elementHasProperty(el, name)) {
+              return false;
+            }
+          }
+          // Advance current to the projected collection of values. We can't reason
+          // further with a plain map, but subsequent segments will keep walking.
+          List<Object> projected = new java.util.ArrayList<>();
+          for (Object el : (Collection<?>) current) {
+            projected.add(elementGetProperty(el, name));
+          }
+          current = projected;
+        } else {
+          return false;
+        }
+      } else {
+        // Non-suffix modifier segment (method call, array range, filter, etc.):
+        // fall back to permissive behavior — the historical semantics for such
+        // expressions in IS DEFINED are not covered by issue #10883.
+        return true;
+      }
+      m = m.next;
+    }
+    return true;
+  }
+
+  private static boolean elementHasProperty(Object el, String name) {
+    if (el == null) return false;
+    if (el instanceof OResult) return ((OResult) el).hasProperty(name);
+    if (el instanceof Map) return ((Map<?, ?>) el).containsKey(name);
+    if (el instanceof OIdentifiable) {
+      Object rec = ((OIdentifiable) el).getRecord();
+      if (rec instanceof com.orientechnologies.orient.core.record.impl.ODocument) {
+        return ((com.orientechnologies.orient.core.record.impl.ODocument) rec).containsField(name);
+      }
+      if (rec instanceof OElement) {
+        return ((OElement) rec).getPropertyNames().contains(name);
+      }
+    }
+    return false;
+  }
+
+  private static Object elementGetProperty(Object el, String name) {
+    if (el == null) return null;
+    if (el instanceof OResult) return ((OResult) el).getProperty(name);
+    if (el instanceof Map) return ((Map<?, ?>) el).get(name);
+    if (el instanceof OIdentifiable) {
+      Object rec = ((OIdentifiable) el).getRecord();
+      if (rec instanceof com.orientechnologies.orient.core.record.impl.ODocument) {
+        return ((com.orientechnologies.orient.core.record.impl.ODocument) rec).field(name);
+      }
+      if (rec instanceof OElement) {
+        return ((OElement) rec).getProperty(name);
+      }
+    }
+    return null;
   }
 
   public void extractSubQueries(OIdentifier letAlias, SubQueryCollector collector) {

@@ -5196,4 +5196,45 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
     // outer list, turning it into `f IN [1, 2]` (element membership over the
     // inner list), which is a distinct semantic question from element coercion.
   }
+
+  /**
+   * Issue #10883: `<path>.<field> IS DEFINED` in a WHERE clause always evaluated to true (and IS
+   * NOT DEFINED to false) when the expression had more than one segment (dotted path over a link,
+   * an embedded map, or an edge endpoint). Prior to the fix, `OBaseExpression.isDefinedFor`
+   * short-circuited to `return true` whenever a modifier chain was present, ignoring whether the
+   * final segment actually resolved.
+   */
+  @Test
+  public void test_issue10883_isDefinedOnDottedPath() {
+    db.command("CREATE CLASS D10883").close();
+    db.command("CREATE PROPERTY D10883.id STRING").close();
+    db.command("CREATE PROPERTY D10883.m EMBEDDEDMAP").close();
+    db.command("INSERT INTO D10883 SET id = 'x', m = {'k': 1}").close();
+    db.command("INSERT INTO D10883 SET id = 'y', m = {}").close();
+    db.command("INSERT INTO D10883 SET id = 'z'").close(); // m not defined
+
+    // m.k defined only on x.
+    try (OResultSet rs =
+        db.query("SELECT id FROM D10883 WHERE m.k IS DEFINED ORDER BY id")) {
+      List<String> ids = new ArrayList<>();
+      rs.forEachRemaining(r -> ids.add(r.getProperty("id")));
+      assertEquals(List.of("x"), ids);
+    }
+
+    // m.nope is defined on no record.
+    try (OResultSet rs = db.query("SELECT id FROM D10883 WHERE m.nope IS DEFINED")) {
+      List<String> ids = new ArrayList<>();
+      rs.forEachRemaining(r -> ids.add(r.getProperty("id")));
+      assertEquals(List.of(), ids);
+    }
+
+    // IS NOT DEFINED is the complement over records where the parent resolves.
+    try (OResultSet rs =
+        db.query("SELECT id FROM D10883 WHERE m.k IS NOT DEFINED ORDER BY id")) {
+      List<String> ids = new ArrayList<>();
+      rs.forEachRemaining(r -> ids.add(r.getProperty("id")));
+      // y has m={} without k; z has no m at all — both are "k not defined".
+      assertEquals(List.of("y", "z"), ids);
+    }
+  }
 }
