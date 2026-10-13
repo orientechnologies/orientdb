@@ -30,7 +30,11 @@ public class LetQueryStep extends AbstractExecutionStep {
     // one cached
     boolean useCache = !query.toString().contains("?");
     subExecutionPlan = query.resolvePlan(useCache, subCtx);
-    result.setMetadata(varName.getStringValue(), toList(subExecutionPlan, ctx));
+    // Issue #10879: run the correlated subquery against subCtx (its parent is the outer ctx) so
+    // that per-row setCurrent calls inside the subplan don't clobber outer ctx.current, and so
+    // `$parent.$current.<field>` resolves through subCtx.getParent() to the outer row. Passing
+    // the outer ctx here would make the subplan share the outer "current" variable slot.
+    result.setMetadata(varName.getStringValue(), toList(subExecutionPlan, subCtx));
     return result;
   }
 

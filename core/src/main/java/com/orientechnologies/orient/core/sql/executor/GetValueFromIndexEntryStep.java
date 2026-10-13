@@ -47,13 +47,21 @@ public class GetValueFromIndexEntryStep extends AbstractExecutionStep {
         return null;
       }
     }
+    OResult mapped = null;
     if (finalVal instanceof OIdentifiable) {
-      return new OResultInternal((OIdentifiable) finalVal);
-
+      mapped = new OResultInternal((OIdentifiable) finalVal);
     } else if (finalVal instanceof OResult) {
-      return (OResult) finalVal;
+      mapped = (OResult) finalVal;
     }
-    return null;
+    if (mapped != null) {
+      // Issue #10879: downstream per-record steps (e.g. LetQueryStep for correlated subqueries)
+      // read ctx.getCurrent() to resolve `$parent.$current.<field>`. FetchFromIndexStep leaves
+      // ctx.current pointing at the key/rid stub, so without updating it here the subquery sees
+      // a record with no user fields and the correlation evaluates to null. Mirror the behavior
+      // of FetchFromClassExecutionStep by publishing the loaded record as the current row.
+      ctx.setCurrent(mapped);
+    }
+    return mapped;
   }
 
   @Override

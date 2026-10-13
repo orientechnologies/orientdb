@@ -5532,4 +5532,41 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
     }
     assertEquals(List.of("b"), postIds);
   }
+
+  /**
+   * Issue #10879: a correlated subquery in LET failed to resolve {@code $parent.$current}
+   * (returning an empty result) whenever the outer query was served by an index. A class scan
+   * for the same semantics worked.
+   */
+  @Test
+  public void test_issue10879_correlatedSubqueryUnderIndex() {
+    db.command("CREATE CLASS N10879").close();
+    db.command("CREATE PROPERTY N10879.id STRING").close();
+    db.command("CREATE PROPERTY N10879.f1 LONG").close();
+    db.command("CREATE INDEX n10879_id ON N10879 (id) UNIQUE").close();
+    db.command("INSERT INTO N10879 SET id = 'n1/r0', f1 = 0").close();
+    db.command("INSERT INTO N10879 SET id = 'n1/r1', f1 = 1").close();
+    db.command("CREATE CLASS J10879").close();
+    db.command("CREATE PROPERTY J10879.src_id STRING").close();
+    db.command("CREATE PROPERTY J10879.dst_id STRING").close();
+    db.command("INSERT INTO J10879 SET src_id = 'n1/r0', dst_id = 'n1/r1'").close();
+
+    String q =
+        "SELECT id, $h.v AS v FROM N10879"
+            + " LET $h = (SELECT dst_id AS v FROM J10879 WHERE src_id = $parent.$current.id)"
+            + " WHERE id = 'n1/r0'";
+    try (OResultSet rs = db.query(q)) {
+      assertTrue(rs.hasNext());
+      OResult r = rs.next();
+      assertEquals("n1/r0", r.getProperty("id"));
+      Object v = r.getProperty("v");
+      assertTrue("expected a collection, got " + v, v instanceof Collection);
+      List<String> flat = new ArrayList<>();
+      for (Object o : (Collection<?>) v) {
+        flat.add(o == null ? null : o.toString());
+      }
+      assertEquals(List.of("n1/r1"), flat);
+      Assert.assertFalse(rs.hasNext());
+    }
+  }
 }
