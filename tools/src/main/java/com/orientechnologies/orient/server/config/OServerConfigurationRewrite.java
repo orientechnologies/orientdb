@@ -4,6 +4,8 @@ import com.orientechnologies.orient.core.config.OConfig;
 import com.orientechnologies.orient.core.config.OConfigNetwork;
 import com.orientechnologies.orient.core.config.OConfigNetworkTls;
 import com.orientechnologies.orient.core.config.OConfigPlugins;
+import com.orientechnologies.orient.core.config.OConfigProperty;
+import com.orientechnologies.orient.core.config.OHandlerConfig;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.config.distributed.OServerDistributedConfiguration;
 import java.io.File;
@@ -29,9 +31,75 @@ public class OServerConfigurationRewrite {
     OConfig config = new OConfig();
     config.setDatabases(configuration.getLocation());
     config.setPlugins(migratePlugins(configuration));
+    config.setHandlers(migrateHandlers(configuration.getHandlers()));
     config.setListeners(migrateListeners(configuration.getNetwork()));
-
+    config.setProperties(migrateProperties(configuration.getProperties()));
     return config;
+  }
+
+  private List<OHandlerConfig> migrateHandlers(List<OServerHandlerConfiguration> handlers) {
+    List<OHandlerConfig> newHandlers = new ArrayList<>();
+    for (var handler : handlers) {
+      var config =
+          switch (handler.getClazz()) {
+            case "com.orientechnologies.orient.server.handler.OAutomaticBackup" -> {
+              yield new OHandlerConfig("automaticBackup", null);
+            }
+            case "com.orientechnologies.orient.server.handler.OCustomSQLFunctionPlugin" -> {
+              yield new OHandlerConfig("custom-sql-functions-manager", null);
+            }
+            case "com.orientechnologies.security.syslog.ODefaultSyslog" -> {
+              yield new OHandlerConfig("syslog", null);
+            }
+            case "com.orientechnologies.orient.server.distributed.impl.ODistributedPlugin" -> {
+              yield new OHandlerConfig("cluster", null);
+            }
+            case "com.orientechnologies.agent.OEnterpriseAgent" -> {
+              yield new OHandlerConfig("enterprise-agent", null);
+            }
+            case "com.orientechnologies.orient.etl.OETLPlugin" -> {
+              yield new OHandlerConfig("etl", null);
+            }
+            case "com.orientechnologies.tinkerpop.handler.OGraphServerHandler" -> {
+              yield new OHandlerConfig("graph", null);
+            }
+            case "com.orientechnologies.tinkerpop.server.OGremlinServerPlugin" -> {
+              yield new OHandlerConfig("gremlin-server", null);
+            }
+            case "com.orientechnologies.orient.server.handler.OJMXPlugin" -> {
+              yield new OHandlerConfig("jmx", null);
+            }
+            case "com.orientechnologies.orient.server.distributed.impl.proxy.OProxyServer" -> {
+              yield new OHandlerConfig("proxy", null);
+            }
+            case "com.orientechnologies.security.OSecurityPlugin" -> {
+              yield new OHandlerConfig("security-plugin", null);
+            }
+
+            case "com.orientechnologies.orient.server.OServerFailingOnStarupPluginStub" -> {
+              yield new OHandlerConfig("failing on startup plugin", null);
+            }
+            case "com.orientechnologies.orient.server.handler.OServerSideScriptInterpreter" -> {
+              yield new OHandlerConfig("script-interpreter", null);
+            }
+
+            default -> throw new UnsupportedOperationException("shit");
+          };
+      newHandlers.add(config);
+    }
+    //       final Class<? extends OServerPlugin> classToLoad =
+    //           (Class<? extends OServerPlugin>) pluginClassLoader.loadClass(cl);
+    //       final OServerPlugin instance = classToLoad.newInstance();
+
+    return newHandlers;
+  }
+
+  private List<OConfigProperty> migrateProperties(OServerEntryConfiguration[] properties) {
+    List<OConfigProperty> props = new ArrayList<>();
+    for (var prop : properties) {
+      props.add(new OConfigProperty(prop.getName(), prop.getValue()));
+    }
+    return props;
   }
 
   private List<OConfigNetwork> migrateListeners(OServerNetworkConfiguration network) {
@@ -93,13 +161,6 @@ public class OServerConfigurationRewrite {
       } else if (p.getName().equals("plugin.directory")) plugins.setDirectory(p.getValue());
     }
 
-    var handlers = configuration.getHandlers();
-    for (var handler : handlers) {
-      String cl = handler.getClazz();
-      //       final Class<? extends OServerPlugin> classToLoad =
-      //           (Class<? extends OServerPlugin>) pluginClassLoader.loadClass(cl);
-      //       final OServerPlugin instance = classToLoad.newInstance();
-    }
     return plugins;
   }
 
