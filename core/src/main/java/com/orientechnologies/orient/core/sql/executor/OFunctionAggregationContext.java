@@ -4,7 +4,9 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
 import com.orientechnologies.orient.core.sql.parser.OExpression;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Delegates to an aggregate function for aggregation calculation
@@ -14,12 +16,34 @@ import java.util.List;
 public class OFunctionAggregationContext implements AggregationContext {
   private OSQLFunction aggregateFunction;
   private List<OExpression> params;
+  // Per-position SQL-standard DISTINCT semantics. Set by OFunctionCall.splitForAggregation when
+  // the user wrote `agg(distinct(x))`. For flagged positions, duplicate values (and NULLs) are
+  // not forwarded to the aggregator (issue #10887).
+  private final boolean[] distinctParams;
+  private final Set<Object>[] distinctSeen;
 
   public OFunctionAggregationContext(OSQLFunction function, List<OExpression> params) {
+    this(function, params, null);
+  }
+
+  @SuppressWarnings("unchecked")
+  public OFunctionAggregationContext(
+      OSQLFunction function, List<OExpression> params, List<Boolean> distinct) {
     this.aggregateFunction = function;
     this.params = params;
     if (this.params == null) {
       this.params = new ArrayList<>();
+    }
+    int n = this.params.size();
+    this.distinctParams = new boolean[n];
+    this.distinctSeen = (Set<Object>[]) new Set<?>[n];
+    if (distinct != null) {
+      for (int i = 0; i < n && i < distinct.size(); i++) {
+        if (Boolean.TRUE.equals(distinct.get(i))) {
+          this.distinctParams[i] = true;
+          this.distinctSeen[i] = new HashSet<>();
+        }
+      }
     }
   }
 
@@ -31,8 +55,19 @@ public class OFunctionAggregationContext implements AggregationContext {
   @Override
   public void apply(OResult next, OCommandContext ctx) {
     List<Object> paramValues = new ArrayList<>();
-    for (OExpression expr : params) {
-      paramValues.add(expr.execute(next, ctx));
+    for (int i = 0; i < params.size(); i++) {
+      Object v = params.get(i).execute(next, ctx);
+      if (distinctParams[i]) {
+        if (v == null) {
+          // Standard SQL: DISTINCT inside an aggregate ignores NULLs.
+          return;
+        }
+        if (!distinctSeen[i].add(v)) {
+          // Duplicate — skip this row for the aggregator.
+          return;
+        }
+      }
+      paramValues.add(v);
     }
     aggregateFunction.execute(next, null, null, paramValues.toArray(), ctx);
   }

@@ -5295,4 +5295,33 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
     assertEquals(List.of("b"), colGtInt);
     assertEquals(colGtInt, intLtCol);
   }
+
+  /**
+   * Issue #10887: `count(distinct(f))` and `sum(distinct(f))` ignored the distinct filter — count
+   * returned the number of non-null rows and sum summed every row. Expected: aggregate only over
+   * values that pass through the distinct filter (first occurrence of each non-null value).
+   */
+  @Test
+  public void test_issue10887_distinctInsideCountAndSum() {
+    db.command("CREATE CLASS D10887").close();
+    db.command("CREATE PROPERTY D10887.f LONG").close();
+    db.command("INSERT INTO D10887 SET f = 1").close();
+    db.command("INSERT INTO D10887 SET f = 1").close();
+    db.command("INSERT INTO D10887 SET f = 2").close();
+    db.command("INSERT INTO D10887 SET f = 5").close();
+    db.command("INSERT INTO D10887 SET f = 5").close();
+    db.command("INSERT INTO D10887").close(); // f = null
+
+    long countDistinct;
+    try (OResultSet rs = db.query("SELECT count(distinct(f)) as c FROM D10887")) {
+      countDistinct = ((Number) rs.next().getProperty("c")).longValue();
+    }
+    assertEquals(3L, countDistinct);
+
+    long sumDistinct;
+    try (OResultSet rs = db.query("SELECT sum(distinct(f)) as s FROM D10887")) {
+      sumDistinct = ((Number) rs.next().getProperty("s")).longValue();
+    }
+    assertEquals(8L, sumDistinct);
+  }
 }
