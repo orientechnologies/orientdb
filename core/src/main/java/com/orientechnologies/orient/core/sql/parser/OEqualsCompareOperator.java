@@ -11,6 +11,7 @@ import com.orientechnologies.orient.core.sql.executor.OIndexStream;
 import com.orientechnologies.orient.core.sql.executor.OResult;
 import com.orientechnologies.orient.core.sql.executor.metadata.OIndexFinder.Operation;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 
@@ -135,6 +136,28 @@ public class OEqualsCompareOperator extends SimpleNode implements OBinaryCompare
     // COLLECTION CONTAINS
     if (OMultiValue.isMultiValue(iLeft) && !OMultiValue.isMultiValue(iRight)) {
       return OMultiValue.contains(iLeft, iRight);
+    }
+
+    // BOTH SIDES MULTIVALUE: element-wise comparison with recursive delegation so
+    // that numeric coercion (e.g. Long vs Integer) is applied per element. Without
+    // this, `f = [1, 2]` where f is EMBEDDEDLIST LONG never matches because
+    // ArrayList.equals falls back to Long.equals(Integer) which is always false.
+    if (OMultiValue.isMultiValue(iLeft) && OMultiValue.isMultiValue(iRight)) {
+      int leftSize = OMultiValue.getSize(iLeft);
+      int rightSize = OMultiValue.getSize(iRight);
+      if (leftSize != rightSize) {
+        return false;
+      }
+      Iterator<Object> li = OMultiValue.getMultiValueIterator(iLeft);
+      Iterator<Object> ri = OMultiValue.getMultiValueIterator(iRight);
+      while (li.hasNext() && ri.hasNext()) {
+        Object l = li.next();
+        Object r = ri.next();
+        if (l == null && r == null) continue;
+        if (l == null || r == null) return false;
+        if (!equals(l, r)) return false;
+      }
+      return !li.hasNext() && !ri.hasNext();
     }
 
     // ALL OTHER CASES

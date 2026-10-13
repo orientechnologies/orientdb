@@ -30,7 +30,7 @@ public class OContainsAllCondition extends OBooleanExpression {
   public boolean execute(Object left, Object right) {
     if (left instanceof Collection) {
       if (right instanceof Collection) {
-        if (((Collection) left).containsAll((Collection) right)) {
+        if (containsAllCoerced((Collection) left, (Collection) right)) {
           return true;
         }
       }
@@ -42,11 +42,12 @@ public class OContainsAllCondition extends OBooleanExpression {
         while (iterator.hasNext()) {
           Object next = iterator.next();
           boolean found = false;
-          if (((Collection) left).contains(next)) {
+          if (collectionContainsCoerced((Collection) left, next)) {
             found = true;
           } else if (next instanceof OResult
               && ((OResult) next).isElement()
-              && ((Collection) left).contains(((OResult) next).getElement().get())) {
+              && collectionContainsCoerced(
+                  (Collection) left, ((OResult) next).getElement().get())) {
             found = true;
           }
           if (!found) {
@@ -55,7 +56,7 @@ public class OContainsAllCondition extends OBooleanExpression {
         }
         return true;
       }
-      return ((Collection) left).contains(right);
+      return collectionContainsCoerced((Collection) left, right);
     }
     if (left instanceof Iterable) {
       left = ((Iterable) left).iterator();
@@ -338,6 +339,24 @@ public class OContainsAllCondition extends OBooleanExpression {
 
     if (rightBlock != null && !rightBlock.isCacheable()) {
       return false;
+    }
+    return true;
+  }
+
+  private static boolean collectionContainsCoerced(Collection<?> haystack, Object needle) {
+    for (Object item : haystack) {
+      if (OEqualsCompareOperator.equals(item, needle)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  private static boolean containsAllCoerced(Collection<?> haystack, Collection<?> needles) {
+    for (Object n : needles) {
+      if (!collectionContainsCoerced(haystack, n)) {
+        return false;
+      }
     }
     return true;
   }

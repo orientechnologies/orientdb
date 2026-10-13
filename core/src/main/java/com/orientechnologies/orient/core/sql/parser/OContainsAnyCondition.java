@@ -41,12 +41,13 @@ public class OContainsAnyCondition extends OBooleanExpression {
         Iterator iterator = (Iterator) right;
         while (iterator.hasNext()) {
           Object next = iterator.next();
-          if (((Collection) left).contains(next)) {
+          if (collectionContainsCoerced((Collection) left, next)) {
             return true;
           }
           if (next instanceof OResult
               && ((OResult) next).isElement()
-              && ((Collection) left).contains(((OResult) next).getElement().get())) {
+              && collectionContainsCoerced(
+                  (Collection) left, ((OResult) next).getElement().get())) {
             return true;
           }
         }
@@ -356,6 +357,15 @@ public class OContainsAnyCondition extends OBooleanExpression {
 
   private Collection<Object> rightValue(OCommandContext ctx, boolean asc) {
     return right.getIndexKey(ctx);
+  }
+
+  private static boolean collectionContainsCoerced(Collection<?> haystack, Object needle) {
+    for (Object item : haystack) {
+      if (OEqualsCompareOperator.equals(item, needle)) {
+        return true;
+      }
+    }
+    return false;
   }
 }
 /* JavaCC - OriginalChecksum=7992ab9e8e812c6d9358ede8b67b4506 (do not edit this line) */

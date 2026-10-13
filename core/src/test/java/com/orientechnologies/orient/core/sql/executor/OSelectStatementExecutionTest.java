@@ -5141,4 +5141,59 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
         db.command("select from ParamItem " + "where oldid in :ids", java.util.Map.of("ids", ids));
     assertEquals(res.stream().count(), 2);
   }
+
+  /**
+   * Issue #10882: collection operators on EMBEDDEDLIST LONG must coerce the operand elements to
+   * the property's declared linked type before comparing, as the scalar path already does. Prior
+   * to the fix, `f = [1, 2]` where `f` is EMBEDDEDLIST LONG returned no rows because element
+   * comparison used Long.equals(Integer) which is always false.
+   */
+  @Test
+  public void test_issue10882_embeddedListLongCoercion() {
+    db.command("CREATE CLASS L10882").close();
+    db.command("CREATE PROPERTY L10882.f EMBEDDEDLIST LONG").close();
+    db.command("INSERT INTO L10882 SET id = 'a', f = [1, 2]").close();
+    db.command("INSERT INTO L10882 SET id = 'b', f = [1, 1]").close();
+    db.command("INSERT INTO L10882 SET id = 'c', f = [7]").close();
+
+    // Sanity: the scalar CONTAINS path already coerces integer literal to LONG element type.
+    try (OResultSet rs = db.query("SELECT id FROM L10882 WHERE f CONTAINS 2")) {
+      List<String> ids = new ArrayList<>();
+      rs.forEachRemaining(r -> ids.add(r.getProperty("id")));
+      assertEquals(List.of("a"), ids);
+    }
+
+    // Equality between EMBEDDEDLIST LONG and integer-literal collection must coerce elements.
+    try (OResultSet rs = db.query("SELECT id FROM L10882 WHERE f = [1, 2]")) {
+      List<String> ids = new ArrayList<>();
+      rs.forEachRemaining(r -> ids.add(r.getProperty("id")));
+      assertEquals(List.of("a"), ids);
+    }
+
+    // Inequality is the complement.
+    try (OResultSet rs = db.query("SELECT id FROM L10882 WHERE f <> [1, 2] ORDER BY id")) {
+      List<String> ids = new ArrayList<>();
+      rs.forEachRemaining(r -> ids.add(r.getProperty("id")));
+      assertEquals(List.of("b", "c"), ids);
+    }
+
+    // CONTAINSANY must match records that share any element after coercion.
+    try (OResultSet rs =
+        db.query("SELECT id FROM L10882 WHERE f CONTAINSANY [1, 7] ORDER BY id")) {
+      List<String> ids = new ArrayList<>();
+      rs.forEachRemaining(r -> ids.add(r.getProperty("id")));
+      assertEquals(List.of("a", "b", "c"), ids);
+    }
+
+    // CONTAINSALL must match records containing every operand element after coercion.
+    try (OResultSet rs = db.query("SELECT id FROM L10882 WHERE f CONTAINSALL [1, 2]")) {
+      List<String> ids = new ArrayList<>();
+      rs.forEachRemaining(r -> ids.add(r.getProperty("id")));
+      assertEquals(List.of("a"), ids);
+    }
+
+    // Note: `f IN [[1, 2]]` is not covered here because the parser strips the
+    // outer list, turning it into `f IN [1, 2]` (element membership over the
+    // inner list), which is a distinct semantic question from element coercion.
+  }
 }
