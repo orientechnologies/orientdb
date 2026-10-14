@@ -158,7 +158,7 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
 
     int depth = 1;
     while (true) {
-      if (ctx.maxDepth != null && ctx.maxDepth <= depth) {
+      if (ctx.maxDepth != null && ctx.maxDepth < depth) {
         break;
       }
       if (ctx.queueLeft.isEmpty() || ctx.queueRight.isEmpty()) break;
@@ -176,7 +176,7 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
         neighborIdentity = walkLeft(ctx);
         if (neighborIdentity != null) return neighborIdentity;
         depth++;
-        if (ctx.maxDepth != null && ctx.maxDepth <= depth) {
+        if (ctx.maxDepth != null && ctx.maxDepth < depth) {
           break;
         }
 
@@ -192,7 +192,7 @@ public class OSQLFunctionShortestPath extends OSQLFunctionMathAbstract {
         if (neighborIdentity != null) return neighborIdentity;
 
         depth++;
-        if (ctx.maxDepth != null && ctx.maxDepth <= depth) {
+        if (ctx.maxDepth != null && ctx.maxDepth < depth) {
           break;
         }
 

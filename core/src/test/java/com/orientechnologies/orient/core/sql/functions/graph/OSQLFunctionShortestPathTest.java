@@ -188,6 +188,7 @@ public class OSQLFunctionShortestPathTest {
     Assert.assertEquals(11, result.size());
   }
 
+  // regression: #10914
   @Test
   public void testMaxDepth3() throws Exception {
     Map<String, Object> additionalParams = new HashMap<String, Object>();
@@ -200,7 +201,7 @@ public class OSQLFunctionShortestPathTest {
             new Object[] {vertices.get(1), vertices.get(20), null, null, additionalParams},
             new OBasicCommandContext((ODatabaseSession) graph));
 
-    Assert.assertEquals(0, result.size());
+    Assert.assertEquals(11, result.size());
   }
 
   @Test
@@ -216,5 +217,23 @@ public class OSQLFunctionShortestPathTest {
             new OBasicCommandContext((ODatabaseSession) graph));
 
     Assert.assertEquals(0, result.size());
+  }
+
+  // regression: #10914
+  @Test
+  public void testMaxDepthExactlyOneHop() throws Exception {
+    Map<String, Object> additionalParams = new HashMap<String, Object>();
+    additionalParams.put(OSQLFunctionShortestPath.PARAM_MAX_DEPTH, 1);
+    final List<ORID> result =
+        function.execute(
+            null,
+            null,
+            null,
+            new Object[] {vertices.get(1), vertices.get(2), null, null, additionalParams},
+            new OBasicCommandContext((ODatabaseSession) graph));
+
+    Assert.assertEquals(2, result.size());
+    Assert.assertEquals(vertices.get(1).getIdentity(), result.get(0));
+    Assert.assertEquals(vertices.get(2).getIdentity(), result.get(1));
   }
 }
