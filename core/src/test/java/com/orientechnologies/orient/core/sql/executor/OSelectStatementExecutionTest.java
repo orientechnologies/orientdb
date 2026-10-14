@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import static com.orientechnologies.orient.core.sql.executor.ExecutionPlanPrintUtils.printExecutionPlan;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -5256,6 +5257,30 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
   }
 
   /**
+   * Issue #10913: {@code UPDATE t SET f = f + 1 WHERE f > 4 AND f < 100} on an indexed property
+   * ran the SET repeatedly against the same row, because the UPDATE drove its input from a live
+   * index range iterator; each SET pushed the row's indexed value forward into the still-open
+   * range and the iterator re-visited it. The materialized RID list must be fully resolved before
+   * mutations begin.
+   */
+  @Test
+  public void test_issue10913_updateIndexedRangeTerminates() {
+    db.command("CREATE CLASS T10913").close();
+    db.command("CREATE PROPERTY T10913.f LONG").close();
+    db.command("CREATE INDEX T10913_f ON T10913 (f) NOTUNIQUE").close();
+    db.command("INSERT INTO T10913 SET f = 5").close();
+
+    db.command("UPDATE T10913 SET f = f + 1 WHERE f > 4 AND f < 100").close();
+
+    long value;
+    try (OResultSet rs = db.query("SELECT f FROM T10913")) {
+      value = ((Number) rs.next().getProperty("f")).longValue();
+      assertFalse(rs.hasNext());
+    }
+    assertEquals(6L, value);
+  }
+
+  /**
    * Issue #10896: {@code SELECT count(*) FROM (SELECT DISTINCT v FROM t)} returned 24 against a
    * table of 20 distinct LONG values (each inserted twice), while the equivalent {@code GROUP BY}
    * query returned the correct 20. The chosen values collide in a single HashMap bucket (Long
@@ -5298,6 +5323,52 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
 
     assertEquals(20L, countFromGroupBy);
     assertEquals(countFromGroupBy, countFromDistinct);
+  }
+
+  /**
+   * Issue #10881: ORDER BY over a STRING property uses a locale Collator (default TERTIARY
+   * strength, which sorts 'b' before 'B'), while the comparison operators and MAX() use
+   * String.compareTo (codepoint order, in which 'B' < 'b'). The two disagree, so
+   * `ORDER BY f DESC LIMIT 1` returns a different row than `SELECT max(f)` and
+   * `WHERE f > 'B'` contradicts `ORDER BY f ASC`. Pinning down a fix requires a project-level
+   * decision on which direction to converge (align operators/MAX to locale, or ORDER BY to
+   * codepoint) because an in-tree test, {@code TestOrderBy.testGermanOrderBy}, explicitly asserts
+   * locale-aware ORDER BY. The test is kept here as a regression anchor for whichever direction is
+   * chosen; see {@code docs/superpowers/specs/2026-09-28-adoubleb-issues-design.md}.
+   */
+  @Test
+  @org.junit.Ignore("Issue #10881: deferred pending design decision — see spec")
+  public void test_issue10881_stringComparisonConsistency() {
+    db.command("CREATE CLASS D10881").close();
+    db.command("CREATE PROPERTY D10881.f3 STRING").close();
+    db.command("INSERT INTO D10881 SET f3 = 'B'").close();
+    db.command("INSERT INTO D10881 SET f3 = 'b'").close();
+
+    List<String> asc = new ArrayList<>();
+    try (OResultSet rs = db.query("SELECT f3 FROM D10881 ORDER BY f3 ASC")) {
+      rs.forEachRemaining(r -> asc.add(r.getProperty("f3")));
+    }
+    // Codepoint order: 'B' (66) < 'b' (98).
+    assertEquals(List.of("B", "b"), asc);
+
+    List<String> gt = new ArrayList<>();
+    try (OResultSet rs = db.query("SELECT f3 FROM D10881 WHERE f3 > 'B'")) {
+      rs.forEachRemaining(r -> gt.add(r.getProperty("f3")));
+    }
+    assertEquals(List.of("b"), gt);
+
+    String max;
+    try (OResultSet rs = db.query("SELECT max(f3) as m FROM D10881")) {
+      max = rs.next().getProperty("m");
+    }
+    assertEquals("b", max);
+
+    String descTop;
+    try (OResultSet rs = db.query("SELECT f3 FROM D10881 ORDER BY f3 DESC LIMIT 1")) {
+      descTop = rs.next().getProperty("f3");
+    }
+    // ORDER BY DESC LIMIT 1 must agree with MAX.
+    assertEquals(max, descTop);
   }
 
   /**

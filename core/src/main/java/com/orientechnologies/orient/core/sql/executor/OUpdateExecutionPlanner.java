@@ -70,6 +70,10 @@ public class OUpdateExecutionPlanner {
     OUpdateExecutionPlan result = new OUpdateExecutionPlan();
 
     handleTarget(result, ctx, this.target, this.whereClause, this.timeout);
+    // Issue #10913: fully materialize the source RID set before mutations begin so that an
+    // index-driven range iterator cannot re-visit rows whose indexed value was pushed forward
+    // by the UPDATE itself.
+    result.chain(new AccumulateResultsStep());
     if (updateEdge) {
       result.chain(new CheckRecordTypeStep("E"));
     }
