@@ -7,6 +7,7 @@ import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.sql.executor.metadata.OIndexFinder.Operation;
 import java.util.Locale;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 public class OLikeOperator extends SimpleNode implements OBinaryCompareOperator {
   protected static final String WILDCARD_ANYCHAR = "?";
@@ -53,7 +54,7 @@ public class OLikeOperator extends SimpleNode implements OBinaryCompareOperator 
     iValue = iValue.replace(WILDCARD_ANY, ".*");
     iValue = iValue.replace(WILDCARD_ANYCHAR, ".");
 
-    return currentValue.matches(iValue);
+    return Pattern.compile(iValue, Pattern.DOTALL).matcher(currentValue).matches();
   }
 
   @Override
