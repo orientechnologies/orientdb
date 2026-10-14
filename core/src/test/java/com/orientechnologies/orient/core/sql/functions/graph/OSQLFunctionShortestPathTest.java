@@ -190,6 +190,8 @@ public class OSQLFunctionShortestPathTest {
 
   @Test
   public void testMaxDepth3() throws Exception {
+    // After fix for #10914, maxDepth: 10 must find the 10-hop path from v1 to v20
+    // (11 vertices). Before the fix this incorrectly returned 0.
     Map<String, Object> additionalParams = new HashMap<String, Object>();
     additionalParams.put(OSQLFunctionShortestPath.PARAM_MAX_DEPTH, 10);
     final List<ORID> result =
@@ -200,7 +202,7 @@ public class OSQLFunctionShortestPathTest {
             new Object[] {vertices.get(1), vertices.get(20), null, null, additionalParams},
             new OBasicCommandContext((ODatabaseSession) graph));
 
-    Assert.assertEquals(0, result.size());
+    Assert.assertEquals(11, result.size());
   }
 
   @Test
@@ -216,5 +218,23 @@ public class OSQLFunctionShortestPathTest {
             new OBasicCommandContext((ODatabaseSession) graph));
 
     Assert.assertEquals(0, result.size());
+  }
+
+  // Issue #10914: shortestPath() with maxDepth: k must find paths of exactly k hops.
+  @Test
+  public void testMaxDepthExactlyOneHop() throws Exception {
+    Map<String, Object> additionalParams = new HashMap<String, Object>();
+    additionalParams.put(OSQLFunctionShortestPath.PARAM_MAX_DEPTH, 1);
+    final List<ORID> result =
+        function.execute(
+            null,
+            null,
+            null,
+            new Object[] {vertices.get(1), vertices.get(2), null, null, additionalParams},
+            new OBasicCommandContext((ODatabaseSession) graph));
+
+    Assert.assertEquals(2, result.size());
+    Assert.assertEquals(vertices.get(1).getIdentity(), result.get(0));
+    Assert.assertEquals(vertices.get(2).getIdentity(), result.get(1));
   }
 }
