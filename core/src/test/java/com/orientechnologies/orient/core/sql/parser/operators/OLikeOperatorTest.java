@@ -35,4 +35,43 @@ public class OLikeOperatorTest {
     Assert.assertFalse(op.execute("foobar", "%fff%"));
     Assert.assertTrue(op.execute("foobar", "foobar"));
   }
+
+  @Test
+  public void testLineTerminators() {
+    OLikeOperator op = new OLikeOperator(-1);
+
+    String[] values = {"a\nb", "a\rb", "a\tb", "ab"};
+    for (String value : values) {
+      Assert.assertTrue(op.execute(value, "a%"));
+      Assert.assertTrue(op.execute(value, "%b"));
+      Assert.assertTrue(op.execute(value, "%a%"));
+    }
+    Assert.assertTrue(op.execute("a\nb", "a?b"));
+    Assert.assertTrue(op.execute("a\rb", "a?b"));
+    Assert.assertTrue(op.execute("a\tb", "a?b"));
+
+    String[] terminators = {"a\u0085b", "a\u2028b", "a\u2029b"};
+    for (String value : terminators) {
+      Assert.assertTrue(op.execute(value, "a%"));
+      Assert.assertTrue(op.execute(value, "%b"));
+      Assert.assertTrue(op.execute(value, "a?b"));
+    }
+
+    Assert.assertTrue(op.execute("a\r\nb", "a??b"));
+    Assert.assertFalse(op.execute("a\r\nb", "a?b"));
+    Assert.assertTrue(op.execute("\n", "%"));
+    Assert.assertTrue(op.execute("\n", "?"));
+
+    Assert.assertTrue(op.execute("A\nB", "a%b"));
+    Assert.assertTrue(op.execute("A\nB", "a?b"));
+    Assert.assertFalse(op.execute("a\nb", "ab"));
+
+    Assert.assertTrue(op.execute("a[\nb", "a[%"));
+    Assert.assertFalse(op.execute("a[\nb", "a[b"));
+
+    Assert.assertFalse(op.execute(null, "%"));
+    Assert.assertFalse(op.execute("a\nb", null));
+    Assert.assertFalse(op.execute("", "%"));
+    Assert.assertFalse(op.execute("a\nb", ""));
+  }
 }

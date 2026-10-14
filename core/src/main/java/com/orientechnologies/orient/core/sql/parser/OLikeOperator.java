@@ -3,10 +3,14 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.common.collection.OMultiValue;
-import com.orientechnologies.orient.core.query.OQueryHelper;
+import java.util.Locale;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 public class OLikeOperator extends SimpleNode implements OBinaryCompareOperator {
+  protected static final String WILDCARD_ANYCHAR = "?";
+  protected static final String WILDCARD_ANY = "%";
+
   public OLikeOperator(int id) {
     super(id);
   }
@@ -22,7 +26,37 @@ public class OLikeOperator extends SimpleNode implements OBinaryCompareOperator 
     if (iLeft == null || iRight == null) {
       return false;
     }
-    return OQueryHelper.like(iLeft.toString(), iRight.toString());
+    return like(iLeft.toString(), iRight.toString());
+  }
+
+  public static boolean like(String currentValue, String iValue) {
+    if (currentValue == null
+        || currentValue.length() == 0
+        || iValue == null
+        || iValue.length() == 0)
+      // EMPTY/NULL PARAMETERS
+      return false;
+
+    iValue = iValue.toLowerCase(Locale.ENGLISH);
+    currentValue = currentValue.toLowerCase(Locale.ENGLISH);
+
+    iValue = iValue.replace("\\", "\\\\");
+    iValue = iValue.replace("[", "\\[");
+    iValue = iValue.replace("]", "\\]");
+    iValue = iValue.replace("{", "\\{");
+    iValue = iValue.replace("}", "\\}");
+    iValue = iValue.replace("(", "\\(");
+    iValue = iValue.replace(")", "\\)");
+    iValue = iValue.replace("|", "\\|");
+    iValue = iValue.replace("*", "\\*");
+    iValue = iValue.replace("+", "\\+");
+    iValue = iValue.replace("$", "\\$");
+    iValue = iValue.replace("^", "\\^");
+    iValue = iValue.replace(".", "\\.");
+    iValue = iValue.replace(WILDCARD_ANY, ".*");
+    iValue = iValue.replace(WILDCARD_ANYCHAR, ".");
+
+    return Pattern.compile(iValue, Pattern.DOTALL).matcher(currentValue).matches();
   }
 
   @Override
