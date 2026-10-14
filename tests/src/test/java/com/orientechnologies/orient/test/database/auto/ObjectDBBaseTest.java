@@ -29,8 +29,7 @@ public class ObjectDBBaseTest extends BaseTest<ODatabaseObject> {
     this.objectContext = new OrientDBObject(this.baseContext);
   }
 
-  @Parameters(value = "url")
-  public ObjectDBBaseTest(@Optional String url, String prefix) {
+  protected ObjectDBBaseTest(@Optional String url, String prefix) {
     super(url, prefix);
     this.objectContext = new OrientDBObject(this.baseContext);
   }

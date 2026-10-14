@@ -45,8 +45,7 @@ public class FunctionsTest extends DocumentDBBaseTest {
                 "create function FunctionsTest \"return a + b\" PARAMETERS [a,b] IDEMPOTENT"
                     + " true LANGUAGE Javascript")
             .next()
-            .getIdentity()
-            .get();
+            .getProperty("finalId");
 
     final ODocument record = result.getRecord();
     database.reload(record);
@@ -62,7 +61,7 @@ public class FunctionsTest extends DocumentDBBaseTest {
     database.command("create function testCall \"return 0;\" LANGUAGE Javascript").close();
 
     OResultSet res1 = database.command("select testCall() as testCall");
-    Assert.assertEquals((int) res1.next().getProperty("testCall"), 0);
+    Assert.assertEquals((double) res1.next().getProperty("testCall"), 0D);
   }
 
   @Test
@@ -71,12 +70,11 @@ public class FunctionsTest extends DocumentDBBaseTest {
         database
             .command("create function testCache \"return 1;\" LANGUAGE Javascript")
             .next()
-            .getIdentity()
-            .get();
+            .getProperty("finalId");
     Assert.assertNotNull(f);
 
     try (OResultSet res1 = database.command("select testCache() as testCache")) {
-      Assert.assertEquals(res1.next().<Object>getProperty("testCache"), 1);
+      Assert.assertEquals(res1.next().<Object>getProperty("testCache"), 1D);
     }
 
     ODocument func = f.getRecord();
@@ -84,7 +82,7 @@ public class FunctionsTest extends DocumentDBBaseTest {
     database.save(func);
 
     try (OResultSet res2 = database.command("select testCache() as testCache")) {
-      Assert.assertEquals(res2.next().<Object>getProperty("testCache"), 2);
+      Assert.assertEquals(res2.next().<Object>getProperty("testCache"), 2D);
     }
   }
 
@@ -103,17 +101,18 @@ public class FunctionsTest extends DocumentDBBaseTest {
     final Thread[] threads = new Thread[threadNum];
     for (int i = 0; i < threadNum; ++i) {
       threads[i] =
-          new Thread() {
-            public void run() {
-              for (int cycle = 0; cycle < TOT; ++cycle) {
-                OResultSet res1 = database.command("select testMTCall() as testMTCall");
-                Assert.assertNotNull(res1);
-                Assert.assertEquals(res1.next().<Object>getProperty("testMTCall"), 3);
+          new Thread(
+              () -> {
+                try (var db = openSession("admin", "adminpwd")) {
+                  for (int cycle = 0; cycle < TOT; ++cycle) {
+                    OResultSet res1 = db.command("select testMTCall() as testMTCall");
+                    Assert.assertNotNull(res1);
+                    Assert.assertEquals(res1.next().<Object>getProperty("testMTCall"), 3);
 
-                counter.incrementAndGet();
-              }
-            }
-          };
+                    counter.incrementAndGet();
+                  }
+                }
+              });
       threads[i].start();
     }
 

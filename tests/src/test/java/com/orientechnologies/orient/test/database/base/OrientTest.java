@@ -17,13 +17,14 @@ package com.orientechnologies.orient.test.database.base;
 
 import com.orientechnologies.orient.core.record.ORecord;
 import java.util.List;
+import org.testng.annotations.Optional;
 import org.testng.annotations.Parameters;
 
 public class OrientTest {
   protected static String url;
 
   @Parameters(value = "url")
-  public OrientTest(String iURL) {
+  public OrientTest(@Optional String iURL) {
     url = iURL;
   }
 

@@ -53,7 +53,7 @@ public class IndexUniqueTest {
 
   @BeforeMethod
   public void before() {
-    ctx = new OrientDB("embeded:./target/", OrientDBConfig.defaultConfig());
+    ctx = new OrientDB("embedded:./target/", OrientDBConfig.defaultConfig());
     if (ctx.exists("uniqueIndexTest")) {
       ctx.drop("uniqueIndexTest");
     }

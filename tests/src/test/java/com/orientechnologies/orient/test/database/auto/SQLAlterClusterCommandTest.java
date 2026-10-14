@@ -47,7 +47,7 @@ public class SQLAlterClusterCommandTest extends DocumentDBBaseTest {
       database.command("ALTER CLUSTER europe NAME \"my_orient\"");
 
       int clusterId = database.getClusterIdByName("my_orient");
-      Assert.assertEquals(clusterId, 18);
+      Assert.assertEquals(clusterId, 33);
     } finally {
       database.command("drop cluster my_orient");
     }

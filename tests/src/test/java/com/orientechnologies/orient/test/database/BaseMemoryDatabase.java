@@ -3,8 +3,8 @@ package com.orientechnologies.orient.test.database;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
-import org.testng.annotations.AfterTest;
-import org.testng.annotations.BeforeTest;
+import org.testng.annotations.AfterMethod;
+import org.testng.annotations.BeforeMethod;
 
 public class BaseMemoryDatabase {
 
@@ -12,7 +12,7 @@ public class BaseMemoryDatabase {
   protected OrientDB context;
   private String databaseName;
 
-  @BeforeTest
+  @BeforeMethod
   public void beforeTest() {
     context = new OrientDB("embedded:", OrientDBConfig.defaultConfig());
     String dbName = this.getClass().getSimpleName();
@@ -33,8 +33,8 @@ public class BaseMemoryDatabase {
     this.db = context.open(this.databaseName, user, password);
   }
 
-  @AfterTest
-  public void afterTest() throws Exception {
+  @AfterMethod
+  public void afterTest() {
     db.close();
     context.drop(databaseName);
     context.close();

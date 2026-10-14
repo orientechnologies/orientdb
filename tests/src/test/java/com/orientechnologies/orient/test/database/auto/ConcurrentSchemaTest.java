@@ -54,10 +54,10 @@ public class ConcurrentSchemaTest extends DocumentDBBaseTest {
         try (ODatabaseSession db = openSession("admin", "admin")) {
           final String clsName = "ConcurrentClassTest-" + id + "-" + i;
 
-          OClass cls = database.getMetadata().getSchema().createClass(clsName);
+          OClass cls = db.getMetadata().getSchema().createClass(clsName);
 
           Assert.assertEquals(cls.getName(), clsName);
-          Assert.assertTrue(database.getMetadata().getSchema().existsClass(clsName));
+          Assert.assertTrue(db.getMetadata().getSchema().existsClass(clsName));
 
           db.command("select from " + clsName).close();
 
@@ -83,9 +83,9 @@ public class ConcurrentSchemaTest extends DocumentDBBaseTest {
         try (ODatabaseSession db = openSession("admin", "admin")) {
           final String clsName = "ConcurrentClassTest-" + id + "-" + i;
 
-          Assert.assertTrue(database.getMetadata().getSchema().existsClass(clsName));
-          database.getMetadata().getSchema().dropClass(clsName);
-          Assert.assertFalse(database.getMetadata().getSchema().existsClass(clsName));
+          Assert.assertTrue(db.getMetadata().getSchema().existsClass(clsName));
+          db.getMetadata().getSchema().dropClass(clsName);
+          Assert.assertFalse(db.getMetadata().getSchema().existsClass(clsName));
 
           counter.decrementAndGet();
         }

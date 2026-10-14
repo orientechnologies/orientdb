@@ -18,9 +18,9 @@ public abstract class AbstractSelectTest extends DocumentDBBaseTest {
     final List<ODocument> synchResult;
     if (args.length == 1 && args[0] instanceof Map) {
       synchResult =
-          db.query(sql, (Map) args[0]).stream().map((x) -> (ODocument) x.toElement()).toList();
+          db.query(sql, (Map) args[0]).stream().map(x -> (ODocument) x.toElement()).toList();
     } else {
-      synchResult = db.query(sql, args).stream().map((x) -> (ODocument) x.toElement()).toList();
+      synchResult = db.query(sql, args).stream().map(x -> (ODocument) x.toElement()).toList();
     }
     return synchResult;
   }

@@ -28,7 +28,7 @@ public class SetupTest {
   private static SetupTest instance;
 
   @Parameters(value = {"url", "reuseDatabase"})
-  public SetupTest(String iURL, @Optional boolean iReuseDatabase) {
+  public SetupTest(@Optional String iURL, @Optional boolean iReuseDatabase) {
     instance = this;
 
     url = iURL;
