@@ -5256,6 +5256,51 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
   }
 
   /**
+   * Issue #10896: {@code SELECT count(*) FROM (SELECT DISTINCT v FROM t)} returned 24 against a
+   * table of 20 distinct LONG values (each inserted twice), while the equivalent {@code GROUP BY}
+   * query returned the correct 20. The chosen values collide in a single HashMap bucket (Long
+   * hashCodes of {@code n} and {@code ~n} are equal), which triggered HashSet treeification; the
+   * tree then used {@code OResultInternal.compareTo}, whose non-contract-abiding ordering made
+   * subsequent {@code contains} lookups miss already-inserted entries so DISTINCT admitted
+   * duplicates.
+   */
+  @Test
+  public void test_issue10896_countDistinctSubquery() {
+    db.command("CREATE CLASS T10896").close();
+    db.command("CREATE PROPERTY T10896.v LONG").close();
+    long[] values = {0, -1, 64, -65, 128, -129, 192, -193, 256, -257, 320, -321, 384, -385, 448,
+        -449, 512, -513, 576, -577};
+    for (int pass = 0; pass < 2; pass++) {
+      for (long v : values) {
+        db.command("INSERT INTO T10896 SET v = " + v).close();
+      }
+    }
+
+    long distinctRows;
+    try (OResultSet rs = db.query("SELECT DISTINCT v FROM T10896")) {
+      distinctRows = 0;
+      while (rs.hasNext()) {
+        rs.next();
+        distinctRows++;
+      }
+    }
+    assertEquals(20L, distinctRows);
+
+    long countFromDistinct;
+    try (OResultSet rs = db.query("SELECT count(*) as c FROM (SELECT DISTINCT v FROM T10896)")) {
+      countFromDistinct = ((Number) rs.next().getProperty("c")).longValue();
+    }
+
+    long countFromGroupBy;
+    try (OResultSet rs = db.query("SELECT count(*) as c FROM (SELECT v FROM T10896 GROUP BY v)")) {
+      countFromGroupBy = ((Number) rs.next().getProperty("c")).longValue();
+    }
+
+    assertEquals(20L, countFromGroupBy);
+    assertEquals(countFromGroupBy, countFromDistinct);
+  }
+
+  /**
    * Issue #10888: scalar comparison operators (`=`, `<`, `>`, `<=`, `>=`) were asymmetric. The
    * engine always converted the right operand to the left operand's type, so putting a String
    * literal on the left and a typed column (DATETIME, INTEGER) on the right caused the engine
