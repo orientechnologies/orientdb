@@ -70,9 +70,11 @@ public class OAlterClusterStatement extends ODDLStatement {
     List<OResult> result = new ArrayList<>();
     List<Integer> clustersToUpdate = getClusters(ctx);
 
-    Object finalValue = attributeValue.getDefaultAlias().getValue();
+    String finalValue = attributeValue.getDefaultAlias().getValue();
 
-    final com.orientechnologies.orient.core.storage.OCluster.ATTRIBUTES attribute =
+    finalValue = finalValue.replace("\"", "").replace("'", "");
+
+    OCluster.ATTRIBUTES attribute =
         Arrays.stream(OCluster.ATTRIBUTES.values())
             .filter(e -> e.name().equalsIgnoreCase(notNull(attributeName.getStringValue())))
             .findAny()
@@ -112,10 +114,6 @@ public class OAlterClusterStatement extends ODDLStatement {
 
   private String notNull(final String value) {
     return value != null ? value : "";
-  }
-
-  private OCluster.ATTRIBUTES getClusterAttribute(OIdentifier attributeName) {
-    return null;
   }
 
   private List<Integer> getClusters(OCommandContext ctx) {
