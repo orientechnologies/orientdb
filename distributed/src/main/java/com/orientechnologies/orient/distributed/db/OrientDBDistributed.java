@@ -395,7 +395,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
         && databaseTopology.isSynching(dbId)) {
       var name = databaseTopology.getDatabaseName(dbId);
       executeNoAuthorizationOnActive(
-          name, db -> ((ODatabaseDocumentInternal) db).autoAssignAllocations(true));
+          name, db -> ((ODatabaseDocumentInternal) db).autoAssignAllocations(false));
     }
   }
 
