@@ -6,6 +6,7 @@ import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.distributed.context.coordination.sync.OSyncState;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InterruptedIOException;
 import java.nio.channels.InterruptedByTimeoutException;
 import java.util.Comparator;
 import java.util.concurrent.PriorityBlockingQueue;
@@ -17,22 +18,20 @@ import java.util.concurrent.locks.ReentrantLock;
 public class OReceiverInputStream extends InputStream {
   private static final OLogger logger = OLogManager.instance().logger(OReceiverInputStream.class);
 
-  private record Buffer(byte[] content, long sequential, boolean finished) {}
+  private record Buffer(byte[] content, long sequential, boolean last) {}
 
   public interface RequestNext {
     void requestNext(OSyncState state, boolean b);
   }
 
-  private volatile byte[] buffer = new byte[] {};
+  private volatile Buffer buffer = new Buffer(new byte[] {}, -1, false);
   private volatile int cursor = 0;
   private final PriorityBlockingQueue<Buffer> buffers =
       new PriorityBlockingQueue<>(100, Comparator.comparing(Buffer::sequential));
   private final RequestNext ctx;
   private final OSyncState state;
-  private volatile boolean finished = false;
-  private volatile long readingSequential = -1;
-  private volatile long receivingSequential = -1;
-  private volatile boolean receivedClose = false;
+  private volatile boolean localClose = false;
+
   private final Lock readMonitor = new ReentrantLock();
   private final Condition condition = readMonitor.newCondition();
 
@@ -45,25 +44,27 @@ public class OReceiverInputStream extends InputStream {
   public int read() throws IOException {
     // TODO: impl also optimized int read(byte[] b, int off, int len)
     readMonitor.lock();
+    if (localClose) {
+      logger.debug("Local closed stream");
+      return -1;
+    }
     try {
-      while (cursor == buffer.length) {
-        if (finished) {
+      while (cursor == buffer.content().length) {
+        if (buffer.last()) {
+          logger.debug("Sender send last message");
           this.state.close();
           return -1;
         }
         try {
-          Buffer bi = buffers.peek();
-          if (bi != null && readingSequential + 1 == bi.sequential()) {
-            bi = buffers.poll();
-            readingSequential = bi.sequential();
-            buffer = bi.content;
-            cursor = 0;
-            if (bi.finished) {
-              this.finished = true;
-            } else {
+          Buffer bff = buffers.peek();
+          if (bff != null && buffer.sequential() + 1 == bff.sequential()) {
+            bff = buffers.poll();
+            if (!bff.last()) {
               ctx.requestNext(state, false);
             }
-          } else if (bi != null && bi.sequential() <= readingSequential) {
+            buffer = bff;
+            cursor = 0;
+          } else if (bff != null && bff.sequential() <= buffer.sequential()) {
             // Duplicate queued message drop
             buffers.poll();
           } else if (!condition.await(5, TimeUnit.MINUTES)) {
@@ -72,11 +73,12 @@ public class OReceiverInputStream extends InputStream {
           }
 
         } catch (InterruptedException e) {
-          Thread.currentThread().interrupt();
-          throw new java.io.InterruptedIOException();
+          var ex = new InterruptedIOException();
+          ex.initCause(e);
+          throw ex;
         }
       }
-      byte b = buffer[cursor];
+      byte b = buffer.content()[cursor];
       cursor++;
       return b & 0xFF;
     } finally {
@@ -86,17 +88,11 @@ public class OReceiverInputStream extends InputStream {
 
   @Override
   public int available() throws IOException {
-    return buffer.length - cursor;
+    return buffer.content().length - cursor;
   }
 
-  public void receive(byte[] buffer, long sequential, boolean finished) {
-    var received = new Buffer(buffer, sequential, finished);
-    if (receivingSequential < sequential) {
-      receivingSequential = sequential;
-    }
-    if (finished) {
-      receivedClose = true;
-    }
+  public void receive(byte[] buffer, long sequential, boolean last) {
+    var received = new Buffer(buffer, sequential, last);
     var offered = this.buffers.offer(received, 5, TimeUnit.MINUTES);
     if (!offered) {
       throw new OTimeoutException("Timeout waiting for sync data");
@@ -111,11 +107,11 @@ public class OReceiverInputStream extends InputStream {
 
   @Override
   public void close() throws IOException {
-    if (!receivedClose) {
+    if (!localClose) {
       // Send a close to the sender
       ctx.requestNext(state, true);
       // Queue a close state
-      receive(new byte[] {}, receivingSequential + 1, true);
+      localClose = true;
     }
   }
 }
