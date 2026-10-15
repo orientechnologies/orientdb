@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.server.config;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.orientechnologies.orient.core.config.OConfig;
 import com.orientechnologies.orient.core.config.OConfigNetwork;
 import com.orientechnologies.orient.core.config.OConfigNetworkTls;
@@ -16,6 +18,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 public class OServerConfigurationRewrite {
@@ -43,13 +46,16 @@ public class OServerConfigurationRewrite {
       var config =
           switch (handler.getClazz()) {
             case "com.orientechnologies.orient.server.handler.OAutomaticBackup" -> {
-              yield new OHandlerConfig("automaticBackup", null);
+              yield new OHandlerConfig(
+                  "automaticBackup", createAtomaticBackup(handler.getParameters()));
             }
             case "com.orientechnologies.orient.server.handler.OCustomSQLFunctionPlugin" -> {
-              yield new OHandlerConfig("custom-sql-functions-manager", null);
+              yield new OHandlerConfig(
+                  "custom-sql-functions-manager",
+                  customSQLFunctionPluginConfig(handler.getParameters()));
             }
             case "com.orientechnologies.security.syslog.ODefaultSyslog" -> {
-              yield new OHandlerConfig("syslog", null);
+              yield new OHandlerConfig("syslog", createSyslogConfig(handler.getParameters()));
             }
             case "com.orientechnologies.orient.server.distributed.impl.ODistributedPlugin" -> {
               yield new OHandlerConfig("cluster", null);
@@ -67,10 +73,10 @@ public class OServerConfigurationRewrite {
               yield new OHandlerConfig("gremlin-server", null);
             }
             case "com.orientechnologies.orient.server.handler.OJMXPlugin" -> {
-              yield new OHandlerConfig("jmx", null);
+              yield new OHandlerConfig("jmx", createJmxConfig(handler.getParameters()));
             }
             case "com.orientechnologies.orient.server.distributed.impl.proxy.OProxyServer" -> {
-              yield new OHandlerConfig("proxy", null);
+              yield new OHandlerConfig("proxy", createProxyConfig(handler.getParameters()));
             }
             case "com.orientechnologies.security.OSecurityPlugin" -> {
               yield new OHandlerConfig("security-plugin", null);
@@ -80,7 +86,8 @@ public class OServerConfigurationRewrite {
               yield new OHandlerConfig("failing on startup plugin", null);
             }
             case "com.orientechnologies.orient.server.handler.OServerSideScriptInterpreter" -> {
-              yield new OHandlerConfig("script-interpreter", null);
+              yield new OHandlerConfig(
+                  "script-interpreter", serverSideInterpreter(handler.getParameters()));
             }
 
             default -> throw new UnsupportedOperationException("shit");
@@ -92,6 +99,121 @@ public class OServerConfigurationRewrite {
     //       final OServerPlugin instance = classToLoad.newInstance();
 
     return newHandlers;
+  }
+
+  private JsonNode createJmxConfig(OServerParameterConfiguration[] parameters) {
+    if (parameters.length == 0) {
+      return null;
+    }
+    ObjectMapper mapper = new ObjectMapper();
+    var object = mapper.createObjectNode();
+    for (var param : parameters) {
+      if (param.getName().equalsIgnoreCase("enabled")) {
+        object.put("enabled", Boolean.parseBoolean(param.getValue()));
+      } else if (param.getName().equalsIgnoreCase("profilerManaged")) {
+        object.put("profilerManaged", Boolean.parseBoolean(param.getValue()));
+      }
+    }
+    return object;
+  }
+
+  private JsonNode createProxyConfig(OServerParameterConfiguration[] parameters) {
+    if (parameters.length == 0) {
+      return null;
+    }
+
+    ObjectMapper mapper = new ObjectMapper();
+    var object = mapper.createObjectNode();
+    for (OServerParameterConfiguration param : parameters) {
+      if (param.getName().equalsIgnoreCase("enabled"))
+        object.put("enabled", Boolean.parseBoolean(param.getValue()));
+      else if (param.getName().equalsIgnoreCase("remoteHost")) {
+        object.put("remoteHost", param.getValue());
+      } else if (param.getName().equalsIgnoreCase("tracing")) {
+        object.put("tracing", param.getValue());
+      } else if (param.getName().equalsIgnoreCase("ports")) {
+        String portsAsString = param.getValue();
+        var array = mapper.createArrayNode();
+        final String[] pairs = portsAsString.split(",");
+        for (String pair : pairs) {
+          array.add(pair);
+        }
+        object.set("ports", array);
+      }
+    }
+    return null;
+  }
+
+  private JsonNode serverSideInterpreter(OServerParameterConfiguration[] parameters) {
+    if (parameters.length == 0) {
+      return null;
+    }
+    ObjectMapper mapper = new ObjectMapper();
+    var object = mapper.createObjectNode();
+    for (OServerParameterConfiguration param : parameters) {
+      if (param.getName().equalsIgnoreCase("enabled")) {
+        object.put("allowedPackages", Boolean.parseBoolean(param.getValue()));
+      } else if (param.getName().equalsIgnoreCase("allowedLanguages")) {
+        var array = mapper.createArrayNode();
+        for (var single : param.getValue().toLowerCase(Locale.ENGLISH).split(",")) {
+          array.add(single);
+        }
+        object.set("allowedLanguages", array);
+      } else if (param.getName().equalsIgnoreCase("allowedPackages")) {
+        var array = mapper.createArrayNode();
+        for (var single : param.getValue().split(",")) {
+          array.add(single);
+        }
+        object.set("allowedPackages", array);
+      }
+    }
+    return object;
+  }
+
+  private JsonNode createAtomaticBackup(OServerParameterConfiguration[] parameters) {
+    for (var param : parameters) {
+      if (param.getName().equalsIgnoreCase("config")) {
+        ObjectMapper mapper = new ObjectMapper();
+        var object = mapper.createObjectNode();
+        object.put("config", param.getValue());
+        return object;
+      }
+    }
+    return null;
+  }
+
+  private JsonNode createSyslogConfig(OServerParameterConfiguration[] parameters) {
+    if (parameters.length == 0) {
+      return null;
+    }
+    ObjectMapper mapper = new ObjectMapper();
+    var object = mapper.createObjectNode();
+    for (var param : parameters) {
+      if (param.getName().equalsIgnoreCase("enabled")) {
+        object.put("enabled", Boolean.parseBoolean(param.getValue()));
+      } else if (param.getName().equalsIgnoreCase("debug")) {
+        object.put("debug", Boolean.parseBoolean(param.getValue()));
+      } else if (param.getName().equalsIgnoreCase("hostname")) {
+        object.put("hostname", param.getValue());
+      } else if (param.getName().equalsIgnoreCase("port")) {
+        object.put("port", Integer.parseInt(param.getValue()));
+      } else if (param.getName().equalsIgnoreCase("appName")) {
+        object.put("appName", param.getValue());
+      }
+    }
+    return object;
+  }
+
+  private JsonNode customSQLFunctionPluginConfig(OServerParameterConfiguration[] parameters) {
+    for (var param : parameters) {
+      if (param.getName().equalsIgnoreCase("config")) {
+        ObjectMapper mapper = new ObjectMapper();
+        var object = mapper.createObjectNode();
+        object.put("config", param.getValue());
+        return object;
+      }
+    }
+    return null;
   }
 
   private List<OConfigProperty> migrateProperties(OServerEntryConfiguration[] properties) {
