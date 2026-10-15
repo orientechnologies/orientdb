@@ -27,6 +27,9 @@ public class OFunctionCall extends SimpleNode {
 
   protected List<OExpression> params = new ArrayList<OExpression>();
 
+  /** Per-param DISTINCT markers, aligned with {@link #params}. */
+  protected List<Boolean> distinctParams = new ArrayList<Boolean>();
+
   public OFunctionCall(int id) {
     super(id);
   }
@@ -287,6 +290,7 @@ public class OFunctionCall extends SimpleNode {
         if (isStar()) {
           for (OExpression param : params) {
             newFunct.getParams().add(param);
+            newFunct.distinctParams.add(Boolean.FALSE);
           }
         } else {
           for (OExpression param : params) {
@@ -295,13 +299,18 @@ public class OFunctionCall extends SimpleNode {
                   "Cannot calculate an aggregate function of another aggregate function "
                       + toString());
             }
+            // Unwrap `distinct(x)` into x for the preAggregate projection; flag the aggregate side.
+            OExpression distinctInner = unwrapDistinctParam(param);
+            OExpression preAggParam = distinctInner != null ? distinctInner : param;
+
             OIdentifier nextAlias = aggregateProj.getNextAlias();
             OProjectionItem paramItem = new OProjectionItem(-1);
             paramItem.alias = nextAlias;
-            paramItem.expression = param;
+            paramItem.expression = preAggParam;
             aggregateProj.getPreAggregate().add(paramItem);
 
             newFunct.params.add(new OExpression(nextAlias));
+            newFunct.distinctParams.add(distinctInner != null);
           }
         }
         aggregateProj.getAggregate().add(createProjection(newFunct, functionResultAlias));
@@ -371,8 +380,44 @@ public class OFunctionCall extends SimpleNode {
     OSQLFunction function = OSQLEngine.getInstance().getFunction(name.getStringValue());
     function.config(this.params.toArray());
 
-    OFunctionAggregationContext result = new OFunctionAggregationContext(function, this.params);
+    OFunctionAggregationContext result =
+        new OFunctionAggregationContext(function, this.params, this.distinctParams);
     return result;
+  }
+
+  /** Returns x if expr is a bare `distinct(x)` call with a single argument, else null. */
+  private static OExpression unwrapDistinctParam(OExpression expr) {
+    if (expr == null) {
+      return null;
+    }
+    OMathExpression me = expr.getMathExpression();
+    if (!(me instanceof OBaseExpression)) {
+      return null;
+    }
+    OBaseExpression base = (OBaseExpression) me;
+    if (base.getModifier() != null) {
+      return null;
+    }
+    OBaseIdentifier id = base.getIdentifier();
+    if (id == null) {
+      return null;
+    }
+    OLevelZeroIdentifier l0 = id.getLevelZero();
+    if (l0 == null) {
+      return null;
+    }
+    OFunctionCall fc = l0.getFunctionCall();
+    if (fc == null) {
+      return null;
+    }
+    if (!"distinct".equalsIgnoreCase(fc.getName().getStringValue())) {
+      return null;
+    }
+    List<OExpression> fcParams = fc.getParams();
+    if (fcParams == null || fcParams.size() != 1) {
+      return null;
+    }
+    return fcParams.get(0);
   }
 
   @Override
@@ -380,6 +425,7 @@ public class OFunctionCall extends SimpleNode {
     OFunctionCall result = new OFunctionCall(-1);
     result.name = name;
     result.params = params.stream().map(x -> x.copy()).collect(Collectors.toList());
+    result.distinctParams = new ArrayList<>(distinctParams);
     return result;
   }
 
