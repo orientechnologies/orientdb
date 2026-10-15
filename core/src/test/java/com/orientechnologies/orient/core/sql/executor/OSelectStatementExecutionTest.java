@@ -5251,4 +5251,40 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
       assertEquals(List.of("b"), ids);
     }
   }
+
+  // regression: #10912
+  @Test
+  public void testIssue10912InNestedListMustCompareWholeList() {
+    db.command("CREATE CLASS InNestedListComparison").close();
+    db.command("INSERT INTO InNestedListComparison SET k = 'a', f = [0, 1]").close();
+    db.command("INSERT INTO InNestedListComparison SET k = 'b', f = [0]").close();
+
+    try (OResultSet rs =
+        db.query("SELECT k FROM InNestedListComparison WHERE f IN [[0, 1]] ORDER BY k")) {
+      List<String> ks = new ArrayList<>();
+      rs.forEachRemaining(r -> ks.add(r.getProperty("k")));
+      assertEquals(List.of("a"), ks);
+    }
+
+    try (OResultSet rs =
+        db.query("SELECT k FROM InNestedListComparison WHERE f IN [[1]] ORDER BY k")) {
+      List<String> ks = new ArrayList<>();
+      rs.forEachRemaining(r -> ks.add(r.getProperty("k")));
+      assertEquals(List.of(), ks);
+    }
+
+    try (OResultSet rs =
+        db.query("SELECT k FROM InNestedListComparison WHERE f IN [[0]] ORDER BY k")) {
+      List<String> ks = new ArrayList<>();
+      rs.forEachRemaining(r -> ks.add(r.getProperty("k")));
+      assertEquals(List.of("b"), ks);
+    }
+
+    try (OResultSet rs =
+        db.query("SELECT k FROM InNestedListComparison WHERE f IN [[0], [0, 1]] ORDER BY k")) {
+      List<String> ks = new ArrayList<>();
+      rs.forEachRemaining(r -> ks.add(r.getProperty("k")));
+      assertEquals(List.of("a", "b"), ks);
+    }
+  }
 }
