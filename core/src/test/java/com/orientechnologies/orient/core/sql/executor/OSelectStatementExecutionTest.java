@@ -5182,13 +5182,11 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
     }
     assertEquals(20L, distinctRows);
     long countFromDistinct;
-    try (OResultSet rs =
-        db.query("SELECT count(*) as c FROM (SELECT DISTINCT v FROM T10896)")) {
+    try (OResultSet rs = db.query("SELECT count(*) as c FROM (SELECT DISTINCT v FROM T10896)")) {
       countFromDistinct = ((Number) rs.next().getProperty("c")).longValue();
     }
     long countFromGroupBy;
-    try (OResultSet rs =
-        db.query("SELECT count(*) as c FROM (SELECT v FROM T10896 GROUP BY v)")) {
+    try (OResultSet rs = db.query("SELECT count(*) as c FROM (SELECT v FROM T10896 GROUP BY v)")) {
       countFromGroupBy = ((Number) rs.next().getProperty("c")).longValue();
     }
     assertEquals(20L, countFromGroupBy);
