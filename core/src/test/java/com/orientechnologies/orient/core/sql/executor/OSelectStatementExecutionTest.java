@@ -5185,8 +5185,7 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
       assertEquals(List.of("b", "c"), ids);
     }
 
-    try (OResultSet rs =
-        db.query("SELECT id FROM L10882 WHERE f CONTAINSANY [1, 7] ORDER BY id")) {
+    try (OResultSet rs = db.query("SELECT id FROM L10882 WHERE f CONTAINSANY [1, 7] ORDER BY id")) {
       List<String> ids = new ArrayList<>();
       rs.forEachRemaining(r -> ids.add(r.getProperty("id")));
       assertEquals(List.of("a", "b", "c"), ids);
