@@ -32,6 +32,7 @@ import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -5177,5 +5178,60 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
       rs.forEachRemaining(r -> ids.add(r.getProperty("id")));
       assertEquals(List.of("r0"), ids);
     }
+  }
+
+  // regression: #10886
+  @Test
+  public void testIssue10886IndexOneSidedRangeAfterUpdate() {
+    db.command("CREATE CLASS IndexOneSidedRangeAfterUpdate").close();
+    db.command("CREATE PROPERTY IndexOneSidedRangeAfterUpdate.id STRING").close();
+    db.command("CREATE PROPERTY IndexOneSidedRangeAfterUpdate.f LONG").close();
+    db.command(
+            "CREATE INDEX IndexOneSidedRangeAfterUpdate_f ON IndexOneSidedRangeAfterUpdate (f)"
+                + " NOTUNIQUE")
+        .close();
+    db.command("INSERT INTO IndexOneSidedRangeAfterUpdate SET id = 'b', f = -7").close();
+    db.command("INSERT INTO IndexOneSidedRangeAfterUpdate SET id = 'c', f = 5").close();
+
+    String script =
+        "BEGIN;\n"
+            + "UPDATE IndexOneSidedRangeAfterUpdate SET f = -100 WHERE id = 'c';\n"
+            + "LET $r = (SELECT id FROM IndexOneSidedRangeAfterUpdate WHERE f < 0);\n"
+            + "ROLLBACK;\n"
+            + "RETURN $r;\n";
+    List<String> ids = new ArrayList<>();
+    try (OResultSet rs = db.execute("sql", script)) {
+      while (rs.hasNext()) {
+        OResult r = rs.next();
+        Object v = r.getProperty("id");
+        if (v != null) {
+          ids.add(v.toString());
+        } else {
+          for (String p : r.getPropertyNames()) {
+            Object pv = r.getProperty(p);
+            if (pv instanceof Collection) {
+              for (Object o : (Collection<?>) pv) {
+                if (o instanceof OResult) {
+                  Object vid = ((OResult) o).getProperty("id");
+                  if (vid != null) {
+                    ids.add(vid.toString());
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    Collections.sort(ids);
+    assertEquals(List.of("b", "c"), ids);
+
+    List<String> postIds = new ArrayList<>();
+    try (OResultSet rs = db.query("SELECT id FROM IndexOneSidedRangeAfterUpdate WHERE f < 0")) {
+      while (rs.hasNext()) {
+        postIds.add(rs.next().getProperty("id"));
+      }
+    }
+    assertEquals(List.of("b"), postIds);
   }
 }
