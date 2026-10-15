@@ -2,6 +2,7 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import static com.orientechnologies.orient.core.sql.executor.ExecutionPlanPrintUtils.printExecutionPlan;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
@@ -5156,5 +5157,23 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
     res =
         db.command("select from ParamItem " + "where oldid in :ids", java.util.Map.of("ids", ids));
     assertEquals(res.stream().count(), 2);
+  }
+
+  // regression: #10913
+  @Test
+  public void test_issue10913_updateIndexedRangeTerminates() {
+    db.command("CREATE CLASS T10913").close();
+    db.command("CREATE PROPERTY T10913.f LONG").close();
+    db.command("CREATE INDEX T10913_f ON T10913 (f) NOTUNIQUE").close();
+    db.command("INSERT INTO T10913 SET f = 5").close();
+
+    db.command("UPDATE T10913 SET f = f + 1 WHERE f > 4 AND f < 100").close();
+
+    long value;
+    try (OResultSet rs = db.query("SELECT f FROM T10913")) {
+      value = ((Number) rs.next().getProperty("f")).longValue();
+      assertFalse(rs.hasNext());
+    }
+    assertEquals(6L, value);
   }
 }

@@ -70,6 +70,8 @@ public class OUpdateExecutionPlanner {
     OUpdateExecutionPlan result = new OUpdateExecutionPlan();
 
     handleTarget(result, ctx, this.target, this.whereClause, this.timeout);
+    // Materialize the source RIDs before mutations so an index-range iterator can't re-visit rows.
+    result.chain(new AccumulateResultsStep());
     if (updateEdge) {
       result.chain(new CheckRecordTypeStep("E"));
     }
