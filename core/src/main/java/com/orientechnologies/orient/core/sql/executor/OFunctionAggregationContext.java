@@ -16,7 +16,8 @@ import java.util.Set;
 public class OFunctionAggregationContext implements AggregationContext {
   private OSQLFunction aggregateFunction;
   private List<OExpression> params;
-  // SQL-standard DISTINCT per aggregate parameter: dedup values before forwarding to the aggregator.
+  // SQL-standard DISTINCT per aggregate parameter: dedup values before forwarding to the
+  // aggregator.
   private final boolean[] distinctParams;
   private final Set<Object>[] distinctSeen;
 
