@@ -5157,4 +5157,35 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
         db.command("select from ParamItem " + "where oldid in :ids", java.util.Map.of("ids", ids));
     assertEquals(res.stream().count(), 2);
   }
+
+  // regression: #10883
+  @Test
+  public void test_issue10883_isDefinedOnDottedPath() {
+    db.command("CREATE CLASS D10883").close();
+    db.command("CREATE PROPERTY D10883.id STRING").close();
+    db.command("CREATE PROPERTY D10883.m EMBEDDEDMAP").close();
+    db.command("INSERT INTO D10883 SET id = 'x', m = {'k': 1}").close();
+    db.command("INSERT INTO D10883 SET id = 'y', m = {}").close();
+    db.command("INSERT INTO D10883 SET id = 'z'").close();
+
+    try (OResultSet rs =
+        db.query("SELECT id FROM D10883 WHERE m.k IS DEFINED ORDER BY id")) {
+      List<String> ids = new ArrayList<>();
+      rs.forEachRemaining(r -> ids.add(r.getProperty("id")));
+      assertEquals(List.of("x"), ids);
+    }
+
+    try (OResultSet rs = db.query("SELECT id FROM D10883 WHERE m.nope IS DEFINED")) {
+      List<String> ids = new ArrayList<>();
+      rs.forEachRemaining(r -> ids.add(r.getProperty("id")));
+      assertEquals(List.of(), ids);
+    }
+
+    try (OResultSet rs =
+        db.query("SELECT id FROM D10883 WHERE m.k IS NOT DEFINED ORDER BY id")) {
+      List<String> ids = new ArrayList<>();
+      rs.forEachRemaining(r -> ids.add(r.getProperty("id")));
+      assertEquals(List.of("y", "z"), ids);
+    }
+  }
 }
