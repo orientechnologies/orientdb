@@ -30,7 +30,7 @@ public class LetQueryStep extends AbstractExecutionStep {
     // one cached
     boolean useCache = !query.toString().contains("?");
     subExecutionPlan = query.resolvePlan(useCache, subCtx);
-    result.setMetadata(varName.getStringValue(), toList(subExecutionPlan, ctx));
+    result.setMetadata(varName.getStringValue(), toList(subExecutionPlan, subCtx));
     return result;
   }
 
