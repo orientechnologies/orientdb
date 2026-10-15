@@ -5157,4 +5157,45 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
         db.command("select from ParamItem " + "where oldid in :ids", java.util.Map.of("ids", ids));
     assertEquals(res.stream().count(), 2);
   }
+
+  // regression: #10882
+  @Test
+  public void test_issue10882_embeddedListLongCoercion() {
+    db.command("CREATE CLASS L10882").close();
+    db.command("CREATE PROPERTY L10882.f EMBEDDEDLIST LONG").close();
+    db.command("INSERT INTO L10882 SET id = 'a', f = [1, 2]").close();
+    db.command("INSERT INTO L10882 SET id = 'b', f = [1, 1]").close();
+    db.command("INSERT INTO L10882 SET id = 'c', f = [7]").close();
+
+    try (OResultSet rs = db.query("SELECT id FROM L10882 WHERE f CONTAINS 2")) {
+      List<String> ids = new ArrayList<>();
+      rs.forEachRemaining(r -> ids.add(r.getProperty("id")));
+      assertEquals(List.of("a"), ids);
+    }
+
+    try (OResultSet rs = db.query("SELECT id FROM L10882 WHERE f = [1, 2]")) {
+      List<String> ids = new ArrayList<>();
+      rs.forEachRemaining(r -> ids.add(r.getProperty("id")));
+      assertEquals(List.of("a"), ids);
+    }
+
+    try (OResultSet rs = db.query("SELECT id FROM L10882 WHERE f <> [1, 2] ORDER BY id")) {
+      List<String> ids = new ArrayList<>();
+      rs.forEachRemaining(r -> ids.add(r.getProperty("id")));
+      assertEquals(List.of("b", "c"), ids);
+    }
+
+    try (OResultSet rs =
+        db.query("SELECT id FROM L10882 WHERE f CONTAINSANY [1, 7] ORDER BY id")) {
+      List<String> ids = new ArrayList<>();
+      rs.forEachRemaining(r -> ids.add(r.getProperty("id")));
+      assertEquals(List.of("a", "b", "c"), ids);
+    }
+
+    try (OResultSet rs = db.query("SELECT id FROM L10882 WHERE f CONTAINSALL [1, 2]")) {
+      List<String> ids = new ArrayList<>();
+      rs.forEachRemaining(r -> ids.add(r.getProperty("id")));
+      assertEquals(List.of("a"), ids);
+    }
+  }
 }
