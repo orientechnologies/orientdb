@@ -139,6 +139,15 @@ public class OEqualsCompareOperator extends SimpleNode implements OBinaryCompare
 
     // ALL OTHER CASES
     try {
+      // Coerce String literal toward the typed side so left/right order doesn't flip the result.
+      if (iLeft instanceof String && !(iRight instanceof String)) {
+        final Object left = OType.convert(iLeft, iRight.getClass());
+        if (left == null) return false;
+        if (left instanceof byte[] && iRight instanceof byte[]) {
+          return Arrays.equals((byte[]) left, (byte[]) iRight);
+        }
+        return left.equals(iRight);
+      }
       final Object right = OType.convert(iRight, iLeft.getClass());
 
       if (right == null) return false;

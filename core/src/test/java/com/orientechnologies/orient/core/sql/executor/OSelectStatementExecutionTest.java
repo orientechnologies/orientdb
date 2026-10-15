@@ -5178,4 +5178,54 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
       assertEquals(List.of("r0"), ids);
     }
   }
+
+  // regression: #10888
+  @Test
+  public void test_issue10888_operandOrderSymmetry() {
+    db.command("CREATE CLASS D10888").close();
+    db.command("CREATE PROPERTY D10888.id STRING").close();
+    db.command("CREATE PROPERTY D10888.d DATETIME").close();
+    db.command("CREATE PROPERTY D10888.f INTEGER").close();
+    db.command(
+            "INSERT INTO D10888 SET id='a', d=DATE('2024-01-01 12:34:56','yyyy-MM-dd HH:mm:ss'),"
+                + " f=5")
+        .close();
+    db.command(
+            "INSERT INTO D10888 SET id='b', d=DATE('2024-06-01 00:00:00','yyyy-MM-dd HH:mm:ss'),"
+                + " f=10")
+        .close();
+
+    List<String> colEqLit = new ArrayList<>();
+    try (OResultSet rs = db.query("SELECT id FROM D10888 WHERE d = '2024-01-01 12:34:56'")) {
+      rs.forEachRemaining(r -> colEqLit.add(r.getProperty("id")));
+    }
+    List<String> litEqCol = new ArrayList<>();
+    try (OResultSet rs = db.query("SELECT id FROM D10888 WHERE '2024-01-01 12:34:56' = d")) {
+      rs.forEachRemaining(r -> litEqCol.add(r.getProperty("id")));
+    }
+    assertEquals(List.of("a"), colEqLit);
+    assertEquals(colEqLit, litEqCol);
+
+    List<String> colGtLit = new ArrayList<>();
+    try (OResultSet rs = db.query("SELECT id FROM D10888 WHERE d > '2024-03-01 00:00:00'")) {
+      rs.forEachRemaining(r -> colGtLit.add(r.getProperty("id")));
+    }
+    List<String> litLtCol = new ArrayList<>();
+    try (OResultSet rs = db.query("SELECT id FROM D10888 WHERE '2024-03-01 00:00:00' < d")) {
+      rs.forEachRemaining(r -> litLtCol.add(r.getProperty("id")));
+    }
+    assertEquals(List.of("b"), colGtLit);
+    assertEquals(colGtLit, litLtCol);
+
+    List<String> colGtInt = new ArrayList<>();
+    try (OResultSet rs = db.query("SELECT id FROM D10888 WHERE f > '6'")) {
+      rs.forEachRemaining(r -> colGtInt.add(r.getProperty("id")));
+    }
+    List<String> intLtCol = new ArrayList<>();
+    try (OResultSet rs = db.query("SELECT id FROM D10888 WHERE '6' < f")) {
+      rs.forEachRemaining(r -> intLtCol.add(r.getProperty("id")));
+    }
+    assertEquals(List.of("b"), colGtInt);
+    assertEquals(colGtInt, intLtCol);
+  }
 }
