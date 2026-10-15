@@ -5157,4 +5157,34 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
         db.command("select from ParamItem " + "where oldid in :ids", java.util.Map.of("ids", ids));
     assertEquals(res.stream().count(), 2);
   }
+
+  // regression: #10884
+  @Test
+  public void test_issue10884_bracketFilterAfterTwoHopPath() {
+    db.command("CREATE CLASS D10884").close();
+    db.command("CREATE PROPERTY D10884.id STRING").close();
+    db.command("CREATE PROPERTY D10884.f LONG").close();
+    db.command("CREATE PROPERTY D10884.n LINKLIST D10884").close();
+    db.command("INSERT INTO D10884 SET id = 'c', f = 2").close();
+    db.command("INSERT INTO D10884 SET id = 'd', f = 5").close();
+    db.command(
+            "INSERT INTO D10884 SET id = 'b', f = 1, n ="
+                + " (SELECT FROM D10884 WHERE id IN ['c','d'])")
+        .close();
+    db.command("INSERT INTO D10884 SET id = 'a', f = 0, n = (SELECT FROM D10884 WHERE id = 'b')")
+        .close();
+
+    try (OResultSet rs = db.query("SELECT n.n[f > 2].id as r FROM D10884 WHERE id = 'a'")) {
+      Object r = rs.next().getProperty("r");
+      assertEquals(List.of(List.of("d")), r);
+    }
+    try (OResultSet rs = db.query("SELECT n.n[f = 2].id as r FROM D10884 WHERE id = 'a'")) {
+      Object r = rs.next().getProperty("r");
+      assertEquals(List.of(List.of("c")), r);
+    }
+    try (OResultSet rs = db.query("SELECT n.n[f > -1].id as r FROM D10884 WHERE id = 'a'")) {
+      Object r = rs.next().getProperty("r");
+      assertEquals(List.of(List.of("c", "d")), r);
+    }
+  }
 }
