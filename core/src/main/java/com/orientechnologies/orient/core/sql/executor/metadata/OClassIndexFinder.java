@@ -388,7 +388,10 @@ public class OClassIndexFinder implements OIndexFinder {
     for (OIndex index : indexes) {
       if (index.getDefinition().getFields().contains(field)) {
         if (!OClass.INDEX_TYPE.FULLTEXT.name().equalsIgnoreCase(index.getType())
-            && !index.getAlgorithm().equalsIgnoreCase("LUCENE")) {
+            && !index.getAlgorithm().equalsIgnoreCase("LUCENE")
+            // DICTIONARY keeps only one entry per key, so it can't serve equality/IN lookups.
+            && !OClass.INDEX_TYPE.DICTIONARY.name().equalsIgnoreCase(index.getType())
+            && !OClass.INDEX_TYPE.DICTIONARY_HASH_INDEX.name().equalsIgnoreCase(index.getType())) {
           selected.add(index);
         }
       }
