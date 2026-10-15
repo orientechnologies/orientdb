@@ -5166,10 +5166,12 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
     db.command("CREATE PROPERTY D10888.d DATETIME").close();
     db.command("CREATE PROPERTY D10888.f INTEGER").close();
     db.command(
-            "INSERT INTO D10888 SET id='a', d=DATE('2024-01-01 12:34:56','yyyy-MM-dd HH:mm:ss'), f=5")
+            "INSERT INTO D10888 SET id='a', d=DATE('2024-01-01 12:34:56','yyyy-MM-dd HH:mm:ss'),"
+                + " f=5")
         .close();
     db.command(
-            "INSERT INTO D10888 SET id='b', d=DATE('2024-06-01 00:00:00','yyyy-MM-dd HH:mm:ss'), f=10")
+            "INSERT INTO D10888 SET id='b', d=DATE('2024-06-01 00:00:00','yyyy-MM-dd HH:mm:ss'),"
+                + " f=10")
         .close();
 
     List<String> colEqLit = new ArrayList<>();
