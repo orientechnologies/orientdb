@@ -5257,6 +5257,47 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
   }
 
   /**
+   * Issue #10912: {@code f IN [[x]]} must mean "the whole list stored in f equals [x]", not "f
+   * shares any element with [x]". {@code OInCondition.evaluateRight} previously unwrapped a
+   * single-element RHS list when its only element was itself a list, which short-circuited
+   * list-equality to element membership.
+   */
+  @Test
+  public void test_issue10912_inNestedListMustCompareWholeList() {
+    db.command("CREATE CLASS D10912").close();
+    db.command("INSERT INTO D10912 SET k = 'a', f = [0, 1]").close();
+    db.command("INSERT INTO D10912 SET k = 'b', f = [0]").close();
+
+    try (OResultSet rs =
+        db.query("SELECT k FROM D10912 WHERE f IN [[0, 1]] ORDER BY k")) {
+      List<String> ks = new ArrayList<>();
+      rs.forEachRemaining(r -> ks.add(r.getProperty("k")));
+      assertEquals(List.of("a"), ks);
+    }
+
+    try (OResultSet rs =
+        db.query("SELECT k FROM D10912 WHERE f IN [[1]] ORDER BY k")) {
+      List<String> ks = new ArrayList<>();
+      rs.forEachRemaining(r -> ks.add(r.getProperty("k")));
+      assertEquals(List.of(), ks);
+    }
+
+    try (OResultSet rs =
+        db.query("SELECT k FROM D10912 WHERE f IN [[0]] ORDER BY k")) {
+      List<String> ks = new ArrayList<>();
+      rs.forEachRemaining(r -> ks.add(r.getProperty("k")));
+      assertEquals(List.of("b"), ks);
+    }
+
+    try (OResultSet rs =
+        db.query("SELECT k FROM D10912 WHERE f IN [[0], [0, 1]] ORDER BY k")) {
+      List<String> ks = new ArrayList<>();
+      rs.forEachRemaining(r -> ks.add(r.getProperty("k")));
+      assertEquals(List.of("a", "b"), ks);
+    }
+  }
+
+  /**
    * Issue #10913: {@code UPDATE t SET f = f + 1 WHERE f > 4 AND f < 100} on an indexed property
    * ran the SET repeatedly against the same row, because the UPDATE drove its input from a live
    * index range iterator; each SET pushed the row's indexed value forward into the still-open

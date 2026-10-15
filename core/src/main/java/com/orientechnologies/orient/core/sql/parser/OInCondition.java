@@ -53,6 +53,18 @@ public class OInCondition extends OBooleanExpression {
     }
 
     Object leftVal = evaluateLeft(currentRecord, ctx);
+    // Issue #10912: the historical single-element-RHS unwrap (used so `oldid IN [?]` with a list
+    // parameter means `oldid IN those_values`) must NOT fire when the LHS is itself a collection:
+    // `f IN [[0, 1]]` where f is a list is whole-list equality, not any-element membership.
+    if (rightMathExpression != null
+        && !OMultiValue.isMultiValue(leftVal)
+        && rightVal instanceof Collection<?>
+        && ((Collection<?>) rightVal).size() == 1) {
+      Object next = ((Collection<?>) rightVal).iterator().next();
+      if (next instanceof Collection<?>) {
+        rightVal = next;
+      }
+    }
     OCollate collate = left.getCollate(currentRecord, ctx);
     if (collate != null) {
       leftVal = collate.transform(leftVal);
@@ -89,12 +101,6 @@ public class OInCondition extends OBooleanExpression {
       rightVal = rightParam.getValue(ctx);
     } else if (rightMathExpression != null) {
       rightVal = rightMathExpression.execute(currentRecord, ctx);
-      if (rightVal instanceof Collection<?> && ((Collection<?>) rightVal).size() == 1) {
-        Object next = ((Collection<?>) rightVal).iterator().next();
-        if (next instanceof Collection<?>) {
-          rightVal = next;
-        }
-      }
     }
     return rightVal;
   }
@@ -116,7 +122,10 @@ public class OInCondition extends OBooleanExpression {
       }
       for (final Object o : OMultiValue.getMultiValueIterable(iRight, false)) {
         if (OEqualsCompareOperator.equals(iLeft, o)) return true;
-        if (OMultiValue.isMultiValue(iLeft)) {
+        // Issue #10912: when the RHS element is itself a collection, do NOT fall back to
+        // element-wise membership of iLeft — that collapses list-equality to any-element-match.
+        // The outer equals above already handles whole-list equality via OEqualsCompareOperator.
+        if (OMultiValue.isMultiValue(iLeft) && !OMultiValue.isMultiValue(o)) {
           for (final Object item : OMultiValue.getMultiValueIterable(iLeft, false)) {
             if (OEqualsCompareOperator.equals(item, o)) {
               return true;
