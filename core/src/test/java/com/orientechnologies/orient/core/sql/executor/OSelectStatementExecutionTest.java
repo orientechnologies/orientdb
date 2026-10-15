@@ -5157,4 +5157,36 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
         db.command("select from ParamItem " + "where oldid in :ids", java.util.Map.of("ids", ids));
     assertEquals(res.stream().count(), 2);
   }
+
+  // regression: #10912
+  @Test
+  public void test_issue10912_inNestedListMustCompareWholeList() {
+    db.command("CREATE CLASS D10912").close();
+    db.command("INSERT INTO D10912 SET k = 'a', f = [0, 1]").close();
+    db.command("INSERT INTO D10912 SET k = 'b', f = [0]").close();
+
+    try (OResultSet rs = db.query("SELECT k FROM D10912 WHERE f IN [[0, 1]] ORDER BY k")) {
+      List<String> ks = new ArrayList<>();
+      rs.forEachRemaining(r -> ks.add(r.getProperty("k")));
+      assertEquals(List.of("a"), ks);
+    }
+
+    try (OResultSet rs = db.query("SELECT k FROM D10912 WHERE f IN [[1]] ORDER BY k")) {
+      List<String> ks = new ArrayList<>();
+      rs.forEachRemaining(r -> ks.add(r.getProperty("k")));
+      assertEquals(List.of(), ks);
+    }
+
+    try (OResultSet rs = db.query("SELECT k FROM D10912 WHERE f IN [[0]] ORDER BY k")) {
+      List<String> ks = new ArrayList<>();
+      rs.forEachRemaining(r -> ks.add(r.getProperty("k")));
+      assertEquals(List.of("b"), ks);
+    }
+
+    try (OResultSet rs = db.query("SELECT k FROM D10912 WHERE f IN [[0], [0, 1]] ORDER BY k")) {
+      List<String> ks = new ArrayList<>();
+      rs.forEachRemaining(r -> ks.add(r.getProperty("k")));
+      assertEquals(List.of("a", "b"), ks);
+    }
+  }
 }
