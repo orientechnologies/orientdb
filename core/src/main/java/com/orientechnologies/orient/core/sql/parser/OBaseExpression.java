@@ -3,6 +3,7 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.collate.OCollate;
+import com.orientechnologies.orient.core.command.OBasicCommandContext;
 import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
@@ -499,6 +500,13 @@ public class OBaseExpression extends OMathExpression {
       if (modifier == null) {
         return identifier.isDefinedFor(currentRecord);
       }
+      // Dotted path: walk each modifier segment; the path is defined iff every segment resolves.
+      if (!identifier.isDefinedFor(currentRecord)) {
+        return false;
+      }
+      Object current =
+          identifier.execute(currentRecord, new OBasicCommandContext());
+      return isModifierChainDefined(current, modifier, currentRecord);
     }
     return true;
   }
@@ -509,8 +517,108 @@ public class OBaseExpression extends OMathExpression {
       if (modifier == null) {
         return identifier.isDefinedFor(currentRecord);
       }
+      if (!identifier.isDefinedFor(currentRecord)) {
+        return false;
+      }
+      OResultInternal wrapper = new OResultInternal(currentRecord);
+      Object current = identifier.execute(wrapper, new OBasicCommandContext());
+      return isModifierChainDefined(current, modifier, wrapper);
     }
     return true;
+  }
+
+  private static boolean isModifierChainDefined(
+      Object current, OModifier mod, OResult currentRecord) {
+    OModifier m = mod;
+    while (m != null) {
+      if (m.suffix != null && m.suffix.identifier != null) {
+        String name = m.suffix.identifier.getStringValue();
+        if (current == null) {
+          return false;
+        }
+        if (current instanceof Map) {
+          if (!((Map<?, ?>) current).containsKey(name)) {
+            return false;
+          }
+          current = ((Map<?, ?>) current).get(name);
+        } else if (current instanceof OResult) {
+          OResult r = (OResult) current;
+          if (!r.hasProperty(name)) {
+            return false;
+          }
+          current = r.getProperty(name);
+        } else if (current instanceof OIdentifiable) {
+          Object rec = ((OIdentifiable) current).getRecord();
+          if (rec instanceof com.orientechnologies.orient.core.record.impl.ODocument) {
+            com.orientechnologies.orient.core.record.impl.ODocument doc =
+                (com.orientechnologies.orient.core.record.impl.ODocument) rec;
+            if (!doc.containsField(name)) {
+              return false;
+            }
+            current = doc.field(name);
+          } else if (rec instanceof OElement) {
+            OElement el = (OElement) rec;
+            if (!el.getPropertyNames().contains(name)) {
+              return false;
+            }
+            current = el.getProperty(name);
+          } else {
+            return false;
+          }
+        } else if (current instanceof Collection) {
+          // Over a collection, the step is defined iff every element has the field.
+          for (Object el : (Collection<?>) current) {
+            if (!elementHasProperty(el, name)) {
+              return false;
+            }
+          }
+          List<Object> projected = new java.util.ArrayList<>();
+          for (Object el : (Collection<?>) current) {
+            projected.add(elementGetProperty(el, name));
+          }
+          current = projected;
+        } else {
+          return false;
+        }
+      } else {
+        // Non-suffix segment (method call, array range, filter): treat as defined.
+        return true;
+      }
+      m = m.next;
+    }
+    return true;
+  }
+
+  private static boolean elementHasProperty(Object el, String name) {
+    if (el == null) return false;
+    if (el instanceof OResult) return ((OResult) el).hasProperty(name);
+    if (el instanceof Map) return ((Map<?, ?>) el).containsKey(name);
+    if (el instanceof OIdentifiable) {
+      Object rec = ((OIdentifiable) el).getRecord();
+      if (rec instanceof com.orientechnologies.orient.core.record.impl.ODocument) {
+        return ((com.orientechnologies.orient.core.record.impl.ODocument) rec).containsField(name);
+      }
+      if (rec instanceof OElement) {
+        return ((OElement) rec).getPropertyNames().contains(name);
+      }
+    }
+    return false;
+  }
+
+  private static Object elementGetProperty(Object el, String name) {
+    if (el == null) return null;
+    if (el instanceof OResult) return ((OResult) el).getProperty(name);
+    if (el instanceof Map) return ((Map<?, ?>) el).get(name);
+    if (el instanceof OIdentifiable) {
+      Object rec = ((OIdentifiable) el).getRecord();
+      if (rec instanceof com.orientechnologies.orient.core.record.impl.ODocument) {
+        return ((com.orientechnologies.orient.core.record.impl.ODocument) rec).field(name);
+      }
+      if (rec instanceof OElement) {
+        return ((OElement) rec).getProperty(name);
+      }
+    }
+    return null;
   }
 
   public void extractSubQueries(OIdentifier letAlias, SubQueryCollector collector) {
