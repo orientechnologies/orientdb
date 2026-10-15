@@ -5168,8 +5168,7 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
     db.command("INSERT INTO D10883 SET id = 'y', m = {}").close();
     db.command("INSERT INTO D10883 SET id = 'z'").close();
 
-    try (OResultSet rs =
-        db.query("SELECT id FROM D10883 WHERE m.k IS DEFINED ORDER BY id")) {
+    try (OResultSet rs = db.query("SELECT id FROM D10883 WHERE m.k IS DEFINED ORDER BY id")) {
       List<String> ids = new ArrayList<>();
       rs.forEachRemaining(r -> ids.add(r.getProperty("id")));
       assertEquals(List.of("x"), ids);
@@ -5181,8 +5180,7 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
       assertEquals(List.of(), ids);
     }
 
-    try (OResultSet rs =
-        db.query("SELECT id FROM D10883 WHERE m.k IS NOT DEFINED ORDER BY id")) {
+    try (OResultSet rs = db.query("SELECT id FROM D10883 WHERE m.k IS NOT DEFINED ORDER BY id")) {
       List<String> ids = new ArrayList<>();
       rs.forEachRemaining(r -> ids.add(r.getProperty("id")));
       assertEquals(List.of("y", "z"), ids);
