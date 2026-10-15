@@ -47,13 +47,17 @@ public class GetValueFromIndexEntryStep extends AbstractExecutionStep {
         return null;
       }
     }
+    OResult mapped = null;
     if (finalVal instanceof OIdentifiable) {
-      return new OResultInternal((OIdentifiable) finalVal);
-
+      mapped = new OResultInternal((OIdentifiable) finalVal);
     } else if (finalVal instanceof OResult) {
-      return (OResult) finalVal;
+      mapped = (OResult) finalVal;
     }
-    return null;
+    if (mapped != null) {
+      // Publish the loaded record so downstream per-record steps can resolve $current fields.
+      ctx.setCurrent(mapped);
+    }
+    return mapped;
   }
 
   @Override
