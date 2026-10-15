@@ -76,9 +76,7 @@ public class DistinctExecutionStep extends AbstractExecutionStep {
         return;
       }
     }
-    pastItems
-        .computeIfAbsent(nextValue.hashCode(), k -> new ArrayList<>())
-        .add(nextValue);
+    pastItems.computeIfAbsent(nextValue.hashCode(), k -> new ArrayList<>()).add(nextValue);
     pastItemsSize[0]++;
     if (maxElementsAllowed > 0 && maxElementsAllowed < pastItemsSize[0]) {
       pastItems.clear();

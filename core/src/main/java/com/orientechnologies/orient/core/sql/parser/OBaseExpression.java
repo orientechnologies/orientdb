@@ -508,8 +508,7 @@ public class OBaseExpression extends OMathExpression {
       if (!identifier.isDefinedFor(currentRecord)) {
         return false;
       }
-      Object current =
-          identifier.execute(currentRecord, new OBasicCommandContext());
+      Object current = identifier.execute(currentRecord, new OBasicCommandContext());
       return isModifierChainDefined(current, modifier, currentRecord);
     }
     return true;

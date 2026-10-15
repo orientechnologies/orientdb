@@ -5196,8 +5196,7 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
     }
 
     // CONTAINSANY must match records that share any element after coercion.
-    try (OResultSet rs =
-        db.query("SELECT id FROM L10882 WHERE f CONTAINSANY [1, 7] ORDER BY id")) {
+    try (OResultSet rs = db.query("SELECT id FROM L10882 WHERE f CONTAINSANY [1, 7] ORDER BY id")) {
       List<String> ids = new ArrayList<>();
       rs.forEachRemaining(r -> ids.add(r.getProperty("id")));
       assertEquals(List.of("a", "b", "c"), ids);
@@ -5232,8 +5231,7 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
     db.command("INSERT INTO D10883 SET id = 'z'").close(); // m not defined
 
     // m.k defined only on x.
-    try (OResultSet rs =
-        db.query("SELECT id FROM D10883 WHERE m.k IS DEFINED ORDER BY id")) {
+    try (OResultSet rs = db.query("SELECT id FROM D10883 WHERE m.k IS DEFINED ORDER BY id")) {
       List<String> ids = new ArrayList<>();
       rs.forEachRemaining(r -> ids.add(r.getProperty("id")));
       assertEquals(List.of("x"), ids);
@@ -5247,8 +5245,7 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
     }
 
     // IS NOT DEFINED is the complement over records where the parent resolves.
-    try (OResultSet rs =
-        db.query("SELECT id FROM D10883 WHERE m.k IS NOT DEFINED ORDER BY id")) {
+    try (OResultSet rs = db.query("SELECT id FROM D10883 WHERE m.k IS NOT DEFINED ORDER BY id")) {
       List<String> ids = new ArrayList<>();
       rs.forEachRemaining(r -> ids.add(r.getProperty("id")));
       // y has m={} without k; z has no m at all — both are "k not defined".
@@ -5268,29 +5265,25 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
     db.command("INSERT INTO D10912 SET k = 'a', f = [0, 1]").close();
     db.command("INSERT INTO D10912 SET k = 'b', f = [0]").close();
 
-    try (OResultSet rs =
-        db.query("SELECT k FROM D10912 WHERE f IN [[0, 1]] ORDER BY k")) {
+    try (OResultSet rs = db.query("SELECT k FROM D10912 WHERE f IN [[0, 1]] ORDER BY k")) {
       List<String> ks = new ArrayList<>();
       rs.forEachRemaining(r -> ks.add(r.getProperty("k")));
       assertEquals(List.of("a"), ks);
     }
 
-    try (OResultSet rs =
-        db.query("SELECT k FROM D10912 WHERE f IN [[1]] ORDER BY k")) {
+    try (OResultSet rs = db.query("SELECT k FROM D10912 WHERE f IN [[1]] ORDER BY k")) {
       List<String> ks = new ArrayList<>();
       rs.forEachRemaining(r -> ks.add(r.getProperty("k")));
       assertEquals(List.of(), ks);
     }
 
-    try (OResultSet rs =
-        db.query("SELECT k FROM D10912 WHERE f IN [[0]] ORDER BY k")) {
+    try (OResultSet rs = db.query("SELECT k FROM D10912 WHERE f IN [[0]] ORDER BY k")) {
       List<String> ks = new ArrayList<>();
       rs.forEachRemaining(r -> ks.add(r.getProperty("k")));
       assertEquals(List.of("b"), ks);
     }
 
-    try (OResultSet rs =
-        db.query("SELECT k FROM D10912 WHERE f IN [[0], [0, 1]] ORDER BY k")) {
+    try (OResultSet rs = db.query("SELECT k FROM D10912 WHERE f IN [[0], [0, 1]] ORDER BY k")) {
       List<String> ks = new ArrayList<>();
       rs.forEachRemaining(r -> ks.add(r.getProperty("k")));
       assertEquals(List.of("a", "b"), ks);
@@ -5334,8 +5327,10 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
   public void test_issue10896_countDistinctSubquery() {
     db.command("CREATE CLASS T10896").close();
     db.command("CREATE PROPERTY T10896.v LONG").close();
-    long[] values = {0, -1, 64, -65, 128, -129, 192, -193, 256, -257, 320, -321, 384, -385, 448,
-        -449, 512, -513, 576, -577};
+    long[] values = {
+      0, -1, 64, -65, 128, -129, 192, -193, 256, -257, 320, -321, 384, -385, 448, -449, 512, -513,
+      576, -577
+    };
     for (int pass = 0; pass < 2; pass++) {
       for (long v : values) {
         db.command("INSERT INTO T10896 SET v = " + v).close();
@@ -5427,10 +5422,12 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
     db.command("CREATE PROPERTY D10888.d DATETIME").close();
     db.command("CREATE PROPERTY D10888.f INTEGER").close();
     db.command(
-            "INSERT INTO D10888 SET id='a', d=DATE('2024-01-01 12:34:56','yyyy-MM-dd HH:mm:ss'), f=5")
+            "INSERT INTO D10888 SET id='a', d=DATE('2024-01-01 12:34:56','yyyy-MM-dd HH:mm:ss'),"
+                + " f=5")
         .close();
     db.command(
-            "INSERT INTO D10888 SET id='b', d=DATE('2024-06-01 00:00:00','yyyy-MM-dd HH:mm:ss'), f=10")
+            "INSERT INTO D10888 SET id='b', d=DATE('2024-06-01 00:00:00','yyyy-MM-dd HH:mm:ss'),"
+                + " f=10")
         .close();
 
     // DATETIME equality — symmetric.
@@ -5520,18 +5517,15 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
     db.command("INSERT INTO D10884 SET id = 'a', f = 0, n = (SELECT FROM D10884 WHERE id = 'b')")
         .close();
 
-    try (OResultSet rs =
-        db.query("SELECT n.n[f > 2].id as r FROM D10884 WHERE id = 'a'")) {
+    try (OResultSet rs = db.query("SELECT n.n[f > 2].id as r FROM D10884 WHERE id = 'a'")) {
       Object r = rs.next().getProperty("r");
       assertEquals(List.of(List.of("d")), r);
     }
-    try (OResultSet rs =
-        db.query("SELECT n.n[f = 2].id as r FROM D10884 WHERE id = 'a'")) {
+    try (OResultSet rs = db.query("SELECT n.n[f = 2].id as r FROM D10884 WHERE id = 'a'")) {
       Object r = rs.next().getProperty("r");
       assertEquals(List.of(List.of("c")), r);
     }
-    try (OResultSet rs =
-        db.query("SELECT n.n[f > -1].id as r FROM D10884 WHERE id = 'a'")) {
+    try (OResultSet rs = db.query("SELECT n.n[f > -1].id as r FROM D10884 WHERE id = 'a'")) {
       Object r = rs.next().getProperty("r");
       assertEquals(List.of(List.of("c", "d")), r);
     }
@@ -5548,8 +5542,7 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
     db.command("CREATE CLASS T10885").close();
     db.command("CREATE PROPERTY T10885.f LONG").close();
     db.command("CREATE PROPERTY T10885.g STRING").close();
-    db.command(
-            "CREATE INDEX t10885_f ON T10885 (f) NOTUNIQUE METADATA {ignoreNullValues: true}")
+    db.command("CREATE INDEX t10885_f ON T10885 (f) NOTUNIQUE METADATA {ignoreNullValues: true}")
         .close();
     db.command("INSERT INTO T10885 SET g = 'a', f = 5").close();
     db.command("INSERT INTO T10885 SET g = 'b', f = 1").close();
