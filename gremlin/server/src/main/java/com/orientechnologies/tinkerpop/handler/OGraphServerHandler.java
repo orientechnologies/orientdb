@@ -37,17 +37,11 @@ public class OGraphServerHandler implements OServerPlugin {
 
   @Override
   public void config(final OServer server, OServerParameterConfiguration[] iParams) {
-    var graphPoolMax = server.getContextConfiguration().dbPoolMax();
     config = OGraphServerHandlerConfig.fromParameters(iParams);
-    if (config.getGraphPoolMax() != null) {
-      graphPoolMax = config.getGraphPoolMax();
-    }
     OCommandGremlinExecutor executor =
         (OCommandGremlinExecutor)
             server.getDatabases().getScriptManager().getScriptExecutor("gremlin");
-    logger.info(
-        "Installed GREMLIN language v.%s - graph.pool.max=%d",
-        executor.getEngineVersion(), graphPoolMax);
+    logger.info("Installed GREMLIN language v.%s ", executor.getEngineVersion());
 
     this.server = server;
   }
