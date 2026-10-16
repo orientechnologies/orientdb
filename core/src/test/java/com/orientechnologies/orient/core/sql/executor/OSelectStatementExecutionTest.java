@@ -5157,4 +5157,25 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
         db.command("select from ParamItem " + "where oldid in :ids", java.util.Map.of("ids", ids));
     assertEquals(res.stream().count(), 2);
   }
+
+  // regression: #10899
+  @Test
+  public void test_issue10899_containsValueInSubqueryWithLong() {
+    db.command("CREATE CLASS T10899").close();
+    db.command("CREATE PROPERTY T10899.id STRING").close();
+    db.command("CREATE PROPERTY T10899.g LONG").close();
+    db.command("CREATE PROPERTY T10899.m EMBEDDEDMAP LONG").close();
+    db.command("INSERT INTO T10899 SET id = 'r0', g = 0, m = {\"k1\": 1099511627776, \"k2\": 3}")
+        .close();
+    db.command("INSERT INTO T10899 SET id = 'r1', g = 1, m = {\"k1\": 5}").close();
+
+    try (OResultSet rs =
+        db.query(
+            "SELECT id FROM T10899 WHERE id IN (SELECT id FROM T10899 WHERE m CONTAINSVALUE"
+                + " 1099511627776)")) {
+      List<String> ids = new ArrayList<>();
+      rs.forEachRemaining(r -> ids.add(r.getProperty("id")));
+      assertEquals(List.of("r0"), ids);
+    }
+  }
 }
