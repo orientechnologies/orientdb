@@ -127,9 +127,7 @@ public class OModifier extends SimpleNode {
     if (iResult.getClass().isArray()) {
       for (int i = 0; i < Array.getLength(iResult); i++) {
         Object item = Array.get(iResult, i);
-        if (condition.evaluate(item, ctx)) {
-          result.add(item);
-        }
+        addFiltered(result, item, ctx);
       }
       return result;
     }
@@ -142,12 +140,30 @@ public class OModifier extends SimpleNode {
     if (iResult instanceof Iterator) {
       while (((Iterator) iResult).hasNext()) {
         Object item = ((Iterator) iResult).next();
-        if (condition.evaluate(item, ctx)) {
-          result.add(item);
-        }
+        addFiltered(result, item, ctx);
       }
     }
     return result;
+  }
+
+  // Recurse into nested multi-value items so the filter applies at the same depth as the final
+  // field access — matches one-hop semantics for multi-hop link traversals.
+  private void addFiltered(List<Object> out, Object item, OCommandContext ctx) {
+    if (item != null
+        && !(item instanceof OIdentifiable)
+        && !(item instanceof OResult)
+        && !(item instanceof Map)
+        && OMultiValue.isMultiValue(item)) {
+      List<Object> inner = new ArrayList<>();
+      for (Object sub : OMultiValue.getMultiValueIterable(item)) {
+        addFiltered(inner, sub, ctx);
+      }
+      out.add(inner);
+      return;
+    }
+    if (condition.evaluate(item, ctx)) {
+      out.add(item);
+    }
   }
 
   public boolean needsAliases(Set<String> aliases) {
