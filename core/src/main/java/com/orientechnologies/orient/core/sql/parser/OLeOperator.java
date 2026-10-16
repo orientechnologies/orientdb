@@ -33,6 +33,15 @@ public class OLeOperator extends SimpleNode implements OBinaryCompareOperator {
       Number[] couple = OType.castComparableNumber((Number) iLeft, (Number) iRight);
       iLeft = couple[0];
       iRight = couple[1];
+    } else if (iLeft instanceof String && !(iRight instanceof String)) {
+      // Coerce String literal toward the typed side so left/right order doesn't flip the result.
+      try {
+        iLeft = OType.convert(iLeft, iRight.getClass());
+      } catch (RuntimeException e) {
+        iLeft = null;
+        logger.warn("Issue converting value to target type, ignoring value", e);
+      }
+      if (iLeft == null) return false;
     } else {
       try {
         iRight = OType.convert(iRight, iLeft.getClass());
