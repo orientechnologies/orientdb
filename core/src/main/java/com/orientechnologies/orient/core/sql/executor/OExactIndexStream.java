@@ -15,17 +15,28 @@ public class OExactIndexStream implements OIndexStream {
   private OIndexInternal index;
   private Collection<Object> startKey;
   private boolean asc;
+  private final boolean empty;
 
   public OExactIndexStream(OIndexInternal index, Object startKey, boolean asc) {
     super();
     this.index = index;
-    this.startKey = toIndexKey(index.getDefinition(), startKey);
+    this.empty =
+        index.getDefinition().getFields().size() == 1
+            && startKey instanceof Collection
+            && ((Collection<?>) startKey).isEmpty();
+    this.startKey =
+        this.empty ? Collections.emptyList() : toIndexKey(index.getDefinition(), startKey);
     this.asc = asc;
   }
 
   private static Collection<Object> toIndexKey(OIndexDefinition definition, Object rightValue) {
     if (definition.getFields().size() == 1 && rightValue instanceof Collection) {
-      rightValue = ((Collection) rightValue).iterator().next();
+      // IN (subquery) feeds one row's value per stream; an empty-list row contributes no key.
+      if (((Collection) rightValue).isEmpty()) {
+        rightValue = null;
+      } else {
+        rightValue = ((Collection) rightValue).iterator().next();
+      }
     }
     if (rightValue instanceof List) {
       rightValue = definition.createValue((List<?>) rightValue);
@@ -39,6 +50,9 @@ public class OExactIndexStream implements OIndexStream {
   }
 
   public Stream<ORawPair<Object, ORID>> start(OCommandContext ctx) {
+    if (empty) {
+      return Stream.empty();
+    }
     return index.streamEntries(startKey, asc);
   }
 
