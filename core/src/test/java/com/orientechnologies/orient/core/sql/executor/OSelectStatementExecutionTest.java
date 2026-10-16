@@ -5157,4 +5157,20 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
         db.command("select from ParamItem " + "where oldid in :ids", java.util.Map.of("ids", ids));
     assertEquals(res.stream().count(), 2);
   }
+
+  // regression: #10910
+  @Test
+  public void test_issue10910_inSubqueryEmptyListHashIndex() {
+    db.command("CREATE CLASS T10910").close();
+    db.command("CREATE PROPERTY T10910.id STRING").close();
+    db.command("CREATE INDEX T10910_id ON T10910 (id) UNIQUE_HASH_INDEX").close();
+    db.command("INSERT INTO T10910 SET id = 'a', l = ['b']").close();
+    db.command("INSERT INTO T10910 SET id = 'b', l = []").close();
+
+    try (OResultSet rs = db.query("SELECT id FROM T10910 WHERE id IN (SELECT l FROM T10910)")) {
+      List<String> ids = new ArrayList<>();
+      rs.forEachRemaining(r -> ids.add(r.getProperty("id")));
+      assertEquals(List.of("b"), ids);
+    }
+  }
 }
