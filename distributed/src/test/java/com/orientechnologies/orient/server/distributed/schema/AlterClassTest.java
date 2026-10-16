@@ -37,6 +37,9 @@ public class AlterClassTest extends AbstractServerClusterTest {
     ODatabaseDocument db =
         serverInstance.get(0).getServerInstance().openDatabase(getDatabaseName());
     try {
+      // wait till databases will be opened on both servers
+      Thread.sleep(1_000);
+
       testAlterCustomAttributeInClass(db);
       testAlterCustomAttributeWithDotInClass(db);
     } finally {
