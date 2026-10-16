@@ -58,7 +58,7 @@ public class OServerConfigurationRewrite {
               yield new OHandlerConfig("syslog", createSyslogConfig(handler.getParameters()));
             }
             case "com.orientechnologies.orient.server.distributed.impl.ODistributedPlugin" -> {
-              yield new OHandlerConfig("cluster", null);
+              yield new OHandlerConfig("cluster", createDistributedConfig(handler.getParameters()));
             }
             case "com.orientechnologies.agent.OEnterpriseAgent" -> {
               yield new OHandlerConfig("enterprise-agent", null);
@@ -101,6 +101,26 @@ public class OServerConfigurationRewrite {
     return newHandlers;
   }
 
+  private JsonNode createDistributedConfig(OServerParameterConfiguration[] parameters) {
+    if (parameters.length == 0) {
+      return null;
+    }
+    ObjectMapper mapper = new ObjectMapper();
+    var object = mapper.createObjectNode();
+
+    for (OServerParameterConfiguration param : parameters) {
+      if (param.getName().equalsIgnoreCase("enabled")) {
+        object.put("enabled", Boolean.parseBoolean(param.getValue()));
+      } else if (param.getName().equalsIgnoreCase("nodeName")) {
+        object.put("nodeName", param.getValue());
+      } else if (param.getName().startsWith("configuration.db.default")) {
+        object.put("configuration.db.default", param.getValue());
+      }
+    }
+
+    return object;
+  }
+
   private JsonNode createJmxConfig(OServerParameterConfiguration[] parameters) {
     if (parameters.length == 0) {
       return null;
@@ -141,7 +161,7 @@ public class OServerConfigurationRewrite {
         object.set("ports", array);
       }
     }
-    return null;
+    return object;
   }
 
   private JsonNode serverSideInterpreter(OServerParameterConfiguration[] parameters) {
