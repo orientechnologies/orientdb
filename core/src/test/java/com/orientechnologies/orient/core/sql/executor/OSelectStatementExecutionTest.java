@@ -5157,4 +5157,39 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
         db.command("select from ParamItem " + "where oldid in :ids", java.util.Map.of("ids", ids));
     assertEquals(res.stream().count(), 2);
   }
+
+  // regression: #10880
+  @Test
+  public void test_issue10880_dictionaryIndexDuplicateMatches() {
+    db.command("CREATE CLASS K10880").close();
+    db.command("CREATE PROPERTY K10880.f STRING").close();
+    db.command("CREATE INDEX k10880_f ON K10880 (f) DICTIONARY").close();
+    db.command("INSERT INTO K10880 SET f = 'dup'").close();
+    db.command("INSERT INTO K10880 SET f = 'dup'").close();
+    db.command("INSERT INTO K10880 SET f = 'dup'").close();
+
+    int countEq = 0;
+    try (OResultSet rs = db.query("SELECT FROM K10880 WHERE f = 'dup'")) {
+      while (rs.hasNext()) {
+        rs.next();
+        countEq++;
+      }
+    }
+    assertEquals(3, countEq);
+
+    long countAgg;
+    try (OResultSet rs = db.query("SELECT count(*) as c FROM K10880 WHERE f = 'dup'")) {
+      countAgg = ((Number) rs.next().getProperty("c")).longValue();
+    }
+    assertEquals(3L, countAgg);
+
+    int countIn = 0;
+    try (OResultSet rs = db.query("SELECT FROM K10880 WHERE f IN ['dup']")) {
+      while (rs.hasNext()) {
+        rs.next();
+        countIn++;
+      }
+    }
+    assertEquals(3, countIn);
+  }
 }
