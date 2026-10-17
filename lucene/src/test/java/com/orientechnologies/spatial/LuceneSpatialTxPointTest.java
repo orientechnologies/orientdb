@@ -23,7 +23,10 @@ import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationContextImpl;
+import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import java.util.ArrayList;
 import org.junit.Assert;
 import org.junit.Before;
@@ -98,6 +101,28 @@ public class LuceneSpatialTxPointTest extends BaseSpatialLuceneTest {
     docs = db.query(query);
 
     Assert.assertEquals(0, docs.stream().count());
+
+    OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "City.location");
+    Assert.assertEquals(0, index.getInternal().size());
+  }
+
+  @Test
+  public void testSpatialTxKeyIsNetworkSerializable() {
+    db.begin();
+    db.save(newCity("Rome", 12.5, 41.9));
+
+    OTransactionIndexChanges changes = db.getTransaction().getIndexChanges("City.location");
+    Object key = changes.getFirstKey();
+    OType type = OType.getTypeByValue(key);
+    Assert.assertEquals(OType.BINARY, type);
+
+    byte[] serialized =
+        ORecordSerializerNetworkV37.INSTANCE.serializeValue(
+            key, type, new OSerializationContextImpl());
+    Object deserialized = ORecordSerializerNetworkV37.INSTANCE.deserializeValue(serialized, type);
+    Assert.assertArrayEquals((byte[]) key, (byte[]) deserialized);
+
+    db.rollback();
   }
 
   @Test
