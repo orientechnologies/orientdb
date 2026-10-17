@@ -14,9 +14,11 @@
  */
 package com.orientechnologies.spatial.index;
 
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.lucene.index.OLuceneIndexNotUnique;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
+import com.orientechnologies.orient.core.index.OIndexException;
 import com.orientechnologies.orient.core.index.OIndexMetadata;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
@@ -29,6 +31,9 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.io.ParseException;
+import org.locationtech.jts.io.WKBReader;
+import org.locationtech.jts.io.WKBWriter;
 import org.locationtech.spatial4j.shape.Shape;
 
 public class OLuceneSpatialIndex extends OLuceneIndexNotUnique {
@@ -73,7 +78,9 @@ public class OLuceneSpatialIndex extends OLuceneIndexNotUnique {
 
     if (key instanceof ODocument) {
       Shape shape = shapeFactory.fromDoc((ODocument) key);
-      return shapeFactory.toGeometry(shape);
+      // WKB is a built-in binary value. A JTS Geometry is OType.CUSTOM and the transaction
+      // protocol rejects it unless db.custom.support is enabled.
+      return new WKBWriter().write(shapeFactory.toGeometry(shape));
     }
     return key;
   }
@@ -81,6 +88,13 @@ public class OLuceneSpatialIndex extends OLuceneIndexNotUnique {
   @Override
   protected Object decodeKey(Object key) {
 
+    if (key instanceof byte[]) {
+      try {
+        return shapeFactory.toDoc(new WKBReader().read((byte[]) key));
+      } catch (ParseException e) {
+        throw OException.wrapException(new OIndexException("Invalid spatial index key"), e);
+      }
+    }
     if (key instanceof Geometry) {
       Geometry geom = (Geometry) key;
       return shapeFactory.toDoc(geom);
