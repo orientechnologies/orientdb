@@ -31,4 +31,15 @@ public interface OServerPluginLoader {
     }
     return allLoaders;
   }
+
+  static Map<String, OServerPluginLoader> loadersByClassName(ClassLoader where) {
+    Map<String, OServerPluginLoader> allLoaders = new HashMap<>();
+    var loaders =
+        OClassLoaderHelper.lookupProviderWithOrientClassLoader(OServerPluginLoader.class, where);
+    while (loaders.hasNext()) {
+      var loader = loaders.next();
+      allLoaders.put(loader.getPluginClassName(), loader);
+    }
+    return allLoaders;
+  }
 }

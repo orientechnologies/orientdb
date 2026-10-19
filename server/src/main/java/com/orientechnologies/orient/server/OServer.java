@@ -69,6 +69,7 @@ import com.orientechnologies.orient.server.network.protocol.http.OHttpSessionMan
 import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpDb;
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
+import com.orientechnologies.orient.server.plugin.OServerPluginLoader;
 import com.orientechnologies.orient.server.plugin.OServerPluginManager;
 import com.orientechnologies.orient.server.token.OTokenHandlerImpl;
 import java.io.ByteArrayInputStream;
@@ -111,7 +112,6 @@ public class OServer {
   private OClientConnectionManager clientConnectionManager;
   private OHttpSessionManager httpSessionManager;
   private OPushManager pushManager;
-  private ClassLoader extensionClassLoader;
   private OTokenHandler tokenHandler;
   private OrientDB context;
   private OrientDBInternal databases;
@@ -176,25 +176,6 @@ public class OServer {
     return server;
   }
 
-  /**
-   * Set the preferred {@link ClassLoader} used to load extensions.
-   *
-   * @since 2.1
-   */
-  public void setExtensionClassLoader(/* @Nullable */ final ClassLoader extensionClassLoader) {
-    this.extensionClassLoader = extensionClassLoader;
-  }
-
-  /**
-   * Get the preferred {@link ClassLoader} used to load extensions.
-   *
-   * @since 2.1
-   */
-  /* @Nullable */
-  public ClassLoader getExtensionClassLoader() {
-    return extensionClassLoader;
-  }
-
   public OSecuritySystem getSecurity() {
     return databases.getSecuritySystem();
   }
@@ -245,14 +226,11 @@ public class OServer {
 
   /** Load an extension class by name. */
   private Class<?> loadClass(final String name) throws ClassNotFoundException {
-    Class<?> loaded = tryLoadClass(extensionClassLoader, name);
+    Class<?> loaded = tryLoadClass(Thread.currentThread().getContextClassLoader(), name);
     if (loaded == null) {
-      loaded = tryLoadClass(Thread.currentThread().getContextClassLoader(), name);
+      loaded = tryLoadClass(getClass().getClassLoader(), name);
       if (loaded == null) {
-        loaded = tryLoadClass(getClass().getClassLoader(), name);
-        if (loaded == null) {
-          loaded = Class.forName(name);
-        }
+        loaded = Class.forName(name);
       }
     }
     return loaded;
@@ -1004,19 +982,23 @@ public class OServer {
             continue;
         }
         try {
-          final OServerPlugin plugin =
-              (OServerPlugin) loadClass(h.getClazz()).getConstructor().newInstance();
+          var loaders = OServerPluginLoader.loadersByClassName();
+          var loader = loaders.get(h.getClazz());
+          if (loader != null) {
+            final OServerPlugin plugin = loader.newInstance();
 
-          pluginManager.registerPlugin(
-              new OServerPluginInfo(plugin.getName(), null, null, null, plugin, null, 0, null));
+            pluginManager.registerPlugin(
+                new OServerPluginInfo(plugin.getName(), null, null, null, plugin, null, 0, null));
 
-          plugin.config(this, h.getParameters());
+            plugin.config(this, h.getParameters());
 
-          plugins.add(plugin);
-        } catch (IllegalArgumentException
-            | SecurityException
-            | InvocationTargetException
-            | NoSuchMethodException e) {
+            plugins.add(plugin);
+          } else {
+            logger.error(
+                "could not find plugin loader for %s, know plugins %s",
+                null, h.getClazz(), loaders);
+          }
+        } catch (IllegalArgumentException | SecurityException e) {
           logger.error("Failed instantiating plugin with class %s", e, h.getClazz());
         }
       }
