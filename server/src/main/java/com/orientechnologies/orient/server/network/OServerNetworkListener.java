@@ -24,6 +24,7 @@ import com.orientechnologies.common.exception.OSystemException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
+import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.enterprise.channel.OChannel;
 import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolException;
@@ -32,6 +33,7 @@ import com.orientechnologies.orient.server.config.OServerCommandConfiguration;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommand;
+import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandLoader;
 import java.io.IOException;
 import java.lang.reflect.Constructor;
 import java.net.BindException;
@@ -131,23 +133,19 @@ public class OServerNetworkListener extends Thread {
   @SuppressWarnings("unchecked")
   public static OServerCommand createCommand(
       final OServer server, final OServerCommandConfiguration iCommand) {
-    try {
-      final Constructor<OServerCommand> c =
-          (Constructor<OServerCommand>)
-              Class.forName(iCommand.getImplementation())
-                  .getConstructor(OServerCommandConfiguration.class);
-      final OServerCommand cmd = c.newInstance(new Object[] {iCommand});
-      cmd.configure(server);
-      return cmd;
-    } catch (Exception e) {
-      throw new IllegalArgumentException(
-          "Cannot create custom command invoking the constructor: "
+    var loaders = OServerCommandLoader.loadersByClassName();
+    var loader = loaders.get(iCommand.getImplementation());
+    if (loader == null) {
+      throw new OConfigurationException(
+          "Cannot create custom command missing loader for : "
               + iCommand.getImplementation()
               + "("
               + iCommand
-              + ")",
-          e);
+              + ")");
     }
+    final OServerCommand cmd = loader.newInstance(iCommand);
+    cmd.configure(server);
+    return cmd;
   }
 
   public List<OServerCommandConfiguration> getStatefulCommands() {

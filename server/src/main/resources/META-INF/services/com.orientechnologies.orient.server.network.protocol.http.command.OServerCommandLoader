@@ -1,0 +1,2 @@
+com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetStaticContentLoader
+com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetGephiLoader
