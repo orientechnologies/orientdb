@@ -26,7 +26,7 @@ public class OHttpRequestImpl extends OHttpRequestAbstract {
   private OParsedToken bearerToken;
 
   public OHttpRequestImpl(
-      ONetworkProtocolHttpAbstract iExecutor,
+      ONetworkHttpExecutor iExecutor,
       InputStream iInStream,
       ONetworkProtocolData iData,
       OContextConfiguration iConfiguration) {

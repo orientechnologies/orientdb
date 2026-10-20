@@ -22,7 +22,7 @@ import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
-import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpAbstract;
+import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpDb;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandAuthenticatedDbAbstract;
 import java.io.IOException;
 import java.util.List;
@@ -46,9 +46,8 @@ public class OServerCommandPostKillDbConnection extends OServerCommandAuthentica
     final List<OClientConnection> connections =
         server.getClientConnectionManager().getConnections();
     for (OClientConnection connection : connections) {
-      if (connection.getProtocol() instanceof ONetworkProtocolHttpAbstract) {
-        final ONetworkProtocolHttpAbstract http =
-            (ONetworkProtocolHttpAbstract) connection.getProtocol();
+      if (connection.getProtocol() instanceof ONetworkProtocolHttpDb) {
+        final ONetworkProtocolHttpDb http = (ONetworkProtocolHttpDb) connection.getProtocol();
         final OHttpRequest req = http.getRequest();
 
         if (req != null && req != iRequest && req.getSessionId().equals(iRequest.getSessionId())) {
