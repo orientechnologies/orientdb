@@ -32,10 +32,10 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerCommandConfiguration;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
+import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolLoader;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommand;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandLoader;
 import java.io.IOException;
-import java.lang.reflect.Constructor;
 import java.net.BindException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -51,7 +51,7 @@ public class OServerNetworkListener extends Thread {
   private OServerSocketFactory socketFactory;
   private ServerSocket serverSocket;
   private InetSocketAddress inboundAddr;
-  private Class<? extends ONetworkProtocol> protocolType;
+  private ONetworkProtocolLoader protocolType;
   private volatile boolean active = true;
   private List<OServerCommandConfiguration> statefulCommands =
       new ArrayList<OServerCommandConfiguration>();
@@ -67,12 +67,12 @@ public class OServerNetworkListener extends Thread {
       final String iHostName,
       final String iHostPortRange,
       final String iProtocolName,
-      final Class<? extends ONetworkProtocol> iProtocol,
+      final ONetworkProtocolLoader iProtocol,
       final OServerParameterConfiguration[] iParameters,
       final OServerCommandConfiguration[] iCommands) {
     super(
         iServer.getThreadGroup(),
-        "OrientDB " + iProtocol.getSimpleName() + " listen at " + iHostName + ":" + iHostPortRange);
+        "OrientDB " + iProtocol.getName() + " listen at " + iHostName + ":" + iHostPortRange);
     server = iServer;
 
     socketFactory = iSocketFactory == null ? OServerSocketFactory.getDefault() : iSocketFactory;
@@ -80,7 +80,7 @@ public class OServerNetworkListener extends Thread {
     // DETERMINE THE PROTOCOL VERSION BY CREATING A NEW ONE AND THEN THROW IT AWAY
     // TODO: CREATE PROTOCOL FACTORIES INSTEAD
     try {
-      protocolVersion = iProtocol.getConstructor(OServer.class).newInstance(server).getVersion();
+      protocolVersion = iProtocol.getVersion();
     } catch (Exception e) {
       final String message = "Error on reading protocol version for " + iProtocol;
       logger.error("%s", e, message);
@@ -88,7 +88,7 @@ public class OServerNetworkListener extends Thread {
       throw OException.wrapException(new ONetworkProtocolException(message), e);
     }
 
-    listen(iHostName, iHostPortRange, iProtocolName, iProtocol);
+    listen(iHostName, iHostPortRange, iProtocolName);
     protocolType = iProtocol;
 
     readParameters(iServer.getContextConfiguration(), iParameters);
@@ -201,8 +201,6 @@ public class OServerNetworkListener extends Thread {
   @Override
   public void run() {
     try {
-      Constructor<? extends ONetworkProtocol> constructor =
-          protocolType.getConstructor(OServer.class);
       while (active) {
         try {
           // listen for and accept a client connection to serverSocket
@@ -235,7 +233,7 @@ public class OServerNetworkListener extends Thread {
             socket.setReceiveBufferSize(socketBufferSize);
           }
           // CREATE A NEW PROTOCOL INSTANCE
-          final ONetworkProtocol protocol = constructor.newInstance(server);
+          final ONetworkProtocol protocol = protocolType.newInstance(server);
 
           // CONFIGURE THE PROTOCOL FOR THE INCOMING CONNECTION
           protocol.config(this, server, socket, configuration);
@@ -244,8 +242,6 @@ public class OServerNetworkListener extends Thread {
           if (active) logger.error("Error on client connection", e);
         }
       }
-    } catch (NoSuchMethodException e) {
-      logger.error("error finding the protocol constructor with the server as parameter", e);
     } finally {
       try {
         if (serverSocket != null && !serverSocket.isClosed()) serverSocket.close();
@@ -254,7 +250,7 @@ public class OServerNetworkListener extends Thread {
     }
   }
 
-  public Class<? extends ONetworkProtocol> getProtocolType() {
+  public ONetworkProtocolLoader getProtocolType() {
     return protocolType;
   }
 
@@ -309,7 +305,7 @@ public class OServerNetworkListener extends Thread {
   public String toString() {
     StringBuilder builder = new StringBuilder(64);
     builder
-        .append(protocolType.getSimpleName())
+        .append(protocolType.getName())
         .append(" ")
         .append(serverSocket.getLocalSocketAddress())
         .append(":");
@@ -332,15 +328,11 @@ public class OServerNetworkListener extends Thread {
 
   /**
    * Initialize a server socket for communicating with the client.
-   *
-   * @param iHostPortRange
    * @param iHostName
+   * @param iHostPortRange
    */
   private void listen(
-      final String iHostName,
-      final String iHostPortRange,
-      final String iProtocolName,
-      Class<? extends ONetworkProtocol> protocolClass) {
+      final String iHostName, final String iHostPortRange, final String iProtocolName) {
 
     for (int port : getPorts(iHostPortRange)) {
       inboundAddr = new InetSocketAddress(iHostName, port);

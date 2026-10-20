@@ -51,7 +51,7 @@ import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
-import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpAbstract;
+import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpDb;
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import java.io.IOException;
 import java.io.InputStream;
@@ -145,13 +145,13 @@ public class OEnterpriseAgent
   @Deprecated
   public void installDistributedCommands() {
     final OServerNetworkListener listener =
-        server.getListenerByProtocol(ONetworkProtocolHttpAbstract.class);
+        server.getListenerByProtocol(ONetworkProtocolHttpDb.class);
     if (listener == null) throw new OConfigurationException("HTTP listener not found");
   }
 
   private void uninstallCommands() {
     final OServerNetworkListener listener =
-        server.getListenerByProtocol(ONetworkProtocolHttpAbstract.class);
+        server.getListenerByProtocol(ONetworkProtocolHttpDb.class);
     if (listener == null) {
       throw new OConfigurationException("HTTP listener not found");
     }

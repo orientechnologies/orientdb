@@ -34,7 +34,7 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerLifecycleListener;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
-import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpAbstract;
+import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpDb;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommand;
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
@@ -255,7 +255,7 @@ public class OEnterpriseServerImpl
   @Override
   public void registerStatelessCommand(OServerCommand iCommand) {
     final OServerNetworkListener listener =
-        server.getListenerByProtocol(ONetworkProtocolHttpAbstract.class);
+        server.getListenerByProtocol(ONetworkProtocolHttpDb.class);
     if (listener != null) {
       listener.registerStatelessCommand(iCommand);
     }
@@ -264,7 +264,7 @@ public class OEnterpriseServerImpl
   @Override
   public void unregisterStatelessCommand(Class<? extends OServerCommand> iCommandClass) {
     final OServerNetworkListener listener =
-        server.getListenerByProtocol(ONetworkProtocolHttpAbstract.class);
+        server.getListenerByProtocol(ONetworkProtocolHttpDb.class);
     if (listener != null) {
       listener.unregisterStatelessCommand(iCommandClass);
     }
@@ -273,7 +273,7 @@ public class OEnterpriseServerImpl
   @Override
   public Collection<OServerCommand> listCommands() {
     final OServerNetworkListener listener =
-        server.getListenerByProtocol(ONetworkProtocolHttpAbstract.class);
+        server.getListenerByProtocol(ONetworkProtocolHttpDb.class);
     return listener.getStatelessCommands();
   }
 

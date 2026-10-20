@@ -31,7 +31,7 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerEntryConfiguration;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
-import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpAbstract;
+import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpDb;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetStaticContent;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetStaticContent.OStaticContent;
 import java.io.BufferedInputStream;
@@ -197,7 +197,7 @@ public class OServerPluginManager implements OService {
     if (pluginWWW == null) pluginWWW = iPluginData.getName();
 
     final OServerNetworkListener httpListener =
-        server.getListenerByProtocol(ONetworkProtocolHttpAbstract.class);
+        server.getListenerByProtocol(ONetworkProtocolHttpDb.class);
 
     if (httpListener == null)
       throw new OConfigurationException(

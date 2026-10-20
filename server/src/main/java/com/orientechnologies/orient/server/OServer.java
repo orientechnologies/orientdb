@@ -65,6 +65,7 @@ import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.OServerSocketFactory;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
+import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolLoader;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpSessionManager;
 import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpDb;
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
@@ -459,13 +460,16 @@ public class OServer {
         }
       }
     }
-    Map<String, Class<? extends ONetworkProtocol>> networkProtocols =
-        new HashMap<String, Class<? extends ONetworkProtocol>>();
+    Map<String, ONetworkProtocolLoader> networkProtocols = new HashMap<>();
 
     // REGISTER PROTOCOLS
-    for (OServerNetworkProtocolConfiguration p : networkConf.getProtocols())
-      networkProtocols.put(
-          p.getName(), (Class<? extends ONetworkProtocol>) loadClass(p.getImplementation()));
+    var availableProtocols = ONetworkProtocolLoader.loadersByClassName();
+    for (OServerNetworkProtocolConfiguration p : networkConf.getProtocols()) {
+      var loader = availableProtocols.get(p.getImplementation());
+      if (loader != null) {
+        networkProtocols.put(p.getName(), loader);
+      }
+    }
 
     // STARTUP LISTENERS
     List<OServerNetworkListener> listener = new ArrayList<>();
@@ -665,7 +669,7 @@ public class OServer {
   public <RET extends OServerNetworkListener> RET getListenerByProtocol(
       final Class<? extends ONetworkProtocol> iProtocolClass) {
     for (OServerNetworkListener l : networkListeners)
-      if (iProtocolClass.isAssignableFrom(l.getProtocolType())) return (RET) l;
+      if (iProtocolClass.getName().equals(l.getProtocolType().getClassName())) return (RET) l;
 
     return null;
   }

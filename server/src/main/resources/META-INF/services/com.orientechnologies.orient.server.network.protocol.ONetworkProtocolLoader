@@ -1,0 +1,2 @@
+com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinaryLoader
+com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpDbLoader

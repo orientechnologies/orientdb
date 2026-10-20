@@ -1866,7 +1866,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
       for (OServerNetworkListener listener : server.getNetworkListeners()) {
         listeners.add(
             new ONodeInfoListener(
-                listener.getProtocolType().getSimpleName(), listener.getListeningAddress(true)));
+                listener.getProtocolType().getName(), listener.getListeningAddress(true)));
       }
     }
 
@@ -1957,7 +1957,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
     for (OServerNetworkListener listener : server.getNetworkListeners()) {
       listeners.add(
           new ONodeListenerConfig(
-              listener.getProtocolType().getSimpleName(), listener.getListeningAddress(true)));
+              listener.getProtocolType().getName(), listener.getListeningAddress(true)));
     }
     nodeCfg.setListeners(listeners);
 
