@@ -5160,7 +5160,7 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
 
   // regression: #10899
   @Test
-  public void test_issue10899_containsValueInSubqueryWithLong() {
+  public void containsValueInSubqueryWithLong() {
     db.command("CREATE CLASS T10899").close();
     db.command("CREATE PROPERTY T10899.id STRING").close();
     db.command("CREATE PROPERTY T10899.g LONG").close();
