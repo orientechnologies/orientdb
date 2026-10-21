@@ -329,4 +329,21 @@ public interface OIndexInternal extends OIndex {
   OIndex create(OIndexMetadata metadata, boolean rebuild, OProgressListener progressListener);
 
   int getIndexId();
+
+  /**
+   * Converts a transaction key of this index to a value that the binary protocol can send without
+   * OType.CUSTOM serialization. The receiving side turns it back with {@link
+   * #fromNetworkKey(Object)}.
+   */
+  default Object toNetworkKey(Object key) {
+    return key;
+  }
+
+  /**
+   * Converts a transaction key received from the binary protocol back to the key used by this
+   * index. It must also accept the original key, which a 3.2.x peer sends as an OType.CUSTOM value.
+   */
+  default Object fromNetworkKey(Object key) {
+    return key;
+  }
 }

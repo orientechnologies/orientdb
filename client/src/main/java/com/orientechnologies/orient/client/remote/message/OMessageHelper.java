@@ -14,6 +14,8 @@ import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
+import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -323,10 +325,23 @@ public class OMessageHelper {
           network.writeRID(perKeyChange.getValue().getIdentity());
         }
       }
+      OIndexInternal index = null;
       for (OTransactionIndexChangesPerKey change :
           indexChange.getKeyChanges().changesPerKey.values()) {
-        OType type = OType.getTypeByValue(change.key);
-        byte[] value = serializer.serializeValue(change.key, type, ctx);
+        Object key = change.key;
+        OType type = OType.getTypeByValue(key);
+        if (type == OType.CUSTOM) {
+          // Let the index turn a custom key (e.g. a spatial Geometry) into a built-in type, so
+          // sending it does not depend on db.custom.support.
+          if (index == null) {
+            index = findIndexInternal(indexChange.getName());
+          }
+          if (index != null) {
+            key = index.toNetworkKey(key);
+            type = OType.getTypeByValue(key);
+          }
+        }
+        byte[] value = serializer.serializeValue(key, type, ctx);
         network.writeByte((byte) type.getId());
         network.writeBytes(value);
         network.writeInt(change.size());
@@ -342,6 +357,15 @@ public class OMessageHelper {
         }
       }
     }
+  }
+
+  private static OIndexInternal findIndexInternal(String indexName) {
+    ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
+    if (db == null || db.isClosed()) {
+      return null;
+    }
+    OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, indexName);
+    return index == null ? null : index.getInternal();
   }
 
   static List<IndexChange> readTransactionIndexChanges(

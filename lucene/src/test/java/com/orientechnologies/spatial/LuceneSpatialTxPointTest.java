@@ -19,6 +19,7 @@
 package com.orientechnologies.spatial;
 
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -26,11 +27,11 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.serialization.serializer.record.OSerializationContextImpl;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
-import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import java.util.ArrayList;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
+import org.locationtech.jts.geom.Geometry;
 
 /** Created by Enrico Risa on 07/08/15. */
 public class LuceneSpatialTxPointTest extends BaseSpatialLuceneTest {
@@ -78,6 +79,33 @@ public class LuceneSpatialTxPointTest extends BaseSpatialLuceneTest {
   }
 
   @Test
+  public void testTxKeyNetworkRoundTrip() {
+    db.begin();
+    db.save(newCity("Rome", 12.5, 41.9));
+
+    OIndexInternal index =
+        db.getMetadata().getIndexManagerInternal().getIndex(db, "City.location").getInternal();
+    Object key = db.getTransaction().getIndexChanges("City.location").getFirstKey();
+    Assert.assertTrue(key instanceof Geometry);
+
+    Object networkKey = index.toNetworkKey(key);
+    OType type = OType.getTypeByValue(networkKey);
+    Assert.assertEquals(OType.STRING, type);
+    byte[] bytes =
+        ORecordSerializerNetworkV37.INSTANCE.serializeValue(
+            networkKey, type, new OSerializationContextImpl());
+    Object received = ORecordSerializerNetworkV37.INSTANCE.deserializeValue(bytes, type);
+
+    Object restored = index.fromNetworkKey(received);
+    Assert.assertTrue(restored instanceof Geometry);
+    Assert.assertTrue(((Geometry) key).equalsExact((Geometry) restored));
+    // A 3.2.x peer sends the Geometry itself as a custom value.
+    Assert.assertSame(key, index.fromNetworkKey(key));
+
+    db.rollback();
+  }
+
+  @Test
   public void testIndexingTxPoint() {
 
     ODocument rome = newCity("Rome", 12.5, 41.9);
@@ -101,28 +129,6 @@ public class LuceneSpatialTxPointTest extends BaseSpatialLuceneTest {
     docs = db.query(query);
 
     Assert.assertEquals(0, docs.stream().count());
-
-    OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "City.location");
-    Assert.assertEquals(0, index.getInternal().size());
-  }
-
-  @Test
-  public void testSpatialTxKeyIsNetworkSerializable() {
-    db.begin();
-    db.save(newCity("Rome", 12.5, 41.9));
-
-    OTransactionIndexChanges changes = db.getTransaction().getIndexChanges("City.location");
-    Object key = changes.getFirstKey();
-    OType type = OType.getTypeByValue(key);
-    Assert.assertEquals(OType.BINARY, type);
-
-    byte[] serialized =
-        ORecordSerializerNetworkV37.INSTANCE.serializeValue(
-            key, type, new OSerializationContextImpl());
-    Object deserialized = ORecordSerializerNetworkV37.INSTANCE.deserializeValue(serialized, type);
-    Assert.assertArrayEquals((byte[]) key, (byte[]) deserialized);
-
-    db.rollback();
   }
 
   @Test
