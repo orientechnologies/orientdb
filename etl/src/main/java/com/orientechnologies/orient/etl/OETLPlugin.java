@@ -28,7 +28,7 @@ import com.orientechnologies.orient.output.OPluginMessageHandler;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
-import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpAbstract;
+import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpDb;
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
 
 /**
@@ -80,7 +80,7 @@ public class OETLPlugin implements OServerPlugin {
   public void startup() {
 
     final OServerNetworkListener listener =
-        server.getListenerByProtocol(ONetworkProtocolHttpAbstract.class);
+        server.getListenerByProtocol(ONetworkProtocolHttpDb.class);
     if (listener == null) {
       throw new OConfigurationException("HTTP listener not found");
     }

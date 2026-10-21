@@ -362,20 +362,23 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   public void notifyClients(String databaseName) {
-    List<String> hosts = new ArrayList<>();
-    for (ONodeId name : getOps().getNetworkTopology().getMembers()) {
-      ONodeConfig memberConfig = getNodeConfiguration(name);
-      if (memberConfig != null) {
-        final Collection<ONodeListenerConfig> listeners = memberConfig.getListeners();
-        if (listeners != null)
-          for (ONodeListenerConfig listener : listeners) {
-            if (listener.getProtocol().equals("ONetworkProtocolBinary")) {
-              hosts.add(listener.getListen());
+    OCoordinatedDistributedOps ops = getOps();
+    if (ops != null) {
+      List<String> hosts = new ArrayList<>();
+      for (ONodeId name : ops.getNetworkTopology().getMembers()) {
+        ONodeConfig memberConfig = getNodeConfiguration(name);
+        if (memberConfig != null) {
+          final Collection<ONodeListenerConfig> listeners = memberConfig.getListeners();
+          if (listeners != null)
+            for (ONodeListenerConfig listener : listeners) {
+              if (listener.getProtocol().equals("ONetworkProtocolBinary")) {
+                hosts.add(listener.getListen());
+              }
             }
-          }
+        }
       }
+      server.getPushManager().pushDistributedConfig(databaseName, hosts);
     }
-    server.getPushManager().pushDistributedConfig(databaseName, hosts);
   }
 
   public void dumpNodeInfo() {
@@ -1863,7 +1866,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
       for (OServerNetworkListener listener : server.getNetworkListeners()) {
         listeners.add(
             new ONodeInfoListener(
-                listener.getProtocolType().getSimpleName(), listener.getListeningAddress(true)));
+                listener.getProtocolType().getName(), listener.getListeningAddress(true)));
       }
     }
 
@@ -1954,7 +1957,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
     for (OServerNetworkListener listener : server.getNetworkListeners()) {
       listeners.add(
           new ONodeListenerConfig(
-              listener.getProtocolType().getSimpleName(), listener.getListeningAddress(true)));
+              listener.getProtocolType().getName(), listener.getListeningAddress(true)));
     }
     nodeCfg.setListeners(listeners);
 

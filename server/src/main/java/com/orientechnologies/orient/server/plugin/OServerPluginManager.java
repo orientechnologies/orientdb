@@ -31,7 +31,7 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerEntryConfiguration;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
-import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpAbstract;
+import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpDb;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetStaticContent;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetStaticContent.OStaticContent;
 import java.io.BufferedInputStream;
@@ -197,7 +197,7 @@ public class OServerPluginManager implements OService {
     if (pluginWWW == null) pluginWWW = iPluginData.getName();
 
     final OServerNetworkListener httpListener =
-        server.getListenerByProtocol(ONetworkProtocolHttpAbstract.class);
+        server.getListenerByProtocol(ONetworkProtocolHttpDb.class);
 
     if (httpListener == null)
       throw new OConfigurationException(
@@ -249,14 +249,15 @@ public class OServerPluginManager implements OService {
 
   @SuppressWarnings("unchecked")
   protected OServerPlugin startPluginClass(
-      final String iClassName,
+      final String className,
       URLClassLoader pluginClassLoader,
-      final OServerParameterConfiguration[] params)
-      throws Exception {
-
-    final Class<? extends OServerPlugin> classToLoad =
-        (Class<? extends OServerPlugin>) pluginClassLoader.loadClass(iClassName);
-    final OServerPlugin instance = classToLoad.newInstance();
+      final OServerParameterConfiguration[] params) {
+    var loaders = OServerPluginLoader.loadersByClassName(pluginClassLoader);
+    var loader = loaders.get(className);
+    if (loader == null) {
+      throw new OConfigurationException("could not find plugin loader for " + className);
+    }
+    final OServerPlugin instance = loader.newInstance();
     instance.config(server, params);
     instance.startup();
     return instance;

@@ -25,7 +25,7 @@ import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
-import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpAbstract;
+import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpDb;
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.tinkerpop.command.OServerCommandPostCommandGremlin;
 import org.apache.tinkerpop.gremlin.orientdb.executor.OCommandGremlinExecutor;
@@ -54,7 +54,7 @@ public class OGraphServerHandler implements OServerPlugin {
   @Override
   public void startup() {
     final OServerNetworkListener listener =
-        server.getListenerByProtocol(ONetworkProtocolHttpAbstract.class);
+        server.getListenerByProtocol(ONetworkProtocolHttpDb.class);
 
     if (!config.isEnabled()) return;
     if (listener != null) listener.registerStatelessCommand(new OServerCommandPostCommandGremlin());

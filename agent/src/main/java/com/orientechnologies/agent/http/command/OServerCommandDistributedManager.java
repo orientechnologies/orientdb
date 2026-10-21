@@ -376,7 +376,7 @@ public class OServerCommandDistributedManager extends OServerCommandDistributedS
       for (OServerNetworkListener listener : server.getNetworkListeners()) {
         listeners.add(
             new ONodeListenerConfig(
-                listener.getProtocolType().getSimpleName(), listener.getListeningAddress(true)));
+                listener.getProtocolType().getName(), listener.getListeningAddress(true)));
       }
       member.setListeners(listeners);
       member.setDatabases(server.getAvailableStorageNames().keySet());

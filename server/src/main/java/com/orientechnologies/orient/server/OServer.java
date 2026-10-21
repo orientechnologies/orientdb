@@ -65,10 +65,12 @@ import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.OServerSocketFactory;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
+import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolLoader;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpSessionManager;
 import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpDb;
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
+import com.orientechnologies.orient.server.plugin.OServerPluginLoader;
 import com.orientechnologies.orient.server.plugin.OServerPluginManager;
 import com.orientechnologies.orient.server.token.OTokenHandlerImpl;
 import java.io.ByteArrayInputStream;
@@ -111,7 +113,6 @@ public class OServer {
   private OClientConnectionManager clientConnectionManager;
   private OHttpSessionManager httpSessionManager;
   private OPushManager pushManager;
-  private ClassLoader extensionClassLoader;
   private OTokenHandler tokenHandler;
   private OrientDB context;
   private OrientDBInternal databases;
@@ -176,25 +177,6 @@ public class OServer {
     return server;
   }
 
-  /**
-   * Set the preferred {@link ClassLoader} used to load extensions.
-   *
-   * @since 2.1
-   */
-  public void setExtensionClassLoader(/* @Nullable */ final ClassLoader extensionClassLoader) {
-    this.extensionClassLoader = extensionClassLoader;
-  }
-
-  /**
-   * Get the preferred {@link ClassLoader} used to load extensions.
-   *
-   * @since 2.1
-   */
-  /* @Nullable */
-  public ClassLoader getExtensionClassLoader() {
-    return extensionClassLoader;
-  }
-
   public OSecuritySystem getSecurity() {
     return databases.getSecuritySystem();
   }
@@ -245,14 +227,11 @@ public class OServer {
 
   /** Load an extension class by name. */
   private Class<?> loadClass(final String name) throws ClassNotFoundException {
-    Class<?> loaded = tryLoadClass(extensionClassLoader, name);
+    Class<?> loaded = tryLoadClass(Thread.currentThread().getContextClassLoader(), name);
     if (loaded == null) {
-      loaded = tryLoadClass(Thread.currentThread().getContextClassLoader(), name);
+      loaded = tryLoadClass(getClass().getClassLoader(), name);
       if (loaded == null) {
-        loaded = tryLoadClass(getClass().getClassLoader(), name);
-        if (loaded == null) {
-          loaded = Class.forName(name);
-        }
+        loaded = Class.forName(name);
       }
     }
     return loaded;
@@ -481,13 +460,16 @@ public class OServer {
         }
       }
     }
-    Map<String, Class<? extends ONetworkProtocol>> networkProtocols =
-        new HashMap<String, Class<? extends ONetworkProtocol>>();
+    Map<String, ONetworkProtocolLoader> networkProtocols = new HashMap<>();
 
     // REGISTER PROTOCOLS
-    for (OServerNetworkProtocolConfiguration p : networkConf.getProtocols())
-      networkProtocols.put(
-          p.getName(), (Class<? extends ONetworkProtocol>) loadClass(p.getImplementation()));
+    var availableProtocols = ONetworkProtocolLoader.loadersByClassName();
+    for (OServerNetworkProtocolConfiguration p : networkConf.getProtocols()) {
+      var loader = availableProtocols.get(p.getImplementation());
+      if (loader != null) {
+        networkProtocols.put(p.getName(), loader);
+      }
+    }
 
     // STARTUP LISTENERS
     List<OServerNetworkListener> listener = new ArrayList<>();
@@ -687,7 +669,7 @@ public class OServer {
   public <RET extends OServerNetworkListener> RET getListenerByProtocol(
       final Class<? extends ONetworkProtocol> iProtocolClass) {
     for (OServerNetworkListener l : networkListeners)
-      if (iProtocolClass.isAssignableFrom(l.getProtocolType())) return (RET) l;
+      if (iProtocolClass.getName().equals(l.getProtocolType().getClassName())) return (RET) l;
 
     return null;
   }
@@ -1004,19 +986,23 @@ public class OServer {
             continue;
         }
         try {
-          final OServerPlugin plugin =
-              (OServerPlugin) loadClass(h.getClazz()).getConstructor().newInstance();
+          var loaders = OServerPluginLoader.loadersByClassName();
+          var loader = loaders.get(h.getClazz());
+          if (loader != null) {
+            final OServerPlugin plugin = loader.newInstance();
 
-          pluginManager.registerPlugin(
-              new OServerPluginInfo(plugin.getName(), null, null, null, plugin, null, 0, null));
+            pluginManager.registerPlugin(
+                new OServerPluginInfo(plugin.getName(), null, null, null, plugin, null, 0, null));
 
-          plugin.config(this, h.getParameters());
+            plugin.config(this, h.getParameters());
 
-          plugins.add(plugin);
-        } catch (IllegalArgumentException
-            | SecurityException
-            | InvocationTargetException
-            | NoSuchMethodException e) {
+            plugins.add(plugin);
+          } else {
+            logger.error(
+                "could not find plugin loader for %s, know plugins %s",
+                null, h.getClazz(), loaders);
+          }
+        } catch (IllegalArgumentException | SecurityException e) {
           logger.error("Failed instantiating plugin with class %s", e, h.getClazz());
         }
       }

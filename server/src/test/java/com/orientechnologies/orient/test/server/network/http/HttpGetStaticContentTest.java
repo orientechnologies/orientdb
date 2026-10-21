@@ -3,7 +3,7 @@ package com.orientechnologies.orient.test.server.network.http;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
-import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpAbstract;
+import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpDb;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetStaticContent;
 import java.io.BufferedInputStream;
 import java.net.URL;
@@ -44,7 +44,7 @@ public class HttpGetStaticContentTest extends BaseHttpTest {
           }
         };
     final OServerNetworkListener httpListener =
-        getServer().getListenerByProtocol(ONetworkProtocolHttpAbstract.class);
+        getServer().getListenerByProtocol(ONetworkProtocolHttpDb.class);
     final OServerCommandGetStaticContent command =
         (OServerCommandGetStaticContent)
             httpListener.getCommand(OServerCommandGetStaticContent.class);
