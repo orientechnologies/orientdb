@@ -47,7 +47,7 @@ SPDX-FileCopyrightText = "2026 OrientDB"
 SPDX-License-Identifier = "Apache-2.0"
 
 [[annotations]]
-path = "distribution/docker/**"
+path = "packages/community/docker/**"
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2026 OrientDB"
 SPDX-License-Identifier = "Apache-2.0"
@@ -245,25 +245,25 @@ SPDX-FileCopyrightText = "2026 OrientDB"
 SPDX-License-Identifier = "Apache-2.0"
 
 [[annotations]]
-path = "gremlin/distribution/src/**"
+path = "packages/tp3/src/**"
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2026 OrientDB"
 SPDX-License-Identifier = "Apache-2.0"
 
 [[annotations]]
-path = "gremlin/distribution/config/**"
+path = "packages/tp3/config/**"
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2026 OrientDB"
 SPDX-License-Identifier = "Apache-2.0"
 
 [[annotations]]
-path = "gremlin/distribution/docker/**"
+path = "packages/tp3/docker/**"
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2026 OrientDB"
 SPDX-License-Identifier = "Apache-2.0"
 
 [[annotations]]
-path = "gremlin/distribution/pom.xml"
+path = "packages/tp3/pom.xml"
 precedence = "aggregate"
 SPDX-FileCopyrightText = "2026 OrientDB"
 SPDX-License-Identifier = "Apache-2.0"
