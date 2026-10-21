@@ -18,6 +18,7 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OClassIndexManager;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndex;
+import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -178,11 +179,18 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
       tempEntries.clear();
 
       for (IndexChange change : indexChanges) {
+        OIndex index =
+            database.getMetadata().getIndexManagerInternal().getIndex(database, change.getName());
+        OIndexInternal indexInternal = index == null ? null : index.getInternal();
         NavigableMap<Object, OTransactionIndexChangesPerKey> changesPerKey =
             new TreeMap<>(ODefaultComparator.INSTANCE);
         for (Map.Entry<Object, OTransactionIndexChangesPerKey> keyChange :
             change.getKeyChanges().changesPerKey.entrySet()) {
           Object key = keyChange.getKey();
+          if (indexInternal != null) {
+            // Undo OIndexInternal.toNetworkKey, applied when the key was written to the network.
+            key = indexInternal.fromNetworkKey(key);
+          }
           if (key instanceof OIdentifiable && !((OIdentifiable) key).getIdentity().isPersistent())
             key = ((OIdentifiable) key).getRecord();
           if (key instanceof OCompositeKey) {

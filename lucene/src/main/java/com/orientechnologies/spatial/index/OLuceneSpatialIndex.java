@@ -32,8 +32,8 @@ import java.util.List;
 import java.util.Map;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.io.ParseException;
-import org.locationtech.jts.io.WKBReader;
-import org.locationtech.jts.io.WKBWriter;
+import org.locationtech.jts.io.WKTReader;
+import org.locationtech.jts.io.WKTWriter;
 import org.locationtech.spatial4j.shape.Shape;
 
 public class OLuceneSpatialIndex extends OLuceneIndexNotUnique {
@@ -78,9 +78,7 @@ public class OLuceneSpatialIndex extends OLuceneIndexNotUnique {
 
     if (key instanceof ODocument) {
       Shape shape = shapeFactory.fromDoc((ODocument) key);
-      // WKB is a built-in binary value. A JTS Geometry is OType.CUSTOM and the transaction
-      // protocol rejects it unless db.custom.support is enabled.
-      return new WKBWriter().write(shapeFactory.toGeometry(shape));
+      return shapeFactory.toGeometry(shape);
     }
     return key;
   }
@@ -88,17 +86,36 @@ public class OLuceneSpatialIndex extends OLuceneIndexNotUnique {
   @Override
   protected Object decodeKey(Object key) {
 
-    if (key instanceof byte[]) {
-      try {
-        return shapeFactory.toDoc(new WKBReader().read((byte[]) key));
-      } catch (ParseException e) {
-        throw OException.wrapException(new OIndexException("Invalid spatial index key"), e);
-      }
-    }
     if (key instanceof Geometry) {
       Geometry geom = (Geometry) key;
       return shapeFactory.toDoc(geom);
     }
+    return key;
+  }
+
+  /**
+   * A JTS Geometry key is OType.CUSTOM, which the binary protocol sends only with
+   * db.custom.support enabled, so transaction keys travel as WKT strings instead.
+   */
+  @Override
+  public Object toNetworkKey(Object key) {
+    if (key instanceof Geometry) {
+      return new WKTWriter().write((Geometry) key);
+    }
+    return key;
+  }
+
+  @Override
+  public Object fromNetworkKey(Object key) {
+    if (key instanceof String) {
+      try {
+        return new WKTReader().read((String) key);
+      } catch (ParseException e) {
+        throw OException.wrapException(
+            new OIndexException("Invalid spatial index key '" + key + "'"), e);
+      }
+    }
+    // A Geometry here is the custom serialized value sent by 3.2.x peers.
     return key;
   }
 
