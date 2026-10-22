@@ -325,22 +325,17 @@ public class OMessageHelper {
           network.writeRID(perKeyChange.getValue().getIdentity());
         }
       }
-      OIndexInternal index = null;
+      // Rewrite every key when the index is present. toNetworkKey is a no-op for built-in types;
+      // custom index keys (for example a spatial Geometry) become a protocol-safe value. Do not
+      // key this off OType.CUSTOM: that type is going away.
+      OIndexInternal index = findIndexInternal(indexChange.getName());
       for (OTransactionIndexChangesPerKey change :
           indexChange.getKeyChanges().changesPerKey.values()) {
         Object key = change.key;
-        OType type = OType.getTypeByValue(key);
-        if (type == OType.CUSTOM) {
-          // Let the index turn a custom key (e.g. a spatial Geometry) into a built-in type, so
-          // sending it does not depend on db.custom.support.
-          if (index == null) {
-            index = findIndexInternal(indexChange.getName());
-          }
-          if (index != null) {
-            key = index.toNetworkKey(key);
-            type = OType.getTypeByValue(key);
-          }
+        if (index != null) {
+          key = index.toNetworkKey(key);
         }
+        OType type = OType.getTypeByValue(key);
         byte[] value = serializer.serializeValue(key, type, ctx);
         network.writeByte((byte) type.getId());
         network.writeBytes(value);
