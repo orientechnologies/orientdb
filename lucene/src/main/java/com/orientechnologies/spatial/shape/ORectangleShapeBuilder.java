@@ -56,12 +56,14 @@ public class ORectangleShapeBuilder extends OShapeBuilder<Rectangle> {
     List<Number> coordinates = document.field(COORDINATES);
 
     Point topLeft =
-        SPATIAL_CONTEXT.makePoint(
-            coordinates.get(0).doubleValue(), coordinates.get(1).doubleValue());
+        SPATIAL_CONTEXT
+            .getShapeFactory()
+            .pointXY(coordinates.get(0).doubleValue(), coordinates.get(1).doubleValue());
     Point bottomRight =
-        SPATIAL_CONTEXT.makePoint(
-            coordinates.get(2).doubleValue(), coordinates.get(3).doubleValue());
-    Rectangle rectangle = SPATIAL_CONTEXT.makeRectangle(topLeft, bottomRight);
+        SPATIAL_CONTEXT
+            .getShapeFactory()
+            .pointXY(coordinates.get(2).doubleValue(), coordinates.get(3).doubleValue());
+    Rectangle rectangle = SPATIAL_CONTEXT.getShapeFactory().rect(topLeft, bottomRight);
     return rectangle;
   }
 

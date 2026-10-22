@@ -88,7 +88,7 @@ public class OMultiLineStringShapeBuilder extends OComplexShapeBuilder<JtsGeomet
     List<List<List<Double>>> coordinates = new ArrayList<List<List<Double>>>();
     ODocument doc = new ODocument(getName() + "Z");
     for (int i = 0; i < geometry.getNumGeometries(); i++) {
-      final Geometry lineString = (LineString) geometry.getGeometryN(i);
+      final Geometry lineString = geometry.getGeometryN(i);
       coordinates.add(coordinatesFromLineStringZ(lineString));
     }
 

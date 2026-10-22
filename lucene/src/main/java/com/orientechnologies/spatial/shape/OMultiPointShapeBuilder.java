@@ -48,7 +48,7 @@ public class OMultiPointShapeBuilder extends OComplexShapeBuilder<JtsGeometry> {
       coords[i] = new Coordinate(coordinate.get(0).doubleValue(), coordinate.get(1).doubleValue());
       i++;
     }
-    return toShape(GEOMETRY_FACTORY.createMultiPoint(coords));
+    return toShape(GEOMETRY_FACTORY.createMultiPointFromCoords(coords));
   }
 
   @Override

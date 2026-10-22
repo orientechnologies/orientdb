@@ -78,9 +78,9 @@ public abstract class OComplexShapeBuilder<T extends Shape> extends OShapeBuilde
       i++;
     }
 
-    MultiPoint multiPoints = GEOMETRY_FACTORY.createMultiPoint(points);
+    MultiPoint multiPoints = GEOMETRY_FACTORY.createMultiPointFromCoords(points);
 
-    return SPATIAL_CONTEXT.makeShape(multiPoints);
+    return SPATIAL_CONTEXT.getShapeFactory().makeShape(multiPoints);
   }
 
   protected JtsGeometry createMultiLine(ShapeCollection<JtsGeometry> geometries) {
@@ -96,7 +96,7 @@ public abstract class OComplexShapeBuilder<T extends Shape> extends OShapeBuilde
 
     MultiLineString multiPoints = GEOMETRY_FACTORY.createMultiLineString(multiLineString);
 
-    return SPATIAL_CONTEXT.makeShape(multiPoints);
+    return SPATIAL_CONTEXT.getShapeFactory().makeShape(multiPoints);
   }
 
   protected JtsGeometry createMultiPolygon(ShapeCollection<Shape> geometries) {
@@ -110,7 +110,7 @@ public abstract class OComplexShapeBuilder<T extends Shape> extends OShapeBuilde
         polygons[i] = (Polygon) ((JtsGeometry) geometry).getGeom();
       } else {
         Rectangle rectangle = (Rectangle) geometry;
-        Geometry geometryFrom = SPATIAL_CONTEXT.getGeometryFrom(rectangle);
+        Geometry geometryFrom = SPATIAL_CONTEXT.getShapeFactory().getGeometryFrom(rectangle);
         polygons[i] = (Polygon) geometryFrom;
       }
 
@@ -119,7 +119,7 @@ public abstract class OComplexShapeBuilder<T extends Shape> extends OShapeBuilde
 
     MultiPolygon multiPolygon = GEOMETRY_FACTORY.createMultiPolygon(polygons);
 
-    return SPATIAL_CONTEXT.makeShape(multiPolygon);
+    return SPATIAL_CONTEXT.getShapeFactory().makeShape(multiPolygon);
   }
 
   protected boolean isMultiPolygon(ShapeCollection<Shape> collection) {

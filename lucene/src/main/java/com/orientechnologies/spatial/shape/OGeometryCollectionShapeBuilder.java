@@ -65,7 +65,7 @@ public class OGeometryCollectionShapeBuilder extends OComplexShapeBuilder<ShapeC
       shapes.add(shape);
     }
 
-    return new ShapeCollection(shapes, SPATIAL_CONTEXT);
+    return new ShapeCollection<Shape>(shapes, SPATIAL_CONTEXT);
   }
 
   @Override
@@ -83,7 +83,7 @@ public class OGeometryCollectionShapeBuilder extends OComplexShapeBuilder<ShapeC
     Geometry[] geometries = new Geometry[shapes.size()];
     int i = 0;
     for (Shape shape : shapes) {
-      geometries[i] = SPATIAL_CONTEXT.getGeometryFrom(shape);
+      geometries[i] = SPATIAL_CONTEXT.getShapeFactory().getGeometryFrom(shape);
       i++;
     }
     return GEOMETRY_FACTORY.createGeometryCollection(geometries).toText();

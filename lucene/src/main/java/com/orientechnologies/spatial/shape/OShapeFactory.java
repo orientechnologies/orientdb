@@ -24,6 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.GeometryCollection;
 import org.locationtech.spatial4j.shape.Point;
 import org.locationtech.spatial4j.shape.Rectangle;
 import org.locationtech.spatial4j.shape.Shape;
@@ -206,13 +207,13 @@ public class OShapeFactory extends OComplexShapeBuilder {
 
   @Override
   public Shape fromMapGeoJson(Map geoJsonMap) {
-    OShapeBuilder oShapeBuilder = factories.get(geoJsonMap.get("type"));
+    OShapeBuilder shapeBuilder = factories.get(geoJsonMap.get("type"));
 
-    if (oShapeBuilder == null) {
-      oShapeBuilder = factories.get(geoJsonMap.get("@class"));
+    if (shapeBuilder == null) {
+      shapeBuilder = factories.get(geoJsonMap.get("@class"));
     }
-    if (oShapeBuilder != null) {
-      return oShapeBuilder.fromMapGeoJson(geoJsonMap);
+    if (shapeBuilder != null) {
+      return shapeBuilder.fromMapGeoJson(geoJsonMap);
     }
     throw new IllegalArgumentException("Invalid map");
     // TODO handle exception shape not found
@@ -224,39 +225,35 @@ public class OShapeFactory extends OComplexShapeBuilder {
       Geometry[] geometries = new Geometry[shapes.size()];
       int i = 0;
       for (Shape shapeItem : shapes) {
-        geometries[i] = SPATIAL_CONTEXT.getGeometryFrom(shapeItem);
+        geometries[i] = SPATIAL_CONTEXT.getShapeFactory().getGeometryFrom(shapeItem);
         i++;
       }
       return GEOMETRY_FACTORY.createGeometryCollection(geometries);
     } else {
-      return SPATIAL_CONTEXT.getGeometryFrom(shape);
+      return SPATIAL_CONTEXT.getShapeFactory().getGeometryFrom(shape);
     }
   }
 
   public ODocument toDoc(Geometry geometry) {
-    if (geometry instanceof org.locationtech.jts.geom.Point) {
-      org.locationtech.jts.geom.Point point = (org.locationtech.jts.geom.Point) geometry;
-      Point point1 = context().makePoint(point.getX(), point.getY());
+    if (geometry instanceof Point point) {
+      Point point1 = context().getShapeFactory().pointXY(point.getX(), point.getY());
       return toDoc(point1);
     }
-    if (geometry instanceof org.locationtech.jts.geom.GeometryCollection) {
-      org.locationtech.jts.geom.GeometryCollection gc =
-          (org.locationtech.jts.geom.GeometryCollection) geometry;
+    if (geometry instanceof GeometryCollection gc) {
       List<Shape> shapes = new ArrayList<Shape>();
       for (int i = 0; i < gc.getNumGeometries(); i++) {
         Geometry geo = gc.getGeometryN(i);
         Shape shape = null;
-        if (geo instanceof org.locationtech.jts.geom.Point) {
-          org.locationtech.jts.geom.Point point = (org.locationtech.jts.geom.Point) geo;
-          shape = context().makePoint(point.getX(), point.getY());
+        if (geo instanceof Point point) {
+          shape = context().getShapeFactory().pointXY(point.getX(), point.getY());
         } else {
-          shape = SPATIAL_CONTEXT.makeShape(geo);
+          shape = SPATIAL_CONTEXT.getShapeFactory().makeShape(geo);
         }
         shapes.add(shape);
       }
       return toDoc(new ShapeCollection<Shape>(shapes, SPATIAL_CONTEXT));
     }
-    return toDoc(SPATIAL_CONTEXT.makeShape(geometry));
+    return toDoc(SPATIAL_CONTEXT.getShapeFactory().makeShape(geometry));
   }
 
   public OShapeOperation operation() {
