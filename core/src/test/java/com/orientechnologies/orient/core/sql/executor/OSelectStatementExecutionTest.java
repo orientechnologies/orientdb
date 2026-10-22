@@ -5178,4 +5178,38 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
       assertEquals(List.of("r0"), ids);
     }
   }
+
+  // regression: #10879
+  @Test
+  public void testIssue10879CorrelatedSubqueryUnderIndex() {
+    db.command("CREATE CLASS CorrelatedNode").close();
+    db.command("CREATE PROPERTY CorrelatedNode.id STRING").close();
+    db.command("CREATE PROPERTY CorrelatedNode.f1 LONG").close();
+    db.command("CREATE INDEX CorrelatedNode_id ON CorrelatedNode (id) UNIQUE").close();
+    db.command("INSERT INTO CorrelatedNode SET id = 'n1/r0', f1 = 0").close();
+    db.command("INSERT INTO CorrelatedNode SET id = 'n1/r1', f1 = 1").close();
+    db.command("CREATE CLASS CorrelatedJoin").close();
+    db.command("CREATE PROPERTY CorrelatedJoin.src_id STRING").close();
+    db.command("CREATE PROPERTY CorrelatedJoin.dst_id STRING").close();
+    db.command("INSERT INTO CorrelatedJoin SET src_id = 'n1/r0', dst_id = 'n1/r1'").close();
+
+    String q =
+        "SELECT id, $h.v AS v FROM CorrelatedNode"
+            + " LET $h = (SELECT dst_id AS v FROM CorrelatedJoin WHERE src_id ="
+            + " $parent.$current.id)"
+            + " WHERE id = 'n1/r0'";
+    try (OResultSet rs = db.query(q)) {
+      assertTrue(rs.hasNext());
+      OResult r = rs.next();
+      assertEquals("n1/r0", r.getProperty("id"));
+      Object v = r.getProperty("v");
+      assertTrue("expected a collection, got " + v, v instanceof Collection);
+      List<String> flat = new ArrayList<>();
+      for (Object o : (Collection<?>) v) {
+        flat.add(o == null ? null : o.toString());
+      }
+      assertEquals(List.of("n1/r1"), flat);
+      Assert.assertFalse(rs.hasNext());
+    }
+  }
 }
