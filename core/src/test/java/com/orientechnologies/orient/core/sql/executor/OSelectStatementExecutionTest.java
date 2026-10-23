@@ -5181,24 +5181,25 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
 
   // regression: #10887
   @Test
-  public void test_issue10887_distinctInsideCountAndSum() {
-    db.command("CREATE CLASS D10887").close();
-    db.command("CREATE PROPERTY D10887.f LONG").close();
-    db.command("INSERT INTO D10887 SET f = 1").close();
-    db.command("INSERT INTO D10887 SET f = 1").close();
-    db.command("INSERT INTO D10887 SET f = 2").close();
-    db.command("INSERT INTO D10887 SET f = 5").close();
-    db.command("INSERT INTO D10887 SET f = 5").close();
-    db.command("INSERT INTO D10887").close();
+  public void testIssue10887DistinctInsideCountAndSum() {
+    db.command("CREATE CLASS DistinctInsideAggregation").close();
+    db.command("CREATE PROPERTY DistinctInsideAggregation.f LONG").close();
+    db.command("INSERT INTO DistinctInsideAggregation SET f = 1").close();
+    db.command("INSERT INTO DistinctInsideAggregation SET f = 1").close();
+    db.command("INSERT INTO DistinctInsideAggregation SET f = 2").close();
+    db.command("INSERT INTO DistinctInsideAggregation SET f = 5").close();
+    db.command("INSERT INTO DistinctInsideAggregation SET f = 5").close();
+    db.command("INSERT INTO DistinctInsideAggregation").close();
 
     long countDistinct;
-    try (OResultSet rs = db.query("SELECT count(distinct(f)) as c FROM D10887")) {
+    try (OResultSet rs =
+        db.query("SELECT count(distinct(f)) as c FROM DistinctInsideAggregation")) {
       countDistinct = ((Number) rs.next().getProperty("c")).longValue();
     }
     assertEquals(3L, countDistinct);
 
     long sumDistinct;
-    try (OResultSet rs = db.query("SELECT sum(distinct(f)) as s FROM D10887")) {
+    try (OResultSet rs = db.query("SELECT sum(distinct(f)) as s FROM DistinctInsideAggregation")) {
       sumDistinct = ((Number) rs.next().getProperty("s")).longValue();
     }
     assertEquals(8L, sumDistinct);
