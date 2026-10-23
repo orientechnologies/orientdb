@@ -5232,4 +5232,23 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
     assertEquals(List.of("b"), colGtInt);
     assertEquals(colGtInt, intLtCol);
   }
+
+  // regression: #10910
+  @Test
+  public void testIssue10910InSubqueryEmptyListHashIndex() {
+    db.command("CREATE CLASS InSubqueryEmptyList").close();
+    db.command("CREATE PROPERTY InSubqueryEmptyList.id STRING").close();
+    db.command("CREATE INDEX InSubqueryEmptyList_id ON InSubqueryEmptyList (id) UNIQUE_HASH_INDEX")
+        .close();
+    db.command("INSERT INTO InSubqueryEmptyList SET id = 'a', l = ['b']").close();
+    db.command("INSERT INTO InSubqueryEmptyList SET id = 'b', l = []").close();
+
+    try (OResultSet rs =
+        db.query(
+            "SELECT id FROM InSubqueryEmptyList WHERE id IN (SELECT l FROM InSubqueryEmptyList)")) {
+      List<String> ids = new ArrayList<>();
+      rs.forEachRemaining(r -> ids.add(r.getProperty("id")));
+      assertEquals(List.of("b"), ids);
+    }
+  }
 }
