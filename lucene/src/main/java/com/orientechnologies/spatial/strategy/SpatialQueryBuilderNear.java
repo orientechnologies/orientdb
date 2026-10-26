@@ -60,7 +60,8 @@ public class SpatialQueryBuilderNear extends SpatialQueryBuilderAbstract {
             SpatialOperation.Intersects,
             factory
                 .context()
-                .makeCircle(
+                .getShapeFactory()
+                .circle(
                     p.getX(),
                     p.getY(),
                     DistanceUtils.dist2Degrees(distance, DistanceUtils.EARTH_MEAN_RADIUS_KM)));

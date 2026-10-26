@@ -132,7 +132,7 @@ public class OLuceneGeoSpatialIndexEngine extends OLuceneSpatialIndexEngineAbstr
       openIfClosed();
       ODocument location = ((OIdentifiable) key).getRecord();
       updateLastAccess();
-      addDocument(newGeoDocument((OIdentifiable) value, factory.fromDoc(location), location));
+      addDocument(newGeoDocument(value, factory.fromDoc(location), location));
     }
   }
 

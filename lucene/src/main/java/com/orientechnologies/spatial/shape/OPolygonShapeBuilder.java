@@ -113,7 +113,6 @@ public class OPolygonShapeBuilder extends OComplexShapeBuilder<JtsGeometry> {
     }
 
     ODocument doc = new ODocument(getName() + "Z");
-    Polygon polygon = (Polygon) shape.getGeom();
     List<List<List<Double>>> polyCoordinates = coordinatesFromPolygonZ(geometry);
     doc.field(COORDINATES, polyCoordinates);
     return doc;

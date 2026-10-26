@@ -66,7 +66,7 @@ public class LuceneSpatialIOTest extends BaseSpatialLuceneTest {
     String p1 = builder.asText(doc);
     Assert.assertNotNull(p1);
 
-    Point point = context.makePoint(-100d, 45d);
+    Point point = context.getShapeFactory().pointXY(-100d, 45d);
 
     String p2 = context.getGeometryFrom(point).toText();
 
@@ -123,7 +123,7 @@ public class LuceneSpatialIOTest extends BaseSpatialLuceneTest {
 
     Assert.assertNotNull(rect);
 
-    Rectangle rectangle = context.makeRectangle(-45d, 45d, -30d, 30d);
+    Rectangle rectangle = context.getShapeFactory().rect(-45d, 45d, -30d, 30d);
 
     String rect1 = context.getGeometryFrom(rectangle).toText();
 
@@ -152,9 +152,9 @@ public class LuceneSpatialIOTest extends BaseSpatialLuceneTest {
         context.makeLineString(
             new ArrayList<Point>() {
               {
-                add(context.makePoint(-71.160281, 42.258729));
-                add(context.makePoint(-71.160837, 42.259113));
-                add(context.makePoint(-71.161144, 42.25932));
+                add(context.getShapeFactory().pointXY(-71.160281, 42.258729));
+                add(context.getShapeFactory().pointXY(-71.160837, 42.259113));
+                add(context.getShapeFactory().pointXY(-71.161144, 42.25932));
               }
             });
 
@@ -190,9 +190,9 @@ public class LuceneSpatialIOTest extends BaseSpatialLuceneTest {
         context.makeLineString(
             new ArrayList<Point>() {
               {
-                add(context.makePoint(-71.160281, 42.258729));
-                add(context.makePoint(-71.160837, 42.259113));
-                add(context.makePoint(-71.161144, 42.25932));
+                add(context.getShapeFactory().pointXY(-71.160281, 42.258729));
+                add(context.getShapeFactory().pointXY(-71.160837, 42.259113));
+                add(context.getShapeFactory().pointXY(-71.161144, 42.25932));
               }
             });
 

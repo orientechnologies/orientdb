@@ -186,11 +186,7 @@ public class LuceneSpatialMemoryTest extends BaseLuceneTest {
                 })
             .setOperation(SpatialOperation.IsWithin);
 
-    OIndex index =
-        ((ODatabaseDocumentInternal) db)
-            .getMetadata()
-            .getIndexManagerInternal()
-            .getIndex((ODatabaseDocumentInternal) db, "Point.ll");
+    OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "Point.ll");
 
     Collection coll;
     try (Stream<ORID> stream = index.getInternal().getRids(oSpatialCompositeKey)) {

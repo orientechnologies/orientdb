@@ -25,13 +25,9 @@ public class OPointLegecyBuilder implements OShapeBuilderLegacy<Point> {
 
   @Override
   public Point makeShape(OCompositeKey key, SpatialContext ctx) {
-    double lat =
-        ((Double) OType.convert(((OCompositeKey) key).getKeys().get(0), Double.class))
-            .doubleValue();
-    double lng =
-        ((Double) OType.convert(((OCompositeKey) key).getKeys().get(1), Double.class))
-            .doubleValue();
-    return ctx.makePoint(lng, lat);
+    double lat = ((Double) OType.convert(key.getKeys().get(0), Double.class)).doubleValue();
+    double lng = ((Double) OType.convert(key.getKeys().get(1), Double.class)).doubleValue();
+    return ctx.getShapeFactory().pointXY(lng, lat);
   }
 
   @Override

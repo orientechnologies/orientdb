@@ -42,12 +42,12 @@ public class OLuceneNearOperator extends OQueryTargetOperator {
     double lat = left.get(0).doubleValue();
     double lon = left.get(1).doubleValue();
 
-    Shape shape = factory.context().makePoint(lon, lat);
+    Shape shape = factory.context().getShapeFactory().pointXY(lon, lat);
     List<Number> right = (List<Number>) iRight;
 
     double lat1 = right.get(0).doubleValue();
     double lon1 = right.get(1).doubleValue();
-    Shape shape1 = factory.context().makePoint(lon1, lat1);
+    Shape shape1 = factory.context().getShapeFactory().pointXY(lon1, lat1);
 
     Map map = (Map) right.get(2);
     double distance = 0;
@@ -60,7 +60,8 @@ public class OLuceneNearOperator extends OQueryTargetOperator {
     Circle circle =
         factory
             .context()
-            .makeCircle(
+            .getShapeFactory()
+            .circle(
                 p.getX(),
                 p.getY(),
                 DistanceUtils.dist2Degrees(distance, DistanceUtils.EARTH_MEAN_RADIUS_KM));

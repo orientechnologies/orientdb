@@ -62,7 +62,8 @@ public class SpatialQueryBuilderDistanceSphere extends SpatialQueryBuilderAbstra
             SpatialOperation.Intersects,
             factory
                 .context()
-                .makeCircle(
+                .getShapeFactory()
+                .circle(
                     (Point) shape,
                     DistanceUtils.dist2Degrees(
                         distance.doubleValue() / 1000, DistanceUtils.EARTH_MEAN_RADIUS_KM)));

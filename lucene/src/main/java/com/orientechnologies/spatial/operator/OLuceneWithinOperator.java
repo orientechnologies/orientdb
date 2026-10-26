@@ -40,7 +40,7 @@ public class OLuceneWithinOperator extends OQueryTargetOperator {
     double lat = left.get(0).doubleValue();
     double lon = left.get(1).doubleValue();
 
-    Shape shape = SpatialContext.GEO.makePoint(lon, lat);
+    Shape shape = SpatialContext.GEO.getShapeFactory().pointXY(lon, lat);
 
     Shape shape1 =
         shapeFactory.makeShape(new OSpatialCompositeKey((List<?>) iRight), SpatialContext.GEO);

@@ -36,7 +36,7 @@ public class ORectangleLegacyBuilder implements OShapeBuilderLegacy<Rectangle> {
       List<Number> numbers = (List<Number>) o;
       double lat = ((Double) OType.convert(numbers.get(0), Double.class)).doubleValue();
       double lng = ((Double) OType.convert(numbers.get(1), Double.class)).doubleValue();
-      points[i] = ctx.makePoint(lng, lat);
+      points[i] = ctx.getShapeFactory().pointXY(lng, lat);
       i++;
     }
 
@@ -44,10 +44,10 @@ public class ORectangleLegacyBuilder implements OShapeBuilderLegacy<Rectangle> {
     Point topRight = points[1];
     if (lowerLeft.getX() > topRight.getX()) {
       double x = lowerLeft.getX();
-      lowerLeft = ctx.makePoint(topRight.getX(), lowerLeft.getY());
-      topRight = ctx.makePoint(x, topRight.getY());
+      lowerLeft = ctx.getShapeFactory().pointXY(topRight.getX(), lowerLeft.getY());
+      topRight = ctx.getShapeFactory().pointXY(x, topRight.getY());
     }
-    return ctx.makeRectangle(lowerLeft, topRight);
+    return ctx.getShapeFactory().rect(lowerLeft, topRight);
   }
 
   @Override
