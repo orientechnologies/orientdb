@@ -18,22 +18,16 @@ import com.orientechnologies.lucene.index.OLuceneIndexNotUnique;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OInvalidIndexEngineIdException;
 import com.orientechnologies.orient.core.index.OIndexMetadata;
-import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.storage.OStorage;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
 import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey.OTransactionIndexEntry;
 import com.orientechnologies.spatial.engine.OLuceneSpatialIndexContainer;
-import com.orientechnologies.spatial.shape.OShapeFactory;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import org.locationtech.jts.geom.Geometry;
-import org.locationtech.spatial4j.shape.Shape;
 
 public class OLuceneSpatialIndex extends OLuceneIndexNotUnique {
-
-  private final OShapeFactory shapeFactory = OShapeFactory.INSTANCE;
 
   public OLuceneSpatialIndex(OIndexMetadata im, final OStorage storage) {
     super(im, storage);
@@ -67,26 +61,6 @@ public class OLuceneSpatialIndex extends OLuceneIndexNotUnique {
     }
 
     return super.interpretTxKeyChanges(changes);
-  }
-
-  @Override
-  protected Object encodeKey(Object key) {
-
-    if (key instanceof ODocument) {
-      Shape shape = shapeFactory.fromDoc((ODocument) key);
-      return shapeFactory.toGeometry(shape);
-    }
-    return key;
-  }
-
-  @Override
-  protected Object decodeKey(Object key) {
-
-    if (key instanceof Geometry) {
-      Geometry geom = (Geometry) key;
-      return shapeFactory.toDoc(geom);
-    }
-    return key;
   }
 
   private static Iterable<OTransactionIndexEntry> interpretAsSpatial(
