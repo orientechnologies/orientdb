@@ -259,10 +259,18 @@ public abstract class ORecordAbstract implements ORecord {
   public int compareTo(final OIdentifiable iOther) {
     if (iOther == null) return 1;
 
-    if (recordId == null) return iOther.getIdentity() == null ? 0 : 1;
+    if (recordId == null || !recordId.isValid()) {
+      if (iOther.getIdentity() == null || !iOther.getIdentity().isValid()) {
+        return compareContent(iOther);
+      } else {
+        return -1;
+      }
+    }
 
     return recordId.compareTo(iOther.getIdentity());
   }
+
+  protected abstract int compareContent(OIdentifiable iOther);
 
   public ORecordElement.STATUS getInternalStatus() {
     return status;

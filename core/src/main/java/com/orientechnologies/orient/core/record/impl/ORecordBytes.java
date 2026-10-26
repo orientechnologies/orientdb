@@ -21,6 +21,7 @@ package com.orientechnologies.orient.core.record.impl;
 
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.db.record.ORecordElement;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
@@ -177,6 +178,15 @@ public class ORecordBytes extends ORecordAbstract implements OBlob {
 
     if (source.length > 0) {
       out.write(source);
+    }
+  }
+
+  @Override
+  protected int compareContent(OIdentifiable iOther) {
+    if (iOther instanceof ORecordBytes other) {
+      return Arrays.compare(this.source, other.source);
+    } else {
+      return -1;
     }
   }
 
