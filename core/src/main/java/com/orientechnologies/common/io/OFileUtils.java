@@ -46,20 +46,6 @@ public class OFileUtils {
   public static final int GIGABYTE = 1073741824;
   public static final long TERABYTE = 1099511627776L;
 
-  private static final boolean useOldFileAPI;
-
-  static {
-    boolean oldAPI = false;
-
-    try {
-      Class.forName("java.nio.file.FileSystemException");
-    } catch (ClassNotFoundException ignore) {
-      oldAPI = true;
-    }
-
-    useOldFileAPI = oldAPI;
-  }
-
   public static long getSizeAsNumber(final Object iSize) {
     if (iSize == null) throw new IllegalArgumentException("Size is null");
 
@@ -203,8 +189,6 @@ public class OFileUtils {
   }
 
   public static boolean renameFile(File from, File to) throws IOException {
-    if (useOldFileAPI) return from.renameTo(to);
-
     final FileSystem fileSystem = FileSystems.getDefault();
 
     final Path fromPath = fileSystem.getPath(from.getAbsolutePath());
@@ -216,8 +200,6 @@ public class OFileUtils {
 
   public static boolean delete(File file) throws IOException {
     if (!file.exists()) return true;
-
-    if (useOldFileAPI) return file.delete();
 
     return OFileUtilsJava7.delete(file);
   }
