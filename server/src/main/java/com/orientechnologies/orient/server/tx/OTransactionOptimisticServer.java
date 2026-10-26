@@ -18,15 +18,25 @@ import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.index.OClassIndexManager;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.record.impl.ODocumentInternal;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ODocumentSerializerDelta;
 import com.orientechnologies.orient.core.serialization.serializer.record.binary.ORecordSerializerNetworkV37;
-import com.orientechnologies.orient.core.tx.*;
-import java.util.*;
+import com.orientechnologies.orient.core.tx.OTransactionAbstract;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChanges;
+import com.orientechnologies.orient.core.tx.OTransactionIndexChangesPerKey;
+import com.orientechnologies.orient.core.tx.OTransactionOptimistic;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.NavigableMap;
+import java.util.Set;
+import java.util.TreeMap;
 
 /** Created by tglman on 28/12/16. */
 public class OTransactionOptimisticServer extends OTransactionOptimistic {
@@ -179,18 +189,11 @@ public class OTransactionOptimisticServer extends OTransactionOptimistic {
       tempEntries.clear();
 
       for (IndexChange change : indexChanges) {
-        OIndex index =
-            database.getMetadata().getIndexManagerInternal().getIndex(database, change.getName());
-        OIndexInternal indexInternal = index == null ? null : index.getInternal();
         NavigableMap<Object, OTransactionIndexChangesPerKey> changesPerKey =
             new TreeMap<>(ODefaultComparator.INSTANCE);
         for (Map.Entry<Object, OTransactionIndexChangesPerKey> keyChange :
             change.getKeyChanges().changesPerKey.entrySet()) {
           Object key = keyChange.getKey();
-          if (indexInternal != null) {
-            // Undo OIndexInternal.toNetworkKey, applied when the key was written to the network.
-            key = indexInternal.fromNetworkKey(key);
-          }
           if (key instanceof OIdentifiable && !((OIdentifiable) key).getIdentity().isPersistent())
             key = ((OIdentifiable) key).getRecord();
           if (key instanceof OCompositeKey) {

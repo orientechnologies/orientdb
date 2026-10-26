@@ -14,8 +14,6 @@ import com.orientechnologies.orient.core.db.record.ORecordOperation;
 import com.orientechnologies.orient.core.exception.OSerializationException;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.index.OIndex;
-import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.ORecord;
 import com.orientechnologies.orient.core.record.ORecordInternal;
@@ -325,16 +323,9 @@ public class OMessageHelper {
           network.writeRID(perKeyChange.getValue().getIdentity());
         }
       }
-      // Rewrite every key when the index is present. toNetworkKey is a no-op for built-in types;
-      // custom index keys (for example a spatial Geometry) become a protocol-safe value. Do not
-      // key this off OType.CUSTOM: that type is going away.
-      OIndexInternal index = findIndexInternal(indexChange.getName());
       for (OTransactionIndexChangesPerKey change :
           indexChange.getKeyChanges().changesPerKey.values()) {
         Object key = change.key;
-        if (index != null) {
-          key = index.toNetworkKey(key);
-        }
         OType type = OType.getTypeByValue(key);
         byte[] value = serializer.serializeValue(key, type, ctx);
         network.writeByte((byte) type.getId());
@@ -352,15 +343,6 @@ public class OMessageHelper {
         }
       }
     }
-  }
-
-  private static OIndexInternal findIndexInternal(String indexName) {
-    ODatabaseDocumentInternal db = ODatabaseRecordThreadLocal.instance().getIfDefined();
-    if (db == null || db.isClosed()) {
-      return null;
-    }
-    OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, indexName);
-    return index == null ? null : index.getInternal();
   }
 
   static List<IndexChange> readTransactionIndexChanges(
