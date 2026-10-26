@@ -286,7 +286,7 @@ public abstract class BaseTest<T extends ODatabase> {
     } else {
       db = (ODatabaseDocumentInternal) database;
     }
-    return (OIndex) (db.getMetadata()).getIndexManagerInternal().getIndex(db, indexName);
+    return db.getMetadata().getIndexManagerInternal().getIndex(db, indexName);
   }
 
   protected Collection<? extends OIndex> getIndexes() {

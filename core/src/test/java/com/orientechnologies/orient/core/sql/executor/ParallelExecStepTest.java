@@ -1,7 +1,5 @@
 package com.orientechnologies.orient.core.sql.executor;
 
-import com.orientechnologies.orient.core.command.OBasicCommandContext;
-import com.orientechnologies.orient.core.command.OCommandContext;
 import com.orientechnologies.orient.core.id.ORecordId;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -13,7 +11,6 @@ public class ParallelExecStepTest {
 
   @Test
   public void test() {
-    OCommandContext ctx = new OBasicCommandContext();
     List<OInternalExecutionPlan> subPlans = new ArrayList<>();
     for (int i = 0; i < 4; i++) {
       FetchFromRidsStep step0 = new FetchFromRidsStep(Collections.singleton(new ORecordId(12, i)));

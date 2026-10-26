@@ -498,7 +498,7 @@ public class SchemaTest extends DocumentDBBaseTest {
     Assert.assertNotNull(classB.getProperty("property"));
     Assert.assertTrue(classB.existsProperty("property"));
 
-    schema = ((OMetadataInternal) database.getMetadata()).getImmutableSchemaSnapshot();
+    schema = database.getMetadata().getImmutableSchemaSnapshot();
     classB = schema.getClass("TestExistsB");
 
     Assert.assertNotNull(classB.getProperty("property"));

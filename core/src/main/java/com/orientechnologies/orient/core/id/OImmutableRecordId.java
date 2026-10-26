@@ -19,7 +19,6 @@
  */
 package com.orientechnologies.orient.core.id;
 
-import com.orientechnologies.orient.core.serialization.OMemoryStream;
 import java.io.IOException;
 import java.io.InputStream;
 
@@ -46,11 +45,6 @@ public class OImmutableRecordId extends ORecordId {
 
   @Override
   public ORecordId fromStream(byte[] iBuffer) {
-    throw new UnsupportedOperationException("fromStream");
-  }
-
-  @Override
-  public ORecordId fromStream(OMemoryStream iStream) {
     throw new UnsupportedOperationException("fromStream");
   }
 

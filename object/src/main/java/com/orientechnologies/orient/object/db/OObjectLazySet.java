@@ -15,7 +15,6 @@
  */
 package com.orientechnologies.orient.object.db;
 
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.object.OLazyObjectSetInterface;
 import com.orientechnologies.orient.core.db.object.OObjectLazyMultivalueElement;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
@@ -274,8 +273,7 @@ public class OObjectLazySet<TYPE> extends HashSet<TYPE>
           add(
               (TYPE)
                   database.getUserObjectByRecord(
-                      ((ODatabaseDocument) getDatabase().getUnderlying()).load((ORID) e, fetchPlan),
-                      fetchPlan));
+                      getDatabase().getUnderlying().load((ORID) e, fetchPlan), fetchPlan));
         else if (e instanceof ODocument)
           add((TYPE) database.getUserObjectByRecord((ORecord) e, fetchPlan));
         else add((TYPE) e);
@@ -297,8 +295,7 @@ public class OObjectLazySet<TYPE> extends HashSet<TYPE>
           super.add(
               (TYPE)
                   database.getUserObjectByRecord(
-                      ((ODatabaseDocument) getDatabase().getUnderlying()).load((ORID) e, fetchPlan),
-                      fetchPlan));
+                      getDatabase().getUnderlying().load((ORID) e, fetchPlan), fetchPlan));
         else if (e instanceof ODocument)
           super.add((TYPE) database.getUserObjectByRecord((ORecord) e, fetchPlan));
         else super.add((TYPE) e);
@@ -321,8 +318,7 @@ public class OObjectLazySet<TYPE> extends HashSet<TYPE>
         if (e instanceof ORID) {
           e =
               database.getUserObjectByRecord(
-                  ((ODatabaseDocument) getDatabase().getUnderlying()).load((ORID) e, fetchPlan),
-                  fetchPlan);
+                  getDatabase().getUnderlying().load((ORID) e, fetchPlan), fetchPlan);
           super.add(
               (TYPE)
                   OObjectEntitySerializer.detachAll(

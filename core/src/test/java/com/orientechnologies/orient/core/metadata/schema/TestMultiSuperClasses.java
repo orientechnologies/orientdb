@@ -6,7 +6,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import com.orientechnologies.BaseMemoryInternalDatabase;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.exception.OSchemaException;
 import java.util.Arrays;
 import java.util.List;
@@ -26,7 +25,7 @@ public class TestMultiSuperClasses extends BaseMemoryInternalDatabase {
     testClassCreationBranch(aClass, bClass, cClass);
     oSchema.reload();
     testClassCreationBranch(aClass, bClass, cClass);
-    oSchema = ((ODatabaseDocumentInternal) db).getMetadata().getImmutableSchemaSnapshot();
+    oSchema = db.getMetadata().getImmutableSchemaSnapshot();
     aClass = oSchema.getClass("javaA");
     bClass = oSchema.getClass("javaB");
     cClass = oSchema.getClass("javaC");

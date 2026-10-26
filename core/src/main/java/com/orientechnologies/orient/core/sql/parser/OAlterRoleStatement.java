@@ -48,7 +48,7 @@ public class OAlterRoleStatement extends OSimpleExecStatement {
   @Override
   public OExecutionStream executeSimple(OCommandContext ctx) {
     List<OResult> rs = new ArrayList<>();
-    ODatabaseSession db = (ODatabaseSession) ctx.getDatabase();
+    ODatabaseSession db = ctx.getDatabase();
     OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
 
     ORole role = db.getMetadata().getSecurity().getRole(name.getStringValue());

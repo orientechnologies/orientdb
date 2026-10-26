@@ -275,8 +275,7 @@ public class SQLSelectProjectionsTest extends DocumentDBBaseTest {
       final ODocument a0doc = database.load((ORID) d.getProperty("a0"));
       final ODocument firstADoc =
           database.load(
-              ((OIdentifiable) d.<Iterable<OIdentifiable>>getProperty("a").iterator().next())
-                  .getIdentity());
+              d.<Iterable<OIdentifiable>>getProperty("a").iterator().next().getIdentity());
 
       Assert.assertTrue(
           ODocumentHelper.hasSameContentOf(a0doc, database, firstADoc, database, null));

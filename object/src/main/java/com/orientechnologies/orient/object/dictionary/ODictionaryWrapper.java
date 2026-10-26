@@ -43,7 +43,7 @@ public class ODictionaryWrapper extends ODictionary<Object> {
   }
 
   public void put(final String iKey, final Object iValue) {
-    final ODocument record = (ODocument) database.getRecordByUserObject(iValue, false);
+    final ODocument record = database.getRecordByUserObject(iValue, false);
     super.put(iKey, record);
   }
 }

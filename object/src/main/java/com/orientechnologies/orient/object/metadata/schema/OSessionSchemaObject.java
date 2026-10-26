@@ -429,8 +429,7 @@ public class OSessionSchemaObject implements OSchemaObject {
         if (automaticSchemaGeneration
             && !currentClass.equals(Object.class)
             && !currentClass.equals(ODocument.class)) {
-          ((OSessionSchemaObject) database.getMetadata().getSchema())
-              .generateSchema(currentClass, database.getUnderlying());
+          database.getMetadata().getSchema().generateSchema(currentClass, database.getUnderlying());
         }
         String iClassName = currentClass.getSimpleName();
         currentClass = currentClass.getSuperclass();

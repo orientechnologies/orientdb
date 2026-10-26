@@ -335,7 +335,7 @@ public class ODocumentHelper {
         if (value instanceof OIdentifiable) {
           final ORecord record =
               currentRecord != null && currentRecord instanceof OIdentifiable
-                  ? ((OIdentifiable) currentRecord).getRecord()
+                  ? currentRecord.getRecord()
                   : null;
 
           final Object index = getIndexPart(iContext, indexPart);

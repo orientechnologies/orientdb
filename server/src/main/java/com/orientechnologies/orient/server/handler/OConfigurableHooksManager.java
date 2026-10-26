@@ -80,7 +80,7 @@ public class OConfigurableHooksManager implements ODatabaseLifecycleListener {
 
   public void onOpen(ODatabaseInternal iDatabase) {
     if (!((ODatabaseDocumentInternal) iDatabase).isRemote()) {
-      final ODatabase<?> db = (ODatabase<?>) iDatabase;
+      final ODatabase<?> db = iDatabase;
       for (OServerHookConfiguration hook : configuredHooks) {
         try {
           final ORecordHook.HOOK_POSITION pos =

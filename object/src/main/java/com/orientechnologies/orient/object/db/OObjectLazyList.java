@@ -113,7 +113,7 @@ public class OObjectLazyList<TYPE> extends ArrayList<TYPE>
         return true;
       }
     } else if (element instanceof Proxy) {
-      record = (OIdentifiable) OObjectEntitySerializer.getDocument((Proxy) element);
+      record = OObjectEntitySerializer.getDocument((Proxy) element);
       if (orphanRemoval && record != null && sourceRecord != null)
         ((OObjectProxyMethodHandler) sourceRecord.getHandler())
             .getOrphans()
@@ -121,7 +121,7 @@ public class OObjectLazyList<TYPE> extends ArrayList<TYPE>
       dirty = recordList.add(record);
     } else {
       element = (TYPE) OObjectEntitySerializer.serializeObject(element, getDatabase());
-      record = (OIdentifiable) OObjectEntitySerializer.getDocument((Proxy) element);
+      record = OObjectEntitySerializer.getDocument((Proxy) element);
       if (orphanRemoval && record != null && sourceRecord != null)
         ((OObjectProxyMethodHandler) sourceRecord.getHandler())
             .getOrphans()
@@ -145,7 +145,7 @@ public class OObjectLazyList<TYPE> extends ArrayList<TYPE>
       recordList.add(index, record);
       return;
     } else if (element instanceof Proxy) {
-      record = (OIdentifiable) OObjectEntitySerializer.getDocument((Proxy) element);
+      record = OObjectEntitySerializer.getDocument((Proxy) element);
       if (orphanRemoval && record != null && sourceRecord != null)
         ((OObjectProxyMethodHandler) sourceRecord.getHandler())
             .getOrphans()
@@ -153,7 +153,7 @@ public class OObjectLazyList<TYPE> extends ArrayList<TYPE>
       recordList.add(index, record);
     } else {
       element = (TYPE) OObjectEntitySerializer.serializeObject(element, getDatabase());
-      record = (OIdentifiable) OObjectEntitySerializer.getDocument((Proxy) element);
+      record = OObjectEntitySerializer.getDocument((Proxy) element);
       if (orphanRemoval && record != null && sourceRecord != null)
         ((OObjectProxyMethodHandler) sourceRecord.getHandler())
             .getOrphans()
@@ -166,7 +166,7 @@ public class OObjectLazyList<TYPE> extends ArrayList<TYPE>
   public TYPE get(final int index) {
     TYPE o = (TYPE) super.get(index);
     if (o == null) {
-      OIdentifiable record = (OIdentifiable) recordList.get(index);
+      OIdentifiable record = recordList.get(index);
       if (record == null || record.getRecord() == null) {
         logger.warn(
             "Record %s references a deleted instance",
@@ -233,7 +233,7 @@ public class OObjectLazyList<TYPE> extends ArrayList<TYPE>
             .add(((OIdentifiable) o).getIdentity());
       return recordList.remove(o);
     } else if (o instanceof Proxy) {
-      OIdentifiable record = (OIdentifiable) OObjectEntitySerializer.getDocument((Proxy) o);
+      OIdentifiable record = OObjectEntitySerializer.getDocument((Proxy) o);
       if (orphanRemoval && record != null && sourceRecord != null)
         ((OObjectProxyMethodHandler) sourceRecord.getHandler())
             .getOrphans()
@@ -319,7 +319,7 @@ public class OObjectLazyList<TYPE> extends ArrayList<TYPE>
             .remove(record.getIdentity());
       recordList.set(index, record);
     } else if (element instanceof Proxy) {
-      record = (OIdentifiable) OObjectEntitySerializer.getDocument((Proxy) element);
+      record = OObjectEntitySerializer.getDocument((Proxy) element);
       if (orphanRemoval && record != null && sourceRecord != null)
         ((OObjectProxyMethodHandler) sourceRecord.getHandler())
             .getOrphans()

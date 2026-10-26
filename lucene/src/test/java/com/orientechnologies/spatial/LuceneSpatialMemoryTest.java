@@ -15,7 +15,6 @@
 package com.orientechnologies.spatial;
 
 import com.orientechnologies.lucene.test.BaseLuceneTest;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -110,11 +109,7 @@ public class LuceneSpatialMemoryTest extends BaseLuceneTest {
                   }
                 })
             .setOperation(SpatialOperation.IsWithin);
-    OIndex index =
-        ((ODatabaseDocumentInternal) db)
-            .getMetadata()
-            .getIndexManagerInternal()
-            .getIndex((ODatabaseDocumentInternal) db, "Point.ll");
+    OIndex index = db.getMetadata().getIndexManagerInternal().getIndex(db, "Point.ll");
 
     Collection coll;
     try (Stream<ORID> stream = index.getInternal().getRids(oSpatialCompositeKey)) {

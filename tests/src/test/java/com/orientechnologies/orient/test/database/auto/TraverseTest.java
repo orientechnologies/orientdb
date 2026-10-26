@@ -373,7 +373,7 @@ public class TraverseTest extends DocumentDBBaseTest {
     try {
 
       String q = "traverse in('married')  from " + nicoleKidman.getIdentity() + "";
-      ODatabaseDocumentInternal db = (ODatabaseDocumentInternal) database.copy();
+      ODatabaseDocumentInternal db = database.copy();
       ODatabaseRecordThreadLocal.instance().set(db);
       List<OResult> result1 = db.command(q).stream().toList();
       Assert.assertEquals(result1.size(), 2);

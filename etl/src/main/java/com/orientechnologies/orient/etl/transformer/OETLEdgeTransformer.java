@@ -209,8 +209,8 @@ public class OETLEdgeTransformer extends OETLAbstractLookupTransformer {
         try {
           // CREATE THE EDGE
           final OEdge edge;
-          if (directionOut) edge = (OEdge) vertex.addEdge(targetVertex, edgeClass);
-          else edge = (OEdge) targetVertex.addEdge(vertex, edgeClass);
+          if (directionOut) edge = vertex.addEdge(targetVertex, edgeClass);
+          else edge = targetVertex.addEdge(vertex, edgeClass);
 
           if (edgeFields != null) {
             for (String f : edgeFields.fieldNames())

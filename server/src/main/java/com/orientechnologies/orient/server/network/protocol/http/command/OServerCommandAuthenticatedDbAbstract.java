@@ -187,9 +187,8 @@ public abstract class OServerCommandAuthenticatedDbAbstract extends OServerComma
     ODatabaseDocument db = null;
     try {
       db =
-          (ODatabaseDocument)
-              server.openDatabase(
-                  iDatabaseName, iAuthenticationParts.get(0), iAuthenticationParts.get(1));
+          server.openDatabase(
+              iDatabaseName, iAuthenticationParts.get(0), iAuthenticationParts.get(1));
       // if (db.getUser() == null)
       // // MAYBE A PREVIOUS ROOT REALM? UN AUTHORIZE
       // return false;

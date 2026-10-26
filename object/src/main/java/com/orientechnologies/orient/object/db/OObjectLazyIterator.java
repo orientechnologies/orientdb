@@ -21,7 +21,6 @@ package com.orientechnologies.orient.object.db;
 
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
-import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -75,8 +74,7 @@ public class OObjectLazyIterator<TYPE> implements Iterator<TYPE>, Serializable {
 
     if (value instanceof ORID && autoConvert2Object) {
       currentElement = (OIdentifiable) value;
-      ORecord record =
-          ((ODatabaseDocument) database.getUnderlying()).load((ORID) value, iFetchPlan);
+      ORecord record = database.getUnderlying().load((ORID) value, iFetchPlan);
       if (record == null) {
         logger.warn(
             "Record %s references a deleted instance",

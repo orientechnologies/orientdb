@@ -160,9 +160,7 @@ public interface OExecutionStepInternal {
         "subSteps",
         getSubSteps() == null
             ? null
-            : getSubSteps().stream()
-                .map(x -> ((OExecutionStepInternal) x).toResult(ctx))
-                .collect(Collectors.toList()));
+            : getSubSteps().stream().map(x -> x.toResult(ctx)).collect(Collectors.toList()));
     String description = prettyPrint(new OPrintContexImpl(ctx.getContext(), 0, 3));
     result.setProperty("description", description);
     serializeToResult(result, ctx);

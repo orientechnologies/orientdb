@@ -3,7 +3,6 @@
 package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OCommandContext;
-import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
@@ -293,7 +292,7 @@ public class OUpdateItem extends SimpleNode {
     if (item instanceof OElement) {
       OClass currentType = ((OElement) item).getSchemaType().orElse(null);
       if (currentType == null || !currentType.isSubClassOf(linkedClass)) {
-        OElement result = ((ODatabaseSession) ctx.getDatabase()).newElement(linkedClass.getName());
+        OElement result = ctx.getDatabase().newElement(linkedClass.getName());
         for (String prop : ((OElement) item).getPropertyNames()) {
           result.setProperty(prop, ((OElement) item).getProperty(prop));
         }
@@ -302,7 +301,7 @@ public class OUpdateItem extends SimpleNode {
         return item;
       }
     } else if (item instanceof Map) {
-      OElement result = ((ODatabaseSession) ctx.getDatabase()).newElement(linkedClass.getName());
+      OElement result = ctx.getDatabase().newElement(linkedClass.getName());
       ((Map<String, Object>) item)
           .entrySet().stream().forEach(x -> result.setProperty(x.getKey(), x.getValue()));
       return result;

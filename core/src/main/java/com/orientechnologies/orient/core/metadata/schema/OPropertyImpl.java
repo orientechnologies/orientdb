@@ -752,7 +752,7 @@ public abstract class OPropertyImpl implements OProperty {
   }
 
   protected boolean isDistributedCommand() {
-    return !((ODatabaseDocumentInternal) getDatabase()).isLocalEnv();
+    return !getDatabase().isLocalEnv();
   }
 
   @Override

@@ -47,7 +47,7 @@ public final class OLoaderExecutionStream implements OExecutionStream {
       OIdentifiable nextRid = iterator.next();
       if (nextRid != null) {
         if (nextRid instanceof ORecord) {
-          nextResult = new OResultInternal((ORecord) nextRid);
+          nextResult = new OResultInternal(nextRid);
           return;
         } else {
           ORecord nextDoc = ctx.getDatabase().load(nextRid.getIdentity());

@@ -5,7 +5,6 @@ import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.ODatabase;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseSession;
-import com.orientechnologies.orient.core.db.OSharedContext;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.db.OrientDBInternal;
@@ -73,7 +72,6 @@ public class OStorageTestIT {
     OLocalPaginatedStorage storage =
         (OLocalPaginatedStorage) ((ODatabaseDocumentInternal) session).getStorage();
     OWriteCache wowCache = storage.getWriteCache();
-    OSharedContext ctx = ((ODatabaseDocumentInternal) session).getSharedContext();
     session.close();
 
     final Path storagePath = storage.getStoragePath();
@@ -136,7 +134,6 @@ public class OStorageTestIT {
     OLocalPaginatedStorage storage =
         (OLocalPaginatedStorage) ((ODatabaseDocumentInternal) session).getStorage();
     OWriteCache wowCache = storage.getWriteCache();
-    OSharedContext ctx = ((ODatabaseDocumentInternal) session).getSharedContext();
     session.close();
 
     final Path storagePath = storage.getStoragePath();
@@ -195,7 +192,6 @@ public class OStorageTestIT {
     OLocalPaginatedStorage storage =
         (OLocalPaginatedStorage) ((ODatabaseDocumentInternal) session).getStorage();
     OWriteCache wowCache = storage.getWriteCache();
-    OSharedContext ctx = ((ODatabaseDocumentInternal) session).getSharedContext();
     session.close();
 
     final Path storagePath = storage.getStoragePath();
@@ -256,7 +252,6 @@ public class OStorageTestIT {
     OLocalPaginatedStorage storage =
         (OLocalPaginatedStorage) ((ODatabaseDocumentInternal) session).getStorage();
     OWriteCache wowCache = storage.getWriteCache();
-    OSharedContext ctx = ((ODatabaseDocumentInternal) session).getSharedContext();
     session.close();
 
     final Path storagePath = storage.getStoragePath();

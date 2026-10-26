@@ -71,7 +71,7 @@ public class OSystemSymmetricKeyAuth extends OSystemUserAuthenticator {
 
         String decryptedUsername = sk.decryptAsString(password);
 
-        if (OSecurityManager.instance().checkPassword(username, decryptedUsername)) {
+        if (OSecurityManager.checkPassword(username, decryptedUsername)) {
           principal = user;
         }
       }

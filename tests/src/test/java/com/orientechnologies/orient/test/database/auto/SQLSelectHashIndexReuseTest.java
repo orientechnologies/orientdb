@@ -2487,14 +2487,13 @@ public class SQLSelectHashIndexReuseTest extends AbstractIndexReuseTest {
     database.save(doc);
 
     OResult result =
-        (OResult)
-            database
-                .query(
-                    "select count(*) as count from CountFunctionWithNotUniqueHashIndex where a ="
-                        + " 'a' and b = 'b'")
-                .stream()
-                .toList()
-                .get(0);
+        database
+            .query(
+                "select count(*) as count from CountFunctionWithNotUniqueHashIndex where a ="
+                    + " 'a' and b = 'b'")
+            .stream()
+            .toList()
+            .get(0);
 
     Assert.assertEquals(result.<Long>getProperty("count"), 1L);
     assertProfileCount(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage, 1);
@@ -2524,13 +2523,11 @@ public class SQLSelectHashIndexReuseTest extends AbstractIndexReuseTest {
     database.save(doc);
 
     OResult result =
-        (OResult)
-            database
-                .query(
-                    "select count(*) as count from CountFunctionWithUniqueHashIndex where a = 'a'")
-                .stream()
-                .toList()
-                .get(0);
+        database
+            .query("select count(*) as count from CountFunctionWithUniqueHashIndex where a = 'a'")
+            .stream()
+            .toList()
+            .get(0);
 
     Assert.assertEquals(result.<Long>getProperty("count"), 1L);
     assertProfileCount(profiler.getCounter("db.demo.query.indexUsed"), oldIndexUsage, 1);

@@ -49,7 +49,6 @@ import com.orientechnologies.orient.core.exception.OTransactionException;
 import com.orientechnologies.orient.core.hook.ORecordHook;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
-import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
@@ -157,8 +156,7 @@ public class OObjectDatabaseTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
   @Override
   public OMetadataObject getMetadata() {
     checkOpenness();
-    if (metadata == null)
-      metadata = new OMetadataObject((OMetadataInternal) underlying.getMetadata(), underlying);
+    if (metadata == null) metadata = new OMetadataObject(underlying.getMetadata(), underlying);
     return metadata;
   }
 
@@ -903,11 +901,11 @@ public class OObjectDatabaseTx extends ODatabaseWrapperAbstract<ODatabaseDocumen
           if (toDelete != null) delete(((OIdentifiable) toDelete).getIdentity());
         } else if (toDelete instanceof Collection) {
           for (OIdentifiable cascadeRecord : ((Collection<OIdentifiable>) toDelete)) {
-            if (cascadeRecord != null) delete(((OIdentifiable) cascadeRecord).getIdentity());
+            if (cascadeRecord != null) delete(cascadeRecord.getIdentity());
           }
         } else if (toDelete instanceof Map) {
           for (OIdentifiable cascadeRecord : ((Map<Object, OIdentifiable>) toDelete).values()) {
-            if (cascadeRecord != null) delete(((OIdentifiable) cascadeRecord).getIdentity());
+            if (cascadeRecord != null) delete(cascadeRecord.getIdentity());
           }
         }
       }

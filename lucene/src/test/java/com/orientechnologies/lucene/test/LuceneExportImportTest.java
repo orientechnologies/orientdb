@@ -69,7 +69,7 @@ public class LuceneExportImportTest extends BaseLuceneTest {
 
       // export
       new ODatabaseExport(
-              (ODatabaseDocumentInternal) db,
+              db,
               file,
               new OCommandOutputListener() {
                 @Override
@@ -85,7 +85,7 @@ public class LuceneExportImportTest extends BaseLuceneTest {
 
       GZIPInputStream stream = new GZIPInputStream(new FileInputStream(file + ".gz"));
       new ODatabaseImport(
-              (ODatabaseDocumentInternal) db,
+              db,
               stream,
               new OCommandOutputListener() {
                 @Override

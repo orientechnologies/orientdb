@@ -439,8 +439,7 @@ public class OClassImplTest extends BaseMemoryInternalDatabase {
             new Callable<ODocument>() {
               @Override
               public ODocument call() throws Exception {
-                ODocument doc1 =
-                    ((ODatabaseDocumentInternal) db).copy().load(document.getIdentity());
+                ODocument doc1 = db.copy().load(document.getIdentity());
                 assertEquals(doc1.fieldType("test1"), OType.LINKLIST);
                 assertEquals(doc1.fieldType("test2"), OType.EMBEDDEDLIST);
                 assertEquals(doc1.fieldType("test3"), OType.LINKSET);

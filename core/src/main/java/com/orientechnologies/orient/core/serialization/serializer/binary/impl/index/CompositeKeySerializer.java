@@ -345,8 +345,7 @@ public final class CompositeKeySerializer implements OBinarySerializer<OComposit
   }
 
   public int getObjectSize(byte[] stream, int startPosition) {
-    //noinspection RedundantCast
-    return ((ByteBuffer) ByteBuffer.wrap(stream).position(startPosition)).getInt();
+    return ByteBuffer.wrap(stream).position(startPosition).getInt();
   }
 
   public byte getId() {
@@ -354,24 +353,19 @@ public final class CompositeKeySerializer implements OBinarySerializer<OComposit
   }
 
   public int getObjectSizeNative(byte[] stream, int startPosition) {
-    //noinspection RedundantCast
-    return ((ByteBuffer)
-            ByteBuffer.wrap(stream).order(ByteOrder.nativeOrder()).position(startPosition))
-        .getInt();
+    return ByteBuffer.wrap(stream).order(ByteOrder.nativeOrder()).position(startPosition).getInt();
   }
 
   public void serializeNativeObject(
       OCompositeKey compositeKey, byte[] stream, int startPosition, Object... hints) {
-    @SuppressWarnings("RedundantCast")
     final ByteBuffer buffer =
-        (ByteBuffer) ByteBuffer.wrap(stream).order(ByteOrder.nativeOrder()).position(startPosition);
+        ByteBuffer.wrap(stream).order(ByteOrder.nativeOrder()).position(startPosition);
     serialize(compositeKey, buffer, (OType[]) hints);
   }
 
   public OCompositeKey deserializeNativeObject(byte[] stream, int startPosition) {
-    @SuppressWarnings("RedundantCast")
     final ByteBuffer buffer =
-        (ByteBuffer) ByteBuffer.wrap(stream).order(ByteOrder.nativeOrder()).position(startPosition);
+        ByteBuffer.wrap(stream).order(ByteOrder.nativeOrder()).position(startPosition);
     return deserialize(buffer);
   }
 

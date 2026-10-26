@@ -298,7 +298,7 @@ public class ObjectTreeTestSchemaFull extends ObjectDBBaseTest {
         for (ODocument follower : followers) {
           Assert.assertTrue(
               ((Collection<ODocument>) follower.getProperty("followings"))
-                  .contains((ODocument) profile.toElement()));
+                  .contains(profile.toElement()));
 
           //          System.out.println("- follower: " + follower.field("name") + " " +
           // follower.field("surname") + " (parent: "

@@ -2903,14 +2903,13 @@ public class SQLSelectIndexReuseTest extends AbstractIndexReuseTest {
             .field("b", "c"));
 
     OResult result =
-        (OResult)
-            database
-                .query(
-                    "select count(*) as count from CountFunctionWithNotUniqueIndexTest where a ="
-                        + " 'a' and b = 'c'")
-                .stream()
-                .toList()
-                .get(0);
+        database
+            .query(
+                "select count(*) as count from CountFunctionWithNotUniqueIndexTest where a ="
+                    + " 'a' and b = 'c'")
+            .stream()
+            .toList()
+            .get(0);
 
     Assert.assertEquals(result.<Long>getProperty("count"), 0l);
 
@@ -2953,14 +2952,13 @@ public class SQLSelectIndexReuseTest extends AbstractIndexReuseTest {
                 .field("b", "b"));
 
     OResult result =
-        (OResult)
-            database
-                .query(
-                    "select count(*) as count from CountFunctionWithUniqueIndexTest where a = 'a'"
-                        + " and b = 'c'")
-                .stream()
-                .toList()
-                .get(0);
+        database
+            .query(
+                "select count(*) as count from CountFunctionWithUniqueIndexTest where a = 'a'"
+                    + " and b = 'c'")
+            .stream()
+            .toList()
+            .get(0);
 
     Assert.assertEquals(result.<Long>getProperty("count"), 2l);
     database.delete(doc);

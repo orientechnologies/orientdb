@@ -35,7 +35,7 @@ public class OAlterSecurityPolicyStatement extends OSimpleExecStatement {
   }
 
   public OExecutionStream executeSimple(OCommandContext ctx) {
-    ODatabaseSession db = (ODatabaseSession) ctx.getDatabase();
+    ODatabaseSession db = ctx.getDatabase();
     OSecurityInternal security = ((ODatabaseInternal) db).getSharedContext().getSecurity();
     OSecurityPolicyImpl policy = security.getSecurityPolicy(db, name.getStringValue());
     if (policy == null) {

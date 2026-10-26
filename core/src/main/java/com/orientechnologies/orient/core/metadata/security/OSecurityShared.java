@@ -1288,7 +1288,7 @@ public class OSecurityShared implements OSecurityInternal {
     if (session.getUser() == null) {
       return Collections.emptySet();
     }
-    OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass((ODocument) document);
+    OImmutableClass clazz = ODocumentInternal.getImmutableSchemaClass(document);
     if (clazz == null) {
       return Collections.emptySet();
     }
@@ -1339,7 +1339,7 @@ public class OSecurityShared implements OSecurityInternal {
     if (document instanceof ODocument) {
       className = document.getClassName();
     } else {
-      clazz = ((OElement) document).getSchemaType().orElse(null);
+      clazz = document.getSchemaType().orElse(null);
       className = clazz == null ? null : clazz.getName();
     }
     if (className == null) {

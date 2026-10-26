@@ -989,7 +989,7 @@ public class OObjectProxyMethodHandler implements MethodHandler {
           valueToSet = OObjectEntitySerializer.serializeObject(valueToSet, getDatabase());
           final ODocument docToSet = OObjectEntitySerializer.getDocument((Proxy) valueToSet);
           if (OObjectEntitySerializer.isEmbeddedField(self.getClass(), fieldName))
-            ODocumentInternal.addOwner((ODocument) docToSet, doc);
+            ODocumentInternal.addOwner(docToSet, doc);
 
           setDocFieldValue(fieldName, docToSet, objectOType);
         } else {

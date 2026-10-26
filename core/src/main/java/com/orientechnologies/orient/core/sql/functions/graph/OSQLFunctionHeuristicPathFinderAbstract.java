@@ -92,7 +92,7 @@ public abstract class OSQLFunctionHeuristicPathFinderAbstract extends OSQLFuncti
     final Set<OVertex> neighbors = new HashSet<OVertex>();
     if (node != null) {
       for (OVertex v : node.getVertices(paramDirection, paramEdgeTypeNames)) {
-        final OVertex ov = (OVertex) v;
+        final OVertex ov = v;
         if (ov != null) neighbors.add(ov);
       }
     }

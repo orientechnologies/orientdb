@@ -271,8 +271,7 @@ public class OObjectLazyMap<TYPE> extends HashMap<Object, Object>
     for (java.util.Map.Entry<Object, OIdentifiable> e : underlying.entrySet())
       super.put(
           e.getKey(),
-          getDatabase()
-              .getUserObjectByRecord((ORecord) ((OIdentifiable) e.getValue()).getRecord(), null));
+          getDatabase().getUserObjectByRecord((ORecord) e.getValue().getRecord(), null));
 
     converted = true;
   }
@@ -284,9 +283,7 @@ public class OObjectLazyMap<TYPE> extends HashMap<Object, Object>
     if (converted || !convertToRecord) return;
 
     for (java.util.Map.Entry<Object, OIdentifiable> e : underlying.entrySet()) {
-      Object o =
-          getDatabase()
-              .getUserObjectByRecord((ORecord) ((OIdentifiable) e.getValue()).getRecord(), null);
+      Object o = getDatabase().getUserObjectByRecord((ORecord) e.getValue().getRecord(), null);
       o =
           OObjectEntitySerializer.detachAll(
               o, getDatabase(), nonProxiedInstance, alreadyDetached, lazyObjects);

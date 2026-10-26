@@ -163,7 +163,7 @@ public class OHttpGraphResponse extends OHttpResponseAbstract {
       if (edgeRids.isEmpty()) {
         for (OVertex vertex : vertices) {
           for (OEdge e : vertex.getEdges(ODirection.OUT)) {
-            OEdge edge = (OEdge) e;
+            OEdge edge = e;
             if (edgeRids.contains(e.getIdentity())
                 && e.getIdentity() != null /* only for non-lighweight */) {
               continue;

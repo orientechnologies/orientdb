@@ -480,7 +480,7 @@ public class HelperClasses {
       ridbag.getDelegate().setSize(size);
       for (int i = 0; i < size; i++) {
         OIdentifiable record = readLinkOptimizedEmbedded(bytes);
-        ((ORidBagDelegate) ridbag.getDelegate()).addInternal(record);
+        ridbag.getDelegate().addInternal(record);
       }
     } else {
       long fileId = OVarIntSerializer.readAsLong(bytes);

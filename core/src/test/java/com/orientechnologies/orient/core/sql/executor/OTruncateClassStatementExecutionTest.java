@@ -2,11 +2,9 @@ package com.orientechnologies.orient.core.sql.executor;
 
 import com.orientechnologies.BaseMemoryInternalDatabase;
 import com.orientechnologies.common.util.ORawPair;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
-import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
 import com.orientechnologies.orient.core.metadata.schema.OType;
@@ -132,12 +130,10 @@ public class OTruncateClassStatementExecutionTest extends BaseMemoryInternalData
     db.command("insert into TestTruncateVertexClassSuperclassWithIndex set name = 'foo'");
     db.command("insert into TestTruncateVertexClassSubclassWithIndex set name = 'bar'");
 
-    if (!((ODatabaseDocumentInternal) db).isRemote()) {
-      final OIndexManagerAbstract indexManager =
-          ((OMetadataInternal) db.getMetadata()).getIndexManagerInternal();
+    if (!db.isRemote()) {
+      final OIndexManagerAbstract indexManager = db.getMetadata().getIndexManagerInternal();
       final OIndex indexOne =
-          indexManager.getIndex(
-              (ODatabaseDocumentInternal) db, "TestTruncateVertexClassSuperclassWithIndex_index");
+          indexManager.getIndex(db, "TestTruncateVertexClassSuperclassWithIndex_index");
       Assert.assertEquals(2, indexOne.getInternal().size());
 
       db.command("truncate class TestTruncateVertexClassSubclassWithIndex");

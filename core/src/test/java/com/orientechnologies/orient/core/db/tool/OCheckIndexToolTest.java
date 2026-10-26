@@ -2,7 +2,6 @@ package com.orientechnologies.orient.core.db.tool;
 
 import com.orientechnologies.BaseMemoryInternalDatabase;
 import com.orientechnologies.orient.core.command.OCommandOutputListener;
-import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.record.impl.ODocument;
@@ -68,7 +67,7 @@ public class OCheckIndexToolTest extends BaseMemoryInternalDatabase {
 
     final OCheckIndexTool tool = new OCheckIndexTool();
 
-    tool.setDatabase((ODatabaseDocumentInternal) db);
+    tool.setDatabase(db);
     tool.setVerbose(true);
     tool.setOutputListener(
         new OCommandOutputListener() {

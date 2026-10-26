@@ -617,16 +617,16 @@ public class OVertexDocument extends ODocument implements OVertex {
     Object edgeProp = vertex.getProperty(edgeField);
     OIdentifiable edgeId = null;
 
-    edgeId = ((OIdentifiable) edge).getIdentity();
+    edgeId = edge.getIdentity();
     if (edgeId == null) {
       // lightweight edge
 
       OVertex out = edge.getFrom();
       OVertex in = edge.getTo();
       if (out != null && vertex.getIdentity().equals(out.getIdentity())) {
-        edgeId = (OIdentifiable) in;
+        edgeId = in;
       } else {
-        edgeId = (OIdentifiable) out;
+        edgeId = out;
       }
     }
 

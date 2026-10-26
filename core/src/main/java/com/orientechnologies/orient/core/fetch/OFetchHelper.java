@@ -343,7 +343,7 @@ public class OFetchHelper {
         // GO RECURSIVELY
         updateRidMap(
             iFetchPlan,
-            (ODocument) d,
+            d,
             iCurrentLevel,
             iLevelFromRoot,
             iFieldDepthLevel,
@@ -370,7 +370,7 @@ public class OFetchHelper {
       // GO RECURSIVELY
       updateRidMap(
           iFetchPlan,
-          (ODocument) d,
+          d,
           iCurrentLevel,
           iLevelFromRoot,
           iFieldDepthLevel,

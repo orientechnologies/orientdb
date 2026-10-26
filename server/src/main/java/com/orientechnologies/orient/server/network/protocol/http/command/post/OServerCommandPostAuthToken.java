@@ -74,9 +74,7 @@ public class OServerCommandPostAuthToken extends OServerCommandAbstract {
         ODatabaseDocument db = null;
         OSecurityUser user = null;
         try {
-          db =
-              (ODatabaseDocument)
-                  server.openDatabase(iRequest.getDatabaseName(), username, password);
+          db = server.openDatabase(iRequest.getDatabaseName(), username, password);
           user = db.getUser();
 
           if (user != null) {
@@ -120,7 +118,7 @@ public class OServerCommandPostAuthToken extends OServerCommandAbstract {
     ODatabaseDocument db = null;
     String userRid = null;
     try {
-      db = (ODatabaseDocument) server.openDatabase(iDatabaseName, username, password);
+      db = server.openDatabase(iDatabaseName, username, password);
 
       userRid = (db.getUser() == null ? "<server user>" : db.getUser().getIdentity().toString());
     } catch (OSecurityAccessException e) {

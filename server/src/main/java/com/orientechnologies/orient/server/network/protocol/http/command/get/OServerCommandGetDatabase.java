@@ -31,7 +31,6 @@ import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndexManagerAbstract;
-import com.orientechnologies.orient.core.metadata.OMetadataInternal;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OClassImpl;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -216,8 +215,7 @@ public class OServerCommandGetDatabase extends OServerCommandGetConnect {
 
       json.endObject();
 
-      if (((OMetadataInternal) db.getMetadata()).getImmutableSchemaSnapshot().getClasses()
-          != null) {
+      if (db.getMetadata().getImmutableSchemaSnapshot().getClasses() != null) {
         json.beginCollection("classes");
         List<String> classNames = new ArrayList<String>();
 

@@ -165,7 +165,7 @@ public class StorageBackupMTStateTest {
             ctx.open(StorageBackupMTStateTest.class.getSimpleName(), "admin", "adminpwd");
     database.incrementalBackup(backupDir.getAbsolutePath());
 
-    OStorage storage = ((ODatabaseDocumentInternal) database).getStorage();
+    OStorage storage = database.getStorage();
     database.close();
 
     storage.shutdown();

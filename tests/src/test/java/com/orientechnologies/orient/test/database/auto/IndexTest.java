@@ -896,10 +896,7 @@ public class IndexTest extends ObjectDBBaseTest {
     }
 
     final OIndex index =
-        ((ODatabaseDocumentInternal) db)
-            .getMetadata()
-            .getIndexManagerInternal()
-            .getIndex(db, "idxTransactionUniqueIndexTest");
+        db.getMetadata().getIndexManagerInternal().getIndex(db, "idxTransactionUniqueIndexTest");
     Assert.assertEquals(index.getInternal().size(), 1);
 
     db.begin();
@@ -940,8 +937,7 @@ public class IndexTest extends ObjectDBBaseTest {
     db.save(docOne);
 
     final OIndex index =
-        ((ODatabaseDocumentInternal) db)
-            .getMetadata()
+        db.getMetadata()
             .getIndexManagerInternal()
             .getIndex(db, "TransactionUniqueIndexWithDotTest.label");
     Assert.assertEquals(index.getInternal().size(), 1);
@@ -980,8 +976,7 @@ public class IndexTest extends ObjectDBBaseTest {
     }
 
     final OIndex index =
-        ((ODatabaseDocumentInternal) db)
-            .getMetadata()
+        db.getMetadata()
             .getIndexManagerInternal()
             .getIndex(db, "TransactionUniqueIndexWithDotTest.label");
     Assert.assertEquals(index.getInternal().size(), 1);

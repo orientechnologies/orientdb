@@ -84,7 +84,7 @@ public class ORecordFactoryManager {
 
   public ORecord newInstance(int cluster, ODatabaseDocumentInternal database) {
     try {
-      return (ORecord) getFactory(database.getRecordType()).newRecord(cluster, database);
+      return getFactory(database.getRecordType()).newRecord(cluster, database);
     } catch (Exception e) {
       throw new IllegalArgumentException("Unsupported record type: " + database.getRecordType(), e);
     }
@@ -93,7 +93,7 @@ public class ORecordFactoryManager {
   public ORecord newInstance(
       final byte iRecordType, int cluster, ODatabaseDocumentInternal database) {
     try {
-      return (ORecord) getFactory(iRecordType).newRecord(cluster, database);
+      return getFactory(iRecordType).newRecord(cluster, database);
     } catch (Exception e) {
       throw new IllegalArgumentException("Unsupported record type: " + iRecordType, e);
     }

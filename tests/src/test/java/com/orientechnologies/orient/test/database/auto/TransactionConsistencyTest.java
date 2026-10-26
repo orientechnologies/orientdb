@@ -125,7 +125,7 @@ public class TransactionConsistencyTest extends DocumentDBBaseTest {
     database1.close();
 
     database2.activateOnCurrentThread();
-    ((ODatabaseDocumentInternal) database2).close();
+    database2.close();
     OrientDBInternal.extract(baseContext).forceDatabaseClose(database2.getName());
     database2 = openSession("admin", "admin");
 

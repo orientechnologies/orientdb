@@ -298,7 +298,7 @@ public class OIndexManagerRemote implements OIndexManagerAbstract {
   void internalAcquireExclusiveLock() {
     final ODatabaseDocumentInternal databaseRecord = getDatabaseIfDefined();
     if (databaseRecord != null && !databaseRecord.isClosed()) {
-      final OMetadataInternal metadata = (OMetadataInternal) databaseRecord.getMetadata();
+      final OMetadataInternal metadata = databaseRecord.getMetadata();
       if (metadata != null) metadata.makeThreadLocalSchemaSnapshot();
     }
     lock.writeLock().lock();
