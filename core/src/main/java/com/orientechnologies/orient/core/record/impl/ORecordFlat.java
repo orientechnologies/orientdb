@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.record.impl;
 import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.db.ODatabaseRecordThreadLocal;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.db.record.OIdentifiable;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.record.ORecord;
@@ -128,6 +129,19 @@ public class ORecordFlat extends ORecordAbstract implements ORecordStringable {
     super.fromStream(iRecordBuffer);
     value = null;
     return this;
+  }
+
+  @Override
+  protected int compareContent(OIdentifiable iOther) {
+    if (iOther instanceof ORecordFlat) {
+      if (this.value == ((ORecordFlat) iOther).value) {
+        return 0;
+      }
+      if (this.value != null) {
+        return this.value.compareTo(((ORecordFlat) iOther).value);
+      }
+    }
+    return -1;
   }
 
   @Override

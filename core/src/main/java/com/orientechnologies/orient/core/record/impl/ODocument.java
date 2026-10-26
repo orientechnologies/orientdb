@@ -22,6 +22,7 @@ package com.orientechnologies.orient.core.record.impl;
 import static com.orientechnologies.orient.core.config.OGlobalConfiguration.DB_CUSTOM_SUPPORT;
 
 import com.orientechnologies.common.collection.OMultiValue;
+import com.orientechnologies.common.comparator.ODefaultComparator;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.io.OIOUtils;
 import com.orientechnologies.common.log.OLogManager;
@@ -3578,6 +3579,39 @@ public class ODocument extends ORecordAbstract
   protected void checkEmbeddable() {
     if (isVertex() || isEdge()) {
       throw new ODatabaseException("Vertices or Edges cannot be stored as embedded");
+    }
+  }
+
+  @Override
+  protected int compareContent(OIdentifiable iOther) {
+    if (iOther instanceof ODocument) {
+      checkForFields();
+      Iterator<Entry<String, ODocumentEntry>> it = this.fields.entrySet().iterator();
+      Iterator<Entry<String, ODocumentEntry>> ito =
+          ((ODocument) iOther).fields.entrySet().iterator();
+      ODefaultComparator cmp = ODefaultComparator.INSTANCE;
+      while (it.hasNext() && ito.hasNext()) {
+        Entry<String, ODocumentEntry> next = it.next();
+        Entry<String, ODocumentEntry> nexto = ito.next();
+        int keyc = next.getKey().compareTo(nexto.getKey());
+        if (keyc == 0) {
+          int valuec = cmp.compare(next.getValue().value, nexto.getValue().value);
+          if (valuec != 0) {
+            return valuec;
+          }
+        } else {
+          return keyc;
+        }
+      }
+      if (it.hasNext()) {
+        return 1;
+      } else if (ito.hasNext()) {
+        return -1;
+      } else {
+        return 0;
+      }
+    } else {
+      return 1;
     }
   }
 }

@@ -19,7 +19,11 @@
  */
 package com.orientechnologies.common.comparator;
 
+import java.util.Collection;
 import java.util.Comparator;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Map.Entry;
 
 /**
  * Comparator that calls {@link Comparable#compareTo(Object)} methods for getting results for all
@@ -48,6 +52,10 @@ public class ODefaultComparator implements Comparator<Object> {
 
     if (objectOne instanceof Comparable)
       return ((Comparable<Object>) objectOne).compareTo(objectTwo);
+    if (objectOne instanceof Collection && objectTwo instanceof Collection)
+      return compareCollection((Collection) objectOne, (Collection) objectTwo);
+    if (objectOne instanceof Map && objectTwo instanceof Map)
+      return compareMap((Map) objectOne, (Map) objectTwo);
 
     final Comparator<?> comparator =
         OComparatorFactory.INSTANCE.getComparator(objectOne.getClass());
@@ -56,5 +64,52 @@ public class ODefaultComparator implements Comparator<Object> {
 
     throw new IllegalStateException(
         "Object of class '" + objectOne.getClass().getName() + "' cannot be compared");
+  }
+
+  private int compareMap(Map objectOne, Map objectTwo) {
+    Iterator<Entry> it = objectOne.entrySet().iterator();
+    Iterator<Entry> ito = objectTwo.entrySet().iterator();
+    Comparator<Object> cmp = ODefaultComparator.INSTANCE;
+    while (it.hasNext() && ito.hasNext()) {
+      Entry next = it.next();
+      Entry nexto = ito.next();
+      int keyc = cmp.compare(next.getKey(), nexto.getKey());
+      if (keyc == 0) {
+        int valuec = cmp.compare(next.getValue(), nexto.getValue());
+        if (valuec != 0) {
+          return valuec;
+        }
+      } else {
+        return keyc;
+      }
+    }
+    if (it.hasNext()) {
+      return 1;
+    } else if (ito.hasNext()) {
+      return -1;
+    } else {
+      return 0;
+    }
+  }
+
+  private int compareCollection(Collection objectOne, Collection objectTwo) {
+    Iterator it = objectOne.iterator();
+    Iterator ito = objectTwo.iterator();
+    Comparator<Object> cmp = ODefaultComparator.INSTANCE;
+    while (it.hasNext() && ito.hasNext()) {
+      Object next = it.next();
+      Object nexto = ito.next();
+      int valuec = cmp.compare(next, nexto);
+      if (valuec != 0) {
+        return valuec;
+      }
+    }
+    if (it.hasNext()) {
+      return 1;
+    } else if (ito.hasNext()) {
+      return -1;
+    } else {
+      return 0;
+    }
   }
 }
