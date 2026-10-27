@@ -94,20 +94,18 @@ public abstract class OSchemaShared implements OCloseable {
   public static Character checkClassNameIfValid(String iName) throws OSchemaException {
     if (iName == null) throw new IllegalArgumentException("Name is null");
 
-    //    iName = iName.trim();
-    //
-    //    final int nameSize = iName.length();
-    //
-    //    if (nameSize == 0)
-    //      throw new IllegalArgumentException("Name is empty");
-    //
-    //    for (int i = 0; i < nameSize; ++i) {
-    //      final char c = iName.charAt(i);
-    //      if (c == ':' || c == ',' || c == ';' || c == ' ' || c == '@' || c == '=' || c == '.' ||
-    // c == '#')
-    //        // INVALID CHARACTER
-    //        return c;
-    //    }
+    iName = iName.trim();
+
+    final int nameSize = iName.length();
+
+    if (nameSize == 0) throw new IllegalArgumentException("Name is empty");
+
+    for (int i = 0; i < nameSize; ++i) {
+      final char c = iName.charAt(i);
+      if (c == '`')
+        // INVALID CHARACTER
+        return c;
+    }
 
     return null;
   }
