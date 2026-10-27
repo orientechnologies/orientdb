@@ -1436,18 +1436,18 @@ public class SQLSelectTest extends AbstractSelectTest {
 
   @Test
   public void testSelectFromIndexValues() {
+    database.command("create property Profile.name STRING").close();
     database.command("create index selectFromIndexValues on Profile (name) notunique").close();
 
     final List<ODocument> classResult =
         new ArrayList<ODocument>(
-            (List<ODocument>)
-                database
-                    .query(
-                        "select from Profile where ((nick like 'J%') or (nick like 'N%')) and (name"
-                            + " is not null)")
-                    .stream()
-                    .map(x -> (ODocument) x.toElement())
-                    .toList());
+            database
+                .query(
+                    "select from Profile where ((nick like 'J%') or (nick like 'N%')) and (name"
+                        + " is not null)")
+                .stream()
+                .map(x -> (ODocument) x.toElement())
+                .toList());
 
     final List<ODocument> indexValuesResult =
         database

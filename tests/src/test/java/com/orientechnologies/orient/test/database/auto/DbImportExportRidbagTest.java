@@ -56,13 +56,16 @@ public class DbImportExportRidbagTest extends DocumentDBBaseTest implements OCom
   public void testDbExport() throws IOException {
     ODatabaseSession database = openSession("admin", "admin");
 
-    database.command("insert into V set name ='a'");
+    database.command("insert into V set name ='a'").close();
     for (int i = 0; i < 100; i++) {
-      database.command("insert into V set name ='b" + i + "'");
+      database.command("insert into V set name ='b" + i + "'").close();
     }
 
-    database.command(
-        "create edge E from (select from V where name ='a') to (select from V where name != 'a')");
+    database
+        .command(
+            "create edge E from (select from V where name ='a') to (select from V where name !="
+                + " 'a')")
+        .close();
 
     // ADD A CUSTOM TO THE CLASS
     database.command("alter class V custom onBeforeCreate=onBeforeCreateItem").close();

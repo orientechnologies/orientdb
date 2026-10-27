@@ -94,11 +94,9 @@ public class AutoShardingTest extends DocumentDBBaseTest {
   public void testDelete() {
     create();
     for (int i = 0; i < ITERATIONS; ++i) {
-      Long deleted =
-          database
-              .command("delete from AutoShardingTest where id = ?", i)
-              .next()
-              .getProperty("count");
+      OResultSet countResult = database.command("delete from AutoShardingTest where id = ?", i);
+      Long deleted = countResult.next().getProperty("count");
+      countResult.close();
 
       Assert.assertEquals(deleted.intValue(), 2);
 
@@ -116,10 +114,10 @@ public class AutoShardingTest extends DocumentDBBaseTest {
   public void testUpdate() {
     create();
     for (int i = 0; i < ITERATIONS; ++i) {
-      OResult updated =
-          database
-              .command("update AutoShardingTest set id += " + ITERATIONS + " where id = ?", i)
-              .next();
+      OResultSet result =
+          database.command("update AutoShardingTest set id += " + ITERATIONS + " where id = ?", i);
+      OResult updated = result.next();
+      result.close();
 
       Assert.assertEquals((long) updated.getProperty("count"), 2);
 
@@ -157,9 +155,10 @@ public class AutoShardingTest extends DocumentDBBaseTest {
       final int selectedClusterId =
           clusterIds[((int) (Math.abs(hashFunction.hashCode(i)) % clusterIds.length))];
 
-      OResult sqlRecord =
-          database.command("insert into AutoShardingTest (id) values (" + i + ")").next();
+      OResultSet result = database.command("insert into AutoShardingTest (id) values (" + i + ")");
+      OResult sqlRecord = result.next();
       Assert.assertEquals(sqlRecord.getIdentity().get().getClusterId(), selectedClusterId);
+      result.close();
 
       ODocument apiRecord = new ODocument("AutoShardingTest").field("id", i);
       database.save(apiRecord);

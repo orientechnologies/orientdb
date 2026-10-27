@@ -108,7 +108,7 @@ public class FunctionsTest extends DocumentDBBaseTest {
                     OResultSet res1 = db.command("select testMTCall() as testMTCall");
                     Assert.assertNotNull(res1);
                     Assert.assertEquals(res1.next().<Object>getProperty("testMTCall"), 3);
-
+                    res1.close();
                     counter.incrementAndGet();
                   }
                 }

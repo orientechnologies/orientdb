@@ -345,7 +345,7 @@ public class SQLInsertTest extends DocumentDBBaseTest {
       database.getMetadata().getSchema().createClass("Account");
 
     for (int i = 0; i < 30; i++) {
-      database.command("insert into cluster:3 set name = 'foo" + i + "'");
+      database.command("insert into cluster:3 set name = 'foo" + i + "'").close();
     }
     List<Long> positions = getValidPositions(3);
 

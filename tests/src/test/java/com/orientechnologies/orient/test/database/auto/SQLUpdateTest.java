@@ -146,25 +146,24 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
 
     for (OResult doc : docs) {
 
-      final long records =
-          database
-              .command(
-                  "update Account set addresses = [#"
-                      + addressClusterId
-                      + ":"
-                      + positions.get(0)
-                      + ", #"
-                      + addressClusterId
-                      + ":"
-                      + positions.get(1)
-                      + ",#"
-                      + addressClusterId
-                      + ":"
-                      + positions.get(2)
-                      + "] where @rid = "
-                      + doc.getIdentity().get())
-              .next()
-              .getProperty("count");
+      OResultSet result =
+          database.command(
+              "update Account set addresses = [#"
+                  + addressClusterId
+                  + ":"
+                  + positions.get(0)
+                  + ", #"
+                  + addressClusterId
+                  + ":"
+                  + positions.get(1)
+                  + ",#"
+                  + addressClusterId
+                  + ":"
+                  + positions.get(2)
+                  + "] where @rid = "
+                  + doc.getIdentity().get());
+      final long records = result.next().getProperty("count");
+      result.close();
 
       Assert.assertEquals(records, 1);
 
@@ -644,6 +643,7 @@ public class SQLUpdateTest extends DocumentDBBaseTest {
     Assert.assertEquals(expectedName, oDoc.getProperty("name"));
     Assert.assertEquals(expectedCity, oDoc.getProperty("city"));
     Assert.assertEquals(expectedGender, oDoc.getProperty("gender"));
+    result.close();
   }
 
   private List<Long> getValidPositions(int clusterId) {
