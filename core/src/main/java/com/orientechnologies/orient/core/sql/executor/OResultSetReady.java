@@ -13,6 +13,24 @@ public class OResultSetReady implements OResultSetInternal, OResettable {
   private int next = 0;
   protected OExecutionPlan plan;
 
+  public OResultSetReady() {}
+
+  public static OResultSetReady fromResultSet(OResultSet from) {
+    OResultSetReady result = new OResultSetReady();
+    from.forEachRemaining(result::add);
+    from.getExecutionPlan().ifPresent(result::setPlan);
+    from.close();
+    return result;
+  }
+
+  public static OResultSet loadIfNeeded(OResultSet from) {
+    if (from instanceof OResultSetReady) {
+      return from;
+    } else {
+      return fromResultSet(from);
+    }
+  }
+
   @Override
   public boolean hasNext() {
     return content.size() > next;
@@ -57,6 +75,7 @@ public class OResultSetReady implements OResultSetInternal, OResettable {
   public OResultSetReady copy() {
     OResultSetReady result = new OResultSetReady();
     result.content = this.content;
+    result.plan = this.plan;
     return result;
   }
 

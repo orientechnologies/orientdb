@@ -591,9 +591,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
       OResultSet result;
       if (!statement.isIdempotent()) {
         // fetch all, close and detach
-        OResultSetReady prefetched = new OResultSetReady();
-        original.forEachRemaining(x -> prefetched.add(x));
-        original.close();
+        OResultSetReady prefetched = OResultSetReady.fromResultSet(original);
         queryCompleted();
         result = attachQuery(prefetched);
       } else {
@@ -693,9 +691,7 @@ public class ODatabaseDocumentEmbedded extends ODatabaseDocumentAbstract
       OResultSet result;
       if (!statement.isIdempotent()) {
         // fetch all, close and detach
-        OResultSetReady prefetched = new OResultSetReady();
-        original.forEachRemaining(x -> prefetched.add(x));
-        original.close();
+        OResultSetReady prefetched = OResultSetReady.fromResultSet(original);
         queryCompleted();
         result = attachQuery(prefetched);
       } else {

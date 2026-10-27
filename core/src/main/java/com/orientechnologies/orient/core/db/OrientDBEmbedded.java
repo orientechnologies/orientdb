@@ -1030,10 +1030,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
     OAdminExecutionPlan executionPlan = statement.createExecutionPlan(ctx);
     var original = new OServerResultSet(executionPlan.start(ctx), ctx, executionPlan);
 
-    OResultSetReady prefetched = new OResultSetReady();
-    original.forEachRemaining(prefetched::add);
-    original.close();
-    return prefetched;
+    return OResultSetReady.fromResultSet(original);
   }
 
   @Override
@@ -1048,11 +1045,7 @@ public class OrientDBEmbedded implements OrientDBInternal {
     OAdminExecutionPlan executionPlan = statement.createExecutionPlan(ctx);
     var original = new OServerResultSet(executionPlan.start(ctx), ctx, executionPlan);
 
-    OResultSetReady prefetched = new OResultSetReady();
-    original.forEachRemaining(prefetched::add);
-    original.close();
-
-    return prefetched;
+    return OResultSetReady.fromResultSet(original);
   }
 
   @Override

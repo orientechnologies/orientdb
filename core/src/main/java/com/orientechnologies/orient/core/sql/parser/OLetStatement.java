@@ -31,12 +31,8 @@ public class OLetStatement extends OSimpleExecStatement {
       }
       result = statement.execute(ctx.getDatabase(), params, ctx, false);
     }
-    if (result instanceof OResultSet) {
-      OResultSetReady rs = new OResultSetReady();
-      ((OResultSet) result).stream().forEach(x -> rs.add(x));
-      rs.setPlan(((OResultSet) result).getExecutionPlan().orElse(null));
-      ((OResultSet) result).close();
-      result = rs;
+    if (result instanceof OResultSet rs) {
+      result = OResultSetReady.fromResultSet(rs);
     }
 
     if (ctx != null) {

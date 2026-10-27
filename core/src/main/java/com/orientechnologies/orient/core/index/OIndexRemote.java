@@ -395,18 +395,11 @@ public abstract class OIndexRemote implements OIndex {
       }
     }
 
-    final OResultSetReady copy = new OResultSetReady(); // TODO a raw array instead...?
-    try (OResultSet res =
-        getDatabase()
-            .indexQuery(
-                getName(),
-                String.format(
-                    QUERY_ITERATE_ENTRIES, name, params.toString(), ascSortOrder ? "ASC" : "DESC"),
-                keys.toArray())) {
-
-      res.forEachRemaining(x -> copy.add(x));
-    }
-
+    String query =
+        String.format(
+            QUERY_ITERATE_ENTRIES, name, params.toString(), ascSortOrder ? "ASC" : "DESC");
+    OResultSet res = getDatabase().indexQuery(getName(), query, keys.toArray());
+    OResultSet copy = OResultSetReady.loadIfNeeded(res);
     return new OIndexAbstractCursor() {
 
       @Override
@@ -435,11 +428,8 @@ public abstract class OIndexRemote implements OIndex {
 
   @Override
   public OIndexCursor cursor() {
-    final OResultSetReady copy = new OResultSetReady(); // TODO a raw array instead...?
-    try (OResultSet result =
-        getDatabase().indexQuery(getName(), String.format(QUERY_ENTRIES, name))) {
-      result.forEachRemaining(x -> copy.add(x));
-    }
+    OResultSet result = getDatabase().indexQuery(getName(), String.format(QUERY_ENTRIES, name));
+    OResultSet copy = OResultSetReady.loadIfNeeded(result);
 
     return new OIndexAbstractCursor() {
 
@@ -471,11 +461,9 @@ public abstract class OIndexRemote implements OIndex {
 
   @Override
   public OIndexCursor descCursor() {
-    final OResultSetReady copy = new OResultSetReady(); // TODO a raw array instead...?
-    try (OResultSet result =
-        getDatabase().indexQuery(getName(), String.format(QUERY_ENTRIES_DESC, name))) {
-      result.forEachRemaining(x -> copy.add(x));
-    }
+    OResultSet result =
+        getDatabase().indexQuery(getName(), String.format(QUERY_ENTRIES_DESC, name));
+    OResultSet copy = OResultSetReady.loadIfNeeded(result);
 
     return new OIndexAbstractCursor() {
 
@@ -507,11 +495,9 @@ public abstract class OIndexRemote implements OIndex {
 
   @Override
   public OIndexKeyCursor keyCursor() {
-    final OResultSetReady copy = new OResultSetReady(); // TODO a raw array instead...?
-    try (final OResultSet result =
-        getDatabase().indexQuery(getName(), String.format(QUERY_KEYS, name))) {
-      result.forEachRemaining(x -> copy.add(x));
-    }
+    OResultSet result = getDatabase().indexQuery(getName(), String.format(QUERY_KEYS, name));
+    OResultSet copy = OResultSetReady.loadIfNeeded(result);
+
     return new OIndexKeyCursor() {
 
       @Override
