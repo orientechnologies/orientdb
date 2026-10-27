@@ -1436,7 +1436,6 @@ public class SQLSelectTest extends AbstractSelectTest {
 
   @Test
   public void testSelectFromIndexValues() {
-    database.command("create property Profile.name STRING").close();
     database.command("create index selectFromIndexValues on Profile (name) notunique").close();
 
     final List<ODocument> classResult =
