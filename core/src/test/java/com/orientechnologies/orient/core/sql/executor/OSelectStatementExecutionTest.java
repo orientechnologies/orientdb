@@ -5251,4 +5251,26 @@ public class OSelectStatementExecutionTest extends BaseMemoryDatabase {
       assertEquals(List.of("b"), ids);
     }
   }
+
+  // regression: #10882
+  @Test
+  public void testIssue10882MultiValueIndexDistinct() {
+    db.command("CREATE CLASS MultiValueIndexDistinct").close();
+    db.command("CREATE PROPERTY MultiValueIndexDistinct.f EMBEDDEDLIST STRING").close();
+    db.command("INSERT INTO MultiValueIndexDistinct SET id = 'a', f = ['x', 'y']").close();
+    db.command("INSERT INTO MultiValueIndexDistinct SET id = 'b', f = ['x', 'z']").close();
+    db.command(
+            "CREATE INDEX MultiValueIndexDistinct_f ON MultiValueIndexDistinct (f) NOTUNIQUE"
+                + " METADATA {ignoreNullValues: true}")
+        .close();
+
+    // Record 'a' matches two keys ('x' and 'y') in the IN list — each is a separate index
+    // entry, so without a DISTINCT step after the multi-value index scan it is returned twice.
+    try (OResultSet rs = db.query("SELECT id FROM MultiValueIndexDistinct WHERE f IN ['x', 'y']")) {
+      List<String> ids = new ArrayList<>();
+      rs.forEachRemaining(r -> ids.add(r.getProperty("id")));
+      ids.sort(String::compareTo);
+      assertEquals(List.of("a", "b"), ids);
+    }
+  }
 }
