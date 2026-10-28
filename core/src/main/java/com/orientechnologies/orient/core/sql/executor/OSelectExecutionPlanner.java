@@ -1950,6 +1950,9 @@ public class OSelectExecutionPlanner {
         clazz.getIndexes().stream()
             .filter(i -> i.supportsOrderedIterations())
             .filter(i -> i.getDefinition() != null)
+            // Indexes with ignoreNullValues=true cannot serve ORDER BY: they omit null-valued
+            // rows that the sort must still include.
+            .filter(i -> !i.getDefinition().isNullValuesIgnored())
             .collect(Collectors.toList())) {
       List<String> indexFields = idx.getDefinition().getFields();
       if (indexFields.size() < info.orderBy.getItems().size()) {
