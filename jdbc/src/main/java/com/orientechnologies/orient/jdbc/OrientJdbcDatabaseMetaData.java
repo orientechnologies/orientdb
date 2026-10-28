@@ -34,9 +34,10 @@ import java.sql.ResultSet;
 import java.sql.RowIdLifetime;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.HashSet;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -871,13 +872,13 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
     final Set<OIndex> classIndexes =
         database.getMetadata().getIndexManagerInternal().getClassIndexes(database, table);
 
-    final Set<OIndex> uniqueIndexes = new HashSet<>();
+    final List<OIndex> uniqueIndexes = new ArrayList<>();
 
     for (OIndex oIndex : classIndexes) {
       if (oIndex.getType().equals(INDEX_TYPE.UNIQUE.name())) uniqueIndexes.add(oIndex);
     }
 
-    final OResultSetReady resultSet = new OResultSetReady();
+    final List<OResultInternal> rows = new ArrayList<>();
 
     for (OIndex unique : uniqueIndexes) {
       int keyFiledSeq = 1;
@@ -891,9 +892,14 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
         res.setProperty("PK_NAME", unique.getName());
         keyFiledSeq++;
 
-        resultSet.add(res);
+        rows.add(res);
       }
     }
+
+    rows.sort(Comparator.comparing(r -> r.getProperty("COLUMN_NAME")));
+
+    final OResultSetReady resultSet = new OResultSetReady();
+    rows.forEach(resultSet::add);
 
     return new OrientJdbcResultSet(
         new OrientJdbcStatement(connection),
@@ -1094,13 +1100,14 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
     final Set<OIndex> classIndexes =
         metadata.getIndexManagerInternal().getClassIndexes(database, table);
 
-    final Set<OIndex> indexes = new HashSet<>();
+    final List<OIndex> indexes = new ArrayList<>();
 
     for (OIndex oIndex : classIndexes) {
       if (!unique || oIndex.getType().equals(INDEX_TYPE.UNIQUE.name())) indexes.add(oIndex);
     }
 
-    final OResultSetReady resultSet = new OResultSetReady();
+    final List<OResultInternal> rows = new ArrayList<>();
+
     for (OIndex idx : indexes) {
       boolean notUniqueIndex = !(idx.getType().equals(INDEX_TYPE.UNIQUE.name()));
 
@@ -1118,8 +1125,17 @@ public class OrientJdbcDatabaseMetaData implements DatabaseMetaData {
       res.setProperty("COLUMN_NAME", fieldNames.substring(1, fieldNames.length() - 1));
       res.setProperty("ASC_OR_DESC", "ASC");
 
-      resultSet.add(res);
+      rows.add(res);
     }
+
+    rows.sort(
+        Comparator.comparing((OResultInternal r) -> (Boolean) r.getProperty("NON_UNIQUE"))
+            .thenComparing(r -> (String) r.getProperty("TYPE"))
+            .thenComparing(r -> (String) r.getProperty("INDEX_NAME"))
+            .thenComparingInt(r -> (Integer) r.getProperty("ORDINAL_POSITION")));
+
+    final OResultSetReady resultSet = new OResultSetReady();
+    rows.forEach(resultSet::add);
 
     return new OrientJdbcResultSet(
         new OrientJdbcStatement(connection),
