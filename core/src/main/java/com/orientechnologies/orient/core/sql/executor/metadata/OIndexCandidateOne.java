@@ -5,6 +5,7 @@ import com.orientechnologies.orient.core.db.ODatabaseDocumentInternal;
 import com.orientechnologies.orient.core.index.OCompositeIndexDefinition;
 import com.orientechnologies.orient.core.index.OIndex;
 import com.orientechnologies.orient.core.index.OIndexDefinition;
+import com.orientechnologies.orient.core.index.OIndexDefinitionMultiValue;
 import com.orientechnologies.orient.core.index.OIndexInternal;
 import com.orientechnologies.orient.core.sql.executor.OAllIndexStream;
 import com.orientechnologies.orient.core.sql.executor.OBetweenIndexStream;
@@ -271,6 +272,9 @@ public class OIndexCandidateOne implements OIndexCandidate {
     OIndexDefinition def = index.getDefinition();
     if (def instanceof OCompositeIndexDefinition
         && ((OCompositeIndexDefinition) def).getMultiValueDefinition() != null) {
+      return true;
+    }
+    if (def instanceof OIndexDefinitionMultiValue) {
       return true;
     }
     return false;
