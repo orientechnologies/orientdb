@@ -79,7 +79,8 @@ public class OSecurityManager {
   /**
    * Checks if an hash string matches a password, based on the algorithm found on hash string.
    *
-   * @param iHash Hash string. Can contain the algorithm as prefix in the format <code>
+   * @param iHash
+   *          Hash string. Can contain the algorithm as prefix in the format <code>
    *     {ALGORITHM}-HASH</code>.
    * @param iPassword
    * @return
@@ -111,8 +112,10 @@ public class OSecurityManager {
   /**
    * Hashes the input string.
    *
-   * @param iInput String to hash
-   * @param iIncludeAlgorithm Include the algorithm used or not
+   * @param iInput
+   *          String to hash
+   * @param iIncludeAlgorithm
+   *          Include the algorithm used or not
    * @return
    */
   public static String createHash(
@@ -304,10 +307,11 @@ public class OSecurityManager {
       String ciClass = OConfiguration.global().clientCredentialInterceptor();
 
       if (ciClass != null) {
-        Class<?> cls = Class.forName(ciClass); // Throws a ClassNotFoundException if not found.
+        OCredentialInterceptorLoader cls =
+            OCredentialInterceptorLoader.loadersByClassName().get(ciClass);
 
-        if (OCredentialInterceptor.class.isAssignableFrom(cls)) {
-          ci = (OCredentialInterceptor) cls.newInstance();
+        if (cls != null) {
+          ci = cls.newInstance();
         }
       }
     } catch (Exception ex) {
