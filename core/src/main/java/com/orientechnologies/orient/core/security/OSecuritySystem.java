@@ -88,8 +88,6 @@ public interface OSecuritySystem {
       OSecurityUser user,
       final String message);
 
-  void registerSecurityClass(final Class<?> cls);
-
   void reload(final String cfgPath);
 
   void reload(final ODocument jsonConfig);
@@ -99,8 +97,6 @@ public interface OSecuritySystem {
   void reload(OSecurityUser user, final String jsonConfig);
 
   void reloadComponent(OSecurityUser user, final String name, final ODocument jsonConfig);
-
-  void unregisterSecurityClass(final Class<?> cls);
 
   // If a password validator is registered with the security system, it will be called to validate
   // the specified password. An OInvalidPasswordException is thrown if the password does not meet

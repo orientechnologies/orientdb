@@ -25,9 +25,9 @@ import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OSecurityManager;
+import com.orientechnologies.orient.core.security.authenticator.OSystemUserAuthenticator;
 import com.orientechnologies.orient.core.security.symmetrickey.OSymmetricKey;
 import com.orientechnologies.orient.core.security.symmetrickey.OUserSymmetricKeyConfig;
-import com.orientechnologies.orient.server.security.authenticator.OSystemUserAuthenticator;
 
 /**
  * Provides an OSystem user symmetric key authenticator, derived from OSystemUserAuthenticator. This

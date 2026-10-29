@@ -86,8 +86,6 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
   private volatile List<OSecurityAuthenticator> authenticatorsList;
   private volatile List<OSecurityAuthenticator> enabledAuthenticators;
 
-  private final ConcurrentHashMap<String, Class<?>> securityClassMap =
-      new ConcurrentHashMap<String, Class<?>>();
   private OTokenSign tokenSign;
   private final Map<String, OTemporaryGlobalUser> ephemeralUsers =
       new ConcurrentHashMap<String, OTemporaryGlobalUser>();
@@ -185,24 +183,8 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
     close();
   }
 
-  private Class<?> getClass(final ODocument jsonConfig) {
-    Class<?> cls = null;
-
-    try {
-      if (jsonConfig.containsField("class")) {
-        final String clsName = jsonConfig.field("class");
-
-        if (securityClassMap.containsKey(clsName)) {
-          cls = securityClassMap.get(clsName);
-        } else {
-          cls = Class.forName(clsName);
-        }
-      }
-    } catch (Exception th) {
-      logger.error("ODefaultServerSecurity.getClass() Throwable: ", th);
-    }
-
-    return cls;
+  private String getClassName(final ODocument jsonConfig) {
+    return jsonConfig.field("class");
   }
 
   // OSecuritySystem (via OServerSecurity)
@@ -569,39 +551,6 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
     }
   }
 
-  // OSecuritySystem
-  public void registerSecurityClass(final Class<?> cls) {
-    String fullTypeName = getFullTypeName(cls);
-
-    if (fullTypeName != null) {
-      securityClassMap.put(fullTypeName, cls);
-    }
-  }
-
-  // OSecuritySystem
-  public void unregisterSecurityClass(final Class<?> cls) {
-    String fullTypeName = getFullTypeName(cls);
-
-    if (fullTypeName != null) {
-      securityClassMap.remove(fullTypeName);
-    }
-  }
-
-  // Returns the package plus type name of Class.
-  private static String getFullTypeName(Class<?> type) {
-    String typeName = null;
-
-    typeName = type.getSimpleName();
-
-    Package pack = type.getPackage();
-
-    if (pack != null) {
-      typeName = pack.getName() + "." + typeName;
-    }
-
-    return typeName;
-  }
-
   public void load(final String cfgPath) {
     this.configDoc = loadConfig(cfgPath);
   }
@@ -695,12 +644,13 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
             if (authMethodDoc.containsField("enabled")) enabled = authMethodDoc.field("enabled");
 
             if (enabled) {
-              Class<?> authClass = getClass(authMethodDoc);
+              String authClass = getClassName(authMethodDoc);
 
               if (authClass != null) {
-                if (OSecurityAuthenticator.class.isAssignableFrom(authClass)) {
-                  OSecurityAuthenticator authPlugin =
-                      (OSecurityAuthenticator) authClass.newInstance();
+                var loaders = OSecurityAuthenticatorLoader.loadersByClassName();
+                var loader = loaders.get(authClass);
+                if (loader != null) {
+                  OSecurityAuthenticator authPlugin = loader.newInstance();
 
                   authPlugin.config(authMethodDoc, this);
                   authPlugin.active();
@@ -939,11 +889,12 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
             passwordValidator = null;
           }
 
-          Class<?> cls = getClass(passwdValDoc);
+          String cls = getClassName(passwdValDoc);
 
           if (cls != null) {
-            if (OPasswordValidator.class.isAssignableFrom(cls)) {
-              passwordValidator = (OPasswordValidator) cls.newInstance();
+            var loader = OPasswordValidatorLoader.loadersByClassName().get(cls);
+            if (loader != null) {
+              passwordValidator = loader.newInstance();
               passwordValidator.config(passwdValDoc, this);
               passwordValidator.active();
             } else {
@@ -974,11 +925,12 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
         }
 
         if (ldapImportDoc != null && isEnabled(ldapImportDoc)) {
-          Class<?> cls = getClass(ldapImportDoc);
+          String cls = getClassName(ldapImportDoc);
 
           if (cls != null) {
-            if (OSecurityComponent.class.isAssignableFrom(cls)) {
-              importLDAP = (OSecurityComponent) cls.newInstance();
+            var loader = OSecurityComponentLoader.loadersByClassName().get(cls);
+            if (loader != null) {
+              importLDAP = loader.newInstance();
               importLDAP.config(ldapImportDoc, this);
               importLDAP.active();
             } else {
@@ -1009,11 +961,12 @@ public class ODefaultSecuritySystem implements OSecuritySystem {
         }
 
         if (auditingDoc != null && isEnabled(auditingDoc)) {
-          Class<?> cls = getClass(auditingDoc);
+          String cls = getClassName(auditingDoc);
 
           if (cls != null) {
-            if (OAuditingService.class.isAssignableFrom(cls)) {
-              auditingService = (OAuditingService) cls.newInstance();
+            var loader = OAuditingServiceLoader.loadersByClassName().get(cls);
+            if (loader != null) {
+              auditingService = loader.newInstance();
               auditingService.config(auditingDoc, this);
               auditingService.active();
             } else {

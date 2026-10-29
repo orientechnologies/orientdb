@@ -28,8 +28,8 @@ import com.orientechnologies.orient.core.metadata.security.OSecurityShared;
 import com.orientechnologies.orient.core.metadata.security.OSecurityUser;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.security.OSecurityManager;
+import com.orientechnologies.orient.core.security.authenticator.ODefaultPasswordAuthenticator;
 import com.orientechnologies.orient.core.security.symmetrickey.OSymmetricKey;
-import com.orientechnologies.orient.server.security.authenticator.ODefaultPasswordAuthenticator;
 import java.util.HashMap;
 import java.util.Map;
 

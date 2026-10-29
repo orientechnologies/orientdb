@@ -1,0 +1,2 @@
+com.orientechnologies.agent.security.authenticator.OSystemSymmetricKeyAuthLoader
+com.orientechnologies.agent.security.authenticator.OSecuritySymmetricKeyAuthLoader

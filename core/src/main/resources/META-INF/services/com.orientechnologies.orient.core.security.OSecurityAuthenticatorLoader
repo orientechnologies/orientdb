@@ -1,0 +1,4 @@
+com.orientechnologies.orient.core.security.authenticator.OSystemUserAuthenticatorLoader
+com.orientechnologies.orient.core.security.authenticator.OServerConfigAuthenticatorLoader
+com.orientechnologies.orient.core.security.authenticator.ODatabaseUserAuthenticatorLoader
+com.orientechnologies.orient.core.security.authenticator.ODefaultPasswordAuthenticatorLoader
