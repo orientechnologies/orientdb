@@ -2,11 +2,19 @@ package com.orientechnologies.orient.server.config;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.config.OConfig;
+import com.orientechnologies.orient.core.config.OConfigAuthentication;
+import com.orientechnologies.orient.core.config.OConfigAuthenticator;
 import com.orientechnologies.orient.core.config.OConfigNetwork;
 import com.orientechnologies.orient.core.config.OConfigNetworkTls;
+import com.orientechnologies.orient.core.config.OConfigPasswordValidator;
 import com.orientechnologies.orient.core.config.OConfigPlugins;
 import com.orientechnologies.orient.core.config.OConfigProperty;
+import com.orientechnologies.orient.core.config.OConfigSecurity;
+import com.orientechnologies.orient.core.config.OConfigSecurityAuditing;
+import com.orientechnologies.orient.core.config.OConfigUser;
+import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OHandlerConfig;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.config.distributed.OServerDistributedConfiguration;
@@ -30,14 +38,300 @@ public class OServerConfigurationRewrite {
     loader.save(load);
   }
 
-  public OConfig convertToOConfig(OServerConfiguration configuration) {
+  public OConfig convertToOConfig(OServerConfiguration configuration) throws IOException {
     OConfig config = new OConfig();
     config.setDatabases(configuration.getLocation());
     config.setPlugins(migratePlugins(configuration));
     config.setHandlers(migrateHandlers(configuration.getHandlers()));
     config.setListeners(migrateListeners(configuration.getNetwork()));
     config.setProperties(migrateProperties(configuration.getProperties()));
+    config.setSecurity(migrateSecurity(configuration));
     return config;
+  }
+
+  private OConfigSecurity migrateSecurity(OServerConfiguration configuration) throws IOException {
+    String configFile =
+        OSystemVariableResolver.resolveSystemVariables("${ORIENTDB_HOME}/config/security.json");
+    OConfigSecurity config;
+    var ssf = configuration.getProperty(OGlobalConfiguration.SERVER_SECURITY_FILE.getKey());
+    if (ssf != null) configFile = ssf;
+    var path = Path.of(configFile);
+    if (path.toFile().exists()) {
+      String content = Files.readString(path);
+      var configDoc = new ODocument();
+      configDoc.fromJSON(content, "noMap");
+      var newConfig = migrateConfigSecurity(configDoc);
+      config = newConfig;
+    } else {
+      config = new OConfigSecurity();
+    }
+    var users = configuration.getUsers();
+    if (users != null) {
+      for (var user : users) {
+        var newUsers = config.getUsers();
+        if (newUsers == null) {
+          newUsers = new ArrayList<>();
+        }
+        newUsers.add(new OConfigUser(user.getName(), user.getPassword(), user.getResources()));
+        config.setUsers(newUsers);
+      }
+    }
+    var sec = configuration.getSecurity();
+    if (sec != null) {
+      if (sec.getUsers() != null) {
+        for (var user : sec.getUsers()) {
+          var newUsers = config.getUsers();
+          if (newUsers == null) {
+            newUsers = new ArrayList<>();
+          }
+          newUsers.add(new OConfigUser(user.getName(), user.getPassword(), user.getResources()));
+          config.setUsers(newUsers);
+        }
+      }
+    }
+    return config;
+  }
+
+  protected void migrateUsers(OConfigSecurity config, OServerUserConfiguration[] users) {
+    for (var user : users) {
+      var newUsers = config.getUsers();
+      if (newUsers == null) {
+        newUsers = new ArrayList<>();
+      }
+      newUsers.add(new OConfigUser(user.getName(), user.getPassword(), user.getResources()));
+      config.setUsers(newUsers);
+    }
+  }
+
+  private OConfigSecurity migrateConfigSecurity(ODocument configDoc) {
+    var newConfig = new OConfigSecurity();
+    if (configDoc.hasProperty("enabled")) {
+      newConfig.setEnabled(configDoc.getProperty("enabled"));
+    }
+    if (configDoc.hasProperty("debug")) {
+      newConfig.setDebug(configDoc.getProperty("debug"));
+    }
+    if (configDoc.hasProperty("auditing")) {
+      newConfig.setAuditing(migrateAditingConfig((ODocument) configDoc.getProperty("auditing")));
+    }
+    if (configDoc.hasProperty("server")) {
+      var server = (ODocument) configDoc.getProperty("server");
+      if (server.hasProperty("storePasswords")) {
+        newConfig.setStorePasswords(server.getProperty("storePasswords"));
+      }
+    }
+    List<OConfigUser> foundUsers = new ArrayList<>();
+    if (configDoc.hasProperty("authentication")) {
+      newConfig.setAuthentication(
+          migrateAuthentication((ODocument) configDoc.getProperty("authentication"), foundUsers));
+    }
+    newConfig.setUsers(foundUsers);
+    if (configDoc.hasProperty("passwordValidator")) {
+      newConfig.setPasswordValidator(
+          migratePasswordValidator((ODocument) configDoc.getProperty("passwordValidator")));
+    }
+    if (configDoc.hasProperty("ldapImporter")) {
+      // TODO: migrate ldap importer config
+    }
+
+    return newConfig;
+  }
+
+  private OConfigPasswordValidator migratePasswordValidator(ODocument confDoc) {
+    OConfigPasswordValidator newConfig = new OConfigPasswordValidator();
+    if (confDoc.hasProperty("enabled")) {
+      newConfig.setEnabled(confDoc.getProperty("enabled"));
+    }
+
+    if (confDoc.hasProperty("class")) {
+      String cls = confDoc.getProperty("class");
+      switch (cls) {
+        case "com.orientechnologies.agent.EnterprisePasswordValidator" -> {}
+        case "com.orientechnologies.security.password.ODefaultPasswordValidator" -> {
+          if (confDoc.containsField("ignoreUUID")) {
+            newConfig.setIgnoreUUID(confDoc.field("ignoreUUID"));
+          }
+
+          if (confDoc.containsField("minimumLength")) {
+            newConfig.setMinimumLength(confDoc.field("minimumLength"));
+          }
+
+          if (confDoc.containsField("numberRegEx")) {
+            newConfig.setNumberRegEx(confDoc.field("numberRegEx"));
+          }
+
+          if (confDoc.containsField("specialRegEx")) {
+            newConfig.setSpecialRegEx(confDoc.field("specialRegEx"));
+          }
+
+          if (confDoc.containsField("uppercaseRegEx")) {
+            newConfig.setUppercaseRegEx(confDoc.field("uppercaseRegEx"));
+          }
+        }
+        default -> throw new UnsupportedOperationException("unsupported conversion of type:" + cls);
+      }
+      ;
+    }
+
+    return newConfig;
+  }
+
+  private OConfigAuthentication migrateAuthentication(
+      ODocument confDoc, List<OConfigUser> foundUsers) {
+    OConfigAuthentication config = new OConfigAuthentication();
+
+    if (confDoc.hasProperty("allowDefault")) {
+      config.setAllowDefault(confDoc.getProperty("allowDefault"));
+    }
+    if (confDoc.hasProperty("authenticators")) {
+      List<ODocument> authMethodsList = confDoc.getProperty("authenticators");
+      List<OConfigAuthenticator> auths = new ArrayList<>();
+      for (var auth : authMethodsList) {
+        auths.add(migrateAuthenticator(auth, foundUsers));
+      }
+      config.setAuthenticators(auths);
+    }
+    return config;
+  }
+
+  private OConfigAuthenticator migrateAuthenticator(ODocument auth, List<OConfigUser> foundUsers) {
+    OConfigAuthenticator authenticator = new OConfigAuthenticator();
+    if (auth.hasProperty("name")) {
+      authenticator.setName(auth.getProperty("name"));
+    }
+
+    if (auth.hasProperty("enabled")) {
+      authenticator.setEnabled(auth.getProperty("enabled"));
+    }
+
+    if (auth.hasProperty("caseSensitive")) {
+      authenticator.setCaseSensitive(auth.getProperty("caseSensitive"));
+    }
+
+    if (auth.hasProperty("debug")) {
+      authenticator.setDebug(auth.getProperty("debug"));
+    }
+
+    if (auth.hasProperty("class")) {
+      String cls = auth.getProperty("class");
+      var type =
+          switch (cls) {
+            case "com.orientechnologies.orient.core.security.authenticator.ODatabaseUserAuthenticator" -> {
+              yield "database-users";
+            }
+            case "com.orientechnologies.orient.core.security.authenticator.ODefaultPasswordAuthenticator" -> {
+              yield "default";
+            }
+            case "com.orientechnologies.orient.server.security.authenticator.ODefaultPasswordAuthenticator" -> {
+              if (auth.hasProperty("users")) {
+                fillUsers((List<ODocument>) auth.getProperty("users"), foundUsers);
+              }
+              yield "default";
+            }
+            case "com.orientechnologies.agent.security.authenticator.OSecuritySymmetricKeyAuth" -> {
+              yield "symmetric-key";
+            }
+            case "com.orientechnologies.orient.core.security.authenticator.OSystemUserAuthenticator" -> {
+              yield "system-users";
+            }
+            case "com.orientechnologies.orient.server.security.authenticator.OSystemUserAuthenticator" -> {
+              yield "system-users";
+            }
+            case "com.orientechnologies.orient.server.security.authenticator.OServerConfigAuthenticator" -> {
+              yield "server-config";
+            }
+            case "com.orientechnologies.orient.core.security.authenticator.OServerConfigAuthenticator" -> {
+              yield "server-config";
+            }
+            case " com.orientechnologies.agent.security.authenticator.OSystemSymmetricKeyAuth" -> {
+              yield "system-symmetric-key";
+            }
+
+            default ->
+                throw new UnsupportedOperationException("unsupported conversion of type:" + cls);
+          };
+      authenticator.setType(type);
+    }
+
+    return authenticator;
+  }
+
+  private void fillUsers(List<ODocument> property, List<OConfigUser> foundUsers) {
+    for (ODocument user : property) {
+      foundUsers.add(
+          new OConfigUser(
+              user.getProperty("username"),
+              user.getProperty("password"),
+              user.getProperty("resources")));
+    }
+  }
+
+  private OConfigSecurityAuditing migrateAditingConfig(ODocument configDoc) {
+    OConfigSecurityAuditing auditing = new OConfigSecurityAuditing();
+    if (configDoc.hasProperty("enabled")) {
+      auditing.setEnabled(configDoc.getProperty("enabled"));
+    }
+    if (configDoc.hasProperty("class")
+        && "com.orientechnologies.security.auditing.ODefaultAuditingLoader"
+            .equals(configDoc.getProperty("class"))) {
+      auditing.setEngine("default");
+
+      ObjectMapper mapper = new ObjectMapper();
+      var object = mapper.createObjectNode();
+      if (configDoc.hasProperty("retentionDays")) {
+        object.put("retentionDays", (int) configDoc.getProperty("retentionDays"));
+      }
+      if (configDoc.hasProperty("distributed")) {
+        var distributed = mapper.createObjectNode();
+        var configDocDistributed = (ODocument) configDoc.getProperty("distributed");
+        if (configDocDistributed.hasProperty("onNodeJoinedEnabled")) {
+          distributed.put(
+              "onNodeJoinedEnabled",
+              (Boolean) configDocDistributed.getProperty("onNodeJoinedEnabled"));
+        }
+
+        if (configDocDistributed.hasProperty("onNodeJoinedMessage")) {
+          distributed.put(
+              "onNodeJoinedMessage",
+              (String) configDocDistributed.getProperty("onNodeJoinedMessage"));
+        }
+
+        if (configDocDistributed.hasProperty("onNodeLeftEnabled")) {
+          distributed.put(
+              "onNodeLeftEnabled", (Boolean) configDocDistributed.getProperty("onNodeLeftEnabled"));
+        }
+
+        if (configDocDistributed.hasProperty("onNodeLeftMessage")) {
+          distributed.put(
+              "onNodeLeftMessage", (String) configDocDistributed.getProperty("onNodeLeftMessage"));
+        }
+        object.set("distributed", distributed);
+      }
+
+      if (configDoc.hasProperty("systemImport")) {
+        var systemImport = mapper.createObjectNode();
+        var configDocSystemImport = (ODocument) configDoc.getProperty("systemImport");
+        if (configDocSystemImport.hasProperty("enabled")) {
+          systemImport.put("enabled", (Boolean) configDocSystemImport.getProperty("enabled"));
+        }
+
+        if (configDocSystemImport.hasProperty("databases")) {
+          var values = mapper.createArrayNode();
+          ((List<String>) configDocSystemImport.getProperty("databases")).forEach(values::add);
+          systemImport.set("databases", values);
+        }
+
+        if (configDocSystemImport.hasProperty("limit")) {
+          systemImport.put("limit", (int) configDocSystemImport.getProperty("limit"));
+        }
+
+        if (configDocSystemImport.hasProperty("sleepPeriod")) {
+          systemImport.put("sleepPeriod", (int) configDocSystemImport.getProperty("sleepPeriod"));
+        }
+        object.set("systemImport", systemImport);
+      }
+    }
+    return auditing;
   }
 
   private List<OHandlerConfig> migrateHandlers(List<OServerHandlerConfiguration> handlers) {
@@ -90,13 +384,12 @@ public class OServerConfigurationRewrite {
                   "script-interpreter", serverSideInterpreter(handler.getParameters()));
             }
 
-            default -> throw new UnsupportedOperationException("shit");
+            default ->
+                throw new UnsupportedOperationException(
+                    "unsupported conversion of type:" + handler.getClazz());
           };
       newHandlers.add(config);
     }
-    //       final Class<? extends OServerPlugin> classToLoad =
-    //           (Class<? extends OServerPlugin>) pluginClassLoader.loadClass(cl);
-    //       final OServerPlugin instance = classToLoad.newInstance();
 
     return newHandlers;
   }

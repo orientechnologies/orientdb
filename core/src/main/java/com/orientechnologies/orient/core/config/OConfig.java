@@ -51,4 +51,8 @@ public class OConfig {
   public void setHandlers(List<OHandlerConfig> handlers) {
     this.handlers = handlers;
   }
+
+  public void setSecurity(OConfigSecurity security) {
+    this.security = security;
+  }
 }
