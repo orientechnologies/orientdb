@@ -7,16 +7,16 @@ public class OServerConfigAuthenticatorLoader implements OSecurityAuthenticatorL
 
   @Override
   public String getName() {
-    return "system-users";
+    return "server-config";
   }
 
   @Override
   public String getClassName() {
-    return OSystemUserAuthenticator.class.getName();
+    return OServerConfigAuthenticator.class.getName();
   }
 
   @Override
   public OSecurityAuthenticator newInstance() {
-    return new OSystemUserAuthenticator();
+    return new OServerConfigAuthenticator();
   }
 }

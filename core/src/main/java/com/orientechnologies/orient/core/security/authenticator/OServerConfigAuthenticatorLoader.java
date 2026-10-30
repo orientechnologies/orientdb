@@ -7,7 +7,7 @@ public class OServerConfigAuthenticatorLoader implements OSecurityAuthenticatorL
 
   @Override
   public String getName() {
-    return "system-users";
+    return "server-config";
   }
 
   @Override
