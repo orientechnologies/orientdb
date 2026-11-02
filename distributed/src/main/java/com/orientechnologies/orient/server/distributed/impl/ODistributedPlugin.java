@@ -121,7 +121,7 @@ public class ODistributedPlugin implements OServerPlugin, ODistributedServerMana
           new ODatabaseException("Error loading hazelcast configuration"), e);
     }
     String contextName = clusterManager.getHazelcastConfig().getGroupConfig().getName();
-    String contextPassword = clusterManager.getHazelcastConfig().getGroupConfig().getName();
+    String contextPassword = clusterManager.getHazelcastConfig().getGroupConfig().getPassword();
     if (nodeName == null) assignNodeName();
     ((OrientDBDistributed) serverInstance.getDatabases())
         .initDistributed(nodeName, contextName, 1, contextPassword);
