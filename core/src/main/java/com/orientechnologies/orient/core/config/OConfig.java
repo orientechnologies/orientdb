@@ -55,4 +55,8 @@ public class OConfig {
   public void setSecurity(OConfigSecurity security) {
     this.security = security;
   }
+
+  public void setDistributed(OConfigDistributed distributed) {
+    this.distributed = distributed;
+  }
 }

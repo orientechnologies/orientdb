@@ -6,6 +6,7 @@ import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.config.OConfig;
 import com.orientechnologies.orient.core.config.OConfigAuthentication;
 import com.orientechnologies.orient.core.config.OConfigAuthenticator;
+import com.orientechnologies.orient.core.config.OConfigDistributed;
 import com.orientechnologies.orient.core.config.OConfigNetwork;
 import com.orientechnologies.orient.core.config.OConfigNetworkTls;
 import com.orientechnologies.orient.core.config.OConfigPasswordValidator;
@@ -28,6 +29,12 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
+import javax.xml.parsers.ParserConfigurationException;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.xml.sax.SAXException;
 
 public class OServerConfigurationRewrite {
 
@@ -38,7 +45,8 @@ public class OServerConfigurationRewrite {
     loader.save(load);
   }
 
-  public OConfig convertToOConfig(OServerConfiguration configuration) throws IOException {
+  public OConfig convertToOConfig(OServerConfiguration configuration)
+      throws IOException, ParserConfigurationException, SAXException {
     OConfig config = new OConfig();
     config.setDatabases(configuration.getLocation());
     config.setPlugins(migratePlugins(configuration));
@@ -46,7 +54,66 @@ public class OServerConfigurationRewrite {
     config.setListeners(migrateListeners(configuration.getNetwork()));
     config.setProperties(migrateProperties(configuration.getProperties()));
     config.setSecurity(migrateSecurity(configuration));
+    config.setDistributed(migrateDistributed(configuration));
     return config;
+  }
+
+  private void readHazelcastConfigs(String file, OConfigDistributed distributed)
+      throws IOException, ParserConfigurationException, SAXException {
+    File inputFile = new File(file);
+    DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
+    DocumentBuilder dBuilder = dbFactory.newDocumentBuilder();
+    Document doc = dBuilder.parse(inputFile);
+    Element hd = (Element) doc.getElementsByTagName("hazelcast").item(0);
+    Element gd = (Element) hd.getElementsByTagName("group").item(0);
+    gd.getElementsByTagName("name").item(0).getNodeValue();
+    gd.getElementsByTagName("password").item(0).getNodeValue();
+  }
+
+  private OConfigDistributed migrateDistributed(OServerConfiguration configuration)
+      throws IOException, ParserConfigurationException, SAXException {
+    // TODO Auto-generated method stub
+    OConfigDistributed distributed = new OConfigDistributed();
+    Iterator<OServerHandlerConfiguration> iter = configuration.getHandlers().iterator();
+    while (iter.hasNext()) {
+      OServerHandlerConfiguration handler = iter.next();
+      if (handler
+          .getClazz()
+          .equals("com.orientechnologies.orient.server.distributed.impl.ODistributedPlugin")) {
+
+        for (OServerParameterConfiguration par : handler.getParameters()) {
+          if ("enabled".equalsIgnoreCase(par.getName())) {
+            distributed.setEnabled(Boolean.valueOf(par.getValue()));
+          }
+          if ("nodeName".equalsIgnoreCase(par.getName())) {
+            distributed.setNode(par.getValue());
+          }
+
+          if ("configuration.hazelcast".equalsIgnoreCase(par.getName())) {
+            readHazelcastConfigs(par.getValue(), distributed);
+          }
+          if ("configuration.db.default".equalsIgnoreCase(par.getName())) {
+            String config = Files.readString(Path.of(par.getValue()));
+            var c = new ODocument();
+            c.fromJSON(config);
+            String quorumValue = c.getProperty("writeQuorum");
+            if ("majority".equals(quorumValue)) {
+              distributed.setNetworkMinimumQuorum(2);
+            } else {
+              try {
+                distributed.setNetworkMinimumQuorum(2);
+              } catch (NumberFormatException e) {
+              }
+            }
+            if (distributed.getNetworkMinimumQuorum() <= 0) {
+              distributed.setNetworkMinimumQuorum(2);
+            }
+          }
+        }
+      }
+    }
+
+    return null;
   }
 
   private OConfigSecurity migrateSecurity(OServerConfiguration configuration) throws IOException {
@@ -554,6 +621,7 @@ public class OServerConfigurationRewrite {
       listeners.add(newListener);
       if (listener.getProtocol().equals("http")) {
         var commands = listener.getCommands();
+        // TODO: load and map commands
       }
     }
     return listeners;
