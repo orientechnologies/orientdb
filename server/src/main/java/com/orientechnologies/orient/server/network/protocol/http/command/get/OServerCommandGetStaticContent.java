@@ -90,6 +90,25 @@ public class OServerCommandGetStaticContent extends OServerCommandConfigurableAb
     super(DEF_PATTERN);
   }
 
+  public OServerCommandGetStaticContent(String patter, Map<String, String> paramenters) {
+    super(patter);
+
+    // LOAD HTTP CACHE CONFIGURATION
+    for (var par : paramenters.entrySet()) {
+      if (par.getKey().startsWith(CONFIG_HTTP_CACHE)) {
+        final String filter = par.getKey().substring(CONFIG_HTTP_CACHE.length());
+        if (filter.equalsIgnoreCase("default")) cacheHttpDefault = par.getValue();
+        else if (filter.length() > 0) {
+          final String[] filters = filter.split(" ");
+          for (String f : filters) {
+            cacheHttp.put(f, par.getValue());
+          }
+        }
+      } else if (par.getKey().startsWith(CONFIG_ROOT_PATH)) rootPath = par.getValue();
+      else if (par.getKey().startsWith(CONFIG_FILE_PATH)) filePath = par.getValue();
+    }
+  }
+
   public OServerCommandGetStaticContent(final OServerCommandConfiguration iConfiguration) {
     super(iConfiguration.getPattern());
 

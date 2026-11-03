@@ -13,6 +13,8 @@ public interface OServerCommandLoader {
 
   OServerCommand newInstance(OServerCommandConfiguration config);
 
+  OServerCommand newInstance(String pattern, Map<String, String> configs);
+
   static Map<String, OServerCommandLoader> loaders() {
     Map<String, OServerCommandLoader> allLoaders = new HashMap<>();
     var loaders =

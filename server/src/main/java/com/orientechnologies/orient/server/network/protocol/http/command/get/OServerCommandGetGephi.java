@@ -45,6 +45,8 @@ public class OServerCommandGetGephi extends OServerCommandAuthenticatedDbAbstrac
 
   public OServerCommandGetGephi(final OServerCommandConfiguration iConfig) {}
 
+  public OServerCommandGetGephi(String pattern, Map<String, String> params) {}
+
   @Override
   public boolean execute(final OHttpRequest iRequest, OHttpResponse iResponse) throws Exception {
     String[] urlParts =
