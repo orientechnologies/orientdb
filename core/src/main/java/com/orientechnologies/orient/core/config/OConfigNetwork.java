@@ -1,6 +1,7 @@
 package com.orientechnologies.orient.core.config;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import java.util.List;
 
 public class OConfigNetwork {
   private String host;
@@ -9,6 +10,7 @@ public class OConfigNetwork {
   private String protocol;
   private OConfigNetworkTls tls;
   private JsonNode parameters;
+  private List<OConfigCommand> commands;
 
   // TODO: Add additional protocol settings
   // Traditionally in http could be plugged some more endpoint ... maybe it should be configured
@@ -52,5 +54,9 @@ public class OConfigNetwork {
 
   public void setParameters(JsonNode parameters) {
     this.parameters = parameters;
+  }
+
+  public void setCommands(List<OConfigCommand> commands) {
+    this.commands = commands;
   }
 }

@@ -6,6 +6,7 @@ import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.config.OConfig;
 import com.orientechnologies.orient.core.config.OConfigAuthentication;
 import com.orientechnologies.orient.core.config.OConfigAuthenticator;
+import com.orientechnologies.orient.core.config.OConfigCommand;
 import com.orientechnologies.orient.core.config.OConfigDistributed;
 import com.orientechnologies.orient.core.config.OConfigNetwork;
 import com.orientechnologies.orient.core.config.OConfigNetworkTls;
@@ -621,7 +622,28 @@ public class OServerConfigurationRewrite {
       listeners.add(newListener);
       if (listener.getProtocol().equals("http")) {
         var commands = listener.getCommands();
-        // TODO: load and map commands
+        List<OConfigCommand> newConfig = new ArrayList<>();
+        for (var command : commands) {
+          var comm =
+              switch (command.getImplementation()) {
+                case "com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetGephi" -> {
+                  yield new OConfigCommand("gephi", command.getPattern(), null);
+                }
+                case "com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetStaticContent" -> {
+                  Map<String, String> pars = new HashMap<>();
+                  for (var par : command.getParameters()) {
+                    pars.put(par.getName(), par.getValue());
+                  }
+                  yield new OConfigCommand("static-content", command.getPattern(), pars);
+                }
+
+                default ->
+                    throw new UnsupportedOperationException(
+                        "unsupported conversion of type:" + command.getImplementation());
+              };
+          newConfig.add(comm);
+        }
+        newListener.setCommands(newConfig);
       }
     }
     return listeners;
