@@ -12,6 +12,7 @@ import com.orientechnologies.orient.core.db.ODatabaseSession;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocumentAbstract;
 import com.orientechnologies.orient.core.db.record.ridbag.ORidBag;
+import com.orientechnologies.orient.core.exception.OValidationException;
 import com.orientechnologies.orient.core.id.ORecordId;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OProperty;
@@ -91,6 +92,57 @@ public class ODocumentTest {
     assertEquals(doc.fieldType("integer"), null);
     assertEquals(doc.fieldType("string"), null);
     assertEquals(doc.fieldType("binary"), null);
+  }
+
+  @Test
+  public void testValidateEmbeddedRejectsRecordIdValue() {
+    final String name = dbName + "_embeddedRid";
+    ODatabaseSession db = null;
+    OrientDB odb = null;
+    try {
+      odb = OCreateDatabaseUtil.createDatabase(name, "memory:", OCreateDatabaseUtil.TYPE_MEMORY);
+      db = odb.open(name, defaultDbAdminCredentials, OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
+
+      OClass clazz = db.getMetadata().getSchema().createClass("EmbeddedRidOwner");
+      OProperty property = clazz.createProperty("embedded", OType.EMBEDDED);
+
+      try {
+        ODocument.validateEmbedded(property, new ORecordId(1, 2));
+        org.junit.Assert.fail("Expected embedded RecordID value to be rejected");
+      } catch (OValidationException expected) {
+        assertTrue(expected.getMessage().contains("RecordID"));
+      }
+    } finally {
+      if (db != null) db.close();
+      if (odb != null) {
+        odb.drop(name);
+        odb.close();
+      }
+    }
+  }
+
+  @Test
+  public void testValidateEmbeddedAcceptsLinkedEmbeddedDocument() {
+    final String name = dbName + "_embeddedLinked";
+    ODatabaseSession db = null;
+    OrientDB odb = null;
+    try {
+      odb = OCreateDatabaseUtil.createDatabase(name, "memory:", OCreateDatabaseUtil.TYPE_MEMORY);
+      db = odb.open(name, defaultDbAdminCredentials, OCreateDatabaseUtil.NEW_ADMIN_PASSWORD);
+
+      OSchema schema = db.getMetadata().getSchema();
+      OClass embeddedClass = schema.createClass("EmbeddedLinkedValue");
+      OClass ownerClass = schema.createClass("EmbeddedLinkedOwner");
+      OProperty property = ownerClass.createProperty("embedded", OType.EMBEDDED, embeddedClass);
+
+      ODocument.validateEmbedded(property, new ODocument(embeddedClass));
+    } finally {
+      if (db != null) db.close();
+      if (odb != null) {
+        odb.drop(name);
+        odb.close();
+      }
+    }
   }
 
   @Test
