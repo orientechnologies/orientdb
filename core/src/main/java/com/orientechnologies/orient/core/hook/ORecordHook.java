@@ -19,6 +19,7 @@
  */
 package com.orientechnologies.orient.core.hook;
 
+import com.orientechnologies.orient.core.hook.ORecordHook.DISTRIBUTED_EXECUTION_MODE;
 import com.orientechnologies.orient.core.record.ORecord;
 
 /**
