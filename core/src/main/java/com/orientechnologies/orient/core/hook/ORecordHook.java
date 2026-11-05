@@ -156,11 +156,14 @@ public interface ORecordHook {
     }
   }
 
-  void onUnregister();
+  default void onUnregister() {}
+  ;
 
   RESULT onTrigger(TYPE iType, ORecord iRecord);
 
-  DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode();
+  default DISTRIBUTED_EXECUTION_MODE getDistributedExecutionMode() {
+    return DISTRIBUTED_EXECUTION_MODE.BOTH;
+  }
 
   /**
    * Returns the array of scopes this hook interested in. By default, all available scopes are
