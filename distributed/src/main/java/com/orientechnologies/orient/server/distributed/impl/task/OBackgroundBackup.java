@@ -14,7 +14,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedServerLog;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileOutputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -90,10 +90,21 @@ public class OBackgroundBackup implements Runnable, OSyncSource {
         else resultedBackupFile.getParentFile().mkdirs();
         resultedBackupFile.createNewFile();
 
-        final OutputStream fileOutputStream = new FileOutputStream(resultedBackupFile);
+        OutputStream fileOutputStream;
+        try {
+          fileOutputStream = new FailsafeOutputStream(resultedBackupFile);
+        } catch (FileNotFoundException e) {
+          /// ignore and not use cache file
+          fileOutputStream = null;
+        }
         PipedOutputStream pipedOutputStream = new PipedOutputStream();
         inputStream = new PipedInputStream(pipedOutputStream, OSyncDatabaseTask.CHUNK_MAX_SIZE);
-        OutputStream dest = new TeeOutputStream(fileOutputStream, pipedOutputStream);
+        OutputStream dest;
+        if (fileOutputStream != null) {
+          dest = new TeeOutputStream(fileOutputStream, pipedOutputStream);
+        } else {
+          dest = pipedOutputStream;
+        }
         if (database.getStorage().supportIncremental()) {
           OWriteAheadLog wal = ((OAbstractPaginatedStorage) database.getStorage()).getWALInstance();
           OLogSequenceNumber lsn = wal.end();
