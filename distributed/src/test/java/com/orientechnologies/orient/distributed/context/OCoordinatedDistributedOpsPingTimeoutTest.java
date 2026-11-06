@@ -14,7 +14,7 @@ public class OCoordinatedDistributedOpsPingTimeoutTest {
     var node2 = flow.bootNode();
     var node3 = flow.bootNode();
     assertFalse(flow.checkOffline(10));
-    Thread.sleep(10);
+    Thread.sleep(20);
     assertTrue(flow.checkOffline(5));
     flow.pingAll(node1);
     flow.pingAll(node2);

@@ -18,6 +18,7 @@ import com.orientechnologies.orient.core.config.OConfigSecurityAuditing;
 import com.orientechnologies.orient.core.config.OConfigUser;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OHandlerConfig;
+import com.orientechnologies.orient.core.config.OHookConfig;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.config.distributed.OServerDistributedConfiguration;
 import java.io.File;
@@ -56,7 +57,27 @@ public class OServerConfigurationRewrite {
     config.setProperties(migrateProperties(configuration.getProperties()));
     config.setSecurity(migrateSecurity(configuration));
     config.setDistributed(migrateDistributed(configuration));
+    config.setHooks(migrateHooks(configuration.getHooks()));
     return config;
+  }
+
+  private List<OHookConfig> migrateHooks(List<OServerHookConfiguration> hooks) {
+    // TODO: migrate hook config
+    return hooks.stream()
+        .map(
+            (h) -> {
+              OHookConfig config = new OHookConfig();
+              config.setLagecyClass(h.getClazz());
+              config.setPosition(h.getPosition());
+              ObjectMapper mapper = new ObjectMapper();
+              var object = mapper.createObjectNode();
+              for (OServerParameterConfiguration param : h.getParameters()) {
+                object.put(param.getName(), param.getValue());
+              }
+              config.setParameters(object);
+              return config;
+            })
+        .toList();
   }
 
   private void readHazelcastConfigs(String file, OConfigDistributed distributed)

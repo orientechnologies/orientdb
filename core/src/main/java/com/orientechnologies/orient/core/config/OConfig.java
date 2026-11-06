@@ -59,4 +59,8 @@ public class OConfig {
   public void setDistributed(OConfigDistributed distributed) {
     this.distributed = distributed;
   }
+
+  public void setHooks(List<OHookConfig> hooks) {
+    this.hooks = hooks;
+  }
 }
