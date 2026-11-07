@@ -19,6 +19,11 @@ import com.orientechnologies.orient.core.config.OConfigUser;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.config.OHandlerConfig;
 import com.orientechnologies.orient.core.config.OHookConfig;
+import com.orientechnologies.orient.core.config.OLdapImportConfig;
+import com.orientechnologies.orient.core.config.OLdapImportDatabaseConfig;
+import com.orientechnologies.orient.core.config.OLdapImportDatabaseDomainConfig;
+import com.orientechnologies.orient.core.config.OLdapImportServerListConfig;
+import com.orientechnologies.orient.core.config.OLdapImportUserConfig;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.config.distributed.OServerDistributedConfiguration;
 import java.io.File;
@@ -62,7 +67,6 @@ public class OServerConfigurationRewrite {
   }
 
   private List<OHookConfig> migrateHooks(List<OServerHookConfiguration> hooks) {
-    // TODO: migrate hook config
     return hooks.stream()
         .map(
             (h) -> {
@@ -94,7 +98,6 @@ public class OServerConfigurationRewrite {
 
   private OConfigDistributed migrateDistributed(OServerConfiguration configuration)
       throws IOException, ParserConfigurationException, SAXException {
-    // TODO Auto-generated method stub
     OConfigDistributed distributed = new OConfigDistributed();
     Iterator<OServerHandlerConfiguration> iter = configuration.getHandlers().iterator();
     while (iter.hasNext()) {
@@ -220,10 +223,123 @@ public class OServerConfigurationRewrite {
           migratePasswordValidator((ODocument) configDoc.getProperty("passwordValidator")));
     }
     if (configDoc.hasProperty("ldapImporter")) {
-      // TODO: migrate ldap importer config
+      newConfig.setLdapImporter(
+          migrateLdapConfig((ODocument) configDoc.getProperty("ldapImporter")));
     }
 
     return newConfig;
+  }
+
+  private OLdapImportConfig migrateLdapConfig(ODocument source) {
+    OLdapImportConfig config = new OLdapImportConfig();
+    if (source.hasProperty("debug")) {
+      config.setDebug(source.getProperty("debug"));
+    }
+
+    if (source.hasProperty("enabled")) {
+      config.setEnabled(source.getProperty("enabled"));
+    }
+
+    if (source.hasProperty("period")) {
+      config.setPeriod(source.getProperty("period"));
+    }
+
+    if (source.hasProperty("databases")) {
+      List<ODocument> list = source.getProperty("databases");
+      final List<OLdapImportDatabaseConfig> databases = new ArrayList<OLdapImportDatabaseConfig>();
+      for (ODocument dbDoc : list) {
+        if (dbDoc.hasProperty("database")) {
+
+          String dbName = dbDoc.getProperty("database");
+          boolean ignoreLocal = true;
+
+          if (dbDoc.hasProperty("ignoreLocal")) {
+            ignoreLocal = dbDoc.getProperty("ignoreLocal");
+          }
+
+          if (dbDoc.hasProperty("domains")) {
+            final List<OLdapImportDatabaseDomainConfig> dbDomainsList =
+                new ArrayList<OLdapImportDatabaseDomainConfig>();
+
+            final List<ODocument> dbdList = dbDoc.getProperty("domains");
+
+            for (ODocument dbDomainDoc : dbdList) {
+              String domain = null;
+
+              // "domain" is mandatory.
+              if (dbDomainDoc.hasProperty("domain")) {
+                domain = dbDomainDoc.getProperty("domain");
+
+                // If authenticator is null, it defaults to OLDAPImporter's primary
+                // OSecurityAuthenticator.
+                String authenticator = null;
+
+                if (dbDomainDoc.hasProperty("authenticator")) {
+                  authenticator = dbDomainDoc.getProperty("authenticator");
+                }
+
+                if (dbDomainDoc.hasProperty("servers")) {
+                  final List<OLdapImportServerListConfig> ldapServerList =
+                      new ArrayList<OLdapImportServerListConfig>();
+
+                  final List<ODocument> ldapServers = dbDomainDoc.getProperty("servers");
+
+                  for (ODocument ldapServerDoc : ldapServers) {
+                    final String url = ldapServerDoc.getProperty("url");
+
+                    boolean isAlias = false;
+
+                    if (ldapServerDoc.hasProperty("isAlias"))
+                      isAlias = ldapServerDoc.getProperty("isAlias");
+
+                    ldapServerList.add(new OLdapImportServerListConfig(url, isAlias));
+                  }
+
+                  //
+                  final List<OLdapImportUserConfig> userList =
+                      new ArrayList<OLdapImportUserConfig>();
+
+                  final List<ODocument> userDocList = dbDomainDoc.getProperty("users");
+
+                  // userDocList can be null if only the oldapUserClass is used instead
+                  // security.json.
+                  if (userDocList != null) {
+                    for (ODocument userDoc : userDocList) {
+                      if (userDoc.hasProperty("baseDN") && userDoc.hasProperty("filter")) {
+                        if (userDoc.hasProperty("roles")) {
+                          final String baseDN = userDoc.getProperty("baseDN");
+                          final String filter = userDoc.getProperty("filter");
+
+                          final List<String> roleList = userDoc.getProperty("roles");
+
+                          final OLdapImportUserConfig User =
+                              new OLdapImportUserConfig(baseDN, filter, roleList);
+
+                          userList.add(User);
+                        }
+                      }
+                    }
+                  }
+
+                  OLdapImportDatabaseDomainConfig dbd =
+                      new OLdapImportDatabaseDomainConfig(
+                          domain, ldapServerList, userList, authenticator);
+
+                  dbDomainsList.add(dbd);
+                }
+              }
+            }
+
+            if (dbName != null) {
+              OLdapImportDatabaseConfig database =
+                  new OLdapImportDatabaseConfig(dbName, ignoreLocal, dbDomainsList);
+              databases.add(database);
+            }
+          }
+        }
+      }
+    }
+    return null;
   }
 
   private OConfigPasswordValidator migratePasswordValidator(ODocument confDoc) {
@@ -237,29 +353,28 @@ public class OServerConfigurationRewrite {
       switch (cls) {
         case "com.orientechnologies.agent.EnterprisePasswordValidator" -> {}
         case "com.orientechnologies.security.password.ODefaultPasswordValidator" -> {
-          if (confDoc.containsField("ignoreUUID")) {
-            newConfig.setIgnoreUUID(confDoc.field("ignoreUUID"));
+          if (confDoc.hasProperty("ignoreUUID")) {
+            newConfig.setIgnoreUUID(confDoc.getProperty("ignoreUUID"));
           }
 
-          if (confDoc.containsField("minimumLength")) {
-            newConfig.setMinimumLength(confDoc.field("minimumLength"));
+          if (confDoc.hasProperty("minimumLength")) {
+            newConfig.setMinimumLength(confDoc.getProperty("minimumLength"));
           }
 
-          if (confDoc.containsField("numberRegEx")) {
-            newConfig.setNumberRegEx(confDoc.field("numberRegEx"));
+          if (confDoc.hasProperty("numberRegEx")) {
+            newConfig.setNumberRegEx(confDoc.getProperty("numberRegEx"));
           }
 
-          if (confDoc.containsField("specialRegEx")) {
-            newConfig.setSpecialRegEx(confDoc.field("specialRegEx"));
+          if (confDoc.hasProperty("specialRegEx")) {
+            newConfig.setSpecialRegEx(confDoc.getProperty("specialRegEx"));
           }
 
-          if (confDoc.containsField("uppercaseRegEx")) {
-            newConfig.setUppercaseRegEx(confDoc.field("uppercaseRegEx"));
+          if (confDoc.hasProperty("uppercaseRegEx")) {
+            newConfig.setUppercaseRegEx(confDoc.getProperty("uppercaseRegEx"));
           }
         }
         default -> throw new UnsupportedOperationException("unsupported conversion of type:" + cls);
       }
-      ;
     }
 
     return newConfig;

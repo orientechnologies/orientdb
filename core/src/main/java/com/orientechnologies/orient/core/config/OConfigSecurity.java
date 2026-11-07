@@ -13,6 +13,7 @@ public class OConfigSecurity {
   private OConfigAuthentication authentication;
   private OConfigPasswordValidator passwordValidator;
   private OConfigSecurityAuditing auditing;
+  private OLdapImportConfig ldapImporter;
 
   public void setEnabled(boolean enabled) {
     this.enabled = enabled;
@@ -44,5 +45,9 @@ public class OConfigSecurity {
 
   public void setPasswordValidator(OConfigPasswordValidator passwordValidator) {
     this.passwordValidator = passwordValidator;
+  }
+
+  public void setLdapImporter(OLdapImportConfig ldapImporter) {
+    this.ldapImporter = ldapImporter;
   }
 }
