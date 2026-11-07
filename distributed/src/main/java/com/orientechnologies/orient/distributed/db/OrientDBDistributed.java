@@ -1039,7 +1039,12 @@ public class OrientDBDistributed extends OrientDBEmbedded
   }
 
   public OCoordinatedDistributedOps getOps() {
-    return getNodeState().getOps();
+    var ns = getNodeState();
+    if (ns != null) {
+      return ns.getOps();
+    } else {
+      return null;
+    }
   }
 
   @Override
