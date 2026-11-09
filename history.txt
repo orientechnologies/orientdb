@@ -27,6 +27,20 @@
 This document contains the last changes of OrientDB Community Edition.
 
 
+-----------------------------------------------------------------------------------------------------------------------------------
+version 3.2.58 - (November, 10 2026)
+
+# Core
+- Fix like operator to match in the wildcard also new line terminators #10895
+
+# Lucene
+- Use spacial index in equality operations, issue #10893
+
+# Remote
+- Avoid to encode document to spatial types in remote client, issue #10929
+
+# Distributed 
+- Make sure to drop cached sync backup in case of error like out of disk space, issue #10987
 
 -----------------------------------------------------------------------------------------------------------------------------------
 version 3.2.57 - (October, 5 2026)
