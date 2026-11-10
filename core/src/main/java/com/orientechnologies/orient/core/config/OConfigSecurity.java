@@ -18,6 +18,8 @@ public class OConfigSecurity {
   private OConfigSecurityAuditing auditing;
   private OLdapImportConfig ldapImporter;
 
+  public OConfigSecurity() {}
+
   public Boolean getStoreUsers() {
     return storeUsers;
   }

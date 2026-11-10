@@ -4,20 +4,42 @@ import java.util.List;
 
 public class OLdapImportConfig {
 
-  private boolean debug;
-  private boolean enabled;
-  private int period;
+  private Boolean debug;
+  private Boolean enabled;
+  private Integer period;
   private List<OLdapImportDatabaseConfig> databases;
 
-  public void setDebug(boolean debug) {
+  public OLdapImportConfig() {}
+
+  public Boolean getDebug() {
+    return debug;
+  }
+
+  public void setDebug(Boolean debug) {
     this.debug = debug;
   }
 
-  public void setEnabled(boolean enabled) {
+  public Boolean getEnabled() {
+    return enabled;
+  }
+
+  public void setEnabled(Boolean enabled) {
     this.enabled = enabled;
   }
 
-  public void setPeriod(int period) {
+  public Integer getPeriod() {
+    return period;
+  }
+
+  public void setPeriod(Integer period) {
     this.period = period;
+  }
+
+  public List<OLdapImportDatabaseConfig> getDatabases() {
+    return databases;
+  }
+
+  public void setDatabases(List<OLdapImportDatabaseConfig> databases) {
+    this.databases = databases;
   }
 }

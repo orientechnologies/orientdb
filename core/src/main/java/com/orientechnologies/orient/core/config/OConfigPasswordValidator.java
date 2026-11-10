@@ -1,7 +1,7 @@
 package com.orientechnologies.orient.core.config;
 
 public class OConfigPasswordValidator {
-  private boolean enabled = true;
+  private Boolean enabled = true;
 
   private Boolean ignoreUUID;
   private Integer minimumLength;
@@ -9,9 +9,7 @@ public class OConfigPasswordValidator {
   private String specialRegEx;
   private String uppercaseRegEx;
 
-  public void setEnabled(boolean enabled) {
-    this.enabled = enabled;
-  }
+  public OConfigPasswordValidator() {}
 
   public void setIgnoreUUID(Boolean ignoreUUID) {
     this.ignoreUUID = ignoreUUID;
@@ -31,5 +29,37 @@ public class OConfigPasswordValidator {
 
   public void setUppercaseRegEx(String uppercaseRegEx) {
     this.uppercaseRegEx = uppercaseRegEx;
+  }
+
+  public Boolean getEnabled() {
+    return enabled;
+  }
+
+  public void setEnabled(Boolean enabled) {
+    this.enabled = enabled;
+  }
+
+  public Integer getMinimumLength() {
+    return minimumLength;
+  }
+
+  public void setMinimumLength(Integer minimumLength) {
+    this.minimumLength = minimumLength;
+  }
+
+  public Boolean getIgnoreUUID() {
+    return ignoreUUID;
+  }
+
+  public String getNumberRegEx() {
+    return numberRegEx;
+  }
+
+  public String getSpecialRegEx() {
+    return specialRegEx;
+  }
+
+  public String getUppercaseRegEx() {
+    return uppercaseRegEx;
   }
 }

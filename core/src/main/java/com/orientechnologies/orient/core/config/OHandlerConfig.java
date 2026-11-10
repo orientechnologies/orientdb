@@ -9,6 +9,8 @@ public class OHandlerConfig {
   private String name;
   private JsonNode config;
 
+  public OHandlerConfig() {}
+
   public OHandlerConfig(String name, JsonNode config) {
     this.name = name;
     this.config = config;

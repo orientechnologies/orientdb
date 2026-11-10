@@ -12,8 +12,10 @@ public class ODefaultDatabaseConfig {
   private int minumumCluster;
   private String clusterSelection;
   private String conflictStragegy;
-  private boolean useLightweightEdges;
-  private boolean validation;
+  private Boolean useLightweightEdges;
+  private Boolean validation;
+
+  public ODefaultDatabaseConfig() {}
 
   public String getDateFormat() {
     return dateFormat;
@@ -43,11 +45,47 @@ public class ODefaultDatabaseConfig {
     return conflictStragegy;
   }
 
-  public boolean isUseLightweightEdges() {
+  public Boolean getUseLightweightEdges() {
     return useLightweightEdges;
   }
 
-  public boolean isValidation() {
+  public void setUseLightweightEdges(Boolean useLightweightEdges) {
+    this.useLightweightEdges = useLightweightEdges;
+  }
+
+  public Boolean getValidation() {
     return validation;
+  }
+
+  public void setValidation(Boolean validation) {
+    this.validation = validation;
+  }
+
+  public void setDateFormat(String dateFormat) {
+    this.dateFormat = dateFormat;
+  }
+
+  public void setDateTimeFormat(String dateTimeFormat) {
+    this.dateTimeFormat = dateTimeFormat;
+  }
+
+  public void setTimeZone(String timeZone) {
+    this.timeZone = timeZone;
+  }
+
+  public void setLocale(String locale) {
+    this.locale = locale;
+  }
+
+  public void setMinumumCluster(int minumumCluster) {
+    this.minumumCluster = minumumCluster;
+  }
+
+  public void setClusterSelection(String clusterSelection) {
+    this.clusterSelection = clusterSelection;
+  }
+
+  public void setConflictStragegy(String conflictStragegy) {
+    this.conflictStragegy = conflictStragegy;
   }
 }

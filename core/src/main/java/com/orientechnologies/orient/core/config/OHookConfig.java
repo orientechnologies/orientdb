@@ -11,6 +11,8 @@ public class OHookConfig {
   private String position;
   private JsonNode parameters;
 
+  public OHookConfig() {}
+
   public void setLagecyClass(String lagecyClass) {
     this.legacyClass = lagecyClass;
   }

@@ -15,10 +15,8 @@ public class OConfigNetwork {
   private JsonNode parameters;
   private List<OConfigCommand> commands;
 
-  // TODO: Add additional protocol settings
-  // Traditionally in http could be plugged some more endpoint ... maybe it should be configured
-  // here
-  // or maybe in the plugin sections
+  public OConfigNetwork() {}
+
   public String getHost() {
     return host;
   }

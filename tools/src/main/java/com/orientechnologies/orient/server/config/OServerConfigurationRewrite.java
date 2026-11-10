@@ -2,6 +2,7 @@ package com.orientechnologies.orient.server.config;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
 import com.orientechnologies.orient.core.config.OConfig;
 import com.orientechnologies.orient.core.config.OConfigAuthentication;
@@ -32,10 +33,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.Set;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -44,6 +47,7 @@ import org.w3c.dom.Element;
 import org.xml.sax.SAXException;
 
 public class OServerConfigurationRewrite {
+  private static final OLogger logger = OLogger.get(OServerConfigurationRewrite.class);
 
   public void rewrite(String file) throws IOException {
     var loader = new OServerConfigurationLoaderXml(OServerConfiguration.class, new File(file));
@@ -104,8 +108,10 @@ public class OServerConfigurationRewrite {
     Document doc = dBuilder.parse(inputFile);
     Element hd = (Element) doc.getElementsByTagName("hazelcast").item(0);
     Element gd = (Element) hd.getElementsByTagName("group").item(0);
-    gd.getElementsByTagName("name").item(0).getNodeValue();
-    gd.getElementsByTagName("password").item(0).getNodeValue();
+    String groupName = gd.getElementsByTagName("name").item(0).getTextContent();
+    String key = gd.getElementsByTagName("password").item(0).getTextContent();
+    distributed.setGroup(groupName);
+    distributed.setKey(key);
   }
 
   private OConfigDistributed migrateDistributed(OServerConfiguration configuration)
@@ -150,7 +156,7 @@ public class OServerConfigurationRewrite {
       }
     }
 
-    return null;
+    return distributed;
   }
 
   private OConfigSecurity migrateSecurity(OServerConfiguration configuration) throws IOException {
@@ -568,7 +574,10 @@ public class OServerConfigurationRewrite {
               yield new OHandlerConfig("syslog", createSyslogConfig(handler.getParameters()));
             }
             case "com.orientechnologies.orient.server.distributed.impl.ODistributedPlugin" -> {
-              yield new OHandlerConfig("cluster", createDistributedConfig(handler.getParameters()));
+              // Migrated to the new distributed config structure.
+              //              yield new OHandlerConfig("cluster",
+              // createDistributedConfig(handler.getParameters()));
+              yield null;
             }
             case "com.orientechnologies.agent.OEnterpriseAgent" -> {
               yield new OHandlerConfig("enterprise-agent", null);
@@ -607,7 +616,9 @@ public class OServerConfigurationRewrite {
                 throw new UnsupportedOperationException(
                     "unsupported conversion of type:" + handler.getClazz());
           };
-      newHandlers.add(config);
+      if (config != null) {
+        newHandlers.add(config);
+      }
     }
 
     return newHandlers;
@@ -684,7 +695,7 @@ public class OServerConfigurationRewrite {
     var object = mapper.createObjectNode();
     for (OServerParameterConfiguration param : parameters) {
       if (param.getName().equalsIgnoreCase("enabled")) {
-        object.put("allowedPackages", Boolean.parseBoolean(param.getValue()));
+        object.put("enabled", Boolean.parseBoolean(param.getValue()));
       } else if (param.getName().equalsIgnoreCase("allowedLanguages")) {
         var array = mapper.createArrayNode();
         for (var single : param.getValue().toLowerCase(Locale.ENGLISH).split(",")) {
@@ -705,6 +716,7 @@ public class OServerConfigurationRewrite {
   private JsonNode createAtomaticBackup(OServerParameterConfiguration[] parameters) {
     for (var param : parameters) {
       if (param.getName().equalsIgnoreCase("config")) {
+        // TODO: handle inline configuration as weel
         ObjectMapper mapper = new ObjectMapper();
         var object = mapper.createObjectNode();
         object.put("config", param.getValue());
@@ -748,13 +760,27 @@ public class OServerConfigurationRewrite {
     return null;
   }
 
+  private Set<String> ignorePropertyKey() {
+    Set<String> ignored = new HashSet<>();
+    ignored.add(OGlobalConfiguration.SERVER_DATABASE_PATH.getKey());
+    return ignored;
+  }
+
   private List<OConfigProperty> migrateProperties(OServerEntryConfiguration[] properties) {
     List<OConfigProperty> props = new ArrayList<>();
     for (var prop : properties) {
-      if (prop.getName().equals(OGlobalConfiguration.SERVER_DATABASE_PATH.getKey())) {
+      if (ignorePropertyKey().contains(prop.getName())) {
+        logger.info("ignored property '%s' already migrated to another setting", prop.getName());
         continue;
       }
-      props.add(new OConfigProperty(prop.getName(), prop.getValue()));
+      if (OGlobalConfiguration.findByKey(prop.getName()) != null) {
+        props.add(new OConfigProperty(prop.getName(), prop.getValue()));
+      } else {
+        logger.info("property '%s' do not exist anymore, ignoring migration", prop.getName());
+      }
+    }
+    if (props.isEmpty()) {
+      return null;
     }
     return props;
   }

@@ -4,13 +4,11 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 public class OConfigSecurityAuditing {
 
-  private boolean enabled;
+  private Boolean enabled;
   private String engine;
   private JsonNode config;
 
-  public void setEnabled(boolean enabled) {
-    this.enabled = enabled;
-  }
+  public OConfigSecurityAuditing() {}
 
   public void setEngine(String engine) {
     this.engine = engine;
@@ -18,5 +16,21 @@ public class OConfigSecurityAuditing {
 
   public void setConfig(JsonNode config) {
     this.config = config;
+  }
+
+  public Boolean getEnabled() {
+    return enabled;
+  }
+
+  public void setEnabled(Boolean enabled) {
+    this.enabled = enabled;
+  }
+
+  public String getEngine() {
+    return engine;
+  }
+
+  public JsonNode getConfig() {
+    return config;
   }
 }

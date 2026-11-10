@@ -8,16 +8,18 @@ import java.util.List;
 public class OConfig {
   private String databases;
   private String backup;
-  private ODefaultDatabaseConfig defaultDatabaseConfig;
-  private OConfigSecurity security;
-  private List<OConfigNetwork> listeners;
   private OConfigPlugins plugins;
-  private OConfigDistributed distributed;
   private List<OHandlerConfig> handlers;
+  private List<OConfigNetwork> listeners;
+  private OConfigSecurity security;
+  private ODefaultDatabaseConfig defaultDatabaseConfig;
+  private OConfigDistributed distributed;
   private List<OHookConfig> hooks;
   // This is mostly for legacy support,
   // on the long term this should be replaced by something else.
   private List<OConfigProperty> properties;
+
+  public OConfig() {}
 
   public void setDatabases(String databases) {
     this.databases = databases;

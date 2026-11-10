@@ -12,6 +12,8 @@ public class OConfigUser {
   // Maybe have a list of specific rules ....
   private Optional<String> role;
 
+  public OConfigUser() {}
+
   public OConfigUser(String user, String password, String resources) {
     this.user = user;
     this.password = password;

@@ -12,6 +12,8 @@ public class OConfigDistributed {
   private int networkMinimumQuorum = 1;
   private OConfigDistributedTopology topology;
 
+  public OConfigDistributed() {}
+
   public void setEnabled(boolean enabled) {
     this.enabled = enabled;
   }

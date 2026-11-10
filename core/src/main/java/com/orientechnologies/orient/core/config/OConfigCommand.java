@@ -11,6 +11,8 @@ public class OConfigCommand {
   private String pattern;
   private Map<String, String> parameters;
 
+  public OConfigCommand() {}
+
   public OConfigCommand(String name, String pattern, Map<String, String> parameters) {
     super();
     this.name = name;
