@@ -1,7 +1,10 @@
 package com.orientechnologies.orient.core.config;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import java.util.List;
 
+@JsonInclude(Include.NON_NULL)
 public class OConfig {
   private String databases;
   private String backup;
@@ -50,6 +53,38 @@ public class OConfig {
 
   public void setHandlers(List<OHandlerConfig> handlers) {
     this.handlers = handlers;
+  }
+
+  public ODefaultDatabaseConfig getDefaultDatabaseConfig() {
+    return defaultDatabaseConfig;
+  }
+
+  public void setDefaultDatabaseConfig(ODefaultDatabaseConfig defaultDatabaseConfig) {
+    this.defaultDatabaseConfig = defaultDatabaseConfig;
+  }
+
+  public OConfigSecurity getSecurity() {
+    return security;
+  }
+
+  public OConfigPlugins getPlugins() {
+    return plugins;
+  }
+
+  public OConfigDistributed getDistributed() {
+    return distributed;
+  }
+
+  public List<OHandlerConfig> getHandlers() {
+    return handlers;
+  }
+
+  public List<OHookConfig> getHooks() {
+    return hooks;
+  }
+
+  public List<OConfigProperty> getProperties() {
+    return properties;
   }
 
   public void setSecurity(OConfigSecurity security) {

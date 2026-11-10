@@ -55,7 +55,7 @@ public class OServerConfigurationRewrite {
   public OConfig convertToOConfig(OServerConfiguration configuration)
       throws IOException, ParserConfigurationException, SAXException {
     OConfig config = new OConfig();
-    config.setDatabases(configuration.getLocation());
+    config.setDatabases(migrateDatabaseLocation(configuration.getProperties()));
     config.setPlugins(migratePlugins(configuration));
     config.setHandlers(migrateHandlers(configuration.getHandlers()));
     config.setListeners(migrateListeners(configuration.getNetwork()));
@@ -66,7 +66,19 @@ public class OServerConfigurationRewrite {
     return config;
   }
 
+  private String migrateDatabaseLocation(OServerEntryConfiguration[] properties) {
+    for (var prop : properties) {
+      if (prop.getName().equals(OGlobalConfiguration.SERVER_DATABASE_PATH.getKey())) {
+        return prop.getValue();
+      }
+    }
+    return "databases";
+  }
+
   private List<OHookConfig> migrateHooks(List<OServerHookConfiguration> hooks) {
+    if (hooks == null) {
+      return null;
+    }
     return hooks.stream()
         .map(
             (h) -> {
@@ -567,6 +579,9 @@ public class OServerConfigurationRewrite {
             case "com.orientechnologies.tinkerpop.handler.OGraphServerHandler" -> {
               yield new OHandlerConfig("graph", null);
             }
+            case "com.orientechnologies.orient.graph.handler.OGraphServerHandler" -> {
+              yield new OHandlerConfig("graph", null);
+            }
             case "com.orientechnologies.tinkerpop.server.OGremlinServerPlugin" -> {
               yield new OHandlerConfig("gremlin-server", null);
             }
@@ -736,6 +751,9 @@ public class OServerConfigurationRewrite {
   private List<OConfigProperty> migrateProperties(OServerEntryConfiguration[] properties) {
     List<OConfigProperty> props = new ArrayList<>();
     for (var prop : properties) {
+      if (prop.getName().equals(OGlobalConfiguration.SERVER_DATABASE_PATH.getKey())) {
+        continue;
+      }
       props.add(new OConfigProperty(prop.getName(), prop.getValue()));
     }
     return props;
@@ -743,8 +761,10 @@ public class OServerConfigurationRewrite {
 
   private List<OConfigNetwork> migrateListeners(OServerNetworkConfiguration network) {
     Map<String, OServerSocketFactoryConfiguration> sockets = new HashMap<>();
-    for (var fact : network.getSockets()) {
-      sockets.put(fact.getName(), fact);
+    if (network.getSockets() != null) {
+      for (var fact : network.getSockets()) {
+        sockets.put(fact.getName(), fact);
+      }
     }
 
     List<OConfigNetwork> listeners = new ArrayList<>();
@@ -754,7 +774,9 @@ public class OServerConfigurationRewrite {
       newListener.setHost(listener.getIpAddress());
       newListener.setProtocol(listener.getProtocol());
       var sock = sockets.get(listener.getSocket());
-      newListener.setTls(migrateTlsConfig(sock.getParameters()));
+      if (sock != null) {
+        newListener.setTls(migrateTlsConfig(sock.getParameters()));
+      }
       listeners.add(newListener);
       if (listener.getProtocol().equals("http")) {
         var commands = listener.getCommands();
@@ -814,12 +836,15 @@ public class OServerConfigurationRewrite {
 
   protected OConfigPlugins migratePlugins(OServerConfiguration configuration) {
     OConfigPlugins plugins = new OConfigPlugins();
+    plugins.setDirectory("plugins");
     for (OServerEntryConfiguration p : configuration.getProperties()) {
       if (p.getName().equals("plugin.hotReload")) {
         plugins.setHotReload(Boolean.parseBoolean(p.getValue()));
       } else if (p.getName().equals("plugin.dynamic")) {
         plugins.setDynamic(Boolean.parseBoolean(p.getValue()));
-      } else if (p.getName().equals("plugin.directory")) plugins.setDirectory(p.getValue());
+      } else if (p.getName().equals("plugin.directory")) {
+        plugins.setDirectory(p.getValue());
+      }
     }
 
     return plugins;

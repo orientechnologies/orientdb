@@ -1,13 +1,16 @@
 package com.orientechnologies.orient.core.config;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.databind.JsonNode;
 import java.util.List;
 
+@JsonInclude(Include.NON_NULL)
 public class OConfigNetwork {
+  private String protocol;
   private String host;
   // TODO: we use to handle ranges ... maybe set ranges.
   private String portRange;
-  private String protocol;
   private OConfigNetworkTls tls;
   private JsonNode parameters;
   private List<OConfigCommand> commands;
@@ -58,5 +61,9 @@ public class OConfigNetwork {
 
   public void setCommands(List<OConfigCommand> commands) {
     this.commands = commands;
+  }
+
+  public List<OConfigCommand> getCommands() {
+    return commands;
   }
 }

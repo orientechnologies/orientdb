@@ -1,5 +1,9 @@
 package com.orientechnologies.orient.core.config;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
+
+@JsonInclude(Include.NON_NULL)
 public class OConfigDistributed {
   private boolean enabled;
   private String group;
@@ -30,5 +34,25 @@ public class OConfigDistributed {
 
   public int getNetworkMinimumQuorum() {
     return networkMinimumQuorum;
+  }
+
+  public boolean isEnabled() {
+    return enabled;
+  }
+
+  public String getGroup() {
+    return group;
+  }
+
+  public String getKey() {
+    return key;
+  }
+
+  public String getNode() {
+    return node;
+  }
+
+  public OConfigDistributedTopology getTopology() {
+    return topology;
   }
 }

@@ -1,23 +1,15 @@
 package com.orientechnologies.orient.core.config;
 
-import java.util.List;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonInclude.Include;
 
+@JsonInclude(Include.NON_NULL)
 public class OConfigPlugins {
   private String directory;
-  private boolean hotReload = false;
+  private Boolean hotReload;
   // This means that will load the plugin if is in the directory,
   // no matter if has the configuration entry or not.
-  private boolean dynamic = false;
-
-  public boolean isDynamic() {
-    return dynamic;
-  }
-
-  public void setDynamic(boolean dynamic) {
-    this.dynamic = dynamic;
-  }
-
-  private List<OConfigPlugin> plugin;
+  private Boolean dynamic;
 
   public String getDirectory() {
     return directory;
@@ -27,19 +19,19 @@ public class OConfigPlugins {
     this.directory = directory;
   }
 
-  public boolean isHotReload() {
+  public Boolean getHotReload() {
     return hotReload;
   }
 
-  public void setHotReload(boolean hotReload) {
+  public void setHotReload(Boolean hotReload) {
     this.hotReload = hotReload;
   }
 
-  public List<OConfigPlugin> getPlugin() {
-    return plugin;
+  public Boolean getDynamic() {
+    return dynamic;
   }
 
-  public void setPlugin(List<OConfigPlugin> plugin) {
-    this.plugin = plugin;
+  public void setDynamic(Boolean dynamic) {
+    this.dynamic = dynamic;
   }
 }
