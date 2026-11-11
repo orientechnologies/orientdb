@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -39,6 +40,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -556,7 +558,8 @@ public class OServerConfigurationRewrite {
     return auditing;
   }
 
-  private List<OHandlerConfig> migrateHandlers(List<OServerHandlerConfiguration> handlers) {
+  private List<OHandlerConfig> migrateHandlers(List<OServerHandlerConfiguration> handlers)
+      throws IOException {
     List<OHandlerConfig> newHandlers = new ArrayList<>();
     for (var handler : handlers) {
       var config =
@@ -713,17 +716,66 @@ public class OServerConfigurationRewrite {
     return object;
   }
 
-  private JsonNode createAtomaticBackup(OServerParameterConfiguration[] parameters) {
+  private JsonNode createAtomaticBackup(OServerParameterConfiguration[] parameters)
+      throws IOException {
+    if (parameters == null || parameters.length == 0) {
+      return null;
+    }
     for (var param : parameters) {
       if (param.getName().equalsIgnoreCase("config")) {
-        // TODO: handle inline configuration as weel
-        ObjectMapper mapper = new ObjectMapper();
-        var object = mapper.createObjectNode();
-        object.put("config", param.getValue());
-        return object;
+        String config = Files.readString(Path.of(param.getValue()));
+        var c = new ODocument();
+        c.fromJSON(config);
+        var vals =
+            c.toMap().entrySet().stream()
+                .collect(Collectors.toMap(p -> p.getKey(), p -> p.getValue().toString()));
+        return createAutomaticBackupConfig(vals);
       }
     }
-    return null;
+    var vals =
+        Arrays.stream(parameters).collect(Collectors.toMap(p -> p.getName(), p -> p.getValue()));
+    return createAutomaticBackupConfig(vals);
+  }
+
+  protected JsonNode createAutomaticBackupConfig(Map<String, String> vals) {
+    ObjectMapper mapper = new ObjectMapper();
+    var object = mapper.createObjectNode();
+    for (var param : vals.entrySet()) {
+      if (param.getKey().equalsIgnoreCase("enabled")) {
+        object.put("enabled", Boolean.parseBoolean(param.getValue()));
+      } else if (param.getKey().equalsIgnoreCase("delay")) {
+        object.put("delay", param.getValue());
+      } else if (param.getKey().equalsIgnoreCase("firstTime")) {
+        object.put("firstTime", param.getValue());
+      } else if (param.getKey().equalsIgnoreCase("target.directory")) {
+        object.put("targetDirectory", param.getValue());
+      } else if (param.getKey().equalsIgnoreCase("db.include")
+          && param.getValue().trim().length() > 0) {
+        var array = mapper.createArrayNode();
+        for (var val : param.getValue().split(",")) {
+          array.add(val);
+        }
+        object.set("dbInclude", array);
+      } else if (param.getKey().equalsIgnoreCase("db.exclude")
+          && param.getValue().trim().length() > 0) {
+        var array = mapper.createArrayNode();
+        for (var val : param.getValue().split(",")) {
+          array.add(val);
+        }
+        object.set("dbExclude", array);
+      } else if (param.getKey().equalsIgnoreCase("target.fileName")) {
+        object.put("targetFileName", param.getValue());
+      } else if (param.getKey().equalsIgnoreCase("bufferSize")) {
+        object.put("bufferSize", Integer.parseInt(param.getValue()));
+      } else if (param.getKey().equalsIgnoreCase("compressionLevel")) {
+        object.put("compressionLevel ", Integer.parseInt(param.getValue()));
+      } else if (param.getKey().equalsIgnoreCase("mode")) {
+        object.put("mode ", param.getValue());
+      } else if (param.getKey().equalsIgnoreCase("exportOptions")) {
+        object.put("exportOptions", param.getValue());
+      }
+    }
+    return object;
   }
 
   private JsonNode createSyslogConfig(OServerParameterConfiguration[] parameters) {
