@@ -20,6 +20,7 @@
 package com.orientechnologies.orient.enterprise.channel;
 
 import com.orientechnologies.common.concur.lock.OAdaptiveLock;
+import com.orientechnologies.common.concur.lock.OLock;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.profiler.OAbstractProfiler.OProfilerHookValue;
@@ -36,7 +37,6 @@ import java.net.NetworkInterface;
 import java.net.Socket;
 import java.net.SocketException;
 import java.util.Enumeration;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 public abstract class OChannel {
@@ -46,8 +46,8 @@ public abstract class OChannel {
   private static final AtomicLong metricGlobalTransmittedBytes = new AtomicLong();
   private static final AtomicLong metricGlobalReceivedBytes = new AtomicLong();
   private static final AtomicLong metricGlobalFlushes = new AtomicLong();
-  private final OAdaptiveLock lockRead = new OAdaptiveLock();
-  private final OAdaptiveLock lockWrite = new OAdaptiveLock();
+  private final OLock lockRead = new OAdaptiveLock();
+  private final OLock lockWrite = new OAdaptiveLock();
   public volatile Socket socket;
   public InputStream inStream;
   public OutputStream outStream;
@@ -125,10 +125,6 @@ public abstract class OChannel {
     lockWrite.lock();
   }
 
-  public boolean tryAcquireWriteLock(final long iTimeout) {
-    return lockWrite.tryAcquireLock(iTimeout, TimeUnit.MILLISECONDS);
-  }
-
   public void releaseWriteLock() {
     lockWrite.unlock();
   }
@@ -145,7 +141,7 @@ public abstract class OChannel {
     if (outStream != null) outStream.flush();
   }
 
-  public OAdaptiveLock getLockWrite() {
+  public OLock getLockWrite() {
     return lockWrite;
   }
 

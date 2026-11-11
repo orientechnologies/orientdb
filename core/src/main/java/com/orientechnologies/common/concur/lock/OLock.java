@@ -27,11 +27,16 @@ import java.util.concurrent.Callable;
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
 public interface OLock {
-  public void lock();
 
-  public void unlock();
+  boolean tryAcquireLock();
 
-  public <V> V callInLock(Callable<V> iCallback) throws Exception;
+  void lock();
 
-  public void close();
+  void unlock();
+
+  boolean isHeldByCurrentThread();
+
+  <V> V callInLock(Callable<V> iCallback) throws Exception;
+
+  void close();
 }

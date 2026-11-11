@@ -19,8 +19,6 @@
  */
 package com.orientechnologies.orient.core.index;
 
-import com.orientechnologies.common.concur.lock.OOneEntryPerKeyLockManager;
-import com.orientechnologies.common.concur.lock.OPartitionedLockManager;
 import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.listener.OProgressListener;
 import com.orientechnologies.common.log.OLogManager;
@@ -62,10 +60,7 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.util.stream.Stream;
 
 /**
- * Handles indexing when records change. The underlying lock manager for keys can be the {@link
- * OPartitionedLockManager}, the default one, or the {@link OOneEntryPerKeyLockManager} in case of
- * distributed. This is to avoid deadlock situation between nodes where keys have the same hash
- * code.
+ * Handles indexing when records change.
  *
  * @author Luca Garulli (l.garulli--(at)--orientdb.com)
  */
