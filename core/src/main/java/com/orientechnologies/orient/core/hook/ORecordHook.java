@@ -156,8 +156,7 @@ public interface ORecordHook {
     }
   }
 
-  default void onUnregister() {}
-  ;
+  void onUnregister();
 
   RESULT onTrigger(TYPE iType, ORecord iRecord);
 
