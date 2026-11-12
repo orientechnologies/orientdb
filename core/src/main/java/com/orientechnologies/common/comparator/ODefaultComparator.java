@@ -50,17 +50,34 @@ public class ODefaultComparator implements Comparator<Object> {
       // FAST COMPARISON
       return 0;
 
-    if (objectOne instanceof Comparable)
+    if (objectOne instanceof Collection) {
+      if (objectTwo instanceof Collection) {
+        return compareCollection((Collection) objectOne, (Collection) objectTwo);
+      } else if (objectTwo instanceof Map) {
+        return 1;
+      } else {
+        return -1;
+      }
+    } else if (objectOne instanceof Map) {
+      if (objectTwo instanceof Map) {
+        return compareMap((Map) objectOne, (Map) objectTwo);
+      } else if (objectTwo instanceof Collection) {
+        return -1;
+      } else {
+        return -1;
+      }
+    } else if (objectTwo instanceof Map || objectTwo instanceof Collection) {
+      return 1;
+    } else if (objectOne instanceof Comparable) {
       return ((Comparable<Object>) objectOne).compareTo(objectTwo);
-    if (objectOne instanceof Collection && objectTwo instanceof Collection)
-      return compareCollection((Collection) objectOne, (Collection) objectTwo);
-    if (objectOne instanceof Map && objectTwo instanceof Map)
-      return compareMap((Map) objectOne, (Map) objectTwo);
+    }
 
     final Comparator<?> comparator =
         OComparatorFactory.INSTANCE.getComparator(objectOne.getClass());
 
-    if (comparator != null) return ((Comparator<Object>) comparator).compare(objectOne, objectTwo);
+    if (comparator != null) {
+      return ((Comparator<Object>) comparator).compare(objectOne, objectTwo);
+    }
 
     throw new IllegalStateException(
         "Object of class '" + objectOne.getClass().getName() + "' cannot be compared");
