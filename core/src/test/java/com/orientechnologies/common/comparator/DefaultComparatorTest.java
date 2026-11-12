@@ -3,6 +3,7 @@ package com.orientechnologies.common.comparator;
 import com.orientechnologies.orient.core.index.OCompositeKey;
 import com.orientechnologies.orient.core.metadata.schema.OType;
 import com.orientechnologies.orient.core.record.impl.ODocument;
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -58,6 +59,23 @@ public class DefaultComparatorTest {
     Map<String, String> mapThree = Map.of("a", "a");
     Map<String, String> mepFor = Map.of("a", "b");
     assertCompareTwoKeys(comparator, mapThree, mepFor);
+  }
+
+  @Test
+  public void testCompareMapToOther() {
+    Map<String, String> mapOne = Map.of();
+
+    assertCompareTwoKeys(comparator, mapOne, 1);
+    assertCompareTwoKeys(comparator, mapOne, new ODocument());
+    assertCompareTwoKeys(comparator, mapOne, new ArrayList());
+  }
+
+  @Test
+  public void testCompareListToOther() {
+    List<String> listOne = List.of();
+
+    assertCompareTwoKeys(comparator, listOne, 1);
+    assertCompareTwoKeys(comparator, listOne, new ODocument());
   }
 
   @Test
