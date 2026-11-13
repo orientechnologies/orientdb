@@ -30,14 +30,15 @@ public class OSystemVariableResolver implements OVariableParserListener {
 
   private static final OSystemVariableResolver instance = new OSystemVariableResolver();
 
-  public static String resolveSystemVariables(final String iPath) {
-    return resolveSystemVariables(iPath, null);
+  public static String resolveSystemVariables(final String toResolve) {
+    return resolveSystemVariables(toResolve, null);
   }
 
-  public static String resolveSystemVariables(final String iPath, final String iDefault) {
-    if (iPath == null) return iDefault;
+  public static String resolveSystemVariables(final String toResolve, final String iDefault) {
+    if (toResolve == null) return iDefault;
 
-    return (String) OVariableParser.resolveVariables(iPath, VAR_BEGIN, VAR_END, instance, iDefault);
+    return (String)
+        OVariableParser.resolveVariables(toResolve, VAR_BEGIN, VAR_END, instance, iDefault);
   }
 
   public static String resolveVariable(final String variable) {

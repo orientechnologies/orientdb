@@ -19,4 +19,18 @@ public class OConfigReadWriteTest {
     assertEquals(config.getBackup(), read.getBackup());
     assertEquals(config.getDatabases(), read.getDatabases());
   }
+
+  @Test
+  public void simpleTestVariables() throws IOException {
+
+    OConfig config = new OConfig();
+    config.setDatabases("${path}");
+    config.setBackup("backup/");
+    OConfigReadWrite rw = new OConfigReadWrite();
+    String value = rw.writeYMLString(config);
+    System.setProperty("path", "databases/");
+    OConfig read = rw.readYMLStringVariables(value);
+    assertEquals(config.getBackup(), read.getBackup());
+    assertEquals("databases/", read.getDatabases());
+  }
 }
