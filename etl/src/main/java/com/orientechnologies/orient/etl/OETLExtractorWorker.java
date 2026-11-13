@@ -53,7 +53,7 @@ class OETLExtractorWorker implements Runnable {
           fetch = false;
         }
       } catch (InterruptedException e) {
-
+        Thread.currentThread().interrupt();
       } catch (Exception e) {
         if (haltOnError) {
           try {

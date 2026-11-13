@@ -103,6 +103,7 @@ public class OProxyServerListener extends Thread {
     try {
       join();
     } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
       // IGNORE IT
     }
   }

@@ -116,6 +116,7 @@ public class OAdaptiveLock extends OAbstractLock {
         try {
           return lock.tryLock(iTimeout, iUnit);
         } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
           throw OException.wrapException(
               new OLockException(
                   "Thread interrupted while waiting for resource of class '"

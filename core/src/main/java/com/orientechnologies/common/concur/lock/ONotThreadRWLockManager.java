@@ -55,6 +55,7 @@ public class ONotThreadRWLockManager<T> implements OSimpleRWLockManager<T> {
         c = new LockGuard(1, lock.newCondition(), shared);
         map.put(key, c);
       } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
         throw OException.wrapException(new OInterruptedException("Interrupted Lock"), e);
       }
     } finally {

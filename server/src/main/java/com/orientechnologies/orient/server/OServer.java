@@ -607,6 +607,7 @@ public class OServer {
     try {
       if (shutdownLatch != null) shutdownLatch.await();
     } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
       logger.error("Error during waiting for OrientDB shutdown", e);
     }
   }
@@ -838,6 +839,7 @@ public class OServer {
         // WAIT ANY LOG IS PRINTED
         Thread.sleep(1000);
       } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
       }
 
       System.out.println();

@@ -43,6 +43,7 @@ final class OETLPipelineWorker implements Runnable {
       // RE-ADD END FLAG FOR OTHER THREADS
       queue.put(content);
     } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
     }
   }
 }

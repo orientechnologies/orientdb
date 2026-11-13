@@ -73,6 +73,7 @@ public class OReceiverInputStream extends InputStream {
           }
 
         } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
           var ex = new InterruptedIOException();
           ex.initCause(e);
           throw ex;

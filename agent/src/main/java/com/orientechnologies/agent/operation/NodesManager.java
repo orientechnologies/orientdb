@@ -40,6 +40,7 @@ public class NodesManager {
     try {
       responseManager.waitForSynchronousResponses();
     } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
       throw new OInterruptedException(e.getMessage());
     }
     return responseManager.getResponses();
@@ -63,6 +64,7 @@ public class NodesManager {
     try {
       responseManager.waitForSynchronousResponses();
     } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
       throw new OInterruptedException(e.getMessage());
     }
     return responseManager.getResponses().size() > 0 ? responseManager.getResponses().get(0) : null;

@@ -102,6 +102,7 @@ public class ODistributedTxCoordinator {
             try {
               Thread.sleep(nextWait.get());
             } catch (InterruptedException e) {
+              Thread.currentThread().interrupt();
               OException.wrapException(new OInterruptedException(e.getMessage()), e);
             }
           } else {
@@ -123,6 +124,7 @@ public class ODistributedTxCoordinator {
           try {
             Thread.sleep(nextWait.get());
           } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             OException.wrapException(new OInterruptedException(e.getMessage()), e);
           }
         } else {

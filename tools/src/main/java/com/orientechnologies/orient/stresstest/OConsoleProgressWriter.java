@@ -52,6 +52,7 @@ public class OConsoleProgressWriter extends OSoftThread {
       Thread.sleep(300);
     } catch (InterruptedException e) {
       softShutdown();
+      Thread.currentThread().interrupt();
     }
   }
 

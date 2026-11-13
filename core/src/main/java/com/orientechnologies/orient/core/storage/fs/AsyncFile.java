@@ -83,6 +83,7 @@ public final class AsyncFile implements OFile {
         try {
           written += writeFuture.get();
         } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
           throw OException.wrapException(
               new OInterruptedException("File write was interrupted"), e);
         } catch (ExecutionException e) {
@@ -186,6 +187,7 @@ public final class AsyncFile implements OFile {
         try {
           written += writeFuture.get();
         } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
           throw OException.wrapException(
               new OInterruptedException("File write was interrupted"), e);
         } catch (ExecutionException e) {
@@ -246,6 +248,7 @@ public final class AsyncFile implements OFile {
         try {
           bytesRead = readFuture.get();
         } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
           throw OException.wrapException(
               new OInterruptedException("File write was interrupted"), e);
         } catch (ExecutionException e) {
@@ -458,6 +461,7 @@ public final class AsyncFile implements OFile {
       try {
         latch.await();
       } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
         throw OException.wrapException(new OInterruptedException("File write was interrupted"), e);
       }
       if (exc != null) {

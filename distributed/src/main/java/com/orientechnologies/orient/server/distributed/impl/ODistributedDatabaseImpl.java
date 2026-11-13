@@ -184,6 +184,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       return result;
 
     } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
       // IGNORE IT
       logger.debugNode(
           nodeId,
@@ -385,6 +386,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
           try {
             this.wait(1000);
           } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             break;
           }
         }
@@ -470,6 +472,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
       try {
         requestExecutor.awaitTermination(1, TimeUnit.MINUTES);
       } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
       }
     }
 
@@ -601,6 +604,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
           Thread.sleep(300);
         } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
           break;
         }
       }

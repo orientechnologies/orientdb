@@ -682,6 +682,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
         return this.nodeState.getOps().waitSelfOnline(name, Optional.of(waitTime));
       }
     } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
       return false;
     }
   }
@@ -810,6 +811,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
       setDatabaseState(dbId, getNodeState().getNodeId(), ODatabaseState.Online);
       getNodeState().getOps().waitOnlineAll(dbId, Optional.of(10 * 60 * 1000L));
     } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
       throw OException.wrapException(new OInterruptedException("wait for online interrupted"), e);
     } catch (ExecutionException | TimeoutException e) {
       throw OException.wrapException(

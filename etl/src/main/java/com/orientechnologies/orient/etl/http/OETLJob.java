@@ -83,6 +83,7 @@ public class OETLJob implements Runnable {
         listener.wait(5000);
         listener.onEnd(this);
       } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
       }
     }
   }

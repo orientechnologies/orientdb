@@ -99,6 +99,7 @@ public class OAuditingLoggingThread extends Thread {
         }
 
       } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
         // IGNORE AND SOFTLY EXIT
 
       } catch (Exception e) {

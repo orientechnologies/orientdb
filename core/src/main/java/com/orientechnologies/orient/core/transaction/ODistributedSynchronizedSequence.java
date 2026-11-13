@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.core.transaction;
 
+import com.orientechnologies.common.concur.lock.OInterruptedException;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.ORawPair;
@@ -52,7 +54,8 @@ public class ODistributedSynchronizedSequence {
     try {
       request.await();
     } catch (InterruptedException e) {
-      e.printStackTrace();
+      Thread.currentThread().interrupt();
+      throw OException.wrapException(new OInterruptedException(e.getMessage()), e);
     }
     SuccessResult status = sequenceManager.notifySuccess(id);
     if (status == SuccessResult.ALREADY_PRESENT) {

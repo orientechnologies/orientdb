@@ -3733,6 +3733,7 @@ public abstract class OAbstractPaginatedStorage
           break;
         }
       } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
         throw OException.wrapException(
             new OInterruptedException("Fuzzy check point was interrupted"), e);
       }
@@ -6334,6 +6335,7 @@ public abstract class OAbstractPaginatedStorage
       try {
         this.wait();
       } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
         throw OException.wrapException(
             new OInterruptedException("Interrupted wait for backup to finish"), e);
       }
@@ -6374,6 +6376,7 @@ public abstract class OAbstractPaginatedStorage
       try {
         this.wait();
       } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
         throw OException.wrapException(
             new OInterruptedException("Interrupted wait for backup to finish"), e);
       }

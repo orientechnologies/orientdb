@@ -630,6 +630,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
               try {
                 Thread.sleep(random.nextInt(delay));
               } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
                 OException.wrapException(new OInterruptedException(e.getMessage()), e);
               }
             }
@@ -937,6 +938,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
           try {
             Thread.sleep(delay.get());
           } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             OException.wrapException(new OInterruptedException(e.getMessage()), e);
           }
         }
@@ -1317,6 +1319,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
               try {
                 Thread.sleep(random.nextInt(delay));
               } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
                 OException.wrapException(new OInterruptedException(e.getMessage()), e);
               }
             }
