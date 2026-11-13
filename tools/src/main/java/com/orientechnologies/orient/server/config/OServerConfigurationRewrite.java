@@ -51,14 +51,14 @@ import org.xml.sax.SAXException;
 public class OServerConfigurationRewrite {
   private static final OLogger logger = OLogger.get(OServerConfigurationRewrite.class);
 
-  public void rewrite(String file) throws IOException {
+  public static void rewrite(String file) throws IOException {
     var loader = new OServerConfigurationLoaderXml(OServerConfiguration.class, new File(file));
     OServerConfiguration load = loader.load();
     migrateDistributed(load, false);
     loader.save(load);
   }
 
-  public OConfig convertToOConfig(OServerConfiguration configuration)
+  public static OConfig convertToOConfig(OServerConfiguration configuration)
       throws IOException, ParserConfigurationException, SAXException {
     OConfig config = new OConfig();
     config.setDatabases(migrateDatabaseLocation(configuration.getProperties()));
@@ -72,7 +72,7 @@ public class OServerConfigurationRewrite {
     return config;
   }
 
-  private String migrateDatabaseLocation(OServerEntryConfiguration[] properties) {
+  private static String migrateDatabaseLocation(OServerEntryConfiguration[] properties) {
     for (var prop : properties) {
       if (prop.getName().equals(OGlobalConfiguration.SERVER_DATABASE_PATH.getKey())) {
         return prop.getValue();
@@ -81,7 +81,7 @@ public class OServerConfigurationRewrite {
     return "databases";
   }
 
-  private List<OHookConfig> migrateHooks(List<OServerHookConfiguration> hooks) {
+  private static List<OHookConfig> migrateHooks(List<OServerHookConfiguration> hooks) {
     if (hooks == null) {
       return null;
     }
@@ -102,7 +102,7 @@ public class OServerConfigurationRewrite {
         .toList();
   }
 
-  private void readHazelcastConfigs(String file, OConfigDistributed distributed)
+  private static void readHazelcastConfigs(String file, OConfigDistributed distributed)
       throws IOException, ParserConfigurationException, SAXException {
     File inputFile = new File(file);
     DocumentBuilderFactory dbFactory = DocumentBuilderFactory.newInstance();
@@ -116,7 +116,7 @@ public class OServerConfigurationRewrite {
     distributed.setKey(key);
   }
 
-  private OConfigDistributed migrateDistributed(OServerConfiguration configuration)
+  private static OConfigDistributed migrateDistributed(OServerConfiguration configuration)
       throws IOException, ParserConfigurationException, SAXException {
     OConfigDistributed distributed = new OConfigDistributed();
     Iterator<OServerHandlerConfiguration> iter = configuration.getHandlers().iterator();
@@ -161,7 +161,8 @@ public class OServerConfigurationRewrite {
     return distributed;
   }
 
-  private OConfigSecurity migrateSecurity(OServerConfiguration configuration) throws IOException {
+  private static OConfigSecurity migrateSecurity(OServerConfiguration configuration)
+      throws IOException {
     String configFile =
         OSystemVariableResolver.resolveSystemVariables("${ORIENTDB_HOME}/config/security.json");
     OConfigSecurity config;
@@ -215,7 +216,7 @@ public class OServerConfigurationRewrite {
     }
   }
 
-  private OConfigSecurity migrateConfigSecurity(ODocument configDoc) {
+  private static OConfigSecurity migrateConfigSecurity(ODocument configDoc) {
     var newConfig = new OConfigSecurity();
     if (configDoc.hasProperty("enabled")) {
       newConfig.setEnabled(configDoc.getProperty("enabled"));
@@ -250,7 +251,7 @@ public class OServerConfigurationRewrite {
     return newConfig;
   }
 
-  private OLdapImportConfig migrateLdapConfig(ODocument source) {
+  private static OLdapImportConfig migrateLdapConfig(ODocument source) {
     OLdapImportConfig config = new OLdapImportConfig();
     if (source.hasProperty("debug")) {
       config.setDebug(source.getProperty("debug"));
@@ -362,7 +363,7 @@ public class OServerConfigurationRewrite {
     return null;
   }
 
-  private OConfigPasswordValidator migratePasswordValidator(ODocument confDoc) {
+  private static OConfigPasswordValidator migratePasswordValidator(ODocument confDoc) {
     OConfigPasswordValidator newConfig = new OConfigPasswordValidator();
     if (confDoc.hasProperty("enabled")) {
       newConfig.setEnabled(confDoc.getProperty("enabled"));
@@ -400,7 +401,7 @@ public class OServerConfigurationRewrite {
     return newConfig;
   }
 
-  private OConfigAuthentication migrateAuthentication(
+  private static OConfigAuthentication migrateAuthentication(
       ODocument confDoc, List<OConfigUser> foundUsers) {
     OConfigAuthentication config = new OConfigAuthentication();
 
@@ -418,7 +419,8 @@ public class OServerConfigurationRewrite {
     return config;
   }
 
-  private OConfigAuthenticator migrateAuthenticator(ODocument auth, List<OConfigUser> foundUsers) {
+  private static OConfigAuthenticator migrateAuthenticator(
+      ODocument auth, List<OConfigUser> foundUsers) {
     OConfigAuthenticator authenticator = new OConfigAuthenticator();
     if (auth.hasProperty("name")) {
       authenticator.setName(auth.getProperty("name"));
@@ -480,7 +482,7 @@ public class OServerConfigurationRewrite {
     return authenticator;
   }
 
-  private void fillUsers(List<ODocument> property, List<OConfigUser> foundUsers) {
+  private static void fillUsers(List<ODocument> property, List<OConfigUser> foundUsers) {
     for (ODocument user : property) {
       foundUsers.add(
           new OConfigUser(
@@ -490,7 +492,7 @@ public class OServerConfigurationRewrite {
     }
   }
 
-  private OConfigSecurityAuditing migrateAditingConfig(ODocument configDoc) {
+  private static OConfigSecurityAuditing migrateAditingConfig(ODocument configDoc) {
     OConfigSecurityAuditing auditing = new OConfigSecurityAuditing();
     if (configDoc.hasProperty("enabled")) {
       auditing.setEnabled(configDoc.getProperty("enabled"));
@@ -558,7 +560,7 @@ public class OServerConfigurationRewrite {
     return auditing;
   }
 
-  private List<OHandlerConfig> migrateHandlers(List<OServerHandlerConfiguration> handlers)
+  private static List<OHandlerConfig> migrateHandlers(List<OServerHandlerConfiguration> handlers)
       throws IOException {
     List<OHandlerConfig> newHandlers = new ArrayList<>();
     for (var handler : handlers) {
@@ -627,7 +629,7 @@ public class OServerConfigurationRewrite {
     return newHandlers;
   }
 
-  private JsonNode createDistributedConfig(OServerParameterConfiguration[] parameters) {
+  private static JsonNode createDistributedConfig(OServerParameterConfiguration[] parameters) {
     if (parameters.length == 0) {
       return null;
     }
@@ -647,7 +649,7 @@ public class OServerConfigurationRewrite {
     return object;
   }
 
-  private JsonNode createJmxConfig(OServerParameterConfiguration[] parameters) {
+  private static JsonNode createJmxConfig(OServerParameterConfiguration[] parameters) {
     if (parameters.length == 0) {
       return null;
     }
@@ -663,7 +665,7 @@ public class OServerConfigurationRewrite {
     return object;
   }
 
-  private JsonNode createProxyConfig(OServerParameterConfiguration[] parameters) {
+  private static JsonNode createProxyConfig(OServerParameterConfiguration[] parameters) {
     if (parameters.length == 0) {
       return null;
     }
@@ -690,7 +692,7 @@ public class OServerConfigurationRewrite {
     return object;
   }
 
-  private JsonNode serverSideInterpreter(OServerParameterConfiguration[] parameters) {
+  private static JsonNode serverSideInterpreter(OServerParameterConfiguration[] parameters) {
     if (parameters.length == 0) {
       return null;
     }
@@ -716,7 +718,7 @@ public class OServerConfigurationRewrite {
     return object;
   }
 
-  private JsonNode createAtomaticBackup(OServerParameterConfiguration[] parameters)
+  private static JsonNode createAtomaticBackup(OServerParameterConfiguration[] parameters)
       throws IOException {
     if (parameters == null || parameters.length == 0) {
       return null;
@@ -737,7 +739,7 @@ public class OServerConfigurationRewrite {
     return createAutomaticBackupConfig(vals);
   }
 
-  protected JsonNode createAutomaticBackupConfig(Map<String, String> vals) {
+  private static JsonNode createAutomaticBackupConfig(Map<String, String> vals) {
     ObjectMapper mapper = new ObjectMapper();
     var object = mapper.createObjectNode();
     for (var param : vals.entrySet()) {
@@ -778,7 +780,7 @@ public class OServerConfigurationRewrite {
     return object;
   }
 
-  private JsonNode createSyslogConfig(OServerParameterConfiguration[] parameters) {
+  private static JsonNode createSyslogConfig(OServerParameterConfiguration[] parameters) {
     if (parameters.length == 0) {
       return null;
     }
@@ -800,7 +802,8 @@ public class OServerConfigurationRewrite {
     return object;
   }
 
-  private JsonNode customSQLFunctionPluginConfig(OServerParameterConfiguration[] parameters) {
+  private static JsonNode customSQLFunctionPluginConfig(
+      OServerParameterConfiguration[] parameters) {
     for (var param : parameters) {
       if (param.getName().equalsIgnoreCase("config")) {
         ObjectMapper mapper = new ObjectMapper();
@@ -812,13 +815,13 @@ public class OServerConfigurationRewrite {
     return null;
   }
 
-  private Set<String> ignorePropertyKey() {
+  private static Set<String> ignorePropertyKey() {
     Set<String> ignored = new HashSet<>();
     ignored.add(OGlobalConfiguration.SERVER_DATABASE_PATH.getKey());
     return ignored;
   }
 
-  private List<OConfigProperty> migrateProperties(OServerEntryConfiguration[] properties) {
+  private static List<OConfigProperty> migrateProperties(OServerEntryConfiguration[] properties) {
     List<OConfigProperty> props = new ArrayList<>();
     for (var prop : properties) {
       if (ignorePropertyKey().contains(prop.getName())) {
@@ -837,7 +840,7 @@ public class OServerConfigurationRewrite {
     return props;
   }
 
-  private List<OConfigNetwork> migrateListeners(OServerNetworkConfiguration network) {
+  private static List<OConfigNetwork> migrateListeners(OServerNetworkConfiguration network) {
     Map<String, OServerSocketFactoryConfiguration> sockets = new HashMap<>();
     if (network.getSockets() != null) {
       for (var fact : network.getSockets()) {
@@ -885,7 +888,7 @@ public class OServerConfigurationRewrite {
     return listeners;
   }
 
-  private OConfigNetworkTls migrateTlsConfig(OServerParameterConfiguration[] parameters) {
+  private static OConfigNetworkTls migrateTlsConfig(OServerParameterConfiguration[] parameters) {
     if (parameters.length == 0) {
       return null;
     }
@@ -912,7 +915,7 @@ public class OServerConfigurationRewrite {
     return tls;
   }
 
-  protected OConfigPlugins migratePlugins(OServerConfiguration configuration) {
+  private static OConfigPlugins migratePlugins(OServerConfiguration configuration) {
     OConfigPlugins plugins = new OConfigPlugins();
     plugins.setDirectory("plugins");
     for (OServerEntryConfiguration p : configuration.getProperties()) {
@@ -928,7 +931,8 @@ public class OServerConfigurationRewrite {
     return plugins;
   }
 
-  private void migrateDistributed(OServerConfiguration load, boolean removeOld) throws IOException {
+  private static void migrateDistributed(OServerConfiguration load, boolean removeOld)
+      throws IOException {
     Iterator<OServerHandlerConfiguration> iter = load.getHandlers().iterator();
     while (iter.hasNext()) {
       OServerHandlerConfiguration handler = iter.next();
