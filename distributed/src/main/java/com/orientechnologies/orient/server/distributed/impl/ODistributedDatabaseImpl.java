@@ -388,6 +388,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
           try {
             this.wait(1000);
           } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             break;
           }
         }
@@ -563,6 +564,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
         try {
           requestExecutor.awaitTermination(1, TimeUnit.MINUTES);
         } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
         }
       }
 
@@ -740,6 +742,7 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
           Thread.sleep(300);
         } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
           break;
         }
       }
@@ -753,12 +756,14 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
           try {
             latch.put(guards);
           } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             throw new OInterruptedException(e.getMessage());
           }
         });
     try {
       this.freezeGuard = latch.take();
     } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
       throw new OInterruptedException(e.getMessage());
     }
   }
@@ -836,12 +841,14 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
           try {
             latch.put(guards);
           } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             throw new OInterruptedException(e.getMessage());
           }
         });
     try {
       return latch.take();
     } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
       throw new OInterruptedException(e.getMessage());
     }
   }

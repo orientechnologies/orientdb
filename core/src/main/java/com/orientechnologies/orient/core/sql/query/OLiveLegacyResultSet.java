@@ -205,6 +205,7 @@ public class OLiveLegacyResultSet<T> extends OConcurrentLegacyResultSet<T> {
         try {
           waitForCompletion.wait();
         } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
           OLogManager.instance().error(this, "Thread was interrupted", e);
         }
     }
@@ -215,6 +216,7 @@ public class OLiveLegacyResultSet<T> extends OConcurrentLegacyResultSet<T> {
       try {
         waitForNextItem.wait();
       } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
         OLogManager.instance().error(this, "Thread was interrupted", e);
       }
     }

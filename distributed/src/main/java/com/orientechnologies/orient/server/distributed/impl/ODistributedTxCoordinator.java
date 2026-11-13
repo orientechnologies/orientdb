@@ -93,6 +93,7 @@ public class ODistributedTxCoordinator {
           try {
             Thread.sleep(new Random().nextInt(retryDelay));
           } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
             OException.wrapException(new OInterruptedException(e.getMessage()), e);
           }
         }
@@ -113,6 +114,7 @@ public class ODistributedTxCoordinator {
         try {
           Thread.sleep(new Random().nextInt(retryDelay));
         } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
           OException.wrapException(new OInterruptedException(e.getMessage()), e);
         }
 

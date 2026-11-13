@@ -19,6 +19,7 @@ final class WaitingListNode {
     try {
       linkLatch.await();
     } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
       throw OException.wrapException(
           new OInterruptedException(
               "Thread was interrupted while was waiting for completion of 'waiting linked list' operation"),

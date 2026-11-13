@@ -248,7 +248,7 @@ public class OStorageRemoteAsyncOperationTest {
                 try {
                   if (callBackWait.await(10, TimeUnit.MILLISECONDS)) readDone.countDown();
                 } catch (InterruptedException e) {
-                  e.printStackTrace();
+                  Thread.currentThread().interrupt();
                 }
               }
 

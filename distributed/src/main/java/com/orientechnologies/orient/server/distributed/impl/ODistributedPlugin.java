@@ -2058,6 +2058,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
         // WAIT ANY LOG IS PRINTED
         Thread.sleep(1000);
       } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
       }
 
       System.out.println();
@@ -2160,6 +2161,7 @@ public class ODistributedPlugin extends OServerPluginAbstract
     try {
       receiver.getStarted().await();
     } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
       throw OException.wrapException(
           new OInterruptedException("Interrupted waiting receive of sync"), e);
     }

@@ -1,5 +1,7 @@
 package com.orientechnologies.orient.server.distributed.impl;
 
+import com.orientechnologies.common.concur.lock.OInterruptedException;
+import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.orient.core.tx.OTransactionId;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import com.orientechnologies.orient.core.tx.OTxMetadataHolderImpl;
@@ -37,7 +39,8 @@ public class ODistributedSynchronizedSequence {
     try {
       request.await();
     } catch (InterruptedException e) {
-      e.printStackTrace();
+      Thread.currentThread().interrupt();
+      throw OException.wrapException(new OInterruptedException(e.getMessage()), e);
     }
     ValidationResult status = sequenceManager.notifySuccess(id);
     if (status == ValidationResult.ALREADY_PRESENT) {

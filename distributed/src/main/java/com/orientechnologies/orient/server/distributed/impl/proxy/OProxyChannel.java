@@ -166,6 +166,7 @@ public class OProxyChannel extends Thread {
       try {
         responseThread.join();
       } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
         // IGNORE IT
       }
   }
@@ -178,6 +179,7 @@ public class OProxyChannel extends Thread {
     try {
       join();
     } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
       // IGNORE IT
     }
   }

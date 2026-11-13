@@ -489,6 +489,7 @@ public class OrientDBDistributed extends OrientDBEmbedded implements OServerAwar
         }
       }
     } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
       // IGNORE IT
     }
   }

@@ -871,6 +871,7 @@ public class OIndexManagerShared implements OIndexManagerAbstract {
           recreateIndexesThread.join();
           OLogManager.instance().info(this, "Indexes restore after crash was finished.");
         } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
           OLogManager.instance().info(this, "Index rebuild task was interrupted.", e);
         }
     }
