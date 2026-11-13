@@ -115,6 +115,7 @@ public class ODistributedDatabaseChunk implements OStreamable {
           // WAIT FOR ASYNCH WRITE
           Thread.sleep(300);
         } catch (InterruptedException e) {
+          Thread.currentThread().interrupt();
         }
 
       // UPDATE FILE SIZE

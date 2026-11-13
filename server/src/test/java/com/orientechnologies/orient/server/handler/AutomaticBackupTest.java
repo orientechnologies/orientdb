@@ -193,7 +193,7 @@ public class AutomaticBackupTest {
     try {
       Thread.sleep(5000);
     } catch (InterruptedException e) {
-      e.printStackTrace();
+      Thread.currentThread().interrupt();
     }
 
     aBackup.sendShutdown();

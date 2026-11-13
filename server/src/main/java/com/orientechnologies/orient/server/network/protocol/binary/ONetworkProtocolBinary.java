@@ -703,6 +703,7 @@ public class ONetworkProtocolBinary extends ONetworkProtocol {
       try {
         Thread.sleep(100);
       } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
         return;
       }
 
