@@ -1645,20 +1645,6 @@ public abstract class OAbstractPaginatedStorage
     }
   }
 
-  public Optional<OBackgroundNewDelta> extractTransactionsFromWal(
-      List<OTransactionId> transactionsMetadata) {
-    return readTransactionsFromWal(transactionsMetadata)
-        .map(
-            (x) -> {
-              try {
-                return new OBackgroundNewDelta(x);
-              } catch (final IOException e) {
-                throw OException.wrapException(
-                    new OStorageException("Error of reading of records from  WAL"), e);
-              }
-            });
-  }
-
   @Override
   public final long count(final int[] iClusterIds) {
     return readOp(

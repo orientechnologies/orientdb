@@ -39,7 +39,6 @@ import com.orientechnologies.orient.core.index.OIndexMetadata;
 import com.orientechnologies.orient.core.index.engine.IndexEngineValuesTransformer;
 import com.orientechnologies.orient.core.index.engine.OBaseIndexEngine;
 import com.orientechnologies.orient.core.storage.cluster.OPaginatedCluster;
-import com.orientechnologies.orient.core.storage.impl.local.OBackgroundNewDelta;
 import com.orientechnologies.orient.core.storage.impl.local.OIndexEngineCallback;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OBonsaiCollectionPointer;
 import com.orientechnologies.orient.core.storage.ridbag.sbtree.OSBTreeCollectionManager;
@@ -380,9 +379,6 @@ public interface OStorage extends OStorageInfo {
   void metadataOnly(byte[] metadata);
 
   boolean isMemory();
-
-  Optional<OBackgroundNewDelta> extractTransactionsFromWal(
-      List<OTransactionId> transactionsMetadata);
 
   void backupTransactions(OutputStream output, List<OTransactionId> transactionsMetadata);
 

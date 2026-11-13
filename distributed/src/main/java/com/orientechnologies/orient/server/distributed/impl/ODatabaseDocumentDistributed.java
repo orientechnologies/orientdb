@@ -576,9 +576,7 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
   public boolean commit2pc(
       ODistributedRequestId transactionId, boolean isCoordinator, ODistributedRequestId requestId) {
     waitQuorumOnline();
-    ODistributedDatabaseImpl localDistributedDatabase =
-        (ODistributedDatabaseImpl) getDistributedShared();
-    localDistributedDatabase.resetLastValidBackup();
+    ODistributedDatabase localDistributedDatabase = getDistributedShared();
 
     var transactionSequence = getSharedContext().getTransactionSequence();
     ONewDistributedTxContextImpl txContext =
@@ -1290,7 +1288,6 @@ public class ODatabaseDocumentDistributed extends ODatabaseDocumentEmbedded {
     var transactionSequence = getSharedContext().getTransactionSequence();
     OStorage storage = getStorage();
     if (apply) {
-      ((ODistributedDatabaseImpl) localDistributedDatabase).resetLastValidBackup();
       if (context.getStatus() == SUCCESS) {
         OTxMetadataHolder preMetadata =
             transactionSequence.notifySuccess(context.getPreChangePromise());

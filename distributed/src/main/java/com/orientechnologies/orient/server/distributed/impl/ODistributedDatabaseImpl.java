@@ -34,7 +34,6 @@ import com.orientechnologies.orient.core.db.OSystemDatabase;
 import com.orientechnologies.orient.core.db.OTimerTask;
 import com.orientechnologies.orient.core.id.ORID;
 import com.orientechnologies.orient.core.storage.OStorage;
-import com.orientechnologies.orient.core.storage.impl.local.OSyncSource;
 import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.OServer;
@@ -96,7 +95,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
   private ExecutorService requestExecutor;
   private OLockManager lockManager = new OLockManagerImpl();
   private Set<OTransactionId> inQueue = Collections.newSetFromMap(new ConcurrentHashMap<>());
-  private OSyncSource lastValidBackup;
   private volatile DB_STATUS freezePrevStatus;
   private volatile OFreezeGuard freezeGuard;
   private final OrientDBDistributed context;
@@ -695,26 +693,6 @@ public class ODistributedDatabaseImpl implements ODistributedDatabase {
 
   public void localUnlock(List<OLockGuard> guards) {
     this.lockManager.unlock(guards);
-  }
-
-  public OSyncSource getLastValidBackup() {
-    return lastValidBackup;
-  }
-
-  public void setLastValidBackup(final OSyncSource lastValidBackup) {
-    this.lastValidBackup = lastValidBackup;
-  }
-
-  public void resetLastValidBackup() {
-    if (lastValidBackup != null) {
-      lastValidBackup.invalidate();
-    }
-  }
-
-  public void clearLastValidBackup() {
-    if (lastValidBackup != null) {
-      lastValidBackup = null;
-    }
   }
 
   public synchronized void freezeStatus() {
