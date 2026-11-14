@@ -33,6 +33,12 @@ public class OConfigReadWrite {
     return reader.readValue(file.toFile());
   }
 
+  public static <T> T read(Class<T> configClass, JsonNode config) throws IOException {
+    ObjectMapper mapper = new ObjectMapper();
+    var reader = mapper.readerFor(configClass);
+    return reader.readValue(config);
+  }
+
   protected void write(Path file, OConfig config, ObjectMapper mapper)
       throws IOException, StreamWriteException, DatabindException {
     var writer = mapper.writerFor(OConfig.class);

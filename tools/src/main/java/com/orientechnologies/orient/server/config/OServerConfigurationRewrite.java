@@ -622,6 +622,11 @@ public class OServerConfigurationRewrite {
                     "unsupported conversion of type:" + handler.getClazz());
           };
       if (config != null) {
+        for (var par : handler.getParameters()) {
+          if (par.getName().equals("enabled")) {
+            config.setEnabled(Boolean.valueOf(par.getValue()));
+          }
+        }
         newHandlers.add(config);
       }
     }
@@ -925,6 +930,8 @@ public class OServerConfigurationRewrite {
         plugins.setDynamic(Boolean.parseBoolean(p.getValue()));
       } else if (p.getName().equals("plugin.directory")) {
         plugins.setDirectory(p.getValue());
+      } else if (p.getName().equals("plugin.loadAtStartup")) {
+        plugins.setLoadAtStartup(Boolean.parseBoolean(p.getValue()));
       }
     }
 

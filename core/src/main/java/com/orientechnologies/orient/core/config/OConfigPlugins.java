@@ -10,6 +10,7 @@ public class OConfigPlugins {
   // This means that will load the plugin if is in the directory,
   // no matter if has the configuration entry or not.
   private Boolean dynamic;
+  private Boolean loadAtStartup;
 
   public String getDirectory() {
     return directory;
@@ -33,5 +34,13 @@ public class OConfigPlugins {
 
   public void setDynamic(Boolean dynamic) {
     this.dynamic = dynamic;
+  }
+
+  public Boolean getLoadAtStartup() {
+    return loadAtStartup;
+  }
+
+  public void setLoadAtStartup(Boolean loadAtStartup) {
+    this.loadAtStartup = loadAtStartup;
   }
 }

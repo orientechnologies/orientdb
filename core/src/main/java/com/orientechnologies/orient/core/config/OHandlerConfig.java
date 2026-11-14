@@ -7,6 +7,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 @JsonInclude(Include.NON_NULL)
 public class OHandlerConfig {
   private String name;
+  private Boolean enabled;
   private JsonNode config;
 
   public OHandlerConfig() {}
@@ -30,5 +31,13 @@ public class OHandlerConfig {
 
   public void setConfig(JsonNode config) {
     this.config = config;
+  }
+
+  public Boolean getEnabled() {
+    return enabled;
+  }
+
+  public void setEnabled(Boolean enabled) {
+    this.enabled = enabled;
   }
 }

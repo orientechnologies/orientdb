@@ -13,9 +13,8 @@ public class OConfigRewriteFromServerConfigTest {
 
   @Test
   public void testBase() throws IOException, ParserConfigurationException, SAXException {
-    OServerConfigurationRewrite rewriter = new OServerConfigurationRewrite();
     var mg = new OServerConfigurationManager(new File("./src/test/fixtures/example_one.xml"));
-    var config = rewriter.convertToOConfig(mg.getConfiguration());
+    var config = OServerConfigurationRewrite.convertToOConfig(mg.getConfiguration());
 
     var crw = new OConfigReadWrite();
     var cfg = crw.writeYMLString(config);
@@ -33,11 +32,10 @@ public class OConfigRewriteFromServerConfigTest {
 
   @Test
   public void testDistributed() throws IOException, ParserConfigurationException, SAXException {
-    OServerConfigurationRewrite rewriter = new OServerConfigurationRewrite();
     var mg =
         new OServerConfigurationManager(
             new File("./src/test/fixtures/distributed/distributed.xml"));
-    var config = rewriter.convertToOConfig(mg.getConfiguration());
+    var config = OServerConfigurationRewrite.convertToOConfig(mg.getConfiguration());
 
     var crw = new OConfigReadWrite();
     var cfg = crw.writeYMLString(config);
