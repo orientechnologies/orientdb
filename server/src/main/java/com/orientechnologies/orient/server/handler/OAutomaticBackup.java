@@ -78,6 +78,14 @@ public class OAutomaticBackup implements OServerPlugin {
   private OrientDBInternal context;
   private OAtomaticBackupConfig config;
 
+  public OAutomaticBackup() {}
+
+  public OAutomaticBackup(OServer context, OAtomaticBackupConfig config) {
+    this.context = context.getDatabases();
+    this.config = config;
+    startAutomaticBackups();
+  }
+
   @Override
   public void config(final OServer iServer, final OServerParameterConfiguration[] iParams) {
     context = iServer.getDatabases();
@@ -151,6 +159,10 @@ public class OAutomaticBackup implements OServerPlugin {
       }
     }
 
+    startAutomaticBackups();
+  }
+
+  protected void startAutomaticBackups() {
     if (config != null && config.isEnabled()) {
       if (config.getDelay() <= 0)
         throw new OConfigurationException("Cannot find mandatory parameter 'delay'");

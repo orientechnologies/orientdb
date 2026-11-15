@@ -42,6 +42,14 @@ public class OServerSideScriptInterpreter implements OServerPlugin {
   private OrientDBInternal context;
   private OServerSideScriptInterpreterConfig config;
 
+  public OServerSideScriptInterpreter(OServer context, OServerSideScriptInterpreterConfig config) {
+    this.context = context.getDatabases();
+    this.config = config;
+    this.context.getScriptManager().addAllowedPackages(config.getAllowedPackages());
+  }
+
+  public OServerSideScriptInterpreter() {}
+
   @Override
   public void config(final OServer iServer, OServerParameterConfiguration[] iParams) {
     this.context = iServer.getDatabases();

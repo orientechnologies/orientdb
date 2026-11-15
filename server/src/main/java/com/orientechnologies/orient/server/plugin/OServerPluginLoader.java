@@ -1,16 +1,21 @@
 package com.orientechnologies.orient.server.plugin;
 
 import com.orientechnologies.common.util.OClassLoaderHelper;
+import com.orientechnologies.orient.server.OServer;
 import java.util.HashMap;
 import java.util.Map;
 
-public interface OServerPluginLoader {
+public interface OServerPluginLoader<C> {
 
   String getName();
 
   String getPluginClassName();
 
+  Class<C> getConfigClass();
+
   OServerPlugin newInstance();
+
+  OServerPlugin newInstance(OServer context, C config);
 
   static Map<String, OServerPluginLoader> loaders() {
     Map<String, OServerPluginLoader> allLoaders = new HashMap<>();

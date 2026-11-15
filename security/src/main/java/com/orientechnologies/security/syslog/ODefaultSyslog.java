@@ -37,7 +37,11 @@ public class ODefaultSyslog implements OServerPlugin, OSyslog {
   private UdpSyslogMessageSender messageSender;
   private ODefaultSyslogConfig config;
 
-  // OSecurityComponent
+  public ODefaultSyslog() {}
+
+  public ODefaultSyslog(OServer context, ODefaultSyslogConfig config) {
+    this.config = config;
+  }
 
   @Override
   public void startup() {

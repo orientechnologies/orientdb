@@ -35,6 +35,17 @@ public class OGraphServerHandler implements OServerPlugin {
   private OServer server;
   private OGraphServerHandlerConfig config;
 
+  public OGraphServerHandler() {}
+
+  public OGraphServerHandler(OServer context, OGraphServerHandlerConfig config) {
+    this.config = config;
+    this.server = context;
+    OCommandGremlinExecutor executor =
+        (OCommandGremlinExecutor)
+            context.getDatabases().getScriptManager().getScriptExecutor("gremlin");
+    logger.info("Installed GREMLIN language v.%s ", executor.getEngineVersion());
+  }
+
   @Override
   public void config(final OServer server, OServerParameterConfiguration[] iParams) {
     config = OGraphServerHandlerConfig.fromParameters(iParams);

@@ -40,6 +40,27 @@ public class OJMXPlugin implements OServerPlugin {
 
   public OJMXPlugin() {}
 
+  public OJMXPlugin(OServer context, OJMXPluginConfig config) {
+    this.config = config;
+
+    logger.info("JMX plugin installed and active: profilerManaged=%s", config.isProfilerManaged());
+
+    final MBeanServer mBeanServer = ManagementFactory.getPlatformMBeanServer();
+
+    try {
+      if (config.isProfilerManaged()) {
+        // REGISTER THE PROFILER
+        onProfiler = new ObjectName("com.orientechnologies.common.profiler:type=OProfilerMXBean");
+        if (mBeanServer.isRegistered(onProfiler)) mBeanServer.unregisterMBean(onProfiler);
+        mBeanServer.registerMBean(Orient.instance().getProfiler(), onProfiler);
+      }
+
+    } catch (Exception e) {
+      throw OException.wrapException(
+          new OConfigurationException("Cannot initialize JMX server"), e);
+    }
+  }
+
   @Override
   public void config(final OServer oServer, final OServerParameterConfiguration[] iParams) {
     config = OJMXPluginConfig.fromParamenters(iParams);

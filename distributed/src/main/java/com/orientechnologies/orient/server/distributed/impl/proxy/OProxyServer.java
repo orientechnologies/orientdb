@@ -21,6 +21,10 @@ public class OProxyServer implements OServerPlugin {
 
   public OProxyServer() {}
 
+  public OProxyServer(OServer context, OProxyServerConfig config) {
+    this.config = config;
+  }
+
   @Override
   public String getName() {
     return "proxy";

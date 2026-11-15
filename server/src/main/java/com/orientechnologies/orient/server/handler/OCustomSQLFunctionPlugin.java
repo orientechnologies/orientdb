@@ -24,8 +24,14 @@ public class OCustomSQLFunctionPlugin implements OServerPlugin {
   private static final char PREFIX_NAME_SEPARATOR = '_';
 
   private ODocument configuration;
-
   private OCustomSQLFunctionPluginConfig config;
+
+  public OCustomSQLFunctionPlugin() {}
+
+  public OCustomSQLFunctionPlugin(OServer contex, OCustomSQLFunctionPluginConfig config) {
+    this.config = config;
+    readFunctions();
+  }
 
   @Override
   public String getName() {
@@ -35,6 +41,10 @@ public class OCustomSQLFunctionPlugin implements OServerPlugin {
   @Override
   public void config(OServer oServer, OServerParameterConfiguration[] iParams) {
     config = OCustomSQLFunctionPluginConfig.fromParameters(iParams);
+    readFunctions();
+  }
+
+  protected void readFunctions() {
     configuration = new ODocument();
 
     var filePath = config.getConfig();

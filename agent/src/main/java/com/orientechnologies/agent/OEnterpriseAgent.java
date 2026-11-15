@@ -85,6 +85,10 @@ public class OEnterpriseAgent
 
   public OEnterpriseAgent() {}
 
+  public OEnterpriseAgent(OServer context, Object config) {
+    server = context;
+  }
+
   @Override
   public void config(final OServer oServer, final OServerParameterConfiguration[] iParams) {
     enabled = PLUGIN_ENABLED_DEFAULT;

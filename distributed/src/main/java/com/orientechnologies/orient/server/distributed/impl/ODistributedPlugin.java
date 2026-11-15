@@ -91,6 +91,11 @@ public class ODistributedPlugin implements OServerPlugin, ODistributedServerMana
     clusterManager = new OHazelcastClusterMetadataManager(this);
   }
 
+  public ODistributedPlugin(OServer context, Object config) {
+    serverInstance = context;
+    clusterManager = new OHazelcastClusterMetadataManager(this);
+  }
+
   @Override
   public void config(OServer oServer, OServerParameterConfiguration[] iParams) {
     serverInstance = oServer;

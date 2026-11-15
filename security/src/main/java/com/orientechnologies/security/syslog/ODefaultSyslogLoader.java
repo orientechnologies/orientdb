@@ -1,9 +1,10 @@
 package com.orientechnologies.security.syslog;
 
+import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginLoader;
 
-public class ODefaultSyslogLoader implements OServerPluginLoader {
+public class ODefaultSyslogLoader implements OServerPluginLoader<ODefaultSyslogConfig> {
 
   @Override
   public String getName() {
@@ -18,5 +19,15 @@ public class ODefaultSyslogLoader implements OServerPluginLoader {
   @Override
   public String getPluginClassName() {
     return ODefaultSyslog.class.getName();
+  }
+
+  @Override
+  public Class<ODefaultSyslogConfig> getConfigClass() {
+    return ODefaultSyslogConfig.class;
+  }
+
+  @Override
+  public OServerPlugin newInstance(OServer context, ODefaultSyslogConfig config) {
+    return new ODefaultSyslog(context, config);
   }
 }

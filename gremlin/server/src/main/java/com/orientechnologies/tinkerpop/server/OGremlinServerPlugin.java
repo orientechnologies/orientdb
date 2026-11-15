@@ -34,6 +34,14 @@ public class OGremlinServerPlugin implements OServerLifecycleListener, OServerPl
   protected ServerGremlinExecutor executor;
   protected OGraphConfig config;
 
+  public OGremlinServerPlugin() {}
+
+  public OGremlinServerPlugin(OServer context, Object config2) {
+    this.oServer = context;
+    this.oServer.registerLifecycleListener(this);
+    this.config = new OGraphConfig(new ODocument());
+  }
+
   @Override
   public String getName() {
     return "gremlin-server";
