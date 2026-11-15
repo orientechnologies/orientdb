@@ -580,9 +580,7 @@ public class OServerConfigurationRewrite {
             }
             case "com.orientechnologies.orient.server.distributed.impl.ODistributedPlugin" -> {
               // Migrated to the new distributed config structure.
-              //              yield new OHandlerConfig("cluster",
-              // createDistributedConfig(handler.getParameters()));
-              yield null;
+              yield new OHandlerConfig("cluster", createDistributedConfig(handler.getParameters()));
             }
             case "com.orientechnologies.agent.OEnterpriseAgent" -> {
               yield new OHandlerConfig("enterprise-agent", null);
@@ -647,7 +645,9 @@ public class OServerConfigurationRewrite {
       } else if (param.getName().equalsIgnoreCase("nodeName")) {
         object.put("nodeName", param.getValue());
       } else if (param.getName().startsWith("configuration.db.default")) {
-        object.put("configuration.db.default", param.getValue());
+        object.put("config", param.getValue());
+      } else if (param.getName().startsWith("configuration.hazelcast")) {
+        object.put("hazelcast", param.getValue());
       }
     }
 

@@ -91,9 +91,25 @@ public class ODistributedPlugin implements OServerPlugin, ODistributedServerMana
     clusterManager = new OHazelcastClusterMetadataManager(this);
   }
 
-  public ODistributedPlugin(OServer context, Object config) {
+  public ODistributedPlugin(OServer context, ODistributedPluginConfig config) {
     serverInstance = context;
     clusterManager = new OHazelcastClusterMetadataManager(this);
+    nodeName = config.getNodeName();
+    if (nodeName.contains("."))
+      throw new OConfigurationException(
+          "Illegal node name '" + nodeName + "'. '.' is not allowed in node name");
+    setDefaultDatabaseConfigFile(config.getConfig());
+    try {
+      clusterManager.configHazelcastPlugin(context, config.getHazelcast(), nodeName);
+    } catch (FileNotFoundException e) {
+      throw OException.wrapException(
+          new ODatabaseException("Error loading hazelcast configuration"), e);
+    }
+    String contextName = clusterManager.getHazelcastConfig().getGroupConfig().getName();
+    String contextPassword = clusterManager.getHazelcastConfig().getGroupConfig().getPassword();
+    if (nodeName == null) assignNodeName();
+    ((OrientDBDistributed) serverInstance.getDatabases())
+        .initDistributed(nodeName, contextName, 1, contextPassword);
   }
 
   @Override
@@ -120,7 +136,13 @@ public class ODistributedPlugin implements OServerPlugin, ODistributedServerMana
     }
 
     try {
-      clusterManager.configHazelcastPlugin(oServer, iParams, nodeName);
+      String hazelcastFile = "config/hazelcast.xml";
+      for (OServerParameterConfiguration param : iParams) {
+        if (param.getName().equalsIgnoreCase("configuration.hazelcast")) {
+          hazelcastFile = param.getValue();
+        }
+      }
+      clusterManager.configHazelcastPlugin(oServer, hazelcastFile, nodeName);
     } catch (FileNotFoundException e) {
       throw OException.wrapException(
           new ODatabaseException("Error loading hazelcast configuration"), e);

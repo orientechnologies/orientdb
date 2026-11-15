@@ -28,7 +28,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.distributed.ONodeConfig;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedException;
 import com.orientechnologies.orient.server.distributed.ODistributedStartupException;
 import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
@@ -73,25 +72,20 @@ public class OHazelcastClusterMetadataManager
     this.distributedPlugin = distributedPlugin;
   }
 
-  public void configHazelcastPlugin(
-      OServer server, OServerParameterConfiguration[] params, String nodeName)
+  public void configHazelcastPlugin(OServer server, String hazelcastFile, String nodeName)
       throws FileNotFoundException {
     this.nodeName = nodeName;
     this.serverInstance = server;
-    for (OServerParameterConfiguration param : params) {
-      if (param.getName().equalsIgnoreCase("configuration.hazelcast")) {
-        hazelcastConfigFile = OSystemVariableResolver.resolveSystemVariables(param.getValue());
-        hazelcastConfigFile = OFileUtils.getPath(hazelcastConfigFile);
-        // If hazelcastConfig is null, use the file system XML config.
-        if (hazelcastConfig == null) {
-          hazelcastConfig = new FileSystemXmlConfig(hazelcastConfigFile);
-          hazelcastConfig.setClassLoader(this.getClass().getClassLoader());
-        }
-
-        // Disabled the shudown hook of hazelcast, shutdown is managed by orient hook
-        hazelcastConfig.setProperty("hazelcast.shutdownhook.enabled", "false");
-      }
+    hazelcastConfigFile = OSystemVariableResolver.resolveSystemVariables(hazelcastFile);
+    hazelcastConfigFile = OFileUtils.getPath(hazelcastConfigFile);
+    // If hazelcastConfig is null, use the file system XML config.
+    if (hazelcastConfig == null) {
+      hazelcastConfig = new FileSystemXmlConfig(hazelcastConfigFile);
+      hazelcastConfig.setClassLoader(this.getClass().getClassLoader());
     }
+
+    // Disabled the shudown hook of hazelcast, shutdown is managed by orient hook
+    hazelcastConfig.setProperty("hazelcast.shutdownhook.enabled", "false");
   }
 
   public Config getHazelcastConfig() {

@@ -4,7 +4,7 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginLoader;
 
-public class ODistributedPluginLoader implements OServerPluginLoader {
+public class ODistributedPluginLoader implements OServerPluginLoader<ODistributedPluginConfig> {
 
   @Override
   public String getName() {
@@ -22,12 +22,12 @@ public class ODistributedPluginLoader implements OServerPluginLoader {
   }
 
   @Override
-  public Class getConfigClass() {
-    return null;
+  public Class<ODistributedPluginConfig> getConfigClass() {
+    return ODistributedPluginConfig.class;
   }
 
   @Override
-  public OServerPlugin newInstance(OServer context, Object config) {
+  public OServerPlugin newInstance(OServer context, ODistributedPluginConfig config) {
     return new ODistributedPlugin(context, config);
   }
 }
