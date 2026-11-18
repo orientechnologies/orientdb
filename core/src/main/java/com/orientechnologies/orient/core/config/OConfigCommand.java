@@ -8,6 +8,7 @@ import java.util.Map;
 public class OConfigCommand {
 
   private String name;
+  private Boolean statefull;
   private String pattern;
   private Map<String, String> parameters;
 
@@ -42,5 +43,13 @@ public class OConfigCommand {
 
   public void setParameters(Map<String, String> parameters) {
     this.parameters = parameters;
+  }
+
+  public Boolean getStatefull() {
+    return statefull;
+  }
+
+  public void setStatefull(Boolean statefull) {
+    this.statefull = statefull;
   }
 }
