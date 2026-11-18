@@ -5,7 +5,6 @@ import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -24,8 +23,7 @@ public class LuceneSpatialRemoteTxTest {
     server =
         OServer.startFromClasspathConfig(
             "com/orientechnologies/spatial/spatial-remote-tx-server-config.xml");
-    int port =
-        server.getListenerByProtocol(ONetworkProtocolBinary.class).getInboundAddr().getPort();
+    int port = server.getBinaryListeners().get(0).getInboundAddr().getPort();
     remote =
         new OrientDB("remote:localhost:" + port, "root", "test", OrientDBConfig.defaultConfig());
     remote.execute(

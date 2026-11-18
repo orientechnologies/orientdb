@@ -21,7 +21,6 @@ import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
-import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 import java.io.File;
 import java.io.IOException;
 import org.apache.tinkerpop.gremlin.orientdb.OrientGraph;
@@ -60,7 +59,7 @@ public class ServerRun {
   }
 
   public String getBinaryProtocolAddress() {
-    return server.getListenerByProtocol(ONetworkProtocolBinary.class).getListeningAddress(true);
+    return server.getBinaryListeners().get(0).getListeningAddress(true);
   }
 
   public void deleteNode() {

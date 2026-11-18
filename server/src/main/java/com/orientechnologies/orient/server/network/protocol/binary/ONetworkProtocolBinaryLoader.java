@@ -7,9 +7,11 @@ import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolLoad
 
 public class ONetworkProtocolBinaryLoader implements ONetworkProtocolLoader {
 
+  public static final String PROTOCOL_NAME = "binary";
+
   @Override
   public String getName() {
-    return ONetworkProtocolBinary.class.getSimpleName();
+    return PROTOCOL_NAME;
   }
 
   @Override

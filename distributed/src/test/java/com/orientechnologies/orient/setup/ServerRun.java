@@ -25,7 +25,6 @@ import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerMain;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
-import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
 import java.io.File;
 import java.io.IOException;
 
@@ -66,7 +65,7 @@ public class ServerRun {
   }
 
   public String getBinaryProtocolAddress() {
-    final OServerNetworkListener prot = server.getListenerByProtocol(ONetworkProtocolBinary.class);
+    final OServerNetworkListener prot = server.getBinaryListeners().get(0);
     if (prot == null) return null;
     return prot.getListeningAddress(true);
   }

@@ -30,8 +30,6 @@ import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerEntryConfiguration;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
-import com.orientechnologies.orient.server.network.OServerNetworkListener;
-import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpDb;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetStaticContent;
 import com.orientechnologies.orient.server.network.protocol.http.command.get.OServerCommandGetStaticContent.OStaticContent;
 import java.io.BufferedInputStream;
@@ -196,33 +194,32 @@ public class OServerPluginManager implements OService {
     Object pluginWWW = iPluginData.getParameter("www");
     if (pluginWWW == null) pluginWWW = iPluginData.getName();
 
-    final OServerNetworkListener httpListener =
-        server.getListenerByProtocol(ONetworkProtocolHttpDb.class);
+    for (var httpListener : server.getHttpListeners()) {
+      if (httpListener == null)
+        throw new OConfigurationException(
+            "HTTP listener not registered while installing Static Content command");
 
-    if (httpListener == null)
-      throw new OConfigurationException(
-          "HTTP listener not registered while installing Static Content command");
+      final OServerCommandGetStaticContent command =
+          (OServerCommandGetStaticContent)
+              httpListener.getCommand(OServerCommandGetStaticContent.class);
 
-    final OServerCommandGetStaticContent command =
-        (OServerCommandGetStaticContent)
-            httpListener.getCommand(OServerCommandGetStaticContent.class);
+      if (command != null) {
+        final URL wwwURL = iPluginData.getClassLoader().findResource("www/");
 
-    if (command != null) {
-      final URL wwwURL = iPluginData.getClassLoader().findResource("www/");
+        final OCallable<Object, String> callback;
+        if (wwwURL != null) callback = createStaticLinkCallback(iPluginData, wwwURL);
+        else
+          // LET TO THE COMMAND TO CONTROL IT
+          callback =
+              new OCallable<Object, String>() {
+                @Override
+                public Object call(final String iArgument) {
+                  return iPluginData.getInstance().getContent(iArgument);
+                }
+              };
 
-      final OCallable<Object, String> callback;
-      if (wwwURL != null) callback = createStaticLinkCallback(iPluginData, wwwURL);
-      else
-        // LET TO THE COMMAND TO CONTROL IT
-        callback =
-            new OCallable<Object, String>() {
-              @Override
-              public Object call(final String iArgument) {
-                return iPluginData.getInstance().getContent(iArgument);
-              }
-            };
-
-      command.registerVirtualFolder(pluginWWW.toString(), callback);
+        command.registerVirtualFolder(pluginWWW.toString(), callback);
+      }
     }
   }
 

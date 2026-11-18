@@ -6,9 +6,11 @@ import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolLoad
 
 public class ONetworkProtocolHttpDbLoader implements ONetworkProtocolLoader {
 
+  public static final String PROTOCOL_NAME = "http";
+
   @Override
   public String getName() {
-    return ONetworkProtocolHttpDb.class.getSimpleName();
+    return PROTOCOL_NAME;
   }
 
   @Override

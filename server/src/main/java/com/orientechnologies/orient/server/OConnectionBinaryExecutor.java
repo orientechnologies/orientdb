@@ -114,8 +114,10 @@ public final class OConnectionBinaryExecutor implements OBinaryRequestExecutor {
   public OListDatabasesResponse executeListDatabases(OListDatabasesRequest request) {
 
     Set<String> dbs = server.listDatabases();
-    String listener =
-        server.getListenerByProtocol(ONetworkProtocolBinary.class).getInboundAddr().toString();
+    String listener = "localhost";
+    for (var bl : server.getBinaryListeners()) {
+      listener = bl.getInboundAddr().toString();
+    }
     Map<String, String> toSend = new HashMap<>();
     for (String dbName : dbs) {
       toSend.put(dbName, "remote:" + listener + "/" + dbName);

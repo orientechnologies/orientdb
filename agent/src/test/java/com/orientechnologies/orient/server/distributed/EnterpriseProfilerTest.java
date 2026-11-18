@@ -1,11 +1,8 @@
 package com.orientechnologies.orient.server.distributed;
 
-import com.orientechnologies.agent.http.command.OServerCommandDistributedManager;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.distributed.config.OClusterConfiguration;
-import com.orientechnologies.orient.server.network.OServerNetworkListener;
-import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpDb;
 import java.util.Set;
 import org.junit.Assert;
 import org.junit.Ignore;
@@ -68,14 +65,7 @@ public class EnterpriseProfilerTest extends AbstractServerClusterTest {
 
     Set<String> availableNodeNames = context.getAvailableNodeNames(getDatabaseName());
 
-    final OServerNetworkListener listener =
-        server.getListenerByProtocol(ONetworkProtocolHttpDb.class);
-
-    OServerCommandDistributedManager command =
-        (OServerCommandDistributedManager)
-            listener.getCommand(OServerCommandDistributedManager.class);
-
-    OClusterConfiguration clusterStats = command.getClusterConfig();
+    OClusterConfiguration clusterStats = context.getClusterConfiguration();
 
     Assert.assertNotNull(clusterStats);
 

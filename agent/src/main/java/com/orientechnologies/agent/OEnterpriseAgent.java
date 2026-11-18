@@ -18,7 +18,6 @@
 package com.orientechnologies.agent;
 
 import com.orientechnologies.agent.functions.OAgentProfilerService;
-import com.orientechnologies.agent.http.command.OServerCommandDistributedManager;
 import com.orientechnologies.agent.profiler.OEnterpriseProfiler;
 import com.orientechnologies.agent.services.OEnterpriseService;
 import com.orientechnologies.agent.services.backup.OBackupService;
@@ -39,7 +38,6 @@ import com.orientechnologies.orient.core.db.ODatabaseLifecycleListener;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
 import com.orientechnologies.orient.core.enterprise.OEnterpriseEndpoint;
 import com.orientechnologies.orient.core.exception.OCommandExecutionException;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.metadata.schema.OClassEmbedded;
 import com.orientechnologies.orient.core.metadata.security.ORole;
 import com.orientechnologies.orient.core.metadata.security.ORule;
@@ -50,8 +48,6 @@ import com.orientechnologies.orient.server.OServerLifecycleListener;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
-import com.orientechnologies.orient.server.network.OServerNetworkListener;
-import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpDb;
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import java.io.IOException;
 import java.io.InputStream;
@@ -132,7 +128,6 @@ public class OEnterpriseAgent
   @Override
   public void shutdown() {
     if (enabled) {
-      uninstallCommands();
       Orient.instance().removeDbLifecycleListener(this);
     }
   }
@@ -144,22 +139,6 @@ public class OEnterpriseAgent
     if (profiler instanceof OEnterpriseProfiler) {
       iConfiguration.setCpu(((OEnterpriseProfiler) profiler).cpuUsage());
     }
-  }
-
-  @Deprecated
-  public void installDistributedCommands() {
-    final OServerNetworkListener listener =
-        server.getListenerByProtocol(ONetworkProtocolHttpDb.class);
-    if (listener == null) throw new OConfigurationException("HTTP listener not found");
-  }
-
-  private void uninstallCommands() {
-    final OServerNetworkListener listener =
-        server.getListenerByProtocol(ONetworkProtocolHttpDb.class);
-    if (listener == null) {
-      throw new OConfigurationException("HTTP listener not found");
-    }
-    listener.unregisterStatelessCommand(OServerCommandDistributedManager.class);
   }
 
   private boolean checkLicense() {

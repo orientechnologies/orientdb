@@ -63,11 +63,12 @@ import com.orientechnologies.orient.server.distributed.config.ODistributedConfig
 import com.orientechnologies.orient.server.handler.OConfigurableHooksManager;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.OServerSocketFactory;
-import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolData;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolLoader;
+import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinaryLoader;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpSessionManager;
 import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpDb;
+import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpDbLoader;
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
 import com.orientechnologies.orient.server.plugin.OServerPluginLoader;
@@ -474,14 +475,15 @@ public class OServer {
     // STARTUP LISTENERS
     List<OServerNetworkListener> listener = new ArrayList<>();
     for (OServerNetworkListenerConfiguration l : networkConf.getListeners()) {
+      var protocol = networkProtocols.get(l.getProtocol());
+      var socketFactory = networkSocketFactories.get(l.getSocket());
       listener.add(
           new OServerNetworkListener(
               this,
-              networkSocketFactories.get(l.getSocket()),
+              socketFactory,
               l.getIpAddress(),
               l.getPortRange(),
-              l.getProtocol(),
-              networkProtocols.get(l.getProtocol()),
+              protocol,
               l.getParameters(),
               l.getCommands()));
     }
@@ -666,13 +668,18 @@ public class OServer {
     return networkListeners;
   }
 
-  @SuppressWarnings("unchecked")
-  public <RET extends OServerNetworkListener> RET getListenerByProtocol(
-      final Class<? extends ONetworkProtocol> iProtocolClass) {
-    for (OServerNetworkListener l : networkListeners)
-      if (iProtocolClass.getName().equals(l.getProtocolType().getClassName())) return (RET) l;
+  public List<OServerNetworkListener> getBinaryListeners() {
+    return getListenersByProtocolName(ONetworkProtocolBinaryLoader.PROTOCOL_NAME);
+  }
 
-    return null;
+  public List<OServerNetworkListener> getHttpListeners() {
+    return getListenersByProtocolName(ONetworkProtocolHttpDbLoader.PROTOCOL_NAME);
+  }
+
+  public List<OServerNetworkListener> getListenersByProtocolName(String name) {
+    return networkListeners.stream()
+        .filter(l -> l.getProtocolType().getName().equals(name))
+        .toList();
   }
 
   public Collection<OServerPluginInfo> getPlugins() {

@@ -62,45 +62,44 @@ public class OServerNetworkListener extends Thread {
   private int protocolVersion = -1;
 
   public OServerNetworkListener(
-      final OServer iServer,
-      final OServerSocketFactory iSocketFactory,
-      final String iHostName,
-      final String iHostPortRange,
-      final String iProtocolName,
-      final ONetworkProtocolLoader iProtocol,
-      final OServerParameterConfiguration[] iParameters,
-      final OServerCommandConfiguration[] iCommands) {
+      OServer server,
+      OServerSocketFactory socketFactory,
+      String hostName,
+      String portRange,
+      ONetworkProtocolLoader protocol,
+      OServerParameterConfiguration[] parameters,
+      OServerCommandConfiguration[] commands) {
     super(
-        iServer.getThreadGroup(),
-        "OrientDB " + iProtocol.getName() + " listen at " + iHostName + ":" + iHostPortRange);
-    server = iServer;
+        server.getThreadGroup(),
+        "OrientDB " + protocol.getName() + " listen at " + hostName + ":" + portRange);
+    this.server = server;
 
-    socketFactory = iSocketFactory == null ? OServerSocketFactory.getDefault() : iSocketFactory;
+    this.socketFactory = socketFactory == null ? OServerSocketFactory.getDefault() : socketFactory;
 
     // DETERMINE THE PROTOCOL VERSION BY CREATING A NEW ONE AND THEN THROW IT AWAY
     // TODO: CREATE PROTOCOL FACTORIES INSTEAD
     try {
-      protocolVersion = iProtocol.getVersion();
+      protocolVersion = protocol.getVersion();
     } catch (Exception e) {
-      final String message = "Error on reading protocol version for " + iProtocol;
+      final String message = "Error on reading protocol version for " + protocol;
       logger.error("%s", e, message);
 
       throw OException.wrapException(new ONetworkProtocolException(message), e);
     }
 
-    listen(iHostName, iHostPortRange, iProtocolName);
-    protocolType = iProtocol;
+    listen(hostName, portRange, protocol.getName());
+    protocolType = protocol;
 
-    readParameters(iServer.getContextConfiguration(), iParameters);
+    readParameters(server.getContextConfiguration(), parameters);
 
-    if (iCommands != null) {
-      for (int i = 0; i < iCommands.length; ++i) {
-        if (iCommands[i].isStateful())
+    if (commands != null) {
+      for (int i = 0; i < commands.length; ++i) {
+        if (commands[i].isStateful())
           // SAVE STATEFUL COMMAND CFG
-          registerStatefulCommand(iCommands[i]);
+          registerStatefulCommand(commands[i]);
         else
           // EARLY CREATE STATELESS COMMAND
-          registerStatelessCommand(OServerNetworkListener.createCommand(server, iCommands[i]));
+          registerStatelessCommand(OServerNetworkListener.createCommand(server, commands[i]));
       }
     }
 

@@ -21,14 +21,11 @@
 package com.orientechnologies.orient.etl;
 
 import com.orientechnologies.orient.core.OConstants;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.etl.context.OETLContextWrapper;
 import com.orientechnologies.orient.etl.http.OServerCommandETL;
 import com.orientechnologies.orient.output.OPluginMessageHandler;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
-import com.orientechnologies.orient.server.network.OServerNetworkListener;
-import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpDb;
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
 
 /**
@@ -78,14 +75,9 @@ public class OETLPlugin implements OServerPlugin {
 
   @Override
   public void startup() {
-
-    final OServerNetworkListener listener =
-        server.getListenerByProtocol(ONetworkProtocolHttpDb.class);
-    if (listener == null) {
-      throw new OConfigurationException("HTTP listener not found");
+    for (var listener : server.getHttpListeners()) {
+      listener.registerStatelessCommand(new OServerCommandETL());
     }
-
-    listener.registerStatelessCommand(new OServerCommandETL());
   }
 
   @Override

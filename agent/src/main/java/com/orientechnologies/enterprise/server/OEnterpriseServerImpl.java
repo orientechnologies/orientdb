@@ -32,9 +32,7 @@ import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerLifecycleListener;
-import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
-import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpDb;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommand;
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
@@ -254,27 +252,25 @@ public class OEnterpriseServerImpl
 
   @Override
   public void registerStatelessCommand(OServerCommand iCommand) {
-    final OServerNetworkListener listener =
-        server.getListenerByProtocol(ONetworkProtocolHttpDb.class);
-    if (listener != null) {
+    for (var listener : server.getHttpListeners()) {
       listener.registerStatelessCommand(iCommand);
     }
   }
 
   @Override
   public void unregisterStatelessCommand(Class<? extends OServerCommand> iCommandClass) {
-    final OServerNetworkListener listener =
-        server.getListenerByProtocol(ONetworkProtocolHttpDb.class);
-    if (listener != null) {
+    for (var listener : server.getHttpListeners()) {
       listener.unregisterStatelessCommand(iCommandClass);
     }
   }
 
   @Override
   public Collection<OServerCommand> listCommands() {
-    final OServerNetworkListener listener =
-        server.getListenerByProtocol(ONetworkProtocolHttpDb.class);
-    return listener.getStatelessCommands();
+    for (var listener : server.getHttpListeners()) {
+      // Just returning the first found
+      return listener.getStatelessCommands();
+    }
+    return List.of();
   }
 
   @Override
