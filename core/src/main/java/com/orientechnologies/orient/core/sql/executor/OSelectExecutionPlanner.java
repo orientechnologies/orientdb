@@ -2029,6 +2029,7 @@ public class OSelectExecutionPlanner {
     if (result != null) {
       result.stream().forEach(x -> plan.chain(x));
       info.whereClause = null;
+      info.perRecordLetClause = null;
       return true;
     }
     OSchema schema = getSchemaFromContext(ctx);
@@ -2059,6 +2060,7 @@ public class OSelectExecutionPlanner {
     }
     if (subclassPlans.size() > 0) {
       plan.chain(new ParallelExecStep(subclassPlans));
+      info.perRecordLetClause = null;
       return true;
     }
     return false;
@@ -2180,6 +2182,19 @@ public class OSelectExecutionPlanner {
     result.add(new GetValueFromIndexEntryStep(filterClusterIds));
     if (candidate.requiresDistinctStep(ctx)) {
       result.add(new DistinctExecutionStep(ctx));
+    }
+    if (info.perRecordLetClause != null) {
+      // Resolve per-record LET bindings before the WHERE filter, so a predicate can
+      // reference a LET variable next to the index-served condition.
+      List<OLetItem> items =
+          sortLet(info.perRecordLetClause.getItems(), this.statement.getLetClause());
+      for (OLetItem item : items) {
+        if (item.getExpression() != null) {
+          result.add(new LetExpressionStep(item.getVarName().copy(), item.getExpression().copy()));
+        } else {
+          result.add(new LetQueryStep(item.getVarName().copy(), item.getQuery().copy()));
+        }
+      }
     }
     if (orderAsc != null
         && info.orderBy != null
