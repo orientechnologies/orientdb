@@ -15,7 +15,7 @@ public class StudioService implements OEnterpriseService {
 
   @Override
   public void start() {
-    server.registerStatelessCommand(new StudioPermissionCommand(server));
+    server.registerStatelessCommand(new StudioPermissionCommandLoader(server));
   }
 
   @Override

@@ -25,7 +25,7 @@ import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
-import com.orientechnologies.tinkerpop.command.OServerCommandPostCommandGremlin;
+import com.orientechnologies.tinkerpop.command.OServerCommandPostCommandGremlinLoader;
 import org.apache.tinkerpop.gremlin.orientdb.executor.OCommandGremlinExecutor;
 
 public class OGraphServerHandler implements OServerPlugin {
@@ -64,7 +64,7 @@ public class OGraphServerHandler implements OServerPlugin {
   public void startup() {
     if (!config.isEnabled()) return;
     for (var listener : server.getHttpListeners()) {
-      listener.registerStatelessCommand(new OServerCommandPostCommandGremlin());
+      listener.registerStatelessCommand(new OServerCommandPostCommandGremlinLoader());
     }
   }
 

@@ -13,7 +13,11 @@ import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.functions.OSQLFunction;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommand;
-import java.util.*;
+import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandLoader;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 
 /** Created by Enrico Risa on 16/07/2018. */
@@ -29,11 +33,9 @@ public interface OEnterpriseServer {
 
   void registerFunction(OSQLFunction function);
 
-  void registerStatelessCommand(final OServerCommand iCommand);
+  void registerStatelessCommand(final OServerCommandLoader iCommand);
 
   void unregisterStatelessCommand(final Class<? extends OServerCommand> iCommandClass);
-
-  Collection<OServerCommand> listCommands();
 
   void unregisterFunction(String function);
 

@@ -24,8 +24,6 @@ import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
-import com.orientechnologies.orient.server.config.OServerCommandConfiguration;
-import com.orientechnologies.orient.server.config.OServerEntryConfiguration;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpRequest;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpResponse;
 import com.orientechnologies.orient.server.network.protocol.http.OHttpUtils;
@@ -106,25 +104,6 @@ public class OServerCommandGetStaticContent extends OServerCommandConfigurableAb
         }
       } else if (par.getKey().startsWith(CONFIG_ROOT_PATH)) rootPath = par.getValue();
       else if (par.getKey().startsWith(CONFIG_FILE_PATH)) filePath = par.getValue();
-    }
-  }
-
-  public OServerCommandGetStaticContent(final OServerCommandConfiguration iConfiguration) {
-    super(iConfiguration.getPattern());
-
-    // LOAD HTTP CACHE CONFIGURATION
-    for (OServerEntryConfiguration par : iConfiguration.getParameters()) {
-      if (par.getName().startsWith(CONFIG_HTTP_CACHE)) {
-        final String filter = par.getName().substring(CONFIG_HTTP_CACHE.length());
-        if (filter.equalsIgnoreCase("default")) cacheHttpDefault = par.getValue();
-        else if (filter.length() > 0) {
-          final String[] filters = filter.split(" ");
-          for (String f : filters) {
-            cacheHttp.put(f, par.getValue());
-          }
-        }
-      } else if (par.getName().startsWith(CONFIG_ROOT_PATH)) rootPath = par.getValue();
-      else if (par.getName().startsWith(CONFIG_FILE_PATH)) filePath = par.getValue();
     }
   }
 

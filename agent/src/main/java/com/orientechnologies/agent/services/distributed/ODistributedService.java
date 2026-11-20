@@ -2,6 +2,7 @@ package com.orientechnologies.agent.services.distributed;
 
 import com.orientechnologies.agent.functions.OAgentProfilerService;
 import com.orientechnologies.agent.http.command.OServerCommandDistributedManager;
+import com.orientechnologies.agent.http.command.OServerCommandDistributedManagerLoader;
 import com.orientechnologies.agent.profiler.OEnterpriseProfiler;
 import com.orientechnologies.agent.services.OEnterpriseService;
 import com.orientechnologies.enterprise.server.OEnterpriseServer;
@@ -14,7 +15,7 @@ public class ODistributedService implements OEnterpriseService {
   @Override
   public void init(OEnterpriseServer server) {
     this.server = server;
-    this.server.registerStatelessCommand(new OServerCommandDistributedManager(server));
+    this.server.registerStatelessCommand(new OServerCommandDistributedManagerLoader(server));
   }
 
   @Override

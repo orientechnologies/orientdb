@@ -44,7 +44,6 @@ import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolEx
 import com.orientechnologies.orient.enterprise.channel.text.OChannelTextServer;
 import com.orientechnologies.orient.server.OClientConnection;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.config.OServerCommandConfiguration;
 import com.orientechnologies.orient.server.network.OServerNetworkListener;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommand;
@@ -998,14 +997,7 @@ public class ONetworkProtocolHttpDb extends ONetworkProtocol implements ONetwork
     cmdManager.registerCommand(new OServerCommandPostImportDatabase());
     cmdManager.registerCommand(new OServerCommandPostUploadSingleFile());
 
-    for (OServerCommandConfiguration c : iListener.getStatefulCommands())
-      try {
-        cmdManager.registerCommand(OServerNetworkListener.createCommand(server, c));
-      } catch (Exception e) {
-        logger.error("Error on creating stateful command '%s'", e, c.getImplementation());
-      }
-
-    for (OServerCommand c : iListener.getStatelessCommands()) cmdManager.registerCommand(c);
+    iListener.registerCommandsToManager(cmdManager);
   }
 
   protected void registerStatelessCommands(final OServerNetworkListener iListener) {

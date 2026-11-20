@@ -34,10 +34,10 @@ import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.OServerLifecycleListener;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommand;
+import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandLoader;
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import com.orientechnologies.orient.server.plugin.OServerPluginInfo;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -251,13 +251,6 @@ public class OEnterpriseServerImpl
   }
 
   @Override
-  public void registerStatelessCommand(OServerCommand iCommand) {
-    for (var listener : server.getHttpListeners()) {
-      listener.registerStatelessCommand(iCommand);
-    }
-  }
-
-  @Override
   public void unregisterStatelessCommand(Class<? extends OServerCommand> iCommandClass) {
     for (var listener : server.getHttpListeners()) {
       listener.unregisterStatelessCommand(iCommandClass);
@@ -265,12 +258,10 @@ public class OEnterpriseServerImpl
   }
 
   @Override
-  public Collection<OServerCommand> listCommands() {
+  public void registerStatelessCommand(OServerCommandLoader iCommand) {
     for (var listener : server.getHttpListeners()) {
-      // Just returning the first found
-      return listener.getStatelessCommands();
+      listener.registerStatelessCommand(iCommand);
     }
-    return List.of();
   }
 
   @Override

@@ -1,8 +1,11 @@
 package com.orientechnologies.agent.services.security;
 
 import com.orientechnologies.agent.http.command.OServerCommandAuditing;
+import com.orientechnologies.agent.http.command.OServerCommandAuditingLoader;
 import com.orientechnologies.agent.http.command.OServerCommandGetSecurityConfig;
+import com.orientechnologies.agent.http.command.OServerCommandGetSecurityConfigLoader;
 import com.orientechnologies.agent.http.command.OServerCommandPostSecurityReload;
+import com.orientechnologies.agent.http.command.OServerCommandPostSecurityReloadLoader;
 import com.orientechnologies.agent.services.OEnterpriseService;
 import com.orientechnologies.enterprise.server.OEnterpriseServer;
 
@@ -18,9 +21,9 @@ public class OSecurityService implements OEnterpriseService {
 
   @Override
   public void start() {
-    server.registerStatelessCommand(new OServerCommandAuditing(server));
-    server.registerStatelessCommand(new OServerCommandGetSecurityConfig(server.getSecurity()));
-    server.registerStatelessCommand(new OServerCommandPostSecurityReload(server.getSecurity()));
+    server.registerStatelessCommand(new OServerCommandAuditingLoader(server));
+    server.registerStatelessCommand(new OServerCommandGetSecurityConfigLoader(server));
+    server.registerStatelessCommand(new OServerCommandPostSecurityReloadLoader(server));
   }
 
   @Override

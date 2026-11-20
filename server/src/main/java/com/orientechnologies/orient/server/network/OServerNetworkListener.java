@@ -24,7 +24,6 @@ import com.orientechnologies.common.exception.OSystemException;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.log.OLogger;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
-import com.orientechnologies.orient.core.exception.OConfigurationException;
 import com.orientechnologies.orient.core.serialization.serializer.OStringSerializerHelper;
 import com.orientechnologies.orient.enterprise.channel.OChannel;
 import com.orientechnologies.orient.enterprise.channel.binary.ONetworkProtocolException;
@@ -33,6 +32,7 @@ import com.orientechnologies.orient.server.config.OServerCommandConfiguration;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocol;
 import com.orientechnologies.orient.server.network.protocol.ONetworkProtocolLoader;
+import com.orientechnologies.orient.server.network.protocol.http.OHttpNetworkCommandManager;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommand;
 import com.orientechnologies.orient.server.network.protocol.http.command.OServerCommandLoader;
 import java.io.IOException;
@@ -44,7 +44,9 @@ import java.net.Socket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class OServerNetworkListener extends Thread {
   private static final OLogger logger = OLogManager.instance().logger(OServerNetworkListener.class);
@@ -53,9 +55,7 @@ public class OServerNetworkListener extends Thread {
   private InetSocketAddress inboundAddr;
   private ONetworkProtocolLoader protocolType;
   private volatile boolean active = true;
-  private List<OServerCommandConfiguration> statefulCommands =
-      new ArrayList<OServerCommandConfiguration>();
-  private List<OServerCommand> statelessCommands = new ArrayList<OServerCommand>();
+  private List<OServerCommandEntry> commands = new ArrayList<>();
   private int socketBufferSize;
   private OContextConfiguration configuration;
   private OServer server;
@@ -93,17 +93,35 @@ public class OServerNetworkListener extends Thread {
     readParameters(server.getContextConfiguration(), parameters);
 
     if (commands != null) {
+      var loaders = OServerCommandLoader.loadersByClassName();
       for (int i = 0; i < commands.length; ++i) {
-        if (commands[i].isStateful())
-          // SAVE STATEFUL COMMAND CFG
-          registerStatefulCommand(commands[i]);
-        else
-          // EARLY CREATE STATELESS COMMAND
-          registerStatelessCommand(OServerNetworkListener.createCommand(server, commands[i]));
+        OServerCommandConfiguration command = commands[i];
+        var loader = loaders.get(command.getImplementation());
+        if (loader != null) {
+          Map<String, String> pars = new HashMap<>();
+          var parsArray = command.getParameters();
+          if (parsArray != null) {
+            for (var parEl : parsArray) {
+              pars.put(parEl.getName(), parEl.getValue());
+            }
+          }
+          addCommand(loader, command.getPattern(), pars, command.isStateful());
+        }
       }
     }
 
     start();
+  }
+
+  public void registerCommandsToManager(OHttpNetworkCommandManager cmdManager) {
+    for (var command : commands) {
+      cmdManager.registerCommand(command.instance(server));
+    }
+  }
+
+  protected void addCommand(
+      OServerCommandLoader loader, String pattern, Map<String, String> pars, boolean statefull) {
+    this.commands.add(new OServerCommandEntry(loader, pattern, pars, statefull));
   }
 
   public static int[] getPorts(final String iHostPortRange) {
@@ -129,57 +147,30 @@ public class OServerNetworkListener extends Thread {
     return ports;
   }
 
-  @SuppressWarnings("unchecked")
-  public static OServerCommand createCommand(
-      final OServer server, final OServerCommandConfiguration command) {
-    var loaders = OServerCommandLoader.loadersByClassName();
-    var loader = loaders.get(command.getImplementation());
-    if (loader == null) {
-      throw new OConfigurationException(
-          "Cannot create custom command missing loader for : "
-              + command.getImplementation()
-              + "("
-              + command
-              + ")");
-    }
-    final OServerCommand cmd = loader.newInstance(command);
-    cmd.configure(server);
-    return cmd;
+  public void registerStatelessCommand(OServerCommandLoader loader) {
+    addCommand(loader, "", Map.of(), false);
   }
 
-  public List<OServerCommandConfiguration> getStatefulCommands() {
-    return statefulCommands;
+  public void registerStatelessCommand(
+      OServerCommandLoader loader, String pattern, Map<String, String> pars) {
+    addCommand(loader, pattern, pars, false);
   }
 
-  public List<OServerCommand> getStatelessCommands() {
-    return statelessCommands;
-  }
-
-  public OServerNetworkListener registerStatelessCommand(final OServerCommand iCommand) {
-    statelessCommands.add(iCommand);
-    return this;
+  public void registerStatefullCommand(
+      OServerCommandLoader loader, String pattern, Map<String, String> pars) {
+    addCommand(loader, pattern, pars, true);
   }
 
   public OServerNetworkListener unregisterStatelessCommand(
       final Class<? extends OServerCommand> iCommandClass) {
-    for (OServerCommand c : statelessCommands) {
-      if (c.getClass().equals(iCommandClass)) {
-        statelessCommands.remove(c);
+    var ic = commands.iterator();
+    while (ic.hasNext()) {
+      var c = ic.next();
+      if (c.getLoader().getCommandClass().equals(iCommandClass.getName())) {
+        ic.remove();
         break;
       }
     }
-    return this;
-  }
-
-  public OServerNetworkListener registerStatefulCommand(
-      final OServerCommandConfiguration iCommand) {
-    statefulCommands.add(iCommand);
-    return this;
-  }
-
-  public OServerNetworkListener unregisterStatefulCommand(
-      final OServerCommandConfiguration iCommand) {
-    statefulCommands.remove(iCommand);
     return this;
   }
 
@@ -312,14 +303,15 @@ public class OServerNetworkListener extends Thread {
   }
 
   public Object getCommand(final Class<?> iCommandClass) {
-    // SEARCH IN STATELESS COMMANDS
-    for (OServerCommand cmd : statelessCommands) {
-      if (cmd.getClass().equals(iCommandClass)) return cmd;
-    }
-
     // SEARCH IN STATEFUL COMMANDS
-    for (OServerCommandConfiguration cmd : statefulCommands) {
-      if (cmd.getImplementation().equals(iCommandClass.getName())) return cmd;
+    for (var command : commands) {
+      if (command.getLoader().getCommandClass().equals(iCommandClass.getName())) {
+        if (command.isStatefull()) {
+          // Pointless to return a instance of statefull is thrown away
+          return null;
+        }
+        return command.instance(server);
+      }
     }
 
     return null;

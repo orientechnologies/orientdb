@@ -1,7 +1,6 @@
 package com.orientechnologies.orient.server.network.protocol.http.command;
 
 import com.orientechnologies.common.util.OClassLoaderHelper;
-import com.orientechnologies.orient.server.config.OServerCommandConfiguration;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -10,8 +9,6 @@ public interface OServerCommandLoader {
   String getCommandClass();
 
   String getName();
-
-  OServerCommand newInstance(OServerCommandConfiguration config);
 
   OServerCommand newInstance(String pattern, Map<String, String> configs);
 

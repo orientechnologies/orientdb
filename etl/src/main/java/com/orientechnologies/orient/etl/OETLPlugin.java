@@ -22,7 +22,7 @@ package com.orientechnologies.orient.etl;
 
 import com.orientechnologies.orient.core.OConstants;
 import com.orientechnologies.orient.etl.context.OETLContextWrapper;
-import com.orientechnologies.orient.etl.http.OServerCommandETL;
+import com.orientechnologies.orient.etl.http.OServerCommandETLLoader;
 import com.orientechnologies.orient.output.OPluginMessageHandler;
 import com.orientechnologies.orient.server.OServer;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
@@ -76,7 +76,7 @@ public class OETLPlugin implements OServerPlugin {
   @Override
   public void startup() {
     for (var listener : server.getHttpListeners()) {
-      listener.registerStatelessCommand(new OServerCommandETL());
+      listener.registerStatelessCommand(new OServerCommandETLLoader());
     }
   }
 

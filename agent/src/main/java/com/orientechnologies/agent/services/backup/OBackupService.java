@@ -19,6 +19,7 @@
 package com.orientechnologies.agent.services.backup;
 
 import com.orientechnologies.agent.http.command.OServerCommandBackupManager;
+import com.orientechnologies.agent.http.command.OServerCommandBackupManagerLoader;
 import com.orientechnologies.agent.services.OEnterpriseService;
 import com.orientechnologies.agent.services.backup.log.OBackupDBLogger;
 import com.orientechnologies.agent.services.backup.log.OBackupLog;
@@ -167,7 +168,7 @@ public class OBackupService implements OEnterpriseService {
     this.config = new OBackupConfig().load();
     initLogger();
     initTasks();
-    server.registerStatelessCommand(new OServerCommandBackupManager(this, server));
+    server.registerStatelessCommand(new OServerCommandBackupManagerLoader(this, server));
   }
 
   @Override

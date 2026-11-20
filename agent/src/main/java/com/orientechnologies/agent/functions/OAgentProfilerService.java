@@ -1,8 +1,11 @@
 package com.orientechnologies.agent.functions;
 
 import com.orientechnologies.agent.http.command.OServerCommandGetNode;
+import com.orientechnologies.agent.http.command.OServerCommandGetNodeLoader;
 import com.orientechnologies.agent.http.command.OServerCommandGetProfiler;
+import com.orientechnologies.agent.http.command.OServerCommandGetProfilerLoader;
 import com.orientechnologies.agent.http.command.OServerCommandGetSQLProfiler;
+import com.orientechnologies.agent.http.command.OServerCommandGetSQLProfilerLoader;
 import com.orientechnologies.agent.profiler.OEnterpriseProfiler;
 import com.orientechnologies.agent.services.OEnterpriseService;
 import com.orientechnologies.common.profiler.OAbstractProfiler;
@@ -40,10 +43,10 @@ public class OAgentProfilerService implements OEnterpriseService {
 
     this.eeFunctions.forEach(f -> this.server.registerFunction(f));
 
-    this.server.registerStatelessCommand(new OServerCommandGetSQLProfiler(this.server));
-    this.server.registerStatelessCommand(new OServerCommandGetProfiler());
+    this.server.registerStatelessCommand(new OServerCommandGetSQLProfilerLoader(this.server));
+    this.server.registerStatelessCommand(new OServerCommandGetProfilerLoader());
 
-    this.server.registerStatelessCommand(new OServerCommandGetNode(this.server));
+    this.server.registerStatelessCommand(new OServerCommandGetNodeLoader(this.server));
   }
 
   protected void installProfiler() {
