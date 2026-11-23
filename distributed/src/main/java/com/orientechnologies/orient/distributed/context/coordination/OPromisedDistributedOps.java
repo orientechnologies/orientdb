@@ -13,13 +13,9 @@ public interface OPromisedDistributedOps {
 
   ODistributedMessage getPromised(OTransactionIdPromise promise);
 
-  Optional<ODistributedMessage> removePromised(OTransactionIdPromise promise);
-
   void addNotPromised(ODistributedMessage message);
 
   ODistributedMessage getNotPromised(OTransactionIdPromise promise);
-
-  Optional<ODistributedMessage> removeNotPromised(OTransactionIdPromise promise);
 
   Optional<Map<OTransactionId, ODistributedMessage>> getPromised(ONodeId node);
 
@@ -29,5 +25,7 @@ public interface OPromisedDistributedOps {
 
   boolean isPromised(OTransactionId id);
 
-  void finalize(OTransactionIdPromise promise);
+  void finalizeSuccess(OTransactionIdPromise promise);
+
+  Optional<ODistributedMessage> cancel(OTransactionIdPromise promise);
 }

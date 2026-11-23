@@ -17,13 +17,15 @@ public class OPromisedDistributedOpsImpl implements OPromisedDistributedOps {
 
   private final Map<OTransactionIdPromise, ODistributedMessage> promised;
   private final Map<OTransactionIdPromise, ODistributedMessage> notPromised;
-  private final Map<ONodeId, Map<OTransactionId, ODistributedMessage>> primisedByNode;
+  private final Map<ONodeId, Map<OTransactionId, ODistributedMessage>> promisedByNode;
+  private final Map<ONodeId, Map<OTransactionId, ODistributedMessage>> notPromisedByNode;
   private final Map<OTransactionId, ODistributedMessage> promisedById;
 
   public OPromisedDistributedOpsImpl() {
     this.promised = new ConcurrentHashMap<>();
-    this.primisedByNode = new ConcurrentHashMap<>();
+    this.promisedByNode = new ConcurrentHashMap<>();
     this.notPromised = new ConcurrentHashMap<>();
+    this.notPromisedByNode = new ConcurrentHashMap<>();
     this.promisedById = new ConcurrentHashMap<>();
   }
 
@@ -32,7 +34,7 @@ public class OPromisedDistributedOpsImpl implements OPromisedDistributedOps {
     this.promised.put(message.getPromiseId(), message);
     this.promisedById.put(message.getPromiseId().getId(), message);
     var perNode =
-        this.primisedByNode.computeIfAbsent(
+        this.promisedByNode.computeIfAbsent(
             message.getPromiseId().getCoordinator(), node -> new ConcurrentHashMap<>());
     perNode.put(message.getPromiseId().getId(), message);
   }
@@ -43,25 +45,38 @@ public class OPromisedDistributedOpsImpl implements OPromisedDistributedOps {
   }
 
   @Override
-  public void finalize(OTransactionIdPromise promise) {
+  public void finalizeSuccess(OTransactionIdPromise promise) {
     // It may be both promised and not promised handle both cases.
     removePromised(promise);
     removeNotPromised(promise);
   }
 
   @Override
+  public Optional<ODistributedMessage> cancel(OTransactionIdPromise promise) {
+    // It may be both promised and not promised handle both cases.
+    var removed = removePromised(promise);
+    if (removed.isPresent()) {
+      return removed;
+    }
+    return removeNotPromised(promise);
+  }
+
   public Optional<ODistributedMessage> removePromised(OTransactionIdPromise promise) {
-    var messages = this.primisedByNode.get(promise.getCoordinator());
+    var messages = this.promisedByNode.get(promise.getCoordinator());
     if (messages != null) {
       messages.remove(promise.getId());
     }
-
+    this.promisedById.remove(promise.getId());
     return Optional.ofNullable(this.promised.remove(promise));
   }
 
   @Override
   public void addNotPromised(ODistributedMessage message) {
     this.notPromised.put(message.getPromiseId(), message);
+    var perNode =
+        this.notPromisedByNode.computeIfAbsent(
+            message.getPromiseId().getCoordinator(), node -> new ConcurrentHashMap<>());
+    perNode.put(message.getPromiseId().getId(), message);
   }
 
   @Override
@@ -69,14 +84,17 @@ public class OPromisedDistributedOpsImpl implements OPromisedDistributedOps {
     return this.notPromised.get(promise);
   }
 
-  @Override
   public Optional<ODistributedMessage> removeNotPromised(OTransactionIdPromise promise) {
+    var messages = this.notPromisedByNode.get(promise.getCoordinator());
+    if (messages != null) {
+      messages.remove(promise.getId());
+    }
     return Optional.ofNullable(this.notPromised.remove(promise));
   }
 
   @Override
   public Optional<Map<OTransactionId, ODistributedMessage>> getPromised(ONodeId node) {
-    return Optional.ofNullable(this.primisedByNode.get(node));
+    return Optional.ofNullable(this.promisedByNode.get(node));
   }
 
   @Override
@@ -90,8 +108,19 @@ public class OPromisedDistributedOpsImpl implements OPromisedDistributedOps {
 
   @Override
   public ODisconnectAction nodeDisconnected(ONodeId node) {
-    var promised = primisedByNode.get(node);
+    var notPromised = notPromisedByNode.remove(node);
+    if (notPromised != null) {
+      for (var not : notPromised.values()) {
+        this.notPromised.remove(not.getPromiseId());
+      }
+    }
+
+    var promised = promisedByNode.remove(node);
     if (promised != null) {
+      for (var prom : promised.values()) {
+        this.promised.remove(prom.getPromiseId());
+        this.promisedById.remove(prom.getPromiseId().getId());
+      }
       return new ODisconnectAction.OReconsentPromised(new ArrayList<>(promised.values()));
     } else {
       return new ODisconnectAction.ONothingToDo();

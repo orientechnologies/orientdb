@@ -285,7 +285,7 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
     boolean promised = sequenceManager.notifyFailure(promise);
     if (promised) {
       logger.debugNode(topology.getNodeId(), "removing promise %s", promise);
-      var message = this.promised.removePromised(promise);
+      var message = this.promised.cancel(promise);
       if (message.isPresent()) {
         this.promised.addNotPromised(message.get());
       }
@@ -297,7 +297,9 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
     boolean promised = sequenceManager.notifyFailure(promise);
     if (promised) {
       logger.debugNode(topology.getNodeId(), "canceling promise %s", promise);
-      return this.promised.removePromised(promise);
+      return this.promised.cancel(promise);
+    } else {
+      this.promised.cancel(promise);
     }
     return Optional.empty();
   }
@@ -330,7 +332,7 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
   }
 
   private synchronized void finalize(OTransactionIdPromise promise) {
-    this.promised.finalize(promise);
+    this.promised.finalizeSuccess(promise);
   }
 
   @Override
