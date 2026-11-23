@@ -25,7 +25,6 @@ import com.orientechnologies.common.exception.OException;
 import com.orientechnologies.common.log.OAnsiCode;
 import com.orientechnologies.common.log.OLogManager;
 import com.orientechnologies.common.parser.OSystemVariableResolver;
-import com.orientechnologies.common.util.OArrays;
 import com.orientechnologies.orient.core.OSignalHandler;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OContextConfiguration;
@@ -39,8 +38,6 @@ import com.orientechnologies.orient.distributed.ONodeListenerConfig;
 import com.orientechnologies.orient.distributed.context.coordination.dbs.ODatabasesTopology;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
 import com.orientechnologies.orient.server.OServer;
-import com.orientechnologies.orient.server.config.OServerConfiguration;
-import com.orientechnologies.orient.server.config.OServerHandlerConfiguration;
 import com.orientechnologies.orient.server.config.OServerParameterConfiguration;
 import com.orientechnologies.orient.server.distributed.ODistributedServerManager;
 import com.orientechnologies.orient.server.distributed.ODistributedStartupException;
@@ -98,6 +95,8 @@ public class ODistributedPlugin implements OServerPlugin, ODistributedServerMana
     if (nodeName.contains("."))
       throw new OConfigurationException(
           "Illegal node name '" + nodeName + "'. '.' is not allowed in node name");
+    if (nodeName == null) assignNodeName();
+
     setDefaultDatabaseConfigFile(config.getConfig());
     try {
       clusterManager.configHazelcastPlugin(context, config.getHazelcast(), nodeName);
@@ -107,7 +106,6 @@ public class ODistributedPlugin implements OServerPlugin, ODistributedServerMana
     }
     String contextName = clusterManager.getHazelcastConfig().getGroupConfig().getName();
     String contextPassword = clusterManager.getHazelcastConfig().getGroupConfig().getPassword();
-    if (nodeName == null) assignNodeName();
     ((OrientDBDistributed) serverInstance.getDatabases())
         .initDistributed(nodeName, contextName, 1, contextPassword);
   }
@@ -134,6 +132,7 @@ public class ODistributedPlugin implements OServerPlugin, ODistributedServerMana
         setDefaultDatabaseConfigFile(param.getValue());
       }
     }
+    if (nodeName == null) assignNodeName();
 
     try {
       String hazelcastFile = "config/hazelcast.xml";
@@ -149,7 +148,6 @@ public class ODistributedPlugin implements OServerPlugin, ODistributedServerMana
     }
     String contextName = clusterManager.getHazelcastConfig().getGroupConfig().getName();
     String contextPassword = clusterManager.getHazelcastConfig().getGroupConfig().getPassword();
-    if (nodeName == null) assignNodeName();
     ((OrientDBDistributed) serverInstance.getDatabases())
         .initDistributed(nodeName, contextName, 1, contextPassword);
   }
@@ -247,6 +245,10 @@ public class ODistributedPlugin implements OServerPlugin, ODistributedServerMana
       nodeName = nodeName.trim();
       if (nodeName.isEmpty()) nodeName = null;
     }
+    var sysInfo = serverInstance.getDatabases().getSystemDatabase().getSystemInfo();
+    if (nodeName == null) {
+      nodeName = sysInfo.getNodeName();
+    }
 
     if (nodeName == null) {
       try {
@@ -307,34 +309,8 @@ public class ODistributedPlugin implements OServerPlugin, ODistributedServerMana
 
     logger.warnNode("Assigning distributed node name: %s", this.nodeName);
 
-    // SALVE THE NODE NAME IN CONFIGURATION
-    boolean found = false;
-    final OServerConfiguration cfg = serverInstance.getConfiguration();
-    for (OServerHandlerConfiguration h : cfg.getHandlers()) {
-      if (h.getClazz().equals(getClass().getName())) {
-        for (OServerParameterConfiguration p : h.getParameters()) {
-          if (p.getName().equals("nodeName")) {
-            found = true;
-            p.setValue(this.nodeName);
-            break;
-          }
-        }
-
-        if (!found) {
-          h.setParameters(OArrays.copyOf(h.getParameters(), h.getParameters().length + 1));
-          h.getParameters()[h.getParameters().length - 1] =
-              new OServerParameterConfiguration("nodeName", this.nodeName);
-        }
-
-        try {
-          serverInstance.saveConfiguration();
-        } catch (IOException e) {
-          throw OException.wrapException(
-              new OConfigurationException("Cannot save server configuration"), e);
-        }
-        break;
-      }
-    }
+    // SAVE THE NODE NAME IN SYSTEM DATABASE
+    sysInfo.setNodeName(nodeName);
   }
 
   public void closeRemoteServer(final ONodeId node) {
