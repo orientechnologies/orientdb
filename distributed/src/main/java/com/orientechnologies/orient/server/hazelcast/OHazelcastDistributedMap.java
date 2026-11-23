@@ -171,6 +171,11 @@ public class OHazelcastDistributedMap extends ConcurrentHashMap<String, Object>
     super.clear();
   }
 
+  void reloadLocalCache() {
+    clearLocalCache();
+    super.putAll(hzMap);
+  }
+
   public boolean existsNode(String nodeUuid) {
     return this.containsKey(OHazelcastClusterMetadataManager.CONFIG_NODE_PREFIX + nodeUuid);
   }

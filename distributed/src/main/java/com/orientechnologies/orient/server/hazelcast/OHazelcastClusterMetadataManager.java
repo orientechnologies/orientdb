@@ -897,7 +897,7 @@ public class OHazelcastClusterMetadataManager
           ODistributedServerLog.DIRECTION.NONE,
           "Server merged the existent cluster, merging databases...");
 
-      configurationMap.clearLocalCache();
+      configurationMap.reloadLocalCache();
 
       // UPDATE THE UUID
       final String oldUuid = nodeUuid;

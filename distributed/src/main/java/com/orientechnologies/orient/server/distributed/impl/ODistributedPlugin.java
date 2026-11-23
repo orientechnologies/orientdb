@@ -2843,6 +2843,10 @@ public class ODistributedPlugin extends OServerPluginAbstract
     return clusterManager.getHazelcastInstance();
   }
 
+  OHazelcastClusterMetadataManager getClusterManager() {
+    return clusterManager;
+  }
+
   @Override
   public ODocument getOnlineDatabaseConfiguration(String databaseName) {
     return clusterManager.getOnlineDatabaseConfiguration(databaseName);
