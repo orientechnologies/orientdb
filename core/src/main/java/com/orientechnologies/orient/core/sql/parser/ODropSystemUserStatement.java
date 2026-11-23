@@ -4,12 +4,9 @@ package com.orientechnologies.orient.core.sql.parser;
 
 import com.orientechnologies.orient.core.command.OAdminCommandContext;
 import com.orientechnologies.orient.core.db.OSystemDatabase;
-import com.orientechnologies.orient.core.sql.executor.OResult;
+import com.orientechnologies.orient.core.sql.executor.OResultInternal;
 import com.orientechnologies.orient.core.sql.executor.stream.OExecutionStream;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
-import java.util.stream.Stream;
 
 public class ODropSystemUserStatement extends SimpleNode implements OAdminStatementExecution {
   protected OIdentifierResolver name;
@@ -21,21 +18,13 @@ public class ODropSystemUserStatement extends SimpleNode implements OAdminStatem
   @Override
   public OExecutionStream executeSimple(OAdminCommandContext ctx) {
     OSystemDatabase systemDb = ctx.getGlobalContext().getSystemDatabase();
-    return systemDb.executeWithDB(
-        db -> {
-          List<Object> params = new ArrayList<>();
-          // INSERT INTO OUser SET
-          StringBuilder sb = new StringBuilder();
-          sb.append("DELETE FROM OUser WHERE ");
-
-          sb.append(OCreateSystemUserStatement.USER_FIELD_NAME);
-          sb.append("=?");
-          params.add(this.name.resolveIdentifierString(ctx));
-
-          Stream<OResult> stream = db.command(sb.toString(), params.toArray()).stream();
-          return OExecutionStream.resultIterator(stream.iterator())
-              .onClose(context -> stream.close());
-        });
+    var resolvedName = this.name.resolveIdentifierString(ctx);
+    var dropped = systemDb.getSystemUsers().dropSystemUser(resolvedName);
+    OResultInternal result = new OResultInternal();
+    result.setProperty("operation", "drop system user");
+    result.setProperty("name", resolvedName);
+    result.setProperty("dropped", dropped);
+    return OExecutionStream.singleton(result);
   }
 
   @Override

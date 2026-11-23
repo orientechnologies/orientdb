@@ -827,15 +827,8 @@ public class OServer {
     if (existServerUser && envRootPassword != null) {
       final String pwd = envRootPassword;
       getSystemDatabase()
-          .executeWithDB(
-              (db) -> {
-                db.command(
-                        "update OUser set password= ? WHERE name = ?",
-                        pwd,
-                        OServerConfiguration.DEFAULT_ROOT_USER)
-                    .close();
-                return (Void) null;
-              });
+          .getSystemUsers()
+          .updateSystemUserPassword(OServerConfiguration.DEFAULT_ROOT_USER, pwd);
     }
 
     boolean existsRoot =

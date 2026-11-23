@@ -25,6 +25,8 @@ import com.orientechnologies.common.util.OCallable;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.metadata.schema.OClass;
 import com.orientechnologies.orient.core.metadata.schema.OSchema;
+import com.orientechnologies.orient.core.osystem.OSystemUsers;
+import com.orientechnologies.orient.core.osystem.OSystemUsersImpl;
 import com.orientechnologies.orient.core.record.OElement;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResultSet;
@@ -38,10 +40,16 @@ public class OSystemDatabase {
   public static final String SERVER_ID_PROPERTY = "serverId";
 
   private final OrientDBInternal context;
+  private final OSystemUsers systemUsers;
   private String serverId;
 
   public OSystemDatabase(final OrientDBInternal context) {
     this.context = context;
+    this.systemUsers = new OSystemUsersImpl(this);
+  }
+
+  public OSystemUsers getSystemUsers() {
+    return systemUsers;
   }
 
   public String getSystemDatabaseName() {

@@ -5,10 +5,7 @@ package com.orientechnologies.orient.core.sql.parser;
 import com.orientechnologies.orient.core.command.OAdminCommandContext;
 import com.orientechnologies.orient.core.db.OSystemDatabase;
 import com.orientechnologies.orient.core.sql.executor.OResultInternal;
-import com.orientechnologies.orient.core.sql.executor.OResultSet;
 import com.orientechnologies.orient.core.sql.executor.stream.OExecutionStream;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 
 public class OExistsSystemUserStatement extends SimpleNode implements OAdminStatementExecution {
@@ -24,29 +21,13 @@ public class OExistsSystemUserStatement extends SimpleNode implements OAdminStat
 
     OSystemDatabase systemDb = ctx.getGlobalContext().getSystemDatabase();
 
+    String resolvedName = name.resolveIdentifierString(ctx);
+    var exists = systemDb.getSystemUsers().existsSystemUser(resolvedName);
+
     OResultInternal result = new OResultInternal();
     result.setProperty("operation", "exists system user");
-    String resolvedName = name.resolveIdentifierString(ctx);
     result.setProperty("name", resolvedName);
-
-    systemDb.executeWithDB(
-        db -> {
-          List<Object> params = new ArrayList<>();
-          params.add(resolvedName);
-          // INSERT INTO OUser SET
-          StringBuilder sb = new StringBuilder();
-          sb.append("SELECT FROM OUser WHERE name = ?");
-
-          try (OResultSet rs = db.command(sb.toString(), params.toArray())) {
-            if (rs.hasNext()) {
-              result.setProperty("exists", true);
-            } else {
-              result.setProperty("exists", false);
-            }
-          }
-          return null;
-        });
-
+    result.setProperty("exists", exists);
     return OExecutionStream.singleton(result);
   }
 
