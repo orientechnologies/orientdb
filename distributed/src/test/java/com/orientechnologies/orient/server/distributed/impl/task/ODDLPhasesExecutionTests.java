@@ -2,6 +2,7 @@ package com.orientechnologies.orient.server.distributed.impl.task;
 
 import static org.junit.Assert.assertTrue;
 
+import com.orientechnologies.common.util.ORawPair;
 import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.id.ONodeId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
@@ -10,6 +11,7 @@ import com.orientechnologies.orient.server.distributed.ODistributedRequestId;
 import com.orientechnologies.orient.server.distributed.impl.ODatabaseDocumentDistributed;
 import com.orientechnologies.orient.server.distributed.impl.task.transaction.OTxSuccess;
 import java.io.IOException;
+import java.util.Optional;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -39,9 +41,16 @@ public class ODDLPhasesExecutionTests {
             orientDB.open(ODDLPhasesExecutionTests.class.getSimpleName(), "admin", "adminpwd");
     String command = "create cluster bla";
     var txs = session.getSharedContext().getTransactionSequence();
-    var ids = txs.nextDDL().get();
-    OTransactionIdPromise first = ids.first;
-    OTransactionIdPromise second = ids.second;
+    Optional<ORawPair<OTransactionIdPromise, OTransactionIdPromise>> ids;
+    do {
+      ids = txs.nextDDL();
+      if (ids.isEmpty()) {
+        Thread.sleep(10);
+      }
+    } while (ids.isEmpty());
+
+    OTransactionIdPromise first = ids.get().first;
+    OTransactionIdPromise second = ids.get().second;
 
     OSQLCommandTaskFirstPhase message = new OSQLCommandTaskFirstPhase(command, first, second);
     ODistributedRequestId requestId = new ODistributedRequestId(nodeId, 10);

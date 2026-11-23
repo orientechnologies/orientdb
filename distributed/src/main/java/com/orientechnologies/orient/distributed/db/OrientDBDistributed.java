@@ -393,9 +393,10 @@ public class OrientDBDistributed extends OrientDBEmbedded
 
   public void autoAssignAllocation(ODatabaseId dbId) {
     ODatabasesTopology databaseTopology = getNodeState().getDatabaseTopology();
-    if (databaseTopology.isQuorumOnline(dbId)
+    if (!isDistributedDisabled()
+        && databaseTopology.isQuorumOnline(dbId)
         && databaseTopology.isOnline(dbId, getNodeId())
-        && databaseTopology.isSynching(dbId)) {
+        && !databaseTopology.isSynching(dbId)) {
       var name = databaseTopology.getDatabaseName(dbId);
       executeNoAuthorizationOnActive(
           name, db -> ((ODatabaseDocumentInternal) db).autoAssignAllocations(false));
