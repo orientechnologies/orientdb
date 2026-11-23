@@ -72,7 +72,7 @@
          | copy distributed scripts
         -->
         <fileSet>
-            <directory>${basedir}/script</directory>
+            <directory>${basedir}/../../distributed/script</directory>
             <outputDirectory>bin</outputDirectory>
             <includes>
                 <include>*.bat</include>
@@ -81,7 +81,7 @@
             <filtered>true</filtered>
         </fileSet>
         <fileSet>
-            <directory>${basedir}/script</directory>
+            <directory>${basedir}/../../distributed/script</directory>
             <outputDirectory>bin</outputDirectory>
             <includes>
                 <include>*.sh</include>
