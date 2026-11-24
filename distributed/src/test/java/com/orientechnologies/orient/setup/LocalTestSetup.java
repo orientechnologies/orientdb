@@ -7,8 +7,8 @@ import com.orientechnologies.orient.core.db.OrientDB;
 import com.orientechnologies.orient.core.db.OrientDBConfig;
 import com.orientechnologies.orient.core.id.ONodeId;
 import com.orientechnologies.orient.distributed.db.OrientDBDistributed;
-import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
-import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpDb;
+import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinaryLoader;
+import com.orientechnologies.orient.server.network.protocol.http.ONetworkProtocolHttpDbLoader;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -48,9 +48,11 @@ public class LocalTestSetup implements TestSetup {
         .forEach(
             listener -> {
               String address = String.format("localhost:%d", listener.getInboundAddr().getPort());
-              if (listener.getProtocolType().equals(ONetworkProtocolBinary.class)) {
+              if (ONetworkProtocolBinaryLoader.PROTOCOL_NAME.equals(
+                  listener.getProtocolType().getName())) {
                 binaryRemotes.put(serverId, address);
-              } else if (listener.getProtocolType().equals(ONetworkProtocolHttpDb.class)) {
+              } else if (ONetworkProtocolHttpDbLoader.PROTOCOL_NAME.equals(
+                  listener.getProtocolType().getName())) {
                 httpRemotes.put(serverId, address);
               }
             });
@@ -80,14 +82,14 @@ public class LocalTestSetup implements TestSetup {
   public void shutdownServer(String serverId) {
     ServerRun server = servers.get(serverId);
     if (server != null) {
-      server.getServerInstance().shutdown();
+      server.shutdownServer();
     }
   }
 
   @Override
   public void teardown() {
     for (ServerRun server : servers.values()) {
-      server.getServerInstance().shutdown();
+      server.shutdownServer();
       server.deleteNode();
     }
     Hazelcast.shutdownAll();

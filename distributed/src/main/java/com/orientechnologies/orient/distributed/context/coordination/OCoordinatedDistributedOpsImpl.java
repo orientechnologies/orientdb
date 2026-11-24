@@ -884,36 +884,41 @@ public class OCoordinatedDistributedOpsImpl implements OCoordinatedDistributedOp
       Set<ONodeId> allNetwork) {
     Map<ODatabaseId, ODatabaseStateNetwork> dbs = new HashMap<>();
     Map<String, ODatabaseStateNetwork> dbNames = new HashMap<>();
+    Set<ODatabaseId> onlyInFirstState = new HashSet<>();
     for (var db : databases) {
       dbs.put(db.id(), db);
       dbNames.put(db.name(), db);
+      onlyInFirstState.add(db.id());
     }
     for (var db : databases2) {
       var db1 = dbs.get(db.id());
       if (db1 != null) {
+        onlyInFirstState.remove(db.id());
         dbs.put(db.id(), mergeDatabase(db1, db, allNetwork));
       } else if (dbNames.containsKey(db.name())) {
         return Optional.empty();
       } else {
-        var members = new ArrayList<>(db.members());
-        for (ONodeId node : allNetwork) {
-          if (db.members().stream().noneMatch((x) -> x.node().equals(node))) {
-            // TODO: define the role from a configuration
-            members.add(new ODatabaseMemberNetwork(node, ONodeRole.Main, ODatabaseState.Offline));
-          }
-        }
-        int newQuorum = db.quorum();
-        int newCompQuorum = (members.size() / 2) + 1;
-        if (newCompQuorum >= newQuorum) {
-          newQuorum = newCompQuorum;
-        }
-
-        dbs.put(
-            db.id(),
-            new ODatabaseStateNetwork(db.id(), db.name(), newQuorum, db.version().next(), members));
+        dbs.put(db.id(), addMissingMembers(db, allNetwork));
       }
     }
+    for (ODatabaseId dbId : onlyInFirstState) {
+      dbs.put(dbId, addMissingMembers(dbs.get(dbId), allNetwork));
+    }
     return Optional.of(new ArrayList<>(dbs.values()));
+  }
+
+  private ODatabaseStateNetwork addMissingMembers(
+      ODatabaseStateNetwork database, Set<ONodeId> allNetwork) {
+    var members = new ArrayList<>(database.members());
+    for (ONodeId node : allNetwork) {
+      if (members.stream().noneMatch((member) -> member.node().equals(node))) {
+        // TODO: define the role from a configuration
+        members.add(new ODatabaseMemberNetwork(node, ONodeRole.Main, ODatabaseState.Offline));
+      }
+    }
+    int newQuorum = Math.max(database.quorum(), (members.size() / 2) + 1);
+    return new ODatabaseStateNetwork(
+        database.id(), database.name(), newQuorum, database.version().next(), members);
   }
 
   private ODatabaseStateNetwork mergeDatabase(

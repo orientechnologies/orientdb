@@ -398,18 +398,25 @@ public class OHazelcastClusterMetadataManager
   }
 
   protected void registerNode(final Member member, final ONodeConfig cfg) {
+    if (cfg == null) {
+      return;
+    }
+
     var joinedNodeName = cfg.getNodeId();
     if (activeNodes.containsKey(joinedNodeName))
       // ALREADY REGISTERED: SKIP IT
       return;
 
+    String url = ODistributedPlugin.getListeningBinaryAddress(cfg);
+    if (url == null) {
+      logger.warnNode(
+          nodeName,
+          "Cannot register node '%s' because its binary listener is missing",
+          joinedNodeName);
+      return;
+    }
+
     if (activeNodes.putIfAbsent(joinedNodeName, member) == null) {
-
-      String url = ODistributedPlugin.getListeningBinaryAddress(cfg);
-
-      if (url == null) {
-        return;
-      }
 
       activeNodesNamesByUuid.put(member.getUuid(), joinedNodeName);
       activeNodesUuidByName.put(joinedNodeName, member.getUuid());

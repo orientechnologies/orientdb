@@ -11,6 +11,12 @@ public interface ONetworkProtocolLoader {
 
   String getClassName();
 
+  default String getSimpleName() {
+    final String className = getClassName();
+    final int packageSeparator = className.lastIndexOf('.');
+    return packageSeparator < 0 ? className : className.substring(packageSeparator + 1);
+  }
+
   int getVersion();
 
   ONetworkProtocol newInstance(OServer server);
