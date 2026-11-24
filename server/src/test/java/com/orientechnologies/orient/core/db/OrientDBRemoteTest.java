@@ -10,6 +10,7 @@ import com.orientechnologies.common.io.OFileUtils;
 import com.orientechnologies.orient.core.Orient;
 import com.orientechnologies.orient.core.config.OGlobalConfiguration;
 import com.orientechnologies.orient.core.db.document.ODatabaseDocument;
+import com.orientechnologies.orient.core.exception.OSecurityAccessException;
 import com.orientechnologies.orient.core.exception.OStorageException;
 import com.orientechnologies.orient.core.record.impl.ODocument;
 import com.orientechnologies.orient.core.sql.executor.OResult;
@@ -247,6 +248,58 @@ public class OrientDBRemoteTest {
     }
     Assert.assertTrue(factory.exists(dbName));
     factory.drop(dbName);
+  }
+
+  @Test(expected = OSecurityAccessException.class)
+  public void testCreateDatabaseViaSQLNoAllowGuest() {
+    String dbName = "testCreateDatabaseViaSQL";
+    try (OrientDB ctx =
+        new OrientDB("remote:localhost", "guest", "guest", OrientDBConfig.defaultConfig())) {
+      try (OResultSet result = ctx.execute("create database " + dbName + " plocal")) {
+        Assert.assertTrue(result.hasNext());
+        OResult item = result.next();
+        Assert.assertEquals(true, item.getProperty("created"));
+      }
+    }
+  }
+
+  @Test(expected = OSecurityAccessException.class)
+  public void testCreateDatabaseViaSQLNoAllowReader() {
+    String dbName = "testCreateDatabaseViaSQL";
+    try (OrientDB ctx =
+        new OrientDB("remote:localhost", "reader", "reader", OrientDBConfig.defaultConfig())) {
+      try (OResultSet result = ctx.execute("create database " + dbName + " plocal")) {
+        Assert.assertTrue(result.hasNext());
+        OResult item = result.next();
+        Assert.assertEquals(true, item.getProperty("created"));
+      }
+    }
+  }
+
+  @Test(expected = OSecurityAccessException.class)
+  public void testCreateDatabaseViaSQLNoAllowWriter() {
+    String dbName = "testCreateDatabaseViaSQL";
+    try (OrientDB ctx =
+        new OrientDB("remote:localhost", "writer", "writer", OrientDBConfig.defaultConfig())) {
+      try (OResultSet result = ctx.execute("create database " + dbName + " plocal")) {
+        Assert.assertTrue(result.hasNext());
+        OResult item = result.next();
+        Assert.assertEquals(true, item.getProperty("created"));
+      }
+    }
+  }
+
+  @Test(expected = OSecurityAccessException.class)
+  public void testCreateDatabaseViaSQLNoAllowAdmin() {
+    String dbName = "testCreateDatabaseViaSQL";
+    try (OrientDB ctx =
+        new OrientDB("remote:localhost", "admin", "admin", OrientDBConfig.defaultConfig())) {
+      try (OResultSet result = ctx.execute("create database " + dbName + " plocal")) {
+        Assert.assertTrue(result.hasNext());
+        OResult item = result.next();
+        Assert.assertEquals(true, item.getProperty("created"));
+      }
+    }
   }
 
   @After
