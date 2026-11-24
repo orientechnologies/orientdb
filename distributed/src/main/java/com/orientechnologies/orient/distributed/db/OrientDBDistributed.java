@@ -410,9 +410,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
     ODatabasesTopology databaseTopology = getNodeState().getDatabaseTopology();
     if (!isDistributedDisabled()
         && databaseTopology.isQuorumOnline(dbId)
-        && databaseTopology
-            .getOnlineNodes(dbId)
-            .containsAll(databaseTopology.getMembers(dbId))
+        && databaseTopology.getOnlineNodes(dbId).containsAll(databaseTopology.getMembers(dbId))
         && databaseTopology.isOnline(dbId, getNodeId())
         && !databaseTopology.isSynching(dbId)) {
       var name = databaseTopology.getDatabaseName(dbId);

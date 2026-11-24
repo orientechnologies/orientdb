@@ -410,7 +410,9 @@ public class OHazelcastClusterMetadataManager
     String url = ODistributedPlugin.getListeningBinaryAddress(cfg);
     if (url == null) {
       logger.warnNode(
-          nodeName, "Cannot register node '%s' because its binary listener is missing", joinedNodeName);
+          nodeName,
+          "Cannot register node '%s' because its binary listener is missing",
+          joinedNodeName);
       return;
     }
 
