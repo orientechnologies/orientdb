@@ -172,6 +172,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
   private volatile ODistributedPlugin plugin;
   private final ConcurrentHashMap<String, ODistributedConfigurationManager> configurations =
       new ConcurrentHashMap<>();
+  private final Set<ODatabaseId> pendingSyncRetries = ConcurrentHashMap.newKeySet();
 
   private final ODistributedMessageServiceImpl messageService;
   private ONodeState nodeState = null;
@@ -227,12 +228,13 @@ public class OrientDBDistributed extends OrientDBEmbedded
           @Override
           public void nodeDisconnected(ONodeId node) {
             closeRemoteServer(node);
-            disconnected(nodeId);
+            disconnected(node);
           }
 
           @Override
           public boolean isNodeAvailable(ONodeId node) {
-            return false;
+            ONodeState state = getNodeState();
+            return state != null && state.getNetworkMembers().contains(node);
           }
         };
 
@@ -388,6 +390,19 @@ public class OrientDBDistributed extends OrientDBEmbedded
   private void syncIfNeeded(ODatabaseId dbId) {
     if (getNodeState().getDatabaseTopology().shouldSink(dbId, getNodeId())) {
       sync(dbId, Optional.empty());
+      scheduleSyncRetry(dbId);
+    }
+  }
+
+  private void scheduleSyncRetry(ODatabaseId dbId) {
+    long delay = getContextConfigurations().distributedCheckHealthEvery();
+    if (delay > 0 && pendingSyncRetries.add(dbId)) {
+      delayExecute(
+          () -> {
+            pendingSyncRetries.remove(dbId);
+            syncIfNeeded(dbId);
+          },
+          delay);
     }
   }
 
@@ -395,6 +410,9 @@ public class OrientDBDistributed extends OrientDBEmbedded
     ODatabasesTopology databaseTopology = getNodeState().getDatabaseTopology();
     if (!isDistributedDisabled()
         && databaseTopology.isQuorumOnline(dbId)
+        && databaseTopology
+            .getOnlineNodes(dbId)
+            .containsAll(databaseTopology.getMembers(dbId))
         && databaseTopology.isOnline(dbId, getNodeId())
         && !databaseTopology.isSynching(dbId)) {
       var name = databaseTopology.getDatabaseName(dbId);
@@ -406,9 +424,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
   private void syncIfNeededAll() {
     var dbp = getNodeState().getDatabaseTopology();
     for (var dbId : dbp.getDatabases()) {
-      if (dbp.shouldSink(dbId, getNodeId())) {
-        sync(dbId, Optional.empty());
-      }
+      syncIfNeeded(dbId);
     }
   }
 
@@ -1874,7 +1890,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
       for (OServerNetworkListener listener : server.getNetworkListeners()) {
         listeners.add(
             new ONodeInfoListener(
-                listener.getProtocolType().getName(), listener.getListeningAddress(true)));
+                listener.getProtocolType().getSimpleName(), listener.getListeningAddress(true)));
       }
     }
 
@@ -1965,7 +1981,7 @@ public class OrientDBDistributed extends OrientDBEmbedded
     for (OServerNetworkListener listener : server.getNetworkListeners()) {
       listeners.add(
           new ONodeListenerConfig(
-              listener.getProtocolType().getName(), listener.getListeningAddress(true)));
+              listener.getProtocolType().getSimpleName(), listener.getListeningAddress(true)));
     }
     nodeCfg.setListeners(listeners);
 

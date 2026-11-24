@@ -8,6 +8,7 @@ import com.orientechnologies.orient.core.id.ODatabaseId;
 import com.orientechnologies.orient.core.id.OGroupId;
 import com.orientechnologies.orient.core.id.ONodeId;
 import com.orientechnologies.orient.core.transaction.ONodeRole;
+import com.orientechnologies.orient.core.transaction.OTransactionId;
 import com.orientechnologies.orient.core.transaction.OTransactionIdPromise;
 import com.orientechnologies.orient.core.tx.OTransactionSequenceStatus;
 import com.orientechnologies.orient.distributed.context.coordination.OCoordinatedDistributedOps;
@@ -192,6 +193,38 @@ public class OCoordinateDistributedOpsMergeStateTest
     var member1 = db.members().get(1);
     assertEquals(member1.node(), nodeId1);
     assertEquals(member1.state(), ODatabaseState.Offline);
+  }
+
+  @Test
+  public void remoteDatabaseMergeMakesJoiningNodeSyncReady() {
+    ONodeId onlineNode = new ONodeId("online-node");
+    ONodeId joiningNode = new ONodeId("joining-node");
+    OGroupId groupId = new OGroupId("group");
+    OCoordinatedDistributedOps online = quorum1Env(onlineNode, groupId);
+    ODatabaseId dbId = ODatabaseId.fromStored("test", "database-id");
+    declareDatabase(online, dbId, "test");
+    setDatabaseState(online, dbId, onlineNode, ODatabaseState.Online);
+
+    OCoordinatedDistributedOps joining = quorum1Env(joiningNode, groupId);
+    ONodeStateNetwork onlineOriginal = online.getNetworkState();
+    ONodeStateNetwork joiningOriginal = joining.getNetworkState();
+    ONodeStateNetwork merged = joining.createMergedState(onlineOriginal).get();
+    OTransactionIdPromise promise =
+        new OTransactionIdPromise(joiningNode, new OTransactionId(1, 20));
+
+    assertTrue(joining.validateMergeNode(onlineNode, merged, joiningOriginal, promise).isEmpty());
+    assertTrue(online.validateMergeToNetwork(groupId, merged, onlineOriginal, promise).isEmpty());
+
+    joining.mergeNode(onlineNode, merged, joiningOriginal, promise);
+    online.mergeToNetwork(promise);
+
+    assertEquals(Set.of(onlineNode, joiningNode), joining.getNetworkTopology().getMembers());
+    assertEquals(Set.of(onlineNode, joiningNode), online.getNetworkTopology().getMembers());
+    assertEquals(Set.of(onlineNode, joiningNode), joining.getDatabaseTopology().getMembers(dbId));
+    assertEquals(Set.of(onlineNode, joiningNode), online.getDatabaseTopology().getMembers(dbId));
+    assertEquals(ODatabaseState.Online, joining.getDatabaseTopology().getState(dbId, onlineNode));
+    assertEquals(ODatabaseState.Offline, joining.getDatabaseTopology().getState(dbId, joiningNode));
+    assertTrue(joining.getDatabaseTopology().shouldSink(dbId, joiningNode));
   }
 
   @Test

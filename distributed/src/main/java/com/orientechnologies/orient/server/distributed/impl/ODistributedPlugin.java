@@ -47,6 +47,8 @@ import com.orientechnologies.orient.server.distributed.ODistributedStartupExcept
 import com.orientechnologies.orient.server.distributed.OLoggerDistributed;
 import com.orientechnologies.orient.server.distributed.config.OClusterConfiguration;
 import com.orientechnologies.orient.server.hazelcast.OHazelcastClusterMetadataManager;
+import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinary;
+import com.orientechnologies.orient.server.network.protocol.binary.ONetworkProtocolBinaryLoader;
 import com.orientechnologies.orient.server.plugin.OServerPlugin;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -366,7 +368,9 @@ public class ODistributedPlugin implements OServerPlugin, ODistributedServerMana
     if (listeners == null) return null;
     String listenUrl = null;
     for (ONodeListenerConfig listener : listeners) {
-      if (listener.getProtocol().equals("ONetworkProtocolBinary")) {
+      if (ONetworkProtocolBinaryLoader.PROTOCOL_NAME.equals(listener.getProtocol())
+          || ONetworkProtocolBinary.class.getName().equals(listener.getProtocol())
+          || ONetworkProtocolBinary.class.getSimpleName().equals(listener.getProtocol())) {
         listenUrl = listener.getListen();
         break;
       }
