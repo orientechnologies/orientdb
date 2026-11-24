@@ -48,14 +48,13 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class OIndexManagerRemote implements OIndexManagerAbstract {
   private static final OLogger logger = OLogManager.instance().logger(OIndexManagerRemote.class);
-  private final AtomicBoolean skipPush = new AtomicBoolean(false);
+  private final AtomicInteger skipPushNesting = new AtomicInteger();
   private static final String QUERY_DROP = "drop index `%s` if exists";
   private final OStorageInfo storage;
   // values of this Map should be IMMUTABLE !! for thread safety reasons.
@@ -559,11 +558,11 @@ public class OIndexManagerRemote implements OIndexManagerAbstract {
   }
 
   protected void acquireExclusiveLock() {
-    skipPush.set(true);
+    skipPushNesting.incrementAndGet();
   }
 
   protected void releaseExclusiveLock() {
-    skipPush.set(false);
+    skipPushNesting.decrementAndGet();
   }
 
   protected void realAcquireExclusiveLock() {
@@ -591,7 +590,7 @@ public class OIndexManagerRemote implements OIndexManagerAbstract {
   public void update(ODocument indexManager) {
     ORecordInternal.setIdentity(
         indexManager, new ORecordId(storage.getConfiguration().getIndexMgrRecordId()));
-    if (!skipPush.get()) {
+    if (skipPushNesting.get() == 0) {
       realAcquireExclusiveLock();
       try {
         fromStream(indexManager);
