@@ -201,4 +201,14 @@ public final class OServerQueryRequest implements OBinaryRequest<OServerQueryRes
   public boolean requireDatabaseSession() {
     return false;
   }
+
+  @Override
+  public boolean requireServerUser() {
+    return true;
+  }
+
+  @Override
+  public String requiredServerRole() {
+    return "database.command";
+  }
 }
