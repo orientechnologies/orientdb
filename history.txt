@@ -28,6 +28,22 @@ This document contains the last changes of OrientDB Community Edition.
 
 
 -----------------------------------------------------------------------------------------------------------------------------------
+version 3.2.59 - (November, 26 2026)
+
+# Core
+- Document compare now o not fail when comparing collections to a not collection type, issue #10997
+- Improved hanling of thread interruptions
+- Update dependencies
+
+# Remote
+- Check user permission for execution of server commands
+- Preserve index metadata during nested remote reloads
+
+# Distributed
+- Restore database recovery after cluster rejoin, issue #10422
+
+
+-----------------------------------------------------------------------------------------------------------------------------------
 version 3.2.58 - (November, 10 2026)
 
 # Core
